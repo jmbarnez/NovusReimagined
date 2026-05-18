@@ -1,0 +1,114 @@
+/* ── Slot Tooltip ── */
+#hud-slot-tooltip {
+  position: fixed;
+  z-index: 9999;
+  max-width: 320px;
+  min-width: 240px;
+  background: rgba(6,10,16,0.97);
+  border: 1px solid rgba(60,80,110,0.55);
+  border-left: 3px solid rgba(60,80,110,0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.75);
+  padding: 12px 14px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  color: #8899aa;
+  line-height: 1.55;
+  pointer-events: none;
+  display: none;
+}
+.tt-header {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+.tt-rarity {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tt-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ddeeff;
+  letter-spacing: 0.02em;
+}
+.tt-rack-label {
+  font-size: 9px;
+  color: #556677;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+}
+.tt-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(50,70,90,0.3);
+}
+.tt-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: #6688aa;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.tt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 1px 0;
+}
+.tt-label {
+  color: #556677;
+  font-size: 9px;
+}
+.tt-val {
+  color: #aabbcc;
+  font-size: 9px;
+  text-align: right;
+}
+.tt-bonuses {
+  font-size: 9px;
+  color: #66aacc;
+  line-height: 1.6;
+}
+.tt-affixes {
+  font-size: 9px;
+  line-height: 1.7;
+}
+.tt-affix-pos {
+  color: #44ee88;
+  font-weight: 700;
+}
+.tt-dur-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.tt-dur-pct {
+  font-weight: 700;
+  font-size: 10px;
+}
+.tt-dur-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(40,50,60,0.6);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tt-dur-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.2s;
+}
+.tt-desc {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(50,70,90,0.25);
+  font-size: 9px;
+  color: #445566;
+  font-style: italic;
+  line-height: 1.5;
+}

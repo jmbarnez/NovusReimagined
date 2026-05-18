@@ -1,0 +1,97 @@
+/* ── Lock Rail ── */
+#hud-lock-rail {
+  position: absolute;
+  top: 0; left: 0; right: 310px;
+  height: 26px;
+  outline: 1px solid #ff4444;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px;
+  background: var(--hud-top-bar, rgba(2,5,10,0.88));
+  border-bottom: 1px solid var(--hud-top-border, rgba(55,85,110,0.65));
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45,62,78,0.8) transparent;
+  pointer-events: auto;
+}
+#hud-lock-rail::-webkit-scrollbar { height: 4px; }
+#hud-lock-rail::-webkit-scrollbar-track { background: transparent; }
+#hud-lock-rail::-webkit-scrollbar-thumb { background: rgba(45,62,78,0.8); border-radius: 2px; }
+
+.lock-card {
+  flex: 0 0 158px;
+  height: 22px;
+  background: rgba(5,8,14,0.99);
+  border: 1px solid rgba(38,48,60,0.95);
+  padding: 2px 5px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.lock-card.primary {
+  border-color: rgba(195,160,85,0.88);
+  background: rgba(72,96,118,0.28);
+}
+.lock-card:hover { border-color: rgba(80,120,150,0.7); }
+.lock-card .lc-name {
+  font-size: 8px; font-weight: 700;
+  color: #98a8b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lock-card.primary .lc-name { color: #d2c6a8; }
+.lock-card .lc-meta {
+  display: none;
+  font-size: 6px; color: #4d5a66;
+  margin-top: 1px;
+}
+.lock-card .lc-bar {
+  position: absolute;
+  bottom: 2px; left: 5px; right: 5px;
+  height: 2px;
+  background: rgba(0,0,0,0.52);
+}
+.lock-card .lc-bar > span {
+  display: block;
+  height: 100%;
+}
+.lock-card .lc-bar.hp > span { background: #9a2828; }
+.lock-card .lc-bar.lock > span { background: rgba(210,155,55,0.92); }
+.lock-card .lc-close {
+  position: absolute;
+  top: 1px; right: 1px;
+  width: 10px; height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12,16,22,0.98);
+  border: 1px solid rgba(70,78,90,0.85);
+  font-size: 7px; font-weight: 700;
+  color: #7a6868;
+  cursor: pointer;
+  pointer-events: auto;
+  line-height: 1;
+}
+.lock-card .lc-close:hover { color: #cc4444; border-color: #884444; }
+.lock-card .lc-assign {
+  position: absolute;
+  top: 2px; right: 14px;
+  font-size: 6px; font-weight: 700;
+  color: #44ffaa;
+}
+.lock-card .lc-scan {
+  position: absolute;
+  bottom: 5px; left: 0; right: 0;
+  text-align: center;
+  font-size: 6px; color: #7ab8d8;
+}
+.lock-card .lc-target {
+  position: absolute;
+  top: 1px; right: 26px;
+  font-size: 7px; font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}

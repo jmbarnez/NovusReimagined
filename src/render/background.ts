@@ -1,0 +1,400 @@
+import { G, Client } from "../state.js";
+import { ctx } from "../canvas.js";
+import { TAU } from "../constants.js";
+import { mkRng, rf } from "../utils/math.js";
+import { flareColorFor } from "./seeded-detail.js";
+import { _pixiReady } from "../pixi.js";
+
+const STAR_FAR_PARALLAX = 0.006;
+const STAR_MID_PARALLAX = 0.018;
+const STAR_NEAR_PARALLAX = 0.036;
+const DUST_PARALLAX = 0.12;
+const WRAP_FAR  = 6000;
+const WRAP_MID  = 4000; // legacy compat with G.STARS
+const WRAP_NEAR = 3000;
+const WRAP_DUST = 3000;
+
+const DETAIL_MULT: Record<string, number> = { low: 0.5, medium: 0.75, high: 1.0 };
+
+function getDetailMult(): number {
+  return DETAIL_MULT[Client.settings?.backgroundDetail] ?? 1.0;
+}
+
+/** Draw a single star layer with wrapping. scintillateAmt > 0 adds a twinkle. */
+function drawStarLayer(stars: any[], wrapW: number, parallaxRate: number, Wc: number, Hc: number, starHueBase: number, camX: number, camY: number, now: number, scintillateAmt = 0, tintRGB?: [number, number, number], tintMix = 0) {
+  const offX = camX * parallaxRate;
+  const offY = camY * parallaxRate;
+  const useTint = tintRGB && tintMix > 0;
+
+  for (const s of stars) {
+    let sx = s.ox - offX;
+    let sy = s.oy - offY;
+    sx = ((sx % wrapW) + wrapW) % wrapW;
+    sy = ((sy % Hc) + Hc) % Hc;
+    // Clamp wrap to screen dims (far layer wraps at its own size)
+    if (sx > Wc) continue;
+
+    const twinkle = scintillateAmt > 0
+      ? 1 + scintillateAmt * Math.sin(now * 0.00025 * (1 + s.r * 1.8) + s.hue * 0.7)
+      : 1;
+    const alpha = s.a * 0.82 * twinkle;
+    if (alpha < 0.03) continue;
+
+    ctx.globalAlpha = Math.min(1, alpha);
+    if (useTint) {
+      // Atmospheric perspective: bias far-layer star color toward system tint.
+      // Base star is a desaturated grey-white (~hsl 18%,72%).
+      const baseR = 184, baseG = 184, baseB = 184;
+      const r = Math.round(baseR * (1 - tintMix) + tintRGB![0] * tintMix);
+      const g = Math.round(baseG * (1 - tintMix) + tintRGB![1] * tintMix);
+      const b = Math.round(baseB * (1 - tintMix) + tintRGB![2] * tintMix);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+    } else {
+      ctx.fillStyle = `hsl(${starHueBase + s.hue},18%,72%)`;
+    }
+
+    // 4-point spike star shape
+    const r = s.r;
+    const spike = r * (2.2 + s.hue * 0.04); // spike length varies per star
+    const thin = r * 0.28;
+    ctx.beginPath();
+    ctx.moveTo(sx,          sy - spike);
+    ctx.lineTo(sx + thin,   sy - thin);
+    ctx.lineTo(sx + spike,  sy);
+    ctx.lineTo(sx + thin,   sy + thin);
+    ctx.lineTo(sx,          sy + spike);
+    ctx.lineTo(sx - thin,   sy + thin);
+    ctx.lineTo(sx - spike,  sy);
+    ctx.lineTo(sx - thin,   sy - thin);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+/** Ambient space dust — tiny translucent dots drifting slowly with high parallax. */
+function drawDust(Wc: number, Hc: number, now: number, camX: number, camY: number) {
+  const offX = camX * DUST_PARALLAX;
+  const offY = camY * DUST_PARALLAX;
+
+  ctx.save();
+  for (const d of G.DUST) {
+    // Slow drift animation
+    let dx = d.ox - offX + now * d.drift;
+    let dy = d.oy - offY + now * d.drift * 0.6;
+    dx = ((dx % WRAP_DUST) + WRAP_DUST) % WRAP_DUST;
+    dy = ((dy % Hc) + Hc) % Hc;
+    if (dx > Wc) continue;
+
+    ctx.globalAlpha = d.a;
+    ctx.fillStyle = "#889aac";
+    ctx.beginPath();
+    ctx.arc(dx, dy, d.r, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/** Reactive edge vignette — darkens screen corners; tightens & reddens during combat or low hull. */
+export function drawVignette(Wc: number, Hc: number) {
+  const cx = Wc / 2, cy = Hc / 2;
+  const heat = Math.max(0, Math.min(1, Client.combatHeat || 0));
+  // Low-hull pulse: ramps up below 35% structure or hull.
+  let lowHull = 0;
+  if (G.P) {
+    const hullFrac = G.P.maxHp > 0 ? G.P.hp / G.P.maxHp : 1;
+    const strFrac = (G.P.maxStructure || 0) > 0 ? G.P.structure / G.P.maxStructure : 1;
+    const dangerFrac = Math.min(hullFrac, strFrac);
+    if (dangerFrac < 0.35) {
+      const t = 1 - dangerFrac / 0.35;
+      lowHull = t * (0.55 + 0.45 * Math.sin(performance.now() * 0.006));
+    }
+  }
+  const inner = Math.hypot(Wc, Hc) * (0.38 - heat * 0.06 - lowHull * 0.05);
+  const outer = Math.hypot(Wc, Hc) * 0.58;
+  const baseDark = 0.28 + heat * 0.25 + lowHull * 0.18;
+  const redMix = heat * 0.7 + lowHull * 0.9;
+  const r = Math.round(redMix * 90);
+  const g = Math.round(redMix * 12);
+  const b = Math.round(redMix * 14);
+  const vig = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+  vig.addColorStop(0, "transparent");
+  vig.addColorStop(1, `rgba(${r},${g},${b},${Math.min(0.85, baseDark)})`);
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, Wc, Hc);
+}
+
+// ── Near-plane silhouettes (gas giants, derelicts) ─────────────────────────
+// Drawn once-per-system, blitted with a slow parallax. Sells background
+// scale without competing with foreground gameplay clarity.
+const SILHOUETTE_PARALLAX = 0.05;
+const WRAP_SILH = 5200;
+
+function ensureSilhouettes(sys: any) {
+  if (sys._silhouettes) return;
+  const rng = mkRng(sys.id + "-silh");
+  const archetype = sys.archetype || "wisps";
+  const baseCount = archetype === "void" ? 2 : archetype === "dense" ? 5 : 4;
+  const out: any[] = [];
+  for (let i = 0; i < baseCount; i++) {
+    const kind = rng() < 0.6 ? "giant" : "derelict";
+    const r = kind === "giant" ? rf(rng, 110, 260) : rf(rng, 22, 48);
+    // Bias planet tint based on system tint, with per-planet hue offset.
+    const baseHue = ((sys.starHue ?? 30) + (rng() - 0.5) * 120 + 360) % 360;
+    const sat = 28 + rng() * 32;        // %
+    const lit = 28 + rng() * 12;        // %
+    out.push({
+      kind,
+      x: (rng() - 0.5) * WRAP_SILH,
+      y: (rng() - 0.5) * WRAP_SILH,
+      r,
+      baseHue, sat, lit,
+      hue: ((sys.tintRGB?.[0] ?? 200) + rng() * 40 - 20) | 0,
+      tilt: rf(rng, 0, TAU),
+      hasRing: kind === "giant" && rng() < 0.4,
+      ringTilt: rf(rng, 0.18, 0.55),
+      seed: rng(),
+    });
+  }
+  sys._silhouettes = out;
+}
+
+function drawSilhouettes(Wc: number, Hc: number, sys: any, camX: number, camY: number) {
+  ensureSilhouettes(sys);
+  const tint = sys.tintRGB || [200, 200, 200];
+  const offX = camX * SILHOUETTE_PARALLAX;
+  const offY = camY * SILHOUETTE_PARALLAX;
+  ctx.save();
+  for (const s of sys._silhouettes as any[]) {
+    let cx = ((s.x - offX) % WRAP_SILH + WRAP_SILH) % WRAP_SILH - WRAP_SILH * 0.5 + Wc * 0.5;
+    let cy = ((s.y - offY) % WRAP_SILH + WRAP_SILH) % WRAP_SILH - WRAP_SILH * 0.5 + Hc * 0.5;
+    if (cx + s.r < 0 || cx - s.r > Wc || cy + s.r < 0 || cy - s.r > Hc) continue;
+    if (s.kind === "giant") {
+      // Distant gas giant — atmospheric body with sun-side highlight + soft rim.
+      const sunDir = sys.sunDir ?? 0;
+      const litX = Math.cos(sunDir) * s.r * 0.45;
+      const litY = Math.sin(sunDir) * s.r * 0.45;
+      const bodyCol = `hsl(${s.baseHue},${s.sat}%,${s.lit}%)`;
+      const shadeCol = `hsl(${s.baseHue},${Math.max(10, s.sat - 12)}%,${Math.max(4, s.lit - 22)}%)`;
+      const litCol   = `hsl(${s.baseHue},${Math.min(80, s.sat + 8)}%,${Math.min(72, s.lit + 28)}%)`;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      // Optional back-half of ring (drawn first so the planet body occludes it).
+      if (s.hasRing) {
+        ctx.save();
+        ctx.rotate(sunDir);
+        ctx.scale(1, s.ringTilt);
+        const rR = s.r * 1.55, rW = s.r * 0.10;
+        const rg = ctx.createRadialGradient(0, 0, rR - rW, 0, 0, rR + rW);
+        rg.addColorStop(0.0, "rgba(0,0,0,0)");
+        rg.addColorStop(0.5, `hsla(${s.baseHue},${s.sat}%,${Math.min(70, s.lit + 20)}%,0.55)`);
+        rg.addColorStop(1.0, "rgba(0,0,0,0)");
+        ctx.beginPath(); ctx.arc(0, 0, rR, Math.PI, TAU);
+        ctx.strokeStyle = rg as any;
+        ctx.lineWidth = rW * 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Body — dark-to-shaded gradient
+      ctx.globalAlpha = 0.88;
+      const bg = ctx.createRadialGradient(litX * 0.3, litY * 0.3, s.r * 0.15, 0, 0, s.r);
+      bg.addColorStop(0.0, bodyCol);
+      bg.addColorStop(0.55, bodyCol);
+      bg.addColorStop(1.0, shadeCol);
+      ctx.fillStyle = bg;
+      ctx.beginPath(); ctx.arc(0, 0, s.r, 0, TAU); ctx.fill();
+
+      // Sun-facing crescent highlight (clipped to body)
+      ctx.save();
+      ctx.beginPath(); ctx.arc(0, 0, s.r, 0, TAU); ctx.clip();
+      const lg = ctx.createRadialGradient(litX, litY, 0, litX, litY, s.r * 0.95);
+      lg.addColorStop(0.0, `hsla(${s.baseHue},${Math.min(80, s.sat + 8)}%,${Math.min(72, s.lit + 28)}%,0.55)`);
+      lg.addColorStop(0.4, `hsla(${s.baseHue},${s.sat}%,${Math.min(60, s.lit + 14)}%,0.18)`);
+      lg.addColorStop(1.0, "rgba(0,0,0,0)");
+      ctx.fillStyle = lg;
+      ctx.fillRect(-s.r, -s.r, s.r * 2, s.r * 2);
+      ctx.restore();
+
+      // Subtle atmospheric rim
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = litCol;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      const rimA = sunDir - Math.PI * 0.45;
+      const rimB = sunDir + Math.PI * 0.45;
+      ctx.arc(0, 0, s.r * 1.005, rimA, rimB);
+      ctx.stroke();
+
+      // Front-half of ring (in front of planet)
+      if (s.hasRing) {
+        ctx.save();
+        ctx.rotate(sunDir);
+        ctx.scale(1, s.ringTilt);
+        const rR = s.r * 1.55, rW = s.r * 0.10;
+        const rg = ctx.createRadialGradient(0, 0, rR - rW, 0, 0, rR + rW);
+        rg.addColorStop(0.0, "rgba(0,0,0,0)");
+        rg.addColorStop(0.5, `hsla(${s.baseHue},${s.sat}%,${Math.min(70, s.lit + 20)}%,0.55)`);
+        rg.addColorStop(1.0, "rgba(0,0,0,0)");
+        ctx.beginPath(); ctx.arc(0, 0, rR, 0, Math.PI);
+        ctx.strokeStyle = rg as any;
+        ctx.lineWidth = rW * 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.restore();
+    } else {
+      // Derelict: small angular silhouette
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(s.tilt);
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = "rgba(8,10,16,0.92)";
+      ctx.beginPath();
+      ctx.moveTo(-s.r, -s.r * 0.35);
+      ctx.lineTo(s.r * 0.6, -s.r * 0.5);
+      ctx.lineTo(s.r, 0);
+      ctx.lineTo(s.r * 0.6, s.r * 0.5);
+      ctx.lineTo(-s.r, s.r * 0.35);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 0.18;
+      ctx.strokeStyle = `rgba(${tint[0]},${tint[1]},${tint[2]},0.4)`;
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// ── A1: Per-system color identity tint ─────────────────────────────────────
+// Multiply pass over the world layer so every entity inherits the system's
+// star-class warmth/coolness without per-entity work.
+export function drawSystemTint(Wc: number, Hc: number, sys: any, dt: number) {
+  if (!sys || !sys.tintRGB) return;
+  // Advance the solar-flare timer regardless of the grading setting — the star
+  // bloom pass leans on sys.flareTint for its brightness pulse.
+  if (typeof sys.flareTimer === "number") {
+    sys.flareTimer -= dt;
+    if (sys.flareTimer <= 0) {
+      sys.flareTimer = 24 + Math.random() * 38;
+      sys.flareTint = 1; // ramps down each frame
+    }
+  }
+  const flare = (sys.flareTint || 0);
+  if (flare > 0) sys.flareTint = Math.max(0, flare - dt * 0.7);
+
+  if (Client.settings?.colorGrading === false) return;
+
+  const flareCol = flareColorFor(sys.starClass || "G");
+  const baseT = sys.tintRGB as [number, number, number];
+  const r = Math.round(baseT[0] * (1 - flare * 0.4) + flareCol[0] * flare * 0.4);
+  const g = Math.round(baseT[1] * (1 - flare * 0.4) + flareCol[1] * flare * 0.4);
+  const b = Math.round(baseT[2] * (1 - flare * 0.4) + flareCol[2] * flare * 0.4);
+
+  ctx.save();
+  // Multiply cast only — keeps empty space pitch black. The "lift" half of the
+  // grade is handled by the Pixi ColorMatrixFilter on worldContainer, which
+  // only touches pixels with rendered content (stars, entities, nebulae) and
+  // leaves the black background untouched.
+  ctx.globalCompositeOperation = "multiply";
+  ctx.fillStyle = `rgba(${r},${g},${b},${0.09 + flare * 0.05})`;
+  ctx.fillRect(0, 0, Wc, Hc);
+  ctx.restore();
+}
+
+export function initBackgroundStars(detail = "high") {
+  const mult = DETAIL_MULT[detail] ?? 1.0;
+  G.STARS_FAR = Array.from({ length: Math.max(60, Math.round(220 * mult)) }, () => ({
+    ox: Math.random() * 6000,
+    oy: Math.random() * 6000,
+    r: 0.18 + Math.random() * 0.28,
+    a: 0.07 + Math.random() * 0.18,
+    hue: Math.random() * 30,
+  }));
+  G.STARS = Array.from({ length: Math.max(40, Math.round(150 * mult)) }, () => ({
+    ox: Math.random() * 4000,
+    oy: Math.random() * 4000,
+    r: 0.35 + Math.random() * 0.55,
+    a: 0.14 + Math.random() * 0.32,
+    hue: (Math.random() - 0.5) * 30,
+  }));
+  G.STARS_NEAR = Array.from({ length: Math.max(10, Math.round(30 * mult)) }, () => ({
+    ox: Math.random() * 3000,
+    oy: Math.random() * 3000,
+    r: 0.6 + Math.random() * 1.0,
+    a: 0.28 + Math.random() * 0.32,
+    hue: Math.random() * 40,
+  }));
+  G.DUST = Array.from({ length: Math.max(8, Math.round(15 * mult)) }, () => ({
+    ox: Math.random() * 3000,
+    oy: Math.random() * 3000,
+    r: 0.2 + Math.random() * 0.3,
+    a: 0.03 + Math.random() * 0.06,
+    drift: 0.01 + Math.random() * 0.015,
+  }));
+}
+
+export function drawBackground(Wc: number, Hc: number, sys: any, now: number, camX: number, camY: number) {
+  if (!sys) return;
+
+  const starHueBase = (sys.starHue + 360) % 360;
+
+  // === Three star layers (gated when PixiJS handles them) ===
+  if (!_pixiReady) {
+    ctx.save();
+
+    // Far layer: dense, tiny, slow parallax — atmospheric perspective biases
+    // the color toward the system tint to suggest haze/distance.
+    if (G.STARS_FAR.length) {
+      drawStarLayer(G.STARS_FAR, WRAP_FAR, STAR_FAR_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0, sys.tintRGB, 0.55);
+    }
+
+    // Near-plane silhouettes (gas giants / derelicts) — drawn between far &
+    // mid star layers so they sit in the middle of the parallax stack.
+    ctx.restore();
+    drawSilhouettes(Wc, Hc, sys, camX, camY);
+    ctx.save();
+
+    // Mid layer (original stars) — subtle shimmer
+    drawStarLayer(G.STARS, WRAP_MID, STAR_MID_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0.08);
+
+    // Near layer: rare bright stars with fast parallax + full twinkle
+    if (G.STARS_NEAR.length) {
+      drawStarLayer(G.STARS_NEAR, WRAP_NEAR, STAR_NEAR_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0.22);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // Ambient space dust
+    drawDust(Wc, Hc, now, camX, camY);
+  } else {
+    // PixiJS handles stars/dust; still draw silhouettes
+    drawSilhouettes(Wc, Hc, sys, camX, camY);
+  }
+
+  // Edge vignette
+  if (Client.settings?.vignetteEnabled !== false) {
+    drawVignette(Wc, Hc);
+  }
+
+  // Ambient falloff — subtle screen-space brightening toward the star's
+  // projected position, suggesting solar illumination of the local dust.
+  if (Client.settings?.ambientFalloff !== false) {
+    const sx = Wc / 2 - camX * 0.003;
+    const sy = Hc / 2 - camY * 0.003;
+    const ambR = Math.hypot(Wc, Hc) * 0.45;
+    const amb = ctx.createRadialGradient(sx, sy, 0, sx, sy, ambR);
+    amb.addColorStop(0, "rgba(255,240,210,0.06)");
+    amb.addColorStop(0.5, "rgba(255,220,180,0.025)");
+    amb.addColorStop(1, "transparent");
+    ctx.fillStyle = amb;
+    ctx.fillRect(0, 0, Wc, Hc);
+  }
+}

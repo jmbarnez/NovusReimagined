@@ -1,0 +1,87 @@
+/* ── Mission Contracts Panel (below minimap) ── */
+#hud-missions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  pointer-events: auto;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 7.5px;
+  color: var(--hud-text-main, #9eb6d4);
+  overflow-y: auto;
+}
+.hm-header {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #5a7088;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+  padding: 2px 0 3px;
+  border-bottom: 1px solid rgba(55,85,110,0.45);
+  margin-bottom: 3px;
+}
+.hm-empty {
+  font-size: 7px;
+  color: var(--hud-text-dim, #7a8fa8);
+  text-align: center;
+  line-height: 1.5;
+  padding: 4px 0;
+  opacity: 0.55;
+  letter-spacing: 0.06em;
+}
+.hm-contract {
+  background: rgba(0,2,6,0.88);
+  border: 1px solid rgba(55,85,110,0.45);
+  border-left: 2px solid rgba(72,144,160,0.7);
+  padding: 3px 5px;
+  margin-bottom: 3px;
+}
+.hm-contract.complete {
+  border-left-color: #44dd88;
+  background: rgba(0,10,5,0.92);
+}
+.hm-title {
+  font-size: 7.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--hud-text-main, #9eb6d4);
+  margin-bottom: 2px;
+}
+.hm-contract.complete .hm-title { color: #74eaaa; }
+.hm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 3px;
+}
+.hm-prog {
+  font-size: 6.5px;
+  color: #4a90b8;
+  letter-spacing: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+.hm-done {
+  font-size: 6.5px;
+  font-weight: 700;
+  color: #44dd88;
+  letter-spacing: 0.08em;
+  animation: hm-pulse 1.4s ease-in-out infinite;
+}
+.hm-reward {
+  font-size: 6.5px;
+  color: #c8a855;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+@keyframes hm-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}

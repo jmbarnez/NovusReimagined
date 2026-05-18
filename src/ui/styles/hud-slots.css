@@ -1,0 +1,238 @@
+/* ── Module Slots ── */
+#hud-slots {
+  flex: 1;
+  display: flex;
+  gap: 3px;
+  padding: 1px 6px 2px;
+  align-items: stretch;
+  min-height: 0;
+}
+.hud-slot {
+  flex: 1;
+  min-width: 40px;
+  background: rgba(6,8,12,0.98);
+  border: 1px solid rgba(28,32,40,0.6);
+  padding: 1px 2px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.1s;
+  pointer-events: auto;
+  overflow: hidden;
+}
+.hud-slot:hover { border-color: rgba(60,80,100,0.8); }
+.hud-slot.pending-assign { border-color: rgba(80,220,255,0.8); }
+.hud-slot.overheat { animation: overheat-pulse 0.6s infinite alternate; }
+
+.hud-slot.rack-turret { border-color: rgba(80,60,40,0.6); }
+.hud-slot.rack-high   { border-color: rgba(80,80,30,0.6); }
+.hud-slot.rack-med    { border-color: rgba(30,80,90,0.6); }
+.hud-slot.rack-low    { border-color: rgba(40,50,60,0.6); }
+
+/* Selected turret (active fire slot) */
+.hud-slot.turret-selected {
+  border-color: rgba(220,180,70,0.85) !important;
+  box-shadow: 0 0 6px rgba(220,180,70,0.30);
+}
+
+/* Active module ON state */
+.hud-slot.module-on { border-color: rgba(100,140,100,0.55); }
+
+/* Turret with assigned target */
+.hud-slot.target-assigned { border-color: rgba(60,140,90,0.55); }
+
+.hud-slot.inactive-active { opacity: 0.45; filter: grayscale(0.6); }
+.hud-slot.inactive-active .sl-name { color: #4a5868; }
+.hud-slot.inactive-active .sl-sub { color: #334455; }
+
+.hud-slot .sl-badge {
+  position: absolute;
+  top: 2px; right: 3px;
+  font-size: 8px; font-weight: 700;
+  color: #a88a3a;
+  line-height: 1;
+}
+.hud-slot .sl-rack {
+  position: absolute;
+  top: 2px; left: 3px;
+  font-size: 7px;
+  line-height: 1;
+}
+.hud-slot.rack-turret .sl-rack { color: #a08058; }
+.hud-slot.rack-high   .sl-rack { color: #9c9048; }
+.hud-slot.rack-med    .sl-rack { color: #4890a0; }
+.hud-slot.rack-low    .sl-rack { color: #6a7888; }
+.hud-slot .sl-name svg {
+  flex-shrink: 0;
+}
+.hud-slot .sl-name {
+  position: absolute;
+  top: 11px;
+  left: 2px; right: 2px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  color: #b8c4d4;
+  line-height: 1.15;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+  text-align: center;
+  gap: 1px;
+}
+.hud-slot .sl-name.empty { color: #3a4048; }
+.hud-slot .sl-sub {
+  position: absolute;
+  bottom: 4px; left: 3px;
+  font-size: 6px;
+  color: #4a5566;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: calc(100% - 6px);
+}
+.hud-slot .sl-sub.assigned { color: #44ffaa; }
+.hud-slot .sl-sub.on { color: #66cc88; }
+.hud-slot .sl-sub.off { color: #cc4444; }
+
+/* Heat bar */
+.hud-slot .sl-heat-track {
+  position: absolute;
+  bottom: 1px; left: 3px; right: 3px;
+  height: 2px;
+  background: rgba(0,0,0,0.45);
+}
+.hud-slot .sl-heat-fill {
+  height: 100%;
+  background: #cc7722;
+  transition: width 0.1s linear;
+}
+.hud-slot .sl-heat-fill.danger { background: #ff4422; }
+
+/* Cooldown overlay */
+.hud-slot .sl-cd-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  pointer-events: none;
+  transition: height 0.1s linear;
+}
+
+/* Firing flash animations */
+@keyframes slot-fire-border {
+  0%   { border-color: rgba(255,255,255,0.95); box-shadow: 0 0 6px rgba(255,200,100,0.6); }
+  100% { border-color: inherit; box-shadow: none; }
+}
+@keyframes slot-fire-dot {
+  0%   { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(0.6); }
+}
+.hud-slot.firing {
+  animation: slot-fire-border 0.15s ease-out;
+}
+.hud-slot .sl-muzzle {
+  position: absolute;
+  top: 3px; right: 16px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #ff8820;
+  opacity: 0;
+  pointer-events: none;
+}
+.hud-slot.firing .sl-muzzle {
+  animation: slot-fire-dot 0.15s ease-out;
+}
+
+@keyframes overheat-pulse {
+  0%   { border-color: #ff4422; box-shadow: 0 0 4px rgba(255,68,34,0.3); }
+  100% { border-color: #882211; box-shadow: 0 0 2px rgba(255,68,34,0.1); }
+}
+
+/* ── Rack Master Switches ── */
+.rack-master-switch {
+  width: 22px;
+  background: rgba(6,8,12,0.98);
+  border: 1px solid rgba(28,32,40,0.6);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: border-color 0.1s;
+  pointer-events: auto;
+}
+.rack-master-switch:hover { border-color: rgba(60,80,100,0.75); }
+
+.rack-master-switch .rms-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+
+/* OFF state — ON half dim, OFF half lit red */
+.rack-master-switch .rms-on  { color: rgba(48,68,88,0.65);  background: rgba(8,12,16,0.95); }
+.rack-master-switch .rms-off { color: rgba(210,75,55,0.90);  background: rgba(30,8,6,0.95); }
+
+/* ON state — ON half lit with rack color, OFF half dim */
+.rack-master-switch.on .rms-off { color: rgba(38,50,62,0.5); background: rgba(6,8,10,0.95); }
+.rack-master-switch.on.rack-turret .rms-on { color: #c8a050; background: rgba(20,14,6,0.95); }
+.rack-master-switch.on.rack-high   .rms-on { color: #c0b040; background: rgba(18,14,4,0.95); }
+.rack-master-switch.on.rack-med    .rms-on { color: #40b0c0; background: rgba(4,18,20,0.95); }
+.rack-master-switch.on.rack-low    .rms-on { color: #8090a8; background: rgba(8,12,16,0.95); }
+.rack-master-switch.on.global      .rms-on { color: #d0c890; background: rgba(18,16,6,0.95); }
+
+/* PARTIAL state — intermediate lighting for partial rack power */
+.rack-master-switch.partial .rms-off { color: rgba(38,50,62,0.5); background: rgba(6,8,10,0.95); }
+.rack-master-switch.partial.rack-turret .rms-on { color: rgba(200,160,80,0.6); background: rgba(14,10,6,0.95); }
+.rack-master-switch.partial.rack-high   .rms-on { color: rgba(192,176,64,0.6); background: rgba(12,10,4,0.95); }
+.rack-master-switch.partial.rack-med    .rms-on { color: rgba(64,176,192,0.6); background: rgba(4,12,14,0.95); }
+.rack-master-switch.partial.rack-low    .rms-on { color: rgba(128,144,168,0.6); background: rgba(6,8,10,0.95); }
+.rack-master-switch.partial.global      .rms-on { color: rgba(208,200,144,0.6); background: rgba(12,10,6,0.95); }
+
+/* Centre label separator */
+.rack-master-switch .rms-label {
+  height: 9px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(58,78,98,0.55);
+  background: rgba(4,6,9,0.99);
+  border-top: 1px solid rgba(20,28,38,0.7);
+  border-bottom: 1px solid rgba(20,28,38,0.7);
+  pointer-events: none;
+}
+.rack-master-switch.on .rms-label { color: rgba(90,110,130,0.65); }
+
+/* Global switch — slightly wider */
+.rack-master-switch.global { width: 26px; }
+.rack-master-switch.global .rms-label { height: 10px; font-size: 4.5px; }
+.rack-master-switch.global.on { border-color: rgba(150,132,78,0.55); }
+
+/* ── Module Damage States ── */
+.hud-slot.module-damaged { border-color: rgba(220,120,30,0.6) !important; }
+.hud-slot.module-damaged .sl-name { color: #cc8844; }
+.hud-slot.module-damaged .sl-sub.damaged { color: #ff8844; font-weight: 700; }
+.hud-slot.module-offline { opacity: 0.45; filter: grayscale(0.75); border-color: rgba(180,40,40,0.55) !important; }
+.hud-slot.module-offline .sl-name { color: #994444; text-decoration: line-through; }
+.hud-slot.module-offline .sl-sub.damage-offline { color: #ff4444; font-weight: 700; }
+.hud-slot .sl-heat-fill.damaged { background: #ff8844; }
+
+/* ── Turret Power States ── */
+.hud-slot.turret-off { opacity: 0.5; filter: grayscale(0.7); }
+.hud-slot.turret-off .sl-name { color: #4a5868; text-decoration: line-through; }
+.hud-slot.turret-cycling { border-color: rgba(80,120,160,0.5) !important; }
+.hud-slot.turret-cycling .sl-name { color: #6688aa; }
+.hud-slot.turret-on { border-color: rgba(80,60,40,0.6); }

@@ -1,0 +1,285 @@
+/**
+ * Shared structural interfaces for world entities.
+ *
+ * These describe the *runtime* shape of objects produced by world-gen and
+ * mutated by physics/combat. They are intentionally lenient (many fields
+ * optional) because the same object shape evolves through its lifecycle
+ * (e.g. `_liveEnemies` cached on a System, `_lastPlayerHitAt` stamped on
+ * an Enemy). The goal is autocomplete and safer refactors, not airtight
+ * invariant enforcement.
+ */
+
+import type { ModuleDef } from "../data/modules.js";
+import { ModuleInstance } from "./moduleInstance.js";
+
+// ── Sensor lock state ────────────────────────────────────────────────────
+
+export interface LockSlot {
+  id: string;
+  resolving: boolean;
+  acc: number;
+}
+
+/**
+ * Resolved primary target (Enemy or Asteroid). Defined as a structural
+ * shape rather than a discriminated union so callers don't need to narrow
+ * before reading common fields like `name`/`alive`/`depleted`.
+ */
+export interface AutoTarget {
+  id: string;
+  x: number;
+  y: number;
+  hp: number;
+  name?: string;
+  alive?: boolean;
+  depleted?: boolean;
+  sigRadius?: number;
+  vx?: number;
+  vy?: number;
+  radius?: number;
+}
+
+// ── Galaxy geometry ──────────────────────────────────────────────────────
+
+export interface StationTurret {
+  angle: number;
+  orbitRadius: number;
+  orbitSpeed: number;
+  shootCd: number;
+  // Set during physics tick (orbit position + targeting state)
+  x?: number;
+  y?: number;
+  target?: Enemy | null;
+  faceAngle?: number;
+  muzzleFlash?: number;
+}
+
+export interface Station {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  radius: number;
+  spin: number;
+  isHome: boolean;
+  services: string[];
+  safeRadius: number;
+  turrets: StationTurret[];
+}
+
+export interface Gate {
+  x: number;
+  y: number;
+  px: number;
+  py: number;
+  targetSysIdx: number;
+  radius: number;
+  spin: number;
+}
+
+export interface Planet {
+  x: number;
+  y: number;
+  radius: number;
+  hue: number;
+  sat: number;
+  lit: number;
+  hasRing: boolean;
+  ringTilt: number;
+  moons: number;
+}
+
+// ── NPCs and asteroids ───────────────────────────────────────────────────
+
+export interface Enemy {
+  id: string;
+  type: string;
+  name: string;
+  x: number;
+  y: number;
+  px: number;
+  py: number;
+  spawnX: number;
+  spawnY: number;
+  hp: number;
+  maxHp: number;
+  vx: number;
+  vy: number;
+  angle: number;
+  prevAngle: number;
+  speed: number;
+  credits: number;
+  loot: Record<string, number>;
+  alive: boolean;
+  respawnTimer: number;
+  aggroRange: number;
+  weaponRange?: number;
+  sigRadius: number;
+  accuracy?: number;
+  radius?: number;
+  level?: number;
+  fitting: Record<string, (string | null)[]>;
+  turretCds: number[];
+
+  // AI/combat scratch state (set during ticks)
+  targetingPlayer?: boolean;
+  hasLockOnPlayer?: boolean;
+  lockOnTimer?: number;
+  thrustFx?: boolean;
+  _orbitDir?: 1 | -1;
+  _lastPlayerHitAt?: number;
+  _lastPlayerHitKind?: "projectile" | "beam" | "missile";
+
+  // Render scratch state — cached label text metrics, keyed on (name,level)
+  _labelKey?: string;
+  _nameW?: number;
+  _lvlW?: number;
+}
+
+export interface AsteroidCrystal {
+  x: number;
+  y: number;
+  size: number;
+  rot: number;
+}
+
+export interface Asteroid {
+  id: string;
+  x: number;
+  y: number;
+  px: number;
+  py: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  shape: number[][];
+  hp: number;
+  maxHp: number;
+  oreWeights: number[];
+  richness: number;
+  depleted: boolean;
+  respawnTimer: number;
+  spinAngle: number;
+  spinVel: number;
+  prevSpin: number;
+  tintHue: number;
+  tintSat: number;
+  name?: string;
+  hasCrystals?: boolean;
+  crystalHue?: number;
+  crystals?: AsteroidCrystal[];
+}
+
+// ── System ───────────────────────────────────────────────────────────────
+
+export interface System {
+  idx: number;
+  id: string;
+  name: string;
+  security: number;
+  mapX: number;
+  mapY: number;
+  ring: number;
+  links: number[];
+  _ready: boolean;
+  asteroids: Asteroid[];
+  enemies: Enemy[];
+  gates: Gate[];
+  stations: Station[];
+  planets: Planet[];
+  nebulaHues: number[];
+  starHue: number;
+
+  // Visual identity fields (A1)
+  archetype?: string;
+  starClass?: string;
+  sunDir?: number;
+  tintRGB?: [number, number, number];
+  flareTint?: number;
+  flareTimer?: number;
+
+  // Cached views rebuilt by physics each tick
+  _liveEnemies?: Enemy[];
+  _liveAsteroids?: Asteroid[];
+  _enemyMap?: Map<string, Enemy>;
+  _asteroidMap?: Map<string, Asteroid>;
+
+  // Background / nebula state (lazily populated by render/background.ts)
+  _nebulaSeed?: number;
+  _nebulaBlobs?: unknown[];
+  _ambientTraders?: unknown[];
+}
+
+// ── Background scenery ───────────────────────────────────────────────────
+
+export interface Star {
+  ox: number;
+  oy: number;
+  r: number;
+  a: number;
+  hue: number;
+}
+
+export interface DustParticle {
+  ox: number;
+  oy: number;
+  r: number;
+  a: number;
+  drift: number;
+}
+
+// ── Loot drops ───────────────────────────────────────────────────────────
+
+export interface WreckSalvageEntry {
+  id: string;
+  weight: number;
+}
+
+/**
+ * Physics-enabled debris fragment from a destroyed ship. Drifts dormantly
+ * after the initial outward explosion, has its own HP, and can be locked
+ * and salvaged independently of the loot container.
+ */
+export interface WreckPiece {
+  id: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  angle: number;
+  angularVel: number;
+  /** Polygon fragment in local space (subset of enemy hull path). */
+  pts: [number, number][];
+  /** Bounding radius for spatial grid and collision resolution. */
+  radius: number;
+  type: string;
+  name: string;
+  hp: number;
+  maxHp: number;
+  /** Seconds since spawn — used for fade-in / explosion phase visuals. */
+  age: number;
+  despawnTimer: number;
+  salvagePool: WreckSalvageEntry[];
+  bob: number;
+  hitFlash: number;
+}
+
+/** Floating loot drop that auto-collects on proximity. */
+export interface SalvagePickup {
+  id: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  bob: number;
+  kind: "loot" | "module" | "ore" | "credits";
+  /** Loot key, module id, ore key, or "credits". */
+  payload: string;
+  qty: number;
+  instance?: ModuleInstance;
+}
+
+// ── Module references re-exported for convenience ────────────────────────
+
+export type { ModuleDef };

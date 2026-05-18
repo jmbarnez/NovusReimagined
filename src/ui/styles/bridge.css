@@ -1,0 +1,105 @@
+#bridge-overlay{display:none;position:fixed;inset:0;z-index:95;font-family:'Orbitron',sans-serif;color:#9aaaba;}
+.bridge-backdrop{position:absolute;inset:0;background:rgba(2,5,10,0.2);}
+.bridge-workspace{position:absolute;inset:0;overflow:hidden;}
+.bridge-toast{position:absolute;top:8px;right:12px;min-height:18px;padding:2px 8px;font-size:10px;color:#c89860;opacity:0;transition:opacity .2s;background:rgba(4,8,14,0.7);border:1px solid #233042;z-index:220;}
+.eve-window{position:absolute;display:flex;flex-direction:column;min-height:100px;min-width:200px;background:rgba(10,14,20,0.82);backdrop-filter:blur(12px);border:1px solid rgba(60,75,95,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.6);resize:both;overflow:hidden;}
+.eve-window-overview{left:auto;right:8px;top:30px;width:320px;height:calc(80vh - 60px);background:rgba(8,12,18,0.65);border-color:rgba(50,65,85,0.3);min-width:180px;}
+.eve-window-cargo{left:calc(50% - 280px);top:calc(50% - 260px);width:640px;height:520px;background:rgba(8,12,18,0.65);border-color:rgba(50,65,85,0.3);min-width:360px;min-height:260px;}
+.eve-window-skills{left:8px;top:30px;width:370px;height:calc(80vh - 60px);background:rgba(8,12,18,0.65);border-color:rgba(70,50,100,0.35);min-width:260px;}
+.eve-window.is-expanded{left:0!important;top:0!important;right:auto!important;width:100%!important;height:100%!important;resize:none;border-width:2px;border-color:rgba(80,100,130,0.6);}
+.eve-window.is-expanded .eve-win-head{cursor:default;background:rgba(25,38,55,0.9);}
+.eve-win-head{flex-shrink:0;display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;background:rgba(30,42,58,0.75);border-bottom:1px solid rgba(0,0,0,0.3);cursor:grab;user-select:none;}
+.eve-window-overview .eve-win-head{height:20px;background:rgba(20,28,40,0.5);}
+.eve-window-skills .eve-win-head{height:20px;background:rgba(20,28,40,0.5);}
+.eve-win-title{font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#a0b0c4;}
+.eve-win-sub{font-size:8px;color:#4a5868;flex:1;}
+.eve-win-btn{width:18px;height:18px;padding:0;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#6a7a8a;cursor:pointer;font-size:12px;}
+.eve-win-btn:hover{color:#fff;background:rgba(255,255,255,0.1);}
+.eve-win-body{flex:1;min-height:0;overflow:hidden;padding:0;background:rgba(5,10,15,0.4);display:flex;flex-direction:column;}
+.eve-win-foot{flex-shrink:0;min-height:4px;background:rgba(30,42,58,0.35);border-top:1px solid rgba(0,0,0,0.2);}
+.ov-meta{font-size:9px;color:#3d4a5e;margin:0 0 6px;letter-spacing:0.02em;text-align:right;}
+.ov-table th{text-align:left;padding:3px 4px;background:rgba(0,0,0,0.25);color:#4a5c6e;font-size:7px;letter-spacing:0.08em;text-transform:uppercase;position:sticky;top:0;}
+.ov-table td{padding:3px 4px;font-size:9px;color:#8a9bac;border-bottom:1px solid rgba(255,255,255,0.03);}
+.ov-wrap{overflow-x:auto;overflow-y:auto;max-height:none;border:1px solid #1c2530;background:rgba(3,5,9,0.65);}
+.ov-table{width:100%;border-collapse:collapse;font-size:10px;}
+.ov-table th{text-align:left;padding:6px 6px;background:#0a0f14;color:#5a6b7c;text-transform:uppercase;font-size:8px;letter-spacing:0.07em;border-bottom:1px solid #1a222c;position:sticky;top:0;z-index:1;}
+.ov-table td{padding:5px 6px;border-bottom:1px solid rgba(18,24,32,0.9);color:#8a9bac;vertical-align:middle;}
+.ov-table tr:hover td{background:rgba(28,38,52,0.4);}
+.ov-row-hostile .ov-name{color:#c8a098;}
+.ov-row-self .ov-name{color:#8ab8d8;}
+.ov-icon{width:20px;text-align:center;color:#5a6570;}
+.ov-st{font-variant-numeric:tabular-nums;color:#6a7a88;white-space:nowrap;}
+.ov-plock{color:#ffcc44;font-size:9px;}
+.ov-plock.ov-scanning{color:#88aaff;}
+.ov-plock.ov-primary{color:#ffee88;}
+.ov-threat{font-size:10px;margin-left:3px;vertical-align:middle;}
+.ov-threat.ov-threat-locked{color:#ff4444;}
+.ov-threat.ov-threat-scan{color:#ffdd44;animation:ov-threat-blink 0.75s infinite alternate;}
+@keyframes ov-threat-blink{from{opacity:1}to{opacity:0.3}}
+.ov-num{text-align:right;font-variant-numeric:tabular-nums;color:#7a8c9c;}
+.ov-lock{background:#0c141a;color:#6a9a88;border:1px solid #223530;padding:2px 8px;cursor:pointer;font-size:9px;font-family:inherit;}
+.ov-lock:hover{background:#14221c;}
+.br-pane{min-height:0;height:100%;}
+.br-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;}
+.br-h{font-size:9px;color:#4a5c6a;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
+.br-mono{font-size:11px;color:#9fb0c4;}
+.br-dim{font-size:10px;color:#384450;}
+.br-sec{margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #121a22;}
+.br-list{max-height:140px;overflow-y:auto;margin-top:6px;}
+.br-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid rgba(12,18,24,0.8);}
+
+/* ─── EVE Inventory Tree ─── */
+.inv-layout{display:flex;width:100%;height:100%;overflow:hidden;}
+.inv-tree{flex:0 0 180px;display:flex;flex-direction:column;background:rgba(6,10,16,0.7);border-right:1px solid rgba(40,55,75,0.35);overflow-y:auto;overflow-x:hidden;padding:4px 0;font-size:10px;}
+.inv-tree-node{display:flex;align-items:center;gap:4px;padding:3px 8px;cursor:pointer;user-select:none;color:#7a8fa8;border-radius:2px;margin:0 4px;}
+.inv-tree-node:hover{background:rgba(30,42,58,0.45);color:#a0b8d0;}
+.inv-tree-node.is-selected{background:rgba(40,60,85,0.55);color:#c8dce8;}
+.inv-tree-arrow{width:10px;text-align:center;font-size:8px;color:#5a6a7a;}
+.inv-tree-icon{width:14px;height:14px;text-align:center;color:#8a9aaa;display:inline-flex;align-items:center;justify-content:center;}
+.inv-tree-icon .inv-svg-icon{width:12px;height:12px;}
+.inv-tree-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.inv-tree-spacer{display:inline-block;width:10px;}
+.inv-tree-children{margin-left:2px;}
+
+/* SVG icons */
+.inv-svg-icon{width:14px;height:14px;display:inline-block;vertical-align:middle;}
+.inv-col-icon .inv-svg-icon{width:13px;height:13px;color:#6a7e90;}
+
+.inv-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.inv-toolbar{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:4px 8px;background:rgba(8,14,22,0.5);border-bottom:1px solid rgba(30,45,65,0.3);}
+.inv-filter{flex:1;background:rgba(4,8,14,0.7);border:1px solid rgba(60,80,105,0.35);color:#9aaaba;padding:3px 6px;font-size:10px;font-family:inherit;outline:none;border-radius:2px;}
+.inv-filter::placeholder{color:#4a5868;}
+.inv-filter:focus{border-color:rgba(90,120,160,0.5);}
+.inv-cap-label{flex-shrink:0;font-size:9px;color:#5a6e80;white-space:nowrap;}
+
+.inv-table-wrap{flex:1;overflow-y:auto;overflow-x:hidden;background:rgba(4,8,14,0.3);}
+.inv-table{width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed;}
+.inv-table thead th{position:sticky;top:0;background:rgba(12,20,30,0.9);color:#5a6e80;text-transform:uppercase;font-size:8px;letter-spacing:0.06em;padding:5px 6px;border-bottom:1px solid #1a2530;border-right:1px solid rgba(40,55,75,0.55);text-align:left;font-weight:600;position:relative;}
+.inv-table thead th:last-child{border-right:none;}
+.inv-col-resizer{position:absolute;top:0;right:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:2;}
+.inv-col-resizer:hover{background:rgba(255,255,255,0.2);}
+.inv-sortable{cursor:pointer;user-select:none;}
+.inv-sortable:hover{color:#8aacbc;}
+.inv-table tbody td{padding:4px 6px;border-bottom:1px solid rgba(18,26,36,0.85);border-right:1px solid rgba(40,55,75,0.22);color:#8a9eb4;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.inv-table tbody td:last-child{border-right:none;}
+.inv-table tbody tr:hover td{background:rgba(28,40,56,0.4);}
+.inv-table tbody tr.is-selected td{background:rgba(35,55,80,0.5);color:#c0d4e8;}
+.inv-col-icon{width:22px;text-align:center;color:#6a7a8a;font-size:10px;}
+.inv-item-name-cell{display:inline-flex;align-items:center;gap:6px;max-width:100%;overflow:hidden;}
+.inv-item-name-cell > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.inv-col-group{color:#6a7e90;}
+.inv-col-qty{text-align:right;font-variant-numeric:tabular-nums;}
+.inv-col-vol{text-align:right;font-variant-numeric:tabular-nums;color:#6a7e90;}
+.inv-empty{text-align:center;color:#3d4a5e;padding:24px 0;font-style:italic;}
+
+.inv-footer{flex-shrink:0;padding:4px 8px;background:rgba(8,14,22,0.5);border-top:1px solid rgba(30,45,65,0.3);}
+.inv-cap-bar{height:4px;background:rgba(20,30,42,0.7);border-radius:2px;overflow:hidden;margin-bottom:4px;}
+.inv-cap-fill{height:100%;background:rgba(90,140,200,0.7);border-radius:2px;transition:width .2s;}
+.inv-selection{font-size:9px;color:#5a6e80;}
+.inv-selection b{color:#9ab8d0;font-weight:600;}
+.inv-sel-meta{color:#4a5e70;margin-left:4px;}
+
+/* Context menu */
+.inv-ctx{position:fixed;z-index:300;background:rgba(12,18,28,0.95);border:1px solid rgba(60,85,110,0.45);box-shadow:0 6px 24px rgba(0,0,0,0.5);min-width:120px;padding:2px 0;border-radius:2px;}
+.inv-ctx-item{padding:5px 10px;font-size:10px;color:#9aaaba;cursor:pointer;user-select:none;}
+.inv-ctx-item:hover{background:rgba(40,60,85,0.55);color:#c8dce8;}

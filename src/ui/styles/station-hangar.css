@@ -1,0 +1,71 @@
+.st-hangar-contracts {
+  margin-top: 24px;
+  border-top: 1px solid rgba(30, 50, 70, 0.3);
+  padding-top: 12px;
+}
+
+/* ── Hangar Inventory ── */
+.st-inventory-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.inv-section {
+  background: rgba(10, 20, 30, 0.4);
+  border: 1px solid rgba(40, 60, 80, 0.3);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.inv-section-title {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4a6070;
+  border-bottom: 1px solid rgba(30, 50, 70, 0.3);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.inv-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(20, 30, 40, 0.4);
+}
+
+.inv-row:last-child {
+  border-bottom: none;
+}
+
+.inv-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.inv-name {
+  font-size: 10px;
+  color: #7a9aaa;
+  flex: 1;
+}
+
+.inv-qty {
+  font-size: 10px;
+  color: #c0d8ee;
+  font-weight: 600;
+  text-align: right;
+}
+
+.inv-empty {
+  font-size: 10px;
+  color: #2e4050;
+  font-style: italic;
+  padding: 8px 0;
+}

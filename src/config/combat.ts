@@ -1,0 +1,50 @@
+export const COMBAT = {
+  PLAYER_AIM: {
+    skillBase: 0.80,
+    skillPerWeaponLevel: 0.08,
+    sigMultiplier: 0.35,
+    distanceScatterBase: 30,
+    distanceRatioCap: 1.4,
+    trackingFloor: 0.10,
+    trackingThresholdMultiplier: 0.012,
+    transversalCap: 1.8,
+    transversalScatterBase: 15,
+    deviationCapRad: 0.35,
+  },
+  ENEMY_AIM: {
+    baseScatter: 22,
+    accuracyFloor: 0.4,
+    distanceReference: 600,
+    distanceRatioCap: 1.5,
+    distanceScatterBase: 28,
+    deviationCapRad: 0.38,
+  },
+  RECOIL: {
+    projectileMultiplier: 0.009,
+    beamMultiplier: 0.35,
+  },
+  MUZZLE_FLASH: {
+    missileIntensity: 10,
+    heavyProjectileIntensity: 8,
+    defaultIntensity: 6,
+    heavyProjectileDmgThreshold: 25,
+  },
+  XP: {
+    perKill: 50,
+    perMine: 10,
+    weaponSkillPerKill: 25,
+  },
+  EXPLOSION_SCALE: {
+    raider: 1.3,
+    pirate: 1.0,
+    default: 0.75,
+  },
+  SFX_EXPLOSION_SCALE: {
+    raider: 1.2,
+    pirate: 0.8,
+    default: 0.5,
+  },
+  TURRET_RANGE_OVERSHOOT: 1.1,
+  CAP_FIRE_SURCHARGE: 0.38,
+  PLAYER_PARTICIPATION_WINDOW_MS: 8000,
+};

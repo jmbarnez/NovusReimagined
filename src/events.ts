@@ -1,0 +1,50 @@
+/**
+ * Lightweight typed event bus for cross-module communication.
+ */
+
+export interface EventMap {
+  "simulation:clear": void;
+  "ui:close-overlays": void;
+  "module:toggle": { rack: string; idx: number; active: boolean; moduleId: string };
+  "player:respawn": { homeIdx: number; penalty: number };
+  "mission:accepted": { contract: import("./data/missions.js").MissionContract };
+  "mission:completed": { contract: import("./data/missions.js").MissionContract };
+  [key: string]: any;
+}
+
+const _handlers: Partial<Record<string, Array<(data: any) => void>>> = {};
+
+export function on<K extends keyof EventMap>(event: K, cb: (data: EventMap[K]) => void): () => void {
+  const key = event as string;
+  if (!_handlers[key]) _handlers[key] = [];
+  _handlers[key]!.push(cb);
+  return () => off(event, cb);
+}
+
+export function off<K extends keyof EventMap>(event: K, cb: (data: EventMap[K]) => void) {
+  const key = event as string;
+  if (!_handlers[key]) return;
+  _handlers[key] = _handlers[key]!.filter((h) => h !== cb);
+}
+
+export function emit<K extends keyof EventMap>(event: K, data?: EventMap[K]) {
+  const key = event as string;
+  if (!_handlers[key]) return;
+  for (const cb of _handlers[key]!) {
+    try {
+      cb(data);
+    } catch (err) {
+      console.error(`[events] error in handler for "${key}":`, err);
+    }
+  }
+}
+
+export function offAll(event?: string) {
+  if (event) {
+    delete _handlers[event];
+  } else {
+    for (const key of Object.keys(_handlers)) {
+      delete _handlers[key];
+    }
+  }
+}

@@ -1,0 +1,45 @@
+/* ── Event Log Panel ── */
+#hud-log-panel {
+  width: 300px;
+  min-width: 220px;
+  max-width: 32%;
+  height: 85px;
+  display: flex;
+  flex-direction: column;
+  background: var(--hud-bottom-bot);
+  border-top: 1px solid var(--hud-bottom-border);
+  border-right: 1px solid var(--hud-bottom-border);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+#hud-log-header {
+  padding: 2px 6px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #5a7088;
+  background: rgba(6,10,16,0.98);
+  border-bottom: 1px solid rgba(30,42,55,0.6);
+  flex-shrink: 0;
+}
+#hud-log-entries {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 3px 5px;
+  font-size: 9px;
+  line-height: 13px;
+  font-family: 'Orbitron', sans-serif;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(40,55,70,0.6) transparent;
+}
+#hud-log-entries::-webkit-scrollbar { width: 4px; }
+#hud-log-entries::-webkit-scrollbar-track { background: transparent; }
+#hud-log-entries::-webkit-scrollbar-thumb { background: rgba(40,55,70,0.6); border-radius: 2px; }
+
+.log-entry { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-entry.log-info    { color: #8aa4c0; }
+.log-entry.log-combat  { color: #cc8866; }
+.log-entry.log-loot    { color: #66cc88; }
+.log-entry.log-warn    { color: #e8c06a; }
+.log-entry.log-system  { color: #aabbcc; }

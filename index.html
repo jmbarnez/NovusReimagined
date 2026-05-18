@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self';
+                   script-src 'self' 'unsafe-eval' blob:;
+                   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                   img-src 'self' data: blob:;
+                   connect-src 'self' ws: wss:;
+                   worker-src 'self' blob:;
+                   font-src 'self' https://fonts.gstatic.com;" />
+    <title>Novus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/ui/styles/loading.css" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%; height: 100%;
+        background: #000000;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #c { display: block; width: 100vw; height: 100vh; cursor: none; vertical-align: top; background: transparent; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div id="hud-overlay" style="display: none;"></div>
+    <div id="bridge-overlay" style="display: none;">
+      <div class="bridge-backdrop" id="bridge-backdrop" aria-hidden="true"></div>
+      <div class="bridge-workspace" id="bridge-workspace">
+        <div id="bridge-toast" class="bridge-toast" aria-live="polite"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

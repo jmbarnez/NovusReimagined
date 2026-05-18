@@ -1,0 +1,99 @@
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #010208;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  opacity: 1;
+  transition: opacity 0.35s ease;
+  overflow: hidden;
+}
+#loading.out {
+  opacity: 0;
+  pointer-events: none;
+}
+#loading::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(30,50,80,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30,50,80,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridDrift 20s linear infinite;
+  pointer-events: none;
+}
+@keyframes gridDrift {
+  from { background-position: 0 0; }
+  to   { background-position: 60px 60px; }
+}
+.ld-corner {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  opacity: 0.3;
+}
+.ld-corner.tl { top: 28px; left: 28px; border-top: 1px solid #3a5888; border-left: 1px solid #3a5888; }
+.ld-corner.tr { top: 28px; right: 28px; border-top: 1px solid #3a5888; border-right: 1px solid #3a5888; }
+.ld-corner.bl { bottom: 28px; left: 28px; border-bottom: 1px solid #3a5888; border-left: 1px solid #3a5888; }
+.ld-corner.br { bottom: 28px; right: 28px; border-bottom: 1px solid #3a5888; border-right: 1px solid #3a5888; }
+.ld-title {
+  position: relative;
+  font-size: clamp(50px, 8vw, 86px);
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  color: #c6dcff;
+  text-shadow:
+    0 0 28px rgba(80,140,255,0.95),
+    0 0 60px rgba(60,110,240,0.5),
+    0 0 110px rgba(40,80,200,0.2);
+  animation: titleBreath 4s ease-in-out infinite;
+  margin-bottom: 8px;
+}
+@keyframes titleBreath {
+  0%, 100% {
+    text-shadow:
+      0 0 28px rgba(80,140,255,0.95),
+      0 0 60px rgba(60,110,240,0.5),
+      0 0 110px rgba(40,80,200,0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 48px rgba(110,165,255,1),
+      0 0 90px rgba(85,130,255,0.7),
+      0 0 150px rgba(55,95,225,0.3);
+  }
+}
+.ld-sep {
+  width: 300px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(70,120,210,0.5), transparent);
+  margin: 14px 0;
+}
+.ld-sub {
+  font-size: 11px;
+  letter-spacing: 0.5em;
+  color: #253a58;
+  text-transform: uppercase;
+}
+.ld-status {
+  margin-top: 60px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: #1e3050;
+  text-transform: uppercase;
+}
+.ld-dots::after {
+  content: '';
+  animation: dots 1.6s steps(4, end) infinite;
+}
+@keyframes dots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+}

@@ -1,0 +1,60 @@
+/* ── Skill XP Popup (top-center) ── */
+#hud-xp-popup {
+  position: absolute;
+  top: 30px; left: 50%;
+  transform: translateX(-50%);
+  min-width: 180px;
+  padding: 6px 12px;
+  background: rgba(0,2,6,0.78);
+  border: 1px solid rgba(120,160,200,0.45);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 50;
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+#hud-xp-popup.visible { opacity: 1; transition: opacity 0.2s ease-in; }
+#hud-xp-popup.fading { opacity: 0; transition: opacity 0.6s ease-out; }
+#hud-xp-popup .xp-row {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  grid-template-rows: auto 4px;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 3px;
+  white-space: nowrap;
+}
+#hud-xp-popup .xp-icon { 
+  font-size: 14px; 
+  grid-column: 1; 
+  grid-row: 1;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.2));
+}
+#hud-xp-popup .xp-name {
+  grid-column: 2; grid-row: 1;
+  color: #cfd8e0;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+#hud-xp-popup .xp-amt {
+  grid-column: 3; grid-row: 1;
+  color: #ffe066;
+  font-weight: 700;
+}
+#hud-xp-popup .xp-bar-track {
+  grid-column: 1 / -1; grid-row: 2;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+#hud-xp-popup .xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4a9eff, #80c8ff);
+  border-radius: 2px;
+  will-change: width;
+}

@@ -1,0 +1,31 @@
+/* ── Turret Context Menu ── */
+#turret-ctx-menu {
+  position: fixed;
+  z-index: 100;
+  background: rgba(6,10,16,0.98);
+  border: 1px solid rgba(50,70,90,0.8);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  color: #9eb6d4;
+  min-width: 120px;
+  padding: 3px 0;
+  pointer-events: auto;
+}
+#turret-ctx-menu .ctx-item {
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.08s;
+}
+#turret-ctx-menu .ctx-item:hover { background: rgba(40,60,80,0.6); }
+#turret-ctx-menu .ctx-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+#turret-ctx-menu .ctx-sep {
+  height: 1px;
+  background: rgba(40,55,70,0.6);
+  margin: 2px 6px;
+}
+
