@@ -271,25 +271,11 @@ export function toggleSkillsWindow() {
   initSkillsInteractions(div);
 }
 
-export function toggleContractsWindow() {
-  const el = getMissionsPanelEl();
-  if (el) {
-    toggleHudWindow("missions", "Contracts", el);
-    updateMissionsPanel();
-  }
-}
-
 export function toggleScannerDock() {
   if (hudState.scannerDock) {
     const hidden = hudState.scannerDock.style.display === "none";
     hudState.scannerDock.style.display = hidden ? "flex" : "none";
   }
-}
-
-export function closeHudWindows() {
-  closeHudWindow("cargo");
-  closeHudWindow("missions");
-  closeHudWindow("skills");
 }
 
 /* ── Theme ──

@@ -7,7 +7,7 @@
  * architecture, immutable snapshots, replay systems).
  *
  * Usage:
- *   import { getState, PlayerAccess, CombatAccess } from "./state-access.js";
+ *   import { getState, PlayerAccess } from "./state-access.js";
  *
  *   const state = getState();
  *   const credits = state.player.credits;

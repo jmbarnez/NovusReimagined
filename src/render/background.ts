@@ -3,7 +3,6 @@ import { G, Client } from "../state.js";
 import { ctx } from "../canvas.js";
 import { TAU } from "../constants.js";
 import { mkRng, rf } from "../utils/math.js";
-import { flareColorFor } from "./seeded-detail.js";
 import { _pixiReady } from "../pixi.js";
 
 const STAR_FAR_PARALLAX = 0.006;
@@ -242,42 +241,6 @@ function drawSilhouettes(Wc: number, Hc: number, sys: any, camX: number, camY: n
     }
   }
   ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-// ── A1: Per-system color identity tint ─────────────────────────────────────
-// Multiply pass over the world layer so every entity inherits the system's
-// star-class warmth/coolness without per-entity work.
-export function drawSystemTint(Wc: number, Hc: number, sys: any, dt: number) {
-  if (!sys || !sys.tintRGB) return;
-  // Advance the solar-flare timer regardless of the grading setting — the star
-  // bloom pass leans on sys.flareTint for its brightness pulse.
-  if (typeof sys.flareTimer === "number") {
-    sys.flareTimer -= dt;
-    if (sys.flareTimer <= 0) {
-      sys.flareTimer = 24 + Math.random() * 38;
-      sys.flareTint = 1; // ramps down each frame
-    }
-  }
-  const flare = (sys.flareTint || 0);
-  if (flare > 0) sys.flareTint = Math.max(0, flare - dt * 0.7);
-
-  if (Client.settings?.colorGrading === false) return;
-
-  const flareCol = flareColorFor(sys.starClass || "G");
-  const baseT = sys.tintRGB as [number, number, number];
-  const r = Math.round(baseT[0] * (1 - flare * 0.4) + flareCol[0] * flare * 0.4);
-  const g = Math.round(baseT[1] * (1 - flare * 0.4) + flareCol[1] * flare * 0.4);
-  const b = Math.round(baseT[2] * (1 - flare * 0.4) + flareCol[2] * flare * 0.4);
-
-  ctx.save();
-  // Multiply cast only — keeps empty space pitch black. The "lift" half of the
-  // grade is handled by the Pixi ColorMatrixFilter on worldContainer, which
-  // only touches pixels with rendered content (stars, entities, nebulae) and
-  // leaves the black background untouched.
-  ctx.globalCompositeOperation = "multiply";
-  ctx.fillStyle = `rgba(${r},${g},${b},${0.09 + flare * 0.05})`;
-  ctx.fillRect(0, 0, Wc, Hc);
   ctx.restore();
 }
 

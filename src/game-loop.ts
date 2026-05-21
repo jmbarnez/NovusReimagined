@@ -1,5 +1,5 @@
 import { G, Client, AppMode } from "./state.js";
-import { drawBackground, drawSystemTint } from "./render/background.js";
+import { drawBackground } from "./render/background.js";
 import { drawHUD, drawGalaxyMap, drawSystemMap, drawWarpScreen, drawTargetArrow } from "./render/hud.js";
 import {
   drawStar,

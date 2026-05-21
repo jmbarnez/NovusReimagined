@@ -61,7 +61,7 @@ export function localSunVec(sysSunDir: number, entityRot = 0): { dx: number; dy:
 }
 
 // ── Star class color tables ────────────────────────────────────────────────
-// Used to derive ambient tint and flare color from a system's seeded star.
+// Used to derive ambient tint from a system's seeded star.
 // Values intentionally subtle — this multiplies over the entire world layer.
 const STAR_TINTS: Record<string, [number, number, number]> = {
   O: [180, 200, 255],
@@ -73,20 +73,6 @@ const STAR_TINTS: Record<string, [number, number, number]> = {
   M: [255, 170, 140],
 };
 
-const STAR_FLARES: Record<string, [number, number, number]> = {
-  O: [220, 235, 255],
-  B: [220, 240, 255],
-  A: [255, 255, 255],
-  F: [255, 245, 220],
-  G: [255, 220, 170],
-  K: [255, 175, 100],
-  M: [255, 120, 80],
-};
-
 export function tintFor(starClass: string): [number, number, number] {
   return STAR_TINTS[starClass] || STAR_TINTS.G;
-}
-
-export function flareColorFor(starClass: string): [number, number, number] {
-  return STAR_FLARES[starClass] || STAR_FLARES.G;
 }
