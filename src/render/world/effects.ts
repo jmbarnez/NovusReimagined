@@ -1,15 +1,18 @@
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { isVisible } from "../../utils/game.js";
-import { getStarCfg, hexToRgb } from "./celestial.js";
 import { addImpactDecal, removeImpactDecal } from "../../utils/entities.js";
 import { worldText, worldCardText } from "../world-text.js";
+import { getUIFont } from "../ui-font.js";
+import { Client } from "../../state.js";
+import { getDistantSunScreenPos } from "../pixi-background.js";
 
 export function drawShockwaves() {
-  if (!G.shockwaves?.length) return;
+  const state = getState();
+  if (!state.shockwaves?.length) return;
   ctx.save();
-  for (const s of G.shockwaves) {
+  for (const s of state.shockwaves) {
     if (!isVisible(s.x, s.y, s.maxRadius)) continue;
     const a = s.life / Math.max(0.001, s.maxLife);
     ctx.globalAlpha = a * 0.55;
@@ -25,18 +28,19 @@ export function drawShockwaves() {
 
 export function drawFloatTexts(sys: any) {
   if (!sys) return;
-  for (const f of G.floatTexts) {
+  const state = getState();
+  for (const f of state.floatTexts) {
     if (!isVisible(f.x, f.y, 20)) continue;
     const alpha = f.life ?? 1;
     if (f.bgColor) {
       worldCardText(f.x, f.y, f.text, {
-        textColor: "#ffffff",
+        textColor: "#000000",
         bgColor: f.bgColor,
         alpha,
       });
     } else {
       worldText(f.x, f.y, f.text, {
-        font: "bold 12px monospace",
+        font: `bold 12px ${getUIFont()}`,
         fill: f.color ?? "#ffffff",
         alpha,
         shadow: true,
@@ -46,7 +50,8 @@ export function drawFloatTexts(sys: any) {
 }
 
 export function updateAndDrawImpactDecals(dt: number) {
-  const decals = G.impactDecals;
+  const state = getState();
+  const decals = state.impactDecals;
   for (let i = decals.length - 1; i >= 0; i--) {
     const d = decals[i];
     d.life -= dt;
@@ -70,8 +75,88 @@ export function updateAndDrawImpactDecals(dt: number) {
   }
 }
 
+// ── Cinematic lens flare ────────────────────────────────────────────────────
+// Screen-space effect anchored to the distant-sun sprite position. Draws after
+// the world-clipped block so all elements are in CSS-pixel screen coordinates.
+export function drawLensFlare(Wc: number, Hc: number) {
+  if (!Client.settings?.lensFlare) return;
+
+  const { x: sx, y: sy } = getDistantSunScreenPos();
+  if (sx === 0 && sy === 0) return;  // sun not yet positioned
+
+  // Direction from sun to screen center (axis along which ghosts string)
+  const cx = Wc / 2, cy = Hc / 2;
+  const dx = cx - sx, dy = cy - sy;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 1) return;
+  const nx = dx / dist, ny = dy / dist;
+
+  // Proximity-only strength — no base value so the flare vanishes at screen edges
+  const proximity = Math.max(0, 1 - dist / (Math.min(Wc, Hc) * 0.7));
+  const strength  = proximity * 0.7;
+  if (strength < 0.01) { ctx.restore(); return; }
+
+  ctx.save();
+
+  // 1. Anamorphic horizontal streak ─────────────────────────────────────
+  {
+    const sW = Wc * 0.14, sH = 1 + proximity;
+    const g = ctx.createLinearGradient(sx - sW / 2, sy, sx + sW / 2, sy);
+    g.addColorStop(0.00, "rgba(0,0,0,0)");
+    g.addColorStop(0.30, "rgba(0,0,0,0)");
+    g.addColorStop(0.50, `rgba(255,240,200,${0.05 * strength})`);
+    g.addColorStop(0.70, "rgba(0,0,0,0)");
+    g.addColorStop(1.00, "rgba(0,0,0,0)");
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = g;
+    ctx.fillRect(sx - sW / 2, sy - sH / 2, sW, sH);
+    ctx.restore();
+  }
+
+  // 2. Ghost circles strung along the sun→center axis ──────────────────
+  const ghosts = [
+    { t: 0.30, r:  8, color: "255,200,120" },
+    { t: 0.60, r: 16, color: "180,210,255" },
+    { t: 0.90, r:  6, color: "255,160,100" },
+    { t: 1.20, r: 10, color: "200,180,255" },
+  ];
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (const g of ghosts) {
+    const gx = sx + dx * g.t;
+    const gy = sy + dy * g.t;
+    const alpha = 0.03 * strength;
+    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, g.r);
+    grad.addColorStop(0.0, `rgba(${g.color},${alpha})`);
+    grad.addColorStop(0.5, `rgba(${g.color},${alpha * 0.3})`);
+    grad.addColorStop(1.0, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(gx, gy, g.r, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 3. Chromatic chord — thin dispersion artifact crossing the streak ──
+  {
+    const chord = ctx.createLinearGradient(sx - 10, sy, sx + 10, sy);
+    chord.addColorStop(0.0, `rgba(255,60,60,${0.02 * strength})`);
+    chord.addColorStop(0.5, `rgba(60,255,60,${0.015 * strength})`);
+    chord.addColorStop(1.0, `rgba(60,60,255,${0.02 * strength})`);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = chord;
+    ctx.fillRect(sx - 10, sy - 1, 20, 2);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
 export function spawnImpactDecal(x: number, y: number, color = "#ff8844") {
-  if (G.impactDecals.length >= 80) removeImpactDecal(0);
+  const state = getState();
+  if (state.impactDecals.length >= 80) removeImpactDecal(0);
   const pts: number[][] = [];
   const n = 5 + Math.floor(Math.random() * 4);
   for (let i = 0; i < n; i++) {
@@ -82,65 +167,3 @@ export function spawnImpactDecal(x: number, y: number, color = "#ff8844") {
   addImpactDecal({ x, y, poly: pts, color, life: 8, maxLife: 8 });
 }
 
-/**
- * Optical lens flare — small artifact circles strung along the star→screen-center
- * axis, with a faint horizontal streak when the star is near mid-screen.
- * Drawn in screen space with "lighter" after the world restore.
- */
-export function drawLensFlare(Wc: number, Hc: number, camxR: number, camyR: number, zoom: number, sys: any) {
-  const sx = Wc / 2 - camxR * zoom;
-  const sy = Hc / 2 - camyR * zoom;
-  if (sx < -300 || sx > Wc + 300 || sy < -300 || sy > Hc + 300) return;
-
-  const cfg = getStarCfg(sys?.starClass ?? "G");
-  const rgb = hexToRgb(cfg.coronaColor);
-  const coreRgb = hexToRgb(cfg.coreColor);
-  const cx = Wc / 2, cy = Hc / 2;
-  const dx = cx - sx, dy = cy - sy;
-  const distToCenter = Math.hypot(dx, dy);
-  const proximity = Math.max(0, Math.min(1, distToCenter / (Math.hypot(Wc, Hc) * 0.15)));
-
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-
-  // Artifact circles along the axis (t=0 is star, t=1 is screen center, t>1 is beyond)
-  const artifacts: Array<{ t: number; r: number; a: number; warm: boolean }> = [
-    { t: 0.28, r: 6,  a: 0.04, warm: true  },
-    { t: 0.50, r: 22, a: 0.02, warm: false },
-    { t: 0.72, r: 4,  a: 0.05, warm: true  },
-    { t: 0.90, r: 14, a: 0.025, warm: false },
-    { t: 1.15, r: 32, a: 0.015, warm: false },
-    { t: 1.35, r: 8,  a: 0.03, warm: true  },
-    { t: 1.60, r: 18, a: 0.012, warm: false },
-  ];
-
-  for (const art of artifacts) {
-    const ax = sx + dx * art.t;
-    const ay = sy + dy * art.t;
-    const alpha = art.a * proximity;
-    const artRgb = art.warm ? coreRgb : rgb;
-    const ag = ctx.createRadialGradient(ax, ay, 0, ax, ay, art.r);
-    ag.addColorStop(0, `rgba(${artRgb},${alpha})`);
-    ag.addColorStop(0.5, `rgba(${artRgb},${alpha * 0.4})`);
-    ag.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = ag;
-    ctx.beginPath(); ctx.arc(ax, ay, art.r, 0, TAU); ctx.fill();
-  }
-
-  // Horizontal glare streak through the star
-  if (distToCenter > 10) {
-    const streakAlpha = proximity * 0.012;
-    const streakW = Wc * 0.55;
-    const sg = ctx.createLinearGradient(sx - streakW, sy, sx + streakW, sy);
-    sg.addColorStop(0.00, "rgba(0,0,0,0)");
-    sg.addColorStop(0.38, `rgba(${coreRgb},${streakAlpha * 0.35})`);
-    sg.addColorStop(0.50, `rgba(${coreRgb},${streakAlpha})`);
-    sg.addColorStop(0.62, `rgba(${coreRgb},${streakAlpha * 0.35})`);
-    sg.addColorStop(1.00, "rgba(0,0,0,0)");
-    ctx.fillStyle = sg;
-    ctx.fillRect(sx - streakW, sy - 2, streakW * 2, 4);
-  }
-
-  ctx.globalCompositeOperation = "source-over";
-  ctx.restore();
-}

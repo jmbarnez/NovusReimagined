@@ -6,8 +6,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Orbitron', sans-serif;
-  color: #9eb6d4;
+  font-family: var(--font-family);
+  color: var(--hud-text-main);
   overflow: hidden;
 }
 

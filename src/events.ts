@@ -2,6 +2,8 @@
  * Lightweight typed event bus for cross-module communication.
  */
 
+import type { Station } from "./types/world.js";
+
 export interface EventMap {
   "simulation:clear": void;
   "ui:close-overlays": void;
@@ -9,15 +11,16 @@ export interface EventMap {
   "player:respawn": { homeIdx: number; penalty: number };
   "mission:accepted": { contract: import("./data/missions.js").MissionContract };
   "mission:completed": { contract: import("./data/missions.js").MissionContract };
-  [key: string]: any;
+  "station:open": { station: Station };
+  "station:close": void;
 }
 
-const _handlers: Partial<Record<string, Array<(data: any) => void>>> = {};
+const _handlers: Partial<Record<string, Array<(data: unknown) => void>>> = {};
 
 export function on<K extends keyof EventMap>(event: K, cb: (data: EventMap[K]) => void): () => void {
   const key = event as string;
   if (!_handlers[key]) _handlers[key] = [];
-  _handlers[key]!.push(cb);
+  _handlers[key]!.push(cb as (data: unknown) => void);
   return () => off(event, cb);
 }
 

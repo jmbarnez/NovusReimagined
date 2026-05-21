@@ -1,18 +1,15 @@
 import { G, Client } from "./state.js";
-import { W, H } from "./canvas.js";
-import { undockStation } from "./dock.js";
+import { undockStation, tryWarp } from "./dock.js";
 import { dst } from "./utils/math.js";
 
 import { curSys } from "./utils/game.js";
 import { requestSensorLock } from "./targeting.js";
 import { toggleSettings, closeSettings, listeningFor } from "./ui/settings.js";
-import { toggleBridgeInventory, toggleBridgeOverview, toggleSkills, closeSkills, closeBridge, renderBridgeUI, tryWarp } from "./dock.js";
+import { toggleCargoWindow, toggleScannerDock, toggleSkillsWindow } from "./ui/hud-overlay.js";
+import { closeTopmostWindow } from "./ui/hud/windows.js";
 import { applyBarHotkey, barHotkeySlotList, toggleSlotDefaultAction } from "./player/player-fitting.js";
 import { playBackgroundMusic } from "./audio/music.js";
 import { resumeAudio, sfxTurretAssign } from "./audio/procedural.js";
-
-import { fireSelectedTurret } from "./combat.js";
-import { saveSettings } from "./data/settings.js";
 
 export function initInput() {
   const canvasEl = document.getElementById("c") as HTMLCanvasElement;
@@ -48,18 +45,32 @@ export function initInput() {
       if (Client.settingsOpen) { closeSettings(); return; }
       if (Client.showMap) { Client.showMap = false; return; }
       if (Client.stationOpen) { undockStation(); return; }
-      if (Client.skillsOpen) { closeSkills(); return; }
-      if (Client.overviewOpen) { Client.overviewOpen = false; renderBridgeUI(); return; }
-      if (Client.bridgeOpen) { closeBridge(); return; }
+      // Close topmost hud window first, then fall through to settings
+      if (closeTopmostWindow()) return;
       toggleSettings();
       return;
     }
 
     if (Client.settingsOpen) return;
 
+    // Inventory / Cargo
+    if (e.code === keybinds.inventory) {
+      if (Client.stationOpen || Client.settingsOpen) return;
+      toggleCargoWindow();
+      return;
+    }
+
+    // Scanner / Overview (toggle dock)
+    if (e.code === keybinds.overview) {
+      if (Client.stationOpen || Client.settingsOpen) return;
+      toggleScannerDock();
+      return;
+    }
+
+    // Skills window
     if (e.code === keybinds.skills) {
       if (Client.stationOpen || Client.settingsOpen) return;
-      toggleSkills();
+      toggleSkillsWindow();
       return;
     }
 
@@ -91,10 +102,6 @@ export function initInput() {
         Client.showMap = false;
       }
     }
-    // Removed Tab key cargo window binding
-    // Removed overview keybind
-    // Removed aim-cone toggle keybind
-
     const rackKeys = ["1","2","3","4","5","6","7","8","9","0"];
     const idx = rackKeys.indexOf(k);
     if (idx !== -1) {
@@ -142,47 +149,40 @@ export function initInput() {
     }
     if (e.button === 0) {
       Client.mouse.lmb = true;
-      const ctrl = Client.keys.control || e.ctrlKey;
 
       if (e.target instanceof Element && e.target.closest("#hud-overlay > *, #title-screen")) return;
 
-      if (ctrl) {
-        if (!Client.stationOpen && !Client.bridgeOpen) {
-          const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
-          const sys = curSys();
-          let locked = false;
-          if (sys) {
-            for (const en of sys.enemies) {
-              if (en.alive && dst(wx, wy, en.x, en.y) < 30) {
-                requestSensorLock(en.id);
+      if (!Client.stationOpen && !Client.bridgeOpen) {
+        const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
+        const sys = curSys();
+        let locked = false;
+        if (sys) {
+          for (const en of sys.enemies) {
+            if (en.alive && dst(wx, wy, en.x, en.y) < 30) {
+              requestSensorLock(en.id);
+              locked = true;
+              break;
+            }
+          }
+          if (!locked) {
+            for (const a of sys.asteroids) {
+              if (!a.depleted && a.hp > 0 && dst(wx, wy, a.x, a.y) < a.radius + 12) {
+                requestSensorLock(a.id);
                 locked = true;
                 break;
               }
             }
-            if (!locked) {
-              for (const a of sys.asteroids) {
-                if (!a.depleted && a.hp > 0 && dst(wx, wy, a.x, a.y) < a.radius + 12) {
-                  requestSensorLock(a.id);
-                  locked = true;
-                  break;
-                }
-              }
-            }
-            if (!locked) {
-              for (const p of G.wreckPieces) {
-                if (p.hp > 0 && dst(wx, wy, p.x, p.y) < 22) {
-                  requestSensorLock(p.id);
-                  locked = true;
-                  break;
-                }
+          }
+          if (!locked) {
+            for (const p of G.wreckPieces) {
+              if (p.hp > 0 && dst(wx, wy, p.x, p.y) < 22) {
+                requestSensorLock(p.id);
+                locked = true;
+                break;
               }
             }
           }
         }
-      } else {
-        // Manual fire disabled — shooting is automatic via targeting
-        // Client.mouse.firing = true;
-        // fireSelectedTurret();
       }
     }
   });

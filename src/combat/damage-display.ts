@@ -19,10 +19,11 @@ export const DMG_COLORS: Record<string, string> = {
 };
 
 export function showDamageNumber(x: number, y: number, amount: number | string, type = "hit", direction = "playerToEnemy") {
-  let text: string, color: string;
+  let text: string, color: string, textColor = "#ffffff";
   if (amount === "MISS" || type === "miss") {
-    text = "MISS";
-    color = DMG_COLORS.miss;
+    text = "0";
+    color = "#4488ff";
+    textColor = "#000000";
   } else if (type === "crit") {
     text = `-${amount}!`;
     color = DMG_COLORS.crit;
@@ -38,7 +39,7 @@ export function showDamageNumber(x: number, y: number, amount: number | string, 
   const jitterY = (Math.random() - 0.5) * 8;
   
   // Create color card effect
-  floatText(x + jitterX, y + jitterY - 12, text, "#ffffff", color);
+  floatText(x + jitterX, y + jitterY - 12, text, textColor, color);
 }
 
 function damageRandomModule(amount: number) {

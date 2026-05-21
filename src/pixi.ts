@@ -3,11 +3,13 @@
  *
  * Layer structure (back → front):
  *   pixi canvas (zIndex 0)
- *     screenContainer  — background stars/dust (screen-space, no camera)
+ *     screenContainer  — background stars/dust/nebula (screen-space, no camera)
  *     worldContainer   — all world-space content
+ *       planetLayer    — baked planet sprites + animated moon graphics
  *       thrustLayer    — Phase 4+: thrust flame sprites (behind hull)
  *       entityLayer    — Phase 3+: enemies, player hull, asteroids, bullets
  *       effectLayer    — Phase 2+: particles, float texts, impact decals
+ *     vignetteSprite   — GPU vignette overlay (last app.stage child, over worldContainer)
  *   main canvas (zIndex 1, alpha:true) — Canvas 2D HUD + transitional world content
  */
 import { Application, Container, ColorMatrixFilter, Rectangle, Graphics } from "pixi.js";
@@ -21,6 +23,8 @@ import { HUD_INSETS } from "./render/viewport.js";
 let app: Application | null = null;
 let worldContainer: Container | null = null;
 let screenContainer: Container | null = null;
+/** Baked planet textures + animated moon Graphics — behind everything else in worldContainer. */
+let planetLayer: Container | null = null;
 /** Phase 4+: thrust flame sprites — rendered behind entityLayer. */
 let thrustLayer: Container | null = null;
 /** Phase 3+: enemies, player hull, asteroids, bullets. */
@@ -33,7 +37,7 @@ let _pixiReady = false;
 /** Physical pixels per CSS pixel — set during initPixi, used by texture bakers. */
 let pixiDpr = 1;
 
-export { app, worldContainer, screenContainer, thrustLayer, entityLayer, effectLayer, worldGradeFilter, _pixiReady, pixiDpr };
+export { app, worldContainer, screenContainer, planetLayer, thrustLayer, entityLayer, effectLayer, worldGradeFilter, _pixiReady, pixiDpr };
 
 /** Render the PixiJS stage once. Call once per game frame after updating positions. */
 export function renderPixi() {
@@ -89,6 +93,10 @@ export async function initPixi(): Promise<Application> {
   app.stage.addChild(worldContainer);
 
   // Named sub-layers so phase migrations land in the right draw order.
+  planetLayer = new Container();
+  planetLayer.label = "planets";
+  worldContainer.addChild(planetLayer);
+
   thrustLayer = new Container();
   thrustLayer.label = "thrust";
   worldContainer.addChild(thrustLayer);

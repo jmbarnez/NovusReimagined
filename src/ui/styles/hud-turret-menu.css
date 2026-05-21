@@ -5,9 +5,9 @@
   background: rgba(6,10,16,0.98);
   border: 1px solid rgba(50,70,90,0.8);
   box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   font-size: 10px;
-  color: #9eb6d4;
+  color: var(--hud-text-main);
   min-width: 120px;
   padding: 3px 0;
   pointer-events: auto;

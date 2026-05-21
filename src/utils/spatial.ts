@@ -124,8 +124,10 @@ export function rebuildSpatialGrid() {
   grid.insert("__player", G.P.x, G.P.y, playerColRadius, "player", G.P);
 
   for (const e of sys._liveEnemies) {
-    const colRadius = ENEMY_DEFS[e.type]?.colRadius ?? e.sigRadius ?? 18;
-    grid.insert(e.id, e.x, e.y, colRadius, "enemy", e);
+    const def = ENEMY_DEFS[e.type];
+    const colRadius = def?.colRadius ?? e.sigRadius ?? 18;
+    const effectiveRadius = ((e.shield ?? 0) > 0) ? (e.sigRadius ?? colRadius) : colRadius;
+    grid.insert(e.id, e.x, e.y, effectiveRadius, "enemy", e);
   }
 
   for (const a of sys._liveAsteroids) {

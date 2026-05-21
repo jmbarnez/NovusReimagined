@@ -11,6 +11,7 @@
  */
 import { ctx, _canvasDpr } from "../canvas.js";
 import { viewCenterX, viewCenterY } from "./viewport.js";
+import { getUIFont } from "./ui-font.js";
 
 let _Wc = 0, _Hc = 0, _cx = 0, _cy = 0, _zoom = 1;
 let _viewCX = 0, _viewCY = 0;
@@ -48,7 +49,7 @@ export function worldText(wx: number, wy: number, text: string, opts: WorldTextO
   const iy = Math.round(sy);
   ctx.save();
   ctx.setTransform(_canvasDpr, 0, 0, _canvasDpr, 0, 0);
-  ctx.font = opts.font ?? "bold 12px monospace";
+  ctx.font = opts.font ?? `bold 12px ${getUIFont()}`;
   ctx.textAlign = opts.align ?? "center";
   ctx.textBaseline = opts.baseline ?? "alphabetic";
   if (opts.alpha != null) ctx.globalAlpha = opts.alpha;
@@ -70,18 +71,18 @@ export function worldCardText(wx: number, wy: number, text: string, opts: WorldC
   ctx.save();
   ctx.setTransform(_canvasDpr, 0, 0, _canvasDpr, 0, 0);
   ctx.globalAlpha = opts.alpha ?? 1;
-  ctx.font = opts.font ?? "bold 12px monospace";
+  ctx.font = opts.font ?? `bold 10px ${getUIFont()}`;
   ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
+  ctx.textBaseline = "middle";
 
   const metrics = ctx.measureText(text);
-  const padX = 6;
-  const padY = 3;
+  const padX = 4;
+  const padY = 2;
   const w = metrics.width + padX * 2;
-  const h = 16;
+  const h = 13;
   const rx = ix - w / 2;
-  const ry = iy - h + 2;
-  const radius = 3;
+  const ry = iy - h / 2;
+  const radius = 2.5;
 
   ctx.fillStyle = opts.bgColor ?? "#333333";
   ctx.beginPath();
@@ -97,8 +98,8 @@ export function worldCardText(wx: number, wy: number, text: string, opts: WorldC
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = "rgba(255,255,255,0.15)";
-  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 1;
   ctx.stroke();
 
   ctx.fillStyle = opts.textColor ?? "#ffffff";

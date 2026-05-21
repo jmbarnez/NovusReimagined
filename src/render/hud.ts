@@ -1,11 +1,13 @@
-import { G, Client } from "../state.js";
+import { getState } from "../state-access.js";
+import { Client } from "../state.js";
 import { ctx, W, H } from "../canvas.js";
-import { TAU, LOCK_RAIL_H, HUD_SIDE_W, HUD_BOTTOM_H, DOCK_RANGE, GATE_RANGE } from "../constants.js";
+import { TAU, LOCK_RAIL_H, HUD_MINIMAP_SIZE, HUD_SIDE_W, HUD_BOTTOM_H, DOCK_RANGE, GATE_RANGE } from "../constants.js";
 import { getThemeColors } from "../data/settings.js";
 import { dst, mulberry32 } from "../utils/math.js";
 import { curSys, liveEnemies, liveAsteroids, topHudHeight } from "../utils/game.js";
 import { getStats } from "../player/player-stats.js";
 import { transversalVs, enemyClassLabel, ensureLockQueue, computeLockTimeSec } from "../targeting.js";
+import { getUIFont } from "./ui-font.js";
 
 let mmCanvas: HTMLCanvasElement | null = null;
 let mmCtx: CanvasRenderingContext2D | null = null;
@@ -13,12 +15,12 @@ let mmCtx: CanvasRenderingContext2D | null = null;
 export function drawHUD(Wc: number, Hc: number, now: number) {
   if (!mmCanvas) {
     mmCanvas = document.createElement("canvas");
-    mmCanvas.width = HUD_SIDE_W;
-    mmCanvas.height = 200;
-    mmCanvas.style.width = `${HUD_SIDE_W}px`;
-    mmCanvas.style.height = "200px";
+    mmCanvas.width = HUD_MINIMAP_SIZE;
+    mmCanvas.height = HUD_MINIMAP_SIZE;
+    mmCanvas.style.width = `${HUD_MINIMAP_SIZE}px`;
+    mmCanvas.style.height = `${HUD_MINIMAP_SIZE}px`;
     mmCtx = mmCanvas.getContext("2d");
-    const container = document.getElementById("hud-side-minimap-container");
+    const container = document.getElementById("hud-minimap");
     if (container) {
       container.innerHTML = "";
       container.appendChild(mmCanvas);
@@ -31,7 +33,9 @@ const _edges = new Float64Array(4);
 
 export function drawTargetArrow(Wc: number, Hc: number, camxR: number, camyR: number, now: number) {
   const sys = curSys();
-  if (!G.P || !sys) return;
+  const state = getState();
+  const player = state.player;
+  if (!player || !sys) return;
   const zoom = Client.zoom;
   const cx = Wc / 2, cy = Hc / 2;
   const mL = 30, mR = 10, mT = LOCK_RAIL_H + 10, mB = 10;
@@ -79,7 +83,7 @@ export function drawTargetArrow(Wc: number, Hc: number, camxR: number, camyR: nu
   // Collect your resolved locks for quick lookup
   const lockedIds = new Set<string>();
   ensureLockQueue();
-  for (const slot of G.P.lockQueue) {
+  for (const slot of player.lockQueue) {
     if (!slot.resolving) lockedIds.add(slot.id);
   }
 
@@ -100,7 +104,7 @@ export function drawTargetArrow(Wc: number, Hc: number, camxR: number, camyR: nu
   }
 
   // Locked asteroids off-screen — blue outlined arrow
-  for (const slot of G.P.lockQueue) {
+  for (const slot of player.lockQueue) {
     if (slot.resolving) continue;
     const a = sys.asteroids.find((a2: any) => a2.id === slot.id && !a2.depleted && a2.hp > 0);
     if (!a) continue;
@@ -110,8 +114,10 @@ export function drawTargetArrow(Wc: number, Hc: number, camxR: number, camyR: nu
 }
 
 export function drawMinimap(mctx: CanvasRenderingContext2D) {
-  const mmW = HUD_SIDE_W;
-  const mmH = 200;
+  const state = getState();
+  const player = state.player;
+  const mmW = HUD_MINIMAP_SIZE;
+  const mmH = HUD_MINIMAP_SIZE;
   const mmLeft = 0;
   const mmTop = 0;
   const mmX = mmLeft + mmW / 2;
@@ -167,28 +173,29 @@ export function drawMinimap(mctx: CanvasRenderingContext2D) {
   mctx.stroke();
   mctx.clip();
 
+
   for (const a of liveAsteroids()) {
-    const px = mmX + (a.x - G.P.x) * scale, py = mmY + (a.y - G.P.y) * scale;
+    const px = mmX + (a.x - player.x) * scale, py = mmY + (a.y - player.y) * scale;
     mctx.fillStyle = "#775522"; mctx.beginPath(); mctx.arc(px, py, 2, 0, TAU); mctx.fill();
   }
   for (const e of liveEnemies()) {
-    const px = mmX + (e.x - G.P.x) * scale, py = mmY + (e.y - G.P.y) * scale;
+    const px = mmX + (e.x - player.x) * scale, py = mmY + (e.y - player.y) * scale;
     mctx.fillStyle = "#cc2222"; drawTriangle(px, py, e.angle ?? 0, 4);
   }
   const sys = curSys();
   if (sys) {
     for (const g of sys.gates) {
-      const px = mmX + (g.x - G.P.x) * scale, py = mmY + (g.y - G.P.y) * scale;
+      const px = mmX + (g.x - player.x) * scale, py = mmY + (g.y - player.y) * scale;
       mctx.fillStyle = "#4488ff"; drawDiamond(px, py, 5);
     }
     for (const s of sys.stations) {
-      const px = mmX + (s.x - G.P.x) * scale, py = mmY + (s.y - G.P.y) * scale;
+      const px = mmX + (s.x - player.x) * scale, py = mmY + (s.y - player.y) * scale;
       mctx.fillStyle = "#44ff88"; drawSquare(px, py, 5);
       if (s.turrets) {
         for (const t of s.turrets) {
           if (t.x === undefined || t.y === undefined) continue;
-          const tx = mmX + (t.x - G.P.x) * scale;
-          const ty = mmY + (t.y - G.P.y) * scale;
+          const tx = mmX + (t.x - player.x) * scale;
+          const ty = mmY + (t.y - player.y) * scale;
           if (tx > mmLeft && tx < mmLeft + mmW && ty > mmTop && ty < mmTop + mmH) {
             mctx.fillStyle = "#66ccff";
             drawCross(tx, ty, 3);
@@ -199,12 +206,12 @@ export function drawMinimap(mctx: CanvasRenderingContext2D) {
   }
 
   // Player heading triangle (center) — points in ship's facing direction.
-  mctx.fillStyle = "#ffffff"; drawTriangle(mmX, mmY, G.P.angle, 5);
+  mctx.fillStyle = "#ffffff"; drawTriangle(mmX, mmY, player.angle, 5);
   
-  const vmag = Math.hypot(G.P.vx, G.P.vy), vmax = 600;
+  const vmag = Math.hypot(player.vx, player.vy), vmax = 600;
   if (vmag > 2) {
     const vLen = Math.min(vmag / vmax, 1) * (mmH / 2) * .8;
-    const va = Math.atan2(G.P.vy, G.P.vx);
+    const va = Math.atan2(player.vy, player.vx);
     mctx.strokeStyle = "rgba(100,200,255,0.6)"; mctx.lineWidth = 1.5;
     mctx.beginPath(); mctx.moveTo(mmX, mmY); mctx.lineTo(mmX + Math.cos(va) * vLen, mmY + Math.sin(va) * vLen); mctx.stroke();
   }
@@ -212,48 +219,53 @@ export function drawMinimap(mctx: CanvasRenderingContext2D) {
 }
 
 export function drawGalaxyMap(Wc: number, Hc: number) {
+  const state = getState();
+  const player = state.player;
   ctx.fillStyle = "rgba(0,1,4,0.97)"; ctx.fillRect(0, 0, Wc, Hc);
-  ctx.font = "bold 18px ui-monospace,monospace"; ctx.fillStyle = "#7a9ec8"; ctx.textAlign = "center";
+  ctx.font = `bold 18px ${getUIFont()}`; ctx.fillStyle = "#7a9ec8"; ctx.textAlign = "center";
   ctx.fillText("GALAXY MAP  [M / ESC to close]", Wc / 2, 36);
-  ctx.font = "12px ui-monospace,monospace"; ctx.fillStyle = "#6688aa";
+  ctx.font = `12px ${getUIFont()}`; ctx.fillStyle = "#6688aa";
   ctx.fillText("Press [M] to switch to System View", Wc / 2, 56);
   let mnX = Infinity, mnY = Infinity, mxX = -Infinity, mxY = -Infinity;
-  for (const s of G.GALAXY) { mnX = Math.min(mnX, s.mapX); mnY = Math.min(mnY, s.mapY); mxX = Math.max(mxX, s.mapX); mxY = Math.max(mxY, s.mapY); }
+  const galaxy = state.GALAXY;
+  for (const s of galaxy) { mnX = Math.min(mnX, s.mapX); mnY = Math.min(mnY, s.mapY); mxX = Math.max(mxX, s.mapX); mxY = Math.max(mxY, s.mapY); }
   const scale = Math.min((Wc - 100) / (mxX - mnX || 1), (Hc - 130) / (mxY - mnY || 1), 0.95);
   const toMap = (mx: number, my: number) => ({ x: Wc / 2 + (mx - (mnX + mxX) / 2) * scale, y: Hc / 2 + 30 + (my - (mnY + mxY) / 2) * scale });
   ctx.strokeStyle = "rgba(28,48,72,0.55)"; ctx.lineWidth = 1;
-  for (const sys of G.GALAXY) { 
+  for (const sys of galaxy) { 
     const a = toMap(sys.mapX, sys.mapY); 
     for (const li of sys.links) { 
-      const b = toMap(G.GALAXY[li].mapX, G.GALAXY[li].mapY); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); 
+      const b = toMap(galaxy[li].mapX, galaxy[li].mapY); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); 
     } 
   }
-  for (const sys of G.GALAXY) {
-    const p = toMap(sys.mapX, sys.mapY), cur = sys.idx === G.P.sysIdx;
+  for (const sys of galaxy) {
+    const p = toMap(sys.mapX, sys.mapY), cur = sys.idx === player.sysIdx;
     const r2 = cur ? 10 : sys.stations.length > 0 ? 7 : 5;
     const sc = sys.security >= .7 ? "#44ff88" : sys.security >= .4 ? "#ffcc44" : "#ff4444";
     ctx.beginPath(); ctx.arc(p.x, p.y, r2, 0, TAU); ctx.fillStyle = cur ? sc : "rgba(35,55,75,0.85)"; ctx.fill();
     ctx.strokeStyle = cur ? "#fff" : sc; ctx.lineWidth = cur ? 2 : 1; ctx.stroke();
     if (sys.stations.length) { ctx.fillStyle = "rgba(100,255,150,0.9)"; ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, TAU); ctx.fill(); }
-    ctx.font = cur ? "bold 10px monospace" : "9px monospace"; ctx.fillStyle = cur ? "#fff" : "#6688aa"; ctx.textAlign = "center";
+    ctx.font = cur ? `bold 10px ${getUIFont()}` : `9px ${getUIFont()}`; ctx.fillStyle = cur ? "#fff" : "#6688aa"; ctx.textAlign = "center";
     ctx.fillText(sys.name, p.x, p.y + r2 + 13);
-    if (sys._ready) { ctx.font = "8px monospace"; ctx.fillStyle = sc; ctx.fillText(sys.security.toFixed(1), p.x, p.y + r2 + 23); }
+    if (sys._ready) { ctx.font = `8px ${getUIFont()}`; ctx.fillStyle = sc; ctx.fillText(sys.security.toFixed(1), p.x, p.y + r2 + 23); }
   }
 }
 
 export function drawSystemMap(Wc: number, Hc: number) {
+  const state = getState();
+  const player = state.player;
   ctx.fillStyle = "rgba(0,1,4,0.97)"; ctx.fillRect(0, 0, Wc, Hc);
   
   const sys = curSys();
   if (!sys) return;
 
-  ctx.font = "bold 18px ui-monospace,monospace"; ctx.fillStyle = "#7a9ec8"; ctx.textAlign = "center";
+  ctx.font = `bold 18px ${getUIFont()}`; ctx.fillStyle = "#7a9ec8"; ctx.textAlign = "center";
   ctx.fillText(`${sys.name.toUpperCase()} SYSTEM MAP  [M / ESC to close]`, Wc / 2, 36);
-  ctx.font = "12px ui-monospace,monospace"; ctx.fillStyle = "#6688aa";
+  ctx.font = `12px ${getUIFont()}`; ctx.fillStyle = "#6688aa";
   ctx.fillText("Press [M] to switch to Galaxy View", Wc / 2, 56);
 
   // Find bounds of the system content
-  let mnX = Math.min(G.P.x, 0), mnY = Math.min(G.P.y, 0), mxX = Math.max(G.P.x, 0), mxY = Math.max(G.P.y, 0);
+  let mnX = Math.min(player.x, 0), mnY = Math.min(player.y, 0), mxX = Math.max(player.x, 0), mxY = Math.max(player.y, 0);
   for (const a of sys.asteroids) { mnX = Math.min(mnX, a.x); mnY = Math.min(mnY, a.y); mxX = Math.max(mxX, a.x); mxY = Math.max(mxY, a.y); }
   for (const e of sys.enemies) { mnX = Math.min(mnX, e.x); mnY = Math.min(mnY, e.y); mxX = Math.max(mxX, e.x); mxY = Math.max(mxY, e.y); }
   for (const g of sys.gates) { mnX = Math.min(mnX, g.x); mnY = Math.min(mnY, g.y); mxX = Math.max(mxX, g.x); mxY = Math.max(mxY, g.y); }
@@ -277,6 +289,15 @@ export function drawSystemMap(Wc: number, Hc: number) {
   for (let y = centerY % gridStep; y < Hc; y += gridStep) { ctx.moveTo(0, y); ctx.lineTo(Wc, y); }
   ctx.stroke();
 
+  // Draw Star at (0,0)
+  const sp = toMap(0, 0);
+  const sysClass = sys.starClass ?? "G";
+  ctx.fillStyle = "#ffcc44";
+  ctx.beginPath(); ctx.arc(sp.x, sp.y, 14, 0, TAU); ctx.fill();
+  ctx.shadowBlur = 20; ctx.shadowColor = "#ffaa00"; ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.font = `bold 11px ${getUIFont()}`; ctx.fillStyle = "#ffcc44"; ctx.textAlign = "center";
+  ctx.fillText(`${sysClass}-CLASS STAR`, sp.x, sp.y + 30);
+
   // Draw asteroids
   for (const a of sys.asteroids) {
     if (a.depleted || a.hp <= 0) continue;
@@ -290,7 +311,7 @@ export function drawSystemMap(Wc: number, Hc: number) {
     if (!e.alive) continue;
     const p = toMap(e.x, e.y);
     ctx.fillStyle = "#cc2222";
-    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, e.radius * scale || 3), 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, (e.radius ?? 3) * scale || 3), 0, TAU); ctx.fill();
   }
 
   // Draw gates
@@ -298,7 +319,7 @@ export function drawSystemMap(Wc: number, Hc: number) {
     const p = toMap(g.x, g.y);
     ctx.fillStyle = "#4488ff";
     ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(3, g.radius * scale || 5), 0, TAU); ctx.fill();
-    ctx.font = "9px monospace"; ctx.fillStyle = "#4488ff"; ctx.textAlign = "center";
+    ctx.font = `9px ${getUIFont()}`; ctx.fillStyle = "#4488ff"; ctx.textAlign = "center";
     ctx.fillText(`JUMP GATE`, p.x, p.y + 12);
   }
 
@@ -307,12 +328,12 @@ export function drawSystemMap(Wc: number, Hc: number) {
     const p = toMap(s.x, s.y);
     ctx.fillStyle = "#44ff88";
     ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(4, s.radius * scale || 6), 0, TAU); ctx.fill();
-    ctx.font = "bold 10px monospace"; ctx.fillStyle = "#44ff88"; ctx.textAlign = "center";
+    ctx.font = `bold 10px ${getUIFont()}`; ctx.fillStyle = "#44ff88"; ctx.textAlign = "center";
     ctx.fillText(s.name, p.x, p.y + Math.max(4, s.radius * scale || 6) + 12);
   }
 
   // Draw player
-  const pp = toMap(G.P.x, G.P.y);
+  const pp = toMap(player.x, player.y);
   ctx.fillStyle = "#ffffff";
   ctx.beginPath(); ctx.arc(pp.x, pp.y, 4, 0, TAU); ctx.fill();
   
@@ -325,17 +346,18 @@ export function drawSystemMap(Wc: number, Hc: number) {
   ctx.fillRect(lx - 10, ly - 20, 150, 140);
   ctx.strokeRect(lx - 10, ly - 20, 150, 140);
   
-  ctx.font = "bold 11px monospace"; ctx.fillStyle = "#88aacc"; ctx.textAlign = "left";
+  ctx.font = `bold 11px ${getUIFont()}`; ctx.fillStyle = "#88aacc"; ctx.textAlign = "left";
   ctx.fillText("LEGEND", lx, ly); ly += 20;
   
   const drawLegendItem = (color: string, label: string) => {
     ctx.fillStyle = color;
     ctx.beginPath(); ctx.arc(lx + 5, ly - 4, 4, 0, TAU); ctx.fill();
-    ctx.fillStyle = "#aaddff"; ctx.font = "11px monospace";
+    ctx.fillStyle = "#aaddff"; ctx.font = `11px ${getUIFont()}`;
     ctx.fillText(label, lx + 18, ly);
     ly += 20;
   };
   
+  drawLegendItem("#ffcc44", "System Star");
   drawLegendItem("#ffffff", "Player Ship");
   drawLegendItem("#44ff88", "Station");
   drawLegendItem("#4488ff", "Jump Gate");
@@ -357,17 +379,19 @@ const _STREAKS = (() => {
 })();
 
 export function drawWarpScreen(Wc: number, Hc: number, now: number) {
-  const preWarp = G.warpTargetIdx >= 0;
+  const state = getState();
+  const player = state.player;
+  const preWarp = state.warpTargetIdx >= 0;
   const cx = Wc / 2, cy = Hc / 2;
   const halfDiag = Math.hypot(Wc, Hc) * 0.5;
 
   let progress: number, arrFade: number;
   if (preWarp) {
-    progress = Math.max(0, 1 - G.warpCooldown / 2.4);
+    progress = Math.max(0, 1 - state.warpCooldown / 2.4);
     arrFade = 0;
   } else {
     progress = 1;
-    arrFade = Math.min(1, (G.warpCooldown - 2.0) / 0.5);
+    arrFade = Math.min(1, (state.warpCooldown - 2.0) / 0.5);
   }
 
   // Deep space overlay — darkens as warp builds
@@ -423,8 +447,8 @@ export function drawWarpScreen(Wc: number, Hc: number, now: number) {
   }
 
   // Text overlays
-  const destIdx  = preWarp ? G.warpTargetIdx : G.P.sysIdx;
-  const destSys  = G.GALAXY[destIdx];
+  const destIdx  = preWarp ? state.warpTargetIdx : player.sysIdx;
+  const destSys  = state.GALAXY[destIdx];
   const destName = (destSys?.name || '').toUpperCase();
   const textA    = preWarp ? Math.min(1, (progress - 0.12) / 0.18) : arrFade;
 
@@ -434,11 +458,11 @@ export function drawWarpScreen(Wc: number, Hc: number, now: number) {
     ctx.textAlign = 'center';
 
     if (preWarp) {
-      ctx.font = 'bold 10px ui-monospace,monospace';
+      ctx.font = `bold 10px ${getUIFont()}`;
       ctx.fillStyle = '#344e72';
       ctx.fillText('JUMP DRIVE ENGAGED', cx, cy - 32);
 
-      ctx.font = 'bold 24px ui-monospace,monospace';
+      ctx.font = `bold 24px ${getUIFont()}`;
       ctx.fillStyle = '#aaceff';
       ctx.shadowBlur = 24;
       ctx.shadowColor = '#3366cc';
@@ -449,13 +473,13 @@ export function drawWarpScreen(Wc: number, Hc: number, now: number) {
         const sec = destSys.security?.toFixed(1);
         const secCol = destSys.security >= 0.7 ? '#44ff88'
                      : destSys.security >= 0.4 ? '#ffcc44' : '#ff5544';
-        ctx.font = '10px ui-monospace,monospace';
+        ctx.font = `10px ${getUIFont()}`;
         ctx.fillStyle = secCol;
         ctx.globalAlpha = textA * 0.7;
         ctx.fillText(`SECURITY ${sec}`, cx, cy + 28);
       }
     } else {
-      ctx.font = 'bold 20px ui-monospace,monospace';
+      ctx.font = `bold 20px ${getUIFont()}`;
       ctx.fillStyle = '#ffffff';
       ctx.shadowBlur = 18;
       ctx.shadowColor = '#88bbff';

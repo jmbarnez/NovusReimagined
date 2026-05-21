@@ -3,8 +3,8 @@ import "./styles/hud-sys-info.css";
 import "./styles/hud-status-bars.css";
 import "./styles/hud-misc.css";
 import { G, Client } from "../state.js";
-import { HUD_SIDE_W, HUD_SIDE_W_FULL, HUD_SIDE_W_COLLAPSED, HUD_BOTTOM_H, setHudSideWidth } from "../constants.js";
-import { getThemeColors } from "../data/settings.js";
+import { HUD_BOTTOM_H } from "../constants.js";
+import { getTheme, getFontStack } from "../data/settings.js";
 import { curSys } from "../utils/game.js";
 import { getStats } from "../player/player-stats.js";
 import { SHIPS } from "../data/ships.js";
@@ -14,12 +14,13 @@ import { sfxConfirm } from "../audio/procedural.js";
 import { initMissionsPanel, updateMissionsPanel, getMissionsPanelEl } from "./hud-missions.js";
 import { renderInventoryHTML, attachInventoryListeners } from "./inventory.js";
 import { renderSkillsContent, initSkillsInteractions } from "./skills.js";
+import { toggleHudWindow, closeHudWindow } from "./hud/windows.js";
 import "./styles/bridge.css";
 
 import { hudState } from "./hud/state.js";
 import { updateSlots } from "./hud/slots.js";
 import { updateLockRail } from "./hud/targeting.js";
-import { updateDockPrompt, updateHudOverviewPanel } from "./hud/overview.js";
+import { updateDockPrompt, updateHudOverviewPanel, updateHudOverviewPanelHeaders } from "./hud/overview.js";
 import { hideTurretCtxMenu } from "./hud/turret-menu.js";
 
 // Re-export specific pieces that were previously in this file so other imports don't break.
@@ -27,79 +28,22 @@ export { logEvent } from "./hud/logs.js";
 export { showXpEarned } from "./hud/xp.js";
 export { flashSlotFire } from "./hud/slots.js";
 
-function switchTab(tabId: "overview" | "missions" | "cargo" | "skills") {
-  hudState.activeTab = tabId;
-  if (!hudState.sideContent || !hudState.sidePanel) return;
-
-  // Update button classes
-  hudState.sidePanel.querySelectorAll(".hud-side-tab-btn").forEach((btn: any) => {
-    btn.classList.toggle("active", btn.dataset.tab === tabId);
-  });
-
-  // Clear content and append active panel
-  hudState.sideContent.innerHTML = "";
-  if (tabId === "overview") {
-    if (hudState.ovPanel) hudState.sideContent.appendChild(hudState.ovPanel);
-  } else if (tabId === "missions") {
-    const el = getMissionsPanelEl();
-    if (el) hudState.sideContent.appendChild(el);
-  } else if (tabId === "cargo") {
-    const div = document.createElement("div");
-    div.id = "bridge-pane-cargo";
-    div.className = "br-pane";
-    div.style.height = "100%";
-    div.style.width = "100%";
-    // Hide overflow at the pane level — the inner `.inv-table-wrap` owns the
-    // scrollbar. Without this, two scroll layers can fight each other.
-    div.style.overflow = "hidden";
-    div.style.display = "flex";
-    div.style.flexDirection = "column";
-    div.innerHTML = renderInventoryHTML();
-    hudState.sideContent.appendChild(div);
-    attachInventoryListeners();
-  } else if (tabId === "skills") {
-    const div = document.createElement("div");
-    div.id = "bridge-pane-skills";
-    div.className = "br-pane";
-    div.style.height = "100%";
-    div.style.overflow = "auto";
-    div.style.display = "flex";
-    div.style.flexDirection = "column";
-    div.innerHTML = renderSkillsContent();
-    hudState.sideContent.appendChild(div);
-    initSkillsInteractions(div);
-  }
-}
-
-function toggleSidePanel() {
-  const isCollapsed = HUD_SIDE_W === HUD_SIDE_W_COLLAPSED;
-  setHudSideWidth(isCollapsed ? HUD_SIDE_W_FULL : HUD_SIDE_W_COLLAPSED);
-  
-  if (hudState.sidePanel) {
-    hudState.sidePanel.classList.toggle("collapsed", !isCollapsed);
-  }
-  
-  const btn = document.getElementById("hud-side-toggle");
-  if (btn) btn.textContent = !isCollapsed ? "◀" : "▶";
-
-  // Reflow everything
-  window.dispatchEvent(new Event("resize"));
-}
-
 /* ── Init ── */
 export function initHudOverlay() {
   if (hudState.root) return;
 
   const overlay = document.getElementById("hud-overlay");
   if (!overlay) return;
-  
+
   overlay.innerHTML = `
     <span id="hud-sys-name"></span>
     <span id="hud-sec"></span>
     <div id="hud-lock-rail"></div>
     <div id="hud-dock-prompt"></div>
     <div id="hud-xp-popup"></div>
-    
+
+    <div id="hud-minimap"></div>
+
     <div id="hud-bottom">
       <div id="hud-log-panel">
         <div id="hud-log-header">EVENT LOG</div>
@@ -111,22 +55,21 @@ export function initHudOverlay() {
             <span class="hud-bar-label speed-label">SPD 0</span>
             <div class="hud-bar-track"><span class="hud-bar-fill speed"></span></div>
           </div>
-          <!-- Other bars injected below -->
         </div>
         <div id="hud-slots"></div>
       </div>
-    </div>
-
-    <div id="hud-side-panel">
-      <button id="hud-side-toggle" type="button" title="Toggle Side Panel">▶</button>
-      <div id="hud-side-minimap-container"></div>
-      <div id="hud-side-tabs">
-        <button type="button" class="hud-side-tab-btn" data-tab="overview" title="Scanner Overview">👁️</button>
-        <button type="button" class="hud-side-tab-btn" data-tab="missions" title="Contracts">📜</button>
-        <button type="button" class="hud-side-tab-btn" data-tab="cargo" title="Cargo">📦</button>
-        <button type="button" class="hud-side-tab-btn" data-tab="skills" title="Skills">🎓</button>
+      <div id="hud-scanner-dock">
+        <div id="hud-scanner-body">
+          <div id="hud-overview-panel">
+            <div class="ov-wrap">
+              <table class="ov-table">
+                <thead><tr><th></th><th class="ov-sortable" data-sort="state">State</th><th class="ov-sortable" data-sort="class">Class</th><th class="ov-sortable" data-sort="name">Name</th><th class="ov-sortable" data-sort="dist">Dist</th><th>Act</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="hud-side-content"></div>
     </div>
 
     <div id="hud-help">
@@ -136,7 +79,7 @@ export function initHudOverlay() {
       <div class="hh-line"><span class="hh-k">Space</span> Brake</div>
       <div class="hh-line"><span class="hh-k">Wheel</span> Zoom</div>
       <div class="hh-sect">Combat</div>
-      <div class="hh-line"><span class="hh-k">Ctrl+LMB</span> Lock</div>
+      <div class="hh-line"><span class="hh-k">LMB</span> Lock</div>
       <div class="hh-line"><span class="hh-k">Shift+click</span> Turret → target</div>
       <div class="hh-line"><span class="hh-k">RMB slot</span> Turret menu</div>
       <div class="hh-sect">Modules</div>
@@ -160,20 +103,16 @@ export function initHudOverlay() {
   hudState.logEntries = overlay.querySelector("#hud-log-entries");
   hudState.speedEl = overlay.querySelector("#hud-speed");
   hudState.slotsContainer = overlay.querySelector("#hud-slots");
-  hudState.sidePanel = overlay.querySelector("#hud-side-panel");
-  hudState.sideContent = overlay.querySelector("#hud-side-content");
-
-  // Side toggle event
-  const sideToggle = overlay.querySelector("#hud-side-toggle") as HTMLElement;
-  if (sideToggle) sideToggle.onclick = toggleSidePanel;
+  hudState.minimapContainer = overlay.querySelector("#hud-minimap");
+  hudState.scannerDock = overlay.querySelector("#hud-scanner-dock");
 
   // Status bars injection
   const bars = overlay.querySelector("#hud-status-bars")!;
-  const barDefs: [string, string, string][] = [
-    ["SHLD", "shield", "#44ccff"],
-    ["HULL", "hull", "#ee9944"],
-    ["STRC", "struct", "#ee4444"],
-    ["CAP", "cap", "#ffcc44"],
+  const barDefs: [string, string][] = [
+    ["SHLD", "shield"],
+    ["HULL", "hull"],
+    ["STRC", "struct"],
+    ["CAP", "cap"],
   ];
   hudState.statusFills = [];
   for (const [label, cls] of barDefs) {
@@ -187,28 +126,29 @@ export function initHudOverlay() {
     hudState.statusFills.push(g.querySelector(".hud-bar-fill") as HTMLElement);
   }
 
-  // Tabs events
-  overlay.querySelectorAll(".hud-side-tab-btn").forEach((btn: any) => {
-    btn.onclick = () => {
+  // Overview panel - scanner dock always present
+  hudState.ovPanel = overlay.querySelector("#hud-overview-panel");
+  hudState.ovEntries = hudState.ovPanel!.querySelector("tbody");
+  
+  // Attach sort listeners
+  const headers = hudState.ovPanel!.querySelectorAll("thead th[data-sort]");
+  headers.forEach((th) => {
+    th.addEventListener("click", () => {
+      const key = (th as HTMLElement).dataset.sort as "state" | "class" | "name" | "dist";
+      if (hudState.ovSortKey === key) {
+        hudState.ovSortDir = (hudState.ovSortDir * -1) as 1 | -1;
+      } else {
+        hudState.ovSortKey = key;
+        hudState.ovSortDir = 1;
+      }
       sfxConfirm();
-      switchTab(btn.dataset.tab as any);
-    };
+      updateHudOverviewPanelHeaders();
+      updateHudOverviewPanel();
+    });
   });
+  updateHudOverviewPanelHeaders();
 
-  // Overview panel
-  hudState.ovPanel = document.createElement("div");
-  hudState.ovPanel.id = "hud-overview-panel";
-  hudState.ovPanel.innerHTML = `
-    <div id="hud-overview-header">SCANNER OVERVIEW</div>
-    <div class="ov-wrap">
-      <table class="ov-table">
-        <thead><tr><th></th><th>State</th><th>Class</th><th>Name</th><th>Dist</th><th>Act</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  `;
-  hudState.ovEntries = hudState.ovPanel.querySelector("tbody");
-  hudState.ovPanel.addEventListener("click", (ev) => {
+  hudState.ovPanel!.addEventListener("click", (ev) => {
     const btn = (ev.target as HTMLElement).closest(".ov-lock");
     if (!btn) return;
     sfxConfirm();
@@ -216,8 +156,8 @@ export function initHudOverlay() {
     if (id) requestSensorLock(id);
   });
 
-  initMissionsPanel(hudState.sidePanel!); 
-  switchTab(hudState.activeTab);
+  // Missions panel (initialised but not mounted until opened as window)
+  initMissionsPanel(overlay);
 
   // Turret context menu
   if (!document.getElementById("turret-ctx-menu")) {
@@ -241,6 +181,8 @@ export function destroyHudOverlay() {
   hudState.slotNodes.clear();
   hudState.rackSwitchNodes.clear();
   hudState.lockCards.clear();
+  // Clean up any hud windows
+  document.querySelectorAll('[id^="hud-win-"]').forEach((el) => el.remove());
 }
 
 /* ── Update ── */
@@ -251,7 +193,7 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   const st = getStats();
   const ship = SHIPS[G.P.shipId];
 
-  applyTheme(Client.settings?.theme || "default");
+  applyTheme(Client.settings?.theme || "default", Client.settings?.fontFamily || "Orbitron");
 
   // Top bar text
   const sysName = sys?.name || "";
@@ -301,17 +243,107 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   updateMissionsPanel();
 }
 
-/* ── Theme ── */
-function applyTheme(themeId: string) {
-  const t = getThemeColors(themeId);
-  const s = hudState.root!.style;
-  s.setProperty("--hud-side-w", `${HUD_SIDE_W}px`);
-  s.setProperty("--hud-bottom-h", `${HUD_BOTTOM_H}px`);
-  s.setProperty("--hud-top-bar", t.topBar);
-  s.setProperty("--hud-top-border", t.topBarBorder);
-  s.setProperty("--hud-bottom-top", t.bottomBarTop);
-  s.setProperty("--hud-bottom-bot", t.bottomBarBottom);
-  s.setProperty("--hud-bottom-border", t.bottomBarBorder);
+/* ── Public helpers for window toggling (called from input.ts) ── */
+export function toggleCargoWindow() {
+  const div = document.createElement("div");
+  div.id = "bridge-pane-cargo";
+  div.className = "br-pane";
+  div.style.height = "100%";
+  div.style.width = "100%";
+  div.style.overflow = "hidden";
+  div.style.display = "flex";
+  div.style.flexDirection = "column";
+  div.innerHTML = renderInventoryHTML();
+  toggleHudWindow("cargo", "Cargo Hold", div);
+  attachInventoryListeners();
+}
+
+export function toggleSkillsWindow() {
+  const div = document.createElement("div");
+  div.id = "bridge-pane-skills";
+  div.className = "br-pane";
+  div.style.height = "100%";
+  div.style.overflow = "auto";
+  div.style.display = "flex";
+  div.style.flexDirection = "column";
+  div.innerHTML = renderSkillsContent();
+  toggleHudWindow("skills", "Skills", div);
+  initSkillsInteractions(div);
+}
+
+export function toggleContractsWindow() {
+  const el = getMissionsPanelEl();
+  if (el) {
+    toggleHudWindow("missions", "Contracts", el);
+    updateMissionsPanel();
+  }
+}
+
+export function toggleScannerDock() {
+  if (hudState.scannerDock) {
+    const hidden = hudState.scannerDock.style.display === "none";
+    hudState.scannerDock.style.display = hidden ? "flex" : "none";
+  }
+}
+
+export function closeHudWindows() {
+  closeHudWindow("cargo");
+  closeHudWindow("missions");
+  closeHudWindow("skills");
+}
+
+/* ── Theme ──
+ * Tokens are written to the document root so every DOM UI surface (HUD,
+ * bridge windows, station screens, settings) inherits the active theme + font.
+ * Re-applied each frame but short-circuited unless theme/font actually changed.
+ */
+let _appliedTheme = "";
+let _appliedFont = "";
+function applyTheme(themeId: string, fontId: string) {
+  // Layout var on the HUD root.
+  if (hudState.root) {
+    hudState.root.style.setProperty("--hud-bottom-h", `${HUD_BOTTOM_H}px`);
+  }
+  if (themeId === _appliedTheme && fontId === _appliedFont) return;
+  _appliedTheme = themeId;
+  _appliedFont = fontId;
+
+  const t = getTheme(themeId);
+  const s = document.documentElement.style;
+  // Font
+  s.setProperty("--font-family", getFontStack(fontId));
+  // Surfaces
+  s.setProperty("--hud-bg-deep", t.bgDeep);
+  s.setProperty("--hud-bg-window", t.bgWindow);
+  s.setProperty("--hud-bg-panel", t.bgPanel);
+  s.setProperty("--hud-bg-elevated", t.bgElevated);
+  // Borders
+  s.setProperty("--hud-border", t.border);
+  s.setProperty("--hud-border-soft", t.borderSoft);
+  s.setProperty("--hud-border-accent", t.borderAccent);
+  // Text
+  s.setProperty("--hud-text-bright", t.textBright);
   s.setProperty("--hud-text-main", t.textMain);
   s.setProperty("--hud-text-dim", t.textDim);
+  s.setProperty("--hud-text-faint", t.textFaint);
+  // Semantic accents
+  s.setProperty("--hud-accent", t.accent);
+  s.setProperty("--hud-positive", t.positive);
+  s.setProperty("--hud-shield", t.shield);
+  s.setProperty("--hud-hull", t.hull);
+  s.setProperty("--hud-danger", t.danger);
+  s.setProperty("--hud-cap", t.cap);
+  // Legacy aliases used by existing layout CSS (top/bottom bars).
+  s.setProperty("--hud-top-bar", t.bgDeep);
+  s.setProperty("--hud-top-border", t.border);
+  s.setProperty("--hud-bottom-top", t.bgPanel);
+  s.setProperty("--hud-bottom-bot", t.bgDeep);
+  s.setProperty("--hud-bottom-border", t.borderAccent);
+}
+
+/** Force a re-apply (e.g. after the player changes theme/font in settings). */
+export function refreshTheme() {
+  _appliedTheme = "";
+  _appliedFont = "";
+  applyTheme(Client.settings?.theme || "default", Client.settings?.fontFamily || "Orbitron");
 }

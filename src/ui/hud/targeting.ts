@@ -12,7 +12,59 @@ import {
   enemyClassLabel,
   transversalVs,
   ensureLockQueue,
+  computeEnemyLevel,
 } from "../../targeting.js";
+import { ENEMY_DEFS } from "../../data/enemies.js";
+
+/* ── Icon texture cache: type → data URL ── */
+const _iconCache = new Map<string, string>();
+
+function getIconDataUrl(type: string): string {
+  if (_iconCache.has(type)) return _iconCache.get(type)!;
+  const def = ENEMY_DEFS[type];
+  const cfg = def?.render;
+  if (!cfg || !cfg.path.length) {
+    const empty = "";
+    _iconCache.set(type, empty);
+    return empty;
+  }
+
+  const size = 32;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const cx = c.getContext("2d")!;
+  cx.clearRect(0, 0, size, size);
+
+  // Center and scale the path to fit in the canvas
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const [px, py] of cfg.path) {
+    if (px < minX) minX = px;
+    if (py < minY) minY = py;
+    if (px > maxX) maxX = px;
+    if (py > maxY) maxY = py;
+  }
+  const pw = maxX - minX || 1;
+  const ph = maxY - minY || 1;
+  const scale = Math.min((size - 4) / pw, (size - 4) / ph);
+  const offX = (size - pw * scale) / 2 - minX * scale;
+  const offY = (size - ph * scale) / 2 - minY * scale;
+
+  cx.beginPath();
+  for (let i = 0; i < cfg.path.length; i++) {
+    const [px, py] = cfg.path[i];
+    i === 0 ? cx.moveTo(px * scale + offX, py * scale + offY) : cx.lineTo(px * scale + offX, py * scale + offY);
+  }
+  cx.closePath();
+  cx.fillStyle = cfg.fill;
+  cx.fill();
+  cx.strokeStyle = cfg.stroke;
+  cx.lineWidth = 1;
+  cx.stroke();
+
+  const url = c.toDataURL();
+  _iconCache.set(type, url);
+  return url;
+}
 
 /* ── Lock Rail ── */
 export function updateLockRail(st: any, now: number) {
@@ -59,6 +111,103 @@ export function createLockCard(id: string) {
   el.className = "lock-card";
   el.dataset.id = id;
 
+  // Header row (visible when resolved)
+  const header = document.createElement("div");
+  header.className = "lc-header";
+
+  const icon = document.createElement("img");
+  icon.className = "lc-icon";
+  icon.alt = "";
+  header.appendChild(icon);
+
+  const name = document.createElement("div");
+  name.className = "lc-name";
+  header.appendChild(name);
+
+  const level = document.createElement("div");
+  level.className = "lc-level";
+  header.appendChild(level);
+
+  const targetInd = document.createElement("div");
+  targetInd.className = "lc-target";
+  header.appendChild(targetInd);
+
+  el.appendChild(header);
+
+  // Health bars (visible when resolved)
+  const bars = document.createElement("div");
+  bars.className = "lc-bars";
+
+  // Shield bar
+  const shieldBar = document.createElement("div");
+  shieldBar.className = "lc-bar shield";
+  const shieldInner = document.createElement("span");
+  const shieldLabel = document.createElement("div");
+  shieldLabel.className = "lc-bar-label";
+  shieldBar.appendChild(shieldInner);
+  shieldBar.appendChild(shieldLabel);
+  bars.appendChild(shieldBar);
+
+  // Hull (HP) bar
+  const hpBar = document.createElement("div");
+  hpBar.className = "lc-bar hp";
+  const hpInner = document.createElement("span");
+  const hpLabel = document.createElement("div");
+  hpLabel.className = "lc-bar-label";
+  hpBar.appendChild(hpInner);
+  hpBar.appendChild(hpLabel);
+  bars.appendChild(hpBar);
+
+  // Structure bar
+  const structBar = document.createElement("div");
+  structBar.className = "lc-bar struct";
+  const structInner = document.createElement("span");
+  const structLabel = document.createElement("div");
+  structLabel.className = "lc-bar-label";
+  structBar.appendChild(structInner);
+  structBar.appendChild(structLabel);
+  bars.appendChild(structBar);
+
+  el.appendChild(bars);
+
+  // Telemetry row (visible when resolved)
+  const telemetry = document.createElement("div");
+  telemetry.className = "lc-telemetry";
+
+  const spdMetric = document.createElement("div");
+  spdMetric.className = "lc-metric";
+  telemetry.appendChild(spdMetric);
+
+  const distMetric = document.createElement("div");
+  distMetric.className = "lc-metric";
+  telemetry.appendChild(distMetric);
+
+  const sigMetric = document.createElement("div");
+  sigMetric.className = "lc-metric";
+  telemetry.appendChild(sigMetric);
+
+  const trsMetric = document.createElement("div");
+  trsMetric.className = "lc-metric";
+  telemetry.appendChild(trsMetric);
+
+  el.appendChild(telemetry);
+
+  // Meta (for asteroids / debris)
+  const meta = document.createElement("div");
+  meta.className = "lc-meta";
+  el.appendChild(meta);
+
+  // Scan progress (resolving state)
+  const scan = document.createElement("div");
+  scan.className = "lc-scan";
+  el.appendChild(scan);
+
+  // Assign slot badge
+  const assign = document.createElement("div");
+  assign.className = "lc-assign";
+  el.appendChild(assign);
+
+  // Close button
   const close = document.createElement("div");
   close.className = "lc-close";
   close.textContent = "×";
@@ -68,32 +217,6 @@ export function createLockCard(id: string) {
     removeSensorLock(id);
   });
   el.appendChild(close);
-
-  const assign = document.createElement("div");
-  assign.className = "lc-assign";
-  el.appendChild(assign);
-
-  const targetInd = document.createElement("div");
-  targetInd.className = "lc-target";
-  el.appendChild(targetInd);
-
-  const name = document.createElement("div");
-  name.className = "lc-name";
-  el.appendChild(name);
-
-  const meta = document.createElement("div");
-  meta.className = "lc-meta";
-  el.appendChild(meta);
-
-  const bar = document.createElement("div");
-  bar.className = "lc-bar";
-  const barInner = document.createElement("span");
-  bar.appendChild(barInner);
-  el.appendChild(bar);
-
-  const scan = document.createElement("div");
-  scan.className = "lc-scan";
-  el.appendChild(scan);
 
   el.addEventListener("click", () => {
     sfxBlip();
@@ -105,56 +228,182 @@ export function createLockCard(id: string) {
   });
 
   hudState.lockRail!.appendChild(el);
-  return { el, nameEl: name, metaEl: meta, barInner, barEl: bar, scanEl: scan, assignEl: assign, targetIndEl: targetInd };
+  return {
+    el,
+    headerEl: header,
+    iconEl: icon,
+    nameEl: name,
+    levelEl: level,
+    targetIndEl: targetInd,
+    barsEl: bars,
+    shieldInner,
+    shieldLabel,
+    hpInner,
+    hpLabel,
+    structInner,
+    structLabel,
+    telemetryEl: telemetry,
+    spdMetric,
+    distMetric,
+    sigMetric,
+    trsMetric,
+    metaEl: meta,
+    scanEl: scan,
+    assignEl: assign,
+  };
 }
 
 export function updateLockCard(card: any, slot: any, t: any, st: any, now: number, primaryId: string | null | undefined) {
-  const { el, nameEl, metaEl, barInner, barEl, scanEl, assignEl, targetIndEl } = card;
+  const {
+    el, headerEl, iconEl, nameEl, levelEl, targetIndEl,
+    barsEl, shieldInner, shieldLabel, hpInner, hpLabel, structInner, structLabel,
+    telemetryEl, spdMetric, distMetric, sigMetric, trsMetric,
+    metaEl, scanEl, assignEl,
+  } = card;
 
   const isAst = isAsteroidTarget(t.id);
   const isPiece = isWreckPieceTarget(t.id);
   const isPrimary = t.id === primaryId;
-  const cls = `lock-card${isPrimary ? " primary" : ""}${isAst ? " asteroid" : ""}${isPiece ? " wreck" : ""}`;
-  if (el.className !== cls) el.className = cls;
+  const isResolved = !slot.resolving;
 
+  // Toggle resolved class
+  const resolvedClass = `lock-card${isPrimary ? " primary" : ""}${isAst ? " asteroid" : ""}${isPiece ? " wreck" : ""}${isResolved ? " resolved" : ""}`;
+  if (el.className !== resolvedClass) el.className = resolvedClass;
+
+  // Assign border highlight
   const assignBorder = G.P._assignTargetId === t.id ? "rgba(80,220,255,0.9)" : "";
   if (el.style.borderColor !== assignBorder) el.style.borderColor = assignBorder;
 
+  // Name
   const nameText = (t.name || "Unknown").slice(0, 16);
   if (nameEl.textContent !== nameText) nameEl.textContent = nameText;
 
-  // Targeting indicator (EVE-style: red = locked you, yellow = locking you)
-  if (!isPiece && t.hasLockOnPlayer) {
-    targetIndEl.textContent = "▼";
-    targetIndEl.style.color = "#ff4444";
-    targetIndEl.style.display = "block";
-  } else if (!isPiece && t.targetingPlayer) {
-    targetIndEl.textContent = "▽";
-    targetIndEl.style.color = "#ffcc44";
-    targetIndEl.style.display = "block";
-  } else {
-    targetIndEl.style.display = "none";
-  }
+  if (isResolved && !isAst && !isPiece) {
+    /* ── Resolved enemy: full info ── */
 
-  const d = Math.round(dst(G.P.x, G.P.y, t.x, t.y));
-  let metaText = "";
-  if (isAst) {
-    const hpFrac = Math.max(0, t.hp / Math.max(1, t.maxHp));
-    metaText = `AST  ${d} m  HP ${Math.round(hpFrac * 100)}%`;
-  } else if (isPiece) {
-    const hpFrac = Math.max(0, t.hp / Math.max(1, t.maxHp));
-    metaText = `DEBRIS  ${d} m  HP ${Math.round(hpFrac * 100)}%`;
-  } else {
-    const relV = Math.round(Math.hypot(G.P.vx - (t.vx || 0), G.P.vy - (t.vy || 0)));
+    // Icon
+    const iconUrl = getIconDataUrl(t.type || "");
+    if (iconUrl && iconEl.src !== iconUrl) iconEl.src = iconUrl;
+    if (!iconUrl) iconEl.style.display = "none";
+    else if (iconEl.style.display === "none") iconEl.style.display = "";
+
+    // Level
+    if (!t.level) t.level = computeEnemyLevel(t);
+    const lvlText = `L${t.level}`;
+    if (levelEl.textContent !== lvlText) levelEl.textContent = lvlText;
+
+    // Targeting indicator
+    if (t.hasLockOnPlayer) {
+      targetIndEl.textContent = "▼";
+      targetIndEl.style.color = "#ff4444";
+      targetIndEl.style.display = "block";
+    } else if (t.targetingPlayer) {
+      targetIndEl.textContent = "▽";
+      targetIndEl.style.color = "#ffcc44";
+      targetIndEl.style.display = "block";
+    } else {
+      targetIndEl.style.display = "none";
+    }
+
+    // Shield bar
+    const maxSh = t.maxShield || 0;
+    const curSh = t.shield || 0;
+    const shPct = maxSh > 0 ? curSh / maxSh : 0;
+    shieldInner.style.width = `${shPct * 100}%`;
+    shieldLabel.textContent = maxSh > 0 ? `${Math.round(shPct * 100)}%` : "";
+
+    // Hull bar
+    const hpFrac = Math.max(0, Math.min(1, t.hp / Math.max(1, t.maxHp)));
+    hpInner.style.width = `${hpFrac * 100}%`;
+    hpLabel.textContent = `${Math.round(hpFrac * 100)}%`;
+
+    // Structure bar
+    const maxSt = t.maxStructure || 0;
+    const curSt = t.structure || 0;
+    const stPct = maxSt > 0 ? curSt / maxSt : 0;
+    structInner.style.width = `${stPct * 100}%`;
+    structLabel.textContent = maxSt > 0 ? `${Math.round(stPct * 100)}%` : "";
+
+    // Telemetry
+    const d = Math.round(dst(G.P.x, G.P.y, t.x, t.y));
+    const speed = Math.round(Math.hypot(t.vx || 0, t.vy || 0));
     const trs = Math.round(transversalVs(t));
     const sig = Math.round(t.sigRadius || 30);
-    const clsLbl = enemyClassLabel(t.type);
     const band = d < st.wProf.range ? "OPT" : "OFF";
-    metaText = `${clsLbl}  ${d} m  ${band}   SIG ${sig}   ΔV ${relV}   TRS ${trs}`;
-  }
-  if (metaEl.textContent !== metaText) metaEl.textContent = metaText;
 
-  // Assigned slot badges: turrets for enemies/asteroids, salvager slots for pieces
+    const spdHtml = `<span class="m-val">${speed}</span> m/s`;
+    const distHtml = `<span class="m-val">${d}</span> m ${band}`;
+    const sigHtml = `SIG <span class="m-val">${sig}</span>`;
+    const trsHtml = `TRS <span class="m-val">${trs}</span>`;
+
+    if (spdMetric.innerHTML !== spdHtml) spdMetric.innerHTML = spdHtml;
+    if (distMetric.innerHTML !== distHtml) distMetric.innerHTML = distHtml;
+    if (sigMetric.innerHTML !== sigHtml) sigMetric.innerHTML = sigHtml;
+    if (trsMetric.innerHTML !== trsHtml) trsMetric.innerHTML = trsHtml;
+
+    // Scan hidden
+    if (scanEl.style.display !== "none") scanEl.style.display = "none";
+
+  } else if (isResolved && (isAst || isPiece)) {
+    /* ── Resolved asteroid / debris: simplified info ── */
+
+    iconEl.style.display = "none";
+    levelEl.textContent = "";
+    targetIndEl.style.display = "none";
+
+    // Single HP bar for asteroids/debris
+    const hpFrac = Math.max(0, Math.min(1, t.hp / Math.max(1, t.maxHp)));
+    hpInner.style.width = `${hpFrac * 100}%`;
+    hpLabel.textContent = `${Math.round(hpFrac * 100)}%`;
+    shieldInner.style.width = "0%";
+    shieldLabel.textContent = "";
+    structInner.style.width = "0%";
+    structLabel.textContent = "";
+
+    // Telemetry
+    const d = Math.round(dst(G.P.x, G.P.y, t.x, t.y));
+    const distHtml = `<span class="m-val">${d}</span> m`;
+    if (distMetric.innerHTML !== distHtml) distMetric.innerHTML = distHtml;
+    spdMetric.innerHTML = "";
+    sigMetric.innerHTML = "";
+    trsMetric.innerHTML = "";
+
+    // Meta for asteroids/debris
+    if (isAst) {
+      metaEl.textContent = `AST  HP ${Math.round(hpFrac * 100)}%`;
+    } else {
+      metaEl.textContent = `DEBRIS  HP ${Math.round(hpFrac * 100)}%`;
+    }
+
+    if (scanEl.style.display !== "none") scanEl.style.display = "none";
+
+  } else {
+    /* ── Resolving: compact scan bar ── */
+    iconEl.style.display = "none";
+    levelEl.textContent = "";
+    targetIndEl.style.display = "none";
+
+    // Scan progress
+    const need = computeLockTimeSec(t, st);
+    const pct = Math.min(1, (slot.acc || 0) / Math.max(0.05, need));
+    hpInner.style.width = `${pct * 100}%`;
+    hpLabel.textContent = "";
+    shieldInner.style.width = "0%";
+    shieldLabel.textContent = "";
+    structInner.style.width = "0%";
+    structLabel.textContent = "";
+
+    if (scanEl.textContent !== "SCAN") scanEl.textContent = "SCAN";
+    if (scanEl.style.display !== "block") scanEl.style.display = "block";
+
+    spdMetric.innerHTML = "";
+    distMetric.innerHTML = "";
+    sigMetric.innerHTML = "";
+    trsMetric.innerHTML = "";
+    metaEl.textContent = "";
+  }
+
+  // Assigned slot badges
   let assignText = "";
   if (isPiece) {
     const assignedSalv: number[] = [];
@@ -170,30 +419,4 @@ export function updateLockCard(card: any, slot: any, t: any, st: any, now: numbe
     assignText = assignedTurrets.length ? assignedTurrets.join(",") : "";
   }
   if (assignEl.textContent !== assignText) assignEl.textContent = assignText;
-
-  // Bar (dirty-check)
-  if (slot.resolving) {
-    const need = computeLockTimeSec(t, st);
-    const pct = Math.min(1, (slot.acc || 0) / Math.max(0.05, need));
-    const barCls = "lc-bar lock";
-    const barW = `${pct * 100}%`;
-    if (barEl.className !== barCls) barEl.className = barCls;
-    if (barInner.style.width !== barW) barInner.style.width = barW;
-    if (scanEl.textContent !== "SCAN") scanEl.textContent = "SCAN";
-    if (scanEl.style.display !== "block") scanEl.style.display = "block";
-  } else if (isPiece) {
-    const hpFrac = Math.max(0, t.hp / Math.max(1, t.maxHp));
-    const barCls = "lc-bar hp";
-    const barW = `${hpFrac * 100}%`;
-    if (barEl.className !== barCls) barEl.className = barCls;
-    if (barInner.style.width !== barW) barInner.style.width = barW;
-    if (scanEl.style.display !== "none") scanEl.style.display = "none";
-  } else {
-    const hpFrac = Math.max(0, t.hp / Math.max(1, t.maxHp));
-    const barCls = "lc-bar hp";
-    const barW = `${hpFrac * 100}%`;
-    if (barEl.className !== barCls) barEl.className = barCls;
-    if (barInner.style.width !== barW) barInner.style.width = barW;
-    if (scanEl.style.display !== "none") scanEl.style.display = "none";
-  }
 }

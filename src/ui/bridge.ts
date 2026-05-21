@@ -5,16 +5,25 @@ import { dst } from "../utils/math.js";
 import { escHtml } from "../utils/format.js";
 import { curSys } from "../utils/game.js";
 import { getSensorContactRangePx } from "../targeting.js";
-import { enemyClassLabel, transversalVs, enemyByLockId, targetByLockId, isAsteroidTarget, requestSensorLock } from "../targeting.js";
-import { getStats } from "../player/player-stats.js";
-import { MODULES } from "../data/modules.js";
-import { closeBridge } from "../dock.js";
+import { enemyClassLabel } from "../targeting.js";
 import { renderInventoryHTML, attachInventoryListeners, resetInventoryUI } from "./inventory.js";
-import { initSkillsInteractions } from "./skills.js";
-import { sfxBlip, sfxConfirm } from "../audio/procedural.js";
+import { sfxBlip } from "../audio/procedural.js";
 import { on } from "../events.js";
+import type { Enemy, Asteroid } from "../types/world.js";
 
 export { attachInventoryListeners, resetInventoryUI };
+
+export interface OverviewRow {
+  kind: "self" | "hostile" | "asteroid" | "station" | "gate";
+  id: string;
+  icon: string;
+  cls: string;
+  name: string;
+  dist: number | string;
+  sig: number | string;
+  relV: number | string;
+  status: string;
+}
 
 let _bridgeToastTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -27,10 +36,10 @@ export function showBridgeToast(msg: string) {
   _bridgeToastTimer = setTimeout(() => { el.style.opacity = "0"; }, 2400);
 }
 
-export function buildLocalOverviewRows() {
+export function buildLocalOverviewRows(): OverviewRow[] {
   const ship = SHIPS[G.P.shipId];
   const range = getSensorContactRangePx(ship);
-  const rows: any[] = [];
+  const rows: OverviewRow[] = [];
   rows.push({
     kind: "self",
     id: "__player",
@@ -48,12 +57,12 @@ export function buildLocalOverviewRows() {
     if (!e.alive) continue;
     const d = dst(G.P.x, G.P.y, e.x, e.y);
     if (d > range) continue;
-    const slot = G.P.lockQueue.find((s: any) => s.id === e.id);
+    const slot = G.P.lockQueue.find((s) => s.id === e.id);
     let status = "";
     if (slot?.resolving) status += `<span class="ov-plock ov-scanning">SCAN</span>`;
     else if (slot && !slot.resolving) status += `<span class="ov-plock${G.P.targetLock?.id === e.id ? " ov-primary" : ""}">LOCK${G.P.targetLock?.id === e.id ? "●" : ""}</span>`;
-    if ((e as any).hasLockOnPlayer) status += `<span class="ov-threat ov-threat-locked" title="Has locked you">◉</span>`;
-    else if ((e as any).targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="Locking you">▲</span>`;
+    if (e.hasLockOnPlayer) status += `<span class="ov-threat ov-threat-locked" title="Has locked you">◉</span>`;
+    else if (e.targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="Locking you">▲</span>`;
     if (!status) status = "—";
     rows.push({
       kind: "hostile",
@@ -71,7 +80,7 @@ export function buildLocalOverviewRows() {
     if (a.depleted || a.hp <= 0) continue;
     const d = dst(G.P.x, G.P.y, a.x, a.y) - a.radius;
     if (d > range) continue;
-    const slot = G.P.lockQueue.find((s: any) => s.id === a.id);
+    const slot = G.P.lockQueue.find((s) => s.id === a.id);
     let status = "—";
     if (slot?.resolving) status = "SCAN";
     else if (slot && !slot.resolving) status = G.P.targetLock?.id === a.id ? "LOCK●" : "LOCK";
@@ -133,13 +142,13 @@ export function buildLocalOverviewRows() {
   return rows;
 }
 
-export function renderBridgeOverviewHTML() {
+export function renderBridgeOverviewHTML(): string {
   const ship = SHIPS[G.P.shipId];
   const rangePx = Math.round(getSensorContactRangePx(ship));
   const sys = curSys();
   const rows = buildLocalOverviewRows();
   const body = rows
-    .map((r: any) => {
+    .map((r: OverviewRow) => {
       const lockBtn =
         r.kind === "hostile" || r.kind === "asteroid"
           ? `<button type="button" class="ov-lock" data-lock-id="${escHtml(r.id)}">Lock</button>`
@@ -175,17 +184,17 @@ export function updateBridgeOverview() {
   if (!tbody) return;
 
   const rows = buildLocalOverviewRows();
-  const existing = new Map();
+  const existing = new Map<string, HTMLTableRowElement>();
   for (const tr of tbody.querySelectorAll("tr[data-id]")) {
-    existing.set((tr as HTMLElement).dataset.id, tr);
+    existing.set((tr as HTMLElement).dataset.id!, tr as HTMLTableRowElement);
   }
 
   for (const r of rows) {
-    let tr: HTMLElement = existing.get(r.id);
+    let tr = existing.get(r.id);
     if (!tr) {
       tr = document.createElement("tr");
       tr.className = `ov-row ov-row-${r.kind}`;
-      (tr as any).dataset.id = r.id;
+      tr.dataset.id = r.id;
       const lockBtn =
         r.kind === "hostile" || r.kind === "asteroid"
           ? `<button type="button" class="ov-lock" data-lock-id="${escHtml(r.id)}">Lock</button>`
@@ -209,25 +218,25 @@ export function updateBridgeOverview() {
       const sigCell = tr.querySelector(".ov-sig");
       if (dCell) dCell.textContent = dist;
       if (sCell) sCell.innerHTML = r.status;
-      if (rCell) rCell.textContent = r.relV;
-      if (sigCell) sigCell.textContent = r.sig;
+      if (rCell) rCell.textContent = String(r.relV);
+      if (sigCell) sigCell.textContent = String(r.sig);
       existing.delete(r.id);
     }
   }
 
   for (const tr of existing.values()) {
-    (tr as HTMLElement).remove();
+    tr.remove();
   }
 }
 
-export function renderBridgeCargoHTML() {
+export function renderBridgeCargoHTML(): string {
   return renderInventoryHTML();
 }
 
 export function ensureBridgeUI() {
   const el = document.getElementById("bridge-overlay");
-  if (!el || (el as any)._initialized) return;
-  (el as any)._initialized = true;
+  if (!el || el.getAttribute("data-initialized") === "true") return;
+  el.setAttribute("data-initialized", "true");
 
   on("ui:close-overlays", () => {
     el.style.display = "none";
@@ -264,15 +273,14 @@ export function initBridgeWindows(rootEl: HTMLElement) {
       if (!win.style.width) win.style.width = `${r.width}px`;
       if (!win.style.height) win.style.height = `${r.height}px`;
     }
-    // win is now HTMLElement from the typed array
     const head = win.querySelector(".eve-win-head");
     const expandBtn = win.querySelector(".eve-win-expand");
     if (!head) continue;
     const bringToFront = () => {
       Client.bridgeWindowZ += 1;
-      (win as HTMLElement).style.zIndex = String(Client.bridgeWindowZ);
+      win.style.zIndex = String(Client.bridgeWindowZ);
     };
-    clampWindow(win as HTMLElement);
+    clampWindow(win);
     head.addEventListener("mousedown", (ev) => {
       const mev = ev as MouseEvent;
       if (mev.button !== 0) return;
@@ -280,7 +288,6 @@ export function initBridgeWindows(rootEl: HTMLElement) {
       mev.preventDefault();
       bringToFront();
       win.classList.add("is-dragging");
-      // Resolve position from computed rect if inline style isn't set yet (e.g. CSS class positioning)
       if (!win.style.left || !win.style.top) {
         const wr = win.getBoundingClientRect();
         const wsr = workspace.getBoundingClientRect();
@@ -294,15 +301,15 @@ export function initBridgeWindows(rootEl: HTMLElement) {
       const onMove = (mv: MouseEvent) => {
         win.style.left = `${baseX + (mv.clientX - sx)}px`;
         win.style.top = `${baseY + (mv.clientY - sy)}px`;
-        clampWindow(win as HTMLElement);
+        clampWindow(win);
       };
       const onUp = () => {
         win.classList.remove("is-dragging");
-        window.removeEventListener("mousemove", onMove as any);
-        window.removeEventListener("mouseup", onUp as any);
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
       };
-      window.addEventListener("mousemove", onMove as any);
-      window.addEventListener("mouseup", onUp as any);
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
     });
     if (expandBtn) {
       expandBtn.addEventListener("click", (ev) => {
@@ -322,7 +329,6 @@ export function initBridgeWindows(rootEl: HTMLElement) {
         });
         if (expand) {
           bringToFront();
-          // Capture current computed rect if inline styles are missing
           if (!win.style.left || !win.style.width) {
             const wr = win.getBoundingClientRect();
             const wsr = workspace.getBoundingClientRect();
@@ -331,10 +337,10 @@ export function initBridgeWindows(rootEl: HTMLElement) {
             if (!win.style.width) win.style.width = `${wr.width}px`;
             if (!win.style.height) win.style.height = `${wr.height}px`;
           }
-          (win as HTMLElement).dataset.prevLeft = win.style.left;
-          (win as HTMLElement).dataset.prevTop = win.style.top;
-          (win as HTMLElement).dataset.prevWidth = win.style.width;
-          (win as HTMLElement).dataset.prevHeight = win.style.height;
+          win.dataset.prevLeft = win.style.left;
+          win.dataset.prevTop = win.style.top;
+          win.dataset.prevWidth = win.style.width;
+          win.dataset.prevHeight = win.style.height;
           win.classList.add("is-expanded");
           (expandBtn as HTMLElement).textContent = "▣";
         }

@@ -65,7 +65,9 @@ export function buildEnemyFromSpawn(sys: any, zone: SpawnZone, entry: { type: st
   const x = Math.round(zone.x + Math.cos(ang) * rad);
   const y = Math.round(zone.y + Math.sin(ang) * rad);
 
-  const hp = 45 + entry.level * 15;
+  const hp = Math.ceil((def.baseHp ?? 45) * (1 + entry.level * 0.2));
+  const shield = Math.ceil((def.shield ?? 0) * (1 + entry.level * 0.2));
+  const structure = Math.ceil((def.baseStructure ?? 0) * (1 + entry.level * 0.2));
   const credits = Math.floor((def.credits ?? 4) * (1 + entry.level * 0.5));
 
   const en: Record<string, any> = {
@@ -76,6 +78,9 @@ export function buildEnemyFromSpawn(sys: any, zone: SpawnZone, entry: { type: st
     px: x, py: y,
     spawnX: x, spawnY: y,
     hp, maxHp: hp,
+    shield, maxShield: shield,
+    structure, maxStructure: structure,
+    weaponMult: def.weaponMult ?? 1.0,
     vx: 0, vy: 0,
     angle: f() * TAU, prevAngle: f() * TAU,
     speed: def.speed ?? 100,

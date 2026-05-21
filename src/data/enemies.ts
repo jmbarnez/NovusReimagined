@@ -20,6 +20,10 @@ export interface EnemyDef {
   colRadius: number;
   speed: number;
   accuracy: number;
+  baseHp: number;
+  baseStructure: number;
+  shield?: number;
+  weaponMult?: number;
   loot: Record<string, number>;
   weaponRange?: number;
   wreckChance?: number;
@@ -34,13 +38,18 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
     credits: 8,
     sigRadius: 18,
     colRadius: 10,
-    speed: 180,
-    accuracy: 1.1,
+    speed: 80,
+    accuracy: 0.5,
+    baseHp: 3,
+    baseStructure: 2,
+    shield: 0,
+    weaponMult: 0.4,
+    weaponRange: 250,
     wreckChance: 0.30,
     loot: { scrap: 0.5, chip: 0.1 },
     moduleLoot: [
-      { id: "tu-neutron", weight: 1 },
-      { id: "me-ab1", weight: 1 },
+      { id: "tu-npc-mite-laser", weight: 1 },
+      { id: "me-ab1", weight: 0.2 },
     ],
     slots: { turret: 1 },
     render: {
@@ -55,12 +64,16 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
     credits: 4,
     sigRadius: 25,
     colRadius: 10,
-    speed: 130,
-    accuracy: 0.7,
+    speed: 90,
+    accuracy: 0.6,
+    baseHp: 5,
+    baseStructure: 1,
+    shield: 0,
+    weaponMult: 0.6,
     wreckChance: 0.45,
     loot: { scrap: 0.6, chip: 0.08 },
     moduleLoot: [
-      { id: "tu-cannon", weight: 2 },
+      { id: "tu-civilian-cannon", weight: 2 },
       { id: "hi-nos", weight: 1 },
     ],
     slots: { turret: 1, high: 1 },
@@ -78,11 +91,15 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
     colRadius: 13,
     speed: 0,
     accuracy: 0.85,
+    baseHp: 6,
+    baseStructure: 4,
+    shield: 0,
+    weaponMult: 0.5,
     loot: { scrap: 0.8, chip: 0.15 },
-    weaponRange: 1000,
+    weaponRange: 900,
     wreckChance: 0.35,
     moduleLoot: [
-      { id: "tu-ion", weight: 2 },
+      { id: "tu-npc-sentry-cannon", weight: 2 },
       { id: "hi-nos", weight: 1 },
     ],
     slots: { turret: 1, med: 1 },
@@ -100,6 +117,10 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
     colRadius: 18,
     speed: 110,
     accuracy: 1.0,
+    baseHp: 35,
+    baseStructure: 25,
+    shield: 20,
+    weaponMult: 0.8,
     wreckChance: 0.60,
     loot: { scrap: 1.2, cell: 0.1 },
     moduleLoot: [
@@ -122,6 +143,10 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
     colRadius: 20,
     speed: 125,
     accuracy: 1.15,
+    baseHp: 120,
+    baseStructure: 90,
+    shield: 80,
+    weaponMult: 1.0,
     wreckChance: 0.85,
     loot: { scrap: 3, chip: 0.4, cell: 0.35 },
     moduleLoot: [

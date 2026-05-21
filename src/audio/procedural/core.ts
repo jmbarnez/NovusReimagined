@@ -14,7 +14,7 @@ export function getAudio(): { ctx: AudioContext; master: GainNode } | null {
     if (!AC) return null;
     const newCtx = new AC();
     const newMaster = newCtx.createGain();
-    newMaster.gain.value = 0.42;
+    newMaster.gain.value = 0.42 * _sfxVolume;
     newMaster.connect(newCtx.destination);
     _ctx = newCtx;
     _master = newMaster;

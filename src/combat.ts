@@ -1,14 +1,14 @@
-import { G, Client } from "./state.js";
+import { G, Client, type Player } from "./state.js";
 import { dst, aimAngle } from "./utils/math.js";
 import { ensureAmmoDefaults, addXp, addSkillXp } from "./player/player-data.js";
 import { getStats, getWeaponProfileForSlot, weaponSkillBonus } from "./player/player-stats.js";
 import { WEAPON_SKILL, type WeaponDelivery } from "./data/skills.js";
 import { CAP_FIRE_SURCHARGE, XP_PER_KILL, RESPAWN_S, PLAYER_PARTICIPATION_WINDOW_MS } from "./constants.js";
-import { floatText, spawnParticles, spawnBeam, spawnBeamImpactSubtle, spawnImpactFlash, spawnExplosion, spawnShockwave, spawnMuzzleFlash } from "./utils/fx.js";
-import { addBullet } from "./utils/entities.js";
-import { clearSensorLocks, syncPrimaryTargetLock, targetByLockId, isAsteroidTarget, transversalVs } from "./targeting.js";
+import { floatText, spawnParticles, spawnBeam, spawnBeamImpactSubtle, spawnImpactFlash, spawnExplosion, spawnMuzzleFlash } from "./utils/fx.js";
+import { addBullet, isTargetDestroyed, type BulletOwner } from "./utils/entities.js";
+import { clearSensorLocks, syncPrimaryTargetLock, targetByLockId, isAsteroidTarget, transversalVs, removeSensorLock } from "./targeting.js";
 import { liveEnemies, curSys } from "./utils/game.js";
-import { MODULES, MODULE_FLAGS } from "./data/modules.js";
+import { MODULES, MODULE_FLAGS, type ModuleDef } from "./data/modules.js";
 import { SHIPS } from "./data/ships.js";
 import { flashSlotFire, logEvent } from "./ui/hud-overlay.js";
 import { progressMissions } from "./data/missions.js";
@@ -16,6 +16,9 @@ import { showDamageNumber } from "./combat/damage-display.js";
 import { sfxWeaponFire, sfxShipExplosion, sfxProjectileImpact } from "./audio/procedural.js";
 import { spawnWreck } from "./wreck.js";
 import { C } from "./config/index.js";
+import type { Enemy, Asteroid, WreckPiece } from "./types/world.js";
+import type { ModuleInstance } from "./types/moduleInstance.js";
+import type { WeaponProfile } from "./data/weaponProfiles.js";
 
 function aimDeviationCone(baseScatter: number, distScatter: number, capRad: number, dist: number, accuracy: number): number {
   const totalScatter = (baseScatter + distScatter) / Math.max(0.1, accuracy);
@@ -24,11 +27,10 @@ function aimDeviationCone(baseScatter: number, distScatter: number, capRad: numb
   return u * coneHalf;
 }
 
-export function computeHitChance(target: any, turretMod: any, wProf: any): number {
-  if (!target) return 1;
+function computeAimDeviationInternal(target: Enemy | Asteroid | WreckPiece, turretMod: ModuleDef | null, wProf: WeaponProfile): { deviation: number; sig: number; dist: number } {
   const dist = Math.max(1, dst(G.P.x, G.P.y, target.x, target.y));
   const tracking = turretMod?.trackingSpeed ?? 0.5;
-  const sig = target.sigRadius || 30;
+  const sig = (target as Enemy).sigRadius || 30;
   const delivery = (turretMod?.weaponDelivery ?? "projectile") as WeaponDelivery;
   const skillLvl = G.P.skills[WEAPON_SKILL[delivery]] || 0;
   const skill = C.COMBAT.PLAYER_AIM.skillBase + skillLvl * C.COMBAT.PLAYER_AIM.skillPerWeaponLevel;
@@ -36,36 +38,28 @@ export function computeHitChance(target: any, turretMod: any, wProf: any): numbe
   const baseScatter = sig * C.COMBAT.PLAYER_AIM.sigMultiplier;
   const distScatter = distRatio * distRatio * C.COMBAT.PLAYER_AIM.distanceScatterBase;
   const trackPenalty = 1 / Math.max(C.COMBAT.PLAYER_AIM.trackingFloor, tracking);
-  const transv = transversalVs(target);
+  const transv = transversalVs(target as Enemy);
   const trackingThreshold = tracking * wProf.range * C.COMBAT.PLAYER_AIM.trackingThresholdMultiplier;
   const transvRatio = transv / Math.max(1, trackingThreshold);
   const transvScatter = Math.min(C.COMBAT.PLAYER_AIM.transversalCap, transvRatio) * C.COMBAT.PLAYER_AIM.transversalScatterBase;
   const deviation = aimDeviationCone((baseScatter + transvScatter) * trackPenalty, distScatter * trackPenalty, C.COMBAT.PLAYER_AIM.deviationCapRad, dist, skill);
+  return { deviation, sig, dist };
+}
+
+export function computeHitChance(target: Enemy | Asteroid | WreckPiece | null, turretMod: ModuleDef | null, wProf: WeaponProfile): number {
+  if (!target) return 1;
+  const { deviation, sig, dist } = computeAimDeviationInternal(target, turretMod, wProf);
   const targetAngularSize = sig / dist;
   const ratio = targetAngularSize / Math.max(0.001, deviation);
   return Math.min(1, Math.max(0, (ratio - 0.3) / 0.7));
 }
 
-export function computeAimDeviation(target: any, turretMod: any, wProf: any): number {
+export function computeAimDeviation(target: Enemy | Asteroid | WreckPiece | null, turretMod: ModuleDef | null, wProf: WeaponProfile): number {
   if (!target) return 0;
-  const dist = Math.max(1, dst(G.P.x, G.P.y, target.x, target.y));
-  const tracking = turretMod?.trackingSpeed ?? 0.5;
-  const sig = target.sigRadius || 30;
-  const delivery = (turretMod?.weaponDelivery ?? "projectile") as WeaponDelivery;
-  const skillLvl = G.P.skills[WEAPON_SKILL[delivery]] || 0;
-  const skill = C.COMBAT.PLAYER_AIM.skillBase + skillLvl * C.COMBAT.PLAYER_AIM.skillPerWeaponLevel;
-  const distRatio = Math.min(dist / Math.max(1, wProf.range), C.COMBAT.PLAYER_AIM.distanceRatioCap);
-  const baseScatter = sig * C.COMBAT.PLAYER_AIM.sigMultiplier;
-  const distScatter = distRatio * distRatio * C.COMBAT.PLAYER_AIM.distanceScatterBase;
-  const trackPenalty = 1 / Math.max(C.COMBAT.PLAYER_AIM.trackingFloor, tracking);
-  const transv = transversalVs(target);
-  const trackingThreshold = tracking * wProf.range * C.COMBAT.PLAYER_AIM.trackingThresholdMultiplier;
-  const transvRatio = transv / Math.max(1, trackingThreshold);
-  const transvScatter = Math.min(C.COMBAT.PLAYER_AIM.transversalCap, transvRatio) * C.COMBAT.PLAYER_AIM.transversalScatterBase;
-  return aimDeviationCone((baseScatter + transvScatter) * trackPenalty, distScatter * trackPenalty, C.COMBAT.PLAYER_AIM.deviationCapRad, dist, skill);
+  return computeAimDeviationInternal(target, turretMod, wProf).deviation;
 }
 
-export function computeEnemyAimDeviation(enemy: any, dist: number): number {
+export function computeEnemyAimDeviation(enemy: Enemy, dist: number): number {
   const accuracy = enemy.accuracy ?? 1.0;
   const baseScatter = C.COMBAT.ENEMY_AIM.baseScatter / Math.max(C.COMBAT.ENEMY_AIM.accuracyFloor, accuracy);
   const distRatio = Math.min(dist / C.COMBAT.ENEMY_AIM.distanceReference, C.COMBAT.ENEMY_AIM.distanceRatioCap);
@@ -125,7 +119,7 @@ export function updateTurretCooldowns(dt: number) {
     const assignedId = G.P.turretTargets?.[i];
     if (!assignedId) continue;
 
-    const lockSlot = G.P.lockQueue?.find((s: any) => s.id === assignedId && !s.resolving);
+    const lockSlot = G.P.lockQueue?.find((s) => s.id === assignedId && !s.resolving);
     if (!lockSlot) continue;
 
     const target = targetByLockId(assignedId);
@@ -139,72 +133,112 @@ export function updateTurretCooldowns(dt: number) {
   }
 }
 
-export function playerShoot(slotIdx = 0, targetEnemy: any = null, isAutoFire = false): boolean {
-  ensureAmmoDefaults();
-  const st = getStats();
+function validatePlayerShootRequirements(
+  slotIdx: number,
+  isAutoFire: boolean
+): { uid: string; inst: ModuleInstance; turretMod: ModuleDef; wProf: WeaponProfile; capNeed: number; ammoKey: string; ammoCost: number } | null {
   const uid = G.P.fitting?.turret?.[slotIdx];
-  if (!uid) return false;
+  if (!uid) return null;
   const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
-  if (!inst) return false;
+  if (!inst) return null;
   const turretMod = MODULES[inst.baseId];
-  if (!turretMod) return false;
-  if (MODULE_FLAGS.isMiningTurret(turretMod)) return false;
+  if (!turretMod) return null;
+  if (MODULE_FLAGS.isMiningTurret(turretMod)) return null;
 
   const wProf = getWeaponProfileForSlot(slotIdx);
-  if (!wProf) return false;
+  if (!wProf) return null;
 
-  if ((G.P.turretCds?.[slotIdx] || 0) > 0) return false;
+  if ((G.P.turretCds?.[slotIdx] || 0) > 0) return null;
 
   const capNeed = wProf.ec + CAP_FIRE_SURCHARGE;
-  if (G.P.energy < capNeed) return false;
+  if (G.P.energy < capNeed) return null;
 
   const ammoKey = wProf.ammoType || "hybrid";
   const ammoCost = wProf.ammoPerShot ?? 1;
-  if (ammoKey !== "none" && (G.P.ammo[ammoKey as keyof typeof G.P.ammo] ?? 0) < ammoCost) {
+  if (ammoCost > 0 && (G.P.ammo[ammoKey as keyof typeof G.P.ammo] ?? 0) < ammoCost) {
     if (!isAutoFire) {
       floatText(G.P.x, G.P.y - 22, "NO AMMO", "#ff9944");
       logEvent("Weapon failed: ammunition depleted", "warn");
     }
-    return false;
+    return null;
   }
 
-  let actualTarget = targetEnemy;
-  if (actualTarget && actualTarget.alive === false) actualTarget = null;
-  if (actualTarget && actualTarget.depleted === true) actualTarget = null;
-  if (actualTarget && actualTarget.hp <= 0) actualTarget = null;
+  return { uid, inst, turretMod, wProf, capNeed, ammoKey, ammoCost };
+}
 
-  let angle: number;
-  if (actualTarget) {
-    // Predictive aim: calculate intercept point
-    const tx = actualTarget.x - G.P.x;
-    const ty = actualTarget.y - G.P.y;
-    const tvx = actualTarget.vx || 0;
-    const tvy = actualTarget.vy || 0;
-    const bspd = wProf.spd;
+function calculatePredictiveAimAngle(actualTarget: Enemy | Asteroid | WreckPiece | null, wProf: WeaponProfile): number {
+  if (!actualTarget) {
+    return aimAngle(G.P.x, G.P.y, Client.mouseWorld.x, Client.mouseWorld.y);
+  }
 
-    // Solve for time 't' in: dist_sq = (tx + tvx*t)^2 + (ty + tvy*t)^2 = (bspd*t)^2
-    // t^2(bspd^2 - tvx^2 - tvy^2) - 2t(tx*tvx + ty*tvy) - (tx^2 + ty^2) = 0
-    const a = bspd * bspd - (tvx * tvx + tvy * tvy);
-    const b = -2 * (tx * tvx + ty * tvy);
-    const c = -(tx * tx + ty * ty);
+  // Predictive aim: calculate intercept point
+  const tx = actualTarget.x - G.P.x;
+  const ty = actualTarget.y - G.P.y;
+  const tvx = (actualTarget as Enemy).vx || 0;
+  const tvy = (actualTarget as Enemy).vy || 0;
+  const bspd = wProf.spd;
 
-    let t = 0;
-    if (a === 0) {
-      t = -c / b;
-    } else {
-      const disc = b * b - 4 * a * c;
-      if (disc >= 0) {
-        t = (-b + Math.sqrt(disc)) / (2 * a);
+  // Solve for time 't' in: dist_sq = (tx + tvx*t)^2 + (ty + tvy*t)^2 = (bspd*t)^2
+  // t^2(bspd^2 - tvx^2 - tvy^2) - 2t(tx*tvx + ty*tvy) - (tx^2 + ty^2) = 0
+  const a = bspd * bspd - (tvx * tvx + tvy * tvy);
+  const b = -2 * (tx * tvx + ty * tvy);
+  const c = -(tx * tx + ty * ty);
+
+  let t = 0;
+  if (a === 0) {
+    t = -c / b;
+  } else {
+    const disc = b * b - 4 * a * c;
+    if (disc >= 0) {
+      t = (-b + Math.sqrt(disc)) / (2 * a);
+    }
+  }
+
+  const ix = actualTarget.x + (t > 0 ? tvx * t : 0);
+  const iy = actualTarget.y + (t > 0 ? tvy * t : 0);
+  return Math.atan2(iy - G.P.y, ix - G.P.x);
+}
+
+function fireBeamWeapon(ox: number, oy: number, angle: number, wProf: WeaponProfile, finalDmg: number, delivery: WeaponDelivery) {
+  const dx = Math.cos(angle), dy = Math.sin(angle), range = wProf.range;
+  let hitDist = range, hitEnemy: Enemy | null = null;
+  for (const e of liveEnemies()) {
+    const ex = e.x - ox, ey = e.y - oy;
+    const proj = ex * dx + ey * dy;
+    if (proj < 0 || proj > range) continue;
+    const hitR = (e.sigRadius || 30) * 0.6 + 8;
+    const perp = Math.abs(ex * dy - ey * dx);
+    if (perp < hitR) {
+      const surfaceDist = proj - Math.sqrt(Math.max(0, hitR * hitR - perp * perp));
+      if (surfaceDist > 0 && surfaceDist < hitDist) {
+        hitDist = surfaceDist;
+        hitEnemy = e;
       }
     }
-
-    const ix = actualTarget.x + (t > 0 ? tvx * t : 0);
-    const iy = actualTarget.y + (t > 0 ? tvy * t : 0);
-    angle = Math.atan2(iy - G.P.y, ix - G.P.x);
-  } else {
-    angle = aimAngle(G.P.x, G.P.y, Client.mouseWorld.x, Client.mouseWorld.y);
   }
+  const ex2 = ox + dx * hitDist, ey2 = oy + dy * hitDist;
+  spawnBeam(ox, oy, ex2, ey2, wProf.color, 3);
+  if (hitEnemy) {
+    damageEnemy(hitEnemy, finalDmg, ex2, ey2, G.P, delivery);
+    spawnBeamImpactSubtle(ex2, ey2, wProf.color);
+    sfxProjectileImpact(ex2, ey2, "beam");
+  } else {
+    spawnParticles(ex2, ey2, wProf.trail, 1, 50);
+  }
+}
 
+export function playerShoot(slotIdx = 0, targetEnemy: Enemy | Asteroid | WreckPiece | null = null, isAutoFire = false): boolean {
+  ensureAmmoDefaults();
+  const reqs = validatePlayerShootRequirements(slotIdx, isAutoFire);
+  if (!reqs) return false;
+
+  const { turretMod, wProf, capNeed, ammoKey, ammoCost } = reqs;
+  const st = getStats();
+
+  let actualTarget = targetEnemy;
+  if (actualTarget && isTargetDestroyed(actualTarget)) actualTarget = null;
+
+  const angle = calculatePredictiveAimAngle(actualTarget, wProf);
   const hitChance = actualTarget && !isAsteroidTarget(actualTarget.id)
     ? computeHitChance(actualTarget, turretMod, wProf)
     : 1;
@@ -216,44 +250,22 @@ export function playerShoot(slotIdx = 0, targetEnemy: any = null, isAutoFire = f
   flashSlotFire(slotIdx);
 
   const pos = getTurretWorldPos(slotIdx);
-  const pan = (pos.y - G.P.y) / 20;
-
   const muzzleIntensity = turretMod.weaponDelivery === "missile" ? C.COMBAT.MUZZLE_FLASH.missileIntensity : turretMod.weaponDelivery === "projectile" && wProf.dmg >= C.COMBAT.MUZZLE_FLASH.heavyProjectileDmgThreshold ? C.COMBAT.MUZZLE_FLASH.heavyProjectileIntensity : C.COMBAT.MUZZLE_FLASH.defaultIntensity;
   spawnMuzzleFlash(pos.x, pos.y, angle, wProf.color, muzzleIntensity);
   sfxWeaponFire(turretMod.weaponDelivery!, turretMod.id, 1, pos.x, pos.y);
 
   const delivery = (turretMod.weaponDelivery ?? "projectile") as WeaponDelivery;
   const weaponMult = st.weaponMult * (1 + weaponSkillBonus(delivery));
-  const finalDmg = Math.max(1, Math.floor(wProf.dmg * weaponMult));
+  
+  // Calculate damage with variance (0.5 to 1.0 of base) and floor it. 
+  // If base is low (like 3), this naturally creates 0-3 range with misses.
+  const variance = 0.5 + Math.random() * 0.7; // 50% to 120%
+  const finalDmg = Math.max(1, Math.floor(wProf.dmg * weaponMult * variance));
 
   const ox = pos.x, oy = pos.y;
 
   if (wProf.type === "beam") {
-    const dx = Math.cos(angle), dy = Math.sin(angle), range = wProf.range;
-    let hitDist = range, hitEnemy = null;
-    for (const e of liveEnemies()) {
-      const ex = e.x - ox, ey = e.y - oy;
-      const proj = ex * dx + ey * dy;
-      if (proj < 0 || proj > range) continue;
-      const hitR = (e.sigRadius || 30) * 0.6 + 8;
-      const perp = Math.abs(ex * dy - ey * dx);
-      if (perp < hitR) {
-        const surfaceDist = proj - Math.sqrt(Math.max(0, hitR * hitR - perp * perp));
-        if (surfaceDist > 0 && surfaceDist < hitDist) {
-          hitDist = surfaceDist;
-          hitEnemy = e;
-        }
-      }
-    }
-    const ex2 = ox + dx * hitDist, ey2 = oy + dy * hitDist;
-    spawnBeam(ox, oy, ex2, ey2, wProf.color, 3);
-    if (hitEnemy) {
-      damageEnemy(hitEnemy, finalDmg, ex2, ey2, G.P, delivery);
-      spawnBeamImpactSubtle(ex2, ey2, wProf.color);
-      sfxProjectileImpact(ex2, ey2, "beam");
-    } else {
-      spawnParticles(ex2, ey2, wProf.trail, 1, 50);
-    }
+    fireBeamWeapon(ox, oy, angle, wProf, finalDmg, delivery);
   } else {
     addBullet({
       x: ox, y: oy, px: ox, py: oy,
@@ -271,21 +283,57 @@ export function playerShoot(slotIdx = 0, targetEnemy: any = null, isAutoFire = f
   return true;
 }
 
-export function damageEnemy(e: any, dmg: number, px: number, py: number, owner?: any, weaponKind?: WeaponDelivery | string | null) {
+export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner?: BulletOwner, weaponKind?: WeaponDelivery | string | null) {
   if (dmg <= 0) return;
-  e.hp -= dmg;
+  
+  let displayType = "hit";
+  let overflow = dmg;
+  
+  if (e.shield !== undefined && e.shield > 0) {
+    displayType = "shield";
+    e.shieldHitGlow = 1;
+    e.shieldHitAngle = Math.atan2(py - e.y, px - e.x);
+    if (overflow >= e.shield) {
+      overflow -= e.shield;
+      e.shield = 0;
+    } else {
+      e.shield -= overflow;
+      overflow = 0;
+    }
+  }
+  
+  if (overflow > 0) {
+    displayType = "hull";
+    if (overflow >= e.hp) {
+      overflow -= e.hp;
+      e.hp = 0;
+    } else {
+      e.hp -= overflow;
+      overflow = 0;
+    }
+  }
+
+  // Structure absorbs whatever overflows past hull (only ships with a structure layer)
+  if (overflow > 0 && (e.maxStructure ?? 0) > 0) {
+    displayType = "structure";
+    e.structureHitGlow = 1;
+    e.structure = (e.structure ?? 0) - overflow;
+    if (e.structure < 0) e.structure = 0;
+  }
+
   if (!owner || owner === G.P) {
     e._lastPlayerHitAt = performance.now();
     if (weaponKind === "projectile" || weaponKind === "beam" || weaponKind === "missile") {
       e._lastPlayerHitKind = weaponKind;
     }
   }
-  floatText(e.x, e.y - 14, `-${dmg}`, "#ff6666", "#aa2222");
-  spawnImpactFlash(px || e.x, py || e.y, "#ff4422");
-  if (e.hp <= 0) killEnemy(e);
+  
+  showDamageNumber(e.x, e.y - 14, dmg, displayType, "playerToEnemy");
+  spawnImpactFlash(px || e.x, py || e.y, displayType === "shield" ? "#44ccff" : "#ff4422");
+  if (e.hp <= 0 && (e.structure ?? 0) <= 0) killEnemy(e);
 }
 
-export function damageAsteroid(a: any, dmg: number, px: number, py: number) {
+export function damageAsteroid(a: Asteroid, dmg: number, px: number, py: number) {
   if (dmg <= 0) return;
   a.hp -= dmg;
   floatText(a.x, a.y - a.radius - 8, `-${Math.round(dmg)}`, "#88bbff");
@@ -296,19 +344,13 @@ export function damageAsteroid(a: any, dmg: number, px: number, py: number) {
   }
 }
 
-export function killEnemy(e: any) {
-  G.P.lockQueue = G.P.lockQueue.filter((s: any) => s.id !== e.id);
-  syncPrimaryTargetLock();
-  if (G.P.turretTargets) {
-    for (let i = 0; i < G.P.turretTargets.length; i++) {
-      if (G.P.turretTargets[i] === e.id) G.P.turretTargets[i] = null;
-    }
-  }
+export function killEnemy(e: Enemy) {
+  removeSensorLock(e.id);
   e.alive = false;
   e.respawnTimer = RESPAWN_S;
   const exScale = e.type === "raider" ? C.COMBAT.EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.EXPLOSION_SCALE.pirate : C.COMBAT.EXPLOSION_SCALE.default;
-  spawnExplosion(e.x, e.y, "#ff4422", exScale);
-  spawnShockwave(e.x, e.y, "#ff4422", exScale);
+  const exTier: "small" | "medium" | "large" = e.type === "raider" ? "large" : e.type === "pirate" ? "medium" : "small";
+  spawnExplosion(e.x, e.y, "#ff4422", exScale, exTier);
   sfxShipExplosion(e.x, e.y, e.type === "raider" ? C.COMBAT.SFX_EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.SFX_EXPLOSION_SCALE.pirate : C.COMBAT.SFX_EXPLOSION_SCALE.default);
 
   const playerParticipated = e._lastPlayerHitAt && (performance.now() - e._lastPlayerHitAt) < PLAYER_PARTICIPATION_WINDOW_MS;

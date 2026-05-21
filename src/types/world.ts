@@ -121,6 +121,12 @@ export interface Enemy {
   fitting: Record<string, (string | null)[]>;
   turretCds: number[];
 
+  shield?: number;
+  maxShield?: number;
+  structure?: number;
+  maxStructure?: number;
+  weaponMult?: number;
+
   // AI/combat scratch state (set during ticks)
   targetingPlayer?: boolean;
   hasLockOnPlayer?: boolean;
@@ -130,10 +136,18 @@ export interface Enemy {
   _lastPlayerHitAt?: number;
   _lastPlayerHitKind?: "projectile" | "beam" | "missile";
 
+  // Shield hit visual state
+  shieldHitGlow?: number;
+  shieldHitAngle?: number;
+  structureHitGlow?: number;
+
   // Render scratch state — cached label text metrics, keyed on (name,level)
   _labelKey?: string;
   _nameW?: number;
   _lvlW?: number;
+
+  // Temporary module instances stored on the fitting at spawn time
+  _tempInstances?: import("./moduleInstance.js").ModuleInstance[];
 }
 
 export interface AsteroidCrystal {
@@ -168,6 +182,23 @@ export interface Asteroid {
   hasCrystals?: boolean;
   crystalHue?: number;
   crystals?: AsteroidCrystal[];
+}
+
+// ── Background silhouettes (gas giants / derelicts) ──────────────────────
+
+export interface Silhouette {
+  kind: "giant" | "derelict";
+  x: number;
+  y: number;
+  r: number;
+  baseHue: number;
+  sat: number;
+  lit: number;
+  hue: number;
+  tilt: number;
+  hasRing: boolean;
+  ringTilt: number;
+  seed: number;
 }
 
 // ── System ───────────────────────────────────────────────────────────────
@@ -208,6 +239,7 @@ export interface System {
   _nebulaSeed?: number;
   _nebulaBlobs?: unknown[];
   _ambientTraders?: unknown[];
+  _silhouettes?: Silhouette[];
 }
 
 // ── Background scenery ───────────────────────────────────────────────────
@@ -226,6 +258,7 @@ export interface DustParticle {
   r: number;
   a: number;
   drift: number;
+  parallax: number;
 }
 
 // ── Loot drops ───────────────────────────────────────────────────────────

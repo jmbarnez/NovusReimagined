@@ -111,6 +111,8 @@ export interface MiningLaserState {
   hitR: number;
   hitNx: number;
   hitNy: number;
+  oreKey: string;
+  oreColor: string;
 }
 
 export interface SalvagerState {
@@ -177,6 +179,7 @@ export interface ClientState {
   skillsOpen: boolean;
   settings: Settings;
   showPerf: boolean;
+  gameStarted: boolean;
   _lastBridgeRender: number;
 }
 
@@ -192,7 +195,7 @@ export const G: GameState = {
   wreckPieces: [],
   salvagePickups: [],
   impactDecals: [],
-  miningLaser: { active: false, x1: 0, y1: 0, x2: 0, y2: 0, phase: 0, hitR: 0, hitNx: 0, hitNy: 0 },
+  miningLaser: { active: false, x1: 0, y1: 0, x2: 0, y2: 0, phase: 0, hitR: 0, hitNx: 0, hitNy: 0, oreKey: "", oreColor: "" },
   salvager: { active: false, targetPieceId: null, x1: 0, y1: 0, x2: 0, y2: 0, phase: 0 },
   warpCooldown: 0,
   warpTargetIdx: -1,

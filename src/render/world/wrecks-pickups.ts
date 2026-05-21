@@ -1,4 +1,5 @@
-import { G, Client } from "../../state.js";
+import { getState } from "../../state-access.js";
+import { Client } from "../../state.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { dst } from "../../utils/math.js";
@@ -8,17 +9,19 @@ import { ORE, REFINED, LOOT, COMPONENTS } from "../../data/resources.js";
 import { getModule } from "../../data/modules.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { PICKUP_LIFE_S } from "../../wreck.js";
+import { getUIFont } from "../ui-font.js";
 
 // ── Wreck debris pieces ───────────────────────────────────────────────────
 const _wreckLockMap = new Map<string, any>();
 
 export function drawWreckPieces(now: number) {
   _wreckLockMap.clear();
-  const primaryId = G.P.targetLock?.id;
-  if (Array.isArray(G.P.lockQueue)) {
-    for (const slot of G.P.lockQueue) _wreckLockMap.set(slot.id, slot);
+  const state = getState();
+  const primaryId = state.player.targetLock?.id;
+  if (Array.isArray(state.player.lockQueue)) {
+    for (const slot of state.player.lockQueue) _wreckLockMap.set(slot.id, slot);
   }
-  for (const p of G.wreckPieces) {
+  for (const p of state.wreckPieces) {
     if (!isVisible(p.x, p.y, 50)) continue;
     const def = ENEMY_DEFS[p.type];
     const fill = def?.render?.fill ?? "#332016";
@@ -230,7 +233,8 @@ export function drawResourceIcon(icon: string, size: number, color: string) {
 // sweep, energy ring pulse, chromatic aberration (rare), vertical light pillar,
 // ground glow, resource icon, name tag, and quantity badge.
 export function drawSalvagePickups(now: number) {
-  for (const s of G.salvagePickups) {
+  const state = getState();
+  for (const s of state.salvagePickups) {
     if (!isVisible(s.x, s.y, 60)) continue;
     const fade = s.life < 8 ? s.life / 8 : 1;
     const bobY = Math.sin(s.bob) * 2.5;
@@ -280,7 +284,7 @@ export function drawSalvagePickups(now: number) {
       label = def?.label ?? s.payload;
     }
 
-    const qtyStr = s.qty > 1 ? ` x${s.qty}` : "";
+    const qtyStr = s.qty > 1 && s.kind !== "credits" ? ` x${s.qty}` : "";
     const pillarH = 50;
 
     ctx.save();
@@ -364,7 +368,7 @@ export function drawSalvagePickups(now: number) {
 
     // ── Name tag + quantity below ───────────────────────────────────────────
     ctx.globalAlpha = (0.85 + 0.15 * Math.sin(now * 0.002 + s.bob * 2)) * fade * flicker;
-    ctx.font = "7px monospace";
+    ctx.font = `7px ${getUIFont()}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     const nameY = 8;

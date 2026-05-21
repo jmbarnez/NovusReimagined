@@ -5,7 +5,7 @@
   width: 150px;
   font-size: 9px;
   font-weight: 700;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   color: var(--hud-text-main);
   text-align: left;
   pointer-events: none;
@@ -20,7 +20,7 @@
   width: 150px;
   font-size: 8px;
   font-weight: 700;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   text-align: left;
   pointer-events: none;
   letter-spacing: 0.1em;

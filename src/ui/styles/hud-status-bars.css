@@ -1,23 +1,23 @@
 /* ── Status Bars ── */
 #hud-status-bars {
   display: flex;
-  gap: 8px;
-  padding: 2px 8px 0;
+  gap: 4px;
+  padding: 2px 6px 0;
 }
 .hud-bar-group {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 .hud-bar-label {
-  font-size: 7px; font-weight: 700;
-  color: #9eb6d4;
-  min-width: 24px;
+  font-size: 6px; font-weight: 700;
+  color: var(--hud-text-dim);
+  min-width: 20px;
 }
 .hud-bar-track {
   flex: 1;
-  height: 8px;
+  height: 5px;
   background: rgba(0,0,0,0.6);
   position: relative;
 }
@@ -26,11 +26,11 @@
   height: 100%;
   transition: width 0.1s linear;
 }
-.hud-bar-fill.shield { background: linear-gradient(180deg, #44ccff, #1188bb); }
-.hud-bar-fill.hull   { background: linear-gradient(180deg, #ee9944, #995522); }
-.hud-bar-fill.struct { background: linear-gradient(180deg, #ee4444, #992222); }
+.hud-bar-fill.shield { background: linear-gradient(180deg, var(--hud-shield), color-mix(in srgb, var(--hud-shield) 55%, #000)); }
+.hud-bar-fill.hull   { background: linear-gradient(180deg, var(--hud-hull), color-mix(in srgb, var(--hud-hull) 55%, #000)); }
+.hud-bar-fill.struct { background: linear-gradient(180deg, var(--hud-danger), color-mix(in srgb, var(--hud-danger) 55%, #000)); }
 .hud-bar-fill.cap {
-  background: linear-gradient(180deg, #ffdd66, #ccaa22);
+  background: linear-gradient(180deg, var(--hud-cap), color-mix(in srgb, var(--hud-cap) 55%, #000));
   position: relative;
   overflow: hidden;
   box-shadow: 0 0 6px rgba(255, 200, 50, 0.4);

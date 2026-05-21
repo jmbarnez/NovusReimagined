@@ -58,7 +58,9 @@ describe("player-stats computeStats", () => {
 
   it("skill levels increase HP and energy", () => {
     const base = computeStats();
-    G.P.skillXp.engineering = 1000;
+    // Need enough XP for engineering level 5 (3085 XP) so that
+    // floor(hull * (1 + 5 * 0.025)) = floor(12 * 1.125) = 13 > 12.
+    G.P.skillXp.engineering = 3085;
     invalidate();
     const skilled = computeStats();
     expect(skilled.maxHp).toBeGreaterThan(base.maxHp);
@@ -83,8 +85,9 @@ describe("player-data loadPlayer migrations", () => {
     localStorage.removeItem("ss2-sim-v1");
     const p = loadPlayer();
     expect(p.shipId).toBe("scout");
-    expect(p.fitting.turret[0]).toBe("start-tu-cannon");
-    expect(p.moduleCargo.length).toBe(3);
+    // makePlayer now issues civilian starter modules with this uid.
+    expect(p.fitting.turret[0]).toBe("start-tu-civ-cannon");
+    expect(p.moduleCargo.length).toBe(2);
   });
 
   it("migrates moduleInventory to moduleCargo", () => {

@@ -25,7 +25,7 @@ export interface ModuleEffects {
   miningRangeKmBonus?: number;
   lockScanBonus?: number;
   evasionMultBonus?: number;
-  [key: string]: any;
+  [key: string]: number | undefined;
 }
 
 export interface DamageProfile {
@@ -70,6 +70,37 @@ export interface ModuleDef {
 export const MODULE_HOLD_VOLUME_M3 = 4;
 
 export const MODULES: Record<string, ModuleDef> = {
+  "tu-civilian-cannon": {
+    id: "tu-civilian-cannon",
+    name: "Civilian Autocannon",
+    short: "Civ Cannon",
+    desc: "Scrap-built civilian weapon. Requires no ammo, but deals pitiful damage.",
+    rack: "turret",
+    weaponDelivery: "projectile",
+    projectileKmPerTick: 3.0,
+    price: 50,
+    powergrid: 1,
+    cpu: 2,
+    massKg: 500,
+    effects: { weaponMultBonus: 0.0 },
+    trackingSpeed: 0.85,
+    optimalRange: 20,
+    falloff: 10,
+    damageProfile: { kin: 1 },
+  },
+  "tu-civilian-miner": {
+    id: "tu-civilian-miner",
+    name: "Civilian Mining Laser",
+    short: "Civ Miner",
+    desc: "Weak mining tool found on civilian craft. Better than nothing.",
+    rack: "turret",
+    mining: true,
+    price: 80,
+    powergrid: 2,
+    cpu: 4,
+    massKg: 800,
+    effects: { miningMultBonus: 0.02, miningRangePctBonus: 0.05 },
+  },
   "tu-cannon": {
     id: "tu-cannon",
     name: "Light Autocannon I",
@@ -390,6 +421,33 @@ export const MODULES: Record<string, ModuleDef> = {
     cpu: 32,
     massKg: 900,
     effects: { weaponMultBonus: 0.12, miningMultBonus: 0.04 },
+  },
+  "tu-npc-sentry-cannon": {
+    id: "tu-npc-sentry-cannon",
+    name: "Sentry Cannon",
+    short: "Sentry Cannon",
+    desc: "Long range artillery.",
+    rack: "turret",
+    weaponDelivery: "projectile",
+    projectileKmPerTick: 4.0,
+    price: 0,
+    powergrid: 0,
+    cpu: 0,
+    massKg: 0,
+    effects: {},
+  },
+  "tu-npc-mite-laser": {
+    id: "tu-npc-mite-laser",
+    name: "Mite Laser",
+    short: "Mite Laser",
+    desc: "Tiny weak laser.",
+    rack: "turret",
+    weaponDelivery: "beam",
+    price: 0,
+    powergrid: 0,
+    cpu: 0,
+    massKg: 0,
+    effects: {},
   },
 };
 

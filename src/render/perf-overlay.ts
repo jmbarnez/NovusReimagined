@@ -1,4 +1,5 @@
-import { G, Client } from "../state.js";
+import { getState } from "../state-access.js";
+import { Client } from "../state.js";
 import { curSys } from "../utils/game.js";
 import { sfxBlip } from "../audio/procedural.js";
 
@@ -98,7 +99,7 @@ export function drawFpsCounter() {
     el.id = "fps-counter";
     el.style.cssText = [
       "position:fixed", "top:8px", "left:8px",
-      "font:bold 11px ui-monospace,monospace",
+      "font:bold 11px var(--font-family, 'Orbitron', sans-serif)",
       "color:rgba(255,255,255,0.75)",
       "background:rgba(0,0,0,0.45)",
       "padding:2px 7px", "border-radius:3px",
@@ -121,11 +122,12 @@ export function drawPerfOverlay() {
   ensurePerfWindow();
   _perfEl!.style.display = "flex";
 
+  const state = getState();
   const lines = [
     `FPS: ${_fps}  avg: ${_avgMs.toFixed(1)}ms  min: ${_minMs.toFixed(1)}ms  max: ${_maxMs.toFixed(1)}ms`,
     `Ticks/frame: ${_avgTicks.toFixed(1)}`,
-    `Entities: B=${G.bullets.length} EB=${G.enemyBullets.length} BM=${G.beams.length} PT=${G.particles.length} FT=${G.floatTexts.length}`,
-    `World: EN=${curSys()?._liveEnemies?.length ?? 0} AST=${curSys()?._liveAsteroids?.length ?? 0} Cells=${G.spatialGrid?.cells?.size ?? 0}`,
+    `Entities: B=${state.bullets.length} EB=${state.enemyBullets.length} BM=${state.beams.length} PT=${state.particles.length} FT=${state.floatTexts.length}`,
+    `World: EN=${curSys()?._liveEnemies?.length ?? 0} AST=${curSys()?._liveAsteroids?.length ?? 0} Cells=${state.spatialGrid?.cells?.size ?? 0}`,
   ];
 
   const mem = (performance as any).memory;

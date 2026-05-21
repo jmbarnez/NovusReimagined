@@ -1,20 +1,24 @@
 import { G } from "./state.js";
-import { SHIPS } from "./data/ships.js";
-import { MODULES, MODULE_FLAGS } from "./data/modules.js";
+import { SHIPS, ShipDef } from "./data/ships.js";
+import { MODULES, MODULE_FLAGS, ModuleDef } from "./data/modules.js";
 import { dst } from "./utils/math.js";
 import { curSys } from "./utils/game.js";
 import { LOCK_TIME_BASE } from "./constants.js";
 import { floatText } from "./utils/fx.js";
+import { isTargetDestroyed } from "./utils/entities.js";
 import { invalidate } from "./player/player-stats.js";
 import { sfxLockAcquired, sfxLockLost, sfxTurretAssign } from "./audio/procedural.js";
 import { WEAPON_PROFILES } from "./data/weaponProfiles.js";
 import { C } from "./config/index.js";
+import type { Enemy, Asteroid, WreckPiece, LockSlot } from "./types/world.js";
+import type { ComputedStats } from "./player/player-stats.js";
+import type { ModuleInstance } from "./types/moduleInstance.js";
 
 export function isWreckPieceTarget(id: string): boolean {
   return typeof id === "string" && id.startsWith("piece-");
 }
 
-export function getWeaponTurretAtSlot(idx: number): any | null {
+export function getWeaponTurretAtSlot(idx: number): ModuleDef | null {
   const uid = G.P.fitting?.turret?.[idx];
   if (!uid) return null;
   const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
@@ -22,7 +26,7 @@ export function getWeaponTurretAtSlot(idx: number): any | null {
   return m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m) ? m : null;
 }
 
-export function resolveWeaponTurret(fitting?: any): any | null {
+export function resolveWeaponTurret(fitting?: { turret?: (string | null)[] }): ModuleDef | null {
   const f = fitting || G.P.fitting;
   if (!f?.turret) return null;
   for (const uid of f.turret) {
@@ -34,11 +38,11 @@ export function resolveWeaponTurret(fitting?: any): any | null {
   return null;
 }
 
-export function getLockAcquireRangePx(ship: any): number {
+export function getLockAcquireRangePx(ship: ShipDef): number {
   return C.TARGETING.LOCK.baseRangePx * ((ship.lockRangeKm || C.TARGETING.LOCK.referenceKm) / C.TARGETING.LOCK.referenceKm);
 }
 
-export function getSensorContactRangePx(ship: any): number {
+export function getSensorContactRangePx(ship: ShipDef): number {
   return C.TARGETING.SENSOR.baseRangePx * ((ship.sensorContactRangeKm || C.TARGETING.LOCK.referenceKm) / C.TARGETING.LOCK.referenceKm);
 }
 
@@ -46,7 +50,7 @@ export function isAsteroidTarget(id: string): boolean {
   return typeof id === "string" && id.startsWith("ast-");
 }
 
-export function targetByLockId(id: string): any | null {
+export function targetByLockId(id: string): Enemy | Asteroid | WreckPiece | null {
   const sys = curSys();
   if (!sys) return null;
   const en = sys._enemyMap?.get(id);
@@ -60,7 +64,7 @@ export function targetByLockId(id: string): any | null {
   return null;
 }
 
-export function enemyByLockId(id: string): any | null {
+export function enemyByLockId(id: string): Enemy | null {
   const sys = curSys();
   if (!sys) return null;
   const en = sys._enemyMap?.get(id);
@@ -72,7 +76,7 @@ export function enemyByLockId(id: string): any | null {
  * take noticeably longer. Maps dist/sensorRange ∈ [0,1] → multiplier in
  * roughly [0.65, 1.4]. Returns 1 if the target is missing/sensor range is 0.
  */
-function distanceLockFactor(target: any): number {
+function distanceLockFactor(target: Enemy | Asteroid | WreckPiece): number {
   if (!target) return 1;
   const ship = SHIPS[G.P.shipId];
   const sensorRange = getSensorContactRangePx(ship) || 1;
@@ -81,7 +85,7 @@ function distanceLockFactor(target: any): number {
   return 0.65 + 0.75 * t;
 }
 
-export function computeLockTimeSec(target: any, st: any): number {
+export function computeLockTimeSec(target: Enemy | Asteroid | WreckPiece, st: ComputedStats): number {
   const distFactor = distanceLockFactor(target);
   if (isAsteroidTarget(target.id)) {
     // Asteroid surface scan — meaningful baseline so it isn't instant, with
@@ -91,13 +95,13 @@ export function computeLockTimeSec(target: any, st: any): number {
   if (isWreckPieceTarget(target.id)) {
     return C.TARGETING.WRECK_PIECE_LOCK_TIME * distFactor;
   }
-  const sig = target.sigRadius || 30;
+  const sig = (target as Enemy).sigRadius || 30;
   const mult = st.lockScanMult || 1;
   const base = LOCK_TIME_BASE * Math.pow(sig / C.TARGETING.LOCK.sigReference, C.TARGETING.LOCK.sigExponent) / Math.max(C.TARGETING.LOCK.multFloor, mult);
   return base * distFactor;
 }
 
-export function ensureLockQueue() {
+export function ensureLockQueue(): void {
   if (!Array.isArray(G.P.lockQueue)) G.P.lockQueue = [];
 }
 
@@ -110,14 +114,14 @@ export function enemyClassLabel(type: string): string {
   return ({ rat: "MITE", rat_drone: "MITE", drone: "DSENT", pirate: "HAC", raider: "BLITZ" } as Record<string, string>)[type] || "UNK";
 }
 
-export function computeEnemyLevel(enemy: any): number {
+export function computeEnemyLevel(enemy: Enemy): number {
   const hpScore = Math.min(1, (enemy.maxHp - C.TARGETING.ENEMY_LEVEL.hpScoreMin) / C.TARGETING.ENEMY_LEVEL.hpScoreRange);
 
   let maxDmg = 0;
   if (enemy.fitting?.turret) {
     for (const uid of enemy.fitting.turret) {
       if (!uid) continue;
-      const inst = (enemy.fitting as any)._tempInstances?.find((inst: any) => inst.uid === uid);
+      const inst = ((enemy.fitting as any)._tempInstances as ModuleInstance[] | undefined)?.find(inst => inst.uid === uid);
       const baseId = inst ? inst.baseId : uid;
       const wProf = WEAPON_PROFILES[baseId];
       if (wProf && wProf.dmg > maxDmg) maxDmg = wProf.dmg;
@@ -132,7 +136,7 @@ export function computeEnemyLevel(enemy: any): number {
   return Math.max(C.TARGETING.ENEMY_LEVEL.levelMin, Math.min(C.TARGETING.ENEMY_LEVEL.levelMax, Math.round(raw * C.TARGETING.ENEMY_LEVEL.levelScale) + C.TARGETING.ENEMY_LEVEL.levelOffset));
 }
 
-export function transversalVs(e: any): number {
+export function transversalVs(e: Enemy): number {
   const rx = e.x - G.P.x, ry = e.y - G.P.y;
   const r2 = rx * rx + ry * ry;
   if (r2 < 4) return 0;
@@ -140,7 +144,7 @@ export function transversalVs(e: any): number {
   return Math.abs(rx * rvy - ry * rvx) / Math.sqrt(r2);
 }
 
-export function syncPrimaryTargetLock() {
+export function syncPrimaryTargetLock(): void {
   ensureLockQueue();
   for (const slot of G.P.lockQueue) {
     if (slot.resolving) continue;
@@ -153,18 +157,24 @@ export function syncPrimaryTargetLock() {
   G.P.targetLock = null;
 }
 
-export function clearSensorLocks() {
+export function clearSensorLocks(): void {
   G.P.lockQueue = [];
   G.P.targetLock = null;
   if (G.P.turretTargets) G.P.turretTargets.fill(null);
+  if (G.P.highTargets) G.P.highTargets.fill(null);
 }
 
-export function removeSensorLock(id: string) {
+export function removeSensorLock(id: string): void {
   ensureLockQueue();
-  G.P.lockQueue = G.P.lockQueue.filter((s: any) => s.id !== id);
+  G.P.lockQueue = G.P.lockQueue.filter((s) => s.id !== id);
   if (G.P.turretTargets) {
     for (let i = 0; i < G.P.turretTargets.length; i++) {
       if (G.P.turretTargets[i] === id) G.P.turretTargets[i] = null;
+    }
+  }
+  if (G.P.highTargets) {
+    for (let i = 0; i < G.P.highTargets.length; i++) {
+      if (G.P.highTargets[i] === id) G.P.highTargets[i] = null;
     }
   }
   syncPrimaryTargetLock();
@@ -172,7 +182,7 @@ export function removeSensorLock(id: string) {
 
 // When a lock resolves, if there is exactly one powered mining/salvager turret
 // with no target assigned, auto-assign it and play a soft chime.
-function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean) {
+function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean): void {
   if (!isAst && !isPiece) return;
   const turretSlots = G.P.fitting?.turret || [];
   const candidates: number[] = [];
@@ -196,7 +206,7 @@ function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean
   sfxTurretAssign();
 }
 
-function autoFillUnboundWeaponTurrets() {
+function autoFillUnboundWeaponTurrets(): void {
   const turretSlots = G.P.fitting?.turret;
   if (!turretSlots) return;
   let firstEnemyLock: string | null = null;
@@ -221,7 +231,7 @@ function autoFillUnboundWeaponTurrets() {
   }
 }
 
-export function updateSensorLocks(dt: number, st: any) {
+export function updateSensorLocks(dt: number, st: ComputedStats): void {
   ensureLockQueue();
   const ship = SHIPS[G.P.shipId];
   const sensorRange = getSensorContactRangePx(ship);
@@ -229,9 +239,19 @@ export function updateSensorLocks(dt: number, st: any) {
   for (let i = G.P.lockQueue.length - 1; i >= 0; i--) {
     const slot = G.P.lockQueue[i];
     const t = targetByLockId(slot.id);
-    if (!t || (t.alive === false) || (t.depleted === true) || t.hp <= 0) {
+    if (!t || isTargetDestroyed(t)) {
       G.P.lockQueue.splice(i, 1);
       if (G.P.targetLock?.id === slot.id) syncPrimaryTargetLock();
+      if (G.P.turretTargets) {
+        for (let j = 0; j < G.P.turretTargets.length; j++) {
+          if (G.P.turretTargets[j] === slot.id) G.P.turretTargets[j] = null;
+        }
+      }
+      if (G.P.highTargets) {
+        for (let j = 0; j < G.P.highTargets.length; j++) {
+          if (G.P.highTargets[j] === slot.id) G.P.highTargets[j] = null;
+        }
+      }
       continue;
     }
     if (dst(G.P.x, G.P.y, t.x, t.y) > dropRange) {
@@ -280,9 +300,9 @@ export function updateSensorLocks(dt: number, st: any) {
   autoFillUnboundWeaponTurrets();
 }
 
-export function requestSensorLock(id: string) {
+export function requestSensorLock(id: string): void {
   ensureLockQueue();
-  const i = G.P.lockQueue.findIndex((s: any) => s.id === id);
+  const i = G.P.lockQueue.findIndex((s) => s.id === id);
   if (i >= 0) {
     const [slot] = G.P.lockQueue.splice(i, 1);
     G.P.lockQueue.unshift(slot);

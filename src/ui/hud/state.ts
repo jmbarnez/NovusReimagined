@@ -6,9 +6,8 @@ export const hudState = {
   lockRail: null as HTMLElement | null,
   ovEntries: null as HTMLElement | null,
   ovPanel: null as HTMLElement | null,
-  sidePanel: null as HTMLElement | null,
-  sideContent: null as HTMLElement | null,
-  activeTab: "overview" as "overview" | "missions" | "cargo" | "skills",
+  ovSortKey: "dist" as "state" | "class" | "name" | "dist",
+  ovSortDir: 1 as 1 | -1,
   dockPrompt: null as HTMLElement | null,
   statusFills: [] as HTMLElement[],
   slotsContainer: null as HTMLElement | null,
@@ -27,6 +26,9 @@ export const hudState = {
   xpBefore: new Map<string, number>(),
   xpHideTimer: null as number | null,
   xpClearTimer: null as number | null,
+
+  minimapContainer: null as HTMLElement | null,
+  scannerDock: null as HTMLElement | null,
 };
 
 export const MAX_LOG_ENTRIES = 50;

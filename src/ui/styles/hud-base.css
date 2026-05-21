@@ -1,43 +1,78 @@
+/* ── Theme Token Defaults (Midnight) ──
+ * These live on :root so every DOM UI surface — HUD, bridge windows, station
+ * screens, settings — inherits them. applyTheme() (hud-overlay.ts) overrides
+ * them at runtime from the active UITheme. Gradient dark-ends and translucent
+ * variants are derived in CSS via color-mix(), so themes only specify the
+ * bright colors. Keep this list in sync with the UITheme interface.
+ */
+:root {
+  --font-family: 'Orbitron', sans-serif;
+  --hud-scanner-w: 280px;
+  --hud-minimap-w: 140px;
+  /* surfaces */
+  --hud-bg-deep: rgba(2,5,10,0.88);
+  --hud-bg-window: rgba(10,14,20,0.82);
+  --hud-bg-panel: rgba(10,15,25,0.95);
+  --hud-bg-elevated: rgba(30,42,58,0.75);
+  /* borders */
+  --hud-border: rgba(55,85,110,0.65);
+  --hud-border-soft: rgba(40,55,70,0.5);
+  --hud-border-accent: rgba(140,118,70,0.72);
+  /* text */
+  --hud-text-bright: #cfe0f5;
+  --hud-text-main: #9eb6d4;
+  --hud-text-dim: #7a8fa8;
+  --hud-text-faint: #5a7080;
+  /* semantic accents */
+  --hud-accent: #ffcc44;
+  --hud-positive: #66ff88;
+  --hud-shield: #44ccff;
+  --hud-hull: #ee9944;
+  --hud-danger: #ee4444;
+  --hud-cap: #ffdd66;
+  /* legacy aliases (top/bottom bars) */
+  --hud-top-bar: var(--hud-bg-deep);
+  --hud-top-border: var(--hud-border);
+  --hud-bottom-top: var(--hud-bg-panel);
+  --hud-bottom-bot: var(--hud-bg-deep);
+  --hud-bottom-border: var(--hud-border-accent);
+}
+
+/* Ensure all inputs, buttons, tables, and text elements inherit the theme font family */
+html, body {
+  font-family: var(--font-family);
+}
+input, button, select, textarea, table, th, td {
+  font-family: inherit;
+}
+
 /* ── HUD Overlay ── */
 #hud-overlay {
   position: fixed;
   inset: 0;
   z-index: 10;
   pointer-events: none;
-  font-family: 'Orbitron', sans-serif;
-  color: var(--hud-text-main, #9eb6d4);
+  font-family: var(--font-family);
+  color: var(--hud-text-main);
   user-select: none;
+  --hud-bottom-h: 95px;
 }
 #hud-overlay > * {
   pointer-events: auto;
 }
 
-/* ── Theme Variables ── */
-#hud-overlay {
-  --hud-side-w: 310px;
-  --hud-bottom-h: 85px;
-  --hud-top-bar: rgba(2,5,10,0.88);
-  --hud-top-border: rgba(55,85,110,0.65);
-  --hud-bottom-top: rgba(4,6,11,0.98);
-  --hud-bottom-bot: rgba(2,3,6,0.99);
-  --hud-bottom-border: rgba(140,118,70,0.72);
-  --hud-text-main: #9eb6d4;
-  --hud-text-dim: #7a8fa8;
-}
-
-/* ── Bottom Bar ── */
+/* ── Bottom Bar (includes scanner dock on right) ── */
 #hud-bottom {
   position: absolute;
-  bottom: 0; left: 0; right: var(--hud-side-w);
-  outline: 1px solid #4488ff;
+  bottom: 0; left: 0;
+  right: 0;
   display: flex;
   flex-direction: row;
   align-items: flex-end;
   pointer-events: auto;
-  transition: right 0.2s ease-out;
 }
 
-/* ── Bottom Right (Middle area now) ── */
+/* ── Bottom Right (middle area) ── */
 #hud-bottom-right {
   flex: 1;
   display: flex;
@@ -50,101 +85,49 @@
   border-top: 1px solid var(--hud-bottom-border);
 }
 
-/* ── Side Panel (RuneScape Style) ── */
-#hud-side-panel {
-  position: absolute;
-  top: 0; right: 0; bottom: 0;
-  width: var(--hud-side-w);
-  outline: 1px solid #44ff44;
-  background: transparent;
-  display: flex;
-  flex-direction: column;
+/* ── Minimap (top-right corner, flush) ── */
+#hud-minimap {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: var(--hud-minimap-w);
+  height: var(--hud-minimap-w);
+  background: rgba(0, 2, 6, 0.92);
+  border: 1px solid #1a2838;
+  box-sizing: border-box;
+  z-index: 15;
   pointer-events: auto;
-  z-index: 20;
-  transition: width 0.2s ease-out;
 }
-#hud-side-panel.collapsed {
-  width: var(--hud-side-w); /* Width is handled by CSS var now, but we need to hide content */
+#hud-minimap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
-#hud-side-toggle {
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 60px;
-  background: rgba(10, 15, 25, 0.95);
-  border: 1px solid var(--hud-bottom-border);
-  border-right: none;
-  color: #ffcc44;
-  cursor: pointer;
+/* ── Scanner Dock (integrated with bottom bar, right side) ── */
+#hud-scanner-dock {
+  width: var(--hud-scanner-w);
+  min-width: 200px;
+  max-width: 38%;
+  height: var(--hud-bottom-h);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  z-index: 30;
-}
-
-#hud-side-panel.collapsed #hud-side-minimap-container,
-#hud-side-panel.collapsed #hud-side-content {
-  display: none;
-}
-
-#hud-side-panel.collapsed #hud-side-tabs {
   flex-direction: column;
-  width: 100%;
-  border-left: 1px solid var(--hud-bottom-border);
-}
-
-#hud-side-minimap-container {
-  width: 100%;
-  height: 200px;
-  background: transparent;
-  position: relative;
-  flex-shrink: 0;
-}
-
-#hud-side-tabs {
-  display: flex;
-  flex-direction: row;
-  background: rgba(10, 15, 25, 0.95);
-  border-bottom: 1px solid var(--hud-bottom-border);
+  background: linear-gradient(180deg, var(--hud-bottom-top), var(--hud-bottom-bot));
+  border-top: 1px solid var(--hud-bottom-border);
   border-left: 1px solid var(--hud-bottom-border);
   flex-shrink: 0;
-}
-
-.hud-side-tab-btn {
-  flex: 1;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--hud-text-dim);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.1s, color 0.1s;
-}
-
-.hud-side-tab-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--hud-text-main);
-}
-
-.hud-side-tab-btn.active {
-  background: rgba(140, 118, 70, 0.2);
-  color: #ffcc44;
-  box-shadow: inset 0 -2px 0 #ffcc44;
-}
-
-#hud-side-content {
-  flex: 1;
+  pointer-events: auto;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: var(--hud-bottom-bot);
-  border-left: 1px solid var(--hud-bottom-border);
 }
+#hud-scanner-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-border) transparent;
+}
+#hud-scanner-body::-webkit-scrollbar { width: 4px; }
+#hud-scanner-body::-webkit-scrollbar-track { background: transparent; }
+#hud-scanner-body::-webkit-scrollbar-thumb { background: var(--hud-border); border-radius: 2px; }

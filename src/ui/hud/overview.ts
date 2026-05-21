@@ -8,7 +8,34 @@ import { hudState } from "./state.js";
 /* ── Overview Panel ── */
 export function updateHudOverviewPanel() {
   if (!hudState.ovEntries) return;
-  const rows = buildLocalOverviewRows();
+  let rows = buildLocalOverviewRows();
+  
+  // Sort rows while keeping player ("self") fixed at the top
+  const playerRow = rows.find((r) => r.kind === "self");
+  const otherRows = rows.filter((r) => r.kind !== "self");
+
+  const key = hudState.ovSortKey;
+  const dir = hudState.ovSortDir;
+
+  otherRows.sort((a, b) => {
+    if (key === "dist") {
+      const da = typeof a.dist === "number" ? a.dist : 999999;
+      const db = typeof b.dist === "number" ? b.dist : 999999;
+      return dir * (da - db);
+    } else if (key === "class") {
+      return dir * a.cls.localeCompare(b.cls);
+    } else if (key === "name") {
+      return dir * a.name.localeCompare(b.name);
+    } else if (key === "state") {
+      const sa = a.status.replace(/<[^>]*>/g, "");
+      const sb = b.status.replace(/<[^>]*>/g, "");
+      return dir * sa.localeCompare(sb);
+    }
+    return 0;
+  });
+
+  rows = playerRow ? [playerRow, ...otherRows] : otherRows;
+
   const existing = new Map();
   for (const tr of hudState.ovEntries.querySelectorAll("tr[data-id]")) {
     existing.set((tr as HTMLElement).dataset.id, tr);
@@ -38,10 +65,25 @@ export function updateHudOverviewPanel() {
       const sCell = tr.querySelector(".ov-st");
       if (dCell && dCell.textContent !== dist) dCell.textContent = dist;
       if (sCell && sCell.innerHTML !== r.status) sCell.innerHTML = r.status;
+      
+      // Re-append to ensure the DOM elements match the sorted rows order
+      hudState.ovEntries.appendChild(tr);
+      
       existing.delete(r.id);
     }
   }
   for (const tr of existing.values()) (tr as HTMLElement).remove();
+}
+
+export function updateHudOverviewPanelHeaders() {
+  if (!hudState.ovPanel) return;
+  const ths = hudState.ovPanel.querySelectorAll("thead th[data-sort]");
+  for (const th of ths) {
+    const key = (th as HTMLElement).dataset.sort;
+    const label = key === "state" ? "State" : key === "class" ? "Class" : key === "name" ? "Name" : "Dist";
+    const ind = hudState.ovSortKey === key ? (hudState.ovSortDir === 1 ? " ↑" : " ↓") : "";
+    th.textContent = label + ind;
+  }
 }
 
 /* ── Dock Prompt ── */

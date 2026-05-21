@@ -1,4 +1,5 @@
-import { G, Client } from "../../state.js";
+import { getState } from "../../state-access.js";
+import { Client } from "../../state.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { lerp } from "../../utils/math.js";
@@ -6,6 +7,7 @@ import { isVisible } from "../../utils/game.js";
 import { getThemeColors } from "../../data/settings.js";
 import { getSalvagerBeam } from "../../salvager.js";
 import { radialGlow } from "../grad-cache.js";
+import { addParticle } from "../../utils/entities.js";
 
 // Cached multi-stop glows for the mining laser / salvager contact points.
 // Baked at pulse=1; per-frame pulse is folded into globalAlpha by the caller.
@@ -43,7 +45,8 @@ function salvageSparkGrad(radius: number): CanvasGradient {
 }
 
 export function drawBullets(alpha: number, sys: any) {
-  for (const b of G.bullets) {
+  const state = getState();
+  for (const b of state.bullets) {
     if (!isVisible(b.x, b.y, 14)) continue;
     const ix = lerp(b.px, b.x, alpha), iy = lerp(b.py, b.y, alpha);
     const spd = Math.hypot(b.vx, b.vy);
@@ -95,7 +98,7 @@ export function drawBullets(alpha: number, sys: any) {
     ctx.strokeStyle = "rgba(255,255,255,0.28)"; ctx.lineWidth = isGauss ? 1.1 : 0.85; ctx.stroke();
     ctx.restore();
   }
-  for (const b of G.enemyBullets) {
+  for (const b of state.enemyBullets) {
     if (!isVisible(b.x, b.y, 14)) continue;
     const ix = lerp(b.px, b.x, alpha), iy = lerp(b.py, b.y, alpha);
     const spd = Math.hypot(b.vx, b.vy);
@@ -131,19 +134,37 @@ export function drawBullets(alpha: number, sys: any) {
 }
 
 export function drawBeams(sys: any) {
-  for (const b of G.beams) {
-    ctx.save(); ctx.globalAlpha = b.life * .92; ctx.shadowBlur = 0;
-    ctx.strokeStyle = b.color; ctx.lineWidth = b.width; ctx.lineCap = "butt";
+  const state = getState();
+  for (const b of state.beams) {
+    ctx.save();
+    ctx.lineCap = "round";
+
+    // 1. Wide soft outer glow layer
+    ctx.globalAlpha = b.life * 0.35;
+    ctx.strokeStyle = b.color;
+    ctx.lineWidth = b.width * 5.0;
     ctx.beginPath(); ctx.moveTo(b.x1, b.y1); ctx.lineTo(b.x2, b.y2); ctx.stroke();
-    ctx.globalAlpha = b.life * .45; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = b.width * .35;
+
+    // 2. Main saturated core color layer
+    ctx.globalAlpha = b.life * 0.95;
+    ctx.strokeStyle = b.color;
+    ctx.lineWidth = b.width;
     ctx.beginPath(); ctx.moveTo(b.x1, b.y1); ctx.lineTo(b.x2, b.y2); ctx.stroke();
+
+    // 3. High intensity white center core
+    ctx.globalAlpha = b.life * 0.85;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = b.width * 0.35;
+    ctx.beginPath(); ctx.moveTo(b.x1, b.y1); ctx.lineTo(b.x2, b.y2); ctx.stroke();
+
     ctx.restore();
   }
 }
 
 export function drawMiningLaser(now: number) {
-  if (!G.miningLaser.active) return;
-  const { x1, y1, x2, y2, phase, hitNx, hitNy, hitR } = G.miningLaser;
+  const state = getState();
+  if (!state.miningLaser.active) return;
+  const { x1, y1, x2, y2, phase, hitNx, hitNy, hitR } = state.miningLaser;
   const pulse = 0.82 + 0.18 * Math.sin(now * 0.022);
   const hittingAsteroid = hitR > 0;
   let endX = x2, endY = y2;
@@ -180,16 +201,27 @@ export function drawMiningLaser(now: number) {
     ctx.beginPath(); ctx.arc(0, 0, 16, 0, TAU); ctx.fill();
     ctx.restore();
 
-    const sparkCount = 3;
+    // GPU-drawn sparks: ore-colored, directional ejection, real physics.
+    // Spawned each frame so the PixiJS sprite pool renders them additively.
+    const oreColor = state.miningLaser.oreColor || "#a0a5aa";
+    const sparkPalette = [oreColor, "#ffffff", oreColor, "#ffffff"];
+    const normalAngle = Math.atan2(hitNy || 0, hitNx || 1);
+    const sparkCount = 2;
     for (let i = 0; i < sparkCount; i++) {
-      const sa = Math.atan2(hitNy || 0, hitNx || 1) + (Math.random() - 0.5) * 1.6;
-      const sd = 4 + Math.random() * 10;
-      const sx = endX + Math.cos(sa) * sd;
-      const sy = endY + Math.sin(sa) * sd;
-      const sz = 1.0 + Math.random() * 1.5;
-      ctx.globalAlpha = 0.4 + Math.random() * 0.4;
-      ctx.fillStyle = Math.random() < 0.5 ? "#ffee66" : "#ffaa22";
-      ctx.beginPath(); ctx.arc(sx, sy, sz, 0, TAU); ctx.fill();
+      const spread = (Math.random() - 0.5) * 2.2;
+      const sa = normalAngle + spread;
+      const spd = 50 + Math.random() * 100;
+      addParticle({
+        x: endX + (Math.random() - 0.5) * 4,
+        y: endY + (Math.random() - 0.5) * 4,
+        color: sparkPalette[i % sparkPalette.length],
+        vx: Math.cos(sa) * spd,
+        vy: Math.sin(sa) * spd,
+        r: 0.8 + Math.random() * 1.6,
+        life: 0.25 + Math.random() * 0.35,
+        drag: 0.91 + Math.random() * 0.05,
+        decay: 2.5 + Math.random() * 1.0,
+      });
     }
   } else {
     ctx.globalAlpha = pulse * 0.6 * pulse;
@@ -249,17 +281,37 @@ export function drawCrosshair() {
   const { x, y } = Client.mouseWorld;
   const sz = 12 / Client.zoom;
   const theme = getThemeColors(Client.settings?.theme || "default");
+  const style = Client.settings?.reticleStyle || "classic";
 
   ctx.save();
   ctx.strokeStyle = theme.textMain;
   ctx.globalAlpha = 0.55;
   ctx.lineWidth = 1.5 / Client.zoom;
-  ctx.beginPath();
-  ctx.moveTo(x - sz, y); ctx.lineTo(x + sz, y);
-  ctx.moveTo(x, y - sz); ctx.lineTo(x, y + sz);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(x, y, sz * 0.6, 0, TAU);
-  ctx.stroke();
+
+  if (style === "brackets") {
+    // Four corner brackets framing the aim point.
+    const arm = sz * 0.5;
+    const corners = [
+      [-1, -1], [1, -1], [1, 1], [-1, 1],
+    ];
+    for (const [sx, sy] of corners) {
+      ctx.beginPath();
+      ctx.moveTo(x + sx * sz, y + sy * sz - sy * arm);
+      ctx.lineTo(x + sx * sz, y + sy * sz);
+      ctx.lineTo(x + sx * sz - sx * arm, y + sy * sz);
+      ctx.stroke();
+    }
+  } else {
+    // Plus-sign lines, shared by "classic" and "cross".
+    ctx.beginPath();
+    ctx.moveTo(x - sz, y); ctx.lineTo(x + sz, y);
+    ctx.moveTo(x, y - sz); ctx.lineTo(x, y + sz);
+    ctx.stroke();
+    if (style === "classic") {
+      ctx.beginPath();
+      ctx.arc(x, y, sz * 0.6, 0, TAU);
+      ctx.stroke();
+    }
+  }
   ctx.restore();
 }

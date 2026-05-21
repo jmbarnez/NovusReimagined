@@ -1,10 +1,45 @@
 import { G, Client } from "../state.js";
 import { SHIPS } from "../data/ships.js";
-import { MODULES, MODULE_HOLD_VOLUME_M3 } from "../data/modules.js";
+import { MODULES, MODULE_HOLD_VOLUME_M3, type ModuleDef } from "../data/modules.js";
 import { escHtml } from "../utils/format.js";
 import { sfxBlip, sfxConfirm } from "../audio/procedural.js";
 import { RARITY_CONFIG } from "../data/moduleRarity.js";
-import { getInstance, invalidateInstanceCache } from "../utils/items.js";
+import { getInstance } from "../utils/items.js";
+import { jettisonItemAction } from "../state/actions.js";
+import type { ModuleInstance } from "../types/moduleInstance.js";
+
+// ─── Interfaces ───
+export interface InventoryItem {
+  id: string;
+  name: string;
+  group: string;
+  qty: number;
+  vol: number;
+  type: "ore" | "ammo" | "refined" | "loot" | "component" | "module" | "fitting";
+  key: string;
+  container: string;
+  meta?: ModuleDef;
+  instance?: ModuleInstance;
+  rarityColor?: string;
+}
+
+export interface TreeNode {
+  id: string;
+  label: string;
+  icon: string;
+  children?: TreeNode[];
+}
+
+export interface InventoryState {
+  selectedTreeId: string;
+  expanded: Set<string>;
+  selectedItemId: string | null;
+  filterText: string;
+  sortKey: "name" | "group" | "qty" | "vol";
+  sortDir: 1 | -1;
+  contextMenu: { x: number; y: number; itemId: string } | null;
+  colWidths: Record<"name" | "group" | "qty" | "vol", number>;
+}
 
 // ─── Inline SVG Icons ───
 const ICON_SVG = (paths: string, vb: string = "0 0 16 16") => `<svg class="inv-svg-icon" viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
@@ -27,7 +62,7 @@ const ICONS: Record<string, string> = {
   low:        ICON_SVG('<rect x="3" y="6" width="10" height="7" rx="1"/><path d="M5 6V4h6v2"/><path d="M3 10h10"/>'),
 };
 
-function iconForItem(it: any) {
+function iconForItem(it: InventoryItem): string {
   if (it.type === "ore")       return ICONS.ore;
   if (it.type === "ammo")      return ICONS.ammo;
   if (it.type === "refined")   return ICONS.refined;
@@ -44,7 +79,7 @@ function iconForItem(it: any) {
   return ICONS.cargo;
 }
 
-function iconForTreeNode(id: string) {
+function iconForTreeNode(id: string): string {
   if (id === "ship")           return ICONS.ship;
   if (id === "shipCargo")      return ICONS.cargo;
   if (id === "shipFitting")    return ICONS.fitting;
@@ -53,17 +88,18 @@ function iconForTreeNode(id: string) {
   return ICONS.cargo;
 }
 
+let bridgeToastTimeout: ReturnType<typeof setTimeout> | null = null;
 function showBridgeToast(msg: string) {
   const el = document.getElementById("bridge-toast");
   if (!el) return;
   el.textContent = msg;
   el.style.opacity = "1";
-  clearTimeout((showBridgeToast as any)._t);
-  (showBridgeToast as any)._t = setTimeout(() => { el.style.opacity = "0"; }, 2400);
+  if (bridgeToastTimeout) clearTimeout(bridgeToastTimeout);
+  bridgeToastTimeout = setTimeout(() => { el.style.opacity = "0"; }, 2400);
 }
 
 // ─── Inventory Tree State ───
-export const INV_STATE: any = {
+export const INV_STATE: InventoryState = {
   selectedTreeId: "shipCargo",
   expanded: new Set(["ship", "shipCargo"]),
   selectedItemId: null,
@@ -76,10 +112,8 @@ export const INV_STATE: any = {
   colWidths: { name: 130, group: 70, qty: 32, vol: 41 },
 };
 
-// ... Container Definitions ...
-
-function getTreeNodes() {
-  const nodes: any[] = [];
+function getTreeNodes(): TreeNode[] {
+  const nodes: TreeNode[] = [];
   const ship = SHIPS[G.P.shipId];
 
   // Ship branch — single unified cargo hold
@@ -109,8 +143,8 @@ function getTreeNodes() {
 }
 
 // ─── Normalize Player Data into Items ───
-function normalizeItems() {
-  const items: any[] = [];
+function normalizeItems(): InventoryItem[] {
+  const items: InventoryItem[] = [];
   const p = G.P;
 
   // Ore items (unified cargo hold)
@@ -140,8 +174,12 @@ function normalizeItems() {
 
   // Modules in cargo (exclude currently fitted)
   const fittedUids = new Set<string>();
-  for (const rack of ["turret", "high", "med", "low"] as const)
-    for (const uid of p.fitting[rack]) if (uid) fittedUids.add(uid);
+  for (const rack of ["turret", "high", "med", "low"] as const) {
+    const slots = p.fitting[rack];
+    if (slots) {
+      for (const uid of slots) if (uid) fittedUids.add(uid);
+    }
+  }
 
   for (const inst of p.moduleCargo) {
     if (fittedUids.has(inst.uid)) continue;
@@ -153,16 +191,19 @@ function normalizeItems() {
   }
 
   // Fitting items (read-only display)
-  for (const rack of ["turret", "high", "med", "low"]) {
-    for (let i = 0; i < (p.fitting[rack]?.length || 0); i++) {
-      const uid = p.fitting[rack][i];
-      if (uid) {
-        const inst = getInstance(uid);
-        if (inst) {
-          const m = MODULES[inst.baseId];
-          if (m) {
-            const rarityCfg = RARITY_CONFIG[inst.rarity];
-            items.push({ id: `fit_${rack}_${i}`, name: `${inst.rarity} ${m.name}`, group: `Fitted ${rack}`, qty: 1, vol: MODULE_HOLD_VOLUME_M3, type: "fitting", key: `${rack}:${i}`, container: "shipFitting", meta: m, instance: inst, rarityColor: rarityCfg.color });
+  for (const rack of ["turret", "high", "med", "low"] as const) {
+    const slots = p.fitting[rack];
+    if (slots) {
+      for (let i = 0; i < slots.length; i++) {
+        const uid = slots[i];
+        if (uid) {
+          const inst = getInstance(uid);
+          if (inst) {
+            const m = MODULES[inst.baseId];
+            if (m) {
+              const rarityCfg = RARITY_CONFIG[inst.rarity];
+              items.push({ id: `fit_${rack}_${i}`, name: `${inst.rarity} ${m.name}`, group: `Fitted ${rack}`, qty: 1, vol: MODULE_HOLD_VOLUME_M3, type: "fitting", key: `${rack}:${i}`, container: "shipFitting", meta: m, instance: inst, rarityColor: rarityCfg.color });
+            }
           }
         }
       }
@@ -172,42 +213,28 @@ function normalizeItems() {
   return items;
 }
 
-function getItemsForContainer(containerId: string) {
+function getItemsForContainer(containerId: string): InventoryItem[] {
   const all = normalizeItems();
   if (containerId === "ship") return [];
   if (containerId === "station") return [];
-  return all.filter((it: any) => it.container === containerId);
+  return all.filter((it: InventoryItem) => it.container === containerId);
 }
 
-function calcVolume(items: any[]) {
+function calcVolume(items: InventoryItem[]): number {
   return items.reduce((sum, it) => sum + (it.vol || 0) * (it.qty || 1), 0);
 }
 
 // ─── Actions ───
 export function jettisonItem(itemId: string, qty: number | null = null) {
   const all = normalizeItems();
-  const it = all.find((x: any) => x.id === itemId);
+  const it = all.find((x: InventoryItem) => x.id === itemId);
   if (!it) return;
   const drop = qty == null ? it.qty : Math.min(qty, it.qty);
   if (drop <= 0) return;
 
-  if (it.type === "ore") G.P.ore[it.key] = Math.max(0, (G.P.ore[it.key] || 0) - drop);
-  else if (it.type === "ammo") G.P.ammo[it.key as keyof typeof G.P.ammo] = Math.max(0, (G.P.ammo[it.key as keyof typeof G.P.ammo] || 0) - drop);
-  else if (it.type === "refined") G.P.refined[it.key] = Math.max(0, (G.P.refined[it.key] || 0) - drop);
-  else if (it.type === "loot") G.P.loot[it.key] = Math.max(0, (G.P.loot[it.key] || 0) - drop);
-  else if (it.type === "component") G.P.components[it.key] = Math.max(0, (G.P.components[it.key] || 0) - drop);
-  else if (it.type === "module") {
-    // Prevent jettisoning modules that are currently fitted
-    const isFitted = ["turret", "high", "med", "low"].some(r =>
-      G.P.fitting[r]?.includes(it.key)
-    );
-    if (isFitted) return;
-    const instIdx = G.P.moduleCargo.findIndex(inst => inst.uid === it.key);
-    if (instIdx !== -1) {
-      G.P.moduleCargo.splice(instIdx, 1);
-      invalidateInstanceCache();
-    }
-  }
+  const res = jettisonItemAction(it.id, drop);
+  if (!res.success) return;
+
   showBridgeToast(`Jettisoned ${drop}× ${it.name}`);
   INV_STATE.selectedItemId = null;
   rerenderInventory();
@@ -215,10 +242,9 @@ export function jettisonItem(itemId: string, qty: number | null = null) {
 
 export function splitStack(itemId: string, newQty: number) {
   const all = normalizeItems();
-  const it = all.find((x: any) => x.id === itemId);
+  const it = all.find((x: InventoryItem) => x.id === itemId);
   if (!it || newQty <= 0 || newQty >= it.qty) return;
   // For simplicity in this flat model, splitting just shows a toast since we don't have granular item objects yet.
-  // In a full impl this would create two stacks.
   showBridgeToast(`Split ${it.name}: ${newQty} / ${it.qty - newQty}`);
 }
 
@@ -266,14 +292,14 @@ function rerenderInventory() {
 }
 
 // ─── HTML Renderers ───
-export function renderInventoryHTML() {
+export function renderInventoryHTML(): string {
   const nodes = getTreeNodes();
   const treeHTML = renderTreeNodes(nodes);
   const items = getItemsForContainer(INV_STATE.selectedTreeId);
   const filtered = (INV_STATE.filterText
-    ? items.filter((it: any) => it.name.toLowerCase().includes(INV_STATE.filterText) || it.group.toLowerCase().includes(INV_STATE.filterText))
+    ? items.filter((it: InventoryItem) => it.name.toLowerCase().includes(INV_STATE.filterText) || it.group.toLowerCase().includes(INV_STATE.filterText))
     : [...items]
-  ).sort((a: any, b: any) => {
+  ).sort((a: InventoryItem, b: InventoryItem) => {
     const d = INV_STATE.sortDir;
     switch (INV_STATE.sortKey) {
       case "group": return d * a.group.localeCompare(b.group);
@@ -285,14 +311,13 @@ export function renderInventoryHTML() {
   const totalVol = calcVolume(items);
   const capacity = getCapacityFor(INV_STATE.selectedTreeId);
   const pct = capacity > 0 ? Math.min(100, Math.round((totalVol / capacity) * 100)) : 0;
-  const selectedItem = normalizeItems().find((it: any) => it.id === INV_STATE.selectedItemId);
+  const selectedItem = normalizeItems().find((it: InventoryItem) => it.id === INV_STATE.selectedItemId);
 
   return `
     <div class="inv-layout">
       <div class="inv-main" style="width: 100%;">
         <div class="inv-toolbar">
           <input type="text" class="inv-filter" placeholder="Filter items…" value="${escHtml(INV_STATE.filterText)}" id="inv-filter-input" />
-          <span class="inv-cap-label">${totalVol.toFixed(1)} / ${capacity.toFixed(1)} m³ (${pct}%)</span>
         </div>
         <div class="inv-table-wrap">
           <table class="inv-table">
@@ -308,12 +333,15 @@ export function renderInventoryHTML() {
               </tr>
             </thead>
             <tbody>
-              ${filtered.length ? filtered.map((it: any) => renderItemRow(it)).join("") : `<tr><td colspan="4" class="inv-empty">Empty</td></tr>`}
+              ${filtered.length ? filtered.map((it: InventoryItem) => renderItemRow(it)).join("") : `<tr><td colspan="4" class="inv-empty">Empty</td></tr>`}
             </tbody>
           </table>
         </div>
         <div class="inv-footer">
-          <div class="inv-cap-bar"><div class="inv-cap-fill" style="width:${pct}%"></div></div>
+          <div class="inv-cap-bar-wrap" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+            <div class="inv-cap-bar" style="flex: 1; margin-bottom: 0;"><div class="inv-cap-fill" style="width:${pct}%"></div></div>
+            <span class="inv-cap-label">${totalVol.toFixed(1)} / ${capacity.toFixed(1)} m³ (${pct}%)</span>
+          </div>
           <div class="inv-selection">
             ${selectedItem ? `<b>${escHtml(selectedItem.name)}</b> <span class="inv-sel-meta">${escHtml(selectedItem.group)} · ${selectedItem.vol.toFixed(2)} m³</span>` : "No selection"}
           </div>
@@ -324,8 +352,8 @@ export function renderInventoryHTML() {
   `;
 }
 
-function renderTreeNodes(nodes: any[], depth: number = 0) {
-  return nodes.map((n: any) => {
+function renderTreeNodes(nodes: TreeNode[], depth: number = 0): string {
+  return nodes.map((n: TreeNode) => {
     const isExpanded = INV_STATE.expanded.has(n.id);
     const isSelected = INV_STATE.selectedTreeId === n.id;
     const hasChildren = n.children && n.children.length > 0;
@@ -336,14 +364,14 @@ function renderTreeNodes(nodes: any[], depth: number = 0) {
       <span class="inv-tree-icon">${iconForTreeNode(n.id)}</span>
       <span class="inv-tree-label">${escHtml(n.label)}</span>
     </div>`;
-    if (hasChildren && isExpanded) {
+    if (hasChildren && isExpanded && n.children) {
       html += `<div class="inv-tree-children">${renderTreeNodes(n.children, depth + 1)}</div>`;
     }
     return html;
   }).join("");
 }
 
-function renderItemRow(it: any) {
+function renderItemRow(it: InventoryItem): string {
   const isSel = INV_STATE.selectedItemId === it.id;
   return `<tr class="inv-table-row ${isSel ? "is-selected" : ""}" data-item="${it.id}">
     <td class="inv-col-name"><span class="inv-item-name-cell">${itemIcon(it)}<span>${escHtml(it.name)}</span></span></td>
@@ -353,11 +381,11 @@ function renderItemRow(it: any) {
   </tr>`;
 }
 
-function itemIcon(it: any) {
+function itemIcon(it: InventoryItem): string {
   return iconForItem(it);
 }
 
-function getCapacityFor(containerId: string) {
+function getCapacityFor(containerId: string): number {
   const ship = SHIPS[G.P.shipId];
   if (containerId === "shipCargo") return ship.baseCargoM3 || 100;
   if (containerId === "shipFitting") return 0; // Fitting is slots, not volume
@@ -365,13 +393,13 @@ function getCapacityFor(containerId: string) {
   return 100;
 }
 
-function renderContextMenu() {
+function renderContextMenu(): string {
   if (!INV_STATE.contextMenu) return "";
   const { x, y, itemId } = INV_STATE.contextMenu;
   const all = normalizeItems();
-  const it = all.find((i: any) => i.id === itemId);
+  const it = all.find((i: InventoryItem) => i.id === itemId);
   if (!it) return "";
-  const items: any[] = [];
+  const items: { action: string; label: string }[] = [];
   if (it.container !== "shipFitting") {
     items.push({ action: "jettison", label: "Jettison" });
     if (it.qty > 1) items.push({ action: "split", label: "Split Stack…" });
@@ -379,7 +407,7 @@ function renderContextMenu() {
   items.push({ action: "info", label: "Show Info" });
 
   return `<div class="inv-ctx" style="left:${x}px;top:${y}px">
-    ${items.map((mi: any) => `<div class="inv-ctx-item" data-action="${mi.action}" data-item="${itemId}">${escHtml(mi.label)}</div>`).join("")}
+    ${items.map((mi) => `<div class="inv-ctx-item" data-action="${mi.action}" data-item="${itemId}">${escHtml(mi.label)}</div>`).join("")}
   </div>`;
 }
 
@@ -397,9 +425,9 @@ export function attachInventoryListeners() {
       sfxBlip(660, 0.04);
       const id = (nodeEl as HTMLElement).dataset.node;
       const nodes = getTreeNodes();
-      const hasChildren = findNode(nodes, id!)?.children?.length > 0;
-      if (hasChildren) toggleTreeNode(id!);
-      selectTreeNode(id!);
+      const hasChildren = (id ? findNode(nodes, id)?.children?.length ?? 0 : 0) > 0;
+      if (hasChildren && id) toggleTreeNode(id);
+      if (id) selectTreeNode(id);
     });
   }
 
@@ -422,9 +450,9 @@ export function attachInventoryListeners() {
     th.addEventListener("click", (e) => {
       // Ignore clicks on the resizer
       if ((e.target as HTMLElement).classList.contains("inv-col-resizer")) return;
-      const key = (th as HTMLElement).dataset.sort!;
+      const key = (th as HTMLElement).dataset.sort as "name" | "group" | "qty" | "vol";
       if (INV_STATE.sortKey === key) {
-        INV_STATE.sortDir *= -1;
+        INV_STATE.sortDir = (INV_STATE.sortDir * -1) as 1 | -1;
       } else {
         INV_STATE.sortKey = key;
         INV_STATE.sortDir = 1;
@@ -439,7 +467,7 @@ export function attachInventoryListeners() {
   let currentResizer: HTMLElement | null = null;
   let startX = 0;
   let startWidth = 0;
-  let currentKey = "";
+  let currentKey: "name" | "group" | "qty" | "vol" | "" = "";
 
   for (const resizer of pane.querySelectorAll(".inv-col-resizer")) {
     resizer.addEventListener("mousedown", (e) => {
@@ -447,12 +475,12 @@ export function attachInventoryListeners() {
       e.preventDefault(); // Prevent text selection
       isResizing = true;
       currentResizer = resizer as HTMLElement;
-      currentKey = currentResizer.dataset.col!;
+      currentKey = currentResizer.dataset.col as "name" | "group" | "qty" | "vol";
       startX = (e as MouseEvent).clientX;
       startWidth = INV_STATE.colWidths[currentKey] || 50;
       
       const onMove = (mv: MouseEvent) => {
-        if (!isResizing) return;
+        if (!isResizing || !currentKey) return;
         const diffX = mv.clientX - startX;
         let newWidth = Math.max(28, Math.min(200, startWidth + diffX)); // Clamp 28-200px
         INV_STATE.colWidths[currentKey] = newWidth;
@@ -492,7 +520,7 @@ export function attachInventoryListeners() {
       if (action === "jettison") { sfxConfirm(); jettisonItem(itemId!); }
       else if (action === "split") {
         const all = normalizeItems();
-        const it = all.find((i: any) => i.id === itemId);
+        const it = all.find((i: InventoryItem) => i.id === itemId);
         if (it && it.qty > 1) {
           sfxConfirm();
           const half = Math.floor(it.qty / 2);
@@ -501,7 +529,7 @@ export function attachInventoryListeners() {
       } else if (action === "info") {
         sfxBlip();
         const all = normalizeItems();
-        const it = all.find((i: any) => i.id === itemId);
+        const it = all.find((i: InventoryItem) => i.id === itemId);
         if (it) showBridgeToast(`${it.name} — ${it.group} (${it.qty})`);
       }
       closeContextMenu();
@@ -517,7 +545,7 @@ export function attachInventoryListeners() {
   }
 }
 
-function findNode(nodes: any[], id: string): any {
+function findNode(nodes: TreeNode[], id: string): TreeNode | null {
   for (const n of nodes) {
     if (n.id === id) return n;
     if (n.children) {

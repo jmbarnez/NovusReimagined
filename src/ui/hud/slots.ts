@@ -1,6 +1,6 @@
 import "../styles/hud-slots.css";
 import { G } from "../../state.js";
-import { SHIPS } from "../../data/ships.js";
+import { SHIPS, type ShipDef, type ShipFitting } from "../../data/ships.js";
 import { MODULES, MODULE_FLAGS } from "../../data/modules.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
 import { MODULE_HP_MAX, TURRET_POWER_CYCLE_S } from "../../constants.js";
@@ -14,9 +14,20 @@ import { hudState, RACK_ORDER } from "./state.js";
 import { getInstance } from "../../utils/items.js";
 import { showSlotTooltip, hideSlotTooltip } from "./slotTooltip.js";
 import { iconSvg } from "../station/shared.js";
+import type { ComputedStats } from "../../player/player-stats.js";
+
+export interface SlotNode {
+  el: HTMLElement;
+  muzzleEl: HTMLElement;
+  cdOverlay: HTMLElement;
+  heatFill: HTMLElement;
+  subEl: HTMLElement;
+  nameEl: HTMLElement;
+  hkIdx: number;
+}
 
 /* ── Module Slots ── */
-export function updateSlots(ship: any, st: any, now: number) {
+export function updateSlots(ship: ShipDef, st: ComputedStats, now: number) {
   const ft = ship.fitting;
   const nSlots = (ft.turret | 0) + (ft.high | 0) + (ft.med | 0) + (ft.low | 0);
   const stateKey = `${nSlots}|${G.P._assignTargetId ?? "-"}`;
@@ -30,10 +41,10 @@ export function updateSlots(ship: any, st: any, now: number) {
   // Update each slot
   let hkIdx = 0;
   for (const rack of RACK_ORDER) {
-    const count = ft[rack] | 0;
+    const count = ft[rack as keyof ShipFitting] | 0;
     for (let idx = 0; idx < count; idx++) {
       const key = `${rack}|${idx}`;
-      const node = hudState.slotNodes.get(key);
+      const node = hudState.slotNodes.get(key) as SlotNode | undefined;
       if (!node) continue;
       updateSlotNode(node, rack, idx, hkIdx, st, now);
       hkIdx++;
@@ -55,22 +66,26 @@ export function getRackState(rack: string): "on" | "off" | "partial" {
   let allOff = true;
   let count = 0;
 
-  const checkSlot = (r: string, i: number) => {
-    if (!(G.P.fitting as any)[r]?.[i]) return;
+  const checkSlot = (r: "turret" | "high" | "med" | "low", i: number) => {
+    const slots = G.P.fitting[r];
+    if (!slots || !slots[i]) return;
     count++;
-    const power = r === "turret" ? (G.P.turretPower?.[i] ?? false) : ((G.P.slotActive as any)?.[r]?.[i] ?? true);
+    const power = r === "turret" ? (G.P.turretPower?.[i] ?? false) : (G.P.slotActive[r]?.[i] ?? true);
     if (power) allOff = false;
     else allOn = false;
   };
 
   if (rack === "global") {
-    for (const r of RACK_ORDER) {
-      const n = (G.P.fitting as any)[r]?.length || 0;
+    for (const r of RACK_ORDER as ("turret" | "high" | "med" | "low")[]) {
+      const slots = G.P.fitting[r];
+      const n = slots ? slots.length : 0;
       for (let i = 0; i < n; i++) checkSlot(r, i);
     }
   } else {
-    const n = (G.P.fitting as any)[rack]?.length || 0;
-    for (let i = 0; i < n; i++) checkSlot(rack, i);
+    const r = rack as "turret" | "high" | "med" | "low";
+    const slots = G.P.fitting[r];
+    const n = slots ? slots.length : 0;
+    for (let i = 0; i < n; i++) checkSlot(r, i);
   }
 
   if (count === 0) return "off";
@@ -79,7 +94,7 @@ export function getRackState(rack: string): "on" | "off" | "partial" {
   return "partial";
 }
 
-export function rebuildSlots(ship: any) {
+export function rebuildSlots(ship: ShipDef) {
   if (!hudState.slotsContainer) return;
   hudState.slotsContainer.innerHTML = "";
   hudState.slotNodes.clear();
@@ -94,7 +109,7 @@ export function rebuildSlots(ship: any) {
 
   let hkIdx = 0;
   for (const rack of RACK_ORDER) {
-    const count = ft[rack] | 0;
+    const count = ft[rack as keyof ShipFitting] | 0;
     if (count > 0) {
       const rackSwitch = createRackSwitch(rack, rack[0].toUpperCase());
       hudState.slotsContainer.appendChild(rackSwitch);
@@ -122,6 +137,7 @@ export function rebuildSlots(ship: any) {
       el.appendChild(name);
 
       const sub = document.createElement("div");
+      name.className = "sl-name empty"; // keep layout classes consistent
       sub.className = "sl-sub";
       el.appendChild(sub);
 
@@ -158,15 +174,16 @@ export function rebuildSlots(ship: any) {
   }
 }
 
-export function updateSlotNode(node: any, rack: string, idx: number, hkIdx: number, st: any, now: number) {
-  const { el, muzzleEl, cdOverlay, heatFill, subEl, nameEl } = node;
-  const uid = (G.P.fitting as any)[rack][idx];
+export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx: number, st: ComputedStats, now: number) {
+  const { el, cdOverlay, heatFill, subEl, nameEl } = node;
+  const r = rack as "turret" | "high" | "med" | "low";
+  const uid = G.P.fitting[r]?.[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   const pending = G.P._assignTargetId != null;
 
   const isTurret = rack === "turret";
-  const ownPower = isTurret ? (G.P.turretPower?.[idx] ?? false) : ((G.P.slotActive as any)?.[rack]?.[idx] ?? true);
+  const ownPower = isTurret ? (G.P.turretPower?.[idx] ?? false) : (G.P.slotActive[r]?.[idx] ?? true);
   const isPowered = ownPower;
   const powerCd = isTurret ? (G.P.turretPowerCd?.[idx] || 0) : 0;
   const isSlotActive = isPowered && powerCd <= 0;
@@ -208,7 +225,7 @@ export function updateSlotNode(node: any, rack: string, idx: number, hkIdx: numb
   }
 
   // Heat / module HP bar (dirty-check)
-  const heat = (G.P.slotHeat as any)?.[rack]?.[idx] || 0;
+  const heat = G.P.slotHeat?.[r]?.[idx] || 0;
   let barW: string, barCls: string;
   if (modDamaged || modOffline) {
     const hpPct = inst ? inst.durability / inst.maxDurability : 0;
@@ -289,7 +306,7 @@ export function updateSlotNode(node: any, rack: string, idx: number, hkIdx: numb
   if (subEl.className !== subCls) subEl.className = subCls;
 }
 
-export function createRackSwitch(rack: string, label: string) {
+export function createRackSwitch(rack: string, label: string): HTMLElement {
   const el = document.createElement("div");
   el.className = `rack-master-switch ${rack === "global" ? "global" : "rack-" + rack}`;
   el.dataset.rack = rack;
@@ -327,10 +344,11 @@ export function onRackSwitchZoneClick(rack: string, wantOn: boolean) {
 }
 
 export function onSlotClick(e: MouseEvent, rack: string, idx: number) {
-  const uid = (G.P.fitting as any)[rack]?.[idx];
+  const r = rack as "turret" | "high" | "med" | "low";
+  const uid = G.P.fitting[r]?.[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
-  const node = hudState.slotNodes.get(`${rack}|${idx}`);
+  const node = hudState.slotNodes.get(`${rack}|${idx}`) as SlotNode | undefined;
 
   // Shift+click on turret assigns target
   if (rack === "turret" && e.shiftKey) {
@@ -373,10 +391,10 @@ export function flashSlotFire(slotIdx: number) {
   if (!ship) return;
   let count = 0;
   for (const rack of RACK_ORDER) {
-    const rackCount = ((ship.fitting as any)[rack] as number) | 0;
+    const rackCount = (ship.fitting[rack as keyof ShipFitting]) | 0;
     if (slotIdx < count + rackCount) {
       const idx = slotIdx - count;
-      const node = hudState.slotNodes.get(`${rack}|${idx}`);
+      const node = hudState.slotNodes.get(`${rack}|${idx}`) as SlotNode | undefined;
       if (node) {
         node.el.classList.remove("firing");
         void node.el.offsetWidth; // force reflow to restart animation

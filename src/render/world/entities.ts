@@ -1,3 +1,4 @@
+import { getState } from "../../state-access.js";
 import { G, Client } from "../../state.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
@@ -7,6 +8,12 @@ import { getStats } from "../../player/player-stats.js";
 import { SHIPS } from "../../data/ships.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
 import { worldText } from "../world-text.js";
+import { getUIFont } from "../ui-font.js";
+import {
+  getAsteroidDropShadowGrad,
+  getAsteroidShadeGrad,
+  getAsteroidBodyGrad,
+} from "../grad-cache.js";
 
 export function drawLockBrackets(
   cx: number, cy: number, radius: number,
@@ -61,14 +68,37 @@ export function drawLockBrackets(
   ctx.stroke();
   ctx.restore();
 
-  if (!slot.resolving && isPrimary) {
-    worldText(cx, cy, "PRIM", {
-      font: "bold 8px ui-monospace, monospace",
-      fill: "#c89868",
-      offsetY: sz + 10,
-      shadow: true,
-      alpha: 0.85,
-    });
+  // Draw the assigned turrets count as a small number in the top-right corner
+  let assignedCount = 0;
+  if (G.P.turretTargets) {
+    for (let i = 0; i < G.P.turretTargets.length; i++) {
+      if (G.P.turretTargets[i] === entityId) {
+        assignedCount++;
+      }
+    }
+  }
+
+  if (!slot.resolving && assignedCount > 0) {
+    ctx.save();
+    const px = cx + sz;
+    const py = cy - sz;
+
+    // Draw small dark circle background with thin border
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, TAU);
+    ctx.fillStyle = "rgba(10, 14, 20, 0.85)";
+    ctx.fill();
+    ctx.strokeStyle = isPrimary ? "#c89868" : "#6a7c8c";
+    ctx.lineWidth = 1.0;
+    ctx.stroke();
+
+    // Draw the number centered in the circle
+    ctx.fillStyle = isPrimary ? "#ffcc44" : "#9eb6d4";
+    ctx.font = `bold 8px ${getUIFont()}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(assignedCount), px, py);
+    ctx.restore();
   }
 }
 
@@ -109,23 +139,24 @@ const _asteroidLockMap = new Map<string, any>();
 
 export function drawAsteroids(alpha: number, sys: any, now: number) {
   if (!sys?._liveAsteroids) return;
+  const state = getState();
+  const player = state.player;
   const mineR = getStats().mineRange;
   _asteroidLockMap.clear();
-  const primaryId = G.P.targetLock?.id;
-  if (Array.isArray(G.P.lockQueue)) {
-    for (const slot of G.P.lockQueue) _asteroidLockMap.set(slot.id, slot);
+  const primaryId = player.targetLock?.id;
+  if (Array.isArray(player.lockQueue)) {
+    for (const slot of player.lockQueue) _asteroidLockMap.set(slot.id, slot);
   }
   for (const a of sys._liveAsteroids) {
     if (!isVisible(a.x, a.y, a.radius + 10)) continue;
-    const near = dst(G.P.x, G.P.y, a.x, a.y) - a.radius < mineR;
+    const near = dst(player.x, player.y, a.x, a.y) - a.radius < mineR;
     const iSpin = lerp(a.prevSpin, a.spinAngle, alpha);
     // 3D drop shadow on the "ground" plane beneath the asteroid
-    const sg = ctx.createRadialGradient(a.x + a.radius * 0.1, a.y + a.radius * 0.25, 0, a.x + a.radius * 0.1, a.y + a.radius * 0.25, a.radius * 1.1);
-    sg.addColorStop(0, "rgba(0,0,0,0.32)");
-    sg.addColorStop(0.55, "rgba(0,0,0,0.14)");
-    sg.addColorStop(1, "transparent");
-    ctx.fillStyle = sg;
-    ctx.beginPath(); ctx.ellipse(a.x + a.radius * 0.1, a.y + a.radius * 0.25, a.radius * 0.8, a.radius * 0.35, 0, 0, TAU); ctx.fill();
+    ctx.save();
+    ctx.translate(a.x + a.radius * 0.1, a.y + a.radius * 0.25);
+    ctx.fillStyle = getAsteroidDropShadowGrad(ctx, a.radius);
+    ctx.beginPath(); ctx.ellipse(0, 0, a.radius * 0.8, a.radius * 0.35, 0, 0, TAU); ctx.fill();
+    ctx.restore();
 
     ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(iSpin);
     const hp = a.hp / Math.max(1, a.maxHp);
@@ -140,29 +171,18 @@ export function drawAsteroids(alpha: number, sys: any, now: number) {
     ctx.stroke();
     const h = a.tintHue ?? 30;
     const s = a.tintSat ?? 13;
-    // Direction from this asteroid toward the star at (0,0), then into local frame
-    const localSun = Math.atan2(-a.y, -a.x) - iSpin;
-    const aHL = a.radius * 0.38;
-    const hlx = Math.cos(localSun) * aHL, hly = Math.sin(localSun) * aHL;
-    const ag = ctx.createRadialGradient(hlx, hly, 0, 0, 0, a.radius);
-    ag.addColorStop(0, `hsl(${h},${s + 4}%,${44 + hp * 14}%)`);
-    ag.addColorStop(0.45, `hsl(${h},${s}%,${22 + hp * 8}%)`);
-    ag.addColorStop(0.85, `hsl(${h},${Math.max(0, s - 4)}%,${10 + hp * 5}%)`);
-    ag.addColorStop(1, `hsl(${h},${Math.max(0, s - 6)}%,${4 + hp * 3}%)`);
-    ctx.fillStyle = ag; ctx.fill();
+    // Direction from this asteroid toward the system star, then into local frame
+    const sunWorldX = Math.cos(sys?.sunDir ?? 0) * 3500;
+    const sunWorldY = Math.sin(sys?.sunDir ?? 0) * 3500;
+    const localSun = Math.atan2(sunWorldY - a.y, sunWorldX - a.x) - iSpin;
+    ctx.fillStyle = getAsteroidBodyGrad(ctx, a.radius, h, s, hp, localSun); ctx.fill();
     // Directional shadow overlay — dark side away from sun
     if (Client.settings?.directionalLighting !== false) {
       ctx.save(); ctx.beginPath();
       ctx.moveTo(a.shape[0][0] * a.radius, a.shape[0][1] * a.radius);
       for (let i = 1; i < a.shape.length; i++) ctx.lineTo(a.shape[i][0] * a.radius, a.shape[i][1] * a.radius);
       ctx.closePath(); ctx.clip();
-      const sdx = Math.cos(localSun), sdy = Math.sin(localSun);
-      const shadeG = ctx.createLinearGradient(sdx * a.radius, sdy * a.radius, -sdx * a.radius, -sdy * a.radius);
-      shadeG.addColorStop(0, "rgba(0,0,0,0)");
-      shadeG.addColorStop(0.4, "rgba(0,0,0,0)");
-      shadeG.addColorStop(0.75, "rgba(0,0,0,0.50)");
-      shadeG.addColorStop(1, "rgba(0,0,0,0.78)");
-      ctx.fillStyle = shadeG; ctx.fillRect(-a.radius, -a.radius, a.radius * 2, a.radius * 2);
+      ctx.fillStyle = getAsteroidShadeGrad(ctx, a.radius, localSun); ctx.fillRect(-a.radius, -a.radius, a.radius * 2, a.radius * 2);
       ctx.restore();
     }
     // Rim light on sun-facing edge
@@ -219,16 +239,82 @@ const _enemyLockMap = new Map<string, any>();
  */
 export function drawEnemyOverlays(alpha: number, sys: any, now: number) {
   if (!sys?._liveEnemies) return;
+  const state = getState();
+  const player = state.player;
   _enemyLockMap.clear();
-  const primaryId = G.P.targetLock?.id;
-  if (Array.isArray(G.P.lockQueue)) {
-    for (const slot of G.P.lockQueue) _enemyLockMap.set(slot.id, slot);
+  const primaryId = player.targetLock?.id;
+  if (Array.isArray(player.lockQueue)) {
+    for (const slot of player.lockQueue) _enemyLockMap.set(slot.id, slot);
   }
   for (const e of sys._liveEnemies) {
     if (!isVisible(e.x, e.y, 40)) continue;
     const ix = lerp(e.px, e.x, alpha);
     const iy = lerp(e.py, e.y, alpha);
     drawLockBrackets(ix, iy, 18, _enemyLockMap.get(e.id), primaryId, e.id, now);
+
+    const glow = e.shieldHitGlow || 0;
+    if (glow > 0) {
+      const shieldR = e.sigRadius ?? 20;
+      const hitAngle = e.shieldHitAngle || 0;
+      const t = 1 - glow;
+      const hx = Math.cos(hitAngle) * shieldR;
+      const hy = Math.sin(hitAngle) * shieldR;
+
+      ctx.save();
+      ctx.translate(ix, iy);
+
+      ctx.save();
+      ctx.beginPath(); ctx.arc(0, 0, shieldR, 0, TAU); ctx.clip();
+
+      const sphereA = glow * 0.12;
+      const bubble = ctx.createRadialGradient(-3, -4, 1, 0, 0, shieldR);
+      bubble.addColorStop(0,    `rgba(30,100,180,${sphereA * 0.15})`);
+      bubble.addColorStop(0.5,  `rgba(40,140,210,${sphereA * 0.4})`);
+      bubble.addColorStop(0.78, `rgba(50,170,240,${sphereA * 0.75})`);
+      bubble.addColorStop(0.88, `rgba(80,200,255,${sphereA * 1.0})`);
+      bubble.addColorStop(0.94, `rgba(100,220,255,${sphereA * 0.7})`);
+      bubble.addColorStop(1,    `rgba(40,120,200,0)`);
+      ctx.fillStyle = bubble;
+      ctx.beginPath(); ctx.arc(0, 0, shieldR, 0, TAU); ctx.fill();
+
+      ctx.globalAlpha = glow * 0.9;
+      const flashSz = shieldR * 0.5;
+      const flashG = ctx.createRadialGradient(hx, hy, 0, hx, hy, flashSz);
+      flashG.addColorStop(0,   "rgba(230,250,255,1.0)");
+      flashG.addColorStop(0.35,"rgba(150,220,255,0.55)");
+      flashG.addColorStop(0.7, "rgba(80,190,255,0.15)");
+      flashG.addColorStop(1,   "rgba(40,150,255,0)");
+      ctx.fillStyle = flashG;
+      ctx.beginPath(); ctx.arc(hx, hy, flashSz, 0, TAU); ctx.fill();
+
+      for (let i = 0; i < 3; i++) {
+        const phase = t * 1.5 - i * 0.2;
+        if (phase <= 0 || phase >= 1) continue;
+        ctx.globalAlpha = glow * (1 - phase) * 0.65;
+        ctx.strokeStyle = "#aaddff";
+        ctx.lineWidth = 2 * (1 - phase);
+        ctx.beginPath(); ctx.arc(hx, hy, phase * shieldR * 2.0, 0, TAU); ctx.stroke();
+      }
+
+      ctx.restore();
+
+      const waveWidth = t * Math.PI * 1.2;
+      const waveA = glow * 0.4 * (1 - t * 0.6);
+      if (waveWidth > 0.05 && waveA > 0.01) {
+        ctx.globalAlpha = waveA;
+        ctx.strokeStyle = "#66ccff";
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "#3388cc";
+        ctx.beginPath();
+        ctx.arc(0, 0, shieldR * (0.96 + t * 0.06), hitAngle - waveWidth * 0.5, hitAngle + waveWidth * 0.5);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
   }
 }
 
@@ -237,16 +323,18 @@ export function drawEnemyOverlays(alpha: number, sys: any, now: number) {
  * Hull body + thrust flames are rendered by syncPixiPlayer in pixi-player.ts.
  */
 export function drawPlayer(now: number, alpha: number) {
-  if (!G.P) return;
-  const shieldGlow = G.P.shieldHitGlow || 0;
-  const hullGlow = G.P.hullHitGlow || 0;
+  const state = getState();
+  const player = state.player;
+  if (!player) return;
+  const shieldGlow = player.shieldHitGlow || 0;
+  const hullGlow = player.hullHitGlow || 0;
   if (shieldGlow <= 0 && hullGlow <= 0) return;
 
-  const ix = lerp(G.P.px, G.P.x, alpha), iy = lerp(G.P.py, G.P.y, alpha);
-  const ia = lerp(G.P.prevAngle, G.P.angle, alpha);
-  if (G.P.invincible > 0 && Math.floor(now / 75) % 2 === 0) return;
+  const ix = lerp(player.px, player.x, alpha), iy = lerp(player.py, player.y, alpha);
+  const ia = lerp(player.prevAngle, player.angle, alpha);
+  if (player.invincible > 0 && Math.floor(now / 75) % 2 === 0) return;
 
-  const latV = G.P.vx * Math.sin(ia) - G.P.vy * Math.cos(ia);
+  const latV = player.vx * Math.sin(ia) - player.vy * Math.cos(ia);
   const bankTilt = Math.max(-0.13, Math.min(0.13, latV * 0.0045));
   const angle = ia + (Math.abs(bankTilt) > 0.002 ? bankTilt : 0);
 
@@ -258,7 +346,7 @@ export function drawPlayer(now: number, alpha: number) {
   // Shield is completely invisible until impacted — only the impact pulse shows
   if (glow > 0) {
     // Convert world-space hit angle to local (ship-rotated) coordinates
-    const hitAngle = G.P.shieldHitAngle - ia;
+    const hitAngle = player.shieldHitAngle - ia;
     const hx = Math.cos(hitAngle) * shieldR;
     const hy = Math.sin(hitAngle) * shieldR;
     const t = 1 - glow; // 0 at impact, 1 as it fades
@@ -322,7 +410,7 @@ export function drawPlayer(now: number, alpha: number) {
 
   // Hull impact — fiery flash where the projectile struck the hull
   if (hullGlow > 0) {
-    const hullAngle = G.P.hullHitAngle - ia;
+    const hullAngle = player.hullHitAngle - ia;
     const hx = Math.cos(hullAngle) * 18;
     const hy = Math.sin(hullAngle) * 18;
 

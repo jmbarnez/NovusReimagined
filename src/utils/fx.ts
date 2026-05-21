@@ -1,5 +1,6 @@
 import { TAU } from "../constants.js";
-import { addParticle, addBeam, addFloatText, addShockwave } from "./entities.js";
+import { addParticle, addBeam, addFloatText, addShockwave, addImpactDecal, removeImpactDecal } from "./entities.js";
+import { G } from "../state.js";
 
 export function spawnMuzzleFlash(x: number, y: number, angle: number, color: string, intensity = 6) {
   const n = Math.max(3, Math.round(intensity));
@@ -80,11 +81,68 @@ export function spawnMiningImpact(x: number, y: number) {
   spawnParticles(x, y, "#ff8822", 1, 45);
 }
 
-export function spawnExplosion(x: number, y: number, color: string, scale = 1.0) {
-  const n = Math.round(4 * scale);
-  const s = 80 * scale;
-  spawnParticles(x, y, color, n, s);
-  spawnParticles(x, y, "#ffcc66", Math.round(n * 0.25), s * 0.6);
+function _spawnDebris(x: number, y: number, color: string, count: number, sizeScale: number) {
+  for (let i = 0; i < count; i++) {
+    const ox = (Math.random() - 0.5) * 20 * sizeScale;
+    const oy = (Math.random() - 0.5) * 20 * sizeScale;
+    const pts: number[][] = [];
+    const n = 4 + Math.floor(Math.random() * 4);
+    const baseR = 3 + Math.random() * 7 * sizeScale;
+    for (let j = 0; j < n; j++) {
+      const a = (j / n) * TAU + (Math.random() - 0.5) * 0.9;
+      const r = baseR * (0.5 + Math.random() * 0.6);
+      pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+    }
+    if (G.impactDecals.length >= 78) removeImpactDecal(0);
+    addImpactDecal({ x: x + ox, y: y + oy, poly: pts, color, life: 5 + Math.random() * 4, maxLife: 9 });
+  }
+}
+
+export function spawnExplosion(x: number, y: number, color: string, scale = 1.0, tier: "small" | "medium" | "large" = "small") {
+  const n  = Math.round(4 * scale);
+  const s  = 80 * scale;
+
+  if (tier === "small") {
+    spawnParticles(x, y, color, n, s);
+    spawnParticles(x, y, "#ffcc66", Math.round(n * 0.25), s * 0.6);
+    // Quick white flash ring
+    addShockwave({ x, y, maxRadius: 22 * scale, life: 0.18, color: "#fff8e0", width: 2.5 });
+    return;
+  }
+
+  if (tier === "medium") {
+    spawnParticles(x, y, color, n + 4, s);
+    spawnParticles(x, y, "#ffcc66", Math.round(n * 0.5), s * 0.7);
+    spawnParticles(x, y, "#ffffff", 2, s * 0.5);
+    addShockwave({ x, y, maxRadius: 18 * scale, life: 0.16, color: "#fffae8", width: 3 });
+    addShockwave({ x, y, maxRadius: (35 + scale * 40), life: 0.45 + scale * 0.2, color, width: 2 + scale * 1.5 });
+    _spawnDebris(x, y, color, 2, scale);
+    _spawnDebris(x, y, "#ffaa44", 1, scale);
+    return;
+  }
+
+  // "large"
+  spawnParticles(x, y, color, n + 10, s * 1.1);
+  spawnParticles(x, y, "#ffcc66", Math.round(n * 0.7), s * 0.85);
+  spawnParticles(x, y, "#ffffff", 4, s * 0.6);
+  // Bright flash ring
+  addShockwave({ x, y, maxRadius: 20 * scale, life: 0.14, color: "#ffffff", width: 4 });
+  // Primary ring
+  addShockwave({ x, y, maxRadius: (45 + scale * 55), life: 0.5 + scale * 0.35, color, width: 2 + scale * 2 });
+  // Secondary wider ring, slight delay simulated by starting wider
+  addShockwave({ x, y, maxRadius: (65 + scale * 70), life: 0.65 + scale * 0.3, color: "#ff8844", width: 1.5 });
+  // Debris chunks
+  _spawnDebris(x, y, color, 3, scale * 1.2);
+  _spawnDebris(x, y, "#ffaa44", 2, scale * 0.9);
+  // Lingering afterburn — large slow-decaying glow
+  addParticle({
+    x, y, color: "#ff6622",
+    vx: 0, vy: 0,
+    r: 18 + scale * 14,
+    life: 1.8 + scale * 0.6,
+    drag: 1.0,
+    decay: 0.55,
+  });
 }
 
 export function spawnShockwave(x: number, y: number, color: string, scale = 1.0) {

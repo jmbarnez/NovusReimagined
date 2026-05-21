@@ -1,7 +1,7 @@
 import { G } from "../state.js";
-import { SHIPS } from "../data/ships.js";
-import { MODULES, MODULE_FLAGS } from "../data/modules.js";
-import { WEAPON_PROFILES } from "../data/weaponProfiles.js";
+import { SHIPS, ShipDef } from "../data/ships.js";
+import { MODULES, MODULE_FLAGS, ModuleDef } from "../data/modules.js";
+import { WEAPON_PROFILES, WeaponProfile } from "../data/weaponProfiles.js";
 import { resolveWeaponTurret, getWeaponTurretAtSlot } from "../targeting.js";
 import { MODULE_HP_MAX, MIN_THRUST_PCT, SHIP_MASS_REF } from "../constants.js";
 import { levelForSkillXp, WEAPON_SKILL, type WeaponDelivery } from "../data/skills.js";
@@ -10,7 +10,7 @@ import { ModuleInstance } from "../types/moduleInstance.js";
 import { C } from "../config/index.js";
 
 export interface ComputedStats {
-  ship: any;
+  ship: ShipDef;
   weaponMult: number;
   miningMult: number;
   maxHp: number;
@@ -29,8 +29,8 @@ export interface ComputedStats {
   maxSpeed: number;
   baseMaxSpeed: number;
   dragPerSec: number;
-  weaponTurret: any;
-  wProf: any;
+  weaponTurret: ModuleDef | null;
+  wProf: WeaponProfile;
   finalDmg: number;
   hasMiner: boolean;
   hasSalvager: boolean;
@@ -63,11 +63,11 @@ export function weaponSkillBonus(delivery: WeaponDelivery): number {
   return lvl * C.PLAYER.SKILL_POTENCY.weaponMultPerLevel;
 }
 
-function isModuleActive(m: any, rack: string, idx: number): boolean {
+function isModuleActive(m: ModuleDef, rack: "turret" | "high" | "med" | "low", idx: number): boolean {
   return rack === "turret" ? (G.P.turretPower?.[idx] ?? false) : (G.P.slotActive?.[rack]?.[idx] ?? true);
 }
 
-export function computeStats(tempFitting?: any): ComputedStats {
+export function computeStats(tempFitting?: Record<string, (string | null)[]>): ComputedStats {
   const p = G.P;
   const fitting = tempFitting || p.fitting;
   const ship = SHIPS[p.shipId];
@@ -95,11 +95,8 @@ export function computeStats(tempFitting?: any): ComputedStats {
       
       // Apply instance affixes
       for (const affix of instance.affixes) {
-        if (e[affix.affectedStat]) {
-          e[affix.affectedStat] += affix.value;
-        } else {
-          e[affix.affectedStat] = affix.value;
-        }
+        const cur = e[affix.affectedStat];
+        e[affix.affectedStat] = (cur ?? 0) + affix.value;
       }
       
       const scale = instance.durability > 0 ? (0.3 + 0.7 * durabilityScale) : 0;
@@ -241,17 +238,11 @@ export function computeStats(tempFitting?: any): ComputedStats {
     const m = inst ? MODULES[inst.baseId] : null;
     if (!m?.isSalvager) continue;
     hasSalvager = true;
-    salvageBonus += (m as any).salvageRollBonus ?? 0;
+    salvageBonus += (m as { salvageRollBonus?: number }).salvageRollBonus ?? 0;
   }
   const metallurgyLevel = skLv('metallurgy');
   const weaponTurret = resolveWeaponTurret(fitting);
-  const baseProf = weaponTurret ? (WEAPON_PROFILES[weaponTurret.id] || WEAPON_PROFILES.default) : WEAPON_PROFILES.default;
-  const rangeScale = ((ship.turretRangeKm || C.PLAYER.TURRET.rangeKmReference) / C.PLAYER.TURRET.rangeKmReference) * C.PLAYER.TURRET.rangeScaleMultiplier;
-  const wProf = { ...baseProf, range: Math.max(C.PLAYER.TURRET.rangeMinPx, Math.round(baseProf.range * rangeScale)) };
-  if (weaponTurret && baseProf.type === "projectile" && baseProf.spd > 0) {
-    const trk = weaponTurret.trackingSpeed ?? C.PLAYER.TURRET.defaultTrackingSpeed;
-    wProf.spd = Math.max(C.PLAYER.TURRET.projectileSpeedMin, Math.round(baseProf.spd * (C.PLAYER.TURRET.projectileSpeedBase + trk * C.PLAYER.TURRET.projectileSpeedPerTracking)));
-  }
+  const wProf = computeScaledWeaponProfile(weaponTurret ? weaponTurret.id : "default", weaponTurret, ship);
   const primaryDelivery: WeaponDelivery | null = (weaponTurret?.weaponDelivery as WeaponDelivery | undefined) ?? null;
   const primarySkillBonus = primaryDelivery ? skLv(WEAPON_SKILL[primaryDelivery]) * C.PLAYER.SKILL_POTENCY.weaponMultPerLevel : 0;
   const finalDmg = Math.floor(wProf.dmg * weaponMult * (1 + primarySkillBonus));
@@ -269,19 +260,23 @@ export function computeStats(tempFitting?: any): ComputedStats {
   };
 }
 
-export function getWeaponProfileForSlot(idx: number): any | null {
+export function computeScaledWeaponProfile(baseId: string, weaponTurret: ModuleDef | null, ship: ShipDef): WeaponProfile {
+  const baseProf = WEAPON_PROFILES[baseId] || WEAPON_PROFILES.default;
+  const rangeScale = ((ship.turretRangeKm || C.PLAYER.TURRET.rangeKmReference) / C.PLAYER.TURRET.rangeKmReference) * C.PLAYER.TURRET.rangeScaleMultiplier;
+  const wProf = { ...baseProf, range: Math.max(C.PLAYER.TURRET.rangeMinPx, Math.round(baseProf.range * rangeScale)) };
+  if (baseProf.type === "projectile" && baseProf.spd > 0) {
+    const trk = weaponTurret?.trackingSpeed ?? C.PLAYER.TURRET.defaultTrackingSpeed;
+    wProf.spd = Math.max(C.PLAYER.TURRET.projectileSpeedMin, Math.round(baseProf.spd * (C.PLAYER.TURRET.projectileSpeedBase + trk * C.PLAYER.TURRET.projectileSpeedPerTracking)));
+  }
+  return wProf;
+}
+
+export function getWeaponProfileForSlot(idx: number): WeaponProfile | null {
   const p = G.P;
   const ship = SHIPS[p.shipId];
   const uid = G.P.fitting.turret[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m) return null;
-  const baseProf = WEAPON_PROFILES[inst!.baseId] || WEAPON_PROFILES.default;
-  const rangeScale = ((ship.turretRangeKm || C.PLAYER.TURRET.rangeKmReference) / C.PLAYER.TURRET.rangeKmReference) * C.PLAYER.TURRET.rangeScaleMultiplier;
-  const wProf = { ...baseProf, range: Math.max(C.PLAYER.TURRET.rangeMinPx, Math.round(baseProf.range * rangeScale)) };
-  if (baseProf.type === "projectile" && baseProf.spd > 0) {
-    const trk = (m as any).trackingSpeed ?? C.PLAYER.TURRET.defaultTrackingSpeed;
-    wProf.spd = Math.max(C.PLAYER.TURRET.projectileSpeedMin, Math.round(baseProf.spd * (C.PLAYER.TURRET.projectileSpeedBase + trk * C.PLAYER.TURRET.projectileSpeedPerTracking)));
-  }
-  return wProf;
+  return computeScaledWeaponProfile(inst!.baseId, m, ship);
 }

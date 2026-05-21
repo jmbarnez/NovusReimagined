@@ -29,6 +29,7 @@ import { G, Client } from "../state.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { entityLayer, effectLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
+import { getUIFont } from "./ui-font.js";
 
 const TAU = Math.PI * 2;
 /** Supersampling multiplier — baked canvas physical pixels per logical texel. */
@@ -83,30 +84,20 @@ function bakeEnemyTexture(type: string): Texture {
     cx.closePath();
   }
 
-  // 1. Thick depth outline
+  // 1. Depth outline
   buildHullPath();
   cx.lineJoin = "round";
   cx.strokeStyle = "rgba(0,0,0,0.92)";
-  cx.lineWidth = 3.8;
+  cx.lineWidth = 2.5;
   cx.stroke();
 
-  // 2. Cel-shaded fill (hard color bands for true cel-shaded look)
+  // 2. Smooth gradient fill
   buildHullPath();
   const baseCol = cfg.fill;
   const hullGrad = cx.createLinearGradient(TEX_HALF, TEX_HALF - 30, TEX_HALF, TEX_HALF + 30);
-  
-  // Flat highlight
-  hullGrad.addColorStop(0.0, lightenCol(baseCol, 15));
-  hullGrad.addColorStop(0.3, lightenCol(baseCol, 15));
-  
-  // Flat midtone
-  hullGrad.addColorStop(0.31, baseCol);
-  hullGrad.addColorStop(0.7, baseCol);
-  
-  // Flat shadow
-  hullGrad.addColorStop(0.71, darkenCol(baseCol, 20));
-  hullGrad.addColorStop(1.0, darkenCol(baseCol, 20));
-  
+  hullGrad.addColorStop(0.0, lightenCol(baseCol, 18));
+  hullGrad.addColorStop(0.45, baseCol);
+  hullGrad.addColorStop(1.0, darkenCol(baseCol, 22));
   cx.fillStyle = hullGrad;
   cx.fill();
 
@@ -130,19 +121,19 @@ function bakeEnemyTexture(type: string): Texture {
   // 4. Coloured edge stroke (rim)
   buildHullPath();
   cx.strokeStyle = cfg.stroke;
-  cx.lineWidth = 1.6;
+  cx.lineWidth = 1.2;
   cx.lineJoin = "round";
   cx.stroke();
 
-  // 5. Bold panel lines for distinct cel-shaded parts
+  // 5. Hairline panel lines
   for (const line of cfg.panelLines ?? []) {
     cx.beginPath();
     for (let i = 0; i < line.length; i++) {
       const [px, py] = line[i];
       i === 0 ? cx.moveTo(TEX_HALF + px, TEX_HALF + py) : cx.lineTo(TEX_HALF + px, TEX_HALF + py);
     }
-    cx.strokeStyle = "rgba(0,0,0,0.85)";
-    cx.lineWidth = 2.5;
+    cx.strokeStyle = "rgba(0,0,0,0.45)";
+    cx.lineWidth = 1.0;
     cx.lineJoin = "round";
     cx.lineCap = "round";
     cx.stroke();
@@ -245,11 +236,19 @@ export function lightDirIndex(localSunAngle: number): number {
 }
 
 // ─── Text styles ─────────────────────────────────────────────────────────────
-const _nameStyle = new TextStyle({ fontFamily: "monospace", fontSize: 9, fill: "#cc7777" });
+// Shared name style — mutating its fontFamily updates every live name Text.
+const _nameStyle = new TextStyle({ fontFamily: getUIFont(), fontSize: 9, fill: "#cc7777" });
 
 function makeLevelStyle(level: number): TextStyle {
   const fill = level <= 3 ? "#44cc66" : level <= 6 ? "#ffcc44" : "#ff4444";
-  return new TextStyle({ fontFamily: "monospace", fontSize: 9, fill });
+  return new TextStyle({ fontFamily: getUIFont(), fontSize: 9, fill });
+}
+
+/** Re-apply the active UI font to all live enemy name/level labels. */
+export function refreshEntityFonts() {
+  const font = getUIFont();
+  _nameStyle.fontFamily = font;
+  for (const b of _bundles.values()) b.levelText.style.fontFamily = font;
 }
 
 // ─── Per-enemy sprite bundle ──────────────────────────────────────────────────
@@ -258,14 +257,20 @@ interface EnemyBundle {
   hullLight: Sprite;
   lightTex: Texture[];
   hpBar: Graphics;
+  shieldBar: Graphics;
+  structureBar: Graphics;
   nameText: Text;
   levelText: Text;
   indicator: Graphics;
   lastHp: number;
+  lastShield: number;
+  lastStructure: number;
   lastLockKey: string;
+  wasLocked: boolean;
 }
 
 const _bundles = new Map<string, EnemyBundle>();
+const _lockMap = new Map<string, any>();
 
 function createBundle(e: { id: string; type: string; name: string; level?: number; hp: number }): EnemyBundle {
   const hull = new Sprite(getEnemyTexture(e.type));
@@ -284,6 +289,12 @@ function createBundle(e: { id: string; type: string; name: string; level?: numbe
   const hpBar = new Graphics();
   effectLayer!.addChild(hpBar);
 
+  const shieldBar = new Graphics();
+  effectLayer!.addChild(shieldBar);
+
+  const structureBar = new Graphics();
+  effectLayer!.addChild(structureBar);
+
   const nameText = new Text({ text: e.name, style: _nameStyle });
   nameText.anchor.set(0, 1);
   effectLayer!.addChild(nameText);
@@ -296,7 +307,7 @@ function createBundle(e: { id: string; type: string; name: string; level?: numbe
   const indicator = new Graphics();
   effectLayer!.addChild(indicator);
 
-  return { hull, hullLight, lightTex, hpBar, nameText, levelText, indicator, lastHp: e.hp, lastLockKey: "" };
+  return { hull, hullLight, lightTex, hpBar, shieldBar, structureBar, nameText, levelText, indicator, lastHp: e.hp, lastShield: -1, lastStructure: -1, lastLockKey: "", wasLocked: false };
 }
 
 function destroyBundle(id: string) {
@@ -305,21 +316,43 @@ function destroyBundle(id: string) {
   entityLayer!.removeChild(b.hull);   b.hull.destroy();
   entityLayer!.removeChild(b.hullLight); b.hullLight.destroy();
   effectLayer!.removeChild(b.hpBar);  b.hpBar.destroy();
+  effectLayer!.removeChild(b.shieldBar); b.shieldBar.destroy();
+  effectLayer!.removeChild(b.structureBar); b.structureBar.destroy();
   effectLayer!.removeChild(b.nameText); b.nameText.destroy();
   effectLayer!.removeChild(b.levelText); b.levelText.destroy();
   effectLayer!.removeChild(b.indicator); b.indicator.destroy();
   _bundles.delete(id);
 }
 
-// ─── HP bar ───────────────────────────────────────────────────────────────────
+// ─── Health bars ───────────────────────────────────────────────────────────────
+// Stacked vertically above the enemy, top → bottom: shield (cyan), hull (red),
+// structure (orange). Each row is HP_BAR_H + 2 px below the previous.
 const HP_BAR_W = 36;
 const HP_BAR_H = 5;
+const BAR_TOP = -30;
+const BAR_ROW = HP_BAR_H + 2;
 
-function rebuildHpBar(g: Graphics, frac: number) {
+function rebuildBar(g: Graphics, frac: number, row: number, color: number) {
+  const y = BAR_TOP + row * BAR_ROW;
   g.clear();
-  g.rect(-HP_BAR_W / 2, -30, HP_BAR_W, HP_BAR_H).fill({ color: 0x000000, alpha: 0.6 });
-  const col = frac > 0.5 ? 0xdd3333 : frac > 0.25 ? 0xff8822 : 0xff2222;
-  g.rect(-HP_BAR_W / 2, -30, HP_BAR_W * frac, HP_BAR_H).fill({ color: col });
+  g.rect(-HP_BAR_W / 2, y, HP_BAR_W, HP_BAR_H).fill({ color: 0x000000, alpha: 0.6 });
+  g.rect(-HP_BAR_W / 2, y, HP_BAR_W * frac, HP_BAR_H).fill({ color });
+}
+
+// Row 0 — shield (cyan)
+function rebuildShieldBar(g: Graphics, frac: number) {
+  rebuildBar(g, frac, 0, 0x3399ff);
+}
+
+// Row 1 — hull (red, brighter as it drops)
+function rebuildHpBar(g: Graphics, frac: number) {
+  const col = frac > 0.5 ? 0xdd3333 : frac > 0.25 ? 0xbb2222 : 0xff2222;
+  rebuildBar(g, frac, 1, col);
+}
+
+// Row 2 — structure (orange)
+function rebuildStructureBar(g: Graphics, frac: number) {
+  rebuildBar(g, frac, 2, 0xee9944);
 }
 
 // ─── Targeting indicator ──────────────────────────────────────────────────────
@@ -357,14 +390,16 @@ export function syncPixiEntities(alpha: number, now: number): void {
   const sys = G.GALAXY?.[G.P?.sysIdx ?? 0];
   const liveEnemies: any[] = sys?._liveEnemies ?? [];
   const lod = Client.zoom < 0.4;
-  const sunDir = sys?.sunDir ?? 0;
   const lightOn = !lod && Client.settings?.directionalLighting !== false;
+  const _sd = sys?.sunDir ?? 0;
+  const sunWorldX = Math.cos(_sd) * 3500;
+  const sunWorldY = Math.sin(_sd) * 3500;
 
   // Build lock lookup (primary + queue)
-  const lockMap = new Map<string, any>();
+  _lockMap.clear();
   const primaryId = G.P.targetLock?.id;
   if (Array.isArray(G.P.lockQueue)) {
-    for (const slot of G.P.lockQueue) lockMap.set(slot.id, slot);
+    for (const slot of G.P.lockQueue) _lockMap.set(slot.id, slot);
   }
 
   const activeIds = new Set<string>();
@@ -387,6 +422,7 @@ export function syncPixiEntities(alpha: number, now: number): void {
     // Directional light overlay — texture picked by local sun direction so the
     // lit edge tracks the system star as the hull rotates.
     if (lightOn && b.lightTex.length) {
+      const sunDir = Math.atan2(sunWorldY - iy, sunWorldX - ix);
       b.hullLight.texture = b.lightTex[lightDirIndex(sunDir - ia)];
       b.hullLight.x = ix;
       b.hullLight.y = iy;
@@ -396,21 +432,51 @@ export function syncPixiEntities(alpha: number, now: number): void {
       b.hullLight.visible = false;
     }
 
-    const lockSlot = lockMap.get(e.id);
-    const hasLock = !!(lockSlot && !lockSlot.resolving);
+    const lockSlot = _lockMap.get(e.id);
+    const isLocked = !!(lockSlot && !lockSlot.resolving);
     const frac = e.hp / Math.max(1, e.maxHp);
+    const hasShield = (e.maxShield ?? 0) > 0;
+    const hasStruct = (e.maxStructure ?? 0) > 0;
+    const shieldFrac = hasShield ? Math.max(0, e.shield ?? 0) / (e.maxShield ?? 1) : 0;
+    const structFrac = hasStruct ? Math.max(0, e.structure ?? 0) / (e.maxStructure ?? 1) : 0;
+    const hpDamaged = frac < 1;
+    const shieldDamaged = hasShield && (e.shield ?? 0) < (e.maxShield ?? 0);
+    const structDamaged = hasStruct && (e.structure ?? 0) < (e.maxStructure ?? 0);
+    const showBars = !lod && (hpDamaged || shieldDamaged || structDamaged || isLocked);
+    const showShieldBar = showBars && hasShield;
+    const showStructBar = showBars && hasStruct;
+    const lockStateChanged = b.wasLocked !== isLocked;
 
-    // HP bar — only when fully locked and not full HP
-    if (!lod && hasLock && frac < 1) {
-      if (b.lastHp !== e.hp) { rebuildHpBar(b.hpBar, frac); b.lastHp = e.hp; }
+    // Shield bar (row 0) — visible when damaged or fully locked
+    if (showShieldBar) {
+      if (lockStateChanged || b.lastShield !== e.shield) { rebuildShieldBar(b.shieldBar, shieldFrac); b.lastShield = e.shield; }
+      b.shieldBar.x = ix; b.shieldBar.y = iy; b.shieldBar.alpha = 1;
+    } else {
+      b.shieldBar.alpha = 0;
+    }
+
+    // Hull bar (row 1)
+    if (showBars) {
+      if (lockStateChanged || b.lastHp !== e.hp) { rebuildHpBar(b.hpBar, frac); b.lastHp = e.hp; }
       b.hpBar.x = ix; b.hpBar.y = iy; b.hpBar.alpha = 1;
     } else {
       b.hpBar.alpha = 0;
     }
 
-    // Labels — name + level side-by-side, centred above enemy
+    // Structure bar (row 2)
+    if (showStructBar) {
+      if (lockStateChanged || b.lastStructure !== e.structure) { rebuildStructureBar(b.structureBar, structFrac); b.lastStructure = e.structure; }
+      b.structureBar.x = ix; b.structureBar.y = iy; b.structureBar.alpha = 1;
+    } else {
+      b.structureBar.alpha = 0;
+    }
+
+    b.wasLocked = isLocked;
+
+    // Labels — name + level side-by-side, centred above the topmost visible bar
     if (!lod) {
-      const nameY = hasLock && frac < 1 ? iy - 33 : iy - 28;
+      const topRow = hasShield ? 0 : 1;
+      const nameY = showBars ? iy + BAR_TOP + topRow * BAR_ROW - 3 : iy - 28;
       const totalW = b.nameText.width + 5 + b.levelText.width;
       const startX = ix - totalW / 2;
       b.nameText.x = startX;          b.nameText.y = nameY; b.nameText.alpha = 1;

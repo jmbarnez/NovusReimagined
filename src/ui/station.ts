@@ -1,21 +1,28 @@
 import "./styles/station-base.css";
 import { G, Client } from "../state.js";
-import { MODULES } from "../data/modules.js";
-import { ORE_MARKET_BUY, COMPONENT_MARKET_BUY } from "../data/marketCatalog.js";
-import { getStats, invalidate } from "../player/player-stats.js";
-import { syncSlotHeat } from "../player/player-fitting.js";
-import { ensureAmmoDefaults } from "../player/player-data.js";
-import { closeStation, undockStation } from "../dock.js";
+import { undockStation } from "../dock.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../audio/procedural.js";
-import { MODULE_HP_MAX } from "../constants.js";
-import { on, emit } from "../events.js";
+import { on } from "../events.js";
 import { generateContractsForStation } from "../data/missions.js";
 import { logEvent } from "./hud-overlay.js";
-import { getRecipe, createCraftJob, type IndustryPool } from "../data/industryRecipes.js";
-import { ModuleRarity, RARITY_CONFIG } from "../data/moduleRarity.js";
-import { generateModuleInstance } from "../loot/generateModule.js";
 import { fmtKey } from "../utils/format.js";
-import { getInstance, invalidateInstanceCache } from "../utils/items.js";
+import {
+  repairShipAction,
+  buyModuleAction,
+  sellModuleAction,
+  buyAmmunitionAction,
+  sellCargoResourceAction,
+  fitModuleAction,
+  unfitModuleAction,
+  swapModuleAction,
+  queueIndustryJobAction,
+  cancelIndustryJobAction,
+  buyBlueprintAction,
+  setHomeSystemAction,
+  acceptContractAction,
+  turnInContractAction,
+  abandonContractAction
+} from "../state/actions.js";
 
 // Re-export and import shared and tab specific logic
 import { stationState, MAX_ACTIVE_CONTRACTS } from "./station/shared.js";
@@ -198,129 +205,65 @@ function onStationAction(e: any) {
       break;
     }
     case "repair": {
-      const st = getStats();
-      const hullRep = Math.max(0, st.maxHp - G.P.hp);
-      const structRep = Math.max(0, st.maxStructure - G.P.structure);
-      const shieldRep = Math.max(0, st.maxShield - G.P.shield);
-      let moduleDamageTotal = 0;
-      for (const rack of ["turret", "high", "med", "low"] as const) {
-        const slots = G.P.fitting?.[rack];
-        if (!slots) continue;
-        for (let i = 0; i < slots.length; i++) {
-          const uid = slots[i];
-          if (uid) {
-            const inst = getInstance(uid);
-            if (inst) {
-              moduleDamageTotal += Math.max(0, inst.maxDurability - inst.durability);
-            }
-          }
-        }
-      }
-      const cost = Math.max(0, Math.ceil((hullRep + structRep * 0.5 + shieldRep * 0.3 + moduleDamageTotal * 0.6) * 0.8));
-      if (G.P.credits < cost) { sfxError(); return; }
+      const res = repairShipAction();
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.credits -= cost;
-      G.P.hp = st.maxHp;
-      G.P.structure = st.maxStructure;
-      G.P.shield = st.maxShield;
-      for (const inst of G.P.moduleCargo) {
-        inst.durability = inst.maxDurability;
-      }
-      for (const rack of ["turret", "high", "med", "low"] as const) {
-        const slots = G.P.fitting?.[rack];
-        if (!slots) continue;
-        for (let i = 0; i < slots.length; i++) {
-          const uid = slots[i];
-          if (uid) {
-            const inst = getInstance(uid);
-            if (inst) inst.durability = inst.maxDurability;
-          }
-        }
-      }
-      invalidate();
       renderStationUI();
       break;
     }
     case "buyMod": {
       const id = (btn as HTMLElement).dataset.modId;
       if (!id) return;
-      const m = MODULES[id];
-      if (!m || G.P.credits < m.price) { sfxError(); return; }
+      const res = buyModuleAction(id);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.credits -= m.price;
-      const inst = generateModuleInstance(id, G.P.level, 0);
-      inst.rarity = ModuleRarity.Stock;
-      inst.affixes = [];
-      G.P.moduleCargo.push(inst);
-      invalidateInstanceCache();
       renderStationUI();
       break;
     }
     case "sellMod": {
       const id = (btn as HTMLElement).dataset.modId;
       if (!id) return;
-      const m = MODULES[id];
-      if (!m) return;
-      // Only sell unfitted instances
-      const fittedIds = new Set<string>();
-      for (const r of ["turret", "high", "med", "low"] as const)
-        for (const uid of G.P.fitting[r]) if (uid) fittedIds.add(uid);
-      const instIdx = G.P.moduleCargo.findIndex(inst => inst.baseId === id && !fittedIds.has(inst.uid));
-      if (instIdx === -1) { sfxError(); return; }
+      const res = sellModuleAction(id);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      const inst = G.P.moduleCargo[instIdx];
-      const rarityMult = RARITY_CONFIG[inst.rarity].sellMult;
-      const sellPrice = Math.floor(m.price * 0.6 * rarityMult);
-      G.P.moduleCargo.splice(instIdx, 1);
-      G.P.credits += sellPrice;
-      invalidateInstanceCache();
-      invalidate();
       renderStationUI();
       break;
     }
     case "buyHybrid": {
-      ensureAmmoDefaults();
-      if (G.P.credits < 40) { sfxError(); return; }
+      const res = buyAmmunitionAction("hybrid");
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.credits -= 40;
-      G.P.ammo.hybrid = (G.P.ammo.hybrid || 0) + 500;
       renderStationUI();
       break;
     }
     case "buyMissile": {
-      ensureAmmoDefaults();
-      if (G.P.credits < 95) { sfxError(); return; }
+      const res = buyAmmunitionAction("missile");
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.credits -= 95;
-      G.P.ammo.missile = (G.P.ammo.missile || 0) + 24;
       renderStationUI();
       break;
     }
     case "sellOre": {
       const k = (btn as HTMLElement).dataset.ore!;
-      if (G.P.ore[k] <= 0) { sfxError(); return; }
+      const res = sellCargoResourceAction("ore", k);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.credits += G.P.ore[k] * (ORE_MARKET_BUY[k] || 0);
-      G.P.ore[k] = 0;
       renderStationUI();
       break;
     }
     case "sellLoot": {
       const k = (btn as HTMLElement).dataset.loot!;
-      if (G.P.loot[k] <= 0) { sfxError(); return; }
+      const res = sellCargoResourceAction("loot", k);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      const lootBuy: Record<string, number> = { scrap: 5, chip: 45, cell: 22, "intact-part": 30 };
-      G.P.credits += G.P.loot[k] * (lootBuy[k!] || 0);
-      G.P.loot[k] = 0;
       renderStationUI();
       break;
     }
     case "sellComp": {
       const k = (btn as HTMLElement).dataset.comp!;
-      if (G.P.components[k] <= 0) { sfxError(); return; }
+      const res = sellCargoResourceAction("components", k);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.credits += G.P.components[k] * (COMPONENT_MARKET_BUY[k] || 100);
-      G.P.components[k] = 0;
       renderStationUI();
       break;
     }
@@ -329,88 +272,52 @@ function onStationAction(e: any) {
       const i = parseInt((btn as HTMLElement).dataset.idx!, 10);
       const select = (btn as HTMLElement).parentElement!.querySelector("select");
       const instanceId = select ? (select as HTMLSelectElement).value : "";
-      if (!instanceId) { sfxError(); return; }
-      const inst = getInstance(instanceId);
-      if (!inst) { sfxError(); return; }
-      const m = MODULES[inst.baseId];
-      if (!m) { sfxError(); return; }
+      const res = fitModuleAction(rack, i, instanceId);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.fitting[rack][i] = instanceId;
-      G.P.moduleHp[rack][i] = Math.round((inst.durability / inst.maxDurability) * MODULE_HP_MAX);
-      syncSlotHeat();
-      invalidate();
       renderStationUI();
       break;
     }
     case "unfit": {
       const rack = (btn as HTMLElement).dataset.rack as "turret" | "high" | "med" | "low";
       const i = parseInt((btn as HTMLElement).dataset.idx!, 10);
-      const uid = G.P.fitting[rack][i];
-      if (!uid) { sfxError(); return; }
-      const inst = getInstance(uid);
-      if (!inst) { sfxError(); return; }
+      const res = unfitModuleAction(rack, i);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      const slotHp = G.P.moduleHp?.[rack]?.[i] ?? MODULE_HP_MAX;
-      inst.durability = Math.round((slotHp / MODULE_HP_MAX) * inst.maxDurability);
-      G.P.fitting[rack][i] = null;
-      syncSlotHeat();
-      invalidate();
       renderStationUI();
       break;
     }
     case "queueJob": {
       const id = (btn as HTMLElement).dataset.recipe!;
-      const r = getRecipe(id);
-      if (!r || (r.requiresBlueprint && !G.P.blueprints[id])) { sfxError(); return; }
       const qty = stationState.craftQty;
-      const pool = (p: IndustryPool) =>
-        p === "ore" ? G.P.ore : p === "refined" ? G.P.refined : p === "loot" ? G.P.loot : G.P.components;
-      for (const inp of r.inputs) {
-        if ((pool(inp.pool)[inp.key] || 0) < inp.qty * qty) { sfxError(); return; }
-      }
+      const res = queueIndustryJobAction(id, qty);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      for (const inp of r.inputs) pool(inp.pool)[inp.key] -= inp.qty * qty;
-      const job = createCraftJob(id, qty);
-      G.P.craftQueue.push(job);
-      stationState.craftQueue = G.P.craftQueue;
-      logEvent(`Queued: ${r.label} ×${qty} (${job.duration / 1000}s)`, "system");
+      if (res.label) logEvent(`Queued: ${res.label}`, "system");
       renderStationUI();
       break;
     }
     case "cancelJob": {
       const jobId = (btn as HTMLElement).dataset.jobId!;
-      const idx = G.P.craftQueue.findIndex(j => j.id === jobId);
-      if (idx === -1) { sfxError(); return; }
-      const job = G.P.craftQueue[idx];
-      const r = getRecipe(job.recipeId);
-      if (r) {
-        const pool = (p: IndustryPool) =>
-          p === "ore" ? G.P.ore : p === "refined" ? G.P.refined : p === "loot" ? G.P.loot : G.P.components;
-        for (const inp of r.inputs) {
-          pool(inp.pool)[inp.key] = (pool(inp.pool)[inp.key] || 0) + inp.qty * job.qty;
-        }
-      }
-      G.P.craftQueue.splice(idx, 1);
-      stationState.craftQueue = G.P.craftQueue;
+      const res = cancelIndustryJobAction(jobId);
+      if (!res.success) { sfxError(); return; }
       sfxBlip();
-      logEvent(`Cancelled: ${r?.label || "job"}`, "system");
+      if (res.label) logEvent(`Cancelled: ${res.label}`, "system");
       renderStationUI();
       break;
     }
     case "buyBP": {
       const id = (btn as HTMLElement).dataset.recipe!;
-      const r = getRecipe(id);
-      const cost = r?.blueprintCost ?? 0;
-      if (!r || !cost || G.P.credits < cost) { sfxError(); return; }
+      const res = buyBlueprintAction(id);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.credits -= cost;
-      G.P.blueprints[id] = true;
       renderStationUI();
       break;
     }
     case "setHome": {
+      const res = setHomeSystemAction();
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.homeSysIdx = G.P.sysIdx;
       renderStationUI();
       break;
     }
@@ -446,63 +353,41 @@ function onStationAction(e: any) {
       const i = parseInt((btn as HTMLElement).dataset.idx!, 10);
       const select = document.getElementById(`swap-${rack}-${i}`) as HTMLSelectElement;
       const newUid = select?.value;
-      if (!newUid) { sfxError(); return; }
-      const newInst = getInstance(newUid);
-      if (!newInst) { sfxError(); return; }
-      const oldUid = G.P.fitting[rack][i];
-      if (!oldUid) { sfxError(); return; }
-      const oldInst = getInstance(oldUid);
-      if (!oldInst) { sfxError(); return; }
+      const res = swapModuleAction(rack, i, newUid);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      const slotHp = G.P.moduleHp?.[rack]?.[i] ?? MODULE_HP_MAX;
-      oldInst.durability = Math.round((slotHp / MODULE_HP_MAX) * oldInst.maxDurability);
-      G.P.fitting[rack][i] = newUid;
-      G.P.moduleHp[rack][i] = Math.round((newInst.durability / newInst.maxDurability) * MODULE_HP_MAX);
-      syncSlotHeat();
-      invalidate();
       renderStationUI();
       break;
     }
-
     case "acceptContract": {
       const id = (btn as HTMLElement).dataset.contractId;
       if (!id) return;
-      const contract = stationState._stationContracts.find(c => c.id === id);
-      if (!contract) return;
-      if (G.P.contracts.length >= MAX_ACTIVE_CONTRACTS) { sfxError(); return; }
+      const res = acceptContractAction(id, stationState._stationContracts);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      const accepted = { ...contract, status: "active" as const };
-      G.P.contracts.push(accepted);
-      emit("mission:accepted", { contract: accepted });
-      logEvent(`Contract accepted: ${accepted.title}`, "system");
+      if (res.label) logEvent(`Contract accepted: ${res.label}`, "system");
       renderContracts();
       break;
     }
     case "turnInContract": {
       const id = (btn as HTMLElement).dataset.contractId;
       if (!id) return;
-      const idx = G.P.contracts.findIndex(c => c.id === id && c.status === "complete");
-      if (idx === -1) { sfxError(); return; }
-      const contract = G.P.contracts[idx];
-      if (contract.stationId !== Client.activeStation?.id) { sfxError(); return; }
+      const res = turnInContractAction(id);
+      if (!res.success) { sfxError(); return; }
       sfxConfirm();
-      G.P.credits += contract.reward;
-      G.P.contracts.splice(idx, 1);
-      logEvent(`Claimed ${contract.reward} CR for: ${contract.title}`, "loot");
+      if (res.label && res.creditsEarned != null) logEvent(`Claimed ${res.creditsEarned} CR for: ${res.label}`, "loot");
       renderStationUI();
       break;
     }
     case "abandonContract": {
       const id = (btn as HTMLElement).dataset.contractId;
       if (!id) return;
-      const idx = G.P.contracts.findIndex(c => c.id === id);
-      if (idx === -1) return;
+      const res = abandonContractAction(id);
+      if (!res.success) { sfxError(); return; }
       sfxBlip();
-      G.P.contracts.splice(idx, 1);
       renderContracts();
       break;
     }
-
     default:
       break;
   }

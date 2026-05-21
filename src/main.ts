@@ -1,4 +1,4 @@
-import { G, Client, AppMode } from "./state.js";
+import { G, Client } from "./state.js";
 import { buildGalaxy, populateSystem } from "./world-gen.js";
 import { makePlayer } from "./player/player-data.js";
 import { computeStats } from "./player/player-stats.js";
@@ -18,6 +18,7 @@ import { initPixiBackground } from "./render/pixi-background.js";
 import { initPixiParticles } from "./render/pixi-particles.js";
 import { initPixiEntities } from "./render/pixi-entities.js";
 import { initPixiPlayer } from "./render/pixi-player.js";
+import { initVignette } from "./render/pixi-vignette.js";
 
 import { showTitleScreen } from "./ui/title-screen.js";
 import { C } from "./config/index.js";
@@ -53,6 +54,7 @@ async function boot() {
     // 4. Rendering Engines
     await initPixi();
     initPixiBackground();
+    initVignette();
     initPixiParticles();
     initPixiEntities();
     initPixiPlayer();
@@ -81,10 +83,26 @@ async function boot() {
 function setupPlayerSpawn() {
   if (G.P.pendingHomeSpawn) {
     G.P.pendingHomeSpawn = false;
-    G.P.x = 0;
-    G.P.y = 0;
-    G.P.px = 0;
-    G.P.py = 0;
+    const sys = G.GALAXY[G.P.sysIdx];
+    if (sys?.asteroids?.length) {
+      // Find the first asteroid cluster and spawn near it
+      const firstAst = sys.asteroids[0];
+      const clusterId = firstAst.id.split("-")[2];
+      const cluster = sys.asteroids.filter((a: any) => a.id.split("-")[2] === clusterId);
+      let cx = 0, cy = 0;
+      for (const a of cluster) { cx += a.x; cy += a.y; }
+      cx /= cluster.length;
+      cy /= cluster.length;
+      const spawnAngle = Math.random() * Math.PI * 2;
+      const spawnDist = 120 + Math.random() * 80;
+      G.P.x = cx + Math.cos(spawnAngle) * spawnDist;
+      G.P.y = cy + Math.sin(spawnAngle) * spawnDist;
+    } else {
+      G.P.x = 0;
+      G.P.y = 0;
+    }
+    G.P.px = G.P.x;
+    G.P.py = G.P.y;
   }
 }
 

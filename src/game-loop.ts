@@ -2,19 +2,16 @@ import { G, Client, AppMode } from "./state.js";
 import { drawBackground, drawSystemTint } from "./render/background.js";
 import { drawHUD, drawGalaxyMap, drawSystemMap, drawWarpScreen, drawTargetArrow } from "./render/hud.js";
 import {
-  drawStar, drawBloomStar,
-  drawPlanets, drawGates, drawStations, drawStationTurrets, drawAsteroids, drawEnemyOverlays, drawDistantSun,
+  drawStar,
+  drawGates, drawStations, drawStationTurrets, drawAsteroids, drawEnemyOverlays,
   drawBullets, drawBeams, drawMiningLaser, drawSalvagerBeam, drawShockwaves, drawPlayer,
   drawCrosshair, drawFloatTexts, drawWreckPieces, drawSalvagePickups,
-  drawWorldBorder, updateAndDrawImpactDecals, drawAmbientLife,
-  drawLensFlare,
+  drawWorldBorder, updateAndDrawImpactDecals, drawAmbientLife, drawLensFlare,
 } from "./render/world.js";
+import { syncPixiPlanets } from "./render/pixi-planets.js";
+import { updateVignette } from "./render/pixi-vignette.js";
+import { syncThrust } from "./render/pixi-thrust.js";
 import { drawStationInterior } from "./render/station-interior.js";
-import {
-  beginBloomPass, endBloomPass,
-  drawBloomBullets, drawBloomBeams,
-  drawBloomMiningLaser, drawBloomSalvagerBeam, drawBloomImpacts, drawBloomShockwaves,
-} from "./render/bloom.js";
 import { updatePerfOverlay, drawPerfOverlay, drawFpsCounter } from "./render/perf-overlay.js";
 import { initHudOverlay, updateHudOverlay, destroyHudOverlay } from "./ui/hud-overlay.js";
 import { tickCraftQueue } from "./ui/station/industry.js";
@@ -170,6 +167,9 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number,
   syncPixiEntities(alpha, now);
   syncPixiPlayer(alpha, now);
   syncPixiTrails();
+  syncPixiPlanets(now);
+  syncThrust(alpha, now);
+  updateVignette();
   renderPixi();
 
   // Canvas 2D overlay — transparent, renders on top of PixiJS
@@ -183,12 +183,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number,
   ctx.scale(Client.zoom, Client.zoom);
   ctx.translate(-camxR, -camyR);
 
-  const bloomOn = Client.settings?.bloomEnabled !== false;
-  if (bloomOn) beginBloomPass(Wc, Hc, camxR, camyR, Client.zoom);
-
-  // Near sun body intentionally not drawn — only the screen-edge distant sun
-  // beacon (see drawDistantSun below) is used to convey direction-of-star.
-  drawPlanets(now, sys);
+  drawStar(now, sys);
   drawWorldBorder();
   drawGates(now, alpha, sys);
   drawStations(now, sys);
@@ -207,25 +202,13 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number,
   drawFloatTexts(sys);
   drawWaypoint();
 
-  if (bloomOn) {
-    drawBloomBullets(alpha);
-    drawBloomBeams();
-    drawBloomMiningLaser(now);
-    drawBloomSalvagerBeam();
-    drawBloomShockwaves();
-    drawBloomImpacts(now, alpha);
-    endBloomPass(ctx, Wc, Hc);
-  }
-
   ctx.restore();
-
-  // Distant sun beacon — only shows when the real star body is off-screen.
-  drawDistantSun(Wc, Hc, camxR, camyR, Client.zoom, now, sys);
-  if (Client.settings?.lensFlare !== false) drawLensFlare(Wc, Hc, camxR, camyR, Client.zoom, sys);
 
   // End of clipped game-frame region. HUD-space overlays (damage flash,
   // target arrow, lock rail extras) draw on the full canvas after this.
   ctx.restore();
+
+  drawLensFlare(Wc, Hc);
 
   const sGlow = G.P.shieldHitGlow || 0;
   const hGlow = G.P.hullHitGlow || 0;

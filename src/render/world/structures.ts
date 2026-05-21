@@ -1,9 +1,10 @@
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { isVisible } from "../../utils/game.js";
 import { dst } from "../../utils/math.js";
 import { worldText } from "../world-text.js";
+import { getUIFont } from "../ui-font.js";
 
 // Station bodies are rendered by PixiJS (render/pixi-stations.ts). This module
 // keeps only the per-frame Canvas 2D station overlays (safe-zone ring,
@@ -13,7 +14,7 @@ export function drawGates(now: number, alpha: number, sys: any) {
   if (!sys?.gates) return;
   for (const g of sys.gates) {
     if (!isVisible(g.x, g.y, g.radius * 2.5)) continue;
-    const target = G.GALAXY[g.targetSysIdx];
+    const target = getState().GALAXY?.[g.targetSysIdx];
     ctx.save(); ctx.translate(g.x, g.y);
     const pulse = 0.5 + 0.5 * Math.sin(now * 0.0022);
     const glow = ctx.createRadialGradient(0, 0, g.radius * .4, 0, 0, g.radius * 2.2);
@@ -30,7 +31,7 @@ export function drawGates(now: number, alpha: number, sys: any) {
     ctx.beginPath(); ctx.arc(0, 0, g.radius * .5, 0, TAU); ctx.fillStyle = core; ctx.fill();
     ctx.restore();
     worldText(g.x, g.y, `⟩⟩ ${target.name}`, {
-      font: "bold 11px monospace",
+      font: `bold 11px ${getUIFont()}`,
       fill: "#88c8ff",
       offsetY: 18,
       shadow: true,
@@ -42,13 +43,14 @@ export function drawStations(now: number, sys: any) {
   if (!sys?.stations) return;
   for (const st of sys.stations) {
     if (!isVisible(st.x, st.y, Math.max(800, st.radius * 3))) continue;
+    const player = getState().player;
     const dockR = st.radius * 2;
-    const inRange = dst(G.P.x, G.P.y, st.x, st.y) < dockR;
+    const inRange = dst(player.x, player.y, st.x, st.y) < dockR;
     const locked = sys._liveEnemies?.some((e: any) => e.hasLockOnPlayer) ?? false;
 
     // Safe-zone ring
     const safeR = st.safeRadius ?? (st.isHome ? 900 : 675);
-    const pd = dst(G.P.x, G.P.y, st.x, st.y);
+    const pd = dst(player.x, player.y, st.x, st.y);
     if (pd < safeR * 2) {
       const t = Math.max(0, 1 - pd / (safeR * 2));
       const zoneAlpha = t * 0.18;
@@ -78,7 +80,7 @@ export function drawStations(now: number, sys: any) {
     const anchorY = st.y + (st.isHome ? R * 1.85 : R * 1.6);
     if (inRange) {
       worldText(st.x, anchorY, locked ? "◉ LOCKED" : "[F] Dock", {
-        font: "bold 10px monospace",
+        font: `bold 10px ${getUIFont()}`,
         fill: locked ? "#ff5555" : "#5fe0ff",
         offsetY: 28,
         shadow: true,

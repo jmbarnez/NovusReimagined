@@ -14,7 +14,9 @@ import { renderSkillsContent } from "./ui/skills.js";
 import { populateSystem } from "./world-gen.js";
 import { logEvent } from "./ui/hud-overlay.js";
 import { sfxWarpCharge, sfxWarpJump } from "./audio/procedural.js";
-export function dockAt(st: any) {
+import type { Station, Gate } from "./types/world.js";
+
+export function dockAt(st: Station) {
   closeBridge();
   clearSensorLocks();
   Client.stationOpen = true;
@@ -93,7 +95,7 @@ export function warpTo(targetIdx: number) {
   G.P.sysIdx = targetIdx;
   populateSystem(G.GALAXY[targetIdx]);
   const gates = G.GALAXY[targetIdx].gates;
-  const back = gates?.find((g: any) => g.targetSysIdx === fromIdx) ?? gates?.[0];
+  const back = gates?.find((g: Gate) => g.targetSysIdx === fromIdx) ?? gates?.[0];
   if (back) {
     const len = Math.hypot(back.x, back.y) || 1;
     const nx = back.x / len, ny = back.y / len;

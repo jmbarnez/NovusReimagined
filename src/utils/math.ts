@@ -56,3 +56,50 @@ export function dst(ax: number, ay: number, bx: number, by: number): number {
 export function aimAngle(fx: number, fy: number, tx: number, ty: number): number {
   return Math.atan2(ty - fy, tx - fx);
 }
+
+export interface Collidable {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+}
+
+export function resolveElasticCollision(
+  e1: Collidable,
+  e2: Collidable,
+  m1: number,
+  m2: number,
+  dx: number,
+  dy: number,
+  dist: number,
+  minDist: number,
+  restitution: number
+): number {
+  const overlap = minDist - dist;
+  const nx = dx / dist;
+  const ny = dy / dist;
+
+  const invM1 = 1 / m1;
+  const invM2 = 1 / m2;
+  const invSum = invM1 + invM2;
+
+  e1.x -= nx * overlap * (invM1 / invSum);
+  e1.y -= ny * overlap * (invM1 / invSum);
+  e2.x += nx * overlap * (invM2 / invSum);
+  e2.y += ny * overlap * (invM2 / invSum);
+
+  const e1vx = e1.vx || 0;
+  const e1vy = e1.vy || 0;
+  const e2vx = e2.vx || 0;
+  const e2vy = e2.vy || 0;
+
+  const closing = (e1vx - e2vx) * nx + (e1vy - e2vy) * ny;
+  if (closing > 0) {
+    const j = (1 + restitution) * closing / invSum;
+    e1.vx = e1vx - (j / m1) * nx;
+    e1.vy = e1vy - (j / m1) * ny;
+    e2.vx = e2vx + (j / m2) * nx;
+    e2.vy = e2vy + (j / m2) * ny;
+  }
+  return closing;
+}

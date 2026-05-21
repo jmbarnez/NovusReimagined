@@ -26,13 +26,11 @@ export function defaultFitting(shipId: string): Record<string, (string | null)[]
 export function makePlayer(): Player {
   const fit = defaultFitting('scout');
   const startingModules: ModuleInstance[] = [
-    { uid: "start-tu-cannon", baseId: "tu-cannon", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-tu-strip", baseId: "tu-strip", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-me-ab1", baseId: "me-ab1", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
+    { uid: "start-tu-civ-cannon", baseId: "tu-civilian-cannon", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
+    { uid: "start-tu-civ-miner", baseId: "tu-civilian-miner", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
   ];
-  fit.turret[0] = "start-tu-cannon";
-  fit.turret[1] = "start-tu-strip";
-  fit.med[0] = "start-me-ab1";
+  fit.turret[0] = "start-tu-civ-cannon";
+  fit.turret[1] = "start-tu-civ-miner";
   return {
     shipId: "scout",
     homeSysIdx: 0,

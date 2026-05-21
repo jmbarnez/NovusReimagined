@@ -5,6 +5,13 @@ export const ENEMIES = {
     SEPARATION_DISTANCE: 70,
     SEPARATION_FORCE_SCALE: 600,
     SEPARATION_MAG_CAP: 1.0,
+    AVOIDANCE: {
+      LOOKAHEAD_TIME: 0.4,      // seconds of velocity look-ahead for the probe
+      QUERY_PADDING: 90,        // added to enemy radius for the asteroid query
+      AVOID_PADDING: 60,        // desired clearance beyond asteroid radius
+      FORCE_SCALE: 900,         // steering strength
+      MAG_CAP: 1.5,             // normalized force cap
+    },
     DETECTION: {
       baseAggroRange: 250,
       lockOnMultiplier: 2.5,

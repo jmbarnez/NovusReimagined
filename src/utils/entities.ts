@@ -53,7 +53,8 @@ export interface Bullet {
   hitChance: number;
 }
 
-export function addBullet({ x, y, px, py, vx, vy, life, dmg, color, sz, trail, owner, kind, weaponId, hitChance = 1 }: Omit<Bullet, "id">) {
+export function addBullet(data: Omit<Bullet, "id" | "hitChance"> & { hitChance?: number }) {
+  const { x, y, px, py, vx, vy, life, dmg, color, sz, trail, owner, kind, weaponId, hitChance = 1 } = data;
   G.bullets.push({ id: generateId(), x, y, px, py, vx, vy, life, dmg, color, sz, trail, owner, kind, weaponId, hitChance });
 }
 
@@ -197,6 +198,7 @@ export interface Trail {
   width: number;
   life: number;
   maxLife: number;
+  angle?: number;
 }
 
 export interface TrailConfig {
@@ -205,10 +207,11 @@ export interface TrailConfig {
   color: string;
   width: number;
   life?: number;
+  angle?: number;
 }
 
-export function addTrailSegment({ x, y, color, width, life = 1.0 }: TrailConfig) {
-  G.trails.push({ id: generateId(), x, y, color, width, life, maxLife: life });
+export function addTrailSegment({ x, y, color, width, life = 1.0, angle }: TrailConfig) {
+  G.trails.push({ id: generateId(), x, y, color, width, life, maxLife: life, angle });
 }
 
 export function removeBullet(index: number) {
@@ -290,4 +293,12 @@ export function addImpactDecal(cfg: ImpactDecalConfig) {
 
 export function removeImpactDecal(index: number) {
   G.impactDecals.splice(index, 1);
+}
+
+/** True when a lockable target (enemy/asteroid/wreck) is gone. Respects the
+ *  structure layer — an enemy with hull at 0 but structure left is still alive. */
+export function isTargetDestroyed(t: { alive?: boolean; depleted?: boolean; hp?: number; structure?: number }): boolean {
+  return t.alive === false
+      || t.depleted === true
+      || ((t.hp ?? 0) <= 0 && (t.structure ?? 0) <= 0);
 }

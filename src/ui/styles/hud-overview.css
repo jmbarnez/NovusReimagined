@@ -1,4 +1,4 @@
-/* ── Overview Panel ── */
+/* ── Overview Panel (inside scanner dock) ── */
 #hud-overview-panel {
   flex: 1;
   display: flex;
@@ -6,16 +6,7 @@
   background: transparent;
   border: none;
   overflow: hidden;
-}
-#hud-overview-header {
-  padding: 2px 6px;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #5a7088;
-  background: rgba(6,10,16,0.98);
-  border-bottom: 1px solid rgba(30,42,55,0.6);
-  flex-shrink: 0;
+  min-height: 60px;
 }
 #hud-overview-panel .ov-wrap {
   flex: 1;
@@ -30,15 +21,25 @@
 #hud-overview-panel .ov-wrap::-webkit-scrollbar-track { background: transparent; }
 #hud-overview-panel .ov-wrap::-webkit-scrollbar-thumb { background: rgba(40,55,70,0.6); border-radius: 2px; }
 #hud-overview-panel .ov-table th {
-  background: rgba(10,15,25,0.95);
+  background: var(--hud-bg-panel);
   font-size: 7px;
   padding: 4px 6px;
+  font-family: var(--font-family), inherit;
+}
+#hud-overview-panel .ov-table th.ov-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+#hud-overview-panel .ov-table th.ov-sortable:hover {
+  color: var(--hud-accent);
 }
 #hud-overview-panel .ov-table td {
   padding: 3px 6px;
   font-size: 8px;
+  font-family: var(--font-family), inherit;
 }
 #hud-overview-panel .ov-lock {
   padding: 1px 4px;
   font-size: 8px;
+  font-family: var(--font-family), inherit;
 }

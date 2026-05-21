@@ -51,30 +51,20 @@ function bakeShipTexture(shipId: string): Texture {
     cx.closePath();
   }
 
-  // 1. Thick depth outline
+  // 1. Depth outline
   shipPath();
   cx.strokeStyle = "rgba(0,0,0,0.92)";
-  cx.lineWidth = 4.0;
+  cx.lineWidth = 2.5;
   cx.lineJoin = "round";
   cx.stroke();
 
-  // 2. Cel-shaded fill (hard color bands for true cel-shaded look)
+  // 2. Smooth gradient fill
   shipPath();
   const baseCol = r.fill;
   const hullGrad = cx.createLinearGradient(SHIP_HALF, SHIP_HALF - 30, SHIP_HALF, SHIP_HALF + 30);
-  
-  // Flat highlight
-  hullGrad.addColorStop(0.0, lightenCol(baseCol, 15));
-  hullGrad.addColorStop(0.3, lightenCol(baseCol, 15));
-  
-  // Flat midtone
-  hullGrad.addColorStop(0.31, baseCol);
-  hullGrad.addColorStop(0.7, baseCol);
-  
-  // Flat shadow
-  hullGrad.addColorStop(0.71, darkenCol(baseCol, 20));
-  hullGrad.addColorStop(1.0, darkenCol(baseCol, 20));
-  
+  hullGrad.addColorStop(0.0, lightenCol(baseCol, 18));
+  hullGrad.addColorStop(0.45, baseCol);
+  hullGrad.addColorStop(1.0, darkenCol(baseCol, 22));
   cx.fillStyle = hullGrad;
   cx.fill();
 
@@ -98,19 +88,19 @@ function bakeShipTexture(shipId: string): Texture {
   // 4. Coloured edge stroke (rim)
   shipPath();
   cx.strokeStyle = r.stroke;
-  cx.lineWidth = 1.8;
+  cx.lineWidth = 1.2;
   cx.lineJoin = "round";
   cx.stroke();
 
-  // 5. Bold panel lines for distinct cel-shaded parts
+  // 5. Hairline panel lines
   for (const line of r.panelLines ?? []) {
     cx.beginPath();
     for (let i = 0; i < line.length; i++) {
       const [px, py] = line[i];
       i === 0 ? cx.moveTo(SHIP_HALF + px, SHIP_HALF + py) : cx.lineTo(SHIP_HALF + px, SHIP_HALF + py);
     }
-    cx.strokeStyle = "rgba(0,0,0,0.85)";
-    cx.lineWidth = 2.5;
+    cx.strokeStyle = "rgba(0,0,0,0.45)";
+    cx.lineWidth = 1.0;
     cx.lineJoin = "round";
     cx.lineCap = "round";
     cx.stroke();
@@ -167,6 +157,13 @@ function bakeShipTexture(shipId: string): Texture {
   cx.beginPath();
   cx.ellipse(cpx, cpy, cp.rx, cp.ry, 0, 0, TAU);
   cx.stroke();
+
+  // Cockpit specular dot — sells the glass read
+  const sdR = Math.min(cp.rx, cp.ry) * 0.32;
+  cx.beginPath();
+  cx.arc(cpx - cp.rx * 0.32, cpy - cp.ry * 0.32, sdR, 0, TAU);
+  cx.fillStyle = "rgba(255,255,255,0.52)";
+  cx.fill();
 
   // 9. Sensor glow (soft radial)
   if (r.sensorGlow) {
@@ -400,7 +397,9 @@ export function syncPixiPlayer(alpha: number, now: number): void {
   if (_hullLightSprite) {
     _hullLightSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
     if (Client.settings?.directionalLighting !== false && _shipLightTex.length) {
-      const sunDir = G.GALAXY?.[G.P.sysIdx ?? 0]?.sunDir ?? 0;
+      const sys = G.GALAXY?.[G.P?.sysIdx ?? 0];
+      const _sd = sys?.sunDir ?? 0;
+      const sunDir = Math.atan2(Math.sin(_sd) * 3500 - iy, Math.cos(_sd) * 3500 - ix);
       let di = Math.round(((sunDir - angle) / TAU) * LIGHT_DIRS) % LIGHT_DIRS;
       if (di < 0) di += LIGHT_DIRS;
       _hullLightSprite.texture = _shipLightTex[di];
@@ -422,6 +421,7 @@ export function syncPixiTrails(): void {
   const trails = G.trails;
   for (let i = 0; i < TRAIL_POOL; i++) {
     const s = _trailPool[i];
+    if (!s) continue;
     const t = trails[i];
     if (!t || t.life <= 0) {
       if (s.visible) s.visible = false;
@@ -431,8 +431,12 @@ export function syncPixiTrails(): void {
     s.visible = true;
     s.x = t.x;
     s.y = t.y;
-    s.scale.set((t.width * a) / DOT_HALF);
-    s.alpha = a;
+    // Particle dot — small round puff that shrinks as it ages. Uniform scale,
+    // no rotation, no elongation — reads as discrete particles in a stream.
+    const base = (t.width * 0.55 * a) / DOT_HALF;
+    s.scale.set(base, base);
+    s.rotation = 0;
+    s.alpha = a * 0.85;
     s.tint = parseInt(t.color.replace("#", ""), 16) || 0xffffff;
   }
 }

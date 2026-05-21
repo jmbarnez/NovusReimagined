@@ -5,24 +5,26 @@ import { damageEnemy, damageAsteroid } from "../combat.js";
 import { updateSensorLocks } from "../targeting.js";
 import { spawnImpactFlash } from "../utils/fx.js";
 import { floatText } from "../utils/fx.js";
-import { removeBullet, updateBeams, updateParticles, updateShockwaves, updateFloatTexts } from "../utils/entities.js";
+import { removeBullet, updateBeams, updateParticles, updateShockwaves, updateFloatTexts, isTargetDestroyed } from "../utils/entities.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { sfxProjectileImpact, sfxBeamImpact } from "../audio/procedural.js";
+import type { SpatialQueryResult } from "../utils/spatial.js";
+import type { Enemy, Asteroid } from "../types/world.js";
 
 export function updateCombat(dt: number) {
   const st = getStats();
   if (G.P.shootCd > 0) G.P.shootCd -= dt;
   if (G.P.targetLock) {
     const tl = G.P.targetLock;
-    const lost = tl.alive === false || tl.depleted === true || tl.hp <= 0 || Math.hypot(G.P.x - tl.x, G.P.y - tl.y) > 3500;
+    const lost = isTargetDestroyed(tl) || Math.hypot(G.P.x - tl.x, G.P.y - tl.y) > 3500;
     if (lost) G.P.targetLock = null;
   }
   updateSensorLocks(dt, st);
 }
 
-const _bHits: any[] = [];
+const _bHits: SpatialQueryResult<Enemy | Asteroid>[] = [];
 
-function isPointInAsteroid(bx: number, by: number, ast: any, bSz: number): boolean {
+export function isPointInAsteroid(bx: number, by: number, ast: Asteroid, bSz: number): boolean {
   const dx = bx - ast.x;
   const dy = by - ast.y;
   
@@ -57,66 +59,75 @@ export function updateProjectiles(dt: number) {
     const b = G.bullets[i]; b.px = b.x; b.py = b.y; b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
 
     if (grid) {
-      _bHits.length = 0;
       const bRad = b.sz || 2;
-      grid.query(b.x, b.y, bRad + 5, "enemy", _bHits); // +5 for slight aim assist
+      const moveDist = Math.max(0, Math.hypot(b.x - b.px, b.y - b.py));
+
+      // --- Candidate enemy hit (point check at current position) ---
+      let enemyTarget: SpatialQueryResult<Enemy> | null = null;
+      let enemyHitDist = Infinity; // distance from b.px along the path
+      _bHits.length = 0;
+      grid.query<Enemy>(b.x, b.y, bRad + 5, "enemy", _bHits as SpatialQueryResult<Enemy>[]);
       if (_bHits.length) {
-        _bHits.sort((a, b) => a.dist - b.dist);
-        const target = _bHits.find((h: any) => h.data && h.data.alive && h.data !== b.owner);
-        if (target && target.data) {
-          const rolledHit = Math.random() < (b.hitChance ?? 1);
-          spawnImpactFlash(b.x, b.y, b.color || "#ff4422");
-          if (b.owner === G.P) sfxProjectileImpact(b.x, b.y, b.weaponId || b.kind || "projectile");
-          if (rolledHit) {
-            damageEnemy(target.data, b.dmg, b.x, b.y, b.owner, b.kind);
-          } else {
-            // Decoupled: still show impact flash, but apply 0 damage and show MISS
-            showDamageNumber(target.data.x, target.data.y - 14, "MISS", "miss", "projectileMiss");
+        let minDist = Infinity;
+        for (let idx = 0; idx < _bHits.length; idx++) {
+          const h = _bHits[idx] as SpatialQueryResult<Enemy>;
+          if (h.data && h.data.alive && h.data !== b.owner) {
+            if (h.dist < minDist) {
+              minDist = h.dist;
+              enemyTarget = h;
+            }
           }
-          b.life = 0;
+        }
+        // Enemy collision is a point test at the end of this step's movement.
+        if (enemyTarget) enemyHitDist = moveDist;
+      }
+
+      // --- Candidate asteroid hit (CCD raycast along the path) ---
+      let astTarget: SpatialQueryResult<Asteroid> | null = null;
+      let astHitDist = Infinity; // distance from b.px along the path
+      let hitX = b.x, hitY = b.y;
+      _bHits.length = 0;
+      grid.query<Asteroid>(b.x, b.y, bRad + moveDist, "asteroid", _bHits as SpatialQueryResult<Asteroid>[]);
+      if (_bHits.length) {
+        const steps = Math.ceil(moveDist / 5);
+        for (let idx = 0; idx < _bHits.length; idx++) {
+          const h = _bHits[idx] as SpatialQueryResult<Asteroid>;
+          const ast = h.data;
+          if (!ast || ast.depleted || ast.hp <= 0) continue;
+
+          for (let s = 0; s <= steps; s++) {
+            const t = steps === 0 ? 1 : s / steps;
+            const tx = b.px + (b.x - b.px) * t;
+            const ty = b.py + (b.y - b.py) * t;
+            if (isPointInAsteroid(tx, ty, ast, bRad)) {
+              const pathDist = moveDist * t;
+              if (pathDist < astHitDist) {
+                astHitDist = pathDist;
+                astTarget = h;
+                hitX = tx; hitY = ty;
+              }
+              break;
+            }
+          }
         }
       }
 
-      if (b.life > 0) {
-        _bHits.length = 0;
-        const moveDist = Math.max(0, Math.hypot(b.x - b.px, b.y - b.py));
-        grid.query(b.x, b.y, bRad + moveDist, "asteroid", _bHits);
-        
-        if (_bHits.length) {
-          _bHits.sort((a, b) => a.dist - b.dist);
-          
-          let hitX = b.x, hitY = b.y;
-          
-          const target = _bHits.find((h: any) => {
-            const ast = h.data;
-            if (!ast || ast.depleted || ast.hp <= 0) return false;
-            
-            // CCD: Raycast the bullet's path using sampled points to prevent clipping
-            const steps = Math.ceil(moveDist / 5); 
-            for (let i = 0; i <= steps; i++) {
-               const t = steps === 0 ? 1 : i / steps;
-               const tx = b.px + (b.x - b.px) * t;
-               const ty = b.py + (b.y - b.py) * t;
-               if (isPointInAsteroid(tx, ty, ast, bRad)) {
-                  hitX = tx; hitY = ty;
-                  return true;
-               }
-            }
-            return false;
-          });
-          
-          if (target && target.data) {
-            const isMining = b.owner === G.P && b.weaponId && MODULE_FLAGS.isMiningTurret(MODULES[b.weaponId]);
-            if (isMining) {
-              damageAsteroid(target.data, b.dmg, hitX, hitY);
-              sfxBeamImpact("mining", hitX, hitY);
-            } else {
-              sfxProjectileImpact(hitX, hitY, b.weaponId || b.kind || "projectile");
-            }
-            spawnImpactFlash(hitX, hitY, b.color || "#ff4422");
-            b.life = 0;
-          }
+      // --- Resolve whichever hit comes first along the path ---
+      if (astTarget && astTarget.data && astHitDist <= enemyHitDist) {
+        const isMining = b.owner === G.P && b.weaponId && MODULE_FLAGS.isMiningTurret(MODULES[b.weaponId]);
+        if (isMining) {
+          damageAsteroid(astTarget.data, b.dmg, hitX, hitY);
+          sfxBeamImpact("mining", hitX, hitY);
+        } else {
+          sfxProjectileImpact(hitX, hitY, b.weaponId || b.kind || "projectile");
         }
+        spawnImpactFlash(hitX, hitY, b.color || "#ff4422");
+        b.life = 0;
+      } else if (enemyTarget && enemyTarget.data) {
+        spawnImpactFlash(b.x, b.y, b.color || "#ff4422");
+        if (b.owner === G.P) sfxProjectileImpact(b.x, b.y, b.weaponId || b.kind || "projectile");
+        damageEnemy(enemyTarget.data, b.dmg, b.x, b.y, b.owner, b.kind);
+        b.life = 0;
       }
     }
 

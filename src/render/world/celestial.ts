@@ -1,8 +1,10 @@
 import { Client } from "../../state.js";
-import { ctx, bloomCtx } from "../../canvas.js";
+import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { isVisible } from "../../utils/game.js";
-import { viewCenterX, viewCenterY, HUD_INSETS } from "../viewport.js";
+
+/** Distance from world origin to the system star, in world units. */
+export const SUN_DIST = 3500;
 
 // ── Star configuration tables ──────────────────────────────────────────────
 export const STAR_CONFIG: Record<string, {
@@ -27,73 +29,45 @@ export function getStarCfg(starClass: string) {
   return STAR_CONFIG[starClass] ?? STAR_CONFIG.G;
 }
 
-/** Draw the star body at world-space origin (0,0) for the current system. */
+/** Draw the star body at its world-space position along sys.sunDir. */
 export function drawStar(now: number, sys: any) {
   if (!sys) return;
   const cfg = getStarCfg(sys.starClass ?? "G");
   const r = cfg.radius;
-  const flarePulse = (sys.flareTint || 0);
+  const sunX = Math.cos(sys.sunDir ?? 0) * SUN_DIST;
+  const sunY = Math.sin(sys.sunDir ?? 0) * SUN_DIST;
 
-  // Visibility check with generous cull radius for corona
-  if (!isVisible(0, 0, r * 5)) return;
+  if (!isVisible(sunX, sunY, r * 3.5)) return;
 
   ctx.save();
+  ctx.translate(sunX, sunY);
 
-  // ── Corona — single continuous gradient, inner=0 so no banding rings ──
+  // ── Outer corona glow — large, soft, pulsing halo ──
+  // Two additive layers: a wide diffuse haze and a tighter bright bloom.
   {
-    const flareBoost = 1 + flarePulse * 0.5;
-    const rgb = hexToRgb(cfg.coronaColor);
-    const coreRgb = hexToRgb(cfg.coreColor);
-    const midRgb = hexToRgb(cfg.midColor);
-    const outerR = r * 2.0 * flareBoost;
-    // p(n) converts "multiples of r" → stop position in [0,1]
-    const p = (m: number) => Math.min(m / (2.0 * flareBoost), 1);
-
+    ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const cg = ctx.createRadialGradient(0, 0, 0, 0, 0, outerR);
-    cg.addColorStop(0,       "rgba(0,0,0,0)");
-    cg.addColorStop(p(0.92), "rgba(0,0,0,0)");
-    cg.addColorStop(p(1.00), `rgba(${coreRgb},${0.35 * flareBoost})`);
-    cg.addColorStop(p(1.14), `rgba(${coreRgb},${0.15 * flareBoost})`);
-    cg.addColorStop(p(1.42), `rgba(${midRgb},0.08)`);
-    cg.addColorStop(p(1.78), `rgba(${midRgb},0.04)`);
-    cg.addColorStop(p(2.20), `rgba(${rgb},0.025)`);
-    cg.addColorStop(p(2.80), `rgba(${rgb},${cfg.coronaAlpha * 0.06})`);
-    cg.addColorStop(p(3.20), `rgba(${rgb},${cfg.coronaAlpha * 0.015})`);
-    cg.addColorStop(1,       "rgba(0,0,0,0)");
-    ctx.fillStyle = cg;
-    ctx.beginPath(); ctx.arc(0, 0, outerR, 0, TAU); ctx.fill();
-    ctx.globalCompositeOperation = "source-over";
-  }
+    const pulse = 1 + 0.06 * Math.sin(now * 0.0006);
 
-  // ── Corona diffraction spikes (4-point star, like real telescope images) ──
-  {
-    const spikeLen = r * (2.6 + flarePulse * 1.4);
-    const spikeAlpha = 0.18 + flarePulse * 0.22;
-    const pulse = 0.85 + 0.15 * Math.sin(now * 0.0008);
-    const baseAngle = sys.sunDir ?? 0; // spikes align with system sun direction
-    ctx.globalCompositeOperation = "lighter";
-    for (let s = 0; s < 4; s++) {
-      const a = baseAngle + s * Math.PI * 0.5;
-      const grad = ctx.createLinearGradient(0, 0, Math.cos(a) * spikeLen, Math.sin(a) * spikeLen);
-      grad.addColorStop(0.00, `rgba(${hexToRgb(cfg.coreColor)},${spikeAlpha * pulse})`);
-      grad.addColorStop(0.08, `rgba(${hexToRgb(cfg.coreColor)},${spikeAlpha * 0.82 * pulse})`);
-      grad.addColorStop(0.20, `rgba(${hexToRgb(cfg.midColor)},${spikeAlpha * 0.48 * pulse})`);
-      grad.addColorStop(0.42, `rgba(${hexToRgb(cfg.coronaColor)},${spikeAlpha * 0.18 * pulse})`);
-      grad.addColorStop(0.70, `rgba(${hexToRgb(cfg.coronaColor)},${spikeAlpha * 0.05 * pulse})`);
-      grad.addColorStop(1.00, "rgba(0,0,0,0)");
-      const half = r * 0.06;
-      const px = Math.cos(a + Math.PI * 0.5);
-      const py = Math.sin(a + Math.PI * 0.5);
-      ctx.beginPath();
-      ctx.moveTo(px * half, py * half);
-      ctx.lineTo(Math.cos(a) * spikeLen, Math.sin(a) * spikeLen);
-      ctx.lineTo(-px * half, -py * half);
-      ctx.closePath();
-      ctx.fillStyle = grad;
-      ctx.fill();
-    }
-    ctx.globalCompositeOperation = "source-over";
+    // Wide diffuse corona haze
+    const haze = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 3.0);
+    haze.addColorStop(0.00, hexToRgba(cfg.coronaColor, 0.10 * pulse));
+    haze.addColorStop(0.25, hexToRgba(cfg.coronaColor, 0.06 * pulse));
+    haze.addColorStop(0.60, hexToRgba(cfg.bloomColor, 0.02 * pulse));
+    haze.addColorStop(1.00, "rgba(0,0,0,0)");
+    ctx.fillStyle = haze;
+    ctx.beginPath(); ctx.arc(0, 0, r * 3.0, 0, TAU); ctx.fill();
+
+    // Tighter bright bloom around the disc edge
+    const bloom = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 1.8);
+    bloom.addColorStop(0.00, hexToRgba(cfg.coreColor, 0.18 * pulse));
+    bloom.addColorStop(0.35, hexToRgba(cfg.coronaColor, 0.12 * pulse));
+    bloom.addColorStop(0.70, hexToRgba(cfg.bloomColor, 0.04 * pulse));
+    bloom.addColorStop(1.00, "rgba(0,0,0,0)");
+    ctx.fillStyle = bloom;
+    ctx.beginPath(); ctx.arc(0, 0, r * 1.8, 0, TAU); ctx.fill();
+
+    ctx.restore();
   }
 
   // ── Photosphere disc — limb darkening ──
@@ -113,7 +87,7 @@ export function drawStar(now: number, sys: any) {
   {
     ctx.save();
     ctx.beginPath(); ctx.arc(0, 0, r * 0.97, 0, TAU); ctx.clip();
-    ctx.globalAlpha = 0.07 + flarePulse * 0.04;
+    ctx.globalAlpha = 0.07;
     const t = now * 0.00025;
     // Three overlapping off-center gradients suggest plasma motion
     for (let i = 0; i < 3; i++) {
@@ -128,22 +102,20 @@ export function drawStar(now: number, sys: any) {
     ctx.restore();
   }
 
-  // ── Active-region prominence (when flareTint > 0) ──
-  if (flarePulse > 0.05) {
-    const flareRgb = hexToRgb(cfg.coronaColor);
-    const px2 = Math.cos(sys.sunDir ?? 0);
-    const py2 = Math.sin(sys.sunDir ?? 0);
-    const fg = ctx.createRadialGradient(
-      px2 * r * 0.85, py2 * r * 0.85, 0,
-      px2 * r * 0.85, py2 * r * 0.85, r * 0.6
-    );
-    fg.addColorStop(0, `rgba(${flareRgb},${flarePulse * 0.85})`);
-    fg.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.globalCompositeOperation = "lighter";
-    ctx.fillStyle = fg;
-    ctx.beginPath(); ctx.arc(px2 * r * 0.85, py2 * r * 0.85, r * 0.6, 0, TAU); ctx.fill();
-    ctx.globalCompositeOperation = "source-over";
-  }
+  // ── Chromosphere — thin glowing limb ring just outside the photosphere ──
+  // Sells the star as a hot plasma body without bloom. Drawn additively so it
+  // brightens the limb without darkening anything inside the disc.
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const chromo = ctx.createRadialGradient(0, 0, r * 0.97, 0, 0, r * 1.12);
+  chromo.addColorStop(0.00, "rgba(0,0,0,0)");
+  chromo.addColorStop(0.35, cfg.coronaColor);
+  chromo.addColorStop(0.70, cfg.coronaColor);
+  chromo.addColorStop(1.00, "rgba(0,0,0,0)");
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = chromo;
+  ctx.beginPath(); ctx.arc(0, 0, r * 1.12, 0, TAU); ctx.fill();
+  ctx.restore();
 
   // ── Thin hard edge stroke ──
   ctx.strokeStyle = shadeHex(cfg.limbColor, 0.5);
@@ -155,80 +127,6 @@ export function drawStar(now: number, sys: any) {
   ctx.restore();
 }
 
-/**
- * Distant-sun overlay drawn in SCREEN space.
- * Places a sun-coloured halo at the screen edge in the system's sun direction,
- * so the star is felt even when the camera is nowhere near world (0,0).
- * Skipped while the real star body is on-screen (would double-up).
- */
-export function drawDistantSun(Wc: number, Hc: number, _camX: number, _camY: number, _zoom: number, now: number, sys: any) {
-  if (!sys) return;
-  const cfg = getStarCfg(sys.starClass ?? "G");
-  const a = sys.sunDir ?? 0;
-  // Anchor the beacon at the edge of the PLAYABLE rectangle so it doesn't
-  // appear behind the side panel / bottom HUD.
-  const vcX = viewCenterX(Wc);
-  const vcY = viewCenterY(Hc);
-  const margin = 40;
-  const halfW = Math.max(40, Math.min(vcX, (Wc - HUD_INSETS.right) - vcX) - margin);
-  const halfH = Math.max(40, Math.min(vcY, (Hc - HUD_INSETS.bottom) - vcY) - margin);
-  const cx = Math.cos(a), cy = Math.sin(a);
-  const tX = halfW / Math.max(Math.abs(cx), 1e-6);
-  const tY = halfH / Math.max(Math.abs(cy), 1e-6);
-  const t = Math.min(tX, tY);
-  const sx = vcX + cx * t;
-  const sy = vcY + cy * t;
-
-  const pulse = 0.92 + 0.08 * Math.sin(now * 0.0009);
-  const rgb = hexToRgb(cfg.coronaColor);
-  const coreRgb = hexToRgb(cfg.coreColor);
-  const haloR = Math.min(Wc, Hc) * 0.32 * pulse;
-
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  // Soft outer halo
-  const g1 = ctx.createRadialGradient(sx, sy, 0, sx, sy, haloR);
-  g1.addColorStop(0.00, `rgba(${coreRgb},0.45)`);
-  g1.addColorStop(0.12, `rgba(${coreRgb},0.22)`);
-  g1.addColorStop(0.35, `rgba(${rgb},0.10)`);
-  g1.addColorStop(0.70, `rgba(${rgb},0.03)`);
-  g1.addColorStop(1.00, "rgba(0,0,0,0)");
-  ctx.fillStyle = g1;
-  ctx.beginPath(); ctx.arc(sx, sy, haloR, 0, TAU); ctx.fill();
-  // Small bright disc
-  const discR = Math.min(Wc, Hc) * 0.018;
-  const g2 = ctx.createRadialGradient(sx, sy, 0, sx, sy, discR);
-  g2.addColorStop(0.0, `rgba(${coreRgb},0.95)`);
-  g2.addColorStop(0.6, `rgba(${coreRgb},0.55)`);
-  g2.addColorStop(1.0, "rgba(0,0,0,0)");
-  ctx.fillStyle = g2;
-  ctx.beginPath(); ctx.arc(sx, sy, discR, 0, TAU); ctx.fill();
-  ctx.restore();
-}
-
-/** Bloom-pass contribution from the star — large soft glow on bloomCtx. */
-export function drawBloomStar(now: number, sys: any) {
-  if (!sys) return;
-  const cfg = getStarCfg(sys.starClass ?? "G");
-  const r = cfg.radius;
-  if (!isVisible(0, 0, r * 6)) return;
-
-  const pulse = 0.9 + 0.1 * Math.sin(now * 0.0007);
-  const flarePulse = sys.flareTint || 0;
-  const bloomR = r * (1.2 + flarePulse * 0.4) * pulse;
-
-  bloomCtx.save();
-  bloomCtx.globalAlpha = 0.12 + flarePulse * 0.05;
-  const bg = bloomCtx.createRadialGradient(0, 0, r * 0.4, 0, 0, bloomR);
-  bg.addColorStop(0.0, cfg.bloomColor);
-  bg.addColorStop(0.3, `rgba(${hexToRgb(cfg.bloomColor)},0.30)`);
-  bg.addColorStop(0.65, `rgba(${hexToRgb(cfg.bloomColor)},0.08)`);
-  bg.addColorStop(1.0, "rgba(0,0,0,0)");
-  bloomCtx.fillStyle = bg;
-  bloomCtx.beginPath(); bloomCtx.arc(0, 0, bloomR, 0, TAU); bloomCtx.fill();
-  bloomCtx.restore();
-}
-
 // Helpers
 export function hexToRgb(hex: string): string {
   const h = hex.replace("#", "");
@@ -236,6 +134,15 @@ export function hexToRgb(hex: string): string {
   const g = parseInt(h.substring(2, 4), 16);
   const b = parseInt(h.substring(4, 6), 16);
   return `${r},${g},${b}`;
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  if (h.length < 6) return `rgba(255,255,255,${alpha})`;
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 export function shadeHex(hex: string, factor: number): string {
@@ -255,7 +162,8 @@ export function drawPlanets(now: number, sys: any) {
     // radius/position) — build them once and cache on the planet object rather
     // than reallocating ~5 gradients per planet per frame.
     if (!p._gradCache) {
-      const toStar = Math.atan2(-p.y, -p.x);
+      const sunDirVal = sys?.sunDir ?? 0;
+      const toStar = sys?.sunDir ?? Math.atan2(Math.sin(sunDirVal) * 3500 - p.y, Math.cos(sunDirVal) * 3500 - p.x);
       const dx = Math.cos(toStar), dy = Math.sin(toStar);
       const r = p.radius;
 

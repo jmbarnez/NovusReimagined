@@ -4,7 +4,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
 }
 
 /* ── Main Grid ── */

@@ -1,4 +1,4 @@
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 import { ctx, W, H } from "../canvas.js";
 import { TAU } from "../constants.js";
 import { shipPath } from "./world.js";
@@ -146,7 +146,7 @@ export function drawStationInterior(Wc: number, Hc: number, now: number) {
   ctx.translate(cx, floorY + 10);
   ctx.scale(3, 3);
   ctx.rotate(-0.25); // slight three-quarter view
-  const ship = G.P?.shipId || "starter";
+  const ship = getState().player?.shipId || "starter";
   ctx.lineJoin = "round";
   shipPath(ship); ctx.strokeStyle = "rgba(0,0,0,0.9)"; ctx.lineWidth = 3.5; ctx.stroke();
   shipPath(ship); ctx.fillStyle = "#102a48"; ctx.fill();

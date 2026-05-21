@@ -14,9 +14,9 @@ import { Client } from "../state.js";
 
 export const HUD_INSETS = {
   /** Reserved on the right edge for the side panel. Mirrors hud-side-panel CSS width. */
-  right: HUD_SIDE_W,
+  get right() { return HUD_SIDE_W; },
   /** Reserved on the bottom edge for the status/slot bar. Mirrors hud-bottom-right CSS height. */
-  bottom: HUD_BOTTOM_H,
+  get bottom() { return HUD_BOTTOM_H; },
 };
 
 /** Centre of the playable rectangle in screen pixels. */

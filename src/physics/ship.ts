@@ -8,7 +8,7 @@ import {
   RACK_TYPES,
 } from "../constants.js";
 import { damagePlayer } from "../combat/damage-display.js";
-import { lerp, angleDiff, aimAngle } from "../utils/math.js";
+import { lerp, angleDiff, aimAngle, resolveElasticCollision } from "../utils/math.js";
 import { getStats } from "../player/player-stats.js";
 import { MODULES } from "../data/modules.js";
 import { SHIPS } from "../data/ships.js";
@@ -26,6 +26,15 @@ export function updateShip(dt: number) {
   if (!Number.isFinite(G.P.angle)) G.P.angle = 0;
   if (!Number.isFinite(G.P.x)) G.P.x = 0;
   if (!Number.isFinite(G.P.y)) G.P.y = 0;
+
+  // Build cargo map once per tick to avoid repeated O(N*M) lookups inside G.P.moduleCargo
+  const cargoMap = new Map<string, any>();
+  if (Array.isArray(G.P.moduleCargo)) {
+    for (let i = 0; i < G.P.moduleCargo.length; i++) {
+      const inst = G.P.moduleCargo[i];
+      if (inst && inst.uid) cargoMap.set(inst.uid, inst);
+    }
+  }
 
   G.P.thrustFx = false;
   const speed = Math.hypot(G.P.vx, G.P.vy);
@@ -68,7 +77,7 @@ export function updateShip(dt: number) {
     for (let i = 0; i < slots.length; i++) {
       const uid = slots[i];
       if (!uid) continue;
-      const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
+      const inst = cargoMap.get(uid);
       if (!inst) continue;
       const m = MODULES[inst.baseId];
       if (!m?.isActive || !m.capDrainPerSec) continue;
@@ -95,7 +104,7 @@ export function updateShip(dt: number) {
   const medSlots = G.P.fitting?.med || [];
   const abUid = medSlots.find(uid => {
     if (!uid) return false;
-    const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
+    const inst = cargoMap.get(uid);
     return inst?.baseId === "me-ab1";
   });
   const abIdx = abUid ? medSlots.indexOf(abUid) : -1;
@@ -136,7 +145,8 @@ export function updateShip(dt: number) {
   G.P.px = G.P.x; G.P.py = G.P.y; G.P.prevAngle = G.P.angle;
   G.P.x += G.P.vx * dt; G.P.y += G.P.vy * dt; G.P.angle += G.P.va * dt;
 
-  if (G.P.thrustFx) {
+  const currentSpeed = Math.hypot(G.P.vx, G.P.vy);
+  if (currentSpeed > 8) {
     const cos = Math.cos(G.P.angle);
     const sin = Math.sin(G.P.angle);
     const rearDist = C.PHYSICS.SHIP.thrustTrailRearDist;
@@ -149,6 +159,7 @@ export function updateShip(dt: number) {
       color: abOn ? C.PHYSICS.SHIP.thrustTrailABColor : C.PHYSICS.SHIP.thrustTrailNormalColor,
       width: abOn ? C.PHYSICS.SHIP.thrustTrailABWidth : C.PHYSICS.SHIP.thrustTrailNormalWidth,
       life: C.PHYSICS.SHIP.thrustTrailLife,
+      angle: G.P.angle,
     });
   }
 
@@ -223,51 +234,23 @@ function resolveSolidCollisions() {
       const ast = h.data;
       if (!ast) continue;
       const mA = ast.radius * ast.radius * ASTEROID_DENSITY;
-      const invSum = 1 / PLAYER_MASS + 1 / mA;
+      const closing = resolveElasticCollision(G.P, ast, PLAYER_MASS, mA, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
 
-      G.P.x -= nx * overlap * (1 / PLAYER_MASS) / invSum;
-      G.P.y -= ny * overlap * (1 / PLAYER_MASS) / invSum;
-      ast.x  += nx * overlap * (1 / mA)          / invSum;
-      ast.y  += ny * overlap * (1 / mA)          / invSum;
-
-      const closing = (G.P.vx - ast.vx) * nx + (G.P.vy - ast.vy) * ny;
-      if (closing > 0) {
-        const j = (1 + COLLISION_RESTITUTION) * closing / invSum;
-        G.P.vx -= (j / PLAYER_MASS) * nx;
-        G.P.vy -= (j / PLAYER_MASS) * ny;
-        ast.vx += (j / mA) * nx;
-        ast.vy += (j / mA) * ny;
-
-        if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
-          const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE;
-          damagePlayer(dmg, ast.x, ast.y);
-          G.P._colCooldown = COLLISION_COOLDOWN;
-        }
+      if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
+        const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE;
+        damagePlayer(dmg, ast.x, ast.y);
+        G.P._colCooldown = COLLISION_COOLDOWN;
       }
 
     } else if (h.type === "enemy") {
       const en = h.data;
       if (!en) continue;
-      const invSum = 1 / PLAYER_MASS + 1 / ENEMY_MASS;
+      const closing = resolveElasticCollision(G.P, en, PLAYER_MASS, ENEMY_MASS, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
 
-      G.P.x -= nx * overlap * (1 / PLAYER_MASS) / invSum;
-      G.P.y -= ny * overlap * (1 / PLAYER_MASS) / invSum;
-      en.x   += nx * overlap * (1 / ENEMY_MASS)  / invSum;
-      en.y   += ny * overlap * (1 / ENEMY_MASS)  / invSum;
-
-      const closing = (G.P.vx - (en.vx || 0)) * nx + (G.P.vy - (en.vy || 0)) * ny;
-      if (closing > 0) {
-        const j = (1 + COLLISION_RESTITUTION) * closing / invSum;
-        G.P.vx    -= (j / PLAYER_MASS) * nx;
-        G.P.vy    -= (j / PLAYER_MASS) * ny;
-        en.vx = (en.vx || 0) + (j / ENEMY_MASS) * nx;
-        en.vy = (en.vy || 0) + (j / ENEMY_MASS) * ny;
-
-        if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
-          const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.5;
-          damagePlayer(dmg, en.x, en.y);
-          G.P._colCooldown = COLLISION_COOLDOWN;
-        }
+      if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
+        const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.5;
+        damagePlayer(dmg, en.x, en.y);
+        G.P._colCooldown = COLLISION_COOLDOWN;
       }
 
     } else if (h.type === "wreckpiece") {
@@ -275,26 +258,12 @@ function resolveSolidCollisions() {
       if (!piece || piece.hp <= 0) continue;
       // Piece mass proportional to radius^2 (flat debris slab approximation).
       const pieceMass = piece.radius * piece.radius * 0.8;
-      const invSum = 1 / PLAYER_MASS + 1 / pieceMass;
+      const closing = resolveElasticCollision(G.P, piece, PLAYER_MASS, pieceMass, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
 
-      G.P.x  -= nx * overlap * (1 / PLAYER_MASS) / invSum;
-      G.P.y  -= ny * overlap * (1 / PLAYER_MASS) / invSum;
-      piece.x += nx * overlap * (1 / pieceMass)  / invSum;
-      piece.y += ny * overlap * (1 / pieceMass)  / invSum;
-
-      const closing = (G.P.vx - (piece.vx || 0)) * nx + (G.P.vy - (piece.vy || 0)) * ny;
-      if (closing > 0) {
-        const j = (1 + COLLISION_RESTITUTION) * closing / invSum;
-        G.P.vx    -= (j / PLAYER_MASS) * nx;
-        G.P.vy    -= (j / PLAYER_MASS) * ny;
-        piece.vx = (piece.vx || 0) + (j / pieceMass) * nx;
-        piece.vy = (piece.vy || 0) + (j / pieceMass) * ny;
-
-        if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
-          const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.4;
-          damagePlayer(dmg, piece.x, piece.y);
-          G.P._colCooldown = COLLISION_COOLDOWN;
-        }
+      if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
+        const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.4;
+        damagePlayer(dmg, piece.x, piece.y);
+        G.P._colCooldown = COLLISION_COOLDOWN;
       }
     }
   }

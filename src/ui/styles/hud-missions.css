@@ -5,9 +5,9 @@
   flex-direction: column;
   padding: 8px;
   pointer-events: auto;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   font-size: 7.5px;
-  color: var(--hud-text-main, #9eb6d4);
+  color: var(--hud-text-main, var(--hud-text-main));
   overflow-y: auto;
 }
 .hm-header {
@@ -19,13 +19,10 @@
   flex-shrink: 0;
 }
 
-  padding: 2px 0 3px;
-  border-bottom: 1px solid rgba(55,85,110,0.45);
-  margin-bottom: 3px;
-}
+
 .hm-empty {
   font-size: 7px;
-  color: var(--hud-text-dim, #7a8fa8);
+  color: var(--hud-text-dim, var(--hud-text-dim));
   text-align: center;
   line-height: 1.5;
   padding: 4px 0;
@@ -40,7 +37,7 @@
   margin-bottom: 3px;
 }
 .hm-contract.complete {
-  border-left-color: #44dd88;
+  border-left-color: var(--hud-positive);
   background: rgba(0,10,5,0.92);
 }
 .hm-title {
@@ -49,7 +46,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--hud-text-main, #9eb6d4);
+  color: var(--hud-text-main, var(--hud-text-main));
   margin-bottom: 2px;
 }
 .hm-contract.complete .hm-title { color: #74eaaa; }
@@ -71,7 +68,7 @@
 .hm-done {
   font-size: 6.5px;
   font-weight: 700;
-  color: #44dd88;
+  color: var(--hud-positive);
   letter-spacing: 0.08em;
   animation: hm-pulse 1.4s ease-in-out infinite;
 }

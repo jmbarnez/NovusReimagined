@@ -1,3 +1,4 @@
+import { getState } from "../state-access.js";
 import { G, Client } from "../state.js";
 import { ctx } from "../canvas.js";
 import { TAU } from "../constants.js";
@@ -8,7 +9,7 @@ import { _pixiReady } from "../pixi.js";
 const STAR_FAR_PARALLAX = 0.006;
 const STAR_MID_PARALLAX = 0.018;
 const STAR_NEAR_PARALLAX = 0.036;
-const DUST_PARALLAX = 0.12;
+
 const WRAP_FAR  = 6000;
 const WRAP_MID  = 4000; // legacy compat with G.STARS
 const WRAP_NEAR = 3000;
@@ -37,7 +38,7 @@ function drawStarLayer(stars: any[], wrapW: number, parallaxRate: number, Wc: nu
     const twinkle = scintillateAmt > 0
       ? 1 + scintillateAmt * Math.sin(now * 0.00025 * (1 + s.r * 1.8) + s.hue * 0.7)
       : 1;
-    const alpha = s.a * 0.82 * twinkle;
+    const alpha = s.a * 0.68 * twinkle;
     if (alpha < 0.03) continue;
 
     ctx.globalAlpha = Math.min(1, alpha);
@@ -73,11 +74,12 @@ function drawStarLayer(stars: any[], wrapW: number, parallaxRate: number, Wc: nu
 
 /** Ambient space dust — tiny translucent dots drifting slowly with high parallax. */
 function drawDust(Wc: number, Hc: number, now: number, camX: number, camY: number) {
-  const offX = camX * DUST_PARALLAX;
-  const offY = camY * DUST_PARALLAX;
-
   ctx.save();
-  for (const d of G.DUST) {
+  const state = getState();
+  for (const d of state.DUST) {
+    const offX = camX * d.parallax;
+    const offY = camY * d.parallax;
+
     // Slow drift animation
     let dx = d.ox - offX + now * d.drift;
     let dy = d.oy - offY + now * d.drift * 0.6;
@@ -93,35 +95,6 @@ function drawDust(Wc: number, Hc: number, now: number, camX: number, camY: numbe
   }
   ctx.globalAlpha = 1;
   ctx.restore();
-}
-
-/** Reactive edge vignette — darkens screen corners; tightens & reddens during combat or low hull. */
-export function drawVignette(Wc: number, Hc: number) {
-  const cx = Wc / 2, cy = Hc / 2;
-  const heat = Math.max(0, Math.min(1, Client.combatHeat || 0));
-  // Low-hull pulse: ramps up below 35% structure or hull.
-  let lowHull = 0;
-  if (G.P) {
-    const hullFrac = G.P.maxHp > 0 ? G.P.hp / G.P.maxHp : 1;
-    const strFrac = (G.P.maxStructure || 0) > 0 ? G.P.structure / G.P.maxStructure : 1;
-    const dangerFrac = Math.min(hullFrac, strFrac);
-    if (dangerFrac < 0.35) {
-      const t = 1 - dangerFrac / 0.35;
-      lowHull = t * (0.55 + 0.45 * Math.sin(performance.now() * 0.006));
-    }
-  }
-  const inner = Math.hypot(Wc, Hc) * (0.38 - heat * 0.06 - lowHull * 0.05);
-  const outer = Math.hypot(Wc, Hc) * 0.58;
-  const baseDark = 0.28 + heat * 0.25 + lowHull * 0.18;
-  const redMix = heat * 0.7 + lowHull * 0.9;
-  const r = Math.round(redMix * 90);
-  const g = Math.round(redMix * 12);
-  const b = Math.round(redMix * 14);
-  const vig = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
-  vig.addColorStop(0, "transparent");
-  vig.addColorStop(1, `rgba(${r},${g},${b},${Math.min(0.85, baseDark)})`);
-  ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, Wc, Hc);
 }
 
 // ── Near-plane silhouettes (gas giants, derelicts) ─────────────────────────
@@ -310,38 +283,48 @@ export function drawSystemTint(Wc: number, Hc: number, sys: any, dt: number) {
 
 export function initBackgroundStars(detail = "high") {
   const mult = DETAIL_MULT[detail] ?? 1.0;
-  G.STARS_FAR = Array.from({ length: Math.max(60, Math.round(220 * mult)) }, () => ({
+  const starsFar = Array.from({ length: Math.max(80, Math.round(220 * mult)) }, () => ({
     ox: Math.random() * 6000,
     oy: Math.random() * 6000,
-    r: 0.18 + Math.random() * 0.28,
-    a: 0.07 + Math.random() * 0.18,
-    hue: Math.random() * 30,
-  }));
-  G.STARS = Array.from({ length: Math.max(40, Math.round(150 * mult)) }, () => ({
-    ox: Math.random() * 4000,
-    oy: Math.random() * 4000,
-    r: 0.35 + Math.random() * 0.55,
-    a: 0.14 + Math.random() * 0.32,
-    hue: (Math.random() - 0.5) * 30,
-  }));
-  G.STARS_NEAR = Array.from({ length: Math.max(10, Math.round(30 * mult)) }, () => ({
-    ox: Math.random() * 3000,
-    oy: Math.random() * 3000,
-    r: 0.6 + Math.random() * 1.0,
-    a: 0.28 + Math.random() * 0.32,
+    r: 0.10 + Math.pow(Math.random(), 3.0) * 0.4,
+    a: 0.03 + Math.pow(Math.random(), 2.2) * 0.16,
     hue: Math.random() * 40,
   }));
-  G.DUST = Array.from({ length: Math.max(8, Math.round(15 * mult)) }, () => ({
+  const stars = Array.from({ length: Math.max(55, Math.round(150 * mult)) }, () => ({
+    ox: Math.random() * 4000,
+    oy: Math.random() * 4000,
+    r: 0.18 + Math.pow(Math.random(), 2.5) * 0.7,
+    a: 0.07 + Math.pow(Math.random(), 2.0) * 0.32,
+    hue: (Math.random() - 0.5) * 40,
+  }));
+  const starsNear = Array.from({ length: Math.max(10, Math.round(24 * mult)) }, () => {
+    const bright = Math.random() < 0.20;
+    return {
+      ox: Math.random() * 3000,
+      oy: Math.random() * 3000,
+      r: bright ? 1.4 + Math.random() * 0.8 : 0.35 + Math.pow(Math.random(), 2.0) * 0.9,
+      a: bright ? 0.55 + Math.random() * 0.20 : 0.15 + Math.pow(Math.random(), 2.0) * 0.35,
+      hue: Math.random() * 50,
+    };
+  });
+  const dust = Array.from({ length: Math.max(50, Math.round(150 * mult)) }, () => ({
     ox: Math.random() * 3000,
     oy: Math.random() * 3000,
-    r: 0.2 + Math.random() * 0.3,
-    a: 0.03 + Math.random() * 0.06,
+    r: 0.05 + Math.random() * 0.1,
+    a: 0.03 + Math.random() * 0.05,
     drift: 0.01 + Math.random() * 0.015,
+    parallax: 0.10 + Math.random() * 0.10,
   }));
+  // Direct assignment is acceptable here during initialization
+  G.STARS_FAR = starsFar;
+  G.STARS = stars;
+  G.STARS_NEAR = starsNear;
+  G.DUST = dust;
 }
 
 export function drawBackground(Wc: number, Hc: number, sys: any, now: number, camX: number, camY: number) {
   if (!sys) return;
+  const state = getState();
 
   const starHueBase = (sys.starHue + 360) % 360;
 
@@ -351,8 +334,8 @@ export function drawBackground(Wc: number, Hc: number, sys: any, now: number, ca
 
     // Far layer: dense, tiny, slow parallax — atmospheric perspective biases
     // the color toward the system tint to suggest haze/distance.
-    if (G.STARS_FAR.length) {
-      drawStarLayer(G.STARS_FAR, WRAP_FAR, STAR_FAR_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0, sys.tintRGB, 0.55);
+    if (state.STARS_FAR.length) {
+      drawStarLayer(state.STARS_FAR, WRAP_FAR, STAR_FAR_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0, sys.tintRGB, 0.55);
     }
 
     // Near-plane silhouettes (gas giants / derelicts) — drawn between far &
@@ -362,11 +345,11 @@ export function drawBackground(Wc: number, Hc: number, sys: any, now: number, ca
     ctx.save();
 
     // Mid layer (original stars) — subtle shimmer
-    drawStarLayer(G.STARS, WRAP_MID, STAR_MID_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0.08);
+    drawStarLayer(state.STARS, WRAP_MID, STAR_MID_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0.08);
 
     // Near layer: rare bright stars with fast parallax + full twinkle
-    if (G.STARS_NEAR.length) {
-      drawStarLayer(G.STARS_NEAR, WRAP_NEAR, STAR_NEAR_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0.22);
+    if (state.STARS_NEAR.length) {
+      drawStarLayer(state.STARS_NEAR, WRAP_NEAR, STAR_NEAR_PARALLAX, Wc, Hc, starHueBase, camX, camY, now, 0.22);
     }
 
     ctx.globalAlpha = 1;
@@ -379,22 +362,4 @@ export function drawBackground(Wc: number, Hc: number, sys: any, now: number, ca
     drawSilhouettes(Wc, Hc, sys, camX, camY);
   }
 
-  // Edge vignette
-  if (Client.settings?.vignetteEnabled !== false) {
-    drawVignette(Wc, Hc);
-  }
-
-  // Ambient falloff — subtle screen-space brightening toward the star's
-  // projected position, suggesting solar illumination of the local dust.
-  if (Client.settings?.ambientFalloff !== false) {
-    const sx = Wc / 2 - camX * 0.003;
-    const sy = Hc / 2 - camY * 0.003;
-    const ambR = Math.hypot(Wc, Hc) * 0.45;
-    const amb = ctx.createRadialGradient(sx, sy, 0, sx, sy, ambR);
-    amb.addColorStop(0, "rgba(255,240,210,0.06)");
-    amb.addColorStop(0.5, "rgba(255,220,180,0.025)");
-    amb.addColorStop(1, "transparent");
-    ctx.fillStyle = amb;
-    ctx.fillRect(0, 0, Wc, Hc);
-  }
 }

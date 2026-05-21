@@ -128,7 +128,7 @@
   border: 1px solid rgba(40, 60, 80, 0.3);
   border-radius: 3px;
   color: #6a8090;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   font-size: 9px;
   cursor: pointer;
   text-transform: uppercase;
@@ -159,7 +159,7 @@
   border: 1px solid rgba(40, 60, 80, 0.3);
   border-radius: 3px;
   color: #8aacbc;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   font-size: 10px;
   outline: none;
 }
@@ -174,7 +174,7 @@
   border: 1px solid rgba(40, 60, 80, 0.3);
   border-radius: 3px;
   color: #8aacbc;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   font-size: 9px;
   outline: none;
   cursor: pointer;
@@ -432,7 +432,7 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #5a7080;
+  color: var(--hud-text-faint);
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -476,7 +476,7 @@
 .io-pill em {
   font-style: normal;
   font-size: 9px;
-  color: #5a7080;
+  color: var(--hud-text-faint);
 }
 
 .io-pill.insufficient em {
@@ -509,7 +509,7 @@
   border: 1px solid rgba(40, 60, 80, 0.4);
   border-radius: 4px;
   color: #aabbcc;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   font-size: 12px;
   font-weight: 700;
   outline: none;
@@ -520,7 +520,7 @@
 .ind-btn {
   flex: 1;
   height: 36px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;

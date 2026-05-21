@@ -29,7 +29,13 @@
       "Bash(jobs -p)",
       "Bash(xargs -r kill)",
       "Bash(Get-ChildItem -Path 'c:\\\\Users\\\\JBCry\\\\Desktop\\\\Novus' -Recurse -Directory)",
-      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\JBCry\\\\Desktop\\\\Novus\" -Recurse -Directory)"
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\JBCry\\\\Desktop\\\\Novus\" -Recurse -Directory)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(node -e \"const p = require\\('./node_modules/pixi.js'\\); const keys = Object.keys\\(p\\).filter\\(k => /mesh|Mesh|GlProg|Shader|Geometry/i.test\\(k\\)\\); console.log\\(keys.join\\('\\\\n'\\)\\);\")",
+      "Bash(node -e \"const p = require\\('./node_modules/pixi.js'\\); const keys = Object.keys\\(p\\).filter\\(k => /^Mesh[^A-Z]|^Mesh$|MeshGeometry|Triangle|QuadGeometry/i.test\\(k\\)\\); console.log\\(keys.join\\('\\\\n'\\)\\);\")",
+      "Bash(node -e ' *)",
+      "Bash(rm scripts/tokenize-css.mjs)",
+      "Bash(rmdir scripts *)"
     ]
   }
 }

@@ -1,9 +1,9 @@
 /* ── Event Log Panel ── */
 #hud-log-panel {
-  width: 300px;
-  min-width: 220px;
-  max-width: 32%;
-  height: 85px;
+  width: var(--hud-scanner-w);
+  min-width: 200px;
+  max-width: 38%;
+  height: var(--hud-bottom-h);
   display: flex;
   flex-direction: column;
   background: var(--hud-bottom-bot);
@@ -29,7 +29,7 @@
   padding: 3px 5px;
   font-size: 9px;
   line-height: 13px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   scrollbar-width: thin;
   scrollbar-color: rgba(40,55,70,0.6) transparent;
 }

@@ -1,8 +1,7 @@
 import { G, Client } from "../state.js";
 import { W, H } from "../canvas.js";
-import { LOCK_RAIL_H, AMMO_START_HYBRID, AMMO_START_MISSILE } from "../constants.js";
+import { LOCK_RAIL_H } from "../constants.js";
 import { getStats, invalidate } from "../player/player-stats.js";
-import { defaultFitting } from "../player/player-data.js";
 import { clearSensorLocks } from "../targeting.js";
 import { SHIPS } from "../data/ships.js";
 import { populateSystem } from "../world-gen.js";
@@ -13,8 +12,6 @@ import { MODULE_HP_MAX, RACK_TYPES } from "../constants.js";
 import { emit } from "../events.js";
 import { clearSimulationEntities } from "./entities.js";
 import type { System, Enemy, Asteroid } from "../types/world.js";
-import { ModuleRarity } from "../data/moduleRarity.js";
-import { ModuleInstance } from "../types/moduleInstance.js";
 
 export function s2w(sx: number, sy: number): { x: number; y: number } {
   // Project from screen pixels to world coords using the playable-area centre
@@ -75,8 +72,6 @@ export function getViewportBounds() {
 }
 
 export function respawnPlayer() {
-  // UI-owned Client state (stationOpen / activeStation / bridgeOpen / overviewOpen / settingsOpen / skillsOpen)
-  // is reset by the respective ui/* modules in response to "ui:close-overlays" per the AGENTS.md rule.
   Client.showMap = false;
   emit("ui:close-overlays");
 
@@ -87,18 +82,7 @@ export function respawnPlayer() {
   const penalty = Math.floor(G.P.credits * 0.1);
   G.P.credits -= penalty;
 
-  G.P.shipId = "scout";
-  const fit = defaultFitting("scout");
-  const startingInstances: ModuleInstance[] = [
-    { uid: "respawn-tu-neutron", baseId: "tu-neutron", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "respawn-tu-strip", baseId: "tu-strip", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "respawn-me-ab1", baseId: "me-ab1", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-  ];
-  fit.turret[0] = "respawn-tu-neutron";
-  if (fit.turret.length > 1) fit.turret[1] = "respawn-tu-strip";
-  fit.med[0] = "respawn-me-ab1";
-  G.P.fitting = fit;
-  G.P.moduleCargo = startingInstances;
+  const fit = G.P.fitting;
   const slotActive: Record<string, boolean[]> = { turret: [], high: [], med: [], low: [] };
   const moduleHp: Record<string, (number | null)[]> = { turret: [], high: [], med: [], low: [] };
   for (const rack of RACK_TYPES) {
@@ -126,8 +110,6 @@ export function respawnPlayer() {
     G.P.slotHeat.med = Array(fit.med.length).fill(0);
     G.P.slotHeat.low = Array(fit.low.length).fill(0);
   }
-  G.P.ammo.hybrid = AMMO_START_HYBRID;
-  G.P.ammo.missile = AMMO_START_MISSILE;
   invalidate();
   const st = getStats();
 
@@ -174,5 +156,4 @@ export function respawnPlayer() {
   spawnShockwave(G.P.x, G.P.y, "#ff4444", 1.2);
   sfxShipExplosion(G.P.x, G.P.y, 1.2);
   floatText(G.P.x, G.P.y - 50, `SHIP DESTROYED — POD ESCAPED${penalty > 0 ? ` (-${penalty}¢)` : ""}`, "#ff4444");
-  floatText(G.P.x, G.P.y - 80, `Ship lost — issued starter SPARROW D1`, "#ff8844");
 }

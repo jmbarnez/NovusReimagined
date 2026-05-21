@@ -1,18 +1,23 @@
 import "./styles/settings.css";
-import { G, Client } from "../state.js";
-import { loadSettings, saveSettings, DEFAULT_SETTINGS, DEFAULT_KEYBINDS, KEYBIND_LABELS, HUD_THEMES, type Keybinds } from "../data/settings.js";
+import { Client } from "../state.js";
+import { loadSettings, saveSettings, DEFAULT_SETTINGS, DEFAULT_KEYBINDS, KEYBIND_LABELS, HUD_THEMES, FONT_OPTIONS, type Keybinds } from "../data/settings.js";
+import { RETICLE_OPTIONS } from "../data/reticles.js";
+import { refreshTheme } from "./hud-overlay.js";
 import { closeBridge, renderBridgeUI } from "../dock.js";
 import { sfxBlip, sfxConfirm, setSfxVolume } from "../audio/procedural.js";
 import { setMusicVolume } from "../audio/music.js";
 import { initBackgroundStars } from "../render/background.js";
 import { refreshBackground } from "../render/pixi-background.js";
+import { setNebulaSystem } from "../render/pixi-nebula-gpu.js";
+import { getState } from "../state-access.js";
 import { resize } from "../canvas.js";
 import { resizePixi } from "../pixi.js";
 import { fmtKey } from "../utils/format.js";
 import { on } from "../events.js";
 
-import { clearEnemyTextureCaches } from "../render/pixi-entities.js";
+import { clearEnemyTextureCaches, refreshEntityFonts } from "../render/pixi-entities.js";
 import { clearShipTextureCaches, rebuildPlayerSprites } from "../render/pixi-player.js";
+import { clearStationTextureCaches } from "../render/pixi-stations.js";
 
 export let listeningFor: string | null = null;
 
@@ -21,6 +26,7 @@ export function initSettings() {
   Client.settingsOpen = false;
   setSfxVolume(Client.settings.sfxVolume);
   setMusicVolume(Client.settings.musicVolume);
+  refreshTheme();
 }
 
 export function openSettings() {
@@ -36,6 +42,8 @@ export function closeSettings() {
   listeningFor = null;
   const el = document.getElementById("settings-overlay");
   if (el) el.style.display = "none";
+  const bubble = document.getElementById("settings-tooltip-bubble");
+  if (bubble) bubble.style.display = "none";
 }
 
 export function toggleSettings() {
@@ -54,8 +62,15 @@ function ensureSettingsUI() {
         <div class="eve-win-sub">Configuration</div>
         <button id="settings-close" class="eve-win-btn">×</button>
       </div>
+      <div class="settings-tabs" id="settings-tabs">
+        <button class="settings-tab active" data-tab="audio">Audio</button>
+        <button class="settings-tab" data-tab="video">Video</button>
+        <button class="settings-tab" data-tab="interface">Interface</button>
+        <button class="settings-tab" data-tab="controls">Controls</button>
+      </div>
       <div class="eve-win-body">
         <div id="settings-body">
+        <div class="settings-tab-panel active" data-tab-panel="audio">
         <h3 class="accent-audio">Audio</h3>
         <div class="settings-row">
           <label>SFX Volume</label>
@@ -67,6 +82,8 @@ function ensureSettingsUI() {
           <input type="range" id="music-volume" min="0" max="1" step="0.05" value="1">
           <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="Volume of background ambient music tracks.">ⓘ</span>
         </div>
+        </div>
+        <div class="settings-tab-panel" data-tab-panel="video">
         <h3 class="accent-video">Video</h3>
         <div class="settings-row">
           <label>Render Scale</label>
@@ -78,16 +95,6 @@ function ensureSettingsUI() {
           <label>Background</label>
           <div id="detail-buttons" style="display:flex;gap:6px;"></div>
           <span class="settings-tip-icon" data-tip-impact="MEDIUM" data-tip-desc="Controls star field density. High adds multiple parallax layers and more star detail.">ⓘ</span>
-        </div>
-        <div class="settings-row">
-          <label>Nebulae</label>
-          <div id="nebula-buttons" style="display:flex;gap:6px;"></div>
-          <span class="settings-tip-icon" data-tip-impact="MEDIUM" data-tip-desc="Controls procedural nebula cloud density and variety. Off disables all nebulae. High generates dense, varied cloud formations with multiple parallax layers.">ⓘ</span>
-        </div>
-        <div class="settings-row settings-toggle-row">
-          <label>Bloom</label>
-          <input type="checkbox" id="bloom-toggle" class="toggle-switch" checked>
-          <span class="settings-tip-icon" data-tip-impact="MEDIUM" data-tip-desc="Additive glow composited over bright objects. Requires an extra canvas blit and blur filter every frame.">ⓘ</span>
         </div>
         <div class="settings-row settings-toggle-row">
           <label>Vignette</label>
@@ -105,24 +112,19 @@ function ensureSettingsUI() {
           <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="Colored scattering halo on the dark limb of each planet. One annular gradient per planet per frame.">ⓘ</span>
         </div>
         <div class="settings-row settings-toggle-row">
-          <label>Ambient Falloff</label>
-          <input type="checkbox" id="amb-falloff-toggle" class="toggle-switch" checked>
-          <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="Screen-space radial brightening near the star's position. Single fullscreen gradient blit per frame.">ⓘ</span>
-        </div>
-        <div class="settings-row settings-toggle-row">
           <label>Color Grading</label>
           <input type="checkbox" id="color-grade-toggle" class="toggle-switch" checked>
           <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="Per-system colour tint that shifts warm/cool based on star class. Applies a PixiJS ColorMatrixFilter.">ⓘ</span>
         </div>
         <div class="settings-row settings-toggle-row">
-          <label>Lens Flare</label>
-          <input type="checkbox" id="lens-flare-toggle" class="toggle-switch" checked>
-          <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="Optical artifact rings and streak along the star-to-screen-center axis. About 8 small gradient fills per frame.">ⓘ</span>
-        </div>
-        <div class="settings-row settings-toggle-row">
           <label>Mipmapping</label>
           <input type="checkbox" id="mipmapping-toggle" class="toggle-switch" checked>
           <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="Smooths textures when zoomed out to prevent edge shimmering, at the cost of some sharpness.">ⓘ</span>
+        </div>
+        <div class="settings-row settings-toggle-row">
+          <label>Lens Flare</label>
+          <input type="checkbox" id="lens-flare-toggle" class="toggle-switch" checked>
+          <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="Cinematic anamorphic streak and ghost circles anchored to the system star.">ⓘ</span>
         </div>
         <div class="settings-row settings-toggle-row">
           <label>FPS Counter</label>
@@ -136,15 +138,25 @@ function ensureSettingsUI() {
           <span id="camera-smoothing-val" class="settings-val">0.08</span>
           <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="Lerp factor for camera follow. Lower = more lag and smoothness. Higher = snappier tracking. No rendering cost.">ⓘ</span>
         </div>
-        <h3 class="accent-theme">HUD Theme</h3>
-        <div id="theme-buttons" class="settings-row"></div>
+        </div>
+        <div class="settings-tab-panel" data-tab-panel="interface">
+        <h3 class="accent-theme">Theme</h3>
+        <div id="theme-buttons" class="settings-swatch-grid"></div>
+        <h3 class="accent-theme">Font</h3>
+        <div id="font-buttons" class="settings-btn-row"></div>
+        <h3 class="accent-theme">Reticle</h3>
+        <div id="reticle-buttons" class="settings-btn-row"></div>
+        </div>
+        <div class="settings-tab-panel" data-tab-panel="controls">
         <h3 class="accent-controls">Controls</h3>
         <div id="keybind-list"></div>
+        </div>
         </div>
       </div>
       <div class="eve-win-foot" id="settings-footer">
         <button id="settings-exit" class="btn-exit">EXIT GAME</button>
         <button id="settings-reset">RESET TO DEFAULTS</button>
+        <button id="settings-save">SAVE</button>
       </div>
     </div>`;
   document.body.appendChild(el);
@@ -155,7 +167,10 @@ function ensureSettingsUI() {
   const impactClass: Record<string, string> = { NONE: "tip-impact-none", LOW: "tip-impact-low", MEDIUM: "tip-impact-medium", HIGH: "tip-impact-high" };
   el.addEventListener("mouseover", (e) => {
     const icon = (e.target as HTMLElement).closest(".settings-tip-icon") as HTMLElement | null;
-    if (!icon) return;
+    if (!icon) {
+      bubble.style.display = "none";
+      return;
+    }
     const impact = icon.dataset.tipImpact || "NONE";
     const desc = icon.dataset.tipDesc || "";
     bubble.innerHTML = `<div class="tip-impact ${impactClass[impact] || "tip-impact-none"}">PERF IMPACT: ${impact}</div><div class="tip-desc">${desc}</div>`;
@@ -172,6 +187,12 @@ function ensureSettingsUI() {
     bubble.style.top = `${top}px`;
     bubble.style.visibility = "visible";
   });
+  el.addEventListener("mouseout", (e) => {
+    const icon = (e.target as HTMLElement).closest(".settings-tip-icon") as HTMLElement | null;
+    if (icon) {
+      bubble.style.display = "none";
+    }
+  });
   el.addEventListener("mouseleave", () => { bubble.style.display = "none"; });
 
   on("ui:close-overlays", () => {
@@ -180,7 +201,27 @@ function ensureSettingsUI() {
     Client.settingsOpen = false;
   });
   el.querySelector("#settings-close")!.addEventListener("click", () => { sfxBlip(); closeSettings(); });
+
+  // Tab strip — toggle which panel is visible.
+  el.querySelectorAll(".settings-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      sfxBlip();
+      bubble.style.display = "none";
+      const name = (tab as HTMLElement).dataset.tab!;
+      el.querySelectorAll(".settings-tab").forEach((t) => t.classList.toggle("active", t === tab));
+      el.querySelectorAll(".settings-tab-panel").forEach((p) =>
+        p.classList.toggle("active", (p as HTMLElement).dataset.tabPanel === name));
+    });
+  });
   el.querySelector("#settings-reset")!.addEventListener("click", () => { sfxBlip(); resetSettings(); });
+  el.querySelector("#settings-save")!.addEventListener("click", () => {
+    sfxConfirm();
+    saveSettings(Client.settings);
+    const btn = el.querySelector("#settings-save") as HTMLButtonElement;
+    btn.textContent = "✓ SAVED";
+    btn.disabled = true;
+    setTimeout(() => { btn.textContent = "SAVE"; btn.disabled = false; }, 1200);
+  });
   el.querySelector("#settings-exit")!.addEventListener("click", () => {
     sfxBlip();
     if (confirm("Exit game and return to title? (Any unsaved progress will be lost)")) {
@@ -208,10 +249,6 @@ function ensureSettingsUI() {
     resizePixi();
     saveSettings(Client.settings);
   });
-  el.querySelector("#bloom-toggle")!.addEventListener("change", (e) => {
-    Client.settings.bloomEnabled = (e.target as HTMLInputElement).checked;
-    saveSettings(Client.settings);
-  });
   el.querySelector("#vignette-toggle")!.addEventListener("change", (e) => {
     Client.settings.vignetteEnabled = (e.target as HTMLInputElement).checked;
     saveSettings(Client.settings);
@@ -219,21 +256,15 @@ function ensureSettingsUI() {
   el.querySelector("#dir-light-toggle")!.addEventListener("change", (e) => {
     Client.settings.directionalLighting = (e.target as HTMLInputElement).checked;
     saveSettings(Client.settings);
+    clearShipTextureCaches(); clearEnemyTextureCaches(); clearStationTextureCaches();
+    rebuildPlayerSprites();
   });
   el.querySelector("#atm-rim-toggle")!.addEventListener("change", (e) => {
     Client.settings.atmosphericRim = (e.target as HTMLInputElement).checked;
     saveSettings(Client.settings);
   });
-  el.querySelector("#amb-falloff-toggle")!.addEventListener("change", (e) => {
-    Client.settings.ambientFalloff = (e.target as HTMLInputElement).checked;
-    saveSettings(Client.settings);
-  });
   el.querySelector("#color-grade-toggle")!.addEventListener("change", (e) => {
     Client.settings.colorGrading = (e.target as HTMLInputElement).checked;
-    saveSettings(Client.settings);
-  });
-  el.querySelector("#lens-flare-toggle")!.addEventListener("change", (e) => {
-    Client.settings.lensFlare = (e.target as HTMLInputElement).checked;
     saveSettings(Client.settings);
   });
   el.querySelector("#mipmapping-toggle")!.addEventListener("change", (e) => {
@@ -242,6 +273,10 @@ function ensureSettingsUI() {
     clearShipTextureCaches();
     clearEnemyTextureCaches();
     rebuildPlayerSprites();
+  });
+  el.querySelector("#lens-flare-toggle")!.addEventListener("change", (e) => {
+    Client.settings.lensFlare = (e.target as HTMLInputElement).checked;
+    saveSettings(Client.settings);
   });
   el.querySelector("#fps-counter-toggle")!.addEventListener("change", (e) => {
     Client.settings.fpsCounter = (e.target as HTMLInputElement).checked;
@@ -282,22 +317,18 @@ function renderSettings() {
   const renderVal = document.getElementById("render-scale-val") as HTMLElement | null;
   if (renderVal) renderVal.textContent = (settings.renderScale ?? 2.5).toFixed(1) + "x";
 
-  const bloomToggle = document.getElementById("bloom-toggle") as HTMLInputElement | null;
-  if (bloomToggle) bloomToggle.checked = settings.bloomEnabled ?? true;
   const vignetteToggle = document.getElementById("vignette-toggle") as HTMLInputElement | null;
   if (vignetteToggle) vignetteToggle.checked = settings.vignetteEnabled ?? true;
   const dirLightToggle = document.getElementById("dir-light-toggle") as HTMLInputElement | null;
   if (dirLightToggle) dirLightToggle.checked = settings.directionalLighting ?? true;
   const atmRimToggle = document.getElementById("atm-rim-toggle") as HTMLInputElement | null;
   if (atmRimToggle) atmRimToggle.checked = settings.atmosphericRim ?? true;
-  const ambFalloffToggle = document.getElementById("amb-falloff-toggle") as HTMLInputElement | null;
-  if (ambFalloffToggle) ambFalloffToggle.checked = settings.ambientFalloff ?? true;
   const colorGradeToggle = document.getElementById("color-grade-toggle") as HTMLInputElement | null;
   if (colorGradeToggle) colorGradeToggle.checked = settings.colorGrading ?? true;
-  const lensFlareToggle = document.getElementById("lens-flare-toggle") as HTMLInputElement | null;
-  if (lensFlareToggle) lensFlareToggle.checked = settings.lensFlare ?? true;
   const mipmappingToggle = document.getElementById("mipmapping-toggle") as HTMLInputElement | null;
   if (mipmappingToggle) mipmappingToggle.checked = settings.mipmapping ?? true;
+  const lensFlareToggle = document.getElementById("lens-flare-toggle") as HTMLInputElement | null;
+  if (lensFlareToggle) lensFlareToggle.checked = settings.lensFlare ?? true;
   const fpsCounterToggle = document.getElementById("fps-counter-toggle") as HTMLInputElement | null;
   if (fpsCounterToggle) fpsCounterToggle.checked = settings.fpsCounter ?? false;
 
@@ -320,28 +351,6 @@ function renderSettings() {
       sfxConfirm();
       settings.backgroundDetail = (btn as HTMLElement).dataset.detail!;
       initBackgroundStars(settings.backgroundDetail);
-      saveSettings(settings);
-      renderSettings();
-    });
-  });
-
-  const nebulaContainer = document.getElementById("nebula-buttons") as HTMLElement;
-  const nebulaOptions = [
-    { id: "off", label: "Off" },
-    { id: "low", label: "Low" },
-    { id: "medium", label: "Med" },
-    { id: "high", label: "High" },
-  ];
-  nebulaContainer.innerHTML = nebulaOptions.map((opt) =>
-    `<button class="detail-btn${settings.nebulaDensity === opt.id ? " active" : ""}" data-nebula="${opt.id}">${opt.label}</button>`
-  ).join("");
-  nebulaContainer.querySelectorAll(".detail-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      sfxConfirm();
-      settings.nebulaDensity = (btn as HTMLElement).dataset.nebula!;
-      for (const sys of G.GALAXY) {
-        if (sys) sys._nebulaBlobs = undefined;
-      }
       refreshBackground();
       saveSettings(settings);
       renderSettings();
@@ -350,12 +359,45 @@ function renderSettings() {
 
   const themeContainer = document.getElementById("theme-buttons") as HTMLElement;
   themeContainer.innerHTML = Object.entries(HUD_THEMES).map(([id, theme]) =>
-    `<button class="theme-btn${settings.theme === id ? " active" : ""}" data-theme="${id}">${(theme as any).name}</button>`
+    `<button class="theme-swatch${settings.theme === id ? " active" : ""}" data-theme="${id}"
+       style="--sw-bg:${theme.bgPanel};--sw-border:${theme.borderAccent};--sw-text:${theme.textMain};--sw-accent:${theme.accent}">
+       <span class="sw-dots"><i style="background:${theme.accent}"></i><i style="background:${theme.shield}"></i><i style="background:${theme.positive}"></i><i style="background:${theme.danger}"></i></span>
+       <span class="sw-name">${theme.name}</span>
+     </button>`
   ).join("");
-  themeContainer.querySelectorAll(".theme-btn").forEach((btn) => {
+  themeContainer.querySelectorAll(".theme-swatch").forEach((btn) => {
     btn.addEventListener("click", () => {
       sfxConfirm();
       settings.theme = (btn as HTMLElement).dataset.theme!;
+      saveSettings(settings);
+      refreshTheme();
+      renderSettings();
+    });
+  });
+
+  const fontContainer = document.getElementById("font-buttons") as HTMLElement;
+  fontContainer.innerHTML = FONT_OPTIONS.map((f) =>
+    `<button class="detail-btn${settings.fontFamily === f.id ? " active" : ""}" data-font="${f.id}" style="font-family:${f.stack}">${f.label}</button>`
+  ).join("");
+  fontContainer.querySelectorAll(".detail-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      sfxConfirm();
+      settings.fontFamily = (btn as HTMLElement).dataset.font!;
+      saveSettings(settings);
+      refreshTheme();
+      refreshEntityFonts();
+      renderSettings();
+    });
+  });
+
+  const reticleContainer = document.getElementById("reticle-buttons") as HTMLElement;
+  reticleContainer.innerHTML = RETICLE_OPTIONS.map((r) =>
+    `<button class="detail-btn${settings.reticleStyle === r.id ? " active" : ""}" data-reticle="${r.id}">${r.label}</button>`
+  ).join("");
+  reticleContainer.querySelectorAll(".detail-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      sfxConfirm();
+      settings.reticleStyle = (btn as HTMLElement).dataset.reticle!;
       saveSettings(settings);
       renderSettings();
     });
@@ -387,12 +429,14 @@ function resetSettings() {
   setSfxVolume(Client.settings.sfxVolume);
   setMusicVolume(Client.settings.musicVolume);
   initBackgroundStars(Client.settings.backgroundDetail);
-  for (const sys of G.GALAXY) {
-    if (sys) sys._nebulaBlobs = undefined;
-  }
+  const state = getState();
+  const curSys = state.GALAXY?.[state.player?.sysIdx ?? 0];
+  setNebulaSystem(curSys);
   resize();
   resizePixi();
   refreshBackground();
+  refreshTheme();
+  refreshEntityFonts();
   saveSettings(Client.settings);
   listeningFor = null;
   renderSettings();

@@ -1,10 +1,11 @@
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { SECTOR_OUTER_RADIUS } from "../../world-gen.js";
 
 export function drawWorldBorder() {
-  const pr = Math.hypot(G.P.x, G.P.y);
+  const state = getState();
+  const pr = Math.hypot(state.player.x, state.player.y);
   const distToEdge = SECTOR_OUTER_RADIUS - pr;
   const fadeStart = 1800;
   const fadeEnd = 600;

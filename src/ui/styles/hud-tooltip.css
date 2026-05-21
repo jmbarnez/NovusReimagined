@@ -9,7 +9,7 @@
   border-left: 3px solid rgba(60,80,110,0.8);
   box-shadow: 0 8px 32px rgba(0,0,0,0.75);
   padding: 12px 14px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-family);
   font-size: 10px;
   color: #8899aa;
   line-height: 1.55;

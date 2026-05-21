@@ -73,7 +73,7 @@
 }
 
 .sk-tile.maxed {
-  border-color: var(--sk-color, #ffcc00);
+  border-color: var(--sk-color, var(--hud-accent));
   box-shadow: 0 0 6px rgba(255, 200, 0, 0.12);
 }
 
@@ -116,7 +116,7 @@
 }
 
 .sk-lvl.maxed {
-  color: #ffd700;
+  color: var(--hud-accent);
   text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
 }
 
