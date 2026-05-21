@@ -1,3 +1,5 @@
+import type { EngagementName } from "../config/enemies.js";
+
 export interface EnemyRender {
   path: number[][];
   fill: string;
@@ -14,6 +16,8 @@ export interface ModuleLootEntry {
 
 export interface EnemyDef {
   name: string;
+  /** AI engagement archetype — see ENGAGEMENT in src/config/enemies.ts. */
+  engagement: EngagementName;
   credits: number;
   sigRadius: number;
   /** Collision radius for solid-body physics (derived from visual path extent). */
@@ -35,6 +39,7 @@ export interface EnemyDef {
 export const ENEMY_DEFS: Record<string, EnemyDef> = {
   rat_drone: {
     name: "Mite Drone",
+    engagement: "orbiter",
     credits: 8,
     sigRadius: 18,
     colRadius: 10,
@@ -61,6 +66,7 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   },
   rat: {
     name: "Scrap Mite",
+    engagement: "skirmisher",
     credits: 4,
     sigRadius: 25,
     colRadius: 10,
@@ -86,6 +92,7 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   },
   drone: {
     name: "Sentry Drone",
+    engagement: "sentry",
     credits: 6,
     sigRadius: 20,
     colRadius: 13,
@@ -112,6 +119,7 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   },
   pirate: {
     name: "Belt Pirate",
+    engagement: "brawler",
     credits: 12,
     sigRadius: 40,
     colRadius: 18,
@@ -138,6 +146,7 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   },
   raider: {
     name: "Blockade Raider",
+    engagement: "brawler",
     credits: 55,
     sigRadius: 65,
     colRadius: 20,

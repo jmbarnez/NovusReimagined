@@ -2,6 +2,7 @@ import { G, Client } from "../state.js";
 import { SHIPS } from "../data/ships.js";
 import { MODULES } from "../data/modules.js";
 import { WEAPON_PROFILES } from "../data/weaponProfiles.js";
+import { ENEMY_DEFS } from "../data/enemies.js";
 import { C } from "../config/index.js";
 import type { Enemy } from "../types/world.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
@@ -89,34 +90,33 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
       e.accuracy ?? 1.0,
     );
     
-    if (e.type === "rat_drone") {
+    const prof = C.ENEMIES.AI.ENGAGEMENT[ENEMY_DEFS[e.type]?.engagement ?? "brawler"];
+    if (prof.behavior === "orbit") {
       if (!e._orbitDir) e._orbitDir = Math.random() < 0.5 ? 1 : -1;
-      const orbitDist = C.ENEMIES.AI.ENGAGEMENT.ratDrone.orbitDistance;
-      const thrust = e.speed * C.ENEMIES.AI.ENGAGEMENT.ratDrone.thrustMultiplier;
-      if (d > orbitDist + C.ENEMIES.AI.ENGAGEMENT.ratDrone.orbitHysteresis) {
-        e.angle += angleDiff(e.angle, targetAngle) * C.ENEMIES.AI.ENGAGEMENT.ratDrone.approachTurnRate;
+      const thrust = e.speed * prof.thrustMultiplier;
+      if (d > prof.orbitDistance + prof.orbitHysteresis) {
+        e.angle += angleDiff(e.angle, targetAngle) * prof.approachTurnRate;
         e.vx += Math.cos(e.angle) * thrust * dt;
         e.vy += Math.sin(e.angle) * thrust * dt;
-      } else if (d < orbitDist - C.ENEMIES.AI.ENGAGEMENT.ratDrone.orbitHysteresis) {
-        e.angle += angleDiff(e.angle, targetAngle + Math.PI) * C.ENEMIES.AI.ENGAGEMENT.ratDrone.approachTurnRate;
+      } else if (d < prof.orbitDistance - prof.orbitHysteresis) {
+        e.angle += angleDiff(e.angle, targetAngle + Math.PI) * prof.approachTurnRate;
         e.vx += Math.cos(e.angle) * thrust * dt;
         e.vy += Math.sin(e.angle) * thrust * dt;
       } else {
-        e.angle += angleDiff(e.angle, targetAngle + Math.PI / 2 * e._orbitDir) * C.ENEMIES.AI.ENGAGEMENT.ratDrone.orbitTurnRate;
+        e.angle += angleDiff(e.angle, targetAngle + Math.PI / 2 * e._orbitDir) * prof.orbitTurnRate;
         e.vx += Math.cos(e.angle) * thrust * dt;
         e.vy += Math.sin(e.angle) * thrust * dt;
       }
       e.thrustFx = true;
+    } else if (prof.behavior === "stationary") {
+      e.angle += angleDiff(e.angle, targetAngle) * prof.turnRate;
     } else {
-      e.angle += angleDiff(e.angle, targetAngle) * C.ENEMIES.AI.ENGAGEMENT.other.turnRate;
-      if (e.type !== "drone") {
-        const distToStop = e.type === "rat" ? C.ENEMIES.AI.ENGAGEMENT.rat.stopDistance : C.ENEMIES.AI.ENGAGEMENT.other.stopDistance;
-        if (d > distToStop) {
-          const thrust = (e.speed || 0) * C.ENEMIES.AI.ENGAGEMENT.rat.thrustMultiplier;
-          e.vx += Math.cos(e.angle) * thrust * dt;
-          e.vy += Math.sin(e.angle) * thrust * dt;
-          e.thrustFx = true;
-        }
+      e.angle += angleDiff(e.angle, targetAngle) * prof.turnRate;
+      if (d > prof.stopDistance) {
+        const thrust = (e.speed || 0) * prof.thrustMultiplier;
+        e.vx += Math.cos(e.angle) * thrust * dt;
+        e.vy += Math.sin(e.angle) * thrust * dt;
+        e.thrustFx = true;
       }
     }
 
@@ -165,8 +165,9 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
     e.targetingPlayer = false;
     e.hasLockOnPlayer = false;
     e.lockOnTimer = 0;
-    if (e.type !== "drone") {
-      const thrust = e.speed * C.ENEMIES.AI.ENGAGEMENT.other.thrustMultiplier * C.ENEMIES.AI.ENGAGEMENT.other.idleThrustMultiplier;
+    const prof = C.ENEMIES.AI.ENGAGEMENT[ENEMY_DEFS[e.type]?.engagement ?? "brawler"];
+    if (prof.behavior !== "stationary") {
+      const thrust = e.speed * prof.thrustMultiplier * prof.idleThrustMultiplier;
       e.vx += Math.cos(e.angle) * thrust * dt;
       e.vy += Math.sin(e.angle) * thrust * dt;
       if (Math.random() < C.ENEMIES.IDLE_ANGLE_JITTER_CHANCE) e.angle += (Math.random() - 0.5) * C.ENEMIES.IDLE_ANGLE_JITTER_AMOUNT;

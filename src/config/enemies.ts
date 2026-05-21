@@ -1,3 +1,65 @@
+export type EngagementName = "orbiter" | "skirmisher" | "brawler" | "sentry";
+
+export type EngagementProfile =
+  | {
+      behavior: "orbit";
+      orbitDistance: number;
+      orbitHysteresis: number;
+      approachTurnRate: number;
+      orbitTurnRate: number;
+      thrustMultiplier: number;
+      idleThrustMultiplier: number;
+    }
+  | {
+      behavior: "chase";
+      stopDistance: number;
+      turnRate: number;
+      thrustMultiplier: number;
+      idleThrustMultiplier: number;
+    }
+  | {
+      behavior: "stationary";
+      turnRate: number;
+    };
+
+// Named AI engagement archetypes. Each enemy references one via
+// EnemyDef.engagement (src/data/enemies.ts); npc-ai dispatches on `behavior`.
+// To add a behavior, add a profile here and point an enemy at it — no AI
+// logic edits required.
+const ENGAGEMENT: Record<EngagementName, EngagementProfile> = {
+  // Circles the target at a fixed range (Mite Drone).
+  orbiter: {
+    behavior: "orbit",
+    orbitDistance: 180,
+    orbitHysteresis: 40,
+    approachTurnRate: 0.04,
+    orbitTurnRate: 0.05,
+    thrustMultiplier: 4,
+    idleThrustMultiplier: 0.2,
+  },
+  // Charges to short range and holds (Scrap Mite).
+  skirmisher: {
+    behavior: "chase",
+    stopDistance: 220,
+    turnRate: 0.08,
+    thrustMultiplier: 4,
+    idleThrustMultiplier: 0.2,
+  },
+  // Closes to medium range and holds (pirates, raiders).
+  brawler: {
+    behavior: "chase",
+    stopDistance: 350,
+    turnRate: 0.08,
+    thrustMultiplier: 4,
+    idleThrustMultiplier: 0.2,
+  },
+  // Fixed emplacement: rotates to track the target but never moves (Sentry Drone).
+  sentry: {
+    behavior: "stationary",
+    turnRate: 0.08,
+  },
+};
+
 export const ENEMIES = {
   PROJECTILE_SPEED: 550,
   AI: {
@@ -22,27 +84,7 @@ export const ENEMIES = {
       baseTime: 6.0,
       perBonusTickReduction: 1.5,
     },
-    ENGAGEMENT: {
-      ratDrone: {
-        orbitDistance: 180,
-        orbitHysteresis: 40,
-        approachTurnRate: 0.04,
-        orbitTurnRate: 0.05,
-        thrustMultiplier: 4,
-      },
-      rat: {
-        stopDistance: 220,
-        turnRate: 0.08,
-        thrustMultiplier: 4,
-        idleThrustMultiplier: 0.2,
-      },
-      other: {
-        stopDistance: 350,
-        turnRate: 0.08,
-        thrustMultiplier: 4,
-        idleThrustMultiplier: 0.2,
-      },
-    },
+    ENGAGEMENT,
     SAFE_ZONE: {
       PUSH_FORCE_MULTIPLIER: 400,
     },
