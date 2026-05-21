@@ -1,3 +1,9 @@
+// Ship-handling and spawn-grid tuning.
+//
+// Collision, mass, module, drag, and station-turret tunables are the flat
+// exports in src/constants.ts (COLLISION_*, *_MASS, MODULE_*, *_DRAG,
+// STATION_TURRET_*) — that is their single source of truth. Do not re-add
+// duplicate blocks for them here.
 export const PHYSICS = {
   SHIP: {
     lateralThrustScale: 0.55,
@@ -11,43 +17,6 @@ export const PHYSICS = {
     thrustTrailABColor: "#ffaa55",
     thrustTrailABWidth: 14,
     thrustTrailLife: 0.9,
-  },
-  COLLISION: {
-    restitution: 0.28,
-    dmgThreshold: 70,
-    dmgScale: 0.055,
-    cooldown: 0.35,
-    wreckPieceMassMultiplier: 0.8,
-    enemyDmgScaleMultiplier: 0.5,
-    wreckPieceDmgScaleMultiplier: 0.4,
-  },
-  DRAG: {
-    asteroidVelDecay: 0.12,
-    wreckPieceLinear: 0.42,
-    wreckPieceAngular: 0.55,
-    salvagePickup: 0.55,
-    enemyAmbient: 0.04,
-    asteroidSpinRange: 0.4,
-  },
-  MASS: {
-    player: 800,
-    enemy: 450,
-    asteroidDensity: 1.8,
-    shipReference: 680000,
-  },
-  MODULE: {
-    hpMax: 100,
-    damageChance: 0.4,
-    damageRatio: 0.25,
-    minThrustPct: 0.3,
-  },
-  STATION_TURRET: {
-    orbitMin: 140,
-    orbitMax: 200,
-    range: 500,
-    damage: 12,
-    reload: 1.5,
-    alignTolerance: 0.26,
   },
   SPAWN_GRID: {
     cellSize: 128,
