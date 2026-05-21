@@ -30,6 +30,8 @@ import { ENEMY_DEFS } from "../data/enemies.js";
 import { entityLayer, effectLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
 import { getUIFont } from "./ui-font.js";
+import { lightenCol, darkenCol } from "../utils/color.js";
+import { tracePath } from "./bake-utils.js";
 
 const TAU = Math.PI * 2;
 /** Supersampling multiplier — baked canvas physical pixels per logical texel. */
@@ -40,26 +42,6 @@ const TEX_SCALE = 3;
 // biggest enemy type; smaller types are centred in blank space (no cost).
 const TEX_SIZE = 192;
 const TEX_HALF = TEX_SIZE / 2;
-
-// ─── Colour helpers ─────────────────────────────────────────────────────────
-function lightenCol(col: string, amt: number): string {
-  const m = col.match(/rgba?\((\d+),(\d+),(\d+)(?:,([\d.]+))?\)/);
-  if (!m) return col;
-  const r = Math.min(255, parseInt(m[1]) + amt);
-  const g = Math.min(255, parseInt(m[2]) + amt);
-  const b = Math.min(255, parseInt(m[3]) + amt);
-  const a = m[4] ?? "1";
-  return `rgba(${r},${g},${b},${a})`;
-}
-function darkenCol(col: string, amt: number): string {
-  const m = col.match(/rgba?\((\d+),(\d+),(\d+)(?:,([\d.]+))?\)/);
-  if (!m) return col;
-  const r = Math.max(0, parseInt(m[1]) - amt);
-  const g = Math.max(0, parseInt(m[2]) - amt);
-  const b = Math.max(0, parseInt(m[3]) - amt);
-  const a = m[4] ?? "1";
-  return `rgba(${r},${g},${b},${a})`;
-}
 
 const _texCache = new Map<string, Texture>();
 
@@ -75,14 +57,7 @@ function bakeEnemyTexture(type: string): Texture {
   cx.scale(TEX_SCALE * dpr, TEX_SCALE * dpr);
 
   // Build the hull path at (HALF, HALF) in canvas coords.
-  function buildHullPath() {
-    cx.beginPath();
-    for (let i = 0; i < cfg.path.length; i++) {
-      const [px, py] = cfg.path[i];
-      i === 0 ? cx.moveTo(TEX_HALF + px, TEX_HALF + py) : cx.lineTo(TEX_HALF + px, TEX_HALF + py);
-    }
-    cx.closePath();
-  }
+  const buildHullPath = () => tracePath(cx, cfg.path, TEX_HALF);
 
   // 1. Depth outline
   buildHullPath();

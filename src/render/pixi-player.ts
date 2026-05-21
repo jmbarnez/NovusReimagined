@@ -11,6 +11,8 @@ import { SHIPS } from "../data/ships.js";
 import { entityLayer, thrustLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
 import { getNebulaDensity } from "./pixi-background.js";
+import { lightenCol, darkenCol } from "../utils/color.js";
+import { tracePath } from "./bake-utils.js";
 
 const TAU = Math.PI * 2;
 const HULL_SCALE = 1.0;
@@ -42,14 +44,7 @@ function bakeShipTexture(shipId: string): Texture {
   const cx = c.getContext("2d")!;
   cx.scale(TEX_SCALE * dpr, TEX_SCALE * dpr);
 
-  function shipPath() {
-    cx.beginPath();
-    for (let i = 0; i < r.path.length; i++) {
-      const [px, py] = r.path[i];
-      i === 0 ? cx.moveTo(SHIP_HALF + px, SHIP_HALF + py) : cx.lineTo(SHIP_HALF + px, SHIP_HALF + py);
-    }
-    cx.closePath();
-  }
+  const shipPath = () => tracePath(cx, r.path, SHIP_HALF);
 
   // 1. Depth outline
   shipPath();
@@ -177,26 +172,6 @@ function bakeShipTexture(shipId: string): Texture {
   }
 
   return canvasToTexture(c, dpr);
-}
-
-// ─── Colour helpers ───────────────────────────────────────────────────────────
-function lightenCol(col: string, amt: number): string {
-  const m = col.match(/rgba?\((\d+),(\d+),(\d+)(?:,([\d.]+))?\)/);
-  if (!m) return col;
-  const r = Math.min(255, parseInt(m[1]) + amt);
-  const g = Math.min(255, parseInt(m[2]) + amt);
-  const b = Math.min(255, parseInt(m[3]) + amt);
-  const a = m[4] ?? "1";
-  return `rgba(${r},${g},${b},${a})`;
-}
-function darkenCol(col: string, amt: number): string {
-  const m = col.match(/rgba?\((\d+),(\d+),(\d+)(?:,([\d.]+))?\)/);
-  if (!m) return col;
-  const r = Math.max(0, parseInt(m[1]) - amt);
-  const g = Math.max(0, parseInt(m[2]) - amt);
-  const b = Math.max(0, parseInt(m[3]) - amt);
-  const a = m[4] ?? "1";
-  return `rgba(${r},${g},${b},${a})`;
 }
 
 function getShipTexture(shipId: string): Texture {

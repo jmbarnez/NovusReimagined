@@ -49,6 +49,12 @@ export function angleDiff(a: number, b: number): number {
   return d;
 }
 
+/** Wrap an angle into the range [0, TAU). */
+export function normalizeAngle(a: number): number {
+  const r = a % TAU;
+  return r < 0 ? r + TAU : r;
+}
+
 export function dst(ax: number, ay: number, bx: number, by: number): number {
   return Math.hypot(ax - bx, ay - by);
 }
