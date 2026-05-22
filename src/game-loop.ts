@@ -1,10 +1,12 @@
 import { G, Client, AppMode } from "./state.js";
+import type { System } from "./types/world.js";
+import { savePlayer } from "./player/player-data.js";
 import { drawBackground } from "./render/background.js";
 import { drawHUD, drawGalaxyMap, drawSystemMap, drawWarpScreen, drawTargetArrow } from "./render/hud.js";
 import {
   drawStar,
   drawGates, drawStations, drawStationTurrets, drawAsteroids, drawEnemyOverlays,
-  drawBullets, drawBeams, drawMiningLaser, drawSalvagerBeam, drawShockwaves, drawPlayer,
+  drawBullets, drawBeams, drawMiningLaser, drawSalvagerBeam, drawTractorBeam, drawShockwaves, drawPlayer,
   drawCrosshair, drawFloatTexts, drawWreckPieces, drawSalvagePickups,
   drawWorldBorder, updateAndDrawImpactDecals, drawAmbientLife, drawLensFlare,
 } from "./render/world.js";
@@ -12,26 +14,28 @@ import { syncPixiPlanets } from "./render/pixi-planets.js";
 import { updateVignette } from "./render/pixi-vignette.js";
 import { syncThrust } from "./render/pixi-thrust.js";
 import { drawStationInterior } from "./render/station-interior.js";
-import { updatePerfOverlay, drawPerfOverlay, drawFpsCounter } from "./render/perf-overlay.js";
+import { updatePerfOverlay, drawPerfOverlay } from "./render/perf-overlay.js";
 import { initHudOverlay, updateHudOverlay, destroyHudOverlay } from "./ui/hud-overlay.js";
 import { tickCraftQueue } from "./ui/station/industry.js";
-import { ctx, W, H, disposeCanvas } from "./canvas.js";
+import { ctx, W, H, canvasLeft, canvasTop, disposeCanvas } from "./canvas.js";
 import { renderPixi, app, worldContainer } from "./pixi.js";
 import { initPixiBackground, updatePixiBackground } from "./render/pixi-background.js";
 import { syncPixiParticles } from "./render/pixi-particles.js";
 import { syncPixiEntities } from "./render/pixi-entities.js";
 import { syncPixiPlayer, syncPixiTrails } from "./render/pixi-player.js";
 import { syncPixiStations } from "./render/pixi-stations.js";
-import { TICK_DT, MAX_CATCH } from "./constants.js";
+import { TICK_DT, MAX_CATCH, LOCK_RAIL_H } from "./constants.js";
 import { curSys, updateViewportBounds } from "./utils/game.js";
 import { tick } from "./physics.js";
 import { updateCamera } from "./utils/camera.js";
 import { setWorldView } from "./render/world-text.js";
 import { viewCenterX, viewCenterY } from "./render/viewport.js";
+import { drawAsteroidDebris } from "./utils/mining.js";
 
 let accumulator = 0;
 let lastFrameTime = performance.now();
 let _gameStarted = false;
+let autoSaveTimer = 0;
 
 // Cached damage flash gradients (keyed by color, invalidated on viewport resize)
 let _dmgFlashWc = 0, _dmgFlashHc = 0;
@@ -72,7 +76,7 @@ function loop(now: number) {
   lastFrameTime = now;
 
   let ticks = 0;
-  if (G.P && Client.mode === AppMode.SPACE && !Client.settingsOpen) {
+  if (G.P && Client.mode === AppMode.SPACE && !Client.settingsOpen && !Client.stationOpen) {
     accumulator += frameTime;
     while (accumulator >= TICK_DT && ticks < MAX_CATCH) {
       tick(TICK_DT);
@@ -80,6 +84,23 @@ function loop(now: number) {
       ticks++;
     }
     if (accumulator > MAX_CATCH * TICK_DT) accumulator = MAX_CATCH * TICK_DT;
+
+    autoSaveTimer += frameTime;
+    if (autoSaveTimer >= 30) {
+      autoSaveTimer = 0;
+      savePlayer();
+    }
+  } else {
+    autoSaveTimer = 0;
+    if (G.P && Client.mode === AppMode.SPACE && !Client.settingsOpen) {
+      accumulator += frameTime;
+      while (accumulator >= TICK_DT && ticks < MAX_CATCH) {
+        tick(TICK_DT);
+        accumulator -= TICK_DT;
+        ticks++;
+      }
+      if (accumulator > MAX_CATCH * TICK_DT) accumulator = MAX_CATCH * TICK_DT;
+    }
   }
 
   updatePerfOverlay(frameTime, ticks);
@@ -111,7 +132,7 @@ function draw(now: number, alpha: number, frameDt: number) {
   }
 }
 
-function drawTitleState(now: number, Wc: number, Hc: number, sys: any) {
+function drawTitleState(now: number, Wc: number, Hc: number, sys: System) {
   // Slow cinematic camera pan
   Client.camx += 0.8;
   Client.camy += 0.4;
@@ -129,7 +150,7 @@ function drawStationState(now: number, Wc: number, Hc: number) {
   drawPerfOverlay();
 }
 
-function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number, Hc: number, sys: any) {
+function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number, Hc: number, sys: System) {
   // Camera locks to the interpolated player position — same alpha as the ship
   // sprite, so the player sits at a fixed screen point with zero relative
   // jitter. Camera position is independent of HUD layout; the playable area
@@ -139,8 +160,10 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number,
   const camyR = Client.camy;
   const viewCX = viewCenterX(Wc);
   const viewCY = viewCenterY(Hc);
-  Client.mouseWorld.x = (Client.mouse.x - viewCX) / Client.zoom + camxR;
-  Client.mouseWorld.y = (Client.mouse.y - viewCY) / Client.zoom + camyR;
+  // Client.mouse is in window coords; the canvas is inset below the lock-rail,
+  // so shift into canvas-local space before projecting to the world.
+  Client.mouseWorld.x = (Client.mouse.x - canvasLeft() - viewCX) / Client.zoom + camxR;
+  Client.mouseWorld.y = (Client.mouse.y - canvasTop() - viewCY) / Client.zoom + camyR;
 
   updateViewportBounds(Wc, Hc, Client.zoom, camxR, camyR, 240);
   setWorldView(Wc, Hc, camxR, camyR, Client.zoom);
@@ -189,6 +212,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number,
   drawStations(now, sys);
   drawStationTurrets(now, sys);
   drawAsteroids(alpha, sys, now);
+  drawAsteroidDebris();
   drawEnemyOverlays(alpha, sys, now);
   drawWreckPieces(now);
   drawSalvagePickups(now);
@@ -196,6 +220,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number,
   drawBeams(sys);
   drawMiningLaser(now);
   drawSalvagerBeam();
+  drawTractorBeam();
   drawShockwaves();
   drawPlayer(now, alpha);
   drawCrosshair();
@@ -204,8 +229,9 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number,
 
   ctx.restore();
 
-  // End of clipped game-frame region. HUD-space overlays (damage flash,
-  // target arrow, lock rail extras) draw on the full canvas after this.
+  // The canvas itself is the playable rect (inset between the HUD bars, see
+  // canvas.ts), so world content is bounded by the canvas edges. HUD-space
+  // overlays (damage flash, target arrow) draw across that rect after this.
   ctx.restore();
 
   drawLensFlare(Wc, Hc);
@@ -251,7 +277,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, Wc: number,
 
   if (!Client.stationOpen) updateHudOverlay(Wc, Hc, now);
 
-  drawFpsCounter();
+
   drawPerfOverlay();
 }
 

@@ -6,6 +6,7 @@ import { on } from "../events.js";
 import { generateContractsForStation } from "../data/missions.js";
 import { logEvent } from "./hud-overlay.js";
 import { fmtKey } from "../utils/format.js";
+import type { Station } from "../types/world.js";
 import {
   repairShipAction,
   buyModuleAction,
@@ -28,11 +29,10 @@ import {
 import { stationState, MAX_ACTIVE_CONTRACTS } from "./station/shared.js";
 import { renderHangar, setPreview, updateStatsGrid } from "./station/hangar.js";
 import { renderMarket } from "./station/market.js";
-import { renderFitting } from "./station/fitting.js";
 import { renderIndustry } from "./station/industry.js";
 import { renderContracts } from "./station/contracts.js";
 
-export { renderHangar, renderMarket, renderFitting, renderIndustry, renderContracts };
+export { renderHangar, renderMarket, renderIndustry, renderContracts };
 
 export function ensureStationUI() {
   if (document.getElementById("station-overlay")) return;
@@ -80,13 +80,15 @@ export function ensureStationUI() {
   el.addEventListener("click", onStationAction);
   
   // Delegated hover listeners for fitting preview on action buttons only
-  el.addEventListener("mouseover", (e: any) => {
+  el.addEventListener("mouseover", (e: MouseEvent) => {
     if (!Client.stationOpen) return;
-    const btn = e.target.closest("[data-action='unfit'], [data-action='swapMod'], [data-action='fit']");
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    const btn = target.closest("[data-action='unfit'], [data-action='swapMod'], [data-action='fit']");
     if (!btn) return;
     const slot = (btn as HTMLElement).closest(".slot");
     if (!slot) return;
-    const rack = (slot as HTMLElement).dataset.rack as any;
+    const rack = (slot as HTMLElement).dataset.rack as "turret" | "high" | "med" | "low";
     const idx = parseInt((slot as HTMLElement).dataset.idx!, 10);
     if (!rack) return;
     const action = (btn as HTMLElement).dataset.action;
@@ -98,46 +100,51 @@ export function ensureStationUI() {
     }
   });
 
-  el.addEventListener("mouseout", (e: any) => {
-    if (e.target.closest("[data-action='unfit'], [data-action='swapMod'], [data-action='fit']")) {
+  el.addEventListener("mouseout", (e: MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (target && target.closest("[data-action='unfit'], [data-action='swapMod'], [data-action='fit']")) {
       stationState.previewFitting = null;
       updateStatsGrid();
     }
   });
 
-  el.addEventListener("input", (e: any) => {
-    if (e.target.id === "mkt-search-input") {
-      stationState.mktSearch = e.target.value;
+  el.addEventListener("input", (e: Event) => {
+    const target = e.target as HTMLInputElement | null;
+    if (!target) return;
+    if (target.id === "mkt-search-input") {
+      stationState.mktSearch = target.value;
       renderMarket();
     }
-    if (e.target.id === "ind-search-input") {
-      stationState.indSearch = e.target.value;
+    if (target.id === "ind-search-input") {
+      stationState.indSearch = target.value;
       renderIndustry();
     }
   });
 
-  el.addEventListener("change", (e: any) => {
-    if (e.target.id === "mkt-sort-select") {
-      stationState.mktSort = e.target.value;
+  el.addEventListener("change", (e: Event) => {
+    const target = e.target as HTMLSelectElement | HTMLInputElement | null;
+    if (!target) return;
+    if (target.id === "mkt-sort-select") {
+      stationState.mktSort = target.value;
       renderMarket();
       return;
     }
-    if (e.target.id === "ind-sort-select") {
-      stationState.indSort = e.target.value;
+    if (target.id === "ind-sort-select") {
+      stationState.indSort = target.value;
       renderIndustry();
       return;
     }
-    if (e.target.id === "ind-qty-sel") {
-      stationState.craftQty = parseInt((e.target as HTMLSelectElement).value, 10);
+    if (target.id === "ind-qty-sel") {
+      stationState.craftQty = parseInt((target as HTMLSelectElement).value, 10);
       renderIndustry();
       return;
     }
-    if (e.target.tagName === "SELECT" && (e.target.id.startsWith("sel-") || e.target.id.startsWith("swap-"))) {
-      const slot = e.target.closest(".slot");
+    if (target.tagName === "SELECT" && (target.id.startsWith("sel-") || target.id.startsWith("swap-"))) {
+      const slot = target.closest(".slot");
       if (slot) {
-        const rack = slot.dataset.rack as any;
-        const idx = parseInt(slot.dataset.idx, 10);
-        if (rack) setPreview(rack, idx, e.target.value);
+        const rack = (slot as HTMLElement).dataset.rack as "turret" | "high" | "med" | "low";
+        const idx = parseInt((slot as HTMLElement).dataset.idx!, 10);
+        if (rack) setPreview(rack, idx, (target as HTMLSelectElement).value);
       }
     }
   });
@@ -151,14 +158,14 @@ export function ensureStationUI() {
   });
 }
 
-export function buildStationUI(st: any) {
+export function buildStationUI(st: Station) {
   const el = document.getElementById("station-overlay");
   if (!el) return;
   el.querySelector("#st-name")!.textContent = st.name;
   el.querySelector("#st-meta")!.textContent = `Services: ${st.services.join(" · ")}`;
   const sys = G.GALAXY[G.P.sysIdx];
   const sec = sys?.security ?? 0.5;
-  const secColor = sec >= 0.7 ? "#44ff88" : sec >= 0.4 ? "#ffcc44" : "#ff4444";
+  const secColor = sec >= 0.7 ? "var(--hud-positive)" : sec >= 0.4 ? "var(--hud-accent)" : "var(--hud-danger)";
   const secLabel = sec >= 0.7 ? "HIGH SEC" : sec >= 0.4 ? "MID SEC" : "LOW SEC";
   (el.querySelector("#st-sec-badge") as HTMLElement).innerHTML = `<span style="color:${secColor}">●</span> ${secLabel} ${sec.toFixed(1)}`;
   el.querySelectorAll(".st-tab").forEach(btn => { 
@@ -193,8 +200,9 @@ export function renderStationUI() {
   renderContracts();
 }
 
-function onStationAction(e: any) {
-  const btn = e.target.closest("[data-action]");
+function onStationAction(e: Event) {
+  const target = e.target as HTMLElement | null;
+  const btn = target?.closest("[data-action]");
   if (!btn) return;
   const action = (btn as HTMLElement).dataset.action;
 

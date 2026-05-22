@@ -60,7 +60,7 @@ export function renderMarket() {
   type Res = { id: string; label: string; qty: number; rate: number; action: string; attr: string };
   let res: Res[] = [
     ...(["iron","crystal","exotic"] as const).map(k => ({ id:k, label:ORE[k].label, qty:G.P.ore[k]||0, rate:ORE_MARKET_BUY[k]||0, action:"sellOre", attr:`data-ore="${k}"` })),
-    ...(["scrap","chip","cell","intact-part"] as const).map(k => ({ id:k, label:(LOOT as any)[k].label, qty:G.P.loot[k]||0, rate:LOOT_BUY[k]||0, action:"sellLoot", attr:`data-loot="${k}"` })),
+    ...(["scrap","chip","cell","intact-part"] as const).map(k => ({ id:k, label:LOOT[k].label, qty:G.P.loot[k]||0, rate:LOOT_BUY[k]||0, action:"sellLoot", attr:`data-loot="${k}"` })),
     ...(["circuit","gear","harness","sensor_cluster"] as const).map(k => ({ id:k, label:k.replace("_"," "), qty:G.P.components[k]||0, rate:COMPONENT_MARKET_BUY[k]||100, action:"sellComp", attr:`data-comp="${k}"` })),
   ];
   if (q) res = res.filter(r => r.label.toLowerCase().includes(q) || r.id.includes(q));

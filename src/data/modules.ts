@@ -33,6 +33,7 @@ export interface DamageProfile {
   therm?: number;
   kin?: number;
   exp?: number;
+  [key: string]: number | undefined;
 }
 
 export interface ModuleDef {
@@ -57,6 +58,9 @@ export interface ModuleDef {
   capDrainPerSec?: number;
   isSalvager?: boolean;
   salvageRollBonus?: number;
+  isTractor?: boolean;
+  tractorMaxMassKg?: number;
+  tractorPullAccel?: number;
   isShield?: boolean;
   /**
    * If set, activating this module via hotkey fires the named ability
@@ -64,6 +68,7 @@ export interface ModuleDef {
    * is otherwise treated as a passive: its `effects` always apply while fitted.
    */
   ability?: string;
+  isComms?: boolean;
 }
 
 /** Packed module volume when stored as cargo units (purchase / unfit). */
@@ -99,7 +104,8 @@ export const MODULES: Record<string, ModuleDef> = {
     powergrid: 2,
     cpu: 4,
     massKg: 800,
-    effects: { miningMultBonus: 0.02, miningRangePctBonus: 0.05 },
+    effects: { miningMultBonus: 0.02 },
+    optimalRange: 180,
   },
   "tu-cannon": {
     id: "tu-cannon",
@@ -242,6 +248,22 @@ export const MODULES: Record<string, ModuleDef> = {
     massKg: 1800,
     effects: { weaponMultBonus: 0.03 },
   },
+  "tu-civilian-salvager": {
+    id: "tu-civilian-salvager",
+    name: "Civilian Salvager",
+    short: "Civ Salvage",
+    desc: "Salvage tool scavenged from a derelict. Slow beam, minimal roll bonus — but it gets the job done.",
+    rack: "turret",
+    isActive: true,
+    isSalvager: true,
+    salvageRollBonus: 0.02,
+    capDrainPerSec: 3.0,
+    price: 60,
+    powergrid: 1,
+    cpu: 3,
+    massKg: 600,
+    effects: {},
+  },
   "hi-salv": {
     id: "hi-salv",
     name: "Salvager I",
@@ -251,12 +273,43 @@ export const MODULES: Record<string, ModuleDef> = {
     isActive: true,
     isSalvager: true,
     salvageRollBonus: 0.1,
-    capDrainPerSec: 2,
+    capDrainPerSec: 5.0,
     price: 800,
     powergrid: 3,
     cpu: 8,
     massKg: 1100,
     effects: {},
+  },
+  "tu-tractor": {
+    id: "tu-tractor",
+    name: "Tractor Beam I",
+    short: "Tractor I",
+    desc: "Pulls a single locked object toward your ship. Only works if the object's mass is within rated capacity.",
+    rack: "turret",
+    isActive: true,
+    isTractor: true,
+    tractorMaxMassKg: 3000,
+    tractorPullAccel: 140,
+    capDrainPerSec: 3,
+    price: 600,
+    powergrid: 3,
+    cpu: 6,
+    massKg: 1000,
+    effects: {},
+    optimalRange: 600,
+  },
+  "hi-comms": {
+    id: "hi-comms",
+    name: "Comms Relay Array",
+    short: "Comms Array",
+    desc: "Enables comms links and hailing with nearby neutral faction ships.",
+    rack: "high",
+    price: 950,
+    powergrid: 2,
+    cpu: 8,
+    massKg: 600,
+    effects: {},
+    isComms: true,
   },
   "hi-link": {
     id: "hi-link",
@@ -466,8 +519,10 @@ export const MODULE_FLAGS = {
   isWeapon: (m: ModuleDef | null | undefined) => !!m?.weaponDelivery,
   isMiningTurret: (m: ModuleDef | null | undefined) => !!m?.mining,
   isSalvager: (m: ModuleDef | null | undefined) => !!m?.isSalvager,
+  isTractor: (m: ModuleDef | null | undefined) => !!m?.isTractor,
   isBeam: (m: ModuleDef | null | undefined) => m?.weaponDelivery === "beam",
   isProjectile: (m: ModuleDef | null | undefined) => m?.weaponDelivery === "projectile",
   isMissile: (m: ModuleDef | null | undefined) => m?.weaponDelivery === "missile",
   isShield: (m: ModuleDef | null | undefined) => !!m?.isShield,
+  isComms: (m: ModuleDef | null | undefined) => !!m?.isComms,
 };

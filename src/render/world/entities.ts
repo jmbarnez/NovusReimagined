@@ -9,23 +9,25 @@ import { SHIPS } from "../../data/ships.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
 import { worldText } from "../world-text.js";
 import { getUIFont } from "../ui-font.js";
+import type { LockSlot, System } from "../../types/world.js";
 import {
   getAsteroidDropShadowGrad,
   getAsteroidShadeGrad,
   getAsteroidBodyGrad,
+  getShieldBubbleGrad,
+  getShieldImpactGrad,
+  getHullSparkGrad,
 } from "../grad-cache.js";
 
 export function drawLockBrackets(
   cx: number, cy: number, radius: number,
-  slot: any, primaryId: string | undefined, entityId: string | undefined,
+  slot: LockSlot | null | undefined, primaryId: string | undefined, entityId: string | undefined,
   now: number,
 ) {
   if (!slot || !entityId) return;
   const isPrimary = entityId === primaryId;
 
-  // EVE-style corner brackets — short L-shaped ticks at each corner of an
-  // invisible bounding square. While resolving they flash dim; once locked
-  // they sit solid and steady.
+  // Corner brackets — short L-shaped ticks at each corner of an invisible bounding square.
   const sz = isPrimary ? radius + 9 : radius + 6;
   const arm = isPrimary ? 7 : 5;
 
@@ -33,17 +35,51 @@ export function drawLockBrackets(
   let alpha: number;
   let lineWidth: number;
 
-  if (slot.resolving) {
-    // Soft blink ~2.2 Hz; dull cool grey-blue.
-    const blink = 0.5 + 0.5 * Math.sin(now * 0.014);
-    color = "#5a7a90";
-    alpha = 0.30 + 0.40 * blink;
-    lineWidth = 1.2;
+  const sys = G.GALAXY?.[G.P?.sysIdx ?? 0];
+  const enemy = sys?._enemyMap?.get(entityId);
+  const isEnemy = !!enemy;
+
+  if (isEnemy) {
+    if (enemy.hasLockOnPlayer) {
+      // Red when that enemy has you locked
+      color = "#ff3b30";
+      alpha = isPrimary ? 0.95 : 0.75;
+      lineWidth = isPrimary ? 1.8 : 1.4;
+    } else if (enemy.targetingPlayer) {
+      // Flashing yellow when being targeted by that enemy
+      const blink = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * 0.024));
+      color = "#ffcc00";
+      alpha = blink * (isPrimary ? 0.95 : 0.75);
+      lineWidth = isPrimary ? 1.7 : 1.3;
+    } else {
+      // Standard enemy lock (not targeting us)
+      if (slot.resolving) {
+        // Locking phase: flashing orange
+        const blink = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * 0.014));
+        color = "#ff8800";
+        alpha = blink * (isPrimary ? 0.85 : 0.65);
+        lineWidth = isPrimary ? 1.4 : 1.1;
+      } else {
+        // Locked: solid hostile orange-red
+        color = "#ff5522";
+        alpha = isPrimary ? 0.90 : 0.70;
+        lineWidth = isPrimary ? 1.7 : 1.3;
+      }
+    }
   } else {
-    // Locked: solid, no blink. Primary slightly warmer / brighter.
-    color = isPrimary ? "#b88a55" : "#6a7c8c";
-    alpha = isPrimary ? 0.85 : 0.65;
-    lineWidth = isPrimary ? 1.6 : 1.3;
+    // Neutral targets (Asteroid, Wreck, etc.)
+    if (slot.resolving) {
+      // Flashing blue for just neutral locking phase
+      const blink = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * 0.014));
+      color = "#00d2ff";
+      alpha = blink * (isPrimary ? 0.85 : 0.65);
+      lineWidth = isPrimary ? 1.4 : 1.1;
+    } else {
+      // Solid blue for neutral targets
+      color = "#0077ff";
+      alpha = isPrimary ? 0.90 : 0.70;
+      lineWidth = isPrimary ? 1.7 : 1.3;
+    }
   }
 
   ctx.save();
@@ -67,39 +103,6 @@ export function drawLockBrackets(
   ctx.moveTo(cx - sz + arm, cy + sz); ctx.lineTo(cx - sz, cy + sz); ctx.lineTo(cx - sz, cy + sz - arm);
   ctx.stroke();
   ctx.restore();
-
-  // Draw the assigned turrets count as a small number in the top-right corner
-  let assignedCount = 0;
-  if (G.P.turretTargets) {
-    for (let i = 0; i < G.P.turretTargets.length; i++) {
-      if (G.P.turretTargets[i] === entityId) {
-        assignedCount++;
-      }
-    }
-  }
-
-  if (!slot.resolving && assignedCount > 0) {
-    ctx.save();
-    const px = cx + sz;
-    const py = cy - sz;
-
-    // Draw small dark circle background with thin border
-    ctx.beginPath();
-    ctx.arc(px, py, 6, 0, TAU);
-    ctx.fillStyle = "rgba(10, 14, 20, 0.85)";
-    ctx.fill();
-    ctx.strokeStyle = isPrimary ? "#c89868" : "#6a7c8c";
-    ctx.lineWidth = 1.0;
-    ctx.stroke();
-
-    // Draw the number centered in the circle
-    ctx.fillStyle = isPrimary ? "#ffcc44" : "#9eb6d4";
-    ctx.font = `bold 8px ${getUIFont()}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(String(assignedCount), px, py);
-    ctx.restore();
-  }
 }
 
 export function shipPath(id: string, size = 1) {
@@ -135,9 +138,9 @@ export function enemyPath(type: string, size = 1) {
   ctx.closePath();
 }
 
-const _asteroidLockMap = new Map<string, any>();
+const _asteroidLockMap = new Map<string, LockSlot>();
 
-export function drawAsteroids(alpha: number, sys: any, now: number) {
+export function drawAsteroids(alpha: number, sys: System, now: number) {
   if (!sys?._liveAsteroids) return;
   const state = getState();
   const player = state.player;
@@ -230,14 +233,14 @@ export function drawAsteroids(alpha: number, sys: any, now: number) {
   }
 }
 
-const _enemyLockMap = new Map<string, any>();
+const _enemyLockMap = new Map<string, LockSlot>();
 
 /**
  * Draws only the lock brackets / scan ring for each enemy.
  * Enemy hulls, HP bars, labels, and targeting indicators are now
  * rendered by PixiJS in pixi-entities.ts (syncPixiEntities).
  */
-export function drawEnemyOverlays(alpha: number, sys: any, now: number) {
+export function drawEnemyOverlays(alpha: number, sys: System, now: number) {
   if (!sys?._liveEnemies) return;
   const state = getState();
   const player = state.player;
@@ -266,26 +269,16 @@ export function drawEnemyOverlays(alpha: number, sys: any, now: number) {
       ctx.save();
       ctx.beginPath(); ctx.arc(0, 0, shieldR, 0, TAU); ctx.clip();
 
-      const sphereA = glow * 0.12;
-      const bubble = ctx.createRadialGradient(-3, -4, 1, 0, 0, shieldR);
-      bubble.addColorStop(0,    `rgba(30,100,180,${sphereA * 0.15})`);
-      bubble.addColorStop(0.5,  `rgba(40,140,210,${sphereA * 0.4})`);
-      bubble.addColorStop(0.78, `rgba(50,170,240,${sphereA * 0.75})`);
-      bubble.addColorStop(0.88, `rgba(80,200,255,${sphereA * 1.0})`);
-      bubble.addColorStop(0.94, `rgba(100,220,255,${sphereA * 0.7})`);
-      bubble.addColorStop(1,    `rgba(40,120,200,0)`);
-      ctx.fillStyle = bubble;
+      ctx.globalAlpha = glow;
+      ctx.fillStyle = getShieldBubbleGrad(ctx, 3, shieldR);
       ctx.beginPath(); ctx.arc(0, 0, shieldR, 0, TAU); ctx.fill();
 
+      ctx.save();
+      ctx.translate(hx, hy);
       ctx.globalAlpha = glow * 0.9;
       const flashSz = shieldR * 0.5;
-      const flashG = ctx.createRadialGradient(hx, hy, 0, hx, hy, flashSz);
-      flashG.addColorStop(0,   "rgba(230,250,255,1.0)");
-      flashG.addColorStop(0.35,"rgba(150,220,255,0.55)");
-      flashG.addColorStop(0.7, "rgba(80,190,255,0.15)");
-      flashG.addColorStop(1,   "rgba(40,150,255,0)");
-      ctx.fillStyle = flashG;
-      ctx.beginPath(); ctx.arc(hx, hy, flashSz, 0, TAU); ctx.fill();
+      ctx.fillStyle = getShieldImpactGrad(ctx, flashSz);
+      ctx.beginPath(); ctx.arc(0, 0, flashSz, 0, TAU); ctx.fill();
 
       for (let i = 0; i < 3; i++) {
         const phase = t * 1.5 - i * 0.2;
@@ -293,8 +286,9 @@ export function drawEnemyOverlays(alpha: number, sys: any, now: number) {
         ctx.globalAlpha = glow * (1 - phase) * 0.65;
         ctx.strokeStyle = "#aaddff";
         ctx.lineWidth = 2 * (1 - phase);
-        ctx.beginPath(); ctx.arc(hx, hy, phase * shieldR * 2.0, 0, TAU); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, phase * shieldR * 2.0, 0, TAU); ctx.stroke();
       }
+      ctx.restore();
 
       ctx.restore();
 
@@ -356,26 +350,16 @@ export function drawPlayer(now: number, alpha: number) {
     ctx.beginPath(); ctx.arc(0, 0, shieldR, 0, TAU); ctx.clip();
 
     // Faint full-sphere flash that fades with the glow
-    const sphereA = glow * 0.12;
-    const bubble = ctx.createRadialGradient(-5, -6, 2, 0, 0, shieldR);
-    bubble.addColorStop(0, `rgba(30,100,180,${sphereA * 0.15})`);
-    bubble.addColorStop(0.5, `rgba(40,140,210,${sphereA * 0.4})`);
-    bubble.addColorStop(0.78, `rgba(50,170,240,${sphereA * 0.75})`);
-    bubble.addColorStop(0.88, `rgba(80,200,255,${sphereA * 1.0})`);
-    bubble.addColorStop(0.94, `rgba(100,220,255,${sphereA * 0.7})`);
-    bubble.addColorStop(1, `rgba(40,120,200,0)`);
-    ctx.fillStyle = bubble;
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = getShieldBubbleGrad(ctx, 5, shieldR);
     ctx.beginPath(); ctx.arc(0, 0, shieldR, 0, TAU); ctx.fill();
 
-    // Bright impact flash at the exact contact point
+    // Bright impact flash and concentric ripples translated to contact point
+    ctx.save();
+    ctx.translate(hx, hy);
     ctx.globalAlpha = glow * 0.95;
-    const flashG = ctx.createRadialGradient(hx, hy, 0, hx, hy, 14);
-    flashG.addColorStop(0, "rgba(230,250,255,1.0)");
-    flashG.addColorStop(0.35, "rgba(150,220,255,0.55)");
-    flashG.addColorStop(0.7, "rgba(80,190,255,0.15)");
-    flashG.addColorStop(1, "rgba(40,150,255,0)");
-    ctx.fillStyle = flashG;
-    ctx.beginPath(); ctx.arc(hx, hy, 14, 0, TAU); ctx.fill();
+    ctx.fillStyle = getShieldImpactGrad(ctx, 14);
+    ctx.beginPath(); ctx.arc(0, 0, 14, 0, TAU); ctx.fill();
 
     // Expanding concentric ripples from impact point
     for (let i = 0; i < 3; i++) {
@@ -386,8 +370,9 @@ export function drawPlayer(now: number, alpha: number) {
       ctx.globalAlpha = rippleA;
       ctx.strokeStyle = "#aaddff";
       ctx.lineWidth = 2.2 * (1 - phase);
-      ctx.beginPath(); ctx.arc(hx, hy, rippleR, 0, TAU); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, rippleR, 0, TAU); ctx.stroke();
     }
+    ctx.restore();
 
     // Traveling arc wave along shield surface
     const waveWidth = t * Math.PI * 1.3;
@@ -414,22 +399,20 @@ export function drawPlayer(now: number, alpha: number) {
     const hx = Math.cos(hullAngle) * 18;
     const hy = Math.sin(hullAngle) * 18;
 
-    ctx.globalAlpha = hullGlow;
+    ctx.save();
+    ctx.translate(hx, hy);
 
     // Bright impact spark
-    const sparkG = ctx.createRadialGradient(hx, hy, 0, hx, hy, 10 * hullGlow + 4);
-    sparkG.addColorStop(0, "rgba(255,255,220,0.95)");
-    sparkG.addColorStop(0.25, "rgba(255,180,60,0.7)");
-    sparkG.addColorStop(0.6, "rgba(255,100,30,0.25)");
-    sparkG.addColorStop(1, "rgba(200,50,10,0)");
-    ctx.fillStyle = sparkG;
-    ctx.beginPath(); ctx.arc(hx, hy, 10 * hullGlow + 4, 0, TAU); ctx.fill();
+    const sparkR = 10 * hullGlow + 4;
+    ctx.globalAlpha = hullGlow;
+    ctx.fillStyle = getHullSparkGrad(ctx, sparkR);
+    ctx.beginPath(); ctx.arc(0, 0, sparkR, 0, TAU); ctx.fill();
 
     // Scorch ring
     ctx.globalAlpha = hullGlow * 0.6;
     ctx.strokeStyle = "rgba(255,140,40,0.8)";
     ctx.lineWidth = 1.5 * hullGlow;
-    ctx.beginPath(); ctx.arc(hx, hy, 6 + (1 - hullGlow) * 8, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, 6 + (1 - hullGlow) * 8, 0, TAU); ctx.stroke();
 
     // Debris sparks
     ctx.globalAlpha = hullGlow * 0.5;
@@ -437,19 +420,20 @@ export function drawPlayer(now: number, alpha: number) {
     for (let i = 0; i < sparkCount; i++) {
       const sa = hullAngle + (i - 2) * 0.4 + Math.PI;
       const sd = 8 + (1 - hullGlow) * 14;
-      const sx = hx + Math.cos(sa) * sd;
-      const sy = hy + Math.sin(sa) * sd;
+      const sx = Math.cos(sa) * sd;
+      const sy = Math.sin(sa) * sd;
       ctx.fillStyle = i % 2 === 0 ? "#ffbb44" : "#ff6622";
       ctx.fillRect(sx - 1.5, sy - 1.5, 3, 3);
     }
 
+    ctx.restore();
     ctx.globalAlpha = 1;
   }
 
   ctx.restore();
 }
 
-export function drawAmbientLife(sys: any, now: number, _dt: number) {
+export function drawAmbientLife(sys: System, now: number, _dt: number) {
   if (!sys._ambientTraders) return;
   for (const t of sys._ambientTraders) {
     if (!isVisible(t.x, t.y, 4)) continue;

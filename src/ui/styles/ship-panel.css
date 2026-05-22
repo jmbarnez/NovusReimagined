@@ -1,0 +1,325 @@
+/* Tab strip */
+.sp-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px;
+  background: var(--hud-bg-panel);
+  border-bottom: 1px solid var(--hud-border);
+  position: relative;
+  z-index: 11;
+  flex-shrink: 0;
+}
+.sp-tab {
+  flex: 1;
+  padding: 9px 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--hud-text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.sp-tab:hover {
+  color: var(--hud-text-main);
+  background: color-mix(in srgb, var(--hud-accent) 6%, transparent);
+}
+.sp-tab.active {
+  color: var(--hud-accent);
+  border-bottom-color: var(--hud-accent);
+}
+.sp-tab-panel {
+  display: none;
+  height: 100%;
+}
+.sp-tab-panel.active {
+  display: block;
+}
+
+/* Scroll area */
+.sp-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(40,55,70,0.6) transparent;
+}
+.sp-scroll::-webkit-scrollbar { width: 4px; }
+.sp-scroll::-webkit-scrollbar-track { background: transparent; }
+.sp-scroll::-webkit-scrollbar-thumb { background: rgba(40,55,70,0.6); border-radius: 2px; }
+
+/* Sections */
+.sp-sect {
+  margin-bottom: 16px;
+}
+.sp-sect-h {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--hud-text-faint);
+  border-bottom: 1px solid var(--hud-border-soft);
+  padding: 0 0 4px 4px;
+  margin: 0 0 8px 0;
+}
+
+/* Stat Grid Scoped */
+.sp-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  background: color-mix(in srgb, var(--hud-bg-panel) 40%, transparent);
+  padding: 10px 12px;
+  border: 1px solid var(--hud-border-soft);
+  border-radius: 6px;
+}
+.sp-stats-grid .st-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sp-stats-grid .st-stat-card .lbl {
+  font-size: 9px;
+  color: var(--hud-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 0;
+}
+.sp-stats-grid .st-stat-card .val {
+  font-size: 12px;
+  color: var(--hud-text-bright);
+  font-weight: 600;
+}
+.sp-stats-grid .st-bar-card {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: color-mix(in srgb, var(--hud-bg-deep) 30%, transparent);
+  padding: 6px 8px;
+  border: 1px solid var(--hud-border-soft);
+  border-radius: 4px;
+}
+.sp-stats-grid .st-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+}
+.sp-stats-grid .st-bar-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 2.5px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.sp-stats-grid .st-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  transition: width 0.15s ease-out;
+}
+.sp-stats-grid .st-bar-fill.shield {
+  background: linear-gradient(90deg, var(--hud-shield), color-mix(in srgb, var(--hud-shield) 55%, #000));
+}
+.sp-stats-grid .st-bar-fill.hull {
+  background: linear-gradient(90deg, var(--hud-hull), color-mix(in srgb, var(--hud-hull) 55%, #000));
+}
+.sp-stats-grid .st-bar-fill.struct {
+  background: linear-gradient(90deg, var(--hud-danger), color-mix(in srgb, var(--hud-danger) 55%, #000));
+}
+.sp-stats-grid .st-bar-fill.cap {
+  background: linear-gradient(90deg, var(--hud-cap), color-mix(in srgb, var(--hud-cap) 55%, #000));
+  box-shadow: 0 0 6px rgba(255, 200, 50, 0.2);
+}
+.sp-stats-grid .delta {
+  font-size: 9px;
+  font-weight: 500;
+  margin-left: 6px;
+  padding: 0px 3px;
+  border-radius: 2px;
+}
+.sp-stats-grid .delta.pos {
+  color: var(--hud-positive);
+  background: color-mix(in srgb, var(--hud-positive) 15%, transparent);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--hud-positive) 40%, transparent);
+}
+.sp-stats-grid .delta.neg {
+  color: var(--hud-danger);
+  background: color-mix(in srgb, var(--hud-danger) 15%, transparent);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--hud-danger) 40%, transparent);
+}
+/* Highlight overload warn */
+.sp-stats-grid .val.overload {
+  color: var(--hud-danger);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--hud-danger) 40%, transparent);
+}
+
+/* Turret Cards */
+.sp-turrets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sp-turret-card {
+  background: color-mix(in srgb, var(--hud-bg-panel) 40%, transparent);
+  border: 1px solid var(--hud-border-soft);
+  border-radius: 6px;
+  padding: 10px 12px;
+  position: relative;
+  transition: border-color 0.2s, background-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sp-turret-card.turret-selected {
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hud-accent) 20%, transparent);
+}
+.sp-turret-card.empty {
+  border-style: dashed;
+  color: var(--hud-text-faint);
+  font-size: 10px;
+  text-align: center;
+  padding: 16px;
+  justify-content: center;
+  align-items: center;
+}
+.sp-turret-card .tc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.sp-turret-card .tc-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--hud-text-bright);
+}
+.sp-turret-card .tc-slot-lbl {
+  font-size: 8px;
+  color: var(--hud-text-faint);
+  background: var(--hud-bg-deep);
+  padding: 1px 4px;
+  border-radius: 2px;
+  border: 1px solid var(--hud-border-soft);
+}
+.sp-turret-card .tc-state-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sp-turret-card .tc-pill {
+  font-size: 8px;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.sp-turret-card .tc-pill.online {
+  color: var(--hud-positive);
+  background: color-mix(in srgb, var(--hud-positive) 15%, transparent);
+}
+.sp-turret-card .tc-pill.offline {
+  color: var(--hud-text-dim);
+  background: color-mix(in srgb, var(--hud-text-dim) 15%, transparent);
+}
+.sp-turret-card .tc-pill.cycling {
+  color: var(--hud-cap);
+  background: color-mix(in srgb, var(--hud-cap) 15%, transparent);
+}
+.sp-turret-card .tc-target-val {
+  font-size: 9px;
+  color: var(--hud-accent);
+}
+.sp-turret-card .tc-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  border-top: 1px solid var(--hud-border-soft);
+  padding-top: 6px;
+}
+.sp-turret-card .tc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+}
+.sp-turret-card .tc-label {
+  color: var(--hud-text-faint);
+}
+.sp-turret-card .tc-val {
+  color: var(--hud-text-main);
+  font-weight: 500;
+}
+.sp-turret-card .tc-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid var(--hud-border-soft);
+  padding-top: 6px;
+}
+.sp-turret-card .tc-bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 8px;
+}
+.sp-turret-card .tc-bar-label {
+  color: var(--hud-text-faint);
+  min-width: 48px;
+}
+.sp-turret-card .tc-bar-track {
+  flex: 1;
+  height: 4px;
+  background: color-mix(in srgb, var(--hud-border-soft) 25%, #000);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.sp-turret-card .tc-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  transition: width 0.1s ease;
+}
+.sp-turret-card .tc-bar-fill.cooldown {
+  background: var(--hud-positive);
+}
+.sp-turret-card .tc-bar-fill.heat {
+  background: var(--hud-accent);
+}
+.sp-turret-card .tc-bar-fill.heat.danger {
+  background: var(--hud-danger);
+  box-shadow: 0 0 4px var(--hud-danger);
+}
+.sp-turret-card .tc-bar-fill.durability {
+  background: var(--hud-shield);
+}
+.sp-turret-card .tc-bar-fill.durability.damaged {
+  background: var(--hud-accent);
+}
+.sp-turret-card .tc-bar-fill.durability.offline {
+  background: var(--hud-danger);
+}
+.sp-turret-card .tc-bar-val {
+  color: var(--hud-text-dim);
+  font-weight: 500;
+  min-width: 24px;
+  text-align: right;
+}
+
+/* Animations for overheat */
+@keyframes turret-overheat-glow {
+  from { border-color: var(--hud-border-soft); }
+  to { border-color: var(--hud-danger); box-shadow: 0 0 6px color-mix(in srgb, var(--hud-danger) 25%, transparent); }
+}
+.sp-turret-card.overheat {
+  animation: turret-overheat-glow 0.8s infinite alternate ease-in-out;
+}

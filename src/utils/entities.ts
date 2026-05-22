@@ -71,10 +71,13 @@ export interface EnemyBullet {
   color: string;
   sz: number;
   trail: string | null;
+  ownerFaction?: "hostile" | "neutral" | "player" | "friendly";
+  ownerId?: string;
+  kind?: string | null;
 }
 
-export function addEnemyBullet({ x, y, px, py, vx, vy, life, dmg, color, sz, trail }: Omit<EnemyBullet, "id">) {
-  G.enemyBullets.push({ id: generateId(), x, y, px, py, vx, vy, life, dmg, color, sz, trail });
+export function addEnemyBullet(data: Omit<EnemyBullet, "id">) {
+  G.enemyBullets.push({ id: generateId(), ...data });
 }
 
 export interface Beam {

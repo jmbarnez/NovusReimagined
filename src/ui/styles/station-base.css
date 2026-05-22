@@ -14,7 +14,7 @@
   grid-template-rows: 1fr;
   width: 100vw;
   height: 100vh;
-  background: rgba(2,5,10,0.78);
+  background: color-mix(in srgb, var(--hud-bg-deep) 88%, transparent);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   overflow: hidden;
@@ -26,12 +26,12 @@
   flex-direction: column;
   gap: 16px;
   padding: 18px 14px;
-  background: rgba(4,8,14,0.65);
-  border-right: 1px solid rgba(30,50,70,0.4);
+  background: color-mix(in srgb, var(--hud-bg-panel) 68%, transparent);
+  border-right: 1px solid var(--hud-border-soft);
 }
 
 #st-station-info {
-  border-bottom: 1px solid rgba(30,50,70,0.35);
+  border-bottom: 1px solid var(--hud-border-soft);
   padding-bottom: 12px;
 }
 
@@ -39,15 +39,15 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #c0d8ee;
+  color: var(--hud-text-bright);
   text-transform: uppercase;
   margin-bottom: 4px;
-  text-shadow: 0 0 8px rgba(80,160,220,0.25);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--hud-shield) 25%, transparent);
 }
 
 #st-meta {
   font-size: 9px;
-  color: #2e4050;
+  color: var(--hud-text-faint);
   line-height: 1.4;
 }
 
@@ -55,7 +55,7 @@
   margin-top: 8px;
   font-size: 10px;
   letter-spacing: 0.06em;
-  color: #4a6070;
+  color: var(--hud-text-faint);
 }
 
 #st-wallet {
@@ -66,11 +66,11 @@
 }
 
 #st-cr {
-  color: #a0b860;
+  color: var(--hud-positive);
 }
 
 #st-sp {
-  color: #7733cc;
+  color: var(--hud-arcane);
 }
 
 /* ── Tabs (vertical sidebar) ── */
@@ -87,7 +87,7 @@
   gap: 10px;
   padding: 8px 12px;
   background: transparent;
-  color: #4a6070;
+  color: var(--hud-text-faint);
   border: 1px solid transparent;
   border-radius: 4px;
   cursor: pointer;
@@ -100,36 +100,48 @@
 
 
 .st-tab:hover:not(:disabled) {
-  color: #8ab0c8;
-  border-color: rgba(60,80,100,0.3);
-  background: rgba(20,32,48,0.4);
+  color: var(--hud-text-main);
+  border-color: var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 40%, transparent);
 }
 
 .st-tab.active {
-  color: #c0d8ee;
-  background: rgba(20,32,48,0.6);
-  border-color: rgba(60,120,160,0.5);
-  box-shadow: 0 0 12px rgba(40,120,180,0.15);
+  color: var(--hud-text-bright);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);
+  border-color: color-mix(in srgb, var(--hud-shield) 50%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-shield) 15%, transparent);
 }
 
 .st-tab:disabled {
-  color: #1e2a34;
+  color: color-mix(in srgb, var(--hud-text-faint) 40%, transparent);
   cursor: not-allowed;
   opacity: 0.5;
 }
 
 /* Tab color accents */
-.st-tab[data-tab="hangar"].active { border-color: rgba(60,180,200,0.6); box-shadow: 0 0 12px rgba(60,180,200,0.15); }
-.st-tab[data-tab="market"].active { border-color: rgba(60,200,120,0.6); box-shadow: 0 0 12px rgba(60,200,120,0.15); }
-.st-tab[data-tab="industry"].active { border-color: rgba(200,180,60,0.6); box-shadow: 0 0 12px rgba(200,180,60,0.15); }
-.st-tab[data-tab="skills"].active { border-color: rgba(140,80,200,0.6); box-shadow: 0 0 12px rgba(140,80,200,0.15); }
+.st-tab[data-tab="hangar"].active {
+  border-color: color-mix(in srgb, var(--hud-shield) 60%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-shield) 15%, transparent);
+}
+.st-tab[data-tab="market"].active {
+  border-color: color-mix(in srgb, var(--hud-positive) 60%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-positive) 15%, transparent);
+}
+.st-tab[data-tab="industry"].active {
+  border-color: color-mix(in srgb, var(--hud-accent) 60%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-accent) 15%, transparent);
+}
+.st-tab[data-tab="skills"].active {
+  border-color: color-mix(in srgb, var(--hud-arcane) 60%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-arcane) 15%, transparent);
+}
 
 /* ── Undock Button ── */
 #st-undock {
   padding: 10px 14px;
-  background: rgba(10,30,20,0.6);
-  color: #60a870;
-  border: 1px solid #1e4028;
+  background: color-mix(in srgb, var(--hud-positive) 12%, var(--hud-bg-deep));
+  color: var(--hud-positive);
+  border: 1px solid color-mix(in srgb, var(--hud-positive) 30%, transparent);
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -140,19 +152,19 @@
 }
 
 #st-undock:hover {
-  background: rgba(20,50,30,0.7);
-  color: #80c890;
-  border-color: #2a6038;
-  box-shadow: 0 0 14px rgba(60,160,90,0.2);
+  background: color-mix(in srgb, var(--hud-positive) 20%, var(--hud-bg-deep));
+  color: color-mix(in srgb, var(--hud-positive) 85%, white);
+  border-color: color-mix(in srgb, var(--hud-positive) 50%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--hud-positive) 20%, transparent);
 }
 
 .st-kbd {
   font-size: 9px;
   padding: 1px 5px;
-  background: rgba(0,0,0,0.4);
-  border: 1px solid rgba(40,70,50,0.5);
+  background: color-mix(in srgb, black 40%, transparent);
+  border: 1px solid var(--hud-border-soft);
   border-radius: 2px;
-  color: #88b898;
+  color: var(--hud-text-dim);
   font-family: inherit;
   letter-spacing: 0.04em;
   margin-left: 6px;
@@ -197,17 +209,17 @@
 /* ── Typography & Utilities ── */
 h3 {
   font-size: 11px;
-  color: #3d5060;
+  color: var(--hud-text-dim);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin: 0 0 10px;
-  border-bottom: 1px solid #0e1820;
+  border-bottom: 1px solid var(--hud-border-soft);
   padding-bottom: 4px;
 }
 
 h4 {
   font-size: 10px;
-  color: #2e4050;
+  color: var(--hud-text-faint);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin: 8px 0 6px;
@@ -223,24 +235,24 @@ h4 {
 
 .lbl {
   font-size: 11px;
-  color: #3d5060;
+  color: var(--hud-text-dim);
   min-width: 120px;
 }
 
 .val {
   font-size: 11px;
-  color: #8aacbc;
+  color: var(--hud-text-main);
 }
 
 .stag {
   font-size: 9px;
-  color: #2e3e4a;
+  color: var(--hud-text-faint);
 }
 
 .al {
-  background: rgba(80,20,10,0.3);
-  border: 1px solid #4a1a10;
-  color: #cc5533;
+  background: color-mix(in srgb, var(--hud-danger) 15%, var(--hud-bg-deep));
+  border: 1px solid color-mix(in srgb, var(--hud-danger) 35%, transparent);
+  color: var(--hud-danger);
   font-size: 11px;
   padding: 6px 10px;
   margin-bottom: 10px;
@@ -248,9 +260,9 @@ h4 {
 
 .btn {
   padding: 4px 10px;
-  background: #081018;
-  color: #5a8098;
-  border: 1px solid #152030;
+  background: var(--hud-bg-deep);
+  color: var(--hud-text-dim);
+  border: 1px solid var(--hud-border-soft);
   cursor: pointer;
   font-family: inherit;
   font-size: 11px;
@@ -259,69 +271,68 @@ h4 {
 }
 
 .btn:hover:not(:disabled) {
-  background: #0d1828;
-  color: #80a8c0;
+  background: color-mix(in srgb, var(--hud-bg-elevated) 40%, transparent);
+  color: var(--hud-text-main);
 }
 
 .btn.active {
-  background: #0d2538;
-  border-color: #3a88cc;
-  color: #80c0e0;
+  background: color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);
+  border-color: var(--hud-shield);
+  color: var(--hud-text-bright);
 }
 
 .btn:disabled {
-  color: #1e2a34;
+  color: color-mix(in srgb, var(--hud-text-faint) 40%, transparent);
   cursor: not-allowed;
 }
 
 .btn-buy {
-  background: #081810;
-  color: #58a870;
-  border-color: #183828;
+  background: color-mix(in srgb, var(--hud-positive) 10%, var(--hud-bg-deep));
+  color: var(--hud-positive);
+  border-color: color-mix(in srgb, var(--hud-positive) 30%, transparent);
 }
 
 .btn-buy:hover:not(:disabled) {
-  background: #0e2416;
-  color: #78c890;
+  background: color-mix(in srgb, var(--hud-positive) 20%, var(--hud-bg-deep));
+  color: color-mix(in srgb, var(--hud-positive) 80%, white);
 }
 
 .btn-sell {
-  background: #180808;
-  color: #a85858;
-  border-color: #381818;
+  background: color-mix(in srgb, var(--hud-danger) 10%, var(--hud-bg-deep));
+  color: var(--hud-danger);
+  border-color: color-mix(in srgb, var(--hud-danger) 30%, transparent);
 }
 
 .btn-sell:hover:not(:disabled) {
-  background: #240e0e;
-  color: #c87878;
+  background: color-mix(in srgb, var(--hud-danger) 20%, var(--hud-bg-deep));
+  color: color-mix(in srgb, var(--hud-danger) 80%, white);
 }
 
 .btn-train {
-  background: #100818;
-  color: #8858a8;
-  border-color: #281838;
+  background: color-mix(in srgb, var(--hud-arcane) 10%, var(--hud-bg-deep));
+  color: var(--hud-arcane);
+  border-color: color-mix(in srgb, var(--hud-arcane) 30%, transparent);
 }
 
 .btn-train:hover:not(:disabled) {
-  background: #180e24;
-  color: #a878c8;
+  background: color-mix(in srgb, var(--hud-arcane) 20%, var(--hud-bg-deep));
+  color: color-mix(in srgb, var(--hud-arcane) 80%, white);
 }
 
 .mitem {
   padding: 8px 0;
-  border-bottom: 1px solid #0a1018;
+  border-bottom: 1px solid var(--hud-border-soft);
   margin-bottom: 4px;
 }
 
 .nm {
   font-size: 12px;
-  color: #8aaaba;
+  color: var(--hud-text-main);
   margin-bottom: 4px;
 }
 
 .dc {
   font-size: 10px;
-  color: #2e4050;
+  color: var(--hud-text-faint);
   margin-bottom: 6px;
 }
-

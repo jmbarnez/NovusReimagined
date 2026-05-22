@@ -126,3 +126,249 @@
     filter: blur(0);
   }
 }
+
+/* Sleek secondary button for starting New Game when a save exists */
+.btn-secondary {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  font-size: 11px !important;
+  padding: 10px 24px !important;
+  margin-top: 10px;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Continue container structure */
+.continue-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 320px;
+}
+
+.btn-continue {
+  width: 100%;
+}
+
+/* Translucent premium metadata card */
+.save-meta-card {
+  position: relative;
+  width: 100%;
+  padding: 18px 24px;
+  background: rgba(10, 20, 40, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(80, 150, 255, 0.15);
+  border-left: 3px solid rgba(80, 150, 255, 0.6);
+  border-radius: 4px;
+  text-align: left;
+  box-sizing: border-box;
+  animation: card-slide-in 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.meta-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 10% 20%, rgba(80, 150, 255, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.meta-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.meta-label {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.meta-val {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+.highlight-yellow {
+  color: #ffe066;
+  text-shadow: 0 0 8px rgba(255, 224, 102, 0.35);
+}
+
+.highlight-blue {
+  color: #5096ff;
+  text-shadow: 0 0 8px rgba(80, 150, 255, 0.35);
+}
+
+.highlight-cyan {
+  color: #4df3ff;
+  text-shadow: 0 0 8px rgba(77, 243, 255, 0.35);
+}
+
+/* Custom Warning Confirmation Modal */
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(1, 3, 8, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: modal-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.confirm-modal-content {
+  position: relative;
+  width: 440px;
+  padding: 32px 40px;
+  background: rgba(20, 10, 10, 0.7);
+  border: 1px solid rgba(255, 80, 80, 0.35);
+  border-top: 4px solid #ff5050;
+  border-radius: 6px;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 80, 80, 0.1);
+  animation: modal-zoom-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-glow-amber {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 80, 80, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.modal-icon {
+  font-size: 38px;
+  margin-bottom: 16px;
+  animation: warning-pulse 2s infinite ease-in-out;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: #ff5050;
+  margin: 0 0 16px 0;
+  text-shadow: 0 0 15px rgba(255, 80, 80, 0.4);
+}
+
+.modal-message {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.08em;
+  margin: 0 0 28px 0;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.btn-modal {
+  padding: 12px 24px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.btn-abort {
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-abort:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.btn-overwrite {
+  color: #ff5050;
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  background: rgba(255, 80, 80, 0.03);
+}
+
+.btn-overwrite:hover {
+  background: rgba(255, 80, 80, 0.12);
+  border-color: #ff5050;
+  box-shadow: 0 0 15px rgba(255, 80, 80, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Animations */
+@keyframes card-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.confirm-modal-overlay.modal-fade-out {
+  opacity: 0;
+  transition: opacity 0.35s ease-out;
+}
+
+.confirm-modal-overlay.modal-fade-out .confirm-modal-content {
+  transform: scale(0.95);
+  transition: transform 0.35s ease-out;
+}
+
+@keyframes warning-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(255, 80, 80, 0));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 10px rgba(255, 80, 80, 0.5));
+  }
+}

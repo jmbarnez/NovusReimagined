@@ -5,12 +5,13 @@ import { isVisible } from "../../utils/game.js";
 import { dst } from "../../utils/math.js";
 import { worldText } from "../world-text.js";
 import { getUIFont } from "../ui-font.js";
+import type { System, Enemy } from "../../types/world.js";
 
 // Station bodies are rendered by PixiJS (render/pixi-stations.ts). This module
 // keeps only the per-frame Canvas 2D station overlays (safe-zone ring,
 // dock-range ring, label) plus gates and station turret rendering.
 
-export function drawGates(now: number, alpha: number, sys: any) {
+export function drawGates(now: number, alpha: number, sys: System) {
   if (!sys?.gates) return;
   for (const g of sys.gates) {
     if (!isVisible(g.x, g.y, g.radius * 2.5)) continue;
@@ -39,14 +40,14 @@ export function drawGates(now: number, alpha: number, sys: any) {
   }
 }
 
-export function drawStations(now: number, sys: any) {
+export function drawStations(now: number, sys: System) {
   if (!sys?.stations) return;
   for (const st of sys.stations) {
     if (!isVisible(st.x, st.y, Math.max(800, st.radius * 3))) continue;
     const player = getState().player;
     const dockR = st.radius * 2;
     const inRange = dst(player.x, player.y, st.x, st.y) < dockR;
-    const locked = sys._liveEnemies?.some((e: any) => e.hasLockOnPlayer) ?? false;
+    const locked = sys._liveEnemies?.some((e: Enemy) => e.hasLockOnPlayer) ?? false;
 
     // Safe-zone ring
     const safeR = st.safeRadius ?? (st.isHome ? 900 : 675);
@@ -66,30 +67,49 @@ export function drawStations(now: number, sys: any) {
       ctx.restore();
     }
 
-    // Dock range ring
-    const dockReady = inRange && !locked;
-    ctx.strokeStyle = dockReady ? "rgba(0,255,100,0.4)" : "rgba(0,180,80,0.10)";
-    ctx.lineWidth = dockReady ? 1.5 : 1;
-    if (!dockReady) ctx.setLineDash([5, 8]);
-    ctx.beginPath(); ctx.arc(st.x, st.y, dockR, 0, TAU); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Label + dock prompt — drawn in screen space so the font stays crisp at any zoom.
     const R = st.radius;
-    // Anchor at the bottom of the body, then push label down by a fixed screen-pixel margin.
     const anchorY = st.y + (st.isHome ? R * 1.85 : R * 1.6);
-    if (inRange) {
-      worldText(st.x, anchorY, locked ? "◉ LOCKED" : "[F] Dock", {
+
+    if (st.isProcessingHub) {
+      // Collection radius ring for hub (orange)
+      const collectR = st.collectRadius ?? 220;
+      const inCollect = dst(player.x, player.y, st.x, st.y) < collectR + 60;
+      ctx.save();
+      ctx.strokeStyle = inCollect ? "rgba(255,160,40,0.55)" : "rgba(200,100,20,0.18)";
+      ctx.lineWidth = inCollect ? 1.5 : 1;
+      ctx.setLineDash([8, 10]);
+      ctx.beginPath(); ctx.arc(st.x, st.y, collectR, 0, TAU); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      worldText(st.x, anchorY, "[F] Processing Hub", {
         font: `bold 10px ${getUIFont()}`,
-        fill: locked ? "#ff5555" : "#5fe0ff",
+        fill: "#ffaa44",
         offsetY: 28,
         shadow: true,
       });
+    } else {
+      // Dock range ring
+      const dockReady = inRange && !locked;
+      ctx.strokeStyle = dockReady ? "rgba(0,255,100,0.4)" : "rgba(0,180,80,0.10)";
+      ctx.lineWidth = dockReady ? 1.5 : 1;
+      if (!dockReady) ctx.setLineDash([5, 8]);
+      ctx.beginPath(); ctx.arc(st.x, st.y, dockR, 0, TAU); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Label + dock prompt
+      if (inRange) {
+        worldText(st.x, anchorY, locked ? "◉ LOCKED" : "[F] Dock", {
+          font: `bold 10px ${getUIFont()}`,
+          fill: locked ? "#ff5555" : "#5fe0ff",
+          offsetY: 28,
+          shadow: true,
+        });
+      }
     }
   }
 }
 
-export function drawStationTurrets(now: number, sys: any) {
+export function drawStationTurrets(now: number, sys: System) {
   if (!sys?.stations) return;
   for (const st of sys.stations) {
     if (!st.turrets || !st.turrets.length) continue;
@@ -104,7 +124,7 @@ export function drawStationTurrets(now: number, sys: any) {
     ctx.restore();
 
     for (const t of st.turrets) {
-      const tx = t.x, ty = t.y;
+      const tx = t.x ?? 0, ty = t.y ?? 0;
       if (!isVisible(tx, ty, 40)) continue;
       const face = t.faceAngle ?? t.angle;
       ctx.save();
@@ -131,7 +151,7 @@ export function drawStationTurrets(now: number, sys: any) {
       ctx.fillRect(14, -2, 4, 4);
 
       // Muzzle flash
-      if (t.muzzleFlash > 0) {
+      if (t.muzzleFlash !== undefined && t.muzzleFlash > 0) {
         t.muzzleFlash -= 1 / 60;
         const fa = Math.max(0, t.muzzleFlash / 0.08);
         ctx.globalAlpha = fa;

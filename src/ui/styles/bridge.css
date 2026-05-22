@@ -4,7 +4,7 @@
 .bridge-toast{position:absolute;top:8px;right:12px;min-height:18px;padding:2px 8px;font-size:10px;color:var(--hud-accent);opacity:0;transition:opacity .2s;background:var(--hud-bg-deep);border:1px solid var(--hud-border);z-index:220;}
 .eve-window{position:absolute;display:flex;flex-direction:column;min-height:100px;min-width:200px;background:var(--hud-bg-window);backdrop-filter:blur(12px);border:1px solid var(--hud-border);box-shadow:0 8px 32px rgba(0,0,0,0.6);resize:both;overflow:hidden;}
 .eve-window-overview{left:auto;right:8px;top:30px;width:320px;height:calc(80vh - 60px);min-width:180px;}
-.eve-window-cargo{left:calc(50% - 280px);top:calc(50% - 260px);width:640px;height:520px;min-width:360px;min-height:260px;}
+.eve-window-cargo{left:calc(50% - 320px);top:calc(50% - 260px);width:640px;height:520px;min-width:360px;min-height:260px;}
 .eve-window-skills{left:8px;top:30px;width:370px;height:calc(80vh - 60px);min-width:260px;}
 .eve-window-missions{right:8px;top:60px;width:360px;height:360px;min-width:220px;}
 .eve-window.is-expanded{left:0!important;top:0!important;right:auto!important;width:100%!important;height:100%!important;resize:none;border-width:2px;border-color:var(--hud-border-accent);}
@@ -29,6 +29,7 @@
 .ov-table tr:hover td{background:color-mix(in srgb, var(--hud-accent) 8%, transparent);color:var(--hud-text-bright);}
 .ov-row-hostile .ov-name{color:var(--hud-danger);}
 .ov-row-self .ov-name{color:var(--hud-shield);}
+.ov-row-neutral .ov-name{color:#a0a5aa;}
 .ov-icon{width:20px;text-align:center;color:var(--hud-text-dim);}
 .ov-st{font-variant-numeric:tabular-nums;color:var(--hud-text-dim);white-space:nowrap;}
 .ov-plock{color:var(--hud-accent);font-size:9px;}
@@ -109,6 +110,9 @@
 .inv-selection{font-size:9px;color:var(--hud-text-dim);}
 .inv-selection b{color:var(--hud-text-bright);font-weight:600;}
 .inv-sel-meta{color:var(--hud-text-faint);margin-left:4px;}
+.inv-credits{display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:1px solid var(--hud-border-soft);color:var(--hud-accent);font-family:var(--font-family);}
+.inv-credits-label{font-size:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;opacity:0.8;}
+.inv-credits-value{font-size:12px;font-weight:900;letter-spacing:0.5px;}
 
 /* Context menu */
 .inv-ctx{position:fixed;z-index:300;background:var(--hud-bg-window);border:1px solid var(--hud-border);box-shadow:0 6px 24px rgba(0,0,0,0.5);min-width:120px;padding:2px 0;border-radius:2px;}

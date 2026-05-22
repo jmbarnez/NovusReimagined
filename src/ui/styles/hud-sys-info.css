@@ -1,13 +1,13 @@
-/* ── Floating System Info ── */
+/* ── Floating System Info (under the minimap, right-aligned) ── */
 #hud-sys-name {
-  position: absolute;
-  top: 32px; left: 10px;
-  width: 150px;
+  position: fixed;
+  top: 106px; right: 5px; left: auto;
+  width: 130px;
   font-size: 9px;
   font-weight: 700;
   font-family: var(--font-family);
   color: var(--hud-text-main);
-  text-align: left;
+  text-align: right;
   pointer-events: none;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -15,13 +15,13 @@
   text-shadow: 0 0 4px rgba(0,0,0,0.8);
 }
 #hud-sec {
-  position: absolute;
-  top: 44px; left: 10px;
-  width: 150px;
+  position: fixed;
+  top: 119px; right: 5px; left: auto;
+  width: 130px;
   font-size: 8px;
   font-weight: 700;
   font-family: var(--font-family);
-  text-align: left;
+  text-align: right;
   pointer-events: none;
   letter-spacing: 0.1em;
   overflow: hidden;

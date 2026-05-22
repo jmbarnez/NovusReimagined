@@ -2,7 +2,7 @@ import "./styles/bridge.css";
 import { G, Client } from "../state.js";
 import { SHIPS } from "../data/ships.js";
 import { dst } from "../utils/math.js";
-import { escHtml } from "../utils/format.js";
+import { escHtml, formatDistance } from "../utils/format.js";
 import { curSys } from "../utils/game.js";
 import { getSensorContactRangePx } from "../targeting.js";
 import { enemyClassLabel } from "../targeting.js";
@@ -14,7 +14,7 @@ import type { Enemy, Asteroid } from "../types/world.js";
 export { attachInventoryListeners, resetInventoryUI };
 
 export interface OverviewRow {
-  kind: "self" | "hostile" | "asteroid" | "station" | "gate";
+  kind: "self" | "hostile" | "neutral" | "asteroid" | "station" | "gate";
   id: string;
   icon: string;
   cls: string;
@@ -65,10 +65,10 @@ export function buildLocalOverviewRows(): OverviewRow[] {
     else if (e.targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="Locking you">▲</span>`;
     if (!status) status = "—";
     rows.push({
-      kind: "hostile",
+      kind: e.faction === "neutral" ? "neutral" : "hostile",
       id: e.id,
       icon: "⚑",
-      cls: enemyClassLabel(e.type),
+      cls: e.faction === "neutral" ? "NEUT" : enemyClassLabel(e.type),
       name: e.name,
       dist: Math.round(d),
       sig: Math.round(e.sigRadius || 30),
@@ -131,7 +131,7 @@ export function buildLocalOverviewRows(): OverviewRow[] {
   rows.sort((a, b) => {
     if (a.kind === "self") return -1;
     if (b.kind === "self") return 1;
-    const pri = (k: string) => (k === "hostile" ? 0 : k === "station" ? 1 : k === "gate" ? 2 : 3);
+    const pri = (k: string) => (k === "hostile" ? 0 : k === "neutral" ? 1 : k === "station" ? 2 : k === "gate" ? 3 : 4);
     const pa = pri(a.kind);
     const pb = pri(b.kind);
     if (pa !== pb) return pa - pb;
@@ -150,10 +150,10 @@ export function renderBridgeOverviewHTML(): string {
   const body = rows
     .map((r: OverviewRow) => {
       const lockBtn =
-        r.kind === "hostile" || r.kind === "asteroid"
+        r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid"
           ? `<button type="button" class="ov-lock" data-lock-id="${escHtml(r.id)}">Lock</button>`
           : "—";
-      const dist = typeof r.dist === "number" ? String(r.dist) : r.dist;
+      const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       return `<tr class="ov-row ov-row-${r.kind}" data-id="${escHtml(r.id)}">
       <td class="ov-icon">${r.icon}</td>
       <td class="ov-st">${r.status}</td>
@@ -196,10 +196,10 @@ export function updateBridgeOverview() {
       tr.className = `ov-row ov-row-${r.kind}`;
       tr.dataset.id = r.id;
       const lockBtn =
-        r.kind === "hostile" || r.kind === "asteroid"
+        r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid"
           ? `<button type="button" class="ov-lock" data-lock-id="${escHtml(r.id)}">Lock</button>`
           : "—";
-      const dist = typeof r.dist === "number" ? String(r.dist) : r.dist;
+      const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       tr.innerHTML = `
         <td class="ov-icon">${r.icon}</td>
         <td class="ov-st">${r.status}</td>
@@ -211,7 +211,7 @@ export function updateBridgeOverview() {
         <td>${lockBtn}</td>`;
       tbody.appendChild(tr);
     } else {
-      const dist = typeof r.dist === "number" ? String(r.dist) : r.dist;
+      const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       const dCell = tr.querySelector(".ov-dist");
       const sCell = tr.querySelector(".ov-st");
       const rCell = tr.querySelector(".ov-relV");

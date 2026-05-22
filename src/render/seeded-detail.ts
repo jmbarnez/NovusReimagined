@@ -6,10 +6,16 @@ import { TAU } from "../constants.js";
 // non-enumerable map so we don't interfere with serialization.
 const DETAIL_KEY = "_seededDetail";
 
-export function getSeededDetail<T>(host: any, kind: string, factory: (rng: () => number) => T): T {
+interface SeededDetailHost {
+  id?: string;
+  idx?: number;
+  _seededDetail?: Record<string, unknown>;
+}
+
+export function getSeededDetail<T>(host: SeededDetailHost | null | undefined, kind: string, factory: (rng: () => number) => T): T {
   if (!host) return factory(Math.random);
-  let bag = host[DETAIL_KEY];
-  if (!bag) { bag = {}; host[DETAIL_KEY] = bag; }
+  let bag = host._seededDetail;
+  if (!bag) { bag = {}; host._seededDetail = bag; }
   if (bag[kind]) return bag[kind] as T;
   const rng = mkRng((host.id || host.idx || "anon") + ":" + kind);
   const v = factory(rng);

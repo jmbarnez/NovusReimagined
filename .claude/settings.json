@@ -35,7 +35,24 @@
       "Bash(node -e \"const p = require\\('./node_modules/pixi.js'\\); const keys = Object.keys\\(p\\).filter\\(k => /^Mesh[^A-Z]|^Mesh$|MeshGeometry|Triangle|QuadGeometry/i.test\\(k\\)\\); console.log\\(keys.join\\('\\\\n'\\)\\);\")",
       "Bash(node -e ' *)",
       "Bash(rm scripts/tokenize-css.mjs)",
-      "Bash(rmdir scripts *)"
+      "Bash(rmdir scripts *)",
+      "PowerShell(head -50)",
+      "Bash(Select-String -Pattern \"requestAnimationFrame|setTimeout|setInterval|Worker|onmessage|postMessage|_ticker|function loop|maxFPS|fps\" -Context 1,1)",
+      "PowerShell(\"=== ORIGINAL worker ===\")",
+      "PowerShell(\"=== CURRENT worker ===\")",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\JBCry\\\\Desktop\\\\Novus\\\\src\\\\ui\" -Recurse -Filter \"*.css\")",
+      "Bash(xargs grep -l \"from.*ui/station\")",
+      "Bash(grep -n \"turret\\\\|Turret\" \"/mnt/c/Users/JBCry/Desktop/Novus/src/state.ts\" | head -40)",
+      "Read(//mnt/c/Users/JBCry/Desktop/Novus/src/**)",
+      "Bash(Find /c/Users/JBCry/Desktop/Novus/src -name \"*targeting*\" -type f)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\JBCry\\\\Desktop\\\\Novus\" -Force)",
+      "Bash(awk '{print $NF}')",
+      "Bash(xargs -I {} sh -c 'wc -l {} | awk \"{print \\\\$1 \\\\\" \\\\\" \\\\\"{}\\\\\"}\"')",
+      "Bash(Get-Content -Path \"src\\\\data\\\\enemies.ts\")",
+      "Bash(Measure-Object -Line)",
+      "PowerShell(\\(Get-Content \"c:\\\\Users\\\\JBCry\\\\Desktop\\\\Novus\\\\src\\\\data\\\\enemies.ts\" | Measure-Object -Line\\).Lines)"
     ]
   }
 }

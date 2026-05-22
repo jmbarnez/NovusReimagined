@@ -2,6 +2,7 @@ import { Client } from "../../state.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { isVisible } from "../../utils/game.js";
+import type { System } from "../../types/world.js";
 
 /** Distance from world origin to the system star, in world units. */
 export const SUN_DIST = 3500;
@@ -30,7 +31,7 @@ export function getStarCfg(starClass: string) {
 }
 
 /** Draw the star body at its world-space position along sys.sunDir. */
-export function drawStar(now: number, sys: any) {
+export function drawStar(now: number, sys: System) {
   if (!sys) return;
   const cfg = getStarCfg(sys.starClass ?? "G");
   const r = cfg.radius;
@@ -38,6 +39,41 @@ export function drawStar(now: number, sys: any) {
   const sunY = Math.sin(sys.sunDir ?? 0) * SUN_DIST;
 
   if (!isVisible(sunX, sunY, r * 3.5)) return;
+
+  if (!sys._starGradCache) {
+    const haze = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 3.0);
+    haze.addColorStop(0.00, hexToRgba(cfg.coronaColor, 0.10));
+    haze.addColorStop(0.25, hexToRgba(cfg.coronaColor, 0.06));
+    haze.addColorStop(0.60, hexToRgba(cfg.bloomColor, 0.02));
+    haze.addColorStop(1.00, "rgba(0,0,0,0)");
+
+    const bloom = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 1.8);
+    bloom.addColorStop(0.00, hexToRgba(cfg.coreColor, 0.18));
+    bloom.addColorStop(0.35, hexToRgba(cfg.coronaColor, 0.12));
+    bloom.addColorStop(0.70, hexToRgba(cfg.bloomColor, 0.04));
+    bloom.addColorStop(1.00, "rgba(0,0,0,0)");
+
+    const photo = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    photo.addColorStop(0.00, cfg.coreColor);
+    photo.addColorStop(0.38, cfg.coreColor);
+    photo.addColorStop(0.68, cfg.midColor);
+    photo.addColorStop(0.88, cfg.limbColor);
+    photo.addColorStop(1.00, shadeHex(cfg.limbColor, 0.4));
+
+    const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.7);
+    gg.addColorStop(0, cfg.coreColor);
+    gg.addColorStop(1, "rgba(0,0,0,0)");
+
+    const chromo = ctx.createRadialGradient(0, 0, r * 0.97, 0, 0, r * 1.12);
+    chromo.addColorStop(0.00, "rgba(0,0,0,0)");
+    chromo.addColorStop(0.35, cfg.coronaColor);
+    chromo.addColorStop(0.70, cfg.coronaColor);
+    chromo.addColorStop(1.00, "rgba(0,0,0,0)");
+
+    sys._starGradCache = { haze, bloom, photo, gg, chromo };
+  }
+
+  const sgc = sys._starGradCache;
 
   ctx.save();
   ctx.translate(sunX, sunY);
@@ -47,24 +83,16 @@ export function drawStar(now: number, sys: any) {
   {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const pulse = 1 + 0.06 * Math.sin(now * 0.0006);
+    const pulse = (1 + 0.06 * Math.sin(now * 0.0006)) * (Client.settings?.bloomIntensity ?? 1.0);
 
     // Wide diffuse corona haze
-    const haze = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 3.0);
-    haze.addColorStop(0.00, hexToRgba(cfg.coronaColor, 0.10 * pulse));
-    haze.addColorStop(0.25, hexToRgba(cfg.coronaColor, 0.06 * pulse));
-    haze.addColorStop(0.60, hexToRgba(cfg.bloomColor, 0.02 * pulse));
-    haze.addColorStop(1.00, "rgba(0,0,0,0)");
-    ctx.fillStyle = haze;
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = sgc.haze;
     ctx.beginPath(); ctx.arc(0, 0, r * 3.0, 0, TAU); ctx.fill();
 
     // Tighter bright bloom around the disc edge
-    const bloom = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 1.8);
-    bloom.addColorStop(0.00, hexToRgba(cfg.coreColor, 0.18 * pulse));
-    bloom.addColorStop(0.35, hexToRgba(cfg.coronaColor, 0.12 * pulse));
-    bloom.addColorStop(0.70, hexToRgba(cfg.bloomColor, 0.04 * pulse));
-    bloom.addColorStop(1.00, "rgba(0,0,0,0)");
-    ctx.fillStyle = bloom;
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = sgc.bloom;
     ctx.beginPath(); ctx.arc(0, 0, r * 1.8, 0, TAU); ctx.fill();
 
     ctx.restore();
@@ -72,32 +100,25 @@ export function drawStar(now: number, sys: any) {
 
   // ── Photosphere disc — limb darkening ──
   {
-    // Limb darkening: bright white core → saturated mid → darker limb
-    const photo = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-    photo.addColorStop(0.00, cfg.coreColor);
-    photo.addColorStop(0.38, cfg.coreColor);
-    photo.addColorStop(0.68, cfg.midColor);
-    photo.addColorStop(0.88, cfg.limbColor);
-    photo.addColorStop(1.00, shadeHex(cfg.limbColor, 0.4));
     ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
-    ctx.fillStyle = photo; ctx.fill();
+    ctx.fillStyle = sgc.photo; ctx.fill();
   }
 
   // ── Surface granulation suggestion (convection cells) ──
   {
     ctx.save();
     ctx.beginPath(); ctx.arc(0, 0, r * 0.97, 0, TAU); ctx.clip();
-    ctx.globalAlpha = 0.07;
     const t = now * 0.00025;
     // Three overlapping off-center gradients suggest plasma motion
     for (let i = 0; i < 3; i++) {
       const ox = Math.cos(t + i * TAU / 3) * r * 0.38;
       const oy = Math.sin(t + i * TAU / 3) * r * 0.38;
-      const gg = ctx.createRadialGradient(ox, oy, 0, ox, oy, r * 0.7);
-      gg.addColorStop(0, cfg.coreColor);
-      gg.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = gg;
-      ctx.beginPath(); ctx.arc(ox, oy, r * 0.7, 0, TAU); ctx.fill();
+      ctx.save();
+      ctx.translate(ox, oy);
+      ctx.globalAlpha = 0.07;
+      ctx.fillStyle = sgc.gg;
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, TAU); ctx.fill();
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -107,13 +128,8 @@ export function drawStar(now: number, sys: any) {
   // brightens the limb without darkening anything inside the disc.
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
-  const chromo = ctx.createRadialGradient(0, 0, r * 0.97, 0, 0, r * 1.12);
-  chromo.addColorStop(0.00, "rgba(0,0,0,0)");
-  chromo.addColorStop(0.35, cfg.coronaColor);
-  chromo.addColorStop(0.70, cfg.coronaColor);
-  chromo.addColorStop(1.00, "rgba(0,0,0,0)");
   ctx.globalAlpha = 0.35;
-  ctx.fillStyle = chromo;
+  ctx.fillStyle = sgc.chromo;
   ctx.beginPath(); ctx.arc(0, 0, r * 1.12, 0, TAU); ctx.fill();
   ctx.restore();
 
@@ -153,7 +169,7 @@ export function shadeHex(hex: string, factor: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
-export function drawPlanets(now: number, sys: any) {
+export function drawPlanets(now: number, sys: System) {
   if (!sys?.planets) return;
   for (const p of sys.planets) {
     if (!isVisible(p.x, p.y, p.radius * 2.2)) continue;

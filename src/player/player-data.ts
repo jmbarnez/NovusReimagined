@@ -1,4 +1,5 @@
 import { G } from "../state.js";
+import { PlayerAccess } from "../state-access.js";
 import type { Player } from "../state.js";
 import { SHIPS } from "../data/ships.js";
 import { SKILL_IDS, SKILL_DEF, xpForSkillLevel, levelForSkillXp, MAX_SKILL_LEVEL, type SkillId } from "../data/skills.js";
@@ -28,6 +29,8 @@ export function makePlayer(): Player {
   const startingModules: ModuleInstance[] = [
     { uid: "start-tu-civ-cannon", baseId: "tu-civilian-cannon", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
     { uid: "start-tu-civ-miner", baseId: "tu-civilian-miner", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
+    { uid: "start-tu-civ-salvager", baseId: "tu-civilian-salvager", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
+    { uid: "start-tu-tractor", baseId: "tu-tractor", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
   ];
   fit.turret[0] = "start-tu-civ-cannon";
   fit.turret[1] = "start-tu-civ-miner";
@@ -80,6 +83,10 @@ export function makePlayer(): Player {
     _assignTargetId: null,
     contracts: [],
     craftQueue: [],
+    tractorCarryKg: 0,
+    tractorTightness: 0.5,
+    hubQueue: [],
+    hubOutput: { loot: {}, ore: {}, modules: [] },
   };
 }
 
@@ -107,10 +114,11 @@ export function loadPlayer(): Player {
     if (!p.turretPowerCd) p.turretPowerCd = Array((p.fitting.turret?.length || 0)).fill(0);
     if (!Array.isArray(p.turretTargets)) p.turretTargets = [];
     if (!Array.isArray(p.highTargets)) p.highTargets = [];
-    if (!Array.isArray(p.moduleCargo)) p.moduleCargo = [];
-    if ((p as any).moduleInventory && typeof (p as any).moduleInventory === "object") {
-      for (const [baseId, count] of Object.entries((p as any).moduleInventory)) {
-        for (let i = 0; i < (count as number); i++) {
+    if (!p.moduleCargo) p.moduleCargo = [];
+    const oldSave = p as unknown as { moduleInventory?: Record<string, number>; damagedModuleHp?: unknown };
+    if (oldSave.moduleInventory && typeof oldSave.moduleInventory === "object") {
+      for (const [baseId, count] of Object.entries(oldSave.moduleInventory)) {
+        for (let i = 0; i < count; i++) {
           p.moduleCargo.push({
             uid: `migrated-${baseId}-${Date.now()}-${i}`,
             baseId,
@@ -122,14 +130,18 @@ export function loadPlayer(): Player {
           });
         }
       }
-      delete (p as any).moduleInventory;
+      delete oldSave.moduleInventory;
     }
-    if ((p as any).damagedModuleHp) delete (p as any).damagedModuleHp;
+    if (oldSave.damagedModuleHp) delete oldSave.damagedModuleHp;
     if (!p.moduleHp || typeof p.moduleHp !== "object") p.moduleHp = { turret: [], high: [], med: [], low: [] };
     if (!p.slotActive || typeof p.slotActive !== "object") p.slotActive = { turret: [], high: [], med: [], low: [] };
     if (!Array.isArray(p.moduleCargo)) p.moduleCargo = [];
     if (!Array.isArray(p.contracts)) p.contracts = [];
     if (!Array.isArray(p.craftQueue)) p.craftQueue = [];
+    if (!Array.isArray(p.hubQueue)) p.hubQueue = [];
+    if (!p.hubOutput || typeof p.hubOutput !== "object") p.hubOutput = { loot: {}, ore: {}, modules: [] };
+    p.tractorCarryKg = 0;
+    if (typeof p.tractorTightness !== "number") p.tractorTightness = 0.5;
     ensureAmmoDefaults(p);
     if (p.structure == null) {
       const shipHull = (SHIPS[p.shipId] || SHIPS.scout).hull;
@@ -184,25 +196,30 @@ export function xpForLevel(lvl: number): number {
 }
 
 export function addXp(amount: number) {
-  G.P.xp += amount;
+  PlayerAccess.setXp(G.P.xp + amount);
+  let leveledUp = false;
   while (G.P.xp >= xpForLevel(G.P.level)) {
-    G.P.xp -= xpForLevel(G.P.level);
-    G.P.level++;
+    PlayerAccess.setXp(G.P.xp - xpForLevel(G.P.level));
+    PlayerAccess.setLevel(G.P.level + 1);
     invalidate();
-    G.P.hp = Math.min(G.P.hp + 30, getStats().maxHp);
+    PlayerAccess.setHp(Math.min(G.P.hp + 30, getStats().maxHp));
     floatText(G.P.x, G.P.y - 50, `✦ LEVEL ${G.P.level} ✦`, "#ffe066");
     spawnParticles(G.P.x, G.P.y, "#ffe066", 6, 70);
     logEvent(`Level up! You are now level ${G.P.level}`, "system");
+    leveledUp = true;
+  }
+  if (leveledUp) {
+    savePlayer();
   }
 }
 
 export function addSkillXp(skillId: string, amount: number) {
-  if (!SKILL_IDS.includes(skillId as any)) return;
+  if (!SKILL_IDS.includes(skillId as SkillId)) return;
   if (amount <= 0) return;
   const prevXp = G.P.skillXp[skillId] || 0;
   const oldLvl = levelForSkillXp(prevXp);
   if (oldLvl >= MAX_SKILL_LEVEL) return;
-  G.P.skillXp[skillId] = prevXp + amount;
+  PlayerAccess.setSkillXp(skillId, prevXp + amount);
   showXpEarned(skillId, amount);
   syncSkillsFromXp();
   const newLvl = levelForSkillXp(G.P.skillXp[skillId]);
@@ -213,11 +230,12 @@ export function addSkillXp(skillId: string, amount: number) {
     floatText(G.P.x, G.P.y - 45, `${icon} ${name} Lv ${newLvl}`, "#ffe066");
     spawnParticles(G.P.x, G.P.y, "#ffe066", 4, 60);
     logEvent(`${name} improved to level ${newLvl}!`, "system");
+    savePlayer();
   }
 }
 
 function syncSkillsFromXp() {
   for (const id of SKILL_IDS) {
-    G.P.skills[id] = levelForSkillXp(G.P.skillXp[id] || 0);
+    PlayerAccess.setSkill(id, levelForSkillXp(G.P.skillXp[id] || 0));
   }
 }

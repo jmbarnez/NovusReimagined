@@ -236,3 +236,50 @@
 .hud-slot.turret-cycling { border-color: rgba(80,120,160,0.5) !important; }
 .hud-slot.turret-cycling .sl-name { color: #6688aa; }
 .hud-slot.turret-on { border-color: rgba(80,60,40,0.6); }
+
+/* ── Tractor Beam Strength Toggle Button ── */
+.hud-slot .sl-str-toggle {
+  position: absolute;
+  top: 1px;
+  right: 12px;
+  padding: 1px 3px;
+  font-family: var(--font-family);
+  font-size: 5px;
+  font-weight: 700;
+  border-radius: 2px;
+  background: var(--hud-bg-elevated);
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 2.5px;
+  line-height: 1;
+  text-transform: uppercase;
+  outline: none;
+  
+  /* Dynamic visual indicators scaling with tightness */
+  color: color-mix(in srgb, var(--hud-text-bright) calc(var(--tightness) * 100%), var(--hud-text-dim));
+  border: 1px solid color-mix(in srgb, var(--hud-shield) calc(var(--tightness) * 80%), var(--hud-border-soft));
+  box-shadow: 0 0 5px color-mix(in srgb, var(--hud-shield) calc(var(--tightness) * 25%), transparent);
+  transition: all 0.15s ease-in-out;
+}
+
+.hud-slot .sl-str-toggle:hover {
+  background: var(--hud-bg-panel);
+  border-color: var(--hud-shield);
+  color: var(--hud-text-bright);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hud-shield) 40%, transparent);
+}
+
+/* Dynamic status dot inside the button */
+.hud-slot .sl-str-toggle::after {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hud-shield) calc(var(--tightness) * 100%), var(--hud-text-faint));
+  box-shadow: 0 0 3px color-mix(in srgb, var(--hud-shield) calc(var(--tightness) * 100%), transparent);
+  transition: all 0.15s ease-in-out;
+}

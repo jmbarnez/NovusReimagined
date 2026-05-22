@@ -1,4 +1,5 @@
 import { G } from "../state.js";
+import { PlayerAccess } from "../state-access.js";
 import { getStats } from "../player/player-stats.js";
 import { showDamageNumber } from "../combat/damage-display.js";
 import { damageEnemy, damageAsteroid } from "../combat.js";
@@ -13,11 +14,11 @@ import type { Enemy, Asteroid } from "../types/world.js";
 
 export function updateCombat(dt: number) {
   const st = getStats();
-  if (G.P.shootCd > 0) G.P.shootCd -= dt;
+  if (G.P.shootCd > 0) PlayerAccess.setShootCd(G.P.shootCd - dt);
   if (G.P.targetLock) {
     const tl = G.P.targetLock;
     const lost = isTargetDestroyed(tl) || Math.hypot(G.P.x - tl.x, G.P.y - tl.y) > 3500;
-    if (lost) G.P.targetLock = null;
+    if (lost) PlayerAccess.setTargetLock(null);
   }
   updateSensorLocks(dt, st);
 }

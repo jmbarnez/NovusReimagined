@@ -1,5 +1,6 @@
 import "../styles/hud-slots.css";
 import { G } from "../../state.js";
+import { PlayerAccess } from "../../state-access.js";
 import { SHIPS, type ShipDef, type ShipFitting } from "../../data/ships.js";
 import { MODULES, MODULE_FLAGS } from "../../data/modules.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
@@ -15,6 +16,8 @@ import { getInstance } from "../../utils/items.js";
 import { showSlotTooltip, hideSlotTooltip } from "./slotTooltip.js";
 import { iconSvg } from "../station/shared.js";
 import type { ComputedStats } from "../../player/player-stats.js";
+import { savePlayer } from "../../player/player-data.js";
+import { sfxBlip } from "../../audio/procedural.js";
 
 export interface SlotNode {
   el: HTMLElement;
@@ -224,6 +227,47 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     if (nameEl.className !== "sl-name empty") nameEl.className = "sl-name empty";
   }
 
+  // Tractor Beam strength toggle button
+  const isTractor = m && MODULE_FLAGS.isTractor(m);
+  let strBtn = el.querySelector(".sl-str-toggle") as HTMLButtonElement | null;
+  if (isTractor && isSlotActive) {
+    const minimized = localStorage.getItem("tractor-dial-minimized") === "true";
+    const arrow = minimized ? "▲" : "▼";
+    const btnText = `STR ${arrow}`;
+
+    if (!strBtn) {
+      strBtn = document.createElement("button");
+      strBtn.className = "sl-str-toggle";
+      strBtn.textContent = btnText;
+      strBtn.title = "Tractor Beam Controls (Click to show/hide, Scroll/Drag dial to adjust)";
+      el.appendChild(strBtn);
+
+      strBtn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const isMin = localStorage.getItem("tractor-dial-minimized") === "true";
+        if (isMin) {
+          localStorage.removeItem("tractor-dial-minimized");
+        } else {
+          localStorage.setItem("tractor-dial-minimized", "true");
+        }
+
+        sfxBlip(isMin ? 1100 : 750, 0.02);
+      });
+    } else {
+      if (strBtn.textContent !== btnText) {
+        strBtn.textContent = btnText;
+      }
+    }
+    const t = G.P.tractorTightness ?? 0.5;
+    strBtn.style.setProperty("--tightness", String(t));
+  } else {
+    if (strBtn) {
+      strBtn.remove();
+    }
+  }
+
   // Heat / module HP bar (dirty-check)
   const heat = G.P.slotHeat?.[r]?.[idx] || 0;
   let barW: string, barCls: string;
@@ -354,12 +398,12 @@ export function onSlotClick(e: MouseEvent, rack: string, idx: number) {
   if (rack === "turret" && e.shiftKey) {
     if (!m) return;
     if (G.P._assignTargetId != null) {
-      G.P.turretTargets[idx] = G.P._assignTargetId;
+      PlayerAccess.setTurretTarget(idx, G.P._assignTargetId);
       const target = targetByLockId(G.P._assignTargetId);
       floatText(G.P.x, G.P.y - 30, `TURRET → ${target?.name || "TARGET"}`, "#44ffaa");
-      G.P._assignTargetId = null;
+      PlayerAccess.setAssignTargetId(null);
     } else if (G.P.targetLock) {
-      G.P.turretTargets[idx] = G.P.targetLock.id;
+      PlayerAccess.setTurretTarget(idx, G.P.targetLock.id);
       floatText(G.P.x, G.P.y - 30, `${m.short || m.name} → ${G.P.targetLock.name || "TARGET"}`, "#44ffaa");
     }
     return;
@@ -367,12 +411,11 @@ export function onSlotClick(e: MouseEvent, rack: string, idx: number) {
 
   // Shift+click on salvager high slot assigns locked wreck
   if (rack === "high" && e.shiftKey && m?.isSalvager) {
-    if (!G.P.highTargets) G.P.highTargets = [];
     if (G.P.targetLock) {
-      G.P.highTargets[idx] = G.P.targetLock.id;
+      PlayerAccess.setHighTarget(idx, G.P.targetLock.id);
       floatText(G.P.x, G.P.y - 30, `${m.short || m.name} → ${G.P.targetLock.name || "WRECK"}`, "#00e8c8");
     } else {
-      G.P.highTargets[idx] = null;
+      PlayerAccess.setHighTarget(idx, null);
       floatText(G.P.x, G.P.y - 30, `${m.short || m.name} UNASSIGNED`, "#ffaa44");
     }
     return;

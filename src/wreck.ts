@@ -1,11 +1,14 @@
 import { G, Client } from "./state.js";
+import { SalvagerAccess, PlayerAccess } from "./state-access.js";
 import { dst } from "./utils/math.js";
 import { floatText } from "./utils/fx.js";
-import { LOOT } from "./data/resources.js";
+import { showPickupToast } from "./ui/hud/pickup-toasts.js";
+import { ORE, LOOT } from "./data/resources.js";
 import { progressMissions } from "./data/missions.js";
 import { MODULES } from "./data/modules.js";
 import { generateModuleInstance } from "./loot/generateModule.js";
 import { ModuleInstance } from "./types/moduleInstance.js";
+import type { Enemy, WreckPiece, SalvagePickup, WreckSalvageEntry } from "./types/world.js";
 import { ENEMY_DEFS } from "./data/enemies.js";
 import { invalidateInstanceCache } from "./utils/items.js";
 import {
@@ -56,7 +59,7 @@ function buildPieceShapes(path: number[][]): PieceShape[] {
   return shapes;
 }
 
-export function spawnWreck(enemy: any) {
+export function spawnWreck(enemy: Enemy) {
   if (!enemy || typeof enemy.x !== "number" || typeof enemy.y !== "number") return;
   const def = ENEMY_DEFS[enemy.type as string];
   const sigR = def?.sigRadius ?? 25;
@@ -183,7 +186,7 @@ function spawnExplosionFx(x: number, y: number, sigR: number) {
   });
 }
 
-function spawnPieceDestructionFx(piece: any) {
+function spawnPieceDestructionFx(piece: WreckPiece) {
   const sparks = C.ECONOMY.PIECE_DESTRUCTION.sparks;
   for (let i = 0; i < sparks; i++) {
     const a = Math.random() * Math.PI * 2;
@@ -208,41 +211,45 @@ function spawnPieceDestructionFx(piece: any) {
   });
 }
 
-export function damageWreckPiece(piece: any, dmg: number) {
+export function damageWreckPiece(piece: WreckPiece, dmg: number) {
   if (piece.hp <= 0) return;
   piece.hp = Math.max(0, piece.hp - dmg);
   piece.hitFlash = 0.18;
   if (piece.hp <= 0) destroyWreckPiece(piece);
 }
 
-function destroyWreckPiece(piece: any) {
-  const idx = G.wreckPieces.indexOf(piece);
-  if (idx === -1) return;
+export type SalvageDrop = { kind: "loot" | "module"; payload: string; qty: number; instance?: ModuleInstance };
 
-  const stats = G._statsCache;
-  const rollBonus = stats?.salvageBonus ?? 0;
-
-  const drops: { kind: "loot" | "module"; payload: string; qty: number; instance?: ModuleInstance }[] = [];
+export function rollWreckSalvage(
+  salvagePool: WreckSalvageEntry[] | undefined,
+  rollBonus: number,
+): SalvageDrop[] {
+  const drops: SalvageDrop[] = [];
   drops.push({ kind: "loot", payload: "scrap", qty: 1 + Math.floor(Math.random() * 2) });
   if (Math.random() < C.ECONOMY.SALVAGE.intactPartBaseChance + rollBonus) {
     drops.push({ kind: "loot", payload: "intact-part", qty: 1 + (Math.random() < C.ECONOMY.SALVAGE.intactPartExtraChance ? 1 : 0) });
   }
-  if (piece.salvagePool?.length && Math.random() < C.ECONOMY.SALVAGE.moduleDropBaseChance + rollBonus * C.ECONOMY.SALVAGE.moduleDropRollBonusMultiplier) {
-    const pool = piece.salvagePool;
-    const total = pool.reduce((s: number, e: any) => s + e.weight, 0);
+  if (salvagePool?.length && Math.random() < C.ECONOMY.SALVAGE.moduleDropBaseChance + rollBonus * C.ECONOMY.SALVAGE.moduleDropRollBonusMultiplier) {
+    const pool = salvagePool;
+    const total = pool.reduce((s: number, e: WreckSalvageEntry) => s + e.weight, 0);
     let r = Math.random() * total;
     let modId = pool[pool.length - 1].id;
     for (const e of pool) {
       r -= e.weight;
       if (r <= 0) { modId = e.id; break; }
     }
-    drops.push({
-      kind: "module",
-      payload: modId,
-      qty: 1,
-      instance: generateModuleInstance(modId, 1, 1),
-    });
+    drops.push({ kind: "module", payload: modId, qty: 1, instance: generateModuleInstance(modId, 1, 1) });
   }
+  return drops;
+}
+
+function destroyWreckPiece(piece: WreckPiece) {
+  const idx = G.wreckPieces.indexOf(piece);
+  if (idx === -1) return;
+
+  const stats = G._statsCache;
+  const rollBonus = stats?.salvageBonus ?? 0;
+  const drops = rollWreckSalvage(piece.salvagePool, rollBonus);
 
   for (let i = 0; i < drops.length; i++) {
     const d = drops[i];
@@ -266,8 +273,7 @@ function destroyWreckPiece(piece: any) {
   sfxWreckPieceDestroy(piece.x, piece.y);
   removeSensorLock(piece.id);
   if (G.salvager.targetPieceId === piece.id) {
-    G.salvager.active = false;
-    G.salvager.targetPieceId = null;
+    SalvagerAccess.update({ active: false, targetPieceId: null });
   }
   removeWreckPiece(idx);
 }
@@ -303,9 +309,44 @@ export function updateSalvagePickups(dt: number) {
   tickAndCull(G.salvagePickups, dt, (s) => {
     s.life -= dt;
     s.bob += dt * C.ECONOMY.SALVAGE_PICKUP.bobRate;
+
+    // Apply magnetic pull toward the player ship
+    const dx = G.P.x - s.x;
+    const dy = G.P.y - s.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 200 && dist > 0.01) {
+      const forcePct = 1 - dist / 200;
+      const pullForce = 520 * forcePct * forcePct + 80;
+      s.vx += (dx / dist) * pullForce * dt;
+      s.vy += (dy / dist) * pullForce * dt;
+
+      // Spawn glowing vacuum trailing particles
+      if (Math.random() < 0.16) {
+        let sparkColor = "#ffe066";
+        if (s.kind === "loot") sparkColor = "#aaffaa";
+        else if (s.kind === "module") sparkColor = "#00e8c8";
+        else if (s.kind === "ore") {
+          sparkColor = (ORE[s.payload] ?? ORE.iron).color;
+        }
+
+        addParticle({
+          x: s.x,
+          y: s.y,
+          vx: -s.vx * 0.35 + (Math.random() - 0.5) * 15,
+          vy: -s.vy * 0.35 + (Math.random() - 0.5) * 15,
+          r: 0.9 + Math.random() * 0.8,
+          life: 0.22 + Math.random() * 0.16,
+          drag: 0.93,
+          decay: 2.8,
+          color: sparkColor,
+        });
+      }
+    }
+
     s.x += s.vx * dt;
     s.y += s.vy * dt;
     s.vx *= drag; s.vy *= drag;
+
     if (s.life <= 0) return true;
     if (dst(G.P.x, G.P.y, s.x, s.y) < PICKUP_RANGE) {
       collectSalvagePickup(s);
@@ -314,34 +355,32 @@ export function updateSalvagePickups(dt: number) {
   }, removeSalvagePickup);
 }
 
-function collectSalvagePickup(s: any) {
+function collectSalvagePickup(s: SalvagePickup) {
   if (s.kind === "ore") {
-    G.P.ore[s.payload] = (G.P.ore[s.payload] || 0) + s.qty;
+    PlayerAccess.setOre(s.payload, (G.P.ore[s.payload] || 0) + s.qty);
     progressMissions("mining", s.qty, s.payload);
-    floatText(s.x, s.y - 12, `+${s.qty} ${s.payload}`, "#ffe066");
+    showPickupToast("ore", s.payload, s.qty);
     sfxItemPickup("ore", s.x, s.y);
   } else if (s.kind === "loot") {
-    G.P.loot[s.payload] = (G.P.loot[s.payload] || 0) + s.qty;
+    PlayerAccess.setLoot(s.payload, (G.P.loot[s.payload] || 0) + s.qty);
     progressMissions("salvage", s.qty, s.payload);
-    const abbr = (LOOT as any)[s.payload]?.abbr || s.payload;
-    floatText(s.x, s.y - 12, `+${s.qty} ${abbr}`, "#aaffaa");
+    showPickupToast("loot", s.payload, s.qty);
     sfxItemPickup("loot", s.x, s.y);
   } else if (s.kind === "credits") {
-    G.P.credits += s.qty;
-    floatText(s.x, s.y - 12, `+${s.qty}¢`, "#ffe066");
+    PlayerAccess.modifyCredits(s.qty);
+    showPickupToast("credits", "", s.qty);
     sfxCreditPickup();
   } else {
     try {
       const inst = s.instance || generateModuleInstance(s.payload, 1, 1);
-      G.P.moduleCargo.push(inst);
+      PlayerAccess.addModuleCargo(inst);
       invalidateInstanceCache();
-      const m = MODULES[s.payload];
-      floatText(s.x, s.y - 12, `+${m?.short ?? s.payload}`, "#00e8c8");
+      showPickupToast("module", s.payload, 1, inst);
       sfxItemPickup("module", s.x, s.y);
     } catch {
       // Fallback: spawn scrap instead of crashing on bad module ID
-      G.P.loot.scrap = (G.P.loot.scrap || 0) + 1;
-      floatText(s.x, s.y - 12, `+1 Sc`, "#aaffaa");
+      PlayerAccess.setLoot("scrap", (G.P.loot.scrap || 0) + 1);
+      showPickupToast("loot", "scrap", 1);
     }
   }
 }

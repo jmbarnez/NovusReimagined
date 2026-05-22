@@ -1,9 +1,10 @@
 import "../styles/hud-tooltip.css";
 import { G } from "../../state.js";
-import { MODULES } from "../../data/modules.js";
+import { MODULES, DamageProfile } from "../../data/modules.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { getInstance } from "../../utils/items.js";
 import { fmtModBonuses } from "../station/shared.js";
+import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
 
 const TOOLTIP_EL_ID = "hud-slot-tooltip";
 
@@ -35,7 +36,7 @@ function rackLabel(rack: string): string {
   return { turret: "Turret Slot", high: "High Slot", med: "Medium Slot", low: "Low Slot" }[rack] || rack;
 }
 
-function damageTypeLabel(profile: any): string {
+function damageTypeLabel(profile?: DamageProfile | null): string {
   if (!profile) return "";
   const labels: Record<string, string> = { em: "EM", therm: "Thermal", kin: "Kinetic", exp: "Explosive" };
   return Object.entries(profile)
@@ -45,7 +46,7 @@ function damageTypeLabel(profile: any): string {
 }
 
 export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouseY: number) {
-  const uid = (G.P.fitting as any)[rack]?.[idx];
+  const uid = G.P.fitting[rack]?.[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m) return;
@@ -82,12 +83,14 @@ export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouse
   }
 
   if (m.mining) {
+    const rangeVal = m.optimalRange ? `${m.optimalRange} m` : "";
     const rangeBonus = m.effects?.miningRangePctBonus ? `+${Math.round(m.effects.miningRangePctBonus * 100)}%` : "";
     const yieldBonus = m.effects?.miningMultBonus ? `+${Math.round(m.effects.miningMultBonus * 100)}%` : "";
     combatHtml = `
       <div class="tt-section">
         <div class="tt-section-title">Mining System</div>
         <div class="tt-row"><span class="tt-val" style="color:#88ffcc">Mining Laser</span></div>
+        ${rangeVal ? `<div class="tt-row"><span class="tt-label">Optimal Range</span><span class="tt-val">${rangeVal}</span></div>` : ""}
         ${yieldBonus ? `<div class="tt-row"><span class="tt-label">Yield Bonus</span><span class="tt-val">${yieldBonus}</span></div>` : ""}
         ${rangeBonus ? `<div class="tt-row"><span class="tt-label">Range Bonus</span><span class="tt-val">${rangeBonus}</span></div>` : ""}
       </div>`;
@@ -116,6 +119,8 @@ export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouse
 
   const isActive = m.isActive ? "Active Module" : "Passive Module";
   const capDrain = m.capDrainPerSec ? `<div class="tt-row"><span class="tt-label">Capacitor Drain</span><span class="tt-val">${m.capDrainPerSec} GJ/s</span></div>` : "";
+  const wProf = m.weaponDelivery ? (WEAPON_PROFILES[m.id] || WEAPON_PROFILES.default) : null;
+  const capCost = wProf && wProf.ec ? `<div class="tt-row"><span class="tt-label">Activation Cost</span><span class="tt-val">${wProf.ec} GJ</span></div>` : "";
 
   el.innerHTML = `
     <div class="tt-header">
@@ -134,6 +139,7 @@ export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouse
       <div class="tt-row"><span class="tt-label">CPU Load</span><span class="tt-val">${m.cpu} CPU</span></div>
       <div class="tt-row"><span class="tt-label">Mass</span><span class="tt-val">${m.massKg.toLocaleString()} kg</span></div>
       ${capDrain}
+      ${capCost}
     </div>
 
     <div class="tt-section">

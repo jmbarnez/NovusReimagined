@@ -8,7 +8,7 @@
 :root {
   --font-family: 'Orbitron', sans-serif;
   --hud-scanner-w: 280px;
-  --hud-minimap-w: 140px;
+  --hud-minimap-w: 102px;
   /* surfaces */
   --hud-bg-deep: rgba(2,5,10,0.88);
   --hud-bg-window: rgba(10,14,20,0.82);
@@ -30,6 +30,7 @@
   --hud-hull: #ee9944;
   --hud-danger: #ee4444;
   --hud-cap: #ffdd66;
+  --hud-arcane: #8858a8;
   /* legacy aliases (top/bottom bars) */
   --hud-top-bar: var(--hud-bg-deep);
   --hud-top-border: var(--hud-border);
@@ -85,24 +86,29 @@ input, button, select, textarea, table, th, td {
   border-top: 1px solid var(--hud-bottom-border);
 }
 
-/* ── Minimap (top-right corner, flush) ── */
+/* ── Minimap (top-right corner, flush squared radar) ── */
 #hud-minimap {
   position: fixed;
   top: 0;
   right: 0;
   width: var(--hud-minimap-w);
   height: var(--hud-minimap-w);
-  background: rgba(0, 2, 6, 0.92);
-  border: 1px solid #1a2838;
+  border-radius: 0px; /* Sharp retro/radar corners */
+  border: none;
+  border-left: 1px solid var(--hud-border);
+  border-bottom: 1px solid var(--hud-border);
   box-sizing: border-box;
   z-index: 15;
   pointer-events: auto;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--hud-bg-deep) 35%, transparent);
 }
 #hud-minimap canvas {
   display: block;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  border-radius: 0px;
 }
 
 /* ── Scanner Dock (integrated with bottom bar, right side) ── */

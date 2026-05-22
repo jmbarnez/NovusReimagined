@@ -1,4 +1,5 @@
 import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
+import type { Planet, System } from "../types/world.js";
 import { TAU } from "../constants.js";
 
 type MoonEntry = {
@@ -22,7 +23,7 @@ function hslInt(h: number, s: number, l: number): number {
   return (f(0) << 16) | (f(8) << 8) | f(4);
 }
 
-function bakePlanet(p: any, sys: any): Texture {
+function bakePlanet(p: Planet, sys: System): Texture {
   const texSize = Math.max(128, Math.ceil(p.radius * 5));
   const half = texSize / 2;
   const c = document.createElement("canvas");
@@ -115,7 +116,7 @@ function bakePlanet(p: any, sys: any): Texture {
   return new Texture({ source: new ImageSource({ resource: c, resolution: 1, scaleMode: "linear" }) });
 }
 
-export function initPlanetSprites(parent: Container, sys: any) {
+export function initPlanetSprites(parent: Container, sys: System) {
   destroyPlanetSprites();
   if (!sys?.planets) return;
 

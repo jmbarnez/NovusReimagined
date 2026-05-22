@@ -1,4 +1,5 @@
 import { G, Client } from "../state.js";
+import { PlayerAccess } from "../state-access.js";
 import { MODULES } from "../data/modules.js";
 import { ORE_MARKET_BUY, COMPONENT_MARKET_BUY } from "../data/marketCatalog.js";
 import { getStats, invalidate } from "../player/player-stats.js";
@@ -46,10 +47,10 @@ export function repairShipAction(): ActionResponse {
     return { success: false, reason: "Insufficient credits" };
   }
 
-  G.P.credits -= cost;
-  G.P.hp = st.maxHp;
-  G.P.structure = st.maxStructure;
-  G.P.shield = st.maxShield;
+  PlayerAccess.modifyCredits(-cost);
+  PlayerAccess.setHp(st.maxHp);
+  PlayerAccess.setStructure(st.maxStructure);
+  PlayerAccess.setShield(st.maxShield);
 
   for (const inst of G.P.moduleCargo) {
     inst.durability = inst.maxDurability;
@@ -80,11 +81,11 @@ export function buyModuleAction(moduleId: string): ActionResponse {
     return { success: false, reason: "Insufficient credits" };
   }
 
-  G.P.credits -= m.price;
+  PlayerAccess.modifyCredits(-m.price);
   const inst = generateModuleInstance(moduleId, G.P.level, 0);
   inst.rarity = ModuleRarity.Stock;
   inst.affixes = [];
-  G.P.moduleCargo.push(inst);
+  PlayerAccess.addModuleCargo(inst);
   invalidateInstanceCache();
 
   return { success: true, creditsSpent: m.price };
@@ -112,8 +113,8 @@ export function sellModuleAction(moduleId: string): ActionResponse {
   const rarityMult = RARITY_CONFIG[inst.rarity].sellMult;
   const sellPrice = Math.floor(m.price * 0.6 * rarityMult);
 
-  G.P.moduleCargo.splice(instIdx, 1);
-  G.P.credits += sellPrice;
+  PlayerAccess.removeModuleCargo(instIdx);
+  PlayerAccess.modifyCredits(sellPrice);
   invalidateInstanceCache();
   invalidate();
 
@@ -124,13 +125,13 @@ export function buyAmmunitionAction(type: "hybrid" | "missile"): ActionResponse 
   ensureAmmoDefaults();
   if (type === "hybrid") {
     if (G.P.credits < 40) return { success: false, reason: "Insufficient credits" };
-    G.P.credits -= 40;
-    G.P.ammo.hybrid = (G.P.ammo.hybrid || 0) + 500;
+    PlayerAccess.modifyCredits(-40);
+    PlayerAccess.setAmmo("hybrid", (G.P.ammo.hybrid || 0) + 500);
     return { success: true, creditsSpent: 40 };
   } else {
     if (G.P.credits < 95) return { success: false, reason: "Insufficient credits" };
-    G.P.credits -= 95;
-    G.P.ammo.missile = (G.P.ammo.missile || 0) + 24;
+    PlayerAccess.modifyCredits(-95);
+    PlayerAccess.setAmmo("missile", (G.P.ammo.missile || 0) + 24);
     return { success: true, creditsSpent: 95 };
   }
 }
@@ -144,23 +145,23 @@ export function sellCargoResourceAction(
     if (qty <= 0) return { success: false, reason: "No ore to sell" };
     const price = ORE_MARKET_BUY[key] || 0;
     const earnings = qty * price;
-    G.P.credits += earnings;
-    G.P.ore[key] = 0;
+    PlayerAccess.modifyCredits(earnings);
+    PlayerAccess.setOre(key, 0);
     return { success: true, creditsEarned: earnings };
   } else if (category === "loot") {
     const qty = G.P.loot[key] || 0;
     if (qty <= 0) return { success: false, reason: "No salvage to sell" };
     const lootBuy: Record<string, number> = { scrap: 5, chip: 45, cell: 22, "intact-part": 30 };
     const earnings = qty * (lootBuy[key] || 0);
-    G.P.credits += earnings;
-    G.P.loot[key] = 0;
+    PlayerAccess.modifyCredits(earnings);
+    PlayerAccess.setLoot(key, 0);
     return { success: true, creditsEarned: earnings };
   } else {
     const qty = G.P.components[key] || 0;
     if (qty <= 0) return { success: false, reason: "No components to sell" };
     const earnings = qty * (COMPONENT_MARKET_BUY[key] || 100);
-    G.P.credits += earnings;
-    G.P.components[key] = 0;
+    PlayerAccess.modifyCredits(earnings);
+    PlayerAccess.setComponents(key, 0);
     return { success: true, creditsEarned: earnings };
   }
 }
@@ -172,8 +173,8 @@ export function fitModuleAction(rack: "turret" | "high" | "med" | "low", slotIdx
   const m = MODULES[inst.baseId];
   if (!m) return { success: false, reason: "Module base definition not found" };
 
-  G.P.fitting[rack][slotIdx] = instanceId;
-  G.P.moduleHp[rack][slotIdx] = Math.round((inst.durability / inst.maxDurability) * MODULE_HP_MAX);
+  PlayerAccess.setFittingSlot(rack, slotIdx, instanceId);
+  PlayerAccess.setModuleHp(rack, slotIdx, Math.round((inst.durability / inst.maxDurability) * MODULE_HP_MAX));
   syncSlotHeat();
   invalidate();
 
@@ -188,7 +189,7 @@ export function unfitModuleAction(rack: "turret" | "high" | "med" | "low", slotI
 
   const slotHp = G.P.moduleHp?.[rack]?.[slotIdx] ?? MODULE_HP_MAX;
   inst.durability = Math.round((slotHp / MODULE_HP_MAX) * inst.maxDurability);
-  G.P.fitting[rack][slotIdx] = null;
+  PlayerAccess.setFittingSlot(rack, slotIdx, null);
   syncSlotHeat();
   invalidate();
 
@@ -207,8 +208,8 @@ export function swapModuleAction(rack: "turret" | "high" | "med" | "low", slotId
 
   const slotHp = G.P.moduleHp?.[rack]?.[slotIdx] ?? MODULE_HP_MAX;
   oldInst.durability = Math.round((slotHp / MODULE_HP_MAX) * oldInst.maxDurability);
-  G.P.fitting[rack][slotIdx] = newInstanceId;
-  G.P.moduleHp[rack][slotIdx] = Math.round((newInst.durability / newInst.maxDurability) * MODULE_HP_MAX);
+  PlayerAccess.setFittingSlot(rack, slotIdx, newInstanceId);
+  PlayerAccess.setModuleHp(rack, slotIdx, Math.round((newInst.durability / newInst.maxDurability) * MODULE_HP_MAX));
   syncSlotHeat();
   invalidate();
 
@@ -232,11 +233,16 @@ export function queueIndustryJobAction(recipeId: string, craftQty: number): Acti
   }
 
   for (const inp of r.inputs) {
-    pool(inp.pool)[inp.key] -= inp.qty * craftQty;
+    const cur = pool(inp.pool)[inp.key] || 0;
+    const setter = inp.pool === "ore" ? PlayerAccess.setOre
+      : inp.pool === "refined" ? PlayerAccess.setRefined
+      : inp.pool === "loot" ? PlayerAccess.setLoot
+      : PlayerAccess.setComponents;
+    setter(inp.key, cur - inp.qty * craftQty);
   }
 
   const job = createCraftJob(recipeId, craftQty);
-  G.P.craftQueue.push(job);
+  PlayerAccess.addCraftJob(job);
 
   return { success: true, label: `${r.label} ×${craftQty} (${job.duration / 1000}s)` };
 }
@@ -251,11 +257,16 @@ export function cancelIndustryJobAction(jobId: string): ActionResponse {
     const pool = (p: IndustryPool) =>
       p === "ore" ? G.P.ore : p === "refined" ? G.P.refined : p === "loot" ? G.P.loot : G.P.components;
     for (const inp of r.inputs) {
-      pool(inp.pool)[inp.key] = (pool(inp.pool)[inp.key] || 0) + inp.qty * job.qty;
+      const cur = pool(inp.pool)[inp.key] || 0;
+      const setter = inp.pool === "ore" ? PlayerAccess.setOre
+        : inp.pool === "refined" ? PlayerAccess.setRefined
+        : inp.pool === "loot" ? PlayerAccess.setLoot
+        : PlayerAccess.setComponents;
+      setter(inp.key, cur + inp.qty * job.qty);
     }
   }
 
-  G.P.craftQueue.splice(idx, 1);
+  PlayerAccess.removeCraftJob(idx);
   return { success: true, label: r?.label || "job" };
 }
 
@@ -265,13 +276,13 @@ export function buyBlueprintAction(recipeId: string): ActionResponse {
   if (!r || !cost) return { success: false, reason: "Blueprint not purchasable" };
   if (G.P.credits < cost) return { success: false, reason: "Insufficient credits" };
 
-  G.P.credits -= cost;
-  G.P.blueprints[recipeId] = true;
+  PlayerAccess.modifyCredits(-cost);
+  PlayerAccess.setBlueprint(recipeId, true);
   return { success: true, creditsSpent: cost };
 }
 
 export function setHomeSystemAction(): ActionResponse {
-  G.P.homeSysIdx = G.P.sysIdx;
+  PlayerAccess.setHomeSysIdx(G.P.sysIdx);
   return { success: true };
 }
 
@@ -283,7 +294,7 @@ export function acceptContractAction(contractId: string, stationContracts: Missi
   }
 
   const accepted = { ...contract, status: "active" as const };
-  G.P.contracts.push(accepted);
+  PlayerAccess.addContract(accepted);
   emit("mission:accepted", { contract: accepted });
 
   return { success: true, label: accepted.title };
@@ -298,8 +309,8 @@ export function turnInContractAction(contractId: string): ActionResponse {
     return { success: false, reason: "Must turn in at correct station" };
   }
 
-  G.P.credits += contract.reward;
-  G.P.contracts.splice(idx, 1);
+  PlayerAccess.modifyCredits(contract.reward);
+  PlayerAccess.removeContract(idx);
 
   return { success: true, creditsEarned: contract.reward, label: contract.title };
 }
@@ -308,7 +319,7 @@ export function abandonContractAction(contractId: string): ActionResponse {
   const idx = G.P.contracts.findIndex(c => c.id === contractId);
   if (idx === -1) return { success: false, reason: "Contract not found" };
 
-  G.P.contracts.splice(idx, 1);
+  PlayerAccess.removeContract(idx);
   return { success: true };
 }
 
@@ -342,31 +353,31 @@ export function jettisonItemAction(itemId: string, qty: number | null = null): A
     const cur = G.P.ore[key] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    G.P.ore[key] = Math.max(0, cur - drop);
+    PlayerAccess.setOre(key, Math.max(0, cur - drop));
     return { success: true, label: `${drop}× iron` }; // Generic display, or caller handles
   } else if (type === "ammo") {
     const cur = G.P.ammo[key as keyof typeof G.P.ammo] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    G.P.ammo[key as keyof typeof G.P.ammo] = Math.max(0, cur - drop);
+    PlayerAccess.setAmmo(key as "hybrid" | "missile", Math.max(0, cur - drop));
     return { success: true };
   } else if (type === "refined") {
     const cur = G.P.refined[key] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    G.P.refined[key] = Math.max(0, cur - drop);
+    PlayerAccess.setRefined(key, Math.max(0, cur - drop));
     return { success: true };
   } else if (type === "loot") {
     const cur = G.P.loot[key] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    G.P.loot[key] = Math.max(0, cur - drop);
+    PlayerAccess.setLoot(key, Math.max(0, cur - drop));
     return { success: true };
   } else if (type === "component") {
     const cur = G.P.components[key] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    G.P.components[key] = Math.max(0, cur - drop);
+    PlayerAccess.setComponents(key, Math.max(0, cur - drop));
     return { success: true };
   } else {
     // Module Jettison
@@ -377,7 +388,7 @@ export function jettisonItemAction(itemId: string, qty: number | null = null): A
     const instIdx = G.P.moduleCargo.findIndex(inst => inst.uid === key);
     if (instIdx === -1) return { success: false, reason: "Module instance not found in cargo" };
 
-    G.P.moduleCargo.splice(instIdx, 1);
+    PlayerAccess.removeModuleCargo(instIdx);
     invalidateInstanceCache();
     return { success: true };
   }

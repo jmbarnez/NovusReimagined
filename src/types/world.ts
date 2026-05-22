@@ -11,6 +11,7 @@
 
 import type { ModuleDef } from "../data/modules.js";
 import { ModuleInstance } from "./moduleInstance.js";
+import type { Player } from "../state.js";
 
 // ── Sensor lock state ────────────────────────────────────────────────────
 
@@ -65,6 +66,9 @@ export interface Station {
   services: string[];
   safeRadius: number;
   turrets: StationTurret[];
+  structureType?: "standard" | "home" | "industrial";
+  isProcessingHub?: boolean;
+  collectRadius?: number;
 }
 
 export interface Gate {
@@ -87,9 +91,25 @@ export interface Planet {
   hasRing: boolean;
   ringTilt: number;
   moons: number;
+  _gradCache?: {
+    glow: CanvasGradient;
+    base: CanvasGradient;
+    rim: CanvasGradient;
+    shadow: CanvasGradient;
+    atm: CanvasGradient;
+  };
 }
 
 // ── NPCs and asteroids ───────────────────────────────────────────────────
+
+export interface EnemyFitting {
+  turret?: (string | null)[];
+  high?: (string | null)[];
+  med?: (string | null)[];
+  low?: (string | null)[];
+  _tempInstances?: import("./moduleInstance.js").ModuleInstance[];
+  [key: string]: (string | null)[] | import("./moduleInstance.js").ModuleInstance[] | undefined;
+}
 
 export interface Enemy {
   id: string;
@@ -118,7 +138,7 @@ export interface Enemy {
   accuracy?: number;
   radius?: number;
   level?: number;
-  fitting: Record<string, (string | null)[]>;
+  fitting: EnemyFitting;
   turretCds: number[];
 
   shield?: number;
@@ -135,6 +155,9 @@ export interface Enemy {
   _orbitDir?: 1 | -1;
   _lastPlayerHitAt?: number;
   _lastPlayerHitKind?: "projectile" | "beam" | "missile";
+  _npcTarget?: Enemy | Player | null;
+  _npcLockTimer?: number;
+  _npcHasLock?: boolean;
 
   // Shield hit visual state
   shieldHitGlow?: number;
@@ -148,6 +171,18 @@ export interface Enemy {
 
   // Temporary module instances stored on the fitting at spawn time
   _tempInstances?: import("./moduleInstance.js").ModuleInstance[];
+
+  // Faction and interaction state
+  faction?: "hostile" | "neutral" | "player" | "friendly";
+  _task?: "transit-in" | "goto-station" | "dwell" | "mine" | "patrol" | "engage" | "depart";
+  _taskTimer?: number;
+  _wpX?: number;
+  _wpY?: number;
+  _exitGateIdx?: number;
+  _mineTargetId?: string;
+  hailable?: boolean;
+  _speech?: { text: string; until: number };
+  commsRange?: number;
 }
 
 export interface AsteroidCrystal {
@@ -182,6 +217,8 @@ export interface Asteroid {
   hasCrystals?: boolean;
   crystalHue?: number;
   crystals?: AsteroidCrystal[];
+  spawnX?: number;
+  spawnY?: number;
 }
 
 // ── Background silhouettes (gas giants / derelicts) ──────────────────────
@@ -199,6 +236,11 @@ export interface Silhouette {
   hasRing: boolean;
   ringTilt: number;
   seed: number;
+  _gradCache?: {
+    bg: CanvasGradient;
+    lg: CanvasGradient;
+    rg?: CanvasGradient;
+  };
 }
 
 // ── System ───────────────────────────────────────────────────────────────
@@ -238,8 +280,15 @@ export interface System {
   // Background / nebula state (lazily populated by render/background.ts)
   _nebulaSeed?: number;
   _nebulaBlobs?: unknown[];
-  _ambientTraders?: unknown[];
+  _ambientTraders?: { x: number; y: number }[];
   _silhouettes?: Silhouette[];
+  _starGradCache?: {
+    haze: CanvasGradient;
+    bloom: CanvasGradient;
+    photo: CanvasGradient;
+    gg: CanvasGradient;
+    chromo: CanvasGradient;
+  };
 }
 
 // ── Background scenery ───────────────────────────────────────────────────

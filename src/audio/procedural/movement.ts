@@ -62,7 +62,17 @@ export function sfxWarpJump() {
   _disconnectOnEnd(noise, filter, g);
 }
 
-export let _engineNodes: any = null;
+interface EngineNodes {
+  ctx: AudioContext;
+  noiseSrc: AudioBufferSourceNode;
+  noiseFilter: BiquadFilterNode;
+  noiseGain: GainNode;
+  rumble: OscillatorNode;
+  rumbleGain: GainNode;
+  active: boolean;
+}
+
+export let _engineNodes: EngineNodes | null = null;
 
 export function startEngineNodes() {
   const a = getAudio();

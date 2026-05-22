@@ -8,6 +8,7 @@ import {
   STATION_TURRET_ALIGN_TOLERANCE,
 } from "../constants.js";
 import { liveEnemies } from "../utils/game.js";
+import { isHostile } from "../combat/factions.js";
 
 export function updateStationTurrets(dt: number) {
   const sys = G.GALAXY[G.P.sysIdx];
@@ -23,9 +24,9 @@ export function updateStationTurrets(dt: number) {
       let best = null;
       let bestD = Infinity;
       for (const e of liveEnemies()) {
+        if (!isHostile("player", e.faction)) continue;
         const d = dst(t.x, t.y, e.x, e.y);
         if (d > STATION_TURRET_RANGE) continue;
-        if (d > (st.safeRadius ?? 600)) continue;
         if (d < bestD) {
           bestD = d;
           best = e;

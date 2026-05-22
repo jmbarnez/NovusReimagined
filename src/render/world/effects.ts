@@ -7,6 +7,7 @@ import { worldText, worldCardText } from "../world-text.js";
 import { getUIFont } from "../ui-font.js";
 import { Client } from "../../state.js";
 import { getDistantSunScreenPos } from "../pixi-background.js";
+import type { System } from "../../types/world.js";
 
 export function drawShockwaves() {
   const state = getState();
@@ -26,7 +27,7 @@ export function drawShockwaves() {
   ctx.restore();
 }
 
-export function drawFloatTexts(sys: any) {
+export function drawFloatTexts(sys: System) {
   if (!sys) return;
   const state = getState();
   for (const f of state.floatTexts) {

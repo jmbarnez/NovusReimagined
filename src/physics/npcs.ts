@@ -1,6 +1,7 @@
 import { G, Client } from "../state.js";
+import { MiningAccess, PlayerAccess } from "../state-access.js";
 import { getStats } from "../player/player-stats.js";
-import { spawnImpactFlash } from "../utils/fx.js";
+import { spawnImpactFlash, spawnParticles } from "../utils/fx.js";
 import { addTrailSegment, removeEnemyBullet, addParticle } from "../utils/entities.js";
 import { liveEnemies, liveAsteroids } from "../utils/game.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
@@ -10,16 +11,19 @@ import { ORE } from "../data/resources.js";
 import { AST_SPIN_RANGE, ASTEROID_VEL_DECAY, ASTEROID_DENSITY, ENEMY_MASS, COLLISION_RESTITUTION, ENEMY_AMBIENT_DRAG, ENEMY_MIN_DIST_HOME_STATION, ENEMY_MIN_DIST_NONHOME_STATION } from "../constants.js";
 import { damagePlayer } from "../combat/damage-display.js";
 import { resolveElasticCollision } from "../utils/math.js";
-import { harvestAsteroid } from "../utils/mining.js";
+import { harvestAsteroid, destroyAsteroid } from "../utils/mining.js";
 import { sfxUnderAttackPulse, sfxBeamImpact, sfxIndustrialBeam } from "../audio/procedural.js";
 import { C } from "../config/index.js";
 import type { Enemy, Asteroid } from "../types/world.js";
 import type { SpatialGrid, SpatialQueryResult } from "../utils/spatial.js";
 import { processNpcBehavior, triggerAttackWarningPulse } from "./npc-ai.js";
 import { isPointInAsteroid } from "./combat-physics.js";
+import { isHostile } from "../combat/factions.js";
+import { damageEnemy } from "../combat.js";
 
 const _qOut: SpatialQueryResult<Enemy>[] = [];
 const _astOut: SpatialQueryResult<Asteroid>[] = [];
+const _ebNpcHits: SpatialQueryResult<Enemy>[] = [];
 
 function updateNpcMovementAndSeparation(e: Enemy, dt: number, enemyDecay: number, grid: SpatialGrid | null) {
   e.px = e.x; e.py = e.y; e.prevAngle = e.angle;
@@ -87,6 +91,7 @@ function updateNpcMovementAndSeparation(e: Enemy, dt: number, enemyDecay: number
 }
 
 function applyNpcStationEvasion(e: Enemy, dt: number) {
+  if (e.faction === "neutral") return;
   const sys = G.GALAXY[G.P.sysIdx];
   if (e.type !== "drone" && sys?.stations) {
     for (const st of sys.stations) {
@@ -152,28 +157,69 @@ export function updateEnemyBullets(dt: number) {
 
     const moveDist = Math.max(0, Math.hypot(b.x - b.px, b.y - b.py));
 
-    // Player hit: closest-approach parameter along this step's path segment.
-    const playerColRadius = SHIPS[G.P.shipId]?.colRadius ?? 20;
-    const hitDist = playerColRadius + C.ENEMIES.AI.HIT_CHECK_RADIUS;
+    // Player hit check: closest-approach segment parameters (if hostile to player)
     let playerHit = false;
-    let playerHitT = 1; // fraction along path of the hit (for nearest-hit ordering)
-    if (Math.hypot(G.P.x - b.x, G.P.y - b.y) < hitDist) {
-      playerHit = true;
-    } else {
-      const pdx = b.x - b.px, pdy = b.y - b.py;
-      const segLenSq = pdx * pdx + pdy * pdy;
-      if (segLenSq > 0) {
-        const t = Math.max(0, Math.min(1, ((G.P.x - b.px) * pdx + (G.P.y - b.py) * pdy) / segLenSq));
-        const closestX = b.px + t * pdx;
-        const closestY = b.py + t * pdy;
-        if (Math.hypot(G.P.x - closestX, G.P.y - closestY) < hitDist) {
-          playerHit = true;
-          playerHitT = t;
+    let playerHitT = 1;
+    if (isHostile(b.ownerFaction, "player")) {
+      const playerColRadius = SHIPS[G.P.shipId]?.colRadius ?? 20;
+      const hitDist = playerColRadius + C.ENEMIES.AI.HIT_CHECK_RADIUS;
+      if (Math.hypot(G.P.x - b.x, G.P.y - b.y) < hitDist) {
+        playerHit = true;
+      } else {
+        const pdx = b.x - b.px, pdy = b.y - b.py;
+        const segLenSq = pdx * pdx + pdy * pdy;
+        if (segLenSq > 0) {
+          const t = Math.max(0, Math.min(1, ((G.P.x - b.px) * pdx + (G.P.y - b.py) * pdy) / segLenSq));
+          const closestX = b.px + t * pdx;
+          const closestY = b.py + t * pdy;
+          if (Math.hypot(G.P.x - closestX, G.P.y - closestY) < hitDist) {
+            playerHit = true;
+            playerHitT = t;
+          }
         }
       }
     }
 
-    // Asteroid hit: CCD raycast along the path, earliest sample wins.
+    // NPC hit: CCD raycast along path segment querying enemies
+    let npcHit = false;
+    let npcHitT = Infinity;
+    let npcHitX = b.x, npcHitY = b.y;
+    let hitNpc: Enemy | null = null;
+
+    if (grid) {
+      const bRad = b.sz || 2;
+      _ebNpcHits.length = 0;
+      grid.query<Enemy>(b.x, b.y, bRad + moveDist, "enemy", _ebNpcHits);
+      if (_ebNpcHits.length) {
+        const steps = Math.ceil(moveDist / 5);
+        for (let idx = 0; idx < _ebNpcHits.length; idx++) {
+          const oe = _ebNpcHits[idx].data;
+          if (!oe || !oe.alive || oe.id === b.ownerId) continue;
+          if (!isHostile(b.ownerFaction, oe.faction)) continue;
+
+          const oeColRadius = ENEMY_DEFS[oe.type]?.colRadius ?? oe.sigRadius ?? 18;
+          const oeHitDist = oeColRadius + C.ENEMIES.AI.HIT_CHECK_RADIUS;
+
+          for (let s = 0; s <= steps; s++) {
+            const t = steps === 0 ? 1 : s / steps;
+            const tx = b.px + (b.x - b.px) * t;
+            const ty = b.py + (b.y - b.py) * t;
+            if (Math.hypot(oe.x - tx, oe.y - ty) < oeHitDist) {
+              if (t < npcHitT) {
+                npcHitT = t;
+                npcHitX = tx;
+                npcHitY = ty;
+                npcHit = true;
+                hitNpc = oe;
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Asteroid hit check: CCD raycast
     let astHit = false;
     let astHitT = Infinity;
     let astHitX = b.x, astHitY = b.y;
@@ -199,14 +245,25 @@ export function updateEnemyBullets(dt: number) {
       }
     }
 
-    // Asteroid blocks the shot when it intercepts before reaching the player.
-    if (astHit && astHitT <= playerHitT) {
+    // Earliest collision wins
+    const earliestT = Math.min(
+      playerHit ? playerHitT : Infinity,
+      astHit ? astHitT : Infinity,
+      npcHit ? npcHitT : Infinity
+    );
+
+    if (earliestT === Infinity) {
+      if (b.life <= 0) removeEnemyBullet(i);
+      continue;
+    }
+
+    if (astHit && astHitT === earliestT) {
       spawnImpactFlash(astHitX, astHitY, b.color || "#ff6644");
       removeEnemyBullet(i);
       continue;
     }
 
-    if (playerHit) {
+    if (playerHit && playerHitT === earliestT) {
       const variance = 0.5 + Math.random() * 0.7;
       const finalDmg = Math.max(1, Math.floor((b.dmg || (2 + Math.random() * 2)) * variance));
       damagePlayer(finalDmg, b.x, b.y);
@@ -214,13 +271,62 @@ export function updateEnemyBullets(dt: number) {
       removeEnemyBullet(i);
       continue;
     }
+
+    if (npcHit && npcHitT === earliestT && hitNpc) {
+      const variance = 0.5 + Math.random() * 0.7;
+      const finalDmg = Math.max(1, Math.floor((b.dmg || (2 + Math.random() * 2)) * variance));
+      damageEnemy(hitNpc, finalDmg, npcHitX, npcHitY, undefined, b.kind || "projectile");
+      spawnImpactFlash(npcHitX, npcHitY, b.color || "#ff6644");
+      removeEnemyBullet(i);
+      continue;
+    }
+
     if (b.life <= 0) removeEnemyBullet(i);
   }
 }
 
 export function updateAsteroids(dt: number) {
+  const sys = G.GALAXY[G.P.sysIdx];
+  if (!sys || !sys.asteroids) return;
+
   const decay = Math.pow(ASTEROID_VEL_DECAY, dt);
-  for (const a of liveAsteroids()) {
+
+  for (const a of sys.asteroids) {
+    // Keep track of spawn coordinates for dynamic respawning
+    if (a.spawnX === undefined) {
+      a.spawnX = a.x;
+      a.spawnY = a.y;
+    }
+
+    if (a.depleted) {
+      a.respawnTimer -= dt;
+      if (a.respawnTimer <= 0) {
+        a.depleted = false;
+        a.hp = a.maxHp;
+        a.vx = 0;
+        a.vy = 0;
+
+        // Respawn near original coordinates with slight jitter
+        const ang = Math.random() * Math.PI * 2;
+        const dist = Math.random() * 80;
+        a.x = a.spawnX! + Math.cos(ang) * dist;
+        a.y = a.spawnY! + Math.sin(ang) * dist;
+
+        // Mineral dust condensation cloud
+        const ores = ["iron", "crystal", "exotic"];
+        const roll = Math.random();
+        let cum = 0;
+        let key = "iron";
+        for (let i = 0; i < 3; i++) {
+          cum += a.oreWeights[i] || 0;
+          if (roll < cum) { key = ores[i]; break; }
+        }
+        const color = (ORE[key] ?? ORE.iron).color;
+        spawnParticles(a.x, a.y, color, 8, 45);
+      }
+      continue;
+    }
+
     a.prevSpin = a.spinAngle;
     a.spinAngle += a.spinVel * dt;
     if (Math.random() < 0.0005) a.spinVel = (Math.random() - 0.5) * AST_SPIN_RANGE;
@@ -239,9 +345,9 @@ let _miningHumTimer = 0;
 
 export function updateMining(dt: number) {
   const st = getStats();
-  if (!st.hasMiner) { G.miningLaser.active = false; return; }
+  if (!st.hasMiner) { MiningAccess.update({ active: false }); return; }
   if (Client.stationOpen || Client.showMap || Client.bridgeOpen || Client.settingsOpen) {
-    G.miningLaser.active = false; return;
+    MiningAccess.update({ active: false }); return;
   }
 
   const sys = G.GALAXY[G.P.sysIdx];
@@ -266,19 +372,22 @@ export function updateMining(dt: number) {
 
     const dx = ast.x - G.P.x, dy = ast.y - G.P.y;
     const dist = Math.hypot(dx, dy);
-    if (dist > st.mineRange) continue;
+    const maxRange = m.optimalRange != null ? m.optimalRange : st.mineRange;
+    if (dist > maxRange) continue;
 
     const energyCost = 10 * dt;  // 1/3 of old 30/sec
     if (G.P.energy < energyCost) continue;
-    G.P.energy -= energyCost;
+    PlayerAccess.setEnergy(G.P.energy - energyCost);
 
     if (!beamSet) {
-      G.miningLaser.active = true;
-      G.miningLaser.x1 = G.P.x; G.miningLaser.y1 = G.P.y;
-      G.miningLaser.x2 = ast.x; G.miningLaser.y2 = ast.y;
-      G.miningLaser.hitR = ast.radius;
-      G.miningLaser.hitNx = dx / dist; G.miningLaser.hitNy = dy / dist;
-      G.miningLaser.phase = (G.miningLaser.phase || 0) + dt * 18;
+      MiningAccess.update({
+        active: true,
+        x1: G.P.x, y1: G.P.y,
+        x2: ast.x, y2: ast.y,
+        hitR: ast.radius,
+        hitNx: dx / dist, hitNy: dy / dist,
+        phase: (G.miningLaser.phase || 0) + dt * 18,
+      });
       beamSet = true;
       _miningHumTimer -= dt;
       if (_miningHumTimer <= 0) {
@@ -288,14 +397,16 @@ export function updateMining(dt: number) {
     }
 
     if (G.P.mineCd > 0) {
-      G.P.mineCd -= dt;
+      PlayerAccess.setMineCd(G.P.mineCd - dt);
     } else {
       const result = harvestAsteroid(ast, st.miningMult);
       sfxBeamImpact("mining", ast.x, ast.y);
-      G.P.mineCd = 0.45;
+      PlayerAccess.setMineCd(0.45);
       if (result.oreKey) {
-        G.miningLaser.oreKey = result.oreKey;
-        G.miningLaser.oreColor = (ORE[result.oreKey] ?? ORE.iron).color;
+        MiningAccess.update({
+          oreKey: result.oreKey,
+          oreColor: (ORE[result.oreKey] ?? ORE.iron).color,
+        });
       }
       const oreColor = G.miningLaser.oreColor || "#a0a5aa";
       const sparkColors = [oreColor, "#ffffff", oreColor];
@@ -315,15 +426,16 @@ export function updateMining(dt: number) {
           decay: 2.0 + Math.random() * 1.0,
         });
       }
-      if (result.depleted) G.miningLaser.hitR = 0;
+      if (result.depleted) {
+        MiningAccess.update({ hitR: 0, active: false });
+        ast.respawnTimer = 60 + Math.random() * 60;
+        destroyAsteroid(ast, true, st.miningMult);
+      }
     }
   }
 
   if (!beamSet) {
-    G.miningLaser.active = false;
-    G.miningLaser.phase = 0;
-    G.miningLaser.oreKey = "";
-    G.miningLaser.oreColor = "";
+    MiningAccess.update({ active: false, phase: 0, oreKey: "", oreColor: "" });
   }
 }
 
@@ -331,6 +443,7 @@ export function updateEnemyRespawns(dt: number) {
   const sys = G.GALAXY[G.P.sysIdx];
   if (!sys || !sys.enemies) return;
   for (const e of sys.enemies) {
+    if (e.faction === "neutral") continue;
     if (!e.alive) {
       e.respawnTimer -= dt;
       if (e.respawnTimer <= 0) {

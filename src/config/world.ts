@@ -20,7 +20,7 @@ export const WORLD = {
     crystalChance: 0.22,
   },
   ASTEROIDS: {
-    clustersPerSystem: { min: 2, max: 3 },
+    clustersPerSystem: { min: 3, max: 3 },
     perCluster: { min: 3, max: 6 },
     hpMin: 50,
     hpMax: 120,
@@ -52,7 +52,7 @@ export const WORLD = {
     turretOrbitSpeedMin: 0.01,
     turretOrbitSpeedMax: 0.03,
     turretShootCdMax: 1.2,
-    safeRadiusHighSec: 25,
+    safeRadiusHighSec: 1250,
     safeRadiusMidSec: 450,
     safeRadiusLowSec: 320,
     turretCountHome: 3,

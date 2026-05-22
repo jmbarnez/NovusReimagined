@@ -1,14 +1,30 @@
 import { Container, Sprite, Texture, Filter, UniformGroup } from "pixi.js";
+import type { System } from "../types/world.js";
 import { defaultFilterVert } from "pixi.js";
 import { NOISE_GLSL } from "./shaders/noise.glsl.js";
 import { mkRng } from "../utils/math.js";
-import { Client } from "../state.js";
-import { HUD_SIDE_W, HUD_BOTTOM_H } from "../constants.js";
+import { W, H } from "../canvas.js";
+
+interface NebulaUniforms {
+  uTime: number;
+  uCamera: Float32Array;
+  uDensity: number;
+  uColor0: { set(v: [number, number, number]): void };
+  uColor1: { set(v: [number, number, number]): void };
+  uColor2: { set(v: [number, number, number]): void };
+  uOffset: Float32Array;
+  uAspect: { set(v: number[]): void };
+  uRidgeFactor: number;
+  uWarpStrength: number;
+  uLaneDir: { set(v: number[]): void };
+  [key: string]: unknown;
+}
 
 
 let _sprite: Sprite | null = null;
 let _filter: Filter | null = null;
 let _ug: UniformGroup | null = null;
+const _nebulaSessionSeed = Date.now();
 
 // ── GLSL fragment shader ───────────────────────────────────────────────────
 const FRAG = `#version 300 es
@@ -117,20 +133,21 @@ export function initNebulaMesh(parent: Container) {
 
 export function updateNebulaMesh(now: number, camX: number, camY: number) {
   if (!_ug) return;
-  const u = _ug.uniforms as any;
+  const u = _ug.uniforms as unknown as NebulaUniforms;
   u.uTime = now;
   u.uCamera[0] = camX;
   u.uCamera[1] = camY;
 }
 
-export function setNebulaSystem(sys: any) {
+export function setNebulaSystem(sys: System) {
   if (!_ug) return;
-  const u = _ug.uniforms as any;
+  const u = _ug.uniforms as unknown as NebulaUniforms;
 
   if (_sprite) _sprite.visible = true;
   if (!sys) return;
 
-  const rng = mkRng(sys.id + "-neb-gpu-v2");
+  // Vary the generated background nebula by session launch time
+  const rng = mkRng(sys.id + "-neb-gpu-v2-" + _nebulaSessionSeed);
 
   // Procedural density / coverage / brightness multiplier
   // yielding values between 0.35 and 0.90 for rich coverage variations
@@ -166,7 +183,7 @@ export function setNebulaSystem(sys: any) {
   _applyArchetype(u, sys.archetype ?? "wisps", rng);
 }
 
-function _applyArchetype(u: any, arch: string, rng: () => number) {
+function _applyArchetype(u: NebulaUniforms, arch: string, rng: () => number) {
   let aspect = [1.0, 1.0];
   let ridge  = 0.0;
   let warp   = 1.0;
@@ -218,10 +235,8 @@ function _applyArchetype(u: any, arch: string, rng: () => number) {
 
 export function resizeNebulaMesh() {
   if (!_sprite) return;
-  const uiRight  = Client.gameStarted ? HUD_SIDE_W  : 0;
-  const uiBottom = Client.gameStarted ? HUD_BOTTOM_H : 0;
-  _sprite.width  = Math.max(1, window.innerWidth  - uiRight);
-  _sprite.height = Math.max(1, window.innerHeight - uiBottom);
+  _sprite.width  = Math.max(1, W());
+  _sprite.height = Math.max(1, H());
 }
 
 export function destroyNebulaMesh() {

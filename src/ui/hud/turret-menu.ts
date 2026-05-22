@@ -1,5 +1,6 @@
 import "../styles/hud-turret-menu.css";
 import { G } from "../../state.js";
+import { PlayerAccess } from "../../state-access.js";
 import { MODULES } from "../../data/modules.js";
 import { TURRET_POWER_CYCLE_S } from "../../constants.js";
 import { sfxPowerCycle } from "../../audio/procedural.js";
@@ -11,7 +12,7 @@ import { getInstance } from "../../utils/items.js";
 export function onTurretContextMenu(e: MouseEvent, rack: string, idx: number) {
   e.preventDefault();
   e.stopPropagation();
-  const modId = (G.P.fitting as any)[rack]?.[idx];
+  const modId = G.P.fitting[rack]?.[idx];
   if (!modId) return;
   showTurretCtxMenu(e.clientX, e.clientY, idx);
 }
@@ -56,15 +57,15 @@ export function onCtxItemClick(e: Event) {
   if (action === "toggle-power") {
     const cycling = (G.P.turretPowerCd?.[idx] || 0) > 0;
     if (cycling) return;
-    G.P.turretPower[idx] = !G.P.turretPower[idx];
-    G.P.turretPowerCd[idx] = TURRET_POWER_CYCLE_S;
+    PlayerAccess.setTurretPower(idx, !G.P.turretPower[idx]);
+    PlayerAccess.setTurretPowerCd(idx, TURRET_POWER_CYCLE_S);
     sfxPowerCycle(G.P.turretPower[idx]);
     const uid = G.P.fitting.turret?.[idx];
     const inst = uid ? getInstance(uid) : null;
     const m = inst ? MODULES[inst.baseId] : null;
     floatText(G.P.x, G.P.y - 30, `${m?.short || "Turret"} ${G.P.turretPower[idx] ? "POWERING UP" : "POWERING DOWN"}`, "#88ccff");
   } else if (action === "clear-target") {
-    G.P.turretTargets[idx] = null;
+    PlayerAccess.setTurretTarget(idx, null);
     floatText(G.P.x, G.P.y - 30, "TURRET UNASSIGNED", "#ffaa44");
   }
 }

@@ -2,7 +2,6 @@ export const hudState = {
   root: null as HTMLElement | null,
   sysName: null as HTMLElement | null,
   secEl: null as HTMLElement | null,
-  speedEl: null as HTMLElement | null,
   lockRail: null as HTMLElement | null,
   ovEntries: null as HTMLElement | null,
   ovPanel: null as HTMLElement | null,
@@ -18,6 +17,7 @@ export const hudState = {
   lastSlotState: "",
 
   turretCtxMenu: null as HTMLElement | null,
+  enemyCtxMenu: null as HTMLElement | null,
 
   logEntries: null as HTMLElement | null,
 
@@ -29,6 +29,7 @@ export const hudState = {
 
   minimapContainer: null as HTMLElement | null,
   scannerDock: null as HTMLElement | null,
+  pickupContainer: null as HTMLElement | null,
 };
 
 export const MAX_LOG_ENTRIES = 50;

@@ -1,9 +1,9 @@
-import { MODULES } from "../../data/modules.js";
+import { MODULES, ModuleDef } from "../../data/modules.js";
 import type { MissionContract } from "../../data/missions.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 
 export const stationState = {
-  previewFitting: null as any,
+  previewFitting: null as Record<string, (string | null)[]> | null,
   _stationContracts: [] as MissionContract[],
   mktTab: "modules",
   mktRack: "all",
@@ -43,7 +43,7 @@ export const EFF_LABEL: Record<string, (v: number) => string> = {
   structuralMassMult:  v => `mass ×${v.toFixed(2)}`,
 };
 
-export function fmtModBonuses(m: any): string {
+export function fmtModBonuses(m: ModuleDef): string {
   const parts: string[] = [];
   if (m.weaponDelivery && m.damageProfile) {
     const dmg = Object.entries(m.damageProfile as Record<string,number>)
@@ -52,7 +52,12 @@ export function fmtModBonuses(m: any): string {
     if (m.optimalRange) parts.push(`rng ${m.optimalRange}${m.falloff ? `+${m.falloff}` : ""}km`);
     if (m.trackingSpeed != null) parts.push(`trk ${Math.round(m.trackingSpeed*100)}%`);
   }
-  if (m.mining) parts.push("mining laser");
+  if (m.mining) {
+    parts.push("mining laser");
+    if (m.optimalRange) {
+      parts.push(`rng ${m.optimalRange}m`);
+    }
+  }
   if (m.isSalvager) parts.push(`salvager +${((m.salvageRollBonus||0)*100).toFixed(0)}%`);
   for (const [k, v] of Object.entries(m.effects || {})) {
     if (v && EFF_LABEL[k]) parts.push(EFF_LABEL[k](v as number));

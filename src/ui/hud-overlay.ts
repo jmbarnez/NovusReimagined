@@ -2,6 +2,7 @@ import "./styles/hud-base.css";
 import "./styles/hud-sys-info.css";
 import "./styles/hud-status-bars.css";
 import "./styles/hud-misc.css";
+import "./styles/hud-pickup-toasts.css";
 import { G, Client } from "../state.js";
 import { HUD_BOTTOM_H } from "../constants.js";
 import { getTheme, getFontStack } from "../data/settings.js";
@@ -14,14 +15,19 @@ import { sfxConfirm } from "../audio/procedural.js";
 import { initMissionsPanel, updateMissionsPanel, getMissionsPanelEl } from "./hud-missions.js";
 import { renderInventoryHTML, attachInventoryListeners } from "./inventory.js";
 import { renderSkillsContent, initSkillsInteractions } from "./skills.js";
-import { toggleHudWindow, closeHudWindow } from "./hud/windows.js";
+import { toggleHudWindow, closeHudWindow, openHudWindow, isOpen } from "./hud/windows.js";
+import { collectHubOutput, hasHubOutput, fmtDuration } from "../hub.js";
 import "./styles/bridge.css";
 
 import { hudState } from "./hud/state.js";
 import { updateSlots } from "./hud/slots.js";
 import { updateLockRail } from "./hud/targeting.js";
-import { updateDockPrompt, updateHudOverviewPanel, updateHudOverviewPanelHeaders } from "./hud/overview.js";
+import { updateDockPrompt, updateHudOverviewPanel, updateHudOverviewPanelHeaders, initOverviewResizers } from "./hud/overview.js";
 import { hideTurretCtxMenu } from "./hud/turret-menu.js";
+import { hideEnemyCtxMenu } from "./hud/enemy-menu.js";
+import { buildShipPanelShell, attachShipPanelListeners, updateShipPanelLive } from "./hud/ship-panel.js";
+import { updateTractorDial } from "./hud/tractor-dial.js";
+import { updateHubTooltip } from "./hud/hub-tooltip.js";
 
 // Re-export specific pieces that were previously in this file so other imports don't break.
 export { logEvent } from "./hud/logs.js";
@@ -41,6 +47,7 @@ export function initHudOverlay() {
     <div id="hud-lock-rail"></div>
     <div id="hud-dock-prompt"></div>
     <div id="hud-xp-popup"></div>
+    <div id="hud-pickup-container"></div>
 
     <div id="hud-minimap"></div>
 
@@ -50,12 +57,7 @@ export function initHudOverlay() {
         <div id="hud-log-entries"></div>
       </div>
       <div id="hud-bottom-right">
-        <div id="hud-status-bars">
-          <div id="hud-speed" class="hud-bar-group">
-            <span class="hud-bar-label speed-label">SPD 0</span>
-            <div class="hud-bar-track"><span class="hud-bar-fill speed"></span></div>
-          </div>
-        </div>
+        <div id="hud-status-bars"></div>
         <div id="hud-slots"></div>
       </div>
       <div id="hud-scanner-dock">
@@ -63,7 +65,14 @@ export function initHudOverlay() {
           <div id="hud-overview-panel">
             <div class="ov-wrap">
               <table class="ov-table">
-                <thead><tr><th></th><th class="ov-sortable" data-sort="state">State</th><th class="ov-sortable" data-sort="class">Class</th><th class="ov-sortable" data-sort="name">Name</th><th class="ov-sortable" data-sort="dist">Dist</th><th>Act</th></tr></thead>
+                <thead><tr>
+                  <th style="width: 18px;"></th>
+                  <th class="ov-sortable" data-sort="state" style="width: 44px;"><span class="th-text">State</span><div class="ov-resizer"></div></th>
+                  <th class="ov-sortable" data-sort="class" style="width: 44px;"><span class="th-text">Class</span><div class="ov-resizer"></div></th>
+                  <th class="ov-sortable" data-sort="name" style="width: 65px;"><span class="th-text">Name</span><div class="ov-resizer"></div></th>
+                  <th class="ov-sortable" data-sort="dist" style="width: 50px;"><span class="th-text">Dist</span><div class="ov-resizer"></div></th>
+                  <th style="width: 35px;"><span class="th-text">Act</span></th>
+                </tr></thead>
                 <tbody></tbody>
               </table>
             </div>
@@ -71,6 +80,15 @@ export function initHudOverlay() {
         </div>
       </div>
     </div>
+
+    ${localStorage.getItem("novus-onboarded") ? "" : `
+    <div id="hud-onboard">
+      <div class="onboard-title">PILOT QUICKSTART</div>
+      <div class="onboard-line"><span class="onboard-k">Right-click</span> to move</div>
+      <div class="onboard-line"><span class="onboard-k">Left-click</span> to lock target</div>
+      <div class="onboard-line"><span class="onboard-k">1–0</span> to fire / activate modules</div>
+    </div>
+    `}
 
     <div id="hud-help">
       <div class="hh-sect">Flight</div>
@@ -93,6 +111,17 @@ export function initHudOverlay() {
     </div>
   `;
 
+  if (!localStorage.getItem("novus-onboarded")) {
+    setTimeout(() => {
+      const onboardEl = document.getElementById("hud-onboard");
+      if (onboardEl && !onboardEl.classList.contains("fade-out")) {
+        onboardEl.classList.add("fade-out");
+        setTimeout(() => onboardEl.remove(), 1000);
+        localStorage.setItem("novus-onboarded", "true");
+      }
+    }, 12000);
+  }
+
   // Bind references
   hudState.root = overlay;
   hudState.sysName = overlay.querySelector("#hud-sys-name");
@@ -101,10 +130,10 @@ export function initHudOverlay() {
   hudState.dockPrompt = overlay.querySelector("#hud-dock-prompt");
   hudState.xpPopup = overlay.querySelector("#hud-xp-popup");
   hudState.logEntries = overlay.querySelector("#hud-log-entries");
-  hudState.speedEl = overlay.querySelector("#hud-speed");
   hudState.slotsContainer = overlay.querySelector("#hud-slots");
   hudState.minimapContainer = overlay.querySelector("#hud-minimap");
   hudState.scannerDock = overlay.querySelector("#hud-scanner-dock");
+  hudState.pickupContainer = overlay.querySelector("#hud-pickup-container");
 
   // Status bars injection
   const bars = overlay.querySelector("#hud-status-bars")!;
@@ -147,12 +176,14 @@ export function initHudOverlay() {
     });
   });
   updateHudOverviewPanelHeaders();
+  initOverviewResizers(hudState.ovPanel!);
 
-  hudState.ovPanel!.addEventListener("click", (ev) => {
+  hudState.ovPanel!.addEventListener("mousedown", (ev) => {
     const btn = (ev.target as HTMLElement).closest(".ov-lock");
     if (!btn) return;
+    ev.stopPropagation();
     sfxConfirm();
-    const id = (btn as HTMLElement).dataset.lockId;
+    const id = btn.getAttribute("data-lock-id");
     if (id) requestSensorLock(id);
   });
 
@@ -165,12 +196,29 @@ export function initHudOverlay() {
     hudState.turretCtxMenu.id = "turret-ctx-menu";
     hudState.turretCtxMenu.style.display = "none";
     document.body.appendChild(hudState.turretCtxMenu);
-    document.addEventListener("click", (e) => {
-      if (hudState.turretCtxMenu && !hudState.turretCtxMenu.contains(e.target as Node)) hideTurretCtxMenu();
-    });
   } else {
     hudState.turretCtxMenu = document.getElementById("turret-ctx-menu");
   }
+
+  // Enemy context menu
+  if (!document.getElementById("enemy-ctx-menu")) {
+    hudState.enemyCtxMenu = document.createElement("div");
+    hudState.enemyCtxMenu.id = "enemy-ctx-menu";
+    hudState.enemyCtxMenu.style.display = "none";
+    document.body.appendChild(hudState.enemyCtxMenu);
+  } else {
+    hudState.enemyCtxMenu = document.getElementById("enemy-ctx-menu");
+  }
+
+  // Global context menus click listener
+  document.addEventListener("click", (e) => {
+    if (hudState.turretCtxMenu && !hudState.turretCtxMenu.contains(e.target as Node)) {
+      hideTurretCtxMenu();
+    }
+    if (hudState.enemyCtxMenu && !hudState.enemyCtxMenu.contains(e.target as Node)) {
+      hideEnemyCtxMenu();
+    }
+  });
 }
 
 export function destroyHudOverlay() {
@@ -188,6 +236,16 @@ export function destroyHudOverlay() {
 /* ── Update ── */
 export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   if (!hudState.root) return;
+
+  // Dismiss onboarding when pilot sets a waypoint/moves
+  if (!localStorage.getItem("novus-onboarded") && Client.waypoint !== null) {
+    const onboardEl = document.getElementById("hud-onboard");
+    if (onboardEl && !onboardEl.classList.contains("fade-out")) {
+      onboardEl.classList.add("fade-out");
+      setTimeout(() => onboardEl.remove(), 1000);
+      localStorage.setItem("novus-onboarded", "true");
+    }
+  }
 
   const sys = curSys();
   const st = getStats();
@@ -208,20 +266,6 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   if (hudState.secEl!.className !== secCls) hudState.secEl!.className = secCls;
 
   // Status bars
-  const speed = Math.hypot(G.P.vx, G.P.vy);
-  const maxSpeed = st.maxSpeed || 1;
-  const baseMax = st.baseMaxSpeed || 1;
-  const speedText = `${Math.round(speed)} m/s`;
-  const spdLbl = hudState.speedEl!.querySelector('.speed-label')!;
-  if (spdLbl.textContent !== speedText) spdLbl.textContent = speedText;
-  
-  const spdFill = hudState.speedEl!.querySelector('.hud-bar-fill') as HTMLElement;
-  const spdW = `${Math.max(0, Math.min(1, speed / maxSpeed)) * 100}%`;
-  if (spdFill.style.width !== spdW) spdFill.style.width = spdW;
-
-  const isOverdrive = speed > baseMax + 1;
-  if (isOverdrive && !spdFill.classList.contains('overdrive')) spdFill.classList.add('overdrive');
-  else if (!isOverdrive && spdFill.classList.contains('overdrive')) spdFill.classList.remove('overdrive');
 
   const barData = [
     [G.P.shield, st.maxShield],
@@ -238,23 +282,27 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   updateSlots(ship, st, now);
   updateLockRail(st, now);
   updateDockPrompt(sys);
+  updateHubWindowIfOpen();
+  updateTractorDial();
+  updateHubTooltip(sys);
   if (Client.overviewOpen) updateBridgeOverview();
   updateHudOverviewPanel();
   updateMissionsPanel();
+  updateShipPanelLive();
+
+  // Credits live in the Cargo Hold window footer now; keep it current while open.
+  const credEl = document.getElementById("inv-credits-value");
+  if (credEl) {
+    const credText = `${Math.floor(G.P.credits).toLocaleString()}¢`;
+    if (credEl.textContent !== credText) credEl.textContent = credText;
+  }
 }
 
 /* ── Public helpers for window toggling (called from input.ts) ── */
 export function toggleCargoWindow() {
-  const div = document.createElement("div");
-  div.id = "bridge-pane-cargo";
-  div.className = "br-pane";
-  div.style.height = "100%";
-  div.style.width = "100%";
-  div.style.overflow = "hidden";
-  div.style.display = "flex";
-  div.style.flexDirection = "column";
-  div.innerHTML = renderInventoryHTML();
-  toggleHudWindow("cargo", "Cargo Hold", div);
+  const shell = buildShipPanelShell();
+  toggleHudWindow("cargo", "SHIP", shell);
+  attachShipPanelListeners(shell);
   attachInventoryListeners();
 }
 
@@ -269,6 +317,92 @@ export function toggleSkillsWindow() {
   div.innerHTML = renderSkillsContent();
   toggleHudWindow("skills", "Skills", div);
   initSkillsInteractions(div);
+}
+
+export function toggleHubWindow() {
+  if (isOpen("industrial-hub")) {
+    closeHudWindow("industrial-hub");
+    return;
+  }
+  const div = document.createElement("div");
+  div.id = "hub-window-body";
+  div.style.cssText = "padding:10px;min-width:300px;max-width:380px;color:#e0e0e0;font-size:11px;";
+  renderHubWindowContent(div);
+  openHudWindow("industrial-hub", "Industrial Processing Hub", div);
+  attachHubWindowListeners(div);
+}
+
+function renderHubWindowContent(container: HTMLElement) {
+  const now = Date.now() / 1000;
+  const queue = G.P.hubQueue ?? [];
+  const output = G.P.hubOutput ?? { loot: {}, ore: {}, modules: [] };
+
+  let html = "";
+
+  if (queue.length > 0) {
+    html += `<div style="margin-bottom:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Processing Queue</div>`;
+    for (const job of queue) {
+      const elapsed = now - job.startTime;
+      const pct = Math.min(100, Math.floor((elapsed / job.duration) * 100));
+      const label = job.kind === "asteroid" ? "Asteroid" : "Debris";
+      const massTons = Math.round(job.mass / 100) / 10;
+      const remaining = Math.max(0, job.duration - elapsed);
+      html += `
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+            <span>${label} (${massTons}t)</span>
+            <span style="color:#888;">${remaining < 1 ? "Ready soon…" : fmtDuration(remaining)}</span>
+          </div>
+          <div style="background:#1a1a1a;border:1px solid #333;height:6px;border-radius:2px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${job.kind === "asteroid" ? "#ff8c20" : "#20aaff"};transition:width 0.5s;"></div>
+          </div>
+        </div>`;
+    }
+  } else {
+    html += `<div style="color:#666;font-style:italic;margin-bottom:8px;">No active processing jobs.<br>Tow debris or asteroids into the collection ring to begin.</div>`;
+  }
+
+  const hasOutput = hasHubOutput();
+  if (hasOutput) {
+    html += `<div style="margin-top:8px;margin-bottom:6px;color:#aaa;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Ready to Collect</div>`;
+    html += `<div style="background:#1e1a10;border:1px solid #4a3800;padding:6px 8px;border-radius:3px;margin-bottom:8px;">`;
+    for (const [k, v] of Object.entries(output.loot)) {
+      if ((v as number) > 0) html += `<div>${k}: <b style="color:#ffcc44;">${v}</b></div>`;
+    }
+    for (const [k, v] of Object.entries(output.ore)) {
+      if ((v as number) > 0) html += `<div>${k} ore: <b style="color:#ff9933;">${v}</b></div>`;
+    }
+    for (const inst of output.modules) {
+      html += `<div>Module: <b style="color:#99aaff;">${inst.baseId}</b></div>`;
+    }
+    html += `</div>`;
+    html += `<button id="hub-collect-btn" style="width:100%;padding:6px;background:#3a2a05;border:1px solid #ff9922;color:#ffcc44;cursor:pointer;border-radius:3px;font-size:11px;">Collect All</button>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function attachHubWindowListeners(container: HTMLElement) {
+  container.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest("#hub-collect-btn");
+    if (!btn) return;
+    const result = collectHubOutput();
+    const items = [
+      ...Object.entries(result.loot).filter(([, v]) => v > 0).map(([k, v]) => `${v}× ${k}`),
+      ...Object.entries(result.ore).filter(([, v]) => v > 0).map(([k, v]) => `${v}× ${k} ore`),
+      ...result.modules.map(m => m.baseId),
+    ];
+    if (items.length > 0) {
+      import("./hud/logs.js").then(m => m.logEvent(`Collected: ${items.join(", ")}`, "loot"));
+    }
+    renderHubWindowContent(container);
+  });
+}
+
+export function updateHubWindowIfOpen() {
+  if (!isOpen("industrial-hub")) return;
+  const body = document.getElementById("hub-window-body");
+  if (body) renderHubWindowContent(body);
 }
 
 export function toggleScannerDock() {
@@ -319,6 +453,7 @@ function applyTheme(themeId: string, fontId: string) {
   s.setProperty("--hud-hull", t.hull);
   s.setProperty("--hud-danger", t.danger);
   s.setProperty("--hud-cap", t.cap);
+  s.setProperty("--hud-arcane", t.arcane ?? "#8858a8");
   // Legacy aliases used by existing layout CSS (top/bottom bars).
   s.setProperty("--hud-top-bar", t.bgDeep);
   s.setProperty("--hud-top-border", t.border);

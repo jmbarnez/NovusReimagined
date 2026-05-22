@@ -115,7 +115,17 @@ export function updateVignette() {
   _sprite.visible = inSpace && enabled;
   if (!_sprite.visible) return;
 
-  const u = _ug.uniforms as any;
+  interface VignetteUniforms {
+    uShieldGlow: number;
+    uShieldAngle: number;
+    uHullGlow: number;
+    uHullAngle: number;
+    uStructureGlow: number;
+    uStructureAngle: number;
+    [key: string]: number;
+  }
+
+  const u = _ug.uniforms as unknown as VignetteUniforms;
   const player = getState().player;
   if (player) {
     u.uShieldGlow     = player.shieldHitGlow || 0;

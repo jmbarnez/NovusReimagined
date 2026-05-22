@@ -4,6 +4,18 @@ export function fmtCompact(n: number): string {
   return String(x);
 }
 
+export function formatDistance(meters: number): string {
+  if (meters < 2000) {
+    return `${Math.round(meters)} m`;
+  } else {
+    const km = meters / 1000;
+    if (Math.round(km * 10) % 10 === 0) {
+      return `${Math.round(km)} km`;
+    }
+    return `${km.toFixed(1)} km`;
+  }
+}
+
 export function hotkeyBadge(i: number): string {
   return i === 9 ? "0" : String(i + 1);
 }

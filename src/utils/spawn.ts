@@ -6,6 +6,7 @@ import { ModuleRarity } from "../data/moduleRarity.js";
 import { generateModuleInstance } from "../loot/generateModule.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import type { SpawnZone } from "../data/enemy-spawns.js";
+import type { System, Enemy, EnemyFitting } from "../types/world.js";
 
 function makeStockInstance(baseId: string): ModuleInstance {
   return {
@@ -19,10 +20,10 @@ function makeStockInstance(baseId: string): ModuleInstance {
   };
 }
 
-function buildEnemyFitting(type: string, level: number, f: () => number): Record<string, (string | null)[]> {
+export function buildEnemyFitting(type: string, level: number, f: () => number): EnemyFitting {
   const def = ENEMY_DEFS[type];
-  const fitting: Record<string, (string | null)[]> = { turret: [], high: [], med: [], low: [] };
-  if (!def.slots) return fitting;
+  const fitting: Record<string, (string | null)[]> & { _tempInstances?: ModuleInstance[] } = { turret: [], high: [], med: [], low: [] };
+  if (!def.slots) return fitting as EnemyFitting;
 
   const lootPool = def.moduleLoot?.map(l => l.id) || [];
 
@@ -54,11 +55,11 @@ function buildEnemyFitting(type: string, level: number, f: () => number): Record
   if (def.slots.med) fillRack("med", def.slots.med);
   if (def.slots.low) fillRack("low", def.slots.low);
 
-  (fitting as any)._tempInstances = tempInstances;
-  return fitting;
+  fitting._tempInstances = tempInstances;
+  return fitting as EnemyFitting;
 }
 
-export function buildEnemyFromSpawn(sys: any, zone: SpawnZone, entry: { type: string; count: number; level: number }, idx: number, f: () => number): Record<string, any> {
+export function buildEnemyFromSpawn(sys: System, zone: SpawnZone, entry: { type: string; count: number; level: number }, idx: number, f: () => number): Enemy {
   const def = ENEMY_DEFS[entry.type];
   const ang = f() * TAU;
   const rad = Math.sqrt(f()) * zone.radius;
@@ -70,7 +71,7 @@ export function buildEnemyFromSpawn(sys: any, zone: SpawnZone, entry: { type: st
   const structure = Math.ceil((def.baseStructure ?? 0) * (1 + entry.level * 0.2));
   const credits = Math.floor((def.credits ?? 4) * (1 + entry.level * 0.5));
 
-  const en: Record<string, any> = {
+  const en: Enemy = {
     id: `en-${sys.id}-z${idx}`,
     type: entry.type,
     name: def.name,

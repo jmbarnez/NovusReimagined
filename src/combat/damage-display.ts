@@ -1,4 +1,5 @@
 import { G, Client } from "../state.js";
+import { PlayerAccess } from "../state-access.js";
 import { floatText, spawnImpactFlash, spawnParticles } from "../utils/fx.js";
 import { respawnPlayer } from "../utils/game.js";
 import { sfxShieldImpact, sfxHullImpact } from "../audio/procedural.js";
@@ -65,9 +66,9 @@ function damageRandomModule(amount: number) {
   const m = MODULES[inst.baseId];
   if (inst.durability <= 0) {
     inst.durability = 0;
-    G.P.slotActive[pick.rack][pick.idx] = false;
+    PlayerAccess.setSlotActive(pick.rack, pick.idx, false);
     if (pick.rack === "turret" && G.P.turretPower) {
-      G.P.turretPower[pick.idx] = false;
+      PlayerAccess.setTurretPower(pick.idx, false);
     }
     invalidate();
     const msg = m ? `${m.short || m.name} OFFLINE — critically damaged` : "Module OFFLINE";
@@ -89,14 +90,14 @@ export function damagePlayer(rawDmg: number, sourceX: number, sourceY: number, o
   let overflow = 0;
 
   if (G.P.shield > 0) {
-    G.P.shield -= rawDmg;
-    G.P.shieldHitGlow = 1;
-    G.P.shieldHitAngle = Math.atan2(sourceY - G.P.y, sourceX - G.P.x);
-    Client.combatHeat = Math.min(1, (Client.combatHeat || 0) + 0.35);
+    PlayerAccess.setShield(G.P.shield - rawDmg);
+    PlayerAccess.setShieldHitGlow(1);
+    PlayerAccess.setShieldHitAngle(Math.atan2(sourceY - G.P.y, sourceX - G.P.x));
+    PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.35));
     sfxShieldImpact(Math.min(1, rawDmg / 20));
     if (G.P.shield < 0) {
       overflow = -G.P.shield;
-      G.P.shield = 0;
+      PlayerAccess.setShield(0);
     }
   } else {
     overflow = rawDmg;
@@ -104,14 +105,14 @@ export function damagePlayer(rawDmg: number, sourceX: number, sourceY: number, o
 
   if (overflow > 0) {
     if (G.P.hp > 0) {
-      G.P.hp -= Math.ceil(overflow);
+      PlayerAccess.setHp(G.P.hp - Math.ceil(overflow));
       displayType = "hull";
-      G.P.hullHitGlow = 1;
-      G.P.hullHitAngle = Math.atan2(sourceY - G.P.y, sourceX - G.P.x);
-      Client.combatHeat = Math.min(1, (Client.combatHeat || 0) + 0.55);
+      PlayerAccess.setHullHitGlow(1);
+      PlayerAccess.setHullHitAngle(Math.atan2(sourceY - G.P.y, sourceX - G.P.x));
+      PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.55));
       if (G.P.hp < 0) {
         overflow = -G.P.hp;
-        G.P.hp = 0;
+        PlayerAccess.setHp(0);
       } else {
         overflow = 0;
       }
@@ -121,10 +122,10 @@ export function damagePlayer(rawDmg: number, sourceX: number, sourceY: number, o
   }
 
   if (overflow > 0) {
-    G.P.structure -= Math.ceil(overflow);
+    PlayerAccess.setStructure(G.P.structure - Math.ceil(overflow));
     displayType = "structure";
-    G.P.structureHitGlow = 1;
-    G.P.structureHitAngle = Math.atan2(sourceY - G.P.y, sourceX - G.P.x);
+    PlayerAccess.setStructureHitGlow(1);
+    PlayerAccess.setStructureHitAngle(Math.atan2(sourceY - G.P.y, sourceX - G.P.x));
     if (G.P.hp <= 0 && Math.random() < MODULE_DAMAGE_CHANCE) {
       damageRandomModule(overflow);
     }
@@ -140,7 +141,7 @@ export function damagePlayer(rawDmg: number, sourceX: number, sourceY: number, o
   }
 
   if (G.P.structure <= 0) {
-    G.P.structure = 0;
+    PlayerAccess.setStructure(0);
     respawnPlayer();
   }
 }

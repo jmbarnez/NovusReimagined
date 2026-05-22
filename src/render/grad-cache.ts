@@ -112,3 +112,50 @@ export function getAsteroidBodyGrad(
     return g;
   });
 }
+
+const _shieldBubbleCache = new Map<string, CanvasGradient>();
+const _shieldImpactCache = new Map<string, CanvasGradient>();
+const _hullSparkCache = new Map<string, CanvasGradient>();
+
+/** Cache player/enemy shield bubble gradients. Modulated via globalAlpha. */
+export function getShieldBubbleGrad(c: CanvasRenderingContext2D, offset: number, shieldR: number): CanvasGradient {
+  const ob = Math.round(offset);
+  const rb = Math.max(1, Math.round(shieldR));
+  const key = `${ob}|${rb}`;
+  return cached(_shieldBubbleCache, key, 100, () => {
+    const g = c.createRadialGradient(-ob, -ob * 1.2, ob * 0.4, 0, 0, rb);
+    g.addColorStop(0,    `rgba(30,100,180,${0.12 * 0.15})`);
+    g.addColorStop(0.5,  `rgba(40,140,210,${0.12 * 0.4})`);
+    g.addColorStop(0.78, `rgba(50,170,240,${0.12 * 0.75})`);
+    g.addColorStop(0.88, `rgba(80,200,255,${0.12 * 1.0})`);
+    g.addColorStop(0.94, `rgba(100,220,255,${0.12 * 0.7})`);
+    g.addColorStop(1,    `rgba(40,120,200,0)`);
+    return g;
+  });
+}
+
+/** Cache shield impact flash gradients. Centered at the origin (translate first). */
+export function getShieldImpactGrad(c: CanvasRenderingContext2D, flashSz: number): CanvasGradient {
+  const fs = Math.max(1, Math.round(flashSz));
+  return cached(_shieldImpactCache, `${fs}`, 100, () => {
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, fs);
+    g.addColorStop(0,   "rgba(230,250,255,1.0)");
+    g.addColorStop(0.35,"rgba(150,220,255,0.55)");
+    g.addColorStop(0.7, "rgba(80,190,255,0.15)");
+    g.addColorStop(1,   "rgba(40,150,255,0)");
+    return g;
+  });
+}
+
+/** Cache player/enemy hull impact sparks. Centered at the origin with bucketed radius. */
+export function getHullSparkGrad(c: CanvasRenderingContext2D, radius: number): CanvasGradient {
+  const rb = Math.max(1, Math.round(radius));
+  return cached(_hullSparkCache, `${rb}`, 50, () => {
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, rb);
+    g.addColorStop(0, "rgba(255,255,220,0.95)");
+    g.addColorStop(0.25, "rgba(255,180,60,0.7)");
+    g.addColorStop(0.6, "rgba(255,100,30,0.25)");
+    g.addColorStop(1, "rgba(200,50,10,0)");
+    return g;
+  });
+}

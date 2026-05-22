@@ -3,7 +3,16 @@ import { ctx, W, H } from "../canvas.js";
 import { TAU } from "../constants.js";
 import { shipPath } from "./world.js";
 
-const _dust: any[] = [];
+interface InteriorDust {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  r: number;
+  alpha: number;
+}
+
+const _dust: InteriorDust[] = [];
 for (let i = 0; i < 40; i++) {
   _dust.push({
     x: Math.random(),
@@ -15,7 +24,16 @@ for (let i = 0; i < 40; i++) {
   });
 }
 
-let _sparks: any[] = [];
+interface InteriorSpark {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  color: string;
+}
+
+let _sparks: InteriorSpark[] = [];
 let _nextSpark = 0;
 
 export function drawStationInterior(Wc: number, Hc: number, now: number) {

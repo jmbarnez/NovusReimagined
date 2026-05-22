@@ -15,6 +15,7 @@ import { progressMissions } from "./data/missions.js";
 import { showDamageNumber } from "./combat/damage-display.js";
 import { sfxWeaponFire, sfxShipExplosion, sfxProjectileImpact } from "./audio/procedural.js";
 import { spawnWreck } from "./wreck.js";
+import { destroyAsteroid } from "./utils/mining.js";
 import { C } from "./config/index.js";
 import type { Enemy, Asteroid, WreckPiece } from "./types/world.js";
 import type { ModuleInstance } from "./types/moduleInstance.js";
@@ -101,9 +102,6 @@ export function updateTurretCooldowns(dt: number) {
   const n = G.P.turretCds?.length || 0;
   for (let i = 0; i < n; i++) {
     if ((G.P.turretCds[i] || 0) > 0) G.P.turretCds[i] -= dt;
-  }
-  if (Client.mouse.firing) {
-    fireSelectedTurret(true);
   }
 
   const turretSlots = G.P.fitting?.turret || [];
@@ -340,7 +338,8 @@ export function damageAsteroid(a: Asteroid, dmg: number, px: number, py: number)
   spawnParticles(px || a.x, py || a.y, "#4488ff", 1, 50);
   if (a.hp <= 0) {
     a.depleted = true;
-    spawnParticles(a.x, a.y, "#4488ff", 3, 60);
+    a.respawnTimer = 60 + Math.random() * 60;
+    destroyAsteroid(a, false);
   }
 }
 
@@ -355,17 +354,27 @@ export function killEnemy(e: Enemy) {
 
   const playerParticipated = e._lastPlayerHitAt && (performance.now() - e._lastPlayerHitAt) < PLAYER_PARTICIPATION_WINDOW_MS;
   if (playerParticipated) {
-    G.P.kills++;
-    progressMissions("bounty", 1, e.type);
-    addXp(XP_PER_KILL);
-    const kind: WeaponDelivery = (e._lastPlayerHitKind as WeaponDelivery) ?? "projectile";
-    const skillId = WEAPON_SKILL[kind];
-    addSkillXp(skillId, 25);
-    floatText(e.x, e.y - 35, `+${XP_PER_KILL} XP`, "#aaddff");
-    logEvent(`Destroyed ${e.name} — +${XP_PER_KILL} XP · ~${e.credits} CR loot`, "combat");
-    spawnWreck(e);
+    if (e.faction !== "neutral") {
+      G.P.kills++;
+      progressMissions("bounty", 1, e.type);
+      addXp(XP_PER_KILL);
+      const kind: WeaponDelivery = (e._lastPlayerHitKind as WeaponDelivery) ?? "projectile";
+      const skillId = WEAPON_SKILL[kind];
+      addSkillXp(skillId, 25);
+      floatText(e.x, e.y - 35, `+${XP_PER_KILL} XP`, "#aaddff");
+      logEvent(`Destroyed ${e.name} — +${XP_PER_KILL} XP · ~${e.credits} CR loot`, "combat");
+      spawnWreck(e);
+    } else {
+      logEvent(`Destroyed ambient ship: ${e.name}`, "combat");
+      spawnWreck(e);
+    }
   } else {
-    floatText(e.x, e.y - 35, "Turret Kill", "#88aacc");
+    if (e.faction === "neutral") {
+      logEvent(`Ambient ship destroyed: ${e.name}`, "combat");
+    } else {
+      floatText(e.x, e.y - 35, "Turret Kill", "#88aacc");
+    }
+    spawnWreck(e);
   }
 }
 

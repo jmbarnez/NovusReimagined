@@ -2,7 +2,7 @@ import "../styles/station-hangar.css";
 import { G, Client } from "../../state.js";
 import { SHIPS } from "../../data/ships.js";
 import { MODULES } from "../../data/modules.js";
-import { getStats, computeStats } from "../../player/player-stats.js";
+import { getStats, computeStats, ComputedStats } from "../../player/player-stats.js";
 import { escHtml } from "../../utils/format.js";
 import { MODULE_HP_MAX } from "../../constants.js";
 import { stationState, CONTRACT_TYPE_ICONS, fmtModBonuses, iconSvg } from "./shared.js";
@@ -11,8 +11,8 @@ import { ModuleInstance } from "../../types/moduleInstance.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { poolItemLabel } from "../../data/industryRecipes.js";
 
-export function buildStatHtml(st: any, pst: any): string {
-  const getValue = (obj: any, k: string) => k.split('.').reduce((o: any, i: string) => o?.[i], obj);
+export function buildStatHtml(st: ComputedStats, pst: ComputedStats | null): string {
+  const getValue = (obj: unknown, k: string): unknown => k.split('.').reduce((o: unknown, i: string) => (o as Record<string, unknown>)?.[i], obj);
   const renderStat = (label: string, key: string, unit: string = "", invert: boolean = false, maxKey?: string) => {
     const cur = getValue(st, key) as number;
     const curMax = maxKey ? getValue(st, maxKey) as number : null;
@@ -98,7 +98,7 @@ function renderSlot(rack: string, i: number, instanceId: string | null): string 
   if (instance && m) {
     const hp = G.P.moduleHp?.[rack]?.[i] ?? MODULE_HP_MAX;
     const durPct = Math.round((instance.durability / instance.maxDurability) * 100);
-    const dmgTag = instance.durability <= 0 ? ` <span style="color:#ff4444">[OFFLINE]</span>` : durPct < 100 ? ` <span style="color:#ff8844">[DUR ${durPct}%]</span>` : "";
+    const dmgTag = instance.durability <= 0 ? ` <span style="color:var(--hud-danger)">[OFFLINE]</span>` : durPct < 100 ? ` <span style="color:var(--hud-hull)">[DUR ${durPct}%]</span>` : "";
     const bonuses = fmtModBonuses(m);
     const affixStr = fmtAffixesShort(instance.affixes);
     const rarityCfg = RARITY_CONFIG[instance.rarity];
@@ -235,7 +235,7 @@ export function renderHangar() {
     <aside>
       <h3>Ship Statistics</h3>
       <div class="st-stats-grid" id="hangar-stats-grid">${buildStatHtml(st, pst)}</div>
-      <div id="hangar-stats-warn" style="margin-top:16px; font-size:10px; color:#3d5060; line-height:1.4;">
+      <div id="hangar-stats-warn" style="margin-top:16px; font-size:10px; color:var(--hud-text-faint); line-height:1.4;">
         ${pgOv ? `<div class="al">⚠ Powergrid overloaded! Stats penalized.</div>` : ""}
         ${cpuOv ? `<div class="al">⚠ CPU overloaded! Active modules disabled.</div>` : ""}
         <span>Hover slots to preview changes.</span>

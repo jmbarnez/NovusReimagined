@@ -1,9 +1,10 @@
-import { getState } from "../state-access.js";
-import { G, Client } from "../state.js";
+import { getState, WorldAccess } from "../state-access.js";
+import { Client } from "../state.js";
 import { ctx } from "../canvas.js";
 import { TAU } from "../constants.js";
 import { mkRng, rf } from "../utils/math.js";
 import { _pixiReady } from "../pixi.js";
+import type { System, Star, Silhouette } from "../types/world.js";
 
 const STAR_FAR_PARALLAX = 0.006;
 const STAR_MID_PARALLAX = 0.018;
@@ -21,7 +22,7 @@ function getDetailMult(): number {
 }
 
 /** Draw a single star layer with wrapping. scintillateAmt > 0 adds a twinkle. */
-function drawStarLayer(stars: any[], wrapW: number, parallaxRate: number, Wc: number, Hc: number, starHueBase: number, camX: number, camY: number, now: number, scintillateAmt = 0, tintRGB?: [number, number, number], tintMix = 0) {
+function drawStarLayer(stars: Star[], wrapW: number, parallaxRate: number, Wc: number, Hc: number, starHueBase: number, camX: number, camY: number, now: number, scintillateAmt = 0, tintRGB?: [number, number, number], tintMix = 0) {
   const offX = camX * parallaxRate;
   const offY = camY * parallaxRate;
   const useTint = tintRGB && tintMix > 0;
@@ -102,12 +103,12 @@ function drawDust(Wc: number, Hc: number, now: number, camX: number, camY: numbe
 const SILHOUETTE_PARALLAX = 0.05;
 const WRAP_SILH = 5200;
 
-function ensureSilhouettes(sys: any) {
+function ensureSilhouettes(sys: System) {
   if (sys._silhouettes) return;
   const rng = mkRng(sys.id + "-silh");
   const archetype = sys.archetype || "wisps";
   const baseCount = archetype === "void" ? 2 : archetype === "dense" ? 5 : 4;
-  const out: any[] = [];
+  const out: Silhouette[] = [];
   for (let i = 0; i < baseCount; i++) {
     const kind = rng() < 0.6 ? "giant" : "derelict";
     const r = kind === "giant" ? rf(rng, 110, 260) : rf(rng, 22, 48);
@@ -131,16 +132,17 @@ function ensureSilhouettes(sys: any) {
   sys._silhouettes = out;
 }
 
-function drawSilhouettes(Wc: number, Hc: number, sys: any, camX: number, camY: number) {
+function drawSilhouettes(Wc: number, Hc: number, sys: System, camX: number, camY: number) {
   ensureSilhouettes(sys);
   const tint = sys.tintRGB || [200, 200, 200];
   const offX = camX * SILHOUETTE_PARALLAX;
   const offY = camY * SILHOUETTE_PARALLAX;
   ctx.save();
-  for (const s of sys._silhouettes as any[]) {
+  for (const s of sys._silhouettes ?? []) {
     let cx = ((s.x - offX) % WRAP_SILH + WRAP_SILH) % WRAP_SILH - WRAP_SILH * 0.5 + Wc * 0.5;
     let cy = ((s.y - offY) % WRAP_SILH + WRAP_SILH) % WRAP_SILH - WRAP_SILH * 0.5 + Hc * 0.5;
     if (cx + s.r < 0 || cx - s.r > Wc || cy + s.r < 0 || cy - s.r > Hc) continue;
+
     if (s.kind === "giant") {
       // Distant gas giant — atmospheric body with sun-side highlight + soft rim.
       const sunDir = sys.sunDir ?? 0;
@@ -150,21 +152,40 @@ function drawSilhouettes(Wc: number, Hc: number, sys: any, camX: number, camY: n
       const shadeCol = `hsl(${s.baseHue},${Math.max(10, s.sat - 12)}%,${Math.max(4, s.lit - 22)}%)`;
       const litCol   = `hsl(${s.baseHue},${Math.min(80, s.sat + 8)}%,${Math.min(72, s.lit + 28)}%)`;
 
+      if (!s._gradCache) {
+        const bg = ctx.createRadialGradient(litX * 0.3, litY * 0.3, s.r * 0.15, 0, 0, s.r);
+        bg.addColorStop(0.0, bodyCol);
+        bg.addColorStop(0.55, bodyCol);
+        bg.addColorStop(1.0, shadeCol);
+
+        const lg = ctx.createRadialGradient(litX, litY, 0, litX, litY, s.r * 0.95);
+        lg.addColorStop(0.0, `hsla(${s.baseHue},${Math.min(80, s.sat + 8)}%,${Math.min(72, s.lit + 28)}%,0.55)`);
+        lg.addColorStop(0.4, `hsla(${s.baseHue},${s.sat}%,${Math.min(60, s.lit + 14)}%,0.18)`);
+        lg.addColorStop(1.0, "rgba(0,0,0,0)");
+
+        let rg: CanvasGradient | undefined;
+        if (s.hasRing) {
+          const rR = s.r * 1.55, rW = s.r * 0.10;
+          rg = ctx.createRadialGradient(0, 0, rR - rW, 0, 0, rR + rW);
+          rg.addColorStop(0.0, "rgba(0,0,0,0)");
+          rg.addColorStop(0.5, `hsla(${s.baseHue},${s.sat}%,${Math.min(70, s.lit + 20)}%,0.55)`);
+          rg.addColorStop(1.0, "rgba(0,0,0,0)");
+        }
+
+        s._gradCache = { bg, lg, rg };
+      }
+
       ctx.save();
       ctx.translate(cx, cy);
 
       // Optional back-half of ring (drawn first so the planet body occludes it).
-      if (s.hasRing) {
+      if (s.hasRing && s._gradCache?.rg) {
         ctx.save();
         ctx.rotate(sunDir);
         ctx.scale(1, s.ringTilt);
         const rR = s.r * 1.55, rW = s.r * 0.10;
-        const rg = ctx.createRadialGradient(0, 0, rR - rW, 0, 0, rR + rW);
-        rg.addColorStop(0.0, "rgba(0,0,0,0)");
-        rg.addColorStop(0.5, `hsla(${s.baseHue},${s.sat}%,${Math.min(70, s.lit + 20)}%,0.55)`);
-        rg.addColorStop(1.0, "rgba(0,0,0,0)");
         ctx.beginPath(); ctx.arc(0, 0, rR, Math.PI, TAU);
-        ctx.strokeStyle = rg as any;
+        ctx.strokeStyle = s._gradCache.rg;
         ctx.lineWidth = rW * 2;
         ctx.stroke();
         ctx.restore();
@@ -172,21 +193,13 @@ function drawSilhouettes(Wc: number, Hc: number, sys: any, camX: number, camY: n
 
       // Body — dark-to-shaded gradient
       ctx.globalAlpha = 0.88;
-      const bg = ctx.createRadialGradient(litX * 0.3, litY * 0.3, s.r * 0.15, 0, 0, s.r);
-      bg.addColorStop(0.0, bodyCol);
-      bg.addColorStop(0.55, bodyCol);
-      bg.addColorStop(1.0, shadeCol);
-      ctx.fillStyle = bg;
+      ctx.fillStyle = s._gradCache.bg;
       ctx.beginPath(); ctx.arc(0, 0, s.r, 0, TAU); ctx.fill();
 
       // Sun-facing crescent highlight (clipped to body)
       ctx.save();
       ctx.beginPath(); ctx.arc(0, 0, s.r, 0, TAU); ctx.clip();
-      const lg = ctx.createRadialGradient(litX, litY, 0, litX, litY, s.r * 0.95);
-      lg.addColorStop(0.0, `hsla(${s.baseHue},${Math.min(80, s.sat + 8)}%,${Math.min(72, s.lit + 28)}%,0.55)`);
-      lg.addColorStop(0.4, `hsla(${s.baseHue},${s.sat}%,${Math.min(60, s.lit + 14)}%,0.18)`);
-      lg.addColorStop(1.0, "rgba(0,0,0,0)");
-      ctx.fillStyle = lg;
+      ctx.fillStyle = s._gradCache.lg;
       ctx.fillRect(-s.r, -s.r, s.r * 2, s.r * 2);
       ctx.restore();
 
@@ -201,17 +214,13 @@ function drawSilhouettes(Wc: number, Hc: number, sys: any, camX: number, camY: n
       ctx.stroke();
 
       // Front-half of ring (in front of planet)
-      if (s.hasRing) {
+      if (s.hasRing && s._gradCache?.rg) {
         ctx.save();
         ctx.rotate(sunDir);
         ctx.scale(1, s.ringTilt);
         const rR = s.r * 1.55, rW = s.r * 0.10;
-        const rg = ctx.createRadialGradient(0, 0, rR - rW, 0, 0, rR + rW);
-        rg.addColorStop(0.0, "rgba(0,0,0,0)");
-        rg.addColorStop(0.5, `hsla(${s.baseHue},${s.sat}%,${Math.min(70, s.lit + 20)}%,0.55)`);
-        rg.addColorStop(1.0, "rgba(0,0,0,0)");
         ctx.beginPath(); ctx.arc(0, 0, rR, 0, Math.PI);
-        ctx.strokeStyle = rg as any;
+        ctx.strokeStyle = s._gradCache.rg;
         ctx.lineWidth = rW * 2;
         ctx.stroke();
         ctx.restore();
@@ -278,14 +287,13 @@ export function initBackgroundStars(detail = "high") {
     drift: 0.01 + Math.random() * 0.015,
     parallax: 0.10 + Math.random() * 0.10,
   }));
-  // Direct assignment is acceptable here during initialization
-  G.STARS_FAR = starsFar;
-  G.STARS = stars;
-  G.STARS_NEAR = starsNear;
-  G.DUST = dust;
+  WorldAccess.setStarsFar(starsFar);
+  WorldAccess.setStars(stars);
+  WorldAccess.setStarsNear(starsNear);
+  WorldAccess.setDust(dust);
 }
 
-export function drawBackground(Wc: number, Hc: number, sys: any, now: number, camX: number, camY: number) {
+export function drawBackground(Wc: number, Hc: number, sys: System, now: number, camX: number, camY: number) {
   if (!sys) return;
   const state = getState();
 

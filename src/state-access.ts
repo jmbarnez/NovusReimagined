@@ -15,7 +15,11 @@
  *   PlayerAccess.modifyCredits(500);
  */
 
-import { G, type GameState, type Player } from "./state.js";
+import { G, Client, type GameState, type Player } from "./state.js";
+import type { ModuleInstance } from "./types/moduleInstance.js";
+import type { LockSlot } from "./types/world.js";
+import type { CraftJob } from "./data/industryRecipes.js";
+import type { MissionContract } from "./data/missions.js";
 
 // ─── Read-only snapshot interface ────────────────────────────────────────────
 
@@ -80,16 +84,21 @@ export const PlayerAccess = {
   /** Update player position & velocity in one call. */
   updatePhysics(data: {
     x?: number; y?: number;
+    px?: number; py?: number;
     vx?: number; vy?: number; va?: number;
-    angle?: number; thrustFx?: boolean;
+    angle?: number; prevAngle?: number;
+    thrustFx?: boolean;
   }) {
     const p = G.P;
     if (data.x !== undefined) p.x = data.x;
     if (data.y !== undefined) p.y = data.y;
+    if (data.px !== undefined) p.px = data.px;
+    if (data.py !== undefined) p.py = data.py;
     if (data.vx !== undefined) p.vx = data.vx;
     if (data.vy !== undefined) p.vy = data.vy;
     if (data.va !== undefined) p.va = data.va;
     if (data.angle !== undefined) p.angle = data.angle;
+    if (data.prevAngle !== undefined) p.prevAngle = data.prevAngle;
     if (data.thrustFx !== undefined) p.thrustFx = data.thrustFx;
   },
 
@@ -201,12 +210,9 @@ export const PlayerAccess = {
     G.P.structureHitAngle = value;
   },
 
-  /** Update combat heat (Client state, not Player). */
+  /** Update combat heat (Client state). */
   setCombatHeat(value: number) {
-    // combatHeat lives on Client, not G.P
-    // This accessor is a no-op placeholder for domain clarity
-    // Use Client.combatHeat = value directly from the UI/input layer
-    void value;
+    Client.combatHeat = value;
   },
 
   /** Update target lock. */
@@ -309,6 +315,139 @@ export const PlayerAccess = {
   setBlueprint(id: string, owned: boolean) {
     G.P.blueprints[id] = owned;
   },
+
+  // ─── Bulk setters & additional fields ────────────────────────────────────
+
+  /** Set current system index. */
+  setSysIdx(value: number) {
+    G.P.sysIdx = value;
+  },
+
+  /** Set max HP. */
+  setMaxHp(value: number) {
+    G.P.maxHp = value;
+  },
+
+  /** Set max structure. */
+  setMaxStructure(value: number) {
+    G.P.maxStructure = value;
+  },
+
+  /** Set max shield. */
+  setMaxShield(value: number) {
+    G.P.maxShield = value;
+  },
+
+  /** Set combat bar state. */
+  setCombatBar(bar: Player["combatBar"]) {
+    G.P.combatBar = bar;
+  },
+
+  /** Set internal assign-target ID. */
+  setAssignTargetId(id: string | null) {
+    G.P._assignTargetId = id;
+  },
+
+  /** Set high-slot target. */
+  setHighTarget(idx: number, targetId: string | null) {
+    if (!G.P.highTargets) G.P.highTargets = [];
+    G.P.highTargets[idx] = targetId;
+  },
+
+  /** Set pending home spawn flag. */
+  setPendingHomeSpawn(value: boolean) {
+    G.P.pendingHomeSpawn = value;
+  },
+
+  /** Add a module instance to cargo. */
+  addModuleCargo(inst: ModuleInstance) {
+    G.P.moduleCargo.push(inst);
+  },
+
+  /** Bulk-replace all slot active states. */
+  setSlotActiveAll(record: Record<string, boolean[]>) {
+    G.P.slotActive = record;
+  },
+
+  /** Bulk-replace all module HP. */
+  setModuleHpAll(record: Record<string, (number | null)[]>) {
+    G.P.moduleHp = record;
+  },
+
+  /** Bulk-replace turret targets array. */
+  setTurretTargetsAll(targets: (string | null)[]) {
+    G.P.turretTargets = targets;
+  },
+
+  /** Bulk-replace turret cooldowns array. */
+  setTurretCdsAll(cds: number[]) {
+    G.P.turretCds = cds;
+  },
+
+  /** Bulk-replace turret power states. */
+  setTurretPowerAll(powers: boolean[]) {
+    G.P.turretPower = powers;
+  },
+
+  /** Bulk-replace turret power cooldowns. */
+  setTurretPowerCdAll(cds: number[]) {
+    G.P.turretPowerCd = cds;
+  },
+
+  /** Bulk-replace all slot heat. */
+  setSlotHeatAll(heat: Record<string, number[]>) {
+    G.P.slotHeat = heat;
+  },
+
+  /** Set shield cooldown. */
+  setShieldCd(value: number) {
+    G.P.shieldCd = value;
+  },
+
+  /** Set home system index. */
+  setHomeSysIdx(value: number) {
+    G.P.homeSysIdx = value;
+  },
+
+  /** Remove a module from cargo by index. */
+  removeModuleCargo(index: number) {
+    G.P.moduleCargo.splice(index, 1);
+  },
+
+  /** Add a craft job to the queue. */
+  addCraftJob(job: CraftJob) {
+    G.P.craftQueue.push(job);
+  },
+
+  /** Remove a craft job by index. */
+  removeCraftJob(index: number) {
+    G.P.craftQueue.splice(index, 1);
+  },
+
+  /** Add an accepted contract. */
+  addContract(contract: MissionContract) {
+    G.P.contracts.push(contract);
+  },
+
+  /** Remove a contract by index. */
+  removeContract(index: number) {
+    G.P.contracts.splice(index, 1);
+  },
+
+  /** Splice lockQueue at index. Returns removed items. */
+  spliceLockQueue(index: number, deleteCount: number) {
+    return G.P.lockQueue.splice(index, deleteCount);
+  },
+
+  /** Unshift an item onto lockQueue. */
+  unshiftLockQueue(item: LockSlot) {
+    G.P.lockQueue.unshift(item);
+  },
+
+  /** Pop the last item from lockQueue. */
+  popLockQueue() {
+    return G.P.lockQueue.pop();
+  },
 };
 
 // ─── World accessors ─────────────────────────────────────────────────────────
@@ -327,6 +466,36 @@ export const WorldAccess = {
   /** Set spatial grid. */
   setSpatialGrid(grid: GameState["spatialGrid"]) {
     G.spatialGrid = grid;
+  },
+
+  /** Set star field (medium parallax layer). */
+  setStars(stars: GameState["STARS"]) {
+    G.STARS = stars;
+  },
+
+  /** Set far star field (slow parallax layer). */
+  setStarsFar(stars: GameState["STARS_FAR"]) {
+    G.STARS_FAR = stars;
+  },
+
+  /** Set near star field (fast parallax layer). */
+  setStarsNear(stars: GameState["STARS_NEAR"]) {
+    G.STARS_NEAR = stars;
+  },
+
+  /** Set dust particle field. */
+  setDust(dust: GameState["DUST"]) {
+    G.DUST = dust;
+  },
+
+  /** Set galaxy systems array (boot-time init). */
+  setGalaxy(galaxy: GameState["GALAXY"]) {
+    G.GALAXY = galaxy;
+  },
+
+  /** Initialize player state (boot-time init). */
+  initPlayer(player: Player) {
+    G.P = player;
   },
 };
 
@@ -347,3 +516,19 @@ export const SalvagerAccess = {
     Object.assign(G.salvager, data);
   },
 };
+
+// ─── Client Navigation accessors ─────────────────────────────────────────────
+
+/** Set active navigation command and clear waypoint. */
+export function setNavCommand(cmd: typeof Client.navCommand) {
+  Client.navCommand = cmd;
+  if (cmd) {
+    Client.waypoint = null;
+  }
+}
+
+/** Clear active navigation command. */
+export function clearNav() {
+  Client.navCommand = null;
+}
+

@@ -1,5 +1,6 @@
 import { Sprite, Texture, ImageSource } from "pixi.js";
 import { G, Client, AppMode } from "../state.js";
+import type { Enemy } from "../types/world.js";
 import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { thrustLayer } from "../pixi.js";
@@ -148,7 +149,7 @@ function _syncPlayerThrust(alpha: number, now: number) {
 }
 
 function _syncEnemyThrust(now: number) {
-  const enemies = liveEnemies() as any[];
+  const enemies = liveEnemies();
   const liveIds = new Set<string>();
 
   for (const e of enemies) {

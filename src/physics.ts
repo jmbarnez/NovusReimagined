@@ -7,9 +7,13 @@ import { updateWarp } from "./dock.js";
 import { rebuildSpatialGrid } from "./utils/spatial.js";
 import { updateWreckPiecesAndPickups } from "./wreck.js";
 import { updateSalvager } from "./salvager.js";
+import { updateTractor } from "./tractor.js";
+import { updateHub, tickHubQueue } from "./hub.js";
 import { updateTrails } from "./utils/entities.js";
 import { updateTurretCooldowns } from "./combat.js";
 import { tickAbilities } from "./player/abilities.js";
+import { updateAsteroidDebris } from "./utils/mining.js";
+import { updateAmbientDirector } from "./physics/ambient-ships.js";
 
 export function tick(dt: number) {
   rebuildSpatialGrid();
@@ -18,6 +22,11 @@ export function tick(dt: number) {
   updateTurretPowerCd(dt);
   updateTurretCooldowns(dt);
   updateCombat(dt);
+  
+  if (G.P?.sysIdx === 0) {
+    updateAmbientDirector(dt);
+  }
+
   updateNpcs(dt);
   updateEnemyBullets(dt);
   updateProjectiles(dt);
@@ -25,11 +34,15 @@ export function tick(dt: number) {
   resolveNpcAsteroidCollisions();
   updateMining(dt);
   updateSalvager(dt);
+  updateTractor(dt);
+  updateHub(dt);
+  tickHubQueue();
   updateEnemyRespawns(dt);
   updateStationTurrets(dt);
   updateWarp(dt);
   updateWreckPiecesAndPickups(dt);
   updateTrails(dt);
+  updateAsteroidDebris(dt);
 }
 
 function updateTurretPowerCd(dt: number) {

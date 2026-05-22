@@ -11,13 +11,13 @@
   align-items: center;
   gap: 12px;
   padding: 6px 8px 8px;
-  border-bottom: 1px solid rgba(30, 42, 58, 0.6);
+  border-bottom: 1px solid var(--hud-border-soft);
   flex-shrink: 0;
 }
 
 .sk-total {
   font-size: 10px;
-  color: #6a8aaa;
+  color: var(--hud-text-dim);
   letter-spacing: 0.04em;
   flex: 1;
 }
@@ -29,8 +29,8 @@
 }
 
 .sk-scroll::-webkit-scrollbar { width: 5px; }
-.sk-scroll::-webkit-scrollbar-track { background: rgba(5, 10, 15, 0.4); }
-.sk-scroll::-webkit-scrollbar-thumb { background: rgba(50, 70, 90, 0.5); border-radius: 2px; }
+.sk-scroll::-webkit-scrollbar-track { background: var(--hud-bg-deep); }
+.sk-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--hud-shield) 40%, transparent); border-radius: 2px; }
 
 .sk-category {
   margin-bottom: 14px;
@@ -41,10 +41,10 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #4a6a80;
+  color: var(--hud-text-faint);
   padding-bottom: 5px;
   margin-bottom: 8px;
-  border-bottom: 1px solid rgba(40, 55, 75, 0.4);
+  border-bottom: 1px solid var(--hud-border-soft);
 }
 
 .sk-cat-grid {
@@ -58,8 +58,8 @@
   flex-direction: column;
   align-items: center;
   padding: 8px 4px 6px;
-  background: rgba(10, 16, 24, 0.7);
-  border: 1px solid rgba(30, 45, 60, 0.5);
+  background: color-mix(in srgb, var(--hud-bg-panel) 70%, transparent);
+  border: 1px solid var(--hud-border-soft);
   border-radius: 2px;
   cursor: pointer;
   position: relative;
@@ -67,8 +67,8 @@
 }
 
 .sk-tile:hover {
-  border-color: var(--sk-color, rgba(80, 120, 160, 0.7));
-  background: rgba(14, 22, 32, 0.85);
+  border-color: var(--sk-color, color-mix(in srgb, var(--hud-shield) 70%, transparent));
+  background: color-mix(in srgb, var(--hud-bg-elevated) 85%, transparent);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.35), inset 0 0 6px rgba(0, 0, 0, 0.2);
 }
 
@@ -94,7 +94,7 @@
 
 .sk-name {
   font-size: 8px;
-  color: #7a9aac;
+  color: var(--hud-text-dim);
   text-align: center;
   letter-spacing: 0.02em;
   line-height: 1.2;
@@ -111,7 +111,7 @@
   right: 5px;
   font-size: 10px;
   font-weight: 700;
-  color: var(--sk-color, #5a7a8a);
+  color: var(--sk-color, var(--hud-text-dim));
   line-height: 1;
 }
 
@@ -123,7 +123,7 @@
 .sk-bar-track {
   width: 100%;
   height: 2px;
-  background: rgba(10, 18, 28, 0.8);
+  background: var(--hud-bg-deep);
   border-radius: 1px;
   overflow: hidden;
   margin-bottom: 3px;
@@ -131,27 +131,27 @@
 
 .sk-bar-fill {
   height: 100%;
-  background: var(--sk-color, #5533aa);
+  background: var(--sk-color, var(--hud-arcane));
   border-radius: 1px;
   transition: width 0.3s ease;
 }
 
 .sk-pct {
   font-size: 7px;
-  color: #344858;
+  color: var(--hud-text-faint);
   letter-spacing: 0.04em;
 }
 
 .sk-tile:hover .sk-pct {
-  color: #5a7a8a;
+  color: var(--hud-text-dim);
 }
 
 /* ─── Detail panel ─── */
 
 .sk-detail {
   flex-shrink: 0;
-  border-top: 1px solid rgba(30, 42, 58, 0.5);
-  background: rgba(4, 8, 14, 0.8);
+  border-top: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-panel) 80%, transparent);
   padding: 8px 10px;
   min-height: 80px;
   display: flex;
@@ -187,7 +187,7 @@
 
 .skd-desc {
   font-size: 9px;
-  color: #3d5060;
+  color: var(--hud-text-faint);
   margin-bottom: 6px;
   line-height: 1.35;
 }
@@ -197,19 +197,19 @@
   display: flex;
   gap: 6px;
   font-size: 9px;
-  color: #344858;
+  color: var(--hud-text-faint);
   margin-bottom: 2px;
 }
 
 .skd-xp-val,
 .skd-lvl-val {
-  color: #7a9aac;
+  color: var(--hud-text-dim);
 }
 
 .skd-bar-track {
   width: 100%;
   height: 5px;
-  background: rgba(10, 18, 28, 0.8);
+  background: var(--hud-bg-deep);
   border-radius: 2px;
   overflow: hidden;
   margin: 4px 0 3px;
@@ -223,6 +223,6 @@
 
 .skd-pct {
   font-size: 9px;
-  color: #4a6a80;
+  color: var(--hud-text-faint);
   margin-bottom: 6px;
 }

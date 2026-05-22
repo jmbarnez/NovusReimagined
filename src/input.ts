@@ -1,11 +1,14 @@
 import { G, Client } from "./state.js";
+import type { Enemy, Station } from "./types/world.js";
+import { PlayerAccess, clearNav } from "./state-access.js";
+import { showEnemyCtxMenu } from "./ui/hud/enemy-menu.js";
 import { undockStation, tryWarp } from "./dock.js";
 import { dst } from "./utils/math.js";
 
 import { curSys } from "./utils/game.js";
 import { requestSensorLock } from "./targeting.js";
 import { toggleSettings, closeSettings, listeningFor } from "./ui/settings.js";
-import { toggleCargoWindow, toggleScannerDock, toggleSkillsWindow } from "./ui/hud-overlay.js";
+import { toggleCargoWindow, toggleScannerDock, toggleSkillsWindow, toggleHubWindow } from "./ui/hud-overlay.js";
 import { closeTopmostWindow } from "./ui/hud/windows.js";
 import { applyBarHotkey, barHotkeySlotList, toggleSlotDefaultAction } from "./player/player-fitting.js";
 import { playBackgroundMusic } from "./audio/music.js";
@@ -78,12 +81,26 @@ export function initInput() {
       if (Client.stationOpen) undockStation();
       else if (!tryWarp()) {
         const sys = curSys();
-        if (sys && sys._liveEnemies?.some((e: any) => e.hasLockOnPlayer)) return;
+        if (sys && sys._liveEnemies?.some((e: Enemy) => e.hasLockOnPlayer)) return;
         if (sys) {
+          // Processing hub intercept — opens window instead of docking
+          let handledByHub = false;
           for (const st of sys.stations) {
-            if (dst(G.P.x, G.P.y, st.x, st.y) < st.radius * 2) {
-              import("./dock.js").then((m: any) => m.dockAt(st));
+            if (!st.isProcessingHub) continue;
+            const interactR = (st.collectRadius ?? 220) + 80;
+            if (dst(G.P.x, G.P.y, st.x, st.y) < interactR) {
+              toggleHubWindow();
+              handledByHub = true;
               break;
+            }
+          }
+          if (!handledByHub) {
+            for (const st of sys.stations) {
+              if (st.isProcessingHub) continue;
+              if (dst(G.P.x, G.P.y, st.x, st.y) < st.radius * 2) {
+                import("./dock.js").then((m) => m.dockAt(st));
+                break;
+              }
             }
           }
         }
@@ -111,11 +128,10 @@ export function initInput() {
         if (!(G.P.turretPower?.[tIdx] ?? false)) {
           toggleSlotDefaultAction("turret", tIdx);
         }
-        G.P.fireControlSlot = tIdx;
+        PlayerAccess.setFireControlSlot(tIdx);
         if (G.P._assignTargetId) {
-          if (!G.P.turretTargets) G.P.turretTargets = [];
-          G.P.turretTargets[tIdx] = G.P._assignTargetId;
-          G.P._assignTargetId = null;
+          PlayerAccess.setTurretTarget(tIdx, G.P._assignTargetId);
+          PlayerAccess.setAssignTargetId(null);
           sfxTurretAssign();
         }
       } else {
@@ -136,7 +152,6 @@ export function initInput() {
     Client.keys[" "] = false;
     Client.mouse.lmb = false;
     Client.mouse.rmb = false;
-    Client.mouse.firing = false;
     setCursorLock(true);
   });
 
@@ -150,7 +165,7 @@ export function initInput() {
     if (e.button === 0) {
       Client.mouse.lmb = true;
 
-      if (e.target instanceof Element && e.target.closest("#hud-overlay > *, #title-screen")) return;
+      if (e.target instanceof Element && e.target.closest("#hud-overlay > *, #title-screen, .eve-window")) return;
 
       if (!Client.stationOpen && !Client.bridgeOpen) {
         const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
@@ -190,15 +205,34 @@ export function initInput() {
   window.addEventListener("mouseup", (e) => {
     if (e.button === 0) {
       Client.mouse.lmb = false;
-      Client.mouse.firing = false;
     }
   });
 
   window.addEventListener("mousedown", (e) => {
     if (e.button === 2) {
-      if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, #title-screen")) return;
-      Client.mouse.rmb = true;
-      Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
+      if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, #title-screen, .eve-window")) return;
+      
+      let enemyClicked = null;
+      if (!Client.stationOpen && !Client.bridgeOpen) {
+        const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
+        const sys = curSys();
+        if (sys) {
+          for (const en of sys.enemies) {
+            if (en.alive && dst(wx, wy, en.x, en.y) < 30) {
+              enemyClicked = en;
+              break;
+            }
+          }
+        }
+      }
+
+      if (enemyClicked) {
+        showEnemyCtxMenu(e.clientX, e.clientY, enemyClicked.id);
+      } else {
+        Client.mouse.rmb = true;
+        Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
+        clearNav();
+      }
     }
   });
 
@@ -216,7 +250,7 @@ export function initInput() {
 
   window.addEventListener("wheel", (e) => {
     if (!Client.gameStarted) return;
-    if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay")) return;
+    if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, .eve-window")) return;
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     Client.zoom = Math.max(0.5, Math.min(2.0, Client.zoom * delta));
   }, { passive: true });

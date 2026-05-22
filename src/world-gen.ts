@@ -4,6 +4,8 @@ import { ENEMY_SPAWNS } from "./data/enemy-spawns.js";
 import { TAU, ENEMY_MIN_DIST_HOME_STATION, ENEMY_MIN_DIST_NONHOME_STATION } from "./constants.js";
 import { tintFor } from "./render/seeded-detail.js";
 import { C } from "./config/index.js";
+import { G } from "./state.js";
+import type { System } from "./types/world.js";
 
 export type NebulaArchetype = "pillars" | "wisps" | "dense" | "void" | "dust-lane";
 export type StarClass = "O" | "B" | "A" | "F" | "G" | "K" | "M";
@@ -30,7 +32,7 @@ function pickStarClass(rng: () => number, ring: number): StarClass {
 }
 
 const SYS_NAMES = [
-  "Federation Core", "Orbital Beta", "Sigma Station", "Drift Margin", "Outpost Kappa",
+  "S.T.A.R.T System", "Orbital Beta", "Sigma Station", "Drift Margin", "Outpost Kappa",
   "Void Reach", "Contested Zone", "Raider Expanse", "Dead Sector", "Forbidden Rim",
   "Frontier Belt", "Patrol Corridor", "Garrison Hub", "Borderzone Alpha", "Mining Colony",
   "Abandoned Relay", "Pirate Haven", "Null Terminus", "Convoy Lane", "Deep Expanse",
@@ -47,8 +49,8 @@ const SECTOR_BELT_SPREAD = C.WORLD.SECTOR.beltSpread;
 const SECTOR_GATE_ORBIT = C.WORLD.SECTOR.gateOrbit;
 const SECTOR_PLANET_ORBIT = C.WORLD.SECTOR.planetOrbit;
 
-export function buildGalaxy(): any[] {
-  const nodes: any[] = [];
+export function buildGalaxy(): System[] {
+  const nodes: System[] = [];
   let idx = 0;
   for (let ring = 0; ring < RING_COUNTS.length; ring++) {
     const n = RING_COUNTS[ring];
@@ -56,7 +58,7 @@ export function buildGalaxy(): any[] {
       const angle = ring === 0 ? 0 : (i / n) * TAU + ring * C.WORLD.GALAXY.ringAngleOffset;
       const f = mkRng(`sys-place-${idx}`);
       const jit = ring > 0 ? (f() - 0.5) * C.WORLD.GALAXY.ringJitter : 0;
-      const sec = ring === 0 ? C.WORLD.SECURITY.ring0
+      const sec = ring === 0 ? (idx === 0 ? 0.0 : C.WORLD.SECURITY.ring0)
         : ring === 1 ? rf(f, C.WORLD.SECURITY.ring1.lo, C.WORLD.SECURITY.ring1.hi)
           : ring === 2 ? rf(f, C.WORLD.SECURITY.ring2.lo, C.WORLD.SECURITY.ring2.hi)
             : rf(f, C.WORLD.SECURITY.ring3.lo, C.WORLD.SECURITY.ring3.hi);
@@ -94,9 +96,9 @@ export function buildGalaxy(): any[] {
     }
   }
   for (const sys of nodes) {
-    const sorted = nodes.filter((b: any) => b !== sys)
-      .sort((a: any, b: any) => dst(a.mapX, a.mapY, sys.mapX, sys.mapY) - dst(b.mapX, b.mapY, sys.mapX, sys.mapY));
-    sorted.slice(0, 2 + (sys.idx % 2)).forEach((t: any) => {
+    const sorted = nodes.filter((b: System) => b !== sys)
+      .sort((a: System, b: System) => dst(a.mapX, a.mapY, sys.mapX, sys.mapY) - dst(b.mapX, b.mapY, sys.mapX, sys.mapY));
+    sorted.slice(0, 2 + (sys.idx % 2)).forEach((t: System) => {
       if (!sys.links.includes(t.idx)) sys.links.push(t.idx);
       if (!t.links.includes(sys.idx)) t.links.push(sys.idx);
     });
@@ -112,13 +114,116 @@ export function makeAstShape(f: () => number): number[][] {
   });
 }
 
-export function populateSystem(sys: any) {
+export function populateSystem(sys: System) {
   if (sys._ready) return;
   sys._ready = true;
   const f = mkRng(sys.id + "-pop");
   const danger = Math.max(0, 1 - sys.security);
 
-  // Station and warp gate generation removed as requested.
+  // ── Warp gate generation ──
+  // Place one gate per hyperlane link, aimed toward the linked system's map position.
+  const galaxy = G.GALAXY;
+  for (const linkIdx of sys.links) {
+    const target = galaxy?.[linkIdx];
+    let gateAngle: number;
+    if (target) {
+      gateAngle = Math.atan2(target.mapY - sys.mapY, target.mapX - sys.mapX);
+    } else {
+      gateAngle = rf(f, 0, TAU);
+    }
+    // Jitter so multiple gates to nearby systems don't stack perfectly
+    gateAngle += (f() - 0.5) * C.WORLD.GATES.angleJitter;
+    const gateDist = rf(f, SECTOR_GATE_ORBIT.lo, SECTOR_GATE_ORBIT.hi);
+    sys.gates.push({
+      x: Math.round(Math.cos(gateAngle) * gateDist),
+      y: Math.round(Math.sin(gateAngle) * gateDist),
+      px: 0, py: 0,
+      targetSysIdx: linkIdx,
+      radius: C.WORLD.GATES.radius,
+      spin: rf(f, 0.004, 0.012),
+    });
+  }
+
+  // ── Station generation ──
+  const isStarter = sys.idx === 0;
+  if (isStarter) {
+    // Novus Starter Hub — compact outpost at origin with limited facilities
+    const turretCount = 2;
+    const turrets = [];
+    for (let t = 0; t < turretCount; t++) {
+      turrets.push({
+        angle: (t / turretCount) * TAU,
+        orbitRadius: C.WORLD.STATIONS.otherRadius * C.WORLD.STATIONS.turretOrbitRadiusMultiplier,
+        orbitSpeed: rf(f, C.WORLD.STATIONS.turretOrbitSpeedMin, C.WORLD.STATIONS.turretOrbitSpeedMax),
+        shootCd: rf(f, 0, C.WORLD.STATIONS.turretShootCdMax),
+      });
+    }
+    sys.stations.push({
+      id: `station-${sys.id}-0`,
+      name: "Novus Starter Hub",
+      x: 0, y: 0,
+      radius: C.WORLD.STATIONS.otherRadius,
+      spin: 0.003,
+      isHome: false,
+      services: ["repair"],
+      safeRadius: C.WORLD.STATIONS.safeRadiusHighSec,
+      turrets,
+    });
+    sys.stations.push({
+      id: `station-${sys.id}-hub`,
+      name: "Industrial Processing Hub",
+      x: 900, y: 0,
+      radius: Math.round(C.WORLD.STATIONS.otherRadius * 0.8),
+      spin: 0.005,
+      isHome: false,
+      services: [],
+      safeRadius: 0,
+      turrets: [],
+      structureType: "industrial",
+      isProcessingHub: true,
+      collectRadius: 220,
+    });
+  } else {
+    // Normal systems: spawn a station for high-sec and mid-sec systems,
+    // and a random chance for low-sec systems
+    const hasStation = sys.security >= 0.4 || f() < 0.35;
+    if (hasStation) {
+      const isHome = sys.security >= 0.7;
+      const stRadius = isHome ? C.WORLD.STATIONS.homeRadius : C.WORLD.STATIONS.otherRadius;
+      const stOrbit = isHome
+        ? rf(f, SECTOR_STATION_HOME.lo, SECTOR_STATION_HOME.hi)
+        : rf(f, SECTOR_STATION_RING1.lo, SECTOR_STATION_RING1.hi);
+      const stAngle = rf(f, 0, TAU);
+      const turretCount = isHome ? C.WORLD.STATIONS.turretCountHome
+        : sys.security >= 0.7 ? C.WORLD.STATIONS.turretCountHighSec
+        : sys.security >= 0.4 ? C.WORLD.STATIONS.turretCountMidSec
+        : C.WORLD.STATIONS.turretCountLowSec;
+      const turrets = [];
+      for (let t = 0; t < turretCount; t++) {
+        turrets.push({
+          angle: (t / turretCount) * TAU,
+          orbitRadius: stRadius * C.WORLD.STATIONS.turretOrbitRadiusMultiplier,
+          orbitSpeed: rf(f, C.WORLD.STATIONS.turretOrbitSpeedMin, C.WORLD.STATIONS.turretOrbitSpeedMax),
+          shootCd: rf(f, 0, C.WORLD.STATIONS.turretShootCdMax),
+        });
+      }
+      const safeRadius = sys.security >= 0.7 ? C.WORLD.STATIONS.safeRadiusHighSec
+        : sys.security >= 0.4 ? C.WORLD.STATIONS.safeRadiusMidSec
+        : C.WORLD.STATIONS.safeRadiusLowSec;
+      sys.stations.push({
+        id: `station-${sys.id}-0`,
+        name: `${sys.name} Station`,
+        x: Math.round(Math.cos(stAngle) * stOrbit),
+        y: Math.round(Math.sin(stAngle) * stOrbit),
+        radius: stRadius,
+        spin: rf(f, 0.002, 0.006),
+        isHome,
+        services: ["market", "industry", "repair"],
+        safeRadius,
+        turrets,
+      });
+    }
+  }
 
   for (let i = 0; i < ri(f, C.WORLD.PLANETS.countMin, C.WORLD.PLANETS.countMax); i++) {
     const ang = rf(f, 0, TAU);
@@ -161,6 +266,15 @@ export function populateSystem(sys: any) {
         }
       }
 
+      const ores = ["Iron", "Crystal", "Exotic"];
+      let maxWeightIdx = 0;
+      for (let w = 1; w < 3; w++) {
+        if ((myWeights[w] || 0) > (myWeights[maxWeightIdx] || 0)) {
+          maxWeightIdx = w;
+        }
+      }
+      const astName = `${ores[maxWeightIdx]} Asteroid`;
+
       sys.asteroids.push({
         id: `ast-${sys.id}-${c}-${i}`,
         x: Math.round(cx + Math.cos(sAng) * spr), y: Math.round(cy + Math.sin(sAng) * spr),
@@ -169,6 +283,7 @@ export function populateSystem(sys: any) {
         shape: makeAstShape(mkRng(sys.id + `a${c}${i}`)),
         hp: maxHp, maxHp,
         oreWeights: myWeights,
+        name: astName,
         hasCrystals: isCrystal,
         crystalHue: isCrystal ? ri(f, 185, 215) : 0,
         crystals,

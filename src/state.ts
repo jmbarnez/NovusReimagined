@@ -27,6 +27,7 @@ import type {
   System,
   WreckPiece,
   SalvagePickup,
+  WreckSalvageEntry,
 } from "./types/world.js";
 import { DEFAULT_SETTINGS } from "./data/settings.js";
 import type { Settings } from "./data/settings.js";
@@ -34,6 +35,22 @@ import type { ComputedStats } from "./player/player-stats.js";
 import type { MissionContract } from "./data/missions.js";
 import type { ModuleInstance } from "./types/moduleInstance.js";
 import type { CraftJob } from "./data/industryRecipes.js";
+
+export interface HubJob {
+  id: string;
+  kind: "debris" | "asteroid";
+  startTime: number;
+  duration: number;
+  mass: number;
+  salvagePool?: WreckSalvageEntry[];
+  oreWeights?: number[];
+}
+
+export interface HubOutput {
+  loot: Record<string, number>;
+  ore: Record<string, number>;
+  modules: ModuleInstance[];
+}
 
 export enum AppMode {
   TITLE = "TITLE",
@@ -101,6 +118,10 @@ export interface Player {
   _colCooldown?: number;
   contracts: MissionContract[];
   craftQueue: CraftJob[];
+  tractorCarryKg?: number;
+  tractorTightness?: number;
+  hubQueue: HubJob[];
+  hubOutput: HubOutput;
 }
 
 export interface MiningLaserState {
@@ -118,6 +139,15 @@ export interface MiningLaserState {
 export interface SalvagerState {
   active: boolean;
   targetPieceId: string | null;
+  x1: number; y1: number;
+  x2: number; y2: number;
+  phase: number;
+}
+
+export interface TractorState {
+  active: boolean;
+  targetId: string | null;
+  tooHeavy: boolean;
   x1: number; y1: number;
   x2: number; y2: number;
   phase: number;
@@ -146,6 +176,7 @@ export interface GameState {
   impactDecals: ImpactDecal[];
   miningLaser: MiningLaserState;
   salvager: SalvagerState;
+  tractor: TractorState;
   warpCooldown: number;
   warpTargetIdx: number;
   GALAXY: System[];
@@ -160,11 +191,12 @@ export interface GameState {
 export interface ClientState {
   mode: AppMode;
   keys: Record<string, boolean>;
-  mouse: { x: number; y: number; lmb: boolean; rmb: boolean; firing: boolean };
+  mouse: { x: number; y: number; lmb: boolean; rmb: boolean };
   mouseWorld: { x: number; y: number };
   camx: number; camy: number;
   zoom: number;
   waypoint: { x: number; y: number } | null;
+  navCommand: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;
   cursorUnlocked: boolean;
   combatHeat: number;
   showMap: boolean;
@@ -197,6 +229,7 @@ export const G: GameState = {
   impactDecals: [],
   miningLaser: { active: false, x1: 0, y1: 0, x2: 0, y2: 0, phase: 0, hitR: 0, hitNx: 0, hitNy: 0, oreKey: "", oreColor: "" },
   salvager: { active: false, targetPieceId: null, x1: 0, y1: 0, x2: 0, y2: 0, phase: 0 },
+  tractor: { active: false, targetId: null, tooHeavy: false, x1: 0, y1: 0, x2: 0, y2: 0, phase: 0 },
   warpCooldown: 0,
   warpTargetIdx: -1,
   GALAXY: [],
@@ -211,12 +244,13 @@ export const G: GameState = {
 export const Client: ClientState = {
   mode: AppMode.TITLE,
   keys: {},
-  mouse: { x: 0, y: 0, lmb: false, rmb: false, firing: false },
+  mouse: { x: 0, y: 0, lmb: false, rmb: false },
   mouseWorld: { x: 0, y: 0 },
   camx: 0,
   camy: 0,
   zoom: 1.0,
   waypoint: null,
+  navCommand: null,
   cursorUnlocked: false,
   combatHeat: 0,
   showMap: false,

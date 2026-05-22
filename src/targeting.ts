@@ -1,4 +1,5 @@
 import { G } from "./state.js";
+import { PlayerAccess } from "./state-access.js";
 import { SHIPS, ShipDef } from "./data/ships.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "./data/modules.js";
 import { dst } from "./utils/math.js";
@@ -56,7 +57,21 @@ export function targetByLockId(id: string): Enemy | Asteroid | WreckPiece | null
   const en = sys._enemyMap?.get(id);
   if (en && en.alive) return en;
   const ast = sys._asteroidMap?.get(id);
-  if (ast && !ast.depleted && ast.hp > 0) return ast;
+  if (ast && !ast.depleted && ast.hp > 0) {
+    if (!ast.name) {
+      const ores = ["Iron", "Crystal", "Exotic"];
+      let maxWeightIdx = 0;
+      if (Array.isArray(ast.oreWeights)) {
+        for (let w = 1; w < 3; w++) {
+          if ((ast.oreWeights[w] || 0) > (ast.oreWeights[maxWeightIdx] || 0)) {
+            maxWeightIdx = w;
+          }
+        }
+      }
+      ast.name = `${ores[maxWeightIdx]} Asteroid`;
+    }
+    return ast;
+  }
   if (isWreckPieceTarget(id)) {
     const p = G.wreckPieces.find((p) => p.id === id);
     return p && p.hp > 0 ? p : null;
@@ -102,7 +117,7 @@ export function computeLockTimeSec(target: Enemy | Asteroid | WreckPiece, st: Co
 }
 
 export function ensureLockQueue(): void {
-  if (!Array.isArray(G.P.lockQueue)) G.P.lockQueue = [];
+  if (!Array.isArray(G.P.lockQueue)) PlayerAccess.setLockQueue([]);
 }
 
 export function maxTargetLocks(): number {
@@ -121,7 +136,7 @@ export function computeEnemyLevel(enemy: Enemy): number {
   if (enemy.fitting?.turret) {
     for (const uid of enemy.fitting.turret) {
       if (!uid) continue;
-      const inst = ((enemy.fitting as any)._tempInstances as ModuleInstance[] | undefined)?.find(inst => inst.uid === uid);
+      const inst = enemy.fitting._tempInstances?.find(inst => inst.uid === uid);
       const baseId = inst ? inst.baseId : uid;
       const wProf = WEAPON_PROFILES[baseId];
       if (wProf && wProf.dmg > maxDmg) maxDmg = wProf.dmg;
@@ -150,31 +165,35 @@ export function syncPrimaryTargetLock(): void {
     if (slot.resolving) continue;
     const t = targetByLockId(slot.id);
     if (t) {
-      G.P.targetLock = t;
+      PlayerAccess.setTargetLock(t);
       return;
     }
   }
-  G.P.targetLock = null;
+  PlayerAccess.setTargetLock(null);
 }
 
 export function clearSensorLocks(): void {
-  G.P.lockQueue = [];
-  G.P.targetLock = null;
-  if (G.P.turretTargets) G.P.turretTargets.fill(null);
-  if (G.P.highTargets) G.P.highTargets.fill(null);
+  PlayerAccess.setLockQueue([]);
+  PlayerAccess.setTargetLock(null);
+  if (G.P.turretTargets) {
+    PlayerAccess.setTurretTargetsAll(Array(G.P.turretTargets.length).fill(null));
+  }
+  if (G.P.highTargets) {
+    for (let i = 0; i < G.P.highTargets.length; i++) PlayerAccess.setHighTarget(i, null);
+  }
 }
 
 export function removeSensorLock(id: string): void {
   ensureLockQueue();
-  G.P.lockQueue = G.P.lockQueue.filter((s) => s.id !== id);
+  PlayerAccess.setLockQueue(G.P.lockQueue.filter((s) => s.id !== id));
   if (G.P.turretTargets) {
     for (let i = 0; i < G.P.turretTargets.length; i++) {
-      if (G.P.turretTargets[i] === id) G.P.turretTargets[i] = null;
+      if (G.P.turretTargets[i] === id) PlayerAccess.setTurretTarget(i, null);
     }
   }
   if (G.P.highTargets) {
     for (let i = 0; i < G.P.highTargets.length; i++) {
-      if (G.P.highTargets[i] === id) G.P.highTargets[i] = null;
+      if (G.P.highTargets[i] === id) PlayerAccess.setHighTarget(i, null);
     }
   }
   syncPrimaryTargetLock();
@@ -194,15 +213,15 @@ function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean
     if (!m) continue;
     const isMiner = MODULE_FLAGS.isMiningTurret(m);
     const isSalv = MODULE_FLAGS.isSalvager(m);
-    if (isAst && !isMiner) continue;
-    if (isPiece && !isSalv) continue;
+    const isTractor = MODULE_FLAGS.isTractor(m);
+    if (isAst && !isMiner && !isTractor) continue;
+    if (isPiece && !isSalv && !isTractor) continue;
     if (!(G.P.turretPower?.[i])) continue;
     if (G.P.turretTargets?.[i]) continue;
     candidates.push(i);
   }
   if (candidates.length !== 1) return; // only auto-assign when unambiguous
-  if (!G.P.turretTargets) G.P.turretTargets = [];
-  G.P.turretTargets[candidates[0]] = id;
+  PlayerAccess.setTurretTarget(candidates[0], id);
   sfxTurretAssign();
 }
 
@@ -225,8 +244,7 @@ function autoFillUnboundWeaponTurrets(): void {
     if (!m?.weaponDelivery || MODULE_FLAGS.isMiningTurret(m) || MODULE_FLAGS.isSalvager(m)) continue;
     if (!G.P.turretPower?.[i]) continue;
     if (G.P.turretTargets?.[i]) continue;
-    if (!G.P.turretTargets) G.P.turretTargets = [];
-    G.P.turretTargets[i] = firstEnemyLock;
+    PlayerAccess.setTurretTarget(i, firstEnemyLock);
     sfxTurretAssign();
   }
 }
@@ -240,33 +258,33 @@ export function updateSensorLocks(dt: number, st: ComputedStats): void {
     const slot = G.P.lockQueue[i];
     const t = targetByLockId(slot.id);
     if (!t || isTargetDestroyed(t)) {
-      G.P.lockQueue.splice(i, 1);
+      PlayerAccess.spliceLockQueue(i, 1);
       if (G.P.targetLock?.id === slot.id) syncPrimaryTargetLock();
       if (G.P.turretTargets) {
         for (let j = 0; j < G.P.turretTargets.length; j++) {
-          if (G.P.turretTargets[j] === slot.id) G.P.turretTargets[j] = null;
+          if (G.P.turretTargets[j] === slot.id) PlayerAccess.setTurretTarget(j, null);
         }
       }
       if (G.P.highTargets) {
         for (let j = 0; j < G.P.highTargets.length; j++) {
-          if (G.P.highTargets[j] === slot.id) G.P.highTargets[j] = null;
+          if (G.P.highTargets[j] === slot.id) PlayerAccess.setHighTarget(j, null);
         }
       }
       continue;
     }
     if (dst(G.P.x, G.P.y, t.x, t.y) > dropRange) {
-      G.P.lockQueue.splice(i, 1);
+      PlayerAccess.spliceLockQueue(i, 1);
       sfxLockLost();
       floatText(t.x, t.y - 25, "LOCK LOST", "#cc8844");
       if (G.P.targetLock?.id === slot.id) syncPrimaryTargetLock();
       if (G.P.turretTargets) {
         for (let j = 0; j < G.P.turretTargets.length; j++) {
-          if (G.P.turretTargets[j] === slot.id) G.P.turretTargets[j] = null;
+          if (G.P.turretTargets[j] === slot.id) PlayerAccess.setTurretTarget(j, null);
         }
       }
       if (G.P.highTargets) {
         for (let j = 0; j < G.P.highTargets.length; j++) {
-          if (G.P.highTargets[j] === slot.id) G.P.highTargets[j] = null;
+          if (G.P.highTargets[j] === slot.id) PlayerAccess.setHighTarget(j, null);
         }
       }
       continue;
@@ -288,8 +306,7 @@ export function updateSensorLocks(dt: number, st: ComputedStats): void {
           const m = slotInst ? MODULES[slotInst.baseId] : null;
           if (m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m) && !MODULE_FLAGS.isSalvager(m)) {
             if ((G.P.turretPower?.[turretSlot]) && !(G.P.turretTargets?.[turretSlot])) {
-              if (!G.P.turretTargets) G.P.turretTargets = [];
-              G.P.turretTargets[turretSlot] = t.id;
+              PlayerAccess.setTurretTarget(turretSlot, t.id);
               sfxTurretAssign();
             }
           }
@@ -304,15 +321,15 @@ export function requestSensorLock(id: string): void {
   ensureLockQueue();
   const i = G.P.lockQueue.findIndex((s) => s.id === id);
   if (i >= 0) {
-    const [slot] = G.P.lockQueue.splice(i, 1);
-    G.P.lockQueue.unshift(slot);
+    const [slot] = PlayerAccess.spliceLockQueue(i, 1);
+    PlayerAccess.unshiftLockQueue(slot);
     syncPrimaryTargetLock();
     return;
   }
   while (G.P.lockQueue.length >= maxTargetLocks()) {
-    G.P.lockQueue.pop();
+    PlayerAccess.popLockQueue();
     floatText(G.P.x, G.P.y - 38, "LOCK CAP — DROPPED TAIL", "#cc8844");
   }
-  G.P.lockQueue.unshift({ id, resolving: true, acc: 0 });
+  PlayerAccess.unshiftLockQueue({ id, resolving: true, acc: 0 });
   syncPrimaryTargetLock();
 }

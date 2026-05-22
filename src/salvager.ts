@@ -1,6 +1,7 @@
 import { G, Client } from "./state.js";
 import { MODULES, MODULE_FLAGS } from "./data/modules.js";
 import { getInstance } from "./utils/items.js";
+import type { WreckPiece, LockSlot } from "./types/world.js";
 import { dst } from "./utils/math.js";
 import { floatText } from "./utils/fx.js";
 import { isWreckPieceTarget } from "./targeting.js";
@@ -28,18 +29,18 @@ function findSalvagerSlot(): { idx: number; rollBonus: number } | null {
     // Turrets use turretPower, not slotActive
     const powered = G.P.turretPower?.[i] ?? false;
     if (powered) {
-      rollBonus += (m as any).salvageRollBonus ?? 0;
+      rollBonus += m.salvageRollBonus ?? 0;
       if (firstIdx === -1) firstIdx = i;
     }
   }
   return firstIdx >= 0 ? { idx: firstIdx, rollBonus } : null;
 }
 
-function resolveAssignedPiece(slotIdx: number): any | null {
+function resolveAssignedPiece(slotIdx: number): WreckPiece | null {
   const assignedId = G.P.turretTargets?.[slotIdx];
   if (!assignedId || !isWreckPieceTarget(assignedId)) return null;
 
-  const lockSlot = G.P.lockQueue?.find((s: any) => s.id === assignedId);
+  const lockSlot = G.P.lockQueue?.find((s: LockSlot) => s.id === assignedId);
   if (!lockSlot || lockSlot.resolving) return null;
 
   const piece = G.wreckPieces.find((p) => p.id === assignedId);
@@ -71,8 +72,9 @@ export function updateSalvager(dt: number) {
   }
 
   // Capacitor drain
-  const modId = G.P.fitting.turret[slot.idx]!;
-  const mod = MODULES[modId];
+  const uid = G.P.fitting.turret[slot.idx]!;
+  const inst = getInstance(uid);
+  const mod = inst ? MODULES[inst.baseId] : null;
   const drain = (mod?.capDrainPerSec ?? 2) * dt;
   if (G.P.energy < drain) {
     sv.active = false;

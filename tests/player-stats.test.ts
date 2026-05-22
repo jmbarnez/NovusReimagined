@@ -87,7 +87,7 @@ describe("player-data loadPlayer migrations", () => {
     expect(p.shipId).toBe("scout");
     // makePlayer now issues civilian starter modules with this uid.
     expect(p.fitting.turret[0]).toBe("start-tu-civ-cannon");
-    expect(p.moduleCargo.length).toBe(2);
+    expect(p.moduleCargo.length).toBe(4);
   });
 
   it("migrates moduleInventory to moduleCargo", () => {

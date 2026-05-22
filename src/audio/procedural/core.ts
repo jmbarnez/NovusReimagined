@@ -10,7 +10,7 @@ export function getAudio(): { ctx: AudioContext; master: GainNode } | null {
     return { ctx: _ctx, master: _master };
   }
   try {
-    const AC = window.AudioContext || (window as any).webkitAudioContext;
+    const AC = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return null;
     const newCtx = new AC();
     const newMaster = newCtx.createGain();

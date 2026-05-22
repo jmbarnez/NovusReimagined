@@ -1,4 +1,8 @@
 import { G, Client } from "../state.js";
+import type { Asteroid, Enemy, WreckPiece } from "../types/world.js";
+import type { SpatialQueryResult } from "../utils/spatial.js";
+import { PlayerAccess, clearNav } from "../state-access.js";
+import { enemyByLockId } from "../targeting.js";
 import { W, H } from "../canvas.js";
 import {
   ACCEL, FRICTION, ANG_FRICTION,
@@ -10,7 +14,7 @@ import {
 import { damagePlayer } from "../combat/damage-display.js";
 import { lerp, angleDiff, aimAngle, resolveElasticCollision } from "../utils/math.js";
 import { getStats } from "../player/player-stats.js";
-import { MODULES } from "../data/modules.js";
+import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { SHIPS } from "../data/ships.js";
 import { invalidate } from "../player/player-stats.js";
 import { updateEngineSound } from "../audio/procedural.js";
@@ -18,17 +22,18 @@ import { addTrailSegment } from "../utils/entities.js";
 import { C } from "../config/index.js";
 import { activeMovementMultipliers } from "../player/abilities.js";
 
+
 export function updateShip(dt: number) {
   const st = getStats();
-  if (!Number.isFinite(G.P.vx)) G.P.vx = 0;
-  if (!Number.isFinite(G.P.vy)) G.P.vy = 0;
-  if (!Number.isFinite(G.P.va)) G.P.va = 0;
-  if (!Number.isFinite(G.P.angle)) G.P.angle = 0;
-  if (!Number.isFinite(G.P.x)) G.P.x = 0;
-  if (!Number.isFinite(G.P.y)) G.P.y = 0;
+  if (!Number.isFinite(G.P.vx)) PlayerAccess.updatePhysics({ vx: 0 });
+  if (!Number.isFinite(G.P.vy)) PlayerAccess.updatePhysics({ vy: 0 });
+  if (!Number.isFinite(G.P.va)) PlayerAccess.updatePhysics({ va: 0 });
+  if (!Number.isFinite(G.P.angle)) PlayerAccess.updatePhysics({ angle: 0 });
+  if (!Number.isFinite(G.P.x)) PlayerAccess.updatePhysics({ x: 0 });
+  if (!Number.isFinite(G.P.y)) PlayerAccess.updatePhysics({ y: 0 });
 
   // Build cargo map once per tick to avoid repeated O(N*M) lookups inside G.P.moduleCargo
-  const cargoMap = new Map<string, any>();
+  const cargoMap = new Map<string, import("../types/moduleInstance.js").ModuleInstance>();
   if (Array.isArray(G.P.moduleCargo)) {
     for (let i = 0; i < G.P.moduleCargo.length; i++) {
       const inst = G.P.moduleCargo[i];
@@ -36,13 +41,59 @@ export function updateShip(dt: number) {
     }
   }
 
-  G.P.thrustFx = false;
+  PlayerAccess.updatePhysics({ thrustFx: false });
   const speed = Math.hypot(G.P.vx, G.P.vy);
   let ax = 0, ay = 0;
   let at = 0;
 
-  // Autopilot: always follows waypoint when one is set.
-  if (Client.waypoint && !Client.stationOpen && !Client.bridgeOpen && !Client.settingsOpen) {
+  // Autopilot: Strategic maneuvers (Orbit / Keep at Range)
+  if (Client.navCommand && !Client.stationOpen && !Client.bridgeOpen && !Client.settingsOpen) {
+    const nav = Client.navCommand;
+    const target = enemyByLockId(nav.targetId);
+    if (!target) {
+      clearNav();
+    } else {
+      const dx = target.x - G.P.x;
+      const dy = target.y - G.P.y;
+      const d = Math.hypot(dx, dy);
+      const targetAngle = Math.atan2(dy, dx);
+      const hysteresis = 30;
+
+      if (nav.mode === "orbit") {
+        let desiredAngle = targetAngle;
+        if (d > nav.rangePx + hysteresis) {
+          desiredAngle = targetAngle;
+        } else if (d < nav.rangePx - hysteresis) {
+          desiredAngle = targetAngle + Math.PI;
+        } else {
+          desiredAngle = targetAngle + (Math.PI / 2) * nav.dir;
+        }
+        const diff = angleDiff(G.P.angle, desiredAngle);
+        at = diff * C.PHYSICS.SHIP.turnRateMultiplier;
+        ax = Math.cos(desiredAngle);
+        ay = Math.sin(desiredAngle);
+        PlayerAccess.updatePhysics({ thrustFx: true });
+      } else if (nav.mode === "keepRange") {
+        // Face target so weapons stay on it
+        const diff = angleDiff(G.P.angle, targetAngle);
+        at = diff * C.PHYSICS.SHIP.turnRateMultiplier;
+
+        if (d > nav.rangePx + hysteresis) {
+          ax = Math.cos(targetAngle);
+          ay = Math.sin(targetAngle);
+          PlayerAccess.updatePhysics({ thrustFx: true });
+        } else if (d < nav.rangePx - hysteresis) {
+          ax = -Math.cos(targetAngle);
+          ay = -Math.sin(targetAngle);
+          PlayerAccess.updatePhysics({ thrustFx: true });
+        } else {
+          ax = 0;
+          ay = 0;
+          PlayerAccess.updatePhysics({ thrustFx: false });
+        }
+      }
+    }
+  } else if (Client.waypoint && !Client.stationOpen && !Client.bridgeOpen && !Client.settingsOpen) {
     const wp = Client.waypoint;
     const dx = wp.x - G.P.x;
     const dy = wp.y - G.P.y;
@@ -56,7 +107,7 @@ export function updateShip(dt: number) {
       at = diff * C.PHYSICS.SHIP.turnRateMultiplier;
       ax = Math.cos(wpAngle);
       ay = Math.sin(wpAngle);
-      G.P.thrustFx = true;
+      PlayerAccess.updatePhysics({ thrustFx: true });
     }
   } else if (!Client.stationOpen && !Client.bridgeOpen && !Client.settingsOpen && !Client.cursorUnlocked) {
     const targetAngle = aimAngle(G.P.x, G.P.y, Client.mouseWorld.x, Client.mouseWorld.y);
@@ -67,7 +118,7 @@ export function updateShip(dt: number) {
   const isThrusting = G.P.thrustFx && speed > C.PHYSICS.SHIP.minSpeedForThrust;
 
   if (Client.keys[" "]) {
-    G.P.vx *= C.PHYSICS.SHIP.brakeVelocityRetention; G.P.vy *= C.PHYSICS.SHIP.brakeVelocityRetention; G.P.va *= C.PHYSICS.SHIP.brakeAngularRetention;
+    PlayerAccess.updatePhysics({ vx: G.P.vx * C.PHYSICS.SHIP.brakeVelocityRetention, vy: G.P.vy * C.PHYSICS.SHIP.brakeVelocityRetention, va: G.P.va * C.PHYSICS.SHIP.brakeAngularRetention });
   }
 
   let capDrained = false;
@@ -81,16 +132,15 @@ export function updateShip(dt: number) {
       if (!inst) continue;
       const m = MODULES[inst.baseId];
       if (!m?.isActive || !m.capDrainPerSec) continue;
+      if (MODULE_FLAGS.isTractor(m)) continue;
       if (!(G.P.slotActive?.[rack]?.[i] ?? true)) continue;
       if (inst.baseId === "me-ab1" && !isThrusting) continue;
       const drain = m.capDrainPerSec * dt;
       if (G.P.energy >= drain) {
-        G.P.energy -= drain;
+        PlayerAccess.setEnergy(G.P.energy - drain);
         capDrained = true;
       } else {
-        if (!G.P.slotActive) G.P.slotActive = {};
-        if (!G.P.slotActive[rack]) G.P.slotActive[rack] = [];
-        G.P.slotActive[rack][i] = false;
+        PlayerAccess.setSlotActive(rack, i, false);
         anyStateChanged = true;
       }
     }
@@ -121,29 +171,26 @@ export function updateShip(dt: number) {
   const mult = activeMovementMultipliers();
   mainThrust *= mult.thrust;
 
-  G.P.vx += ax * mainThrust * dt;
-  G.P.vy += ay * mainThrust * dt;
-  G.P.va += at * turnRate * dt;
-
+  PlayerAccess.updatePhysics({ vx: G.P.vx + ax * mainThrust * dt, vy: G.P.vy + ay * mainThrust * dt, va: G.P.va + at * turnRate * dt });
   // Cap to ability-boosted max speed when an active speed multiplier is in play.
   if (mult.speed > 1) {
     const cap = (st.maxSpeed || 0) * mult.speed;
     if (cap > 0) {
       const sp = Math.hypot(G.P.vx, G.P.vy);
-      if (sp > cap) { const k = cap / sp; G.P.vx *= k; G.P.vy *= k; }
+      if (sp > cap) { const k = cap / sp; PlayerAccess.updatePhysics({ vx: G.P.vx * k, vy: G.P.vy * k }); }
     }
   }
 
-  G.P.vx *= drag; G.P.vy *= drag; G.P.va *= ANG_FRICTION;
+  PlayerAccess.updatePhysics({ vx: G.P.vx * drag, vy: G.P.vy * drag, va: G.P.va * ANG_FRICTION });
 
   // Snap negligible velocity to zero — eliminates perpetual micro-drift
   // that the camera would chase, causing fine vibration.
-  if (Math.abs(G.P.vx) < 0.01) G.P.vx = 0;
-  if (Math.abs(G.P.vy) < 0.01) G.P.vy = 0;
-  if (Math.abs(G.P.va) < 0.001) G.P.va = 0;
+  if (Math.abs(G.P.vx) < 0.01) PlayerAccess.updatePhysics({ vx: 0 });
+  if (Math.abs(G.P.vy) < 0.01) PlayerAccess.updatePhysics({ vy: 0 });
+  if (Math.abs(G.P.va) < 0.001) PlayerAccess.updatePhysics({ va: 0 });
 
-  G.P.px = G.P.x; G.P.py = G.P.y; G.P.prevAngle = G.P.angle;
-  G.P.x += G.P.vx * dt; G.P.y += G.P.vy * dt; G.P.angle += G.P.va * dt;
+  PlayerAccess.updatePhysics({ px: G.P.x, py: G.P.y, prevAngle: G.P.angle });
+  PlayerAccess.updatePhysics({ x: G.P.x + G.P.vx * dt, y: G.P.y + G.P.vy * dt, angle: G.P.angle + G.P.va * dt });
 
   const currentSpeed = Math.hypot(G.P.vx, G.P.vy);
   if (currentSpeed > 8) {
@@ -163,44 +210,44 @@ export function updateShip(dt: number) {
     });
   }
 
-  if ((G.P._colCooldown ?? 0) > 0) G.P._colCooldown = (G.P._colCooldown ?? 0) - dt;
+  if ((G.P._colCooldown ?? 0) > 0) PlayerAccess.setColCooldown((G.P._colCooldown ?? 0) - dt);
 
   resolveSolidCollisions();
 
-  if (G.P.invincible > 0) G.P.invincible -= dt;
+  if (G.P.invincible > 0) PlayerAccess.setInvincible(G.P.invincible - dt);
   if ((Client.combatHeat ?? 0) > 0) {
-    Client.combatHeat = Math.max(0, Client.combatHeat - dt * 0.25);
+    PlayerAccess.setCombatHeat(Math.max(0, Client.combatHeat - dt * 0.25));
   }
   if (G.P.shieldHitGlow > 0) {
-    G.P.shieldHitGlow -= dt * 2.5;
+    PlayerAccess.setShieldHitGlow(G.P.shieldHitGlow - dt * 2.5);
     if (G.P.shieldHitGlow <= 0) {
-      G.P.shieldHitGlow = 0;
-      G.P.shieldHitAngle = 0;
+      PlayerAccess.setShieldHitGlow(0);
+      PlayerAccess.setShieldHitAngle(0);
     }
   }
   if (G.P.hullHitGlow > 0) {
-    G.P.hullHitGlow -= dt * 3.0;
+    PlayerAccess.setHullHitGlow(G.P.hullHitGlow - dt * 3.0);
     if (G.P.hullHitGlow <= 0) {
-      G.P.hullHitGlow = 0;
-      G.P.hullHitAngle = 0;
+      PlayerAccess.setHullHitGlow(0);
+      PlayerAccess.setHullHitAngle(0);
     }
   }
   if ((G.P.structureHitGlow ?? 0) > 0) {
-    G.P.structureHitGlow = (G.P.structureHitGlow ?? 0) - dt * 3.0;
-    if (G.P.structureHitGlow <= 0) {
-      G.P.structureHitGlow = 0;
-      G.P.structureHitAngle = 0;
+    PlayerAccess.setStructureHitGlow((G.P.structureHitGlow ?? 0) - dt * 3.0);
+    if (G.P.structureHitGlow! <= 0) {
+      PlayerAccess.setStructureHitGlow(0);
+      PlayerAccess.setStructureHitAngle(0);
     }
   }
 
-  G.P.shield = Math.min(st.maxShield, G.P.shield + st.shieldRegen * dt);
-  G.P.energy = Math.min(st.maxEnergy, G.P.energy + st.energyRegen * dt);
+  PlayerAccess.setShield(Math.min(st.maxShield, G.P.shield + st.shieldRegen * dt));
+  PlayerAccess.setEnergy(Math.min(st.maxEnergy, G.P.energy + st.energyRegen * dt));
 
   if (G.P.slotHeat) {
     for (const rack of Object.keys(G.P.slotHeat)) {
       const heat = G.P.slotHeat[rack];
       for (let i = 0; i < heat.length; i++) {
-        if (heat[i] > 0) heat[i] = Math.max(0, heat[i] - dt * 0.15);
+        if (heat[i] > 0) PlayerAccess.setSlotHeat(rack, i, Math.max(0, heat[i] - dt * 0.15));
       }
     }
   }
@@ -209,7 +256,7 @@ export function updateShip(dt: number) {
   updateEngineSound(isThrusting, speedRatio, abOn);
 }
 
-const _colHits: any[] = [];
+const _colHits: SpatialQueryResult<unknown>[] = [];
 
 function resolveSolidCollisions() {
   const grid = G.spatialGrid;
@@ -231,7 +278,7 @@ function resolveSolidCollisions() {
     const ny = h.dy / h.dist;
 
     if (h.type === "asteroid") {
-      const ast = h.data;
+      const ast = h.data as Asteroid;
       if (!ast) continue;
       const mA = ast.radius * ast.radius * ASTEROID_DENSITY;
       const closing = resolveElasticCollision(G.P, ast, PLAYER_MASS, mA, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
@@ -239,22 +286,22 @@ function resolveSolidCollisions() {
       if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
         const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE;
         damagePlayer(dmg, ast.x, ast.y);
-        G.P._colCooldown = COLLISION_COOLDOWN;
+        PlayerAccess.setColCooldown(COLLISION_COOLDOWN);
       }
 
     } else if (h.type === "enemy") {
-      const en = h.data;
+      const en = h.data as Enemy;
       if (!en) continue;
       const closing = resolveElasticCollision(G.P, en, PLAYER_MASS, ENEMY_MASS, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
 
       if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
         const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.5;
         damagePlayer(dmg, en.x, en.y);
-        G.P._colCooldown = COLLISION_COOLDOWN;
+        PlayerAccess.setColCooldown(COLLISION_COOLDOWN);
       }
 
     } else if (h.type === "wreckpiece") {
-      const piece = h.data as any;
+      const piece = h.data as WreckPiece;
       if (!piece || piece.hp <= 0) continue;
       // Piece mass proportional to radius^2 (flat debris slab approximation).
       const pieceMass = piece.radius * piece.radius * 0.8;
@@ -263,7 +310,7 @@ function resolveSolidCollisions() {
       if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
         const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.4;
         damagePlayer(dmg, piece.x, piece.y);
-        G.P._colCooldown = COLLISION_COOLDOWN;
+        PlayerAccess.setColCooldown(COLLISION_COOLDOWN);
       }
     }
   }

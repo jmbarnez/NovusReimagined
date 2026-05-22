@@ -10,6 +10,7 @@
  * pollute the saved Player shape.
  */
 import { G } from "../state.js";
+import { PlayerAccess } from "../state-access.js";
 import { addTrailSegment } from "../utils/entities.js";
 
 export interface AbilityDef {
@@ -48,10 +49,9 @@ export const ABILITIES: AbilityDef[] = [
           life: 0.45,
         });
       }
-      G.P.x += c * BLINK_DIST;
-      G.P.y += s * BLINK_DIST;
-      G.P.px = G.P.x; G.P.py = G.P.y;
-      if ((G.P.invincible ?? 0) < 0.25) G.P.invincible = 0.25;
+      PlayerAccess.updatePhysics({ x: G.P.x + c * BLINK_DIST, y: G.P.y + s * BLINK_DIST });
+      PlayerAccess.updatePhysics({ px: G.P.x, py: G.P.y });
+      if ((G.P.invincible ?? 0) < 0.25) PlayerAccess.setInvincible(0.25);
     },
   },
   {
@@ -62,7 +62,7 @@ export const ABILITIES: AbilityDef[] = [
     duration: 2,
     description: "Brief invincibility shield.",
     onActivate: () => {
-      G.P.invincible = Math.max(G.P.invincible ?? 0, 2);
+      PlayerAccess.setInvincible(Math.max(G.P.invincible ?? 0, 2));
     },
   },
 ];
@@ -114,7 +114,7 @@ export function tryActivate(id: string): ActivateResult {
     if (ok === false) return "aborted";
   }
 
-  G.P.energy = Math.max(0, G.P.energy - def.capCost);
+  PlayerAccess.setEnergy(Math.max(0, G.P.energy - def.capCost));
   s.cd = def.cooldown;
   s.remaining = def.duration;
   return "fired";

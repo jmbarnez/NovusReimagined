@@ -73,7 +73,8 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
   const ship = SHIPS[p.shipId];
   const skLv = (id: string) => levelForSkillXp(p.skillXp?.[id] || 0);
   let wepB = 0, minB = 0, ehpB = 0, addPG = 0, engineMN = ship?.baseMainEngineMN ?? 7;
-  let massMult = ((ship?.hullMassKg ?? SHIP_MASS_REF) / SHIP_MASS_REF);
+  const carryKg = (p.tractorCarryKg ?? 0);
+  let massMult = ((ship?.hullMassKg ?? SHIP_MASS_REF) + carryKg) / SHIP_MASS_REF;
   let usedPG = 0, usedCPU = 0;
   let simThrustPct = 0, simMaxSpeedPct = 0, simTurnPct = 0, simDragAdd = 0;
   let capFlat = 0, capPct = 0, capRechargePct = 0;
@@ -279,4 +280,19 @@ export function getWeaponProfileForSlot(idx: number): WeaponProfile | null {
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m) return null;
   return computeScaledWeaponProfile(inst!.baseId, m, ship);
+}
+
+export function hasCommsEquipment(): boolean {
+  const fitting = G.P?.fitting;
+  if (!fitting) return false;
+  for (const rack of ["turret", "high", "med", "low"] as const) {
+    for (const uid of fitting[rack] || []) {
+      if (!uid) continue;
+      const inst = getInstance(uid);
+      if (!inst) continue;
+      const m = MODULES[inst.baseId];
+      if (m && (m as { isComms?: boolean }).isComms) return true;
+    }
+  }
+  return false;
 }

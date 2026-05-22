@@ -31,10 +31,10 @@ export const ANG_ACCEL = 6.5;
 export const ANG_FRICTION = 0.94;
 export const AST_SPIN_RANGE = 0.4;
 
-export const HUD_MINIMAP_SIZE = 140;
+export const HUD_MINIMAP_SIZE = 102;
 export const HUD_SIDE_W = 0;
 export const HUD_BOTTOM_H = 95;
-export const LOCK_RAIL_H = 52;
+export const LOCK_RAIL_H = 102;
 export const LOCK_TIME_BASE = 5.0;
 export const SHIP_MASS_REF = 680000; // scout hull mass — baseline for agility scaling
 

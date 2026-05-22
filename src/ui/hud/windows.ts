@@ -9,6 +9,16 @@ function clampWindow(win: HTMLElement) {
   if (wr.width === 0) return;
   const maxX = Math.max(0, window.innerWidth - wr.width);
   const maxY = Math.max(0, window.innerHeight - wr.height);
+
+  const hasInline = win.style.left && win.style.left !== "auto";
+  if (!hasInline) {
+    // If the window has never been dragged and it fits inside the viewport,
+    // let CSS handle the centering or absolute offset responsively.
+    if (wr.left >= 0 && wr.left <= maxX && wr.top >= 0 && wr.top <= maxY) {
+      return;
+    }
+  }
+
   win.style.left = `${Math.max(0, Math.min(parseFloat(win.style.left) || wr.left, maxX))}px`;
   win.style.top = `${Math.max(0, Math.min(parseFloat(win.style.top) || wr.top, maxY))}px`;
   win.style.right = "auto";
@@ -130,13 +140,21 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
   }
 
   win.style.display = "flex";
-  if (!win.style.left || win.style.left === "auto") {
-    win.style.left = `${Math.max(8, window.innerWidth - 420)}px`;
-    win.style.top = `${60}px`;
-    win.style.right = "auto";
-  }
+  // Clamp immediately to handle small viewports gracefully on launch.
+  // If it has no inline style and fits within the screen, clampWindow will return early and do nothing,
+  // letting it center/position via bridge.css rules.
+  clampWindow(win);
   bringToFront(win);
 }
+
+// Keep all active dynamic windows inside visible viewport bounds on resize
+window.addEventListener("resize", () => {
+  _windows.forEach((win) => {
+    if (win.style.display !== "none") {
+      clampWindow(win);
+    }
+  });
+});
 
 export function closeHudWindow(id: string) {
   const win = _windows.get(id);

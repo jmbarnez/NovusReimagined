@@ -1,6 +1,7 @@
-import { G, Client } from "../state.js";
+import { G } from "../state.js";
+import type { System, Star, DustParticle } from "../types/world.js";
 import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
-import { HUD_SIDE_W, HUD_BOTTOM_H } from "../constants.js";
+import { W, H } from "../canvas.js";
 import { TAU } from "../constants.js";
 import { getState } from "../state-access.js";
 import { screenContainer, planetLayer } from "../pixi.js";
@@ -37,7 +38,7 @@ export let nearStarContainer: Container | null = null;
 export let dustContainer:     Container | null = null;
 
 // Compute the sun's screen position for lens flare without rendering a sprite
-function updateSunScreenPos(Wc: number, Hc: number, camX: number, camY: number, sys: any) {
+function updateSunScreenPos(Wc: number, Hc: number, camX: number, camY: number, sys: System) {
   if (!sys) return;
   const sunDir  = sys.sunDir ?? 0;
   const screenDist = Math.min(Wc, Hc) * 0.38;
@@ -87,7 +88,7 @@ function bakeStarTexture(): Texture {
 
 function spawnStarSprites() {
   if (!starTexture) starTexture = bakeStarTexture();
-  const spawnFor = (container: Container, stars: any[]) => {
+  const spawnFor = (container: Container, stars: Star[]) => {
     container.removeChildren();
     for (const s of stars) {
       const sprite = new Sprite(starTexture!);
@@ -105,11 +106,11 @@ function spawnStarSprites() {
 function spawnDustSprites() {
   dustContainer!.removeChildren();
   for (const d of G.DUST ?? []) {
-    const g = new Graphics();
+    const g = new Graphics() as Graphics & { _dustData?: DustParticle };
     const dotR = 0.6 + d.r * 3;
     g.circle(0, 0, dotR);
     g.fill({ color: 0xffffff, alpha: d.a * 3.5 });
-    (g as any)._dustData = d;
+    g._dustData = d;
     dustContainer!.addChild(g);
   }
 }
@@ -146,10 +147,8 @@ export function updateBackground(now: number, camX: number, camY: number) {
   const sys     = state.GALAXY?.[sysIdx];
   const starHue = sys?.starHue ?? 210;
 
-  const uiRight  = Client.gameStarted ? HUD_SIDE_W  : 0;
-  const uiBottom = Client.gameStarted ? HUD_BOTTOM_H : 0;
-  const Wc = window.innerWidth  - uiRight;
-  const Hc = window.innerHeight - uiBottom;
+  const Wc = W();
+  const Hc = H();
 
   // Resize GPU nebula mesh when viewport changes
   if (Wc !== _lastWc || Hc !== _lastHc) {
@@ -184,7 +183,7 @@ export function getNebulaDensity(_camX: number, _camY: number): number {
 
 // ── Star / dust layer updaters ─────────────────────────────────────────────
 function updateStarLayer(
-  container: Container, stars: any[], _wrapW: number,
+  container: Container, stars: Star[], _wrapW: number,
   parallaxRate: number, Wc: number, Hc: number,
   now: number, scintillateAmt: number, camX: number, camY: number,
 ) {

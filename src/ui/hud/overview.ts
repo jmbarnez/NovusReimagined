@@ -1,9 +1,12 @@
 import "../styles/hud-overview.css";
 import { G } from "../../state.js";
+import type { System } from "../../types/world.js";
 import { GATE_RANGE } from "../../constants.js";
 import { dst } from "../../utils/math.js";
 import { buildLocalOverviewRows } from "../bridge.js";
 import { hudState } from "./state.js";
+import { showEnemyCtxMenu } from "./enemy-menu.js";
+import { formatDistance } from "../../utils/format.js";
 
 /* ── Overview Panel ── */
 export function updateHudOverviewPanel() {
@@ -36,21 +39,24 @@ export function updateHudOverviewPanel() {
 
   rows = playerRow ? [playerRow, ...otherRows] : otherRows;
 
-  const existing = new Map();
+  const existing = new Map<string, HTMLElement>();
   for (const tr of hudState.ovEntries.querySelectorAll("tr[data-id]")) {
-    existing.set((tr as HTMLElement).dataset.id, tr);
+    const id = (tr as HTMLElement).getAttribute("data-id");
+    if (id) {
+      existing.set(id, tr as HTMLElement);
+    }
   }
 
   for (const r of rows) {
-    let tr: HTMLElement = existing.get(r.id);
+    let tr = existing.get(r.id);
     if (!tr) {
       tr = document.createElement("tr");
       tr.className = `ov-row ov-row-${r.kind}`;
-      (tr as any).dataset.id = r.id;
-      const lockBtn = (r.kind === "hostile" || r.kind === "asteroid")
+      tr.setAttribute("data-id", r.id);
+      const lockBtn = (r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid")
         ? `<button type="button" class="ov-lock" data-lock-id="${r.id}">Lock</button>`
         : "—";
-      const dist = typeof r.dist === "number" ? String(r.dist) : r.dist;
+      const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       tr.innerHTML = `
         <td class="ov-icon">${r.icon}</td>
         <td class="ov-st">${r.status}</td>
@@ -58,9 +64,18 @@ export function updateHudOverviewPanel() {
         <td class="ov-name">${r.name.slice(0, 12)}</td>
         <td class="ov-num ov-dist">${dist}</td>
         <td>${lockBtn}</td>`;
+      
+      tr.addEventListener("contextmenu", (ev) => {
+        if (r.kind === "hostile" || r.kind === "neutral") {
+          ev.preventDefault();
+          ev.stopPropagation();
+          showEnemyCtxMenu(ev.clientX, ev.clientY, r.id);
+        }
+      });
+
       hudState.ovEntries.appendChild(tr);
     } else {
-      const dist = typeof r.dist === "number" ? String(r.dist) : r.dist;
+      const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       const dCell = tr.querySelector(".ov-dist");
       const sCell = tr.querySelector(".ov-st");
       if (dCell && dCell.textContent !== dist) dCell.textContent = dist;
@@ -72,7 +87,7 @@ export function updateHudOverviewPanel() {
       existing.delete(r.id);
     }
   }
-  for (const tr of existing.values()) (tr as HTMLElement).remove();
+  for (const tr of existing.values()) tr.remove();
 }
 
 export function updateHudOverviewPanelHeaders() {
@@ -82,12 +97,100 @@ export function updateHudOverviewPanelHeaders() {
     const key = (th as HTMLElement).dataset.sort;
     const label = key === "state" ? "State" : key === "class" ? "Class" : key === "name" ? "Name" : "Dist";
     const ind = hudState.ovSortKey === key ? (hudState.ovSortDir === 1 ? " ↑" : " ↓") : "";
-    th.textContent = label + ind;
+    const textEl = th.querySelector(".th-text");
+    if (textEl) {
+      textEl.textContent = label + ind;
+    } else {
+      th.textContent = label + ind;
+    }
   }
 }
 
+export function initOverviewResizers(panelEl: HTMLElement) {
+  const table = panelEl.querySelector(".ov-table") as HTMLElement;
+  if (!table) return;
+  const ths = table.querySelectorAll("thead th") as NodeListOf<HTMLElement>;
+
+  // Function to compute total width of table to match the column sum (Excel-style)
+  const updateTableTotalWidth = () => {
+    let total = 0;
+    ths.forEach((th) => {
+      total += th.getBoundingClientRect().width;
+    });
+    table.style.width = total + "px";
+  };
+
+  // Load custom widths from localStorage
+  const savedWidths = localStorage.getItem("hud-overview-widths");
+  if (savedWidths) {
+    try {
+      const widths = JSON.parse(savedWidths) as number[];
+      ths.forEach((th, idx) => {
+        if (widths[idx] !== undefined) {
+          th.style.width = widths[idx] + "px";
+        }
+      });
+      // Also adjust table total width to fit the saved values exactly
+      let totalSaved = widths.reduce((sum, w) => sum + w, 0);
+      table.style.width = totalSaved + "px";
+    } catch (e) {
+      console.error("Failed to load saved column widths", e);
+    }
+  } else {
+    // If no saved widths, set the initial table total width
+    updateTableTotalWidth();
+  }
+
+  // Bind drag listeners to each resizer
+  ths.forEach((th, index) => {
+    const resizer = th.querySelector(".ov-resizer") as HTMLElement;
+    if (!resizer) return;
+
+    resizer.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Stop sorting trigger on th click!
+
+      const startX = e.clientX;
+      const startWidth = th.getBoundingClientRect().width;
+
+      resizer.classList.add("resizing");
+
+      // Record widths of all columns initially to adjust table width during drag
+      const colWidths = Array.from(ths).map(t => t.getBoundingClientRect().width);
+
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const newWidth = Math.max(15, startWidth + dx); // min width 15px
+        th.style.width = newWidth + "px";
+
+        // Sum current widths to update total table width
+        colWidths[index] = newWidth;
+        const total = colWidths.reduce((sum, w) => sum + w, 0);
+        table.style.width = total + "px";
+      };
+
+      const onMouseUp = () => {
+        resizer.classList.remove("resizing");
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+
+        // Compute final actual widths and persist
+        const finalWidths = Array.from(ths).map(t => t.getBoundingClientRect().width);
+        localStorage.setItem("hud-overview-widths", JSON.stringify(finalWidths));
+        
+        // Finalize total table width
+        const total = finalWidths.reduce((sum, w) => sum + w, 0);
+        table.style.width = total + "px";
+      };
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    });
+  });
+}
+
 /* ── Dock Prompt ── */
-export function updateDockPrompt(sys: any) {
+export function updateDockPrompt(sys: System | null | undefined) {
   // Gate prompt takes priority
   if (sys?.gates) {
     for (const g of sys.gates) {
@@ -95,6 +198,21 @@ export function updateDockPrompt(sys: any) {
         const tgt = G.GALAXY[g.targetSysIdx];
         if (hudState.dockPrompt) {
           hudState.dockPrompt.textContent = `[F] Jump to ${tgt?.name || "Gate"}`;
+          hudState.dockPrompt.classList.add("visible");
+        }
+        return;
+      }
+    }
+  }
+
+  // Processing hub proximity check
+  if (sys?.stations) {
+    for (const st of sys.stations) {
+      if (!st.isProcessingHub) continue;
+      const interactR = (st.collectRadius ?? 220) + 80;
+      if (dst(G.P.x, G.P.y, st.x, st.y) < interactR) {
+        if (hudState.dockPrompt) {
+          hudState.dockPrompt.textContent = "[F] Processing Hub";
           hudState.dockPrompt.classList.add("visible");
         }
         return;

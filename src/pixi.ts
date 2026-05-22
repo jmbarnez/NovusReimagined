@@ -18,13 +18,27 @@ import { Client } from "./state.js";
 import { clearShipTextureCaches, rebuildPlayerSprites } from "./render/pixi-player.js";
 import { clearEnemyTextureCaches } from "./render/pixi-entities.js";
 import { clearStationTextureCaches } from "./render/pixi-stations.js";
-import { HUD_INSETS } from "./render/viewport.js";
+import { HUD_SIDE_W, HUD_BOTTOM_H, LOCK_RAIL_H } from "./constants.js";
+
+/** Playable rect (between the HUD bars in-game, full window on the title screen). */
+function playRect() {
+  const uiTop = 0;
+  const uiBottom = Client.gameStarted ? HUD_BOTTOM_H : 0;
+  const uiRight = Client.gameStarted ? HUD_SIDE_W : 0;
+  return {
+    top: uiTop,
+    width: Math.max(1, window.innerWidth - uiRight),
+    height: Math.max(1, window.innerHeight - uiTop - uiBottom),
+  };
+}
 
 let app: Application | null = null;
 let worldContainer: Container | null = null;
 let screenContainer: Container | null = null;
 /** Baked planet textures + animated moon Graphics — behind everything else in worldContainer. */
 let planetLayer: Container | null = null;
+/** Phase 3 (background): baked stations — rendered behind thrust and entity layers. */
+let stationLayer: Container | null = null;
 /** Phase 4+: thrust flame sprites — rendered behind entityLayer. */
 let thrustLayer: Container | null = null;
 /** Phase 3+: enemies, player hull, asteroids, bullets. */
@@ -37,7 +51,7 @@ let _pixiReady = false;
 /** Physical pixels per CSS pixel — set during initPixi, used by texture bakers. */
 let pixiDpr = 1;
 
-export { app, worldContainer, screenContainer, planetLayer, thrustLayer, entityLayer, effectLayer, worldGradeFilter, _pixiReady, pixiDpr };
+export { app, worldContainer, screenContainer, planetLayer, stationLayer, thrustLayer, entityLayer, effectLayer, worldGradeFilter, _pixiReady, pixiDpr };
 
 /** Render the PixiJS stage once. Call once per game frame after updating positions. */
 export function renderPixi() {
@@ -51,11 +65,10 @@ export async function initPixi(): Promise<Application> {
   const cap = Client.settings?.renderScale ?? 2.5;
   pixiDpr = Math.min(window.devicePixelRatio || 1, cap);
 
-  const uiRight = Client.gameStarted ? HUD_INSETS.right : 0;
-  const uiBottom = Client.gameStarted ? HUD_INSETS.bottom : 0;
+  const rect = playRect();
   await app.init({
-    width: window.innerWidth - uiRight,
-    height: window.innerHeight - uiBottom,
+    width: rect.width,
+    height: rect.height,
     resolution: pixiDpr,
     autoDensity: true,
     antialias: true,
@@ -77,7 +90,7 @@ export async function initPixi(): Promise<Application> {
   // Insert the PixiJS canvas behind the HUD canvas (#c, zIndex 1).
   const pixiCanvas = app.canvas as HTMLCanvasElement;
   pixiCanvas.style.position = "fixed";
-  pixiCanvas.style.top = "0";
+  pixiCanvas.style.top = `${rect.top}px`;
   pixiCanvas.style.left = "0";
   pixiCanvas.style.zIndex = "0";
   document.body.appendChild(pixiCanvas);
@@ -96,6 +109,10 @@ export async function initPixi(): Promise<Application> {
   planetLayer = new Container();
   planetLayer.label = "planets";
   worldContainer.addChild(planetLayer);
+
+  stationLayer = new Container();
+  stationLayer.label = "stations";
+  worldContainer.addChild(stationLayer);
 
   thrustLayer = new Container();
   thrustLayer.label = "thrust";
@@ -118,16 +135,10 @@ export async function initPixi(): Promise<Application> {
   // pinned to the viewport so PixiJS skips a per-frame getBounds() on the world.
   worldGradeFilter = new ColorMatrixFilter();
   if (worldContainer) {
-    worldContainer.filterArea = new Rectangle(0, 0, window.innerWidth - uiRight, window.innerHeight - uiBottom);
+    worldContainer.filterArea = new Rectangle(0, 0, rect.width, rect.height);
   }
 
   return app;
-}
-
-/** Attach/detach the playable-rect mask. Detached during title screen so the
- *  background renders edge-to-edge with no visible HUD-shaped cutout. */
-export function setViewMaskEnabled(enabled: boolean) {
-  // Masking is achieved by canvas dimension resizing.
 }
 
 export function resizePixi() {
@@ -135,13 +146,18 @@ export function resizePixi() {
   const cap = Client.settings?.renderScale ?? 2.5;
   const oldDpr = pixiDpr;
   pixiDpr = Math.min(window.devicePixelRatio || 1, cap);
-  
-  const uiRight = Client.gameStarted ? HUD_INSETS.right : 0;
-  const uiBottom = Client.gameStarted ? HUD_INSETS.bottom : 0;
-  app.renderer.resize(window.innerWidth - uiRight, window.innerHeight - uiBottom);
+
+  const rect = playRect();
+  app.renderer.resize(rect.width, rect.height);
   app.renderer.resolution = pixiDpr;
+
+  const pixiCanvas = app.canvas as HTMLCanvasElement;
+  if (pixiCanvas) {
+    pixiCanvas.style.top = `${rect.top}px`;
+  }
+
   if (worldContainer) {
-    worldContainer.filterArea = new Rectangle(0, 0, window.innerWidth - uiRight, window.innerHeight - uiBottom);
+    worldContainer.filterArea = new Rectangle(0, 0, rect.width, rect.height);
   }
   // If DPR changed, invalidate all baked textures so they re-render at the new resolution.
   if (pixiDpr !== oldDpr) {

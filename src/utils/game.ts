@@ -1,6 +1,7 @@
 import { G, Client } from "../state.js";
+import { WorldAccess, MiningAccess, PlayerAccess } from "../state-access.js";
+import { savePlayer } from "../player/player-data.js";
 import { W, H } from "../canvas.js";
-import { LOCK_RAIL_H } from "../constants.js";
 import { getStats, invalidate } from "../player/player-stats.js";
 import { clearSensorLocks } from "../targeting.js";
 import { SHIPS } from "../data/ships.js";
@@ -8,7 +9,7 @@ import { populateSystem } from "../world-gen.js";
 import { floatText, spawnExplosion, spawnShockwave } from "./fx.js";
 import { sfxShipExplosion } from "../audio/procedural.js";
 import { viewCenterX, viewCenterY } from "../render/viewport.js";
-import { MODULE_HP_MAX, RACK_TYPES } from "../constants.js";
+import { MODULE_HP_MAX, RACK_TYPES, LOCK_RAIL_H } from "../constants.js";
 import { emit } from "../events.js";
 import { clearSimulationEntities } from "./entities.js";
 import type { System, Enemy, Asteroid } from "../types/world.js";
@@ -76,8 +77,8 @@ export function respawnPlayer() {
   emit("ui:close-overlays");
 
   Client.mouse.lmb = false;
-  G.warpCooldown = 0;
-  G.warpTargetIdx = -1;
+  WorldAccess.setWarpCooldown(0);
+  WorldAccess.setWarpTargetIdx(-1);
 
   const penalty = Math.floor(G.P.credits * 0.1);
   G.P.credits -= penalty;
@@ -97,39 +98,39 @@ export function respawnPlayer() {
       }
     }
   }
-  G.P.slotActive = slotActive;
-  G.P.moduleHp = moduleHp;
-  G.P.turretTargets = Array(fit.turret.length).fill(null);
-  G.P.turretCds = Array(fit.turret.length).fill(0);
-  G.P.turretPower = Array(fit.turret.length).fill(false);
-  G.P.turretPowerCd = Array(fit.turret.length).fill(0);
-  G.P.combatBar = { pos: 0.5, dir: 1 };
+  PlayerAccess.setSlotActiveAll(slotActive);
+  PlayerAccess.setModuleHpAll(moduleHp);
+  PlayerAccess.setTurretTargetsAll(Array(fit.turret.length).fill(null));
+  PlayerAccess.setTurretCdsAll(Array(fit.turret.length).fill(0));
+  PlayerAccess.setTurretPowerAll(Array(fit.turret.length).fill(false));
+  PlayerAccess.setTurretPowerCdAll(Array(fit.turret.length).fill(0));
+  PlayerAccess.setCombatBar({ pos: 0.5, dir: 1 });
   if (G.P.slotHeat) {
-    G.P.slotHeat.turret = Array(fit.turret.length).fill(0);
-    G.P.slotHeat.high = Array(fit.high.length).fill(0);
-    G.P.slotHeat.med = Array(fit.med.length).fill(0);
-    G.P.slotHeat.low = Array(fit.low.length).fill(0);
+    PlayerAccess.setSlotHeatAll({
+      turret: Array(fit.turret.length).fill(0),
+      high: Array(fit.high.length).fill(0),
+      med: Array(fit.med.length).fill(0),
+      low: Array(fit.low.length).fill(0),
+    });
   }
   invalidate();
   const st = getStats();
 
   const homeIdx = G.P.homeSysIdx ?? 0;
-  G.P.sysIdx = homeIdx;
-  G.P.vx = G.P.vy = G.P.va = 0;
-  G.P.angle = 0;
-  G.P.prevAngle = 0;
-  G.P.shield = st.maxShield;
-  G.P.hp = st.maxHp;
-  G.P.structure = st.maxStructure;
-  G.P.maxHp = st.maxHp;
-  G.P.maxStructure = st.maxStructure;
-  G.P.maxShield = st.maxShield;
-  G.P.energy = st.maxEnergy;
-  G.P.invincible = 3.0;
-  G.P.shieldHitGlow = 0;
-  G.P.hullHitGlow = 0;
+  PlayerAccess.setSysIdx(homeIdx);
+  PlayerAccess.updatePhysics({ vx: 0, vy: 0, va: 0, angle: 0, prevAngle: 0 });
+  PlayerAccess.setShield(st.maxShield);
+  PlayerAccess.setHp(st.maxHp);
+  PlayerAccess.setStructure(st.maxStructure);
+  PlayerAccess.setMaxHp(st.maxHp);
+  PlayerAccess.setMaxStructure(st.maxStructure);
+  PlayerAccess.setMaxShield(st.maxShield);
+  PlayerAccess.setEnergy(st.maxEnergy);
+  PlayerAccess.setInvincible(3.0);
+  PlayerAccess.setShieldHitGlow(0);
+  PlayerAccess.setHullHitGlow(0);
   clearSensorLocks();
-  G.miningLaser.active = false;
+  MiningAccess.update({ active: false });
   clearSimulationEntities();
   emit("simulation:clear");
   emit("player:respawn", { homeIdx, penalty });
@@ -138,22 +139,21 @@ export function respawnPlayer() {
   const homeSys = G.GALAXY[homeIdx];
   const homeSt = homeSys?.stations[0];
   if (homeSt) {
-    const hubR = Math.hypot(homeSt.x, homeSt.y) || 1;
-    const ox = homeSt.x / hubR;
-    const oy = homeSt.y / hubR;
+    const hubR = Math.hypot(homeSt.x, homeSt.y);
+    // Default outward direction to (1,0) when station is at origin
+    const ox = hubR > 0.5 ? homeSt.x / hubR : 1;
+    const oy = hubR > 0.5 ? homeSt.y / hubR : 0;
     const pad = homeSt.radius + 240;
-    G.P.x = homeSt.x + ox * pad;
-    G.P.y = homeSt.y + oy * pad;
+    PlayerAccess.updatePhysics({ x: homeSt.x + ox * pad, y: homeSt.y + oy * pad });
   } else {
-    G.P.x = 0;
-    G.P.y = 0;
+    PlayerAccess.updatePhysics({ x: 0, y: 0 });
   }
-  G.P.px = G.P.x;
-  G.P.py = G.P.y;
+  PlayerAccess.updatePhysics({ px: G.P.x, py: G.P.y });
   Client.camx = G.P.x;
   Client.camy = G.P.y;
   spawnExplosion(G.P.x, G.P.y, "#ff4444", 1.2);
   spawnShockwave(G.P.x, G.P.y, "#ff4444", 1.2);
   sfxShipExplosion(G.P.x, G.P.y, 1.2);
   floatText(G.P.x, G.P.y - 50, `SHIP DESTROYED — POD ESCAPED${penalty > 0 ? ` (-${penalty}¢)` : ""}`, "#ff4444");
+  savePlayer();
 }

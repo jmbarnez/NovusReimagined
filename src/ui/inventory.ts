@@ -215,8 +215,14 @@ function normalizeItems(): InventoryItem[] {
 
 function getItemsForContainer(containerId: string): InventoryItem[] {
   const all = normalizeItems();
-  if (containerId === "ship") return [];
-  if (containerId === "station") return [];
+  if (containerId === "ship") {
+    // Return all items fitted on the ship or held in cargo
+    return all.filter((it: InventoryItem) => it.container === "shipCargo" || it.container === "shipFitting");
+  }
+  if (containerId === "station") {
+    // Return all items stored in station storage/hangar
+    return all.filter((it: InventoryItem) => it.container === "stationStorage");
+  }
   return all.filter((it: InventoryItem) => it.container === containerId);
 }
 
@@ -345,6 +351,10 @@ export function renderInventoryHTML(): string {
           <div class="inv-selection">
             ${selectedItem ? `<b>${escHtml(selectedItem.name)}</b> <span class="inv-sel-meta">${escHtml(selectedItem.group)} · ${selectedItem.vol.toFixed(2)} m³</span>` : "No selection"}
           </div>
+          <div class="inv-credits">
+            <span class="inv-credits-label">Credits</span>
+            <span class="inv-credits-value" id="inv-credits-value">${Math.floor(G.P.credits).toLocaleString()}¢</span>
+          </div>
         </div>
       </div>
     </div>
@@ -387,9 +397,9 @@ function itemIcon(it: InventoryItem): string {
 
 function getCapacityFor(containerId: string): number {
   const ship = SHIPS[G.P.shipId];
-  if (containerId === "shipCargo") return ship.baseCargoM3 || 100;
+  if (containerId === "ship" || containerId === "shipCargo") return ship.baseCargoM3 || 100;
   if (containerId === "shipFitting") return 0; // Fitting is slots, not volume
-  if (containerId === "stationStorage") return 10000;
+  if (containerId === "station" || containerId === "stationStorage") return 10000;
   return 100;
 }
 

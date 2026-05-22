@@ -18,7 +18,6 @@ let _avgTicks = 0;
 
 let _perfEl: HTMLDivElement | null = null;
 let _perfBody: HTMLDivElement | null = null;
-let _fpsEl: HTMLDivElement | null = null;
 
 function ensurePerfWindow() {
   if (_perfEl) return;
@@ -88,31 +87,6 @@ export function updatePerfOverlay(frameTimeSec: number, ticksThisFrame: number) 
   }
 }
 
-export function drawFpsCounter() {
-  const show = Client.settings?.fpsCounter ?? false;
-  if (!show) {
-    if (_fpsEl) _fpsEl.style.display = "none";
-    return;
-  }
-  if (!_fpsEl) {
-    const el = document.createElement("div");
-    el.id = "fps-counter";
-    el.style.cssText = [
-      "position:fixed", "top:8px", "left:8px",
-      "font:bold 11px var(--font-family, 'Orbitron', sans-serif)",
-      "color:rgba(255,255,255,0.75)",
-      "background:rgba(0,0,0,0.45)",
-      "padding:2px 7px", "border-radius:3px",
-      "pointer-events:none", "z-index:9999",
-      "letter-spacing:0.04em",
-    ].join(";");
-    document.body.appendChild(el);
-    _fpsEl = el;
-  }
-  _fpsEl.style.display = "block";
-  const color = _fps >= 55 ? "#88ff88" : _fps >= 30 ? "#ffcc44" : "#ff5533";
-  _fpsEl.innerHTML = `<span style="color:${color}">${_fps}</span> fps`;
-}
 
 export function drawPerfOverlay() {
   if (!Client.showPerf) {
@@ -130,7 +104,7 @@ export function drawPerfOverlay() {
     `World: EN=${curSys()?._liveEnemies?.length ?? 0} AST=${curSys()?._liveAsteroids?.length ?? 0} Cells=${state.spatialGrid?.cells?.size ?? 0}`,
   ];
 
-  const mem = (performance as any).memory;
+  const mem = (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
   if (mem) {
     lines.push(
       `Memory: ${(mem.usedJSHeapSize / 1048576).toFixed(1)}MB / ${(mem.totalJSHeapSize / 1048576).toFixed(1)}MB  Limit: ${(mem.jsHeapSizeLimit / 1048576).toFixed(0)}MB`
@@ -138,8 +112,9 @@ export function drawPerfOverlay() {
   }
 
   const html = lines.map((l, i) => `<div class="perf-line${i === 0 ? " perf-fps" : ""}">${l}</div>`).join("");
-  if ((_perfBody as any)._lastHtml !== html) {
-    (_perfBody as any)._lastHtml = html;
-    _perfBody!.innerHTML = html;
+  const body = _perfBody as (HTMLDivElement & { _lastHtml?: string }) | null;
+  if (body && body._lastHtml !== html) {
+    body._lastHtml = html;
+    body.innerHTML = html;
   }
 }

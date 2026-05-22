@@ -1,13 +1,15 @@
 import { getState } from "../../state-access.js";
-import { Client } from "../../state.js";
+import { Client, G } from "../../state.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { lerp } from "../../utils/math.js";
 import { isVisible } from "../../utils/game.js";
 import { getThemeColors } from "../../data/settings.js";
 import { getSalvagerBeam } from "../../salvager.js";
+import { getTractorBeam } from "../../tractor.js";
 import { radialGlow } from "../grad-cache.js";
 import { addParticle } from "../../utils/entities.js";
+import type { System } from "../../types/world.js";
 
 // Cached multi-stop glows for the mining laser / salvager contact points.
 // Baked at pulse=1; per-frame pulse is folded into globalAlpha by the caller.
@@ -44,7 +46,7 @@ function salvageSparkGrad(radius: number): CanvasGradient {
   return g;
 }
 
-export function drawBullets(alpha: number, sys: any) {
+export function drawBullets(alpha: number, sys: System) {
   const state = getState();
   for (const b of state.bullets) {
     if (!isVisible(b.x, b.y, 14)) continue;
@@ -133,7 +135,7 @@ export function drawBullets(alpha: number, sys: any) {
   }
 }
 
-export function drawBeams(sys: any) {
+export function drawBeams(sys: System) {
   const state = getState();
   for (const b of state.beams) {
     ctx.save();
@@ -277,6 +279,66 @@ export function drawSalvagerBeam() {
   ctx.restore();
 }
 
+export function drawTractorBeam() {
+  const tr = getTractorBeam();
+  if (!tr.active && !tr.tooHeavy) return;
+  const { x1, y1, x2, y2, phase, active, tooHeavy } = tr;
+  const pulse = 0.7 + 0.3 * Math.sin(phase * 3.0);
+
+  ctx.save();
+  ctx.lineCap = "round";
+
+  if (tooHeavy && !active) {
+    // Weak red flash — can't pull
+    ctx.globalAlpha = 0.25;
+    ctx.strokeStyle = "#ff4422";
+    ctx.lineWidth = 6;
+    ctx.setLineDash([8, 12]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+  } else {
+    const t = G.P.tractorTightness ?? 0.5;
+    const beamScale = 0.6 + t * 0.8;
+
+    // Outer glow — cyan
+    ctx.globalAlpha = 0.18 * pulse;
+    ctx.strokeStyle = "#00ccff";
+    ctx.lineWidth = 12 * beamScale;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+
+    // Animated dashed core — direction of pull (from x2→x1)
+    ctx.globalAlpha = 0.62 * pulse;
+    ctx.strokeStyle = "#44ddff";
+    ctx.lineWidth = 2.5 * beamScale;
+    ctx.setLineDash([12, 8]);
+    ctx.lineDashOffset = phase * 14;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Bright center line
+    ctx.globalAlpha = 0.88 * pulse;
+    ctx.strokeStyle = "#ccf8ff";
+    ctx.lineWidth = 1 * beamScale;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+
+    // Glow at target contact point
+    const sparkR = Math.max(1, Math.round((5 + Math.sin(phase * 3.5) * 2) * 2 * beamScale));
+    ctx.globalAlpha = pulse * pulse;
+    ctx.save();
+    ctx.translate(x2, y2);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, sparkR);
+    g.addColorStop(0, "rgba(100,240,255,0.9)");
+    g.addColorStop(1, "rgba(0,180,255,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, sparkR, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+import { renderReticleStyle } from "../reticle.js";
+
 export function drawCrosshair() {
   const { x, y } = Client.mouseWorld;
   const sz = 12 / Client.zoom;
@@ -284,34 +346,7 @@ export function drawCrosshair() {
   const style = Client.settings?.reticleStyle || "classic";
 
   ctx.save();
-  ctx.strokeStyle = theme.textMain;
   ctx.globalAlpha = 0.55;
-  ctx.lineWidth = 1.5 / Client.zoom;
-
-  if (style === "brackets") {
-    // Four corner brackets framing the aim point.
-    const arm = sz * 0.5;
-    const corners = [
-      [-1, -1], [1, -1], [1, 1], [-1, 1],
-    ];
-    for (const [sx, sy] of corners) {
-      ctx.beginPath();
-      ctx.moveTo(x + sx * sz, y + sy * sz - sy * arm);
-      ctx.lineTo(x + sx * sz, y + sy * sz);
-      ctx.lineTo(x + sx * sz - sx * arm, y + sy * sz);
-      ctx.stroke();
-    }
-  } else {
-    // Plus-sign lines, shared by "classic" and "cross".
-    ctx.beginPath();
-    ctx.moveTo(x - sz, y); ctx.lineTo(x + sz, y);
-    ctx.moveTo(x, y - sz); ctx.lineTo(x, y + sz);
-    ctx.stroke();
-    if (style === "classic") {
-      ctx.beginPath();
-      ctx.arc(x, y, sz * 0.6, 0, TAU);
-      ctx.stroke();
-    }
-  }
+  renderReticleStyle(ctx, style, x, y, sz, theme.textMain, 1.5 / Client.zoom);
   ctx.restore();
 }

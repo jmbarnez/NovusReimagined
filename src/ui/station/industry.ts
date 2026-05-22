@@ -1,5 +1,6 @@
 import "../styles/station-industry.css";
 import { G, Client } from "../../state.js";
+import { PlayerAccess } from "../../state-access.js";
 import { MACHINES, RECIPES, poolItemLabel, type IndustryPool, createCraftJob, tickCraftJobs, CraftJob } from "../../data/industryRecipes.js";
 import { escHtml } from "../../utils/format.js";
 import { stationState, iconSvg } from "./shared.js";
@@ -45,9 +46,9 @@ export function tickCraftQueue() {
   if (G.P.craftQueue.length === 0) return;
 
   const completed: CraftJob[] = [];
-  G.P.craftQueue = tickCraftJobs(G.P.craftQueue, (job) => {
+  PlayerAccess.setCraftQueue(tickCraftJobs(G.P.craftQueue, (job) => {
     completed.push(job);
-  });
+  }));
 
   for (const job of completed) {
     const recipe = RECIPES.find(r => r.id === job.recipeId);
@@ -55,7 +56,12 @@ export function tickCraftQueue() {
     const skillMult = recipe.outputSkill ? 1 + (G.P.skills[recipe.outputSkill] || 0) * 0.05 : 1;
     for (const out of recipe.outputs) {
       const totalQty = Math.floor(out.qty * job.qty * skillMult);
-      playerPool(out.pool)[out.key] = (playerPool(out.pool)[out.key] || 0) + totalQty;
+      const cur = playerPool(out.pool)[out.key] || 0;
+      const setter = out.pool === "ore" ? PlayerAccess.setOre
+        : out.pool === "refined" ? PlayerAccess.setRefined
+        : out.pool === "loot" ? PlayerAccess.setLoot
+        : PlayerAccess.setComponents;
+      setter(out.key, cur + totalQty);
     }
     const label = recipe.label;
     logEvent(`Crafting complete: ${label} ×${job.qty}`, "loot");

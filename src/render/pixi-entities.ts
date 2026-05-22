@@ -26,12 +26,14 @@
  */
 import { ImageSource, Sprite, Graphics, Text, TextStyle, Texture } from "pixi.js";
 import { G, Client } from "../state.js";
+import type { Enemy } from "../types/world.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { entityLayer, effectLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
 import { getUIFont } from "./ui-font.js";
 import { lightenCol, darkenCol } from "../utils/color.js";
 import { tracePath } from "./bake-utils.js";
+import { hasCommsEquipment } from "../player/player-stats.js";
 
 const TAU = Math.PI * 2;
 /** Supersampling multiplier — baked canvas physical pixels per logical texel. */
@@ -213,17 +215,27 @@ export function lightDirIndex(localSunAngle: number): number {
 // ─── Text styles ─────────────────────────────────────────────────────────────
 // Shared name style — mutating its fontFamily updates every live name Text.
 const _nameStyle = new TextStyle({ fontFamily: getUIFont(), fontSize: 9, fill: "#cc7777" });
+const _levelStyle = new TextStyle({ fontFamily: getUIFont(), fontSize: 9, fontWeight: "bold", fill: "#000000" });
+const _speechStyle = new TextStyle({
+  fontFamily: getUIFont(),
+  fontSize: 10,
+  fill: "#ffffff",
+  stroke: { color: "#000000", width: 3 },
+  align: "center",
+  wordWrap: true,
+  wordWrapWidth: 180,
+});
 
-function makeLevelStyle(level: number): TextStyle {
-  const fill = level <= 3 ? "#44cc66" : level <= 6 ? "#ffcc44" : "#ff4444";
-  return new TextStyle({ fontFamily: getUIFont(), fontSize: 9, fill });
+function getLevelColor(level: number): number {
+  return level <= 3 ? 0x44cc66 : level <= 6 ? 0xffcc44 : 0xff4444;
 }
 
 /** Re-apply the active UI font to all live enemy name/level labels. */
 export function refreshEntityFonts() {
   const font = getUIFont();
   _nameStyle.fontFamily = font;
-  for (const b of _bundles.values()) b.levelText.style.fontFamily = font;
+  _levelStyle.fontFamily = font;
+  _speechStyle.fontFamily = font;
 }
 
 // ─── Per-enemy sprite bundle ──────────────────────────────────────────────────
@@ -235,8 +247,10 @@ interface EnemyBundle {
   shieldBar: Graphics;
   structureBar: Graphics;
   nameText: Text;
+  levelBg: Graphics;
   levelText: Text;
   indicator: Graphics;
+  speechText: Text;
   lastHp: number;
   lastShield: number;
   lastStructure: number;
@@ -271,18 +285,26 @@ function createBundle(e: { id: string; type: string; name: string; level?: numbe
   effectLayer!.addChild(structureBar);
 
   const nameText = new Text({ text: e.name, style: _nameStyle });
-  nameText.anchor.set(0, 1);
+  nameText.anchor.set(0, 0.5);
   effectLayer!.addChild(nameText);
 
+  const levelBg = new Graphics();
+  effectLayer!.addChild(levelBg);
+
   const lvl = e.level ?? 1;
-  const levelText = new Text({ text: `Lv.${lvl}`, style: makeLevelStyle(lvl) });
-  levelText.anchor.set(0, 1);
+  const levelText = new Text({ text: String(lvl), style: _levelStyle });
+  levelText.anchor.set(0.5, 0.5);
   effectLayer!.addChild(levelText);
 
   const indicator = new Graphics();
   effectLayer!.addChild(indicator);
 
-  return { hull, hullLight, lightTex, hpBar, shieldBar, structureBar, nameText, levelText, indicator, lastHp: e.hp, lastShield: -1, lastStructure: -1, lastLockKey: "", wasLocked: false };
+  const speechText = new Text({ text: "", style: _speechStyle });
+  speechText.anchor.set(0.5, 1.0);
+  speechText.visible = false;
+  effectLayer!.addChild(speechText);
+
+  return { hull, hullLight, lightTex, hpBar, shieldBar, structureBar, nameText, levelBg, levelText, indicator, speechText, lastHp: e.hp, lastShield: -1, lastStructure: -1, lastLockKey: "", wasLocked: false };
 }
 
 function destroyBundle(id: string) {
@@ -294,40 +316,28 @@ function destroyBundle(id: string) {
   effectLayer!.removeChild(b.shieldBar); b.shieldBar.destroy();
   effectLayer!.removeChild(b.structureBar); b.structureBar.destroy();
   effectLayer!.removeChild(b.nameText); b.nameText.destroy();
+  effectLayer!.removeChild(b.levelBg); b.levelBg.destroy();
   effectLayer!.removeChild(b.levelText); b.levelText.destroy();
   effectLayer!.removeChild(b.indicator); b.indicator.destroy();
+  effectLayer!.removeChild(b.speechText); b.speechText.destroy();
   _bundles.delete(id);
 }
 
 // ─── Health bars ───────────────────────────────────────────────────────────────
-// Stacked vertically above the enemy, top → bottom: shield (cyan), hull (red),
-// structure (orange). Each row is HP_BAR_H + 2 px below the previous.
-const HP_BAR_W = 36;
-const HP_BAR_H = 5;
-const BAR_TOP = -30;
-const BAR_ROW = HP_BAR_H + 2;
+// Unified horizontal bar divided into 3 side-by-side segments (Shield, HP, Structure),
+// positioned statically right below the name text.
+const HP_BAR_H = 3;
+const BAR_Y = -24;
+const NAME_Y = -34;
 
-function rebuildBar(g: Graphics, frac: number, row: number, color: number) {
-  const y = BAR_TOP + row * BAR_ROW;
+function rebuildBarSegment(g: Graphics, frac: number, secIdx: number, barW: number, secW: number, gap: number, color: number) {
+  const x = -barW / 2 + secIdx * (secW + gap);
   g.clear();
-  g.rect(-HP_BAR_W / 2, y, HP_BAR_W, HP_BAR_H).fill({ color: 0x000000, alpha: 0.6 });
-  g.rect(-HP_BAR_W / 2, y, HP_BAR_W * frac, HP_BAR_H).fill({ color });
-}
-
-// Row 0 — shield (cyan)
-function rebuildShieldBar(g: Graphics, frac: number) {
-  rebuildBar(g, frac, 0, 0x3399ff);
-}
-
-// Row 1 — hull (red, brighter as it drops)
-function rebuildHpBar(g: Graphics, frac: number) {
-  const col = frac > 0.5 ? 0xdd3333 : frac > 0.25 ? 0xbb2222 : 0xff2222;
-  rebuildBar(g, frac, 1, col);
-}
-
-// Row 2 — structure (orange)
-function rebuildStructureBar(g: Graphics, frac: number) {
-  rebuildBar(g, frac, 2, 0xee9944);
+  g.rect(x, BAR_Y, secW, HP_BAR_H).fill({ color: 0x000000, alpha: 0.6 });
+  if (frac > 0) {
+    const f = Math.min(1, Math.max(0, frac));
+    g.rect(x + secW * (1 - f), BAR_Y, secW * f, HP_BAR_H).fill({ color });
+  }
 }
 
 // ─── Targeting indicator ──────────────────────────────────────────────────────
@@ -363,7 +373,7 @@ export function syncPixiEntities(alpha: number, now: number): void {
   if (!entityLayer || !effectLayer) return;
 
   const sys = G.GALAXY?.[G.P?.sysIdx ?? 0];
-  const liveEnemies: any[] = sys?._liveEnemies ?? [];
+  const liveEnemies: Enemy[] = sys?._liveEnemies ?? [];
   const lod = Client.zoom < 0.4;
   const lightOn = !lod && Client.settings?.directionalLighting !== false;
   const _sd = sys?.sunDir ?? 0;
@@ -418,54 +428,132 @@ export function syncPixiEntities(alpha: number, now: number): void {
     const shieldDamaged = hasShield && (e.shield ?? 0) < (e.maxShield ?? 0);
     const structDamaged = hasStruct && (e.structure ?? 0) < (e.maxStructure ?? 0);
     const showBars = !lod && (hpDamaged || shieldDamaged || structDamaged || isLocked);
-    const showShieldBar = showBars && hasShield;
-    const showStructBar = showBars && hasStruct;
     const lockStateChanged = b.wasLocked !== isLocked;
 
-    // Shield bar (row 0) — visible when damaged or fully locked
-    if (showShieldBar) {
-      if (lockStateChanged || b.lastShield !== e.shield) { rebuildShieldBar(b.shieldBar, shieldFrac); b.lastShield = e.shield; }
-      b.shieldBar.x = ix; b.shieldBar.y = iy; b.shieldBar.alpha = 1;
-    } else {
-      b.shieldBar.alpha = 0;
-    }
-
-    // Hull bar (row 1)
+    // Unified health bar divided into 3 side-by-side segments
     if (showBars) {
-      if (lockStateChanged || b.lastHp !== e.hp) { rebuildHpBar(b.hpBar, frac); b.lastHp = e.hp; }
-      b.hpBar.x = ix; b.hpBar.y = iy; b.hpBar.alpha = 1;
-    } else {
-      b.hpBar.alpha = 0;
-    }
+      const barW = Math.max(24, b.nameText.width);
+      const gap = 1.5;
+      const secW = (barW - 2 * gap) / 3;
 
-    // Structure bar (row 2)
-    if (showStructBar) {
-      if (lockStateChanged || b.lastStructure !== e.structure) { rebuildStructureBar(b.structureBar, structFrac); b.lastStructure = e.structure; }
+      // Shield bar (segment 0)
+      if (lockStateChanged || b.lastShield !== e.shield) {
+        rebuildBarSegment(b.shieldBar, shieldFrac, 0, barW, secW, gap, 0x3399ff);
+        b.lastShield = e.shield ?? 0;
+      }
+      b.shieldBar.x = ix; b.shieldBar.y = iy; b.shieldBar.alpha = 1;
+
+      // HP bar (segment 1)
+      if (lockStateChanged || b.lastHp !== e.hp) {
+        const hpCol = frac > 0.5 ? 0xdd3333 : frac > 0.25 ? 0xbb2222 : 0xff2222;
+        rebuildBarSegment(b.hpBar, frac, 1, barW, secW, gap, hpCol);
+        b.lastHp = e.hp;
+      }
+      b.hpBar.x = ix; b.hpBar.y = iy; b.hpBar.alpha = 1;
+
+      // Structure bar (segment 2)
+      if (lockStateChanged || b.lastStructure !== e.structure) {
+        rebuildBarSegment(b.structureBar, structFrac, 2, barW, secW, gap, 0xee9944);
+        b.lastStructure = e.structure ?? 0;
+      }
       b.structureBar.x = ix; b.structureBar.y = iy; b.structureBar.alpha = 1;
     } else {
+      b.shieldBar.alpha = 0;
+      b.hpBar.alpha = 0;
       b.structureBar.alpha = 0;
     }
 
     b.wasLocked = isLocked;
 
-    // Labels — name + level side-by-side, centred above the topmost visible bar
+    const playerHasComms = hasCommsEquipment();
+
+    // Labels — level badge (left) and name box (right) connected flush, centered above unified bar
     if (!lod) {
-      const topRow = hasShield ? 0 : 1;
-      const nameY = showBars ? iy + BAR_TOP + topRow * BAR_ROW - 3 : iy - 28;
-      const totalW = b.nameText.width + 5 + b.levelText.width;
+      const nameY = iy + NAME_Y;
+      const padX = 4;
+      const padH = 13;
+      
+      // Dynamic text/color styling for factions
+      let textColor = "#ff4444"; // hostile red
+      let tagColor = 0xcc3333; // hostile red
+      let lvlStr = String(e.level ?? 1);
+
+      if (e.faction === "neutral") {
+        textColor = "#a0a5aa"; // neutral gray
+        tagColor = 0x7a828a; // neutral gray
+        lvlStr = "NEUT";
+      } else if (e.faction === "player" || e.faction === "friendly") {
+        textColor = "#3399ff"; // friendly blue
+        tagColor = 0x0088ff; // friendly blue
+        lvlStr = e.level ? String(e.level) : "ALLY";
+      }
+
+      b.nameText.style.fill = textColor;
+      b.levelText.text = lvlStr;
+
+      const cardW = b.levelText.width + padX * 2;
+      const namePadX = 6;
+      const nameBoxW = b.nameText.width + namePadX * 2;
+      const totalW = cardW + nameBoxW;
       const startX = ix - totalW / 2;
-      b.nameText.x = startX;          b.nameText.y = nameY; b.nameText.alpha = 1;
-      b.levelText.x = startX + b.nameText.width + 5; b.levelText.y = nameY; b.levelText.alpha = 1;
+
+      // Draw both flush connected cards on the levelBg Graphics element
+      b.levelBg.clear()
+        // 1. Level card on the left
+        .roundRect(0, -padH / 2, cardW, padH, 2.5)
+        .fill({ color: tagColor })
+        .stroke({ color: 0x000000, width: 1 })
+        // 2. Translucent black name box on the right connected flush
+        .roundRect(cardW, -padH / 2, nameBoxW, padH, 2.5)
+        .fill({ color: 0x000000, alpha: 0.55 })
+        .stroke({ color: 0x000000, width: 1 });
+
+      b.levelBg.x = startX;
+      b.levelBg.y = nameY;
+      b.levelBg.alpha = 1;
+
+      // Position level text (centered in left card)
+      b.levelText.x = startX + cardW / 2;
+      b.levelText.y = nameY;
+      b.levelText.alpha = 1;
+
+      // Position name text (left-aligned, padded inside right box)
+      b.nameText.x = startX + cardW + namePadX;
+      b.nameText.y = nameY;
+      b.nameText.alpha = 1;
     } else {
-      b.nameText.alpha = 0; b.levelText.alpha = 0;
+      b.nameText.alpha = 0;
+      b.levelBg.alpha = 0;
+      b.levelText.alpha = 0;
     }
 
-    // Targeting indicator (triangle above enemy)
-    if (!lod && e.hasLockOnPlayer) {
+    // Dialogue/Speech bubble display
+    if (e._speech && now < e._speech.until) {
+      b.speechText.text = e._speech.text;
+      b.speechText.x = ix;
+      b.speechText.y = iy - 50;
+      b.speechText.alpha = 1;
+      b.speechText.visible = true;
+    } else {
+      b.speechText.visible = false;
+    }
+
+    // Targeting or hailing indicator (triangle or cyan pulsing ! above enemy)
+    if (!lod && e.faction === "neutral" && e.hailable && playerHasComms) {
+      const key = "hailable";
+      if (b.lastLockKey !== key) {
+        b.indicator.clear();
+        b.indicator.rect(-1.5, -15, 3, 7).fill({ color: 0x00ffd0 });
+        b.indicator.circle(0, -4, 1.8).fill({ color: 0x00ffd0 });
+        b.lastLockKey = key;
+      }
+      b.indicator.x = ix; b.indicator.y = iy - 40;
+      b.indicator.alpha = 0.5 + Math.sin(now / 150) * 0.4;
+    } else if (!lod && e.hasLockOnPlayer) {
       const key = "locked";
       if (b.lastLockKey !== key) { rebuildIndicator(b.indicator, 0xff4444); b.lastLockKey = key; }
       b.indicator.x = ix; b.indicator.y = iy - 40; b.indicator.alpha = 1;
-    } else if (!lod && e.targetingPlayer && e.lockOnTimer > 0) {
+    } else if (!lod && e.targetingPlayer && (e.lockOnTimer ?? 0) > 0) {
       const key = "targeting";
       if (b.lastLockKey !== key) { rebuildIndicator(b.indicator, 0xffcc44); b.lastLockKey = key; }
       b.indicator.x = ix; b.indicator.y = iy - 40;

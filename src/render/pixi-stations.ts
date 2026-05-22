@@ -15,7 +15,8 @@
  */
 import { ImageSource, Sprite, Texture } from "pixi.js";
 import { Client } from "../state.js";
-import { entityLayer, pixiDpr } from "../pixi.js";
+import type { System } from "../types/world.js";
+import { stationLayer, pixiDpr } from "../pixi.js";
 import { mkRng, ri, rf } from "../utils/math.js";
 
 const TAU = Math.PI * 2;
@@ -37,6 +38,8 @@ interface Station {
   spin: number;
   isHome: boolean;
   name: string;
+  structureType?: string;
+  collectRadius?: number;
 }
 
 interface StationBundle {
@@ -618,10 +621,131 @@ function cornerLight(cx: CanvasRenderingContext2D, x: number, y: number, S: numb
   cx.beginPath(); cx.arc(x, y, 1.1 * S, 0, TAU); cx.fill();
 }
 
+function drawIndustrialHub(cx: CanvasRenderingContext2D, half: number, st: Station) {
+  const R = st.radius;
+  const S = R / 36;
+  const LW = 1 + (S - 1) * 0.4;
+  const rng = mkRng(st.id);
+
+  cx.save();
+  cx.translate(half, half);
+
+  // Base disc — same hull palette
+  drawHullDisc(cx, R * 0.82);
+
+  // Outer processing ring — rusty-orange heat tint
+  {
+    const ringR = R * 1.0;
+    const ringW = 10 * S;
+    const rg = cx.createRadialGradient(0, 0, ringR - ringW / 2, 0, 0, ringR + ringW / 2);
+    rg.addColorStop(0.00, COL.hullDark);
+    rg.addColorStop(0.35, "#3a2810");
+    rg.addColorStop(0.65, "#5c3a14");
+    rg.addColorStop(1.00, COL.hullDark);
+    cx.fillStyle = rg;
+    cx.beginPath(); cx.arc(0, 0, ringR + ringW / 2, 0, TAU); cx.fill();
+    cx.beginPath(); cx.arc(0, 0, ringR - ringW / 2, 0, TAU);
+    cx.fillStyle = COL.hullMid; cx.fill();
+    cx.strokeStyle = "rgba(0,0,0,0.7)";
+    cx.lineWidth = 0.8 * LW;
+    cx.beginPath(); cx.arc(0, 0, ringR + ringW / 2, 0, TAU); cx.stroke();
+    cx.beginPath(); cx.arc(0, 0, ringR - ringW / 2, 0, TAU); cx.stroke();
+  }
+
+  // Four smelter towers spaced evenly around the hub
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * TAU + Math.PI / 8;
+    const c = Math.cos(a), s = Math.sin(a);
+    const tx = c * R * 0.55, ty = s * R * 0.55;
+    const tW = 7 * S, tH = 18 * S;
+
+    cx.save();
+    cx.translate(tx, ty);
+    cx.rotate(a + Math.PI / 2);
+
+    // Tower body
+    const tg = cx.createLinearGradient(-tW / 2, 0, tW / 2, 0);
+    tg.addColorStop(0, COL.hullDark);
+    tg.addColorStop(0.5, COL.hullLite);
+    tg.addColorStop(1, COL.hullDark);
+    cx.fillStyle = tg;
+    cx.fillRect(-tW / 2, -tH, tW, tH);
+    cx.strokeStyle = "rgba(0,0,0,0.65)";
+    cx.lineWidth = 0.8 * LW;
+    cx.strokeRect(-tW / 2, -tH, tW, tH);
+
+    // Forge glow at top of tower
+    const glowR = 4.5 * S;
+    const glow = cx.createRadialGradient(0, -tH, 0, 0, -tH, glowR * 2);
+    glow.addColorStop(0, "rgba(255,140,30,0.85)");
+    glow.addColorStop(0.5, "rgba(255,80,10,0.35)");
+    glow.addColorStop(1, "rgba(200,40,0,0)");
+    cx.fillStyle = glow;
+    cx.beginPath(); cx.arc(0, -tH, glowR * 2, 0, TAU); cx.fill();
+    cx.fillStyle = "rgba(255,200,80,0.9)";
+    cx.beginPath(); cx.arc(0, -tH, glowR * 0.5, 0, TAU); cx.fill();
+
+    cx.restore();
+  }
+
+  // Central hub core
+  drawHullDisc(cx, R * 0.45);
+
+  // Processing vents — four pairs of orange-lit slits
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * TAU;
+    const vx = Math.cos(a) * R * 0.3, vy = Math.sin(a) * R * 0.3;
+    cx.save();
+    cx.translate(vx, vy);
+    cx.rotate(a);
+    cx.fillStyle = `rgba(${COL.amber},0.6)`;
+    cx.fillRect(-5 * S, -2 * S, 10 * S, 4 * S);
+    cx.strokeStyle = "rgba(0,0,0,0.5)";
+    cx.lineWidth = 0.7 * LW;
+    cx.strokeRect(-5 * S, -2 * S, 10 * S, 4 * S);
+    cx.restore();
+  }
+
+  // Central core pip + status glow
+  cx.fillStyle = "#1a1208";
+  cx.beginPath(); cx.arc(0, 0, 8 * S, 0, TAU); cx.fill();
+  const cg = cx.createRadialGradient(0, 0, 0, 0, 0, 7 * S);
+  cg.addColorStop(0, "rgba(255,160,40,0.9)");
+  cg.addColorStop(1, "rgba(255,80,0,0)");
+  cx.fillStyle = cg;
+  cx.beginPath(); cx.arc(0, 0, 7 * S, 0, TAU); cx.fill();
+
+  // Greebles — random boxes at ring edge
+  for (let i = 0; i < 6; i++) {
+    const a = rng() * TAU;
+    const dist = R * (0.88 + rng() * 0.12);
+    const gx = Math.cos(a) * dist, gy = Math.sin(a) * dist;
+    const gw = (3 + rng() * 4) * S, gh = (2 + rng() * 3) * S;
+    cx.save();
+    cx.translate(gx, gy);
+    cx.rotate(a);
+    cx.fillStyle = COL.hullMid;
+    cx.fillRect(-gw / 2, -gh / 2, gw, gh);
+    cx.strokeStyle = "rgba(0,0,0,0.6)";
+    cx.lineWidth = 0.6 * LW;
+    cx.strokeRect(-gw / 2, -gh / 2, gw, gh);
+    cx.restore();
+  }
+
+  // Hazard beacon lights at cardinal points
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * TAU;
+    cornerLight(cx, Math.cos(a) * R * 1.05, Math.sin(a) * R * 1.05, S, COL.hazard);
+  }
+
+  cx.restore();
+}
+
 function bakeStationBody(st: Station): { tex: Texture; texSize: number } {
   const size = texSizeFor(st);
   const { c, cx, half, superscale, dpr } = makeCanvas(size);
-  if (st.isHome) drawHomeBody(cx, half, st);
+  if (st.structureType === "industrial") drawIndustrialHub(cx, half, st);
+  else if (st.isHome) drawHomeBody(cx, half, st);
   else drawGenericBody(cx, half, st);
   const mipmap = Client.settings?.mipmapping ?? true;
   return { tex: canvasToTexture(c, superscale, dpr, mipmap), texSize: size };
@@ -660,7 +784,7 @@ function createBundle(st: Station): StationBundle {
   const { tex, texSize } = bakeStationBody(st);
   const body = new Sprite(tex);
   body.anchor.set(0.5);
-  entityLayer!.addChild(body);
+  stationLayer!.addChild(body);
 
   const lightTex = bakeStationLightTextures(st, texSize);
   const light = new Sprite(lightTex[0] ?? Texture.EMPTY);
@@ -668,7 +792,7 @@ function createBundle(st: Station): StationBundle {
   light.blendMode = "add";
   light.alpha = 0.7;
   light.visible = false;
-  entityLayer!.addChild(light);
+  stationLayer!.addChild(light);
 
   return { body, light, lightTex, texSize };
 }
@@ -676,8 +800,8 @@ function createBundle(st: Station): StationBundle {
 function destroyBundle(id: string) {
   const b = _bundles.get(id);
   if (!b) return;
-  entityLayer!.removeChild(b.body); b.body.destroy();
-  entityLayer!.removeChild(b.light); b.light.destroy();
+  stationLayer!.removeChild(b.body); b.body.destroy();
+  stationLayer!.removeChild(b.light); b.light.destroy();
   for (const t of b.lightTex) t.destroy();
   _bundles.delete(id);
 }
@@ -688,8 +812,8 @@ export function clearStationTextureCaches(): void {
   for (const id of Array.from(_bundles.keys())) destroyBundle(id);
 }
 
-export function syncPixiStations(_now: number, sys: any): void {
-  if (!entityLayer) return;
+export function syncPixiStations(_now: number, sys: System): void {
+  if (!stationLayer) return;
   const stations: Station[] = sys?.stations ?? [];
   const sunDir = sys?.sunDir ?? 0;
   const lightOn = Client.settings?.directionalLighting !== false;

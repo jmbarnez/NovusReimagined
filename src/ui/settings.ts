@@ -3,7 +3,7 @@ import { Client } from "../state.js";
 import { loadSettings, saveSettings, DEFAULT_SETTINGS, DEFAULT_KEYBINDS, KEYBIND_LABELS, HUD_THEMES, FONT_OPTIONS, type Keybinds } from "../data/settings.js";
 import { RETICLE_OPTIONS } from "../data/reticles.js";
 import { refreshTheme } from "./hud-overlay.js";
-import { closeBridge, renderBridgeUI } from "../dock.js";
+import { renderReticleStyle } from "../render/reticle.js";
 import { sfxBlip, sfxConfirm, setSfxVolume } from "../audio/procedural.js";
 import { setMusicVolume } from "../audio/music.js";
 import { initBackgroundStars } from "../render/background.js";
@@ -92,6 +92,12 @@ function ensureSettingsUI() {
           <span class="settings-tip-icon" data-tip-impact="HIGH" data-tip-desc="Canvas resolution multiplier. 2.5× renders at 6× the pixel count of 1.0×. Lower values greatly improve performance on weaker hardware.">ⓘ</span>
         </div>
         <div class="settings-row">
+          <label>Bloom</label>
+          <input type="range" id="bloom-intensity" min="0.0" max="2.0" step="0.1" value="1.0">
+          <span id="bloom-intensity-val" class="settings-val">1.0x</span>
+          <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="Intensity of star corona glow and solar flares. Scales radial additive shaders in the celestial background.">ⓘ</span>
+        </div>
+        <div class="settings-row">
           <label>Background</label>
           <div id="detail-buttons" style="display:flex;gap:6px;"></div>
           <span class="settings-tip-icon" data-tip-impact="MEDIUM" data-tip-desc="Controls star field density. High adds multiple parallax layers and more star detail.">ⓘ</span>
@@ -126,11 +132,7 @@ function ensureSettingsUI() {
           <input type="checkbox" id="lens-flare-toggle" class="toggle-switch" checked>
           <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="Cinematic anamorphic streak and ghost circles anchored to the system star.">ⓘ</span>
         </div>
-        <div class="settings-row settings-toggle-row">
-          <label>FPS Counter</label>
-          <input type="checkbox" id="fps-counter-toggle" class="toggle-switch">
-          <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="Shows a live frame-rate counter in the top-left corner. Color-coded green / yellow / red.">ⓘ</span>
-        </div>
+
         <h3 class="accent-camera">Camera</h3>
         <div class="settings-row">
           <label>Smoothing</label>
@@ -249,6 +251,12 @@ function ensureSettingsUI() {
     resizePixi();
     saveSettings(Client.settings);
   });
+  el.querySelector("#bloom-intensity")!.addEventListener("input", (e) => {
+    const v = parseFloat((e.target as HTMLInputElement).value);
+    Client.settings.bloomIntensity = v;
+    (document.getElementById("bloom-intensity-val") as HTMLElement).textContent = v.toFixed(1) + "x";
+    saveSettings(Client.settings);
+  });
   el.querySelector("#vignette-toggle")!.addEventListener("change", (e) => {
     Client.settings.vignetteEnabled = (e.target as HTMLInputElement).checked;
     saveSettings(Client.settings);
@@ -278,10 +286,7 @@ function ensureSettingsUI() {
     Client.settings.lensFlare = (e.target as HTMLInputElement).checked;
     saveSettings(Client.settings);
   });
-  el.querySelector("#fps-counter-toggle")!.addEventListener("change", (e) => {
-    Client.settings.fpsCounter = (e.target as HTMLInputElement).checked;
-    saveSettings(Client.settings);
-  });
+
   el.querySelector("#camera-smoothing")!.addEventListener("input", (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.cameraSmoothing = v;
@@ -317,6 +322,11 @@ function renderSettings() {
   const renderVal = document.getElementById("render-scale-val") as HTMLElement | null;
   if (renderVal) renderVal.textContent = (settings.renderScale ?? 2.5).toFixed(1) + "x";
 
+  const bloomSlider = document.getElementById("bloom-intensity") as HTMLInputElement | null;
+  if (bloomSlider) bloomSlider.value = String(settings.bloomIntensity ?? 1.0);
+  const bloomVal = document.getElementById("bloom-intensity-val") as HTMLElement | null;
+  if (bloomVal) bloomVal.textContent = (settings.bloomIntensity ?? 1.0).toFixed(1) + "x";
+
   const vignetteToggle = document.getElementById("vignette-toggle") as HTMLInputElement | null;
   if (vignetteToggle) vignetteToggle.checked = settings.vignetteEnabled ?? true;
   const dirLightToggle = document.getElementById("dir-light-toggle") as HTMLInputElement | null;
@@ -329,8 +339,7 @@ function renderSettings() {
   if (mipmappingToggle) mipmappingToggle.checked = settings.mipmapping ?? true;
   const lensFlareToggle = document.getElementById("lens-flare-toggle") as HTMLInputElement | null;
   if (lensFlareToggle) lensFlareToggle.checked = settings.lensFlare ?? true;
-  const fpsCounterToggle = document.getElementById("fps-counter-toggle") as HTMLInputElement | null;
-  if (fpsCounterToggle) fpsCounterToggle.checked = settings.fpsCounter ?? false;
+
 
   const camSlider = document.getElementById("camera-smoothing") as HTMLInputElement | null;
   if (camSlider) camSlider.value = String(settings.cameraSmoothing ?? 0.08);
@@ -339,14 +348,18 @@ function renderSettings() {
 
   const detailContainer = document.getElementById("detail-buttons") as HTMLElement;
   const detailOptions = [
-    { id: "low", label: "Low" },
-    { id: "medium", label: "Med" },
-    { id: "high", label: "High" },
+    { id: "low", label: "Low", dots: 3 },
+    { id: "medium", label: "Med", dots: 6 },
+    { id: "high", label: "High", dots: 9 },
   ];
-  detailContainer.innerHTML = detailOptions.map((opt) =>
-    `<button class="detail-btn${settings.backgroundDetail === opt.id ? " active" : ""}" data-detail="${opt.id}">${opt.label}</button>`
-  ).join("");
-  detailContainer.querySelectorAll(".detail-btn").forEach((btn) => {
+  detailContainer.innerHTML = detailOptions.map((opt) => {
+    const dotsHtml = Array.from({ length: opt.dots }).map(() => "<i></i>").join("");
+    return `<button class="detail-card${settings.backgroundDetail === opt.id ? " active" : ""}" data-detail="${opt.id}">
+      <span class="detail-card-stars ${opt.id}">${dotsHtml}</span>
+      <span class="detail-card-label">${opt.label}</span>
+    </button>`;
+  }).join("");
+  detailContainer.querySelectorAll(".detail-card").forEach((btn) => {
     btn.addEventListener("click", () => {
       sfxConfirm();
       settings.backgroundDetail = (btn as HTMLElement).dataset.detail!;
@@ -392,9 +405,23 @@ function renderSettings() {
 
   const reticleContainer = document.getElementById("reticle-buttons") as HTMLElement;
   reticleContainer.innerHTML = RETICLE_OPTIONS.map((r) =>
-    `<button class="detail-btn${settings.reticleStyle === r.id ? " active" : ""}" data-reticle="${r.id}">${r.label}</button>`
+    `<button class="reticle-btn${settings.reticleStyle === r.id ? " active" : ""}" data-reticle="${r.id}">
+      <canvas class="reticle-preview" width="32" height="32" data-reticle-id="${r.id}"></canvas>
+      <span class="reticle-label">${r.label}</span>
+    </button>`
   ).join("");
-  reticleContainer.querySelectorAll(".detail-btn").forEach((btn) => {
+
+  const themeColors = HUD_THEMES[settings.theme] || HUD_THEMES.default;
+
+  reticleContainer.querySelectorAll(".reticle-preview").forEach((canvas) => {
+    const ctx = (canvas as HTMLCanvasElement).getContext("2d");
+    if (!ctx) return;
+    const style = (canvas as HTMLElement).dataset.reticleId!;
+    ctx.clearRect(0, 0, 32, 32);
+    renderReticleStyle(ctx, style, 16, 16, 9, themeColors.textMain, 1.5);
+  });
+
+  reticleContainer.querySelectorAll(".reticle-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       sfxConfirm();
       settings.reticleStyle = (btn as HTMLElement).dataset.reticle!;
