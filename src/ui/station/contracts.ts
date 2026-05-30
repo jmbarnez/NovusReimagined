@@ -1,5 +1,6 @@
 import "../styles/station-contracts.css";
-import { G, Client } from "../../state.js";
+import { Client } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { escHtml } from "../../utils/format.js";
 import { stationState, MAX_ACTIVE_CONTRACTS, CONTRACT_TYPE_ICONS } from "./shared.js";
 
@@ -7,13 +8,13 @@ export function renderContracts() {
   const div = document.getElementById("panel-contracts");
   if (!div) return;
 
-  const active = G.P.contracts.filter(c => c.status === "active" || c.status === "complete");
+  const active = getState().player.contracts.filter(c => c.status === "active" || c.status === "complete");
   const activeCount = active.length;
   const atCap = activeCount >= MAX_ACTIVE_CONTRACTS;
   const activeStation = Client.activeStation;
 
   const availableRows = stationState._stationContracts.map(c => {
-    const alreadyActive = G.P.contracts.some(ac => ac.id === c.id);
+    const alreadyActive = getState().player.contracts.some(ac => ac.id === c.id);
     const disabled = alreadyActive || atCap ? "disabled" : "";
     const label = alreadyActive ? "Accepted" : atCap ? "Full" : "Accept";
     return `

@@ -12,6 +12,8 @@ export const SKILL_IDS = [
   "refining",
   "salvage",
   "metallurgy",
+  "surveying",
+  "decryption",
 ] as const;
 
 /** Weapon delivery → required combat skill mapping. */
@@ -105,6 +107,20 @@ export const SKILL_DEF: Record<SkillId, SkillDef> = {
     icon: "⚗️",
     category: "industry",
     color: "#00e8c8",
+  },
+  surveying: {
+    name: "Surveying",
+    desc: "Signal analysis and sector survey operations.",
+    icon: "⌁",
+    category: "industry",
+    color: "#66aacc",
+  },
+  decryption: {
+    name: "Decryption",
+    desc: "Encrypted site breach and trace resistance.",
+    icon: "◇",
+    category: "industry",
+    color: "#aa88ff",
   },
 };
 

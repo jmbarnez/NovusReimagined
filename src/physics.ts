@@ -1,4 +1,4 @@
-import { G } from "./state.js";
+import { getState, PlayerAccess } from "./state-access.js";
 import { updateShip } from "./physics/ship.js";
 import { updateCombat, updateProjectiles } from "./physics/combat-physics.js";
 import { updateNpcs, updateEnemyBullets, updateAsteroids, updateMining, resolveNpcAsteroidCollisions, updateEnemyRespawns } from "./physics/npcs.js";
@@ -23,7 +23,7 @@ export function tick(dt: number) {
   updateTurretCooldowns(dt);
   updateCombat(dt);
   
-  if (G.P?.sysIdx === 0) {
+  if (getState().player?.sysIdx === 0) {
     updateAmbientDirector(dt);
   }
 
@@ -46,11 +46,13 @@ export function tick(dt: number) {
 }
 
 function updateTurretPowerCd(dt: number) {
-  if (!G.P?.turretPowerCd) return;
-  for (let i = 0; i < G.P.turretPowerCd.length; i++) {
-    if (G.P.turretPowerCd[i] > 0) {
-      G.P.turretPowerCd[i] -= dt;
-      if (G.P.turretPowerCd[i] < 0) G.P.turretPowerCd[i] = 0;
+  if (!getState().player?.turretPowerCd) return;
+  for (let i = 0; i < getState().player.turretPowerCd.length; i++) {
+    if (getState().player.turretPowerCd[i] > 0) {
+      const nextCd = Math.max(0, getState().player.turretPowerCd[i] - dt);
+      PlayerAccess.setTurretPowerCd(i, nextCd);
     }
   }
 }
+
+export const simulationTick = tick;

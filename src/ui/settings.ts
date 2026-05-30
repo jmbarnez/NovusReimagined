@@ -1,5 +1,6 @@
 import "./styles/settings.css";
 import { Client } from "../state.js";
+import { getState } from "../state-access.js";
 import { loadSettings, saveSettings, DEFAULT_SETTINGS, DEFAULT_KEYBINDS, KEYBIND_LABELS, HUD_THEMES, FONT_OPTIONS, type Keybinds } from "../data/settings.js";
 import { RETICLE_OPTIONS } from "../data/reticles.js";
 import { refreshTheme } from "./hud-overlay.js";
@@ -9,7 +10,7 @@ import { setMusicVolume } from "../audio/music.js";
 import { initBackgroundStars } from "../render/background.js";
 import { refreshBackground } from "../render/pixi-background.js";
 import { setNebulaSystem } from "../render/pixi-nebula-gpu.js";
-import { getState } from "../state-access.js";
+
 import { resize } from "../canvas.js";
 import { resizePixi } from "../pixi.js";
 import { fmtKey } from "../utils/format.js";

@@ -1,4 +1,5 @@
-import { G, Client, type Player } from "../state.js";
+import { Client, type Player } from "../state.js";
+import { getState } from "../state-access.js";
 import { SHIPS } from "../data/ships.js";
 import { MODULES } from "../data/modules.js";
 import { WEAPON_PROFILES } from "../data/weaponProfiles.js";
@@ -26,6 +27,7 @@ export function computeLinearInterceptAngle(
   targetVy: number,
   projectileSpeed: number,
   predictionScale: number = 1.0,
+  predictionTimeCap = 2.0,
 ): number {
   const relX = targetX - shooterX;
   const relY = targetY - shooterY;
@@ -55,7 +57,7 @@ export function computeLinearInterceptAngle(
   }
 
   if (!Number.isFinite(t) || t < 0) t = 0;
-  t = Math.min(t, 2.0) * predictionScale;
+  t = Math.min(t, predictionTimeCap) * predictionScale;
 
   const aimX = targetX + relVx * t;
   const aimY = targetY + relVy * t;
@@ -67,11 +69,13 @@ export function pickHostileTarget(e: Enemy, range: number): Enemy | Player | nul
   let closestDist = range;
 
   // Check player if eligible
-  if (G.P.hp > 0 && isHostile(e.faction, "player")) {
-    const dist = Math.hypot(G.P.x - e.x, G.P.y - e.y);
+  const provokedByPlayer = !!e._lastPlayerHitAt && performance.now() - e._lastPlayerHitAt < C.ENEMIES.PLAYER_HIT_WINDOW_MS;
+  const playerAlive = getState().player.hp > 0 || (getState().player.structure ?? 0) > 0;
+  if (playerAlive && (isHostile(e.faction, "player") || provokedByPlayer)) {
+    const dist = Math.hypot(getState().player.x - e.x, getState().player.y - e.y);
     if (dist < closestDist) {
       closestDist = dist;
-      closestTarget = G.P;
+      closestTarget = getState().player;
     }
   }
 
@@ -93,7 +97,7 @@ export function pickHostileTarget(e: Enemy, range: number): Enemy | Player | nul
 
 export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, detectionRange: number) {
   if (!e.fitting?.turret) return;
-  const isTargetPlayer = target === G.P;
+  const isTargetPlayer = target === getState().player;
   const targetX = target.x;
   const targetY = target.y;
   const targetVx = target.vx || 0;
@@ -130,8 +134,8 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
           addBeam({ x1: e.x, y1: e.y, x2: bX2, y2: bY2, color: wProf.color, width: wProf.sz, life: C.ENEMIES.AI.BEAM_IMPACT_LIFE });
           
           if (isTargetPlayer) {
-            const hitR = SHIPS[G.P.shipId]?.signatureRadius ?? 20;
-            const perp = Math.abs((G.P.x - e.x) * Math.sin(shootAng) - (G.P.y - e.y) * Math.cos(shootAng));
+            const hitR = SHIPS[getState().player.shipId]?.signatureRadius ?? 20;
+            const perp = Math.abs((getState().player.x - e.x) * Math.sin(shootAng) - (getState().player.y - e.y) * Math.cos(shootAng));
             if (perp < Math.min(hitR * 0.6 + C.ENEMIES.AI.HIT_CHECK_RADIUS, C.ENEMIES.AI.BEAM_HIT_RADIUS_CAP)) {
               damagePlayer(Math.max(1, Math.floor(wProf.dmg * (e.weaponMult ?? 1.0))), e.x, e.y);
             }
@@ -143,7 +147,7 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
             }
           }
         } else {
-          if (G.enemyBullets.length < 200) {
+          if (getState().enemyBullets.length < 200) {
             const bSpd = wProf.spd || 800;
             const bLife = (wProf.range * 1.1) / bSpd;
             sfxWeaponFire("projectile", baseId, 0.8, e.x, e.y);
@@ -163,7 +167,8 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
 
 export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRange: number) {
   // If neutral faction, defer entirely to ambient director behavior loop
-  if (e.faction === "neutral") {
+  const provokedByPlayer = !!e._lastPlayerHitAt && performance.now() - e._lastPlayerHitAt < C.ENEMIES.PLAYER_HIT_WINDOW_MS;
+  if (e.faction === "neutral" && !provokedByPlayer) {
     processAmbientBehavior(e, dt);
     return;
   }
@@ -171,8 +176,8 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
   // General targeting search logic for hostile faction ships
   let target = e._npcTarget;
   if (target) {
-    if ((target as unknown) === G.P) {
-      if (G.P.hp <= 0) target = null;
+    if ((target as unknown) === getState().player) {
+      if (getState().player.hp <= 0 && (getState().player.structure ?? 0) <= 0) target = null;
     } else {
       if (!(target as Enemy).alive) target = null;
     }
@@ -187,7 +192,7 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
     e.hasLockOnPlayer = false;
     e.lockOnTimer = 0;
 
-    if ((target as unknown) === G.P) {
+    if ((target as unknown) === getState().player) {
       e.targetingPlayer = true;
       sfxHostileLocking(e.x, e.y);
     }
@@ -195,7 +200,7 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
 
   if (target) {
     const dist = Math.hypot(target.x - e.x, target.y - e.y);
-    const isPlayer = (target as unknown) === G.P;
+    const isPlayer = (target as unknown) === getState().player;
     
     // Check if target is out of range
     let limit = detectionRange;
@@ -213,7 +218,7 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
 
   if (target) {
     const dist = Math.hypot(target.x - e.x, target.y - e.y);
-    const isPlayer = (target as unknown) === G.P;
+    const isPlayer = (target as unknown) === getState().player;
 
     const shipDef = SHIPS[e.type] ?? SHIPS["scout"];
     const lockTimeRequired = Math.max(
@@ -291,14 +296,14 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
   }
 }
 
-export function triggerAttackWarningPulse(allEnemies: Enemy[], dt: number) {
+export function triggerAttackWarningPulse(allEnemies: Enemy[], dt: number, _p?: Player) {
   let lockedCount = 0;
   let closestLocked: Enemy | null = null;
   let closestDist = Infinity;
   for (const e of allEnemies) {
     if (e.hasLockOnPlayer) {
       lockedCount++;
-      const ed = Math.hypot(G.P.x - e.x, G.P.y - e.y);
+      const ed = Math.hypot(getState().player.x - e.x, getState().player.y - e.y);
       if (ed < closestDist) {
         closestDist = ed;
         closestLocked = e;
@@ -314,4 +319,9 @@ export function triggerAttackWarningPulse(allEnemies: Enemy[], dt: number) {
   } else {
     _attackPulseTimer = 0;
   }
+}
+
+export function isPlayerRef(val: unknown): val is Player {
+  if (!val || typeof val !== "object") return false;
+  return "shipId" in val && "pilotName" in val;
 }

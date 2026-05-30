@@ -1,5 +1,5 @@
 import "../styles/hud-tooltip.css";
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { MODULES, DamageProfile } from "../../data/modules.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { getInstance } from "../../utils/items.js";
@@ -46,7 +46,7 @@ function damageTypeLabel(profile?: DamageProfile | null): string {
 }
 
 export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouseY: number) {
-  const uid = G.P.fitting[rack]?.[idx];
+  const uid = getState().player.fitting[rack]?.[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m) return;

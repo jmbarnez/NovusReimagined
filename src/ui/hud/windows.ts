@@ -2,6 +2,11 @@ import { Client } from "../../state.js";
 import { sfxBlip } from "../../audio/procedural.js";
 
 const _windows = new Map<string, HTMLElement>();
+const _closeCallbacks = new Map<string, () => void>();
+
+export function getHudWindow(id: string): HTMLElement | null {
+  return _windows.get(id) || null;
+}
 
 function clampWindow(win: HTMLElement) {
   if (win.classList.contains("is-expanded")) return;
@@ -50,7 +55,12 @@ function makeWindowHTML(id: string, title: string): string {
     </div>`;
 }
 
-export function openHudWindow(id: string, title: string, contentEl: HTMLElement | string) {
+export function openHudWindow(id: string, title: string, contentEl: HTMLElement | string, onClose?: () => void) {
+  if (onClose) {
+    _closeCallbacks.set(id, onClose);
+  } else {
+    _closeCallbacks.delete(id);
+  }
   let win = _windows.get(id);
   if (!win) {
     document.body.insertAdjacentHTML("beforeend", makeWindowHTML(id, title));
@@ -160,6 +170,10 @@ export function closeHudWindow(id: string) {
   const win = _windows.get(id);
   if (win) {
     win.style.display = "none";
+    const cb = _closeCallbacks.get(id);
+    if (cb) {
+      cb();
+    }
   }
 }
 

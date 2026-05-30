@@ -1,6 +1,6 @@
-import { G, Client } from "./state.js";
+import { Client } from "./state.js";
 import type { Enemy, Station } from "./types/world.js";
-import { PlayerAccess, clearNav } from "./state-access.js";
+import { PlayerAccess, clearNav, getState } from "./state-access.js";
 import { showEnemyCtxMenu } from "./ui/hud/enemy-menu.js";
 import { undockStation, tryWarp } from "./dock.js";
 import { dst } from "./utils/math.js";
@@ -8,14 +8,31 @@ import { dst } from "./utils/math.js";
 import { curSys } from "./utils/game.js";
 import { requestSensorLock } from "./targeting.js";
 import { toggleSettings, closeSettings, listeningFor } from "./ui/settings.js";
-import { toggleCargoWindow, toggleScannerDock, toggleSkillsWindow, toggleHubWindow } from "./ui/hud-overlay.js";
+import { toggleCargoWindow, toggleScannerDock, toggleSkillsWindow, toggleHubWindow, toggleEventLogPanel } from "./ui/hud-overlay.js";
 import { closeTopmostWindow } from "./ui/hud/windows.js";
 import { applyBarHotkey, barHotkeySlotList, toggleSlotDefaultAction } from "./player/player-fitting.js";
 import { playBackgroundMusic } from "./audio/music.js";
 import { resumeAudio, sfxTurretAssign } from "./audio/procedural.js";
+import { playerHardpointRack } from "./utils/hardpoints.js";
+import { isEventLogToggleHotkey, isOverviewToggleHotkey } from "./input-hotkeys.js";
 
 export function initInput() {
   const canvasEl = document.getElementById("c") as HTMLCanvasElement;
+  const uiPointerBlockSelector = [
+    "#station-overlay",
+    "#bridge-overlay",
+    "#settings-overlay",
+    "#wreck-overlay",
+    "#title-screen",
+    ".eve-window",
+    "#hud-bottom",
+    "#hud-minimap",
+    "#map-overlay",
+    "[id^='hud-win-']",
+  ].join(", ");
+
+  const isBlockedByUi = (target: EventTarget | null) =>
+    target instanceof Element && !!target.closest(uiPointerBlockSelector);
 
   const setCursorLock = (locked: boolean) => {
     Client.cursorUnlocked = !locked;
@@ -64,9 +81,16 @@ export function initInput() {
     }
 
     // Scanner / Overview (toggle dock)
-    if (e.code === keybinds.overview) {
+    if (isOverviewToggleHotkey(e.code, keybinds)) {
       if (Client.stationOpen || Client.settingsOpen) return;
       toggleScannerDock();
+      return;
+    }
+
+    // Comms Log
+    if (isEventLogToggleHotkey(e.code, keybinds, e)) {
+      if (Client.stationOpen || Client.settingsOpen) return;
+      toggleEventLogPanel();
       return;
     }
 
@@ -88,7 +112,7 @@ export function initInput() {
           for (const st of sys.stations) {
             if (!st.isProcessingHub) continue;
             const interactR = (st.collectRadius ?? 220) + 80;
-            if (dst(G.P.x, G.P.y, st.x, st.y) < interactR) {
+            if (dst(getState().player.x, getState().player.y, st.x, st.y) < interactR) {
               toggleHubWindow();
               handledByHub = true;
               break;
@@ -97,7 +121,7 @@ export function initInput() {
           if (!handledByHub) {
             for (const st of sys.stations) {
               if (st.isProcessingHub) continue;
-              if (dst(G.P.x, G.P.y, st.x, st.y) < st.radius * 2) {
+              if (dst(getState().player.x, getState().player.y, st.x, st.y) < st.radius * 2) {
                 import("./dock.js").then((m) => m.dockAt(st));
                 break;
               }
@@ -123,14 +147,15 @@ export function initInput() {
     const idx = rackKeys.indexOf(k);
     if (idx !== -1) {
       const slots = barHotkeySlotList();
-      if (idx < slots.length && slots[idx].rack === "turret") {
+      const hardpointRack = playerHardpointRack(getState().player);
+      if (idx < slots.length && slots[idx].rack === hardpointRack) {
         const tIdx = slots[idx].idx;
-        if (!(G.P.turretPower?.[tIdx] ?? false)) {
-          toggleSlotDefaultAction("turret", tIdx);
+        if (!(getState().player.turretPower?.[tIdx] ?? false)) {
+          toggleSlotDefaultAction(hardpointRack, tIdx);
         }
         PlayerAccess.setFireControlSlot(tIdx);
-        if (G.P._assignTargetId) {
-          PlayerAccess.setTurretTarget(tIdx, G.P._assignTargetId);
+        if (getState().player._assignTargetId) {
+          PlayerAccess.setTurretTarget(tIdx, getState().player._assignTargetId);
           PlayerAccess.setAssignTargetId(null);
           sfxTurretAssign();
         }
@@ -165,7 +190,7 @@ export function initInput() {
     if (e.button === 0) {
       Client.mouse.lmb = true;
 
-      if (e.target instanceof Element && e.target.closest("#hud-overlay > *, #title-screen, .eve-window")) return;
+      if (isBlockedByUi(e.target)) return;
 
       if (!Client.stationOpen && !Client.bridgeOpen) {
         const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
@@ -189,7 +214,7 @@ export function initInput() {
             }
           }
           if (!locked) {
-            for (const p of G.wreckPieces) {
+            for (const p of getState().wreckPieces) {
               if (p.hp > 0 && dst(wx, wy, p.x, p.y) < 22) {
                 requestSensorLock(p.id);
                 locked = true;
@@ -210,7 +235,7 @@ export function initInput() {
 
   window.addEventListener("mousedown", (e) => {
     if (e.button === 2) {
-      if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, #title-screen, .eve-window")) return;
+      if (isBlockedByUi(e.target)) return;
       
       let enemyClicked = null;
       if (!Client.stationOpen && !Client.bridgeOpen) {

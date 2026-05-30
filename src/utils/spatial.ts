@@ -1,4 +1,4 @@
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 import { curSys } from "./game.js";
 import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
@@ -105,11 +105,11 @@ export class SpatialGrid {
   }
 }
 
-export function rebuildSpatialGrid() {
-  const grid = G.spatialGrid;
+export function rebuildSpatialGrid(sysIdx?: number) {
+  const grid = getState().spatialGrid;
   if (!grid) return;
   grid.clear();
-  const sys = curSys();
+  const sys = sysIdx !== undefined ? getState().GALAXY[sysIdx] : curSys();
   if (!sys) return;
 
   if (!sys._liveEnemies) sys._liveEnemies = [];
@@ -120,8 +120,11 @@ export function rebuildSpatialGrid() {
   for (const a of sys.asteroids) if (!a.depleted && a.hp > 0) sys._liveAsteroids[la++] = a;
   sys._liveAsteroids.length = la;
 
-  const playerColRadius = SHIPS[G.P.shipId]?.colRadius ?? 20;
-  grid.insert("__player", G.P.x, G.P.y, playerColRadius, "player", G.P);
+  for (const p of getState().players.values()) {
+    if (p.sysIdx !== sys.idx) continue;
+    const playerColRadius = SHIPS[p.shipId]?.colRadius ?? 20;
+    grid.insert(p.netId ?? "__player", p.x, p.y, playerColRadius, "player", p);
+  }
 
   for (const e of sys._liveEnemies) {
     const def = ENEMY_DEFS[e.type];
@@ -138,7 +141,7 @@ export function rebuildSpatialGrid() {
     grid.insert(s.id, s.x, s.y, s.radius, "station", s);
   }
 
-  for (const p of G.wreckPieces) {
+  for (const p of getState().wreckPieces) {
     if (p.hp > 0) grid.insert(p.id, p.x, p.y, p.radius, "wreckpiece", p);
   }
 }

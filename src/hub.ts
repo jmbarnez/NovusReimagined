@@ -1,22 +1,43 @@
-import { G } from "./state.js";
+import { type Player } from "./state.js";
+import { getState } from "./state-access.js";
+import { PlayerAccess } from "./state-access.js";
 import type { HubJob } from "./state.js";
-import { dst } from "./utils/math.js";
+import type { ModuleInstance } from "./types/moduleInstance.js";
+import { dst, random } from "./utils/math.js";
 import { floatText } from "./utils/fx.js";
 import { curSys } from "./utils/game.js";
 import { removeSensorLock } from "./targeting.js";
 import { removeWreckPiece } from "./utils/entities.js";
 import { rollWreckSalvage } from "./wreck.js";
 import { addSkillXp } from "./player/player-data.js";
-import { generateModuleInstance } from "./loot/generateModule.js";
-import { logEvent } from "./ui/hud/logs.js";
-import type { Station } from "./types/world.js";
+import { getStats } from "./player/player-stats.js";
+import { logEvent } from "./feedback.js";
+import { getRecipe } from "./data/industryRecipes.js";
+import { C } from "./config/index.js";
+import type { Station, WreckSalvageEntry } from "./types/world.js";
 
 export const ORE_KEYS = ["iron", "crystal", "exotic"] as const;
 
-function getHub(): Station | null {
-  const sys = curSys();
+const ORE_TO_SMELT_RECIPE: Record<string, string> = {
+  iron: "bar",
+  crystal: "lat",
+  exotic: "con",
+};
+
+function getHub(p: Player): Station | null {
+  const sys = curSys(p);
   if (!sys) return null;
   return sys.stations.find((st: Station) => st.isProcessingHub) ?? null;
+}
+
+export function getDropZoneCenter(hub: Station): { x: number; y: number; radius: number } {
+  const dx = hub.dropZoneOffset?.dx ?? 180;
+  const dy = hub.dropZoneOffset?.dy ?? 0;
+  return {
+    x: hub.x + dx,
+    y: hub.y + dy,
+    radius: hub.dropZoneRadius ?? 140,
+  };
 }
 
 export function fmtDuration(seconds: number): string {
@@ -29,156 +50,360 @@ export function fmtDuration(seconds: number): string {
   return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
-export function updateHub(_dt: number) {
-  const hub = getHub();
-  if (!hub) return;
+export function getProcessFee(mass: number): number {
+  return Math.max(
+    C.HUB.PROCESS_MIN_FEE,
+    Math.ceil(mass * C.HUB.PROCESS_FEE_PER_MASS),
+  );
+}
 
-  const collectR: number = hub.collectRadius ?? 220;
-  const now = Date.now() / 1000;
+export function getSmeltFee(craftQty: number): number {
+  return C.HUB.SMELT_FEE_PER_BATCH * craftQty;
+}
 
-  // Absorb wreck pieces
-  for (let i = G.wreckPieces.length - 1; i >= 0; i--) {
-    const p = G.wreckPieces[i];
-    if (dst(p.x, p.y, hub.x, hub.y) >= collectR) continue;
-
-    const mass = p.radius * p.radius * 0.8;
-    const duration = 50 + mass / 40;
-    const job: HubJob = {
-      id: `hub-d-${Date.now()}-${i}`,
-      kind: "debris",
-      startTime: now,
-      duration,
-      mass,
-      salvagePool: p.salvagePool ? [...p.salvagePool] : [],
-    };
-    G.P.hubQueue.push(job);
-    removeSensorLock(p.id);
-    removeWreckPiece(i);
-    floatText(hub.x, hub.y - 30, "Debris absorbed", "#ffaa44");
-    logEvent("Debris absorbed — processing", "loot");
+function completeAsteroidProcessing(mass: number, oreWeights: number[], p: Player) {
+  const weights = oreWeights.length ? oreWeights : [1, 0, 0];
+  const total = weights.reduce((a, b) => a + b, 0) || 1;
+  const roll = random() * total;
+  let cum = 0;
+  let key: string = ORE_KEYS[0];
+  for (let k = 0; k < ORE_KEYS.length; k++) {
+    cum += weights[k] ?? 0;
+    if (roll < cum) { key = ORE_KEYS[k]; break; }
   }
 
-  // Absorb asteroids
-  const sys = curSys();
-  if (!sys) return;
-  for (let i = sys.asteroids.length - 1; i >= 0; i--) {
-    const ast = sys.asteroids[i];
-    if (ast.depleted || ast.hp <= 0) continue;
-    if (dst(ast.x, ast.y, hub.x, hub.y) >= collectR) continue;
+  const skillLv = p.skills?.["refining"] ?? 0;
+  const yieldMult = 0.6 + skillLv * 0.03;
+  const qty = Math.max(1, Math.floor((10 + mass / 80) * yieldMult));
+  const cur = p.hubDeposit?.ore?.[key] ?? 0;
+  PlayerAccess.setHubDepositOre(key, cur + qty, p);
 
-    const mass = ast.radius * ast.radius * 1.8;
-    const duration = 110 + mass / 30;
-    const job: HubJob = {
-      id: `hub-a-${Date.now()}-${i}`,
-      kind: "asteroid",
-      startTime: now,
-      duration,
-      mass,
-      oreWeights: [...(ast.oreWeights ?? [1, 0, 0])],
-    };
-    G.P.hubQueue.push(job);
-    removeSensorLock(ast.id);
-    // Mark depleted so it respawns naturally
-    ast.depleted = true;
-    ast.hp = 0;
-    ast.respawnTimer = 90 + Math.random() * 60;
-    floatText(hub.x, hub.y - 30, "Asteroid absorbed", "#ffaa44");
-    logEvent("Asteroid absorbed — processing", "loot");
+  const xp = Math.max(10, Math.floor(mass * 0.025));
+  addSkillXp("refining", xp, p);
+  if (p === getState().player) {
+    logEvent(`Processing complete — ${qty}× ${key} ore ready · Refining +${xp} XP`, "loot");
   }
 }
 
-export function tickHubQueue() {
-  if (!G.P.hubQueue?.length) return;
+function completeDebrisProcessing(mass: number, salvagePool: WreckSalvageEntry[] | undefined, p: Player) {
+  const rollBonus = getStats(p).salvageBonus;
+  const drops = rollWreckSalvage(salvagePool, rollBonus);
+  for (const drop of drops) {
+    if (drop.kind === "loot") {
+      const cur = p.hubDeposit?.loot?.[drop.payload] ?? 0;
+      PlayerAccess.setHubDepositLoot(drop.payload, cur + drop.qty, p);
+    } else if (drop.kind === "module" && drop.instance) {
+      PlayerAccess.addHubDepositModule(drop.instance, p);
+    }
+  }
+  const xp = Math.max(5, Math.floor(mass * 0.015));
+  addSkillXp("salvage", xp, p);
+  if (p === getState().player) {
+    logEvent(`Processing complete — salvage ready · Salvage +${xp} XP`, "loot");
+  }
+}
+
+export function updateHub(_dt: number) {
+  // Sandbox physics mode: Automatic background ingestion is disabled.
+  // Asteroids and salvage debris remain fully physical, floating in the docking bay
+  // until the player interacts with the console and manually triggers deconstruction.
+}
+
+export interface ScanDepositItem {
+  id: string;
+  kind: "asteroid" | "debris";
+  label: string;
+  mass: number;
+  oreWeights?: number[];
+  salvagePool?: WreckSalvageEntry[];
+}
+
+export function getFloatingDeposits(hub: Station, p: Player): ScanDepositItem[] {
+  const dropZone = getDropZoneCenter(hub);
+  const items: ScanDepositItem[] = [];
+
+  // 1. Scan floating salvage wreck pieces inside the docking bay
+  for (const wp of getState().wreckPieces) {
+    if (dst(wp.x, wp.y, dropZone.x, dropZone.y) < dropZone.radius) {
+      const mass = wp.radius * wp.radius * 0.8;
+      items.push({
+        id: wp.id,
+        kind: "debris",
+        label: wp.name || "Wreck debris",
+        mass,
+        salvagePool: wp.salvagePool ? [...wp.salvagePool] : [],
+      });
+    }
+  }
+
+  // 2. Scan floating asteroids inside the docking bay
+  const sys = curSys(p);
+  if (sys) {
+    for (const ast of sys.asteroids) {
+      if (ast.depleted || ast.hp <= 0) continue;
+      if (dst(ast.x, ast.y, dropZone.x, dropZone.y) < dropZone.radius) {
+        const mass = ast.radius * ast.radius * 1.8;
+        items.push({
+          id: ast.id,
+          kind: "asteroid",
+          label: ast.name || "Asteroid",
+          mass,
+          oreWeights: ast.oreWeights ? [...ast.oreWeights] : [1, 0, 0],
+        });
+      }
+    }
+  }
+
+  return items;
+}
+
+export function processFloatingItem(itemId: string, p: Player): { success: boolean; reason?: string } {
+  const hub = getHub(p);
+  if (!hub) return { success: false, reason: "No active reclamation hub detected" };
+
+  const items = getFloatingDeposits(hub, p);
+  const item = items.find(i => i.id === itemId);
+  if (!item) return { success: false, reason: "Target matter is no longer located inside the docking bay" };
+
+  const fee = getProcessFee(item.mass);
+  if (p.credits < fee) {
+    return { success: false, reason: `Need ${fee}¢ processing fee (have ${p.credits}¢)` };
+  }
+
+  // Deduct credits from account
+  PlayerAccess.modifyCredits(-fee, p);
+
+  // Deconstruct and remove the physical entity from the world
+  if (item.kind === "debris") {
+    const idx = getState().wreckPieces.findIndex(wp => wp.id === itemId);
+    if (idx !== -1) {
+      removeSensorLock(itemId, p);
+      removeWreckPiece(idx);
+    }
+  } else if (item.kind === "asteroid") {
+    const sys = curSys(p);
+    if (sys) {
+      const ast = sys.asteroids.find(a => a.id === itemId);
+      if (ast) {
+        removeSensorLock(itemId, p);
+        ast.depleted = true;
+        ast.hp = 0;
+        ast.respawnTimer = 90 + random() * 60;
+      }
+    }
+  }
+
+  // Queue deconstruction job in Reclamation Array
+  const now = Date.now() / 1000;
+  const duration = item.kind === "asteroid"
+    ? C.HUB.ASTEROID_PROCESS_BASE + item.mass / C.HUB.ASTEROID_PROCESS_PER_MASS
+    : C.HUB.DEBRIS_PROCESS_BASE + item.mass / C.HUB.DEBRIS_PROCESS_PER_MASS;
+
+  const job = {
+    id: `hub-${item.kind}-${Date.now()}`,
+    kind: item.kind,
+    startTime: now,
+    duration,
+    mass: item.mass,
+    oreWeights: item.oreWeights ? [...item.oreWeights] : undefined,
+    salvagePool: item.salvagePool ? [...item.salvagePool] : undefined,
+  };
+
+  PlayerAccess.addHubJob(job, p);
+  if (p === getState().player) {
+    const dropZone = getDropZoneCenter(hub);
+    floatText(dropZone.x, dropZone.y - 35, "Reclamation Initiated", "#ffaa44");
+    logEvent(`Matter Reclamation Initiated: ${item.label} (${fee}¢ fee)`, "system");
+  }
+
+  return { success: true };
+}
+
+export function processDepositItem(itemId: string, p: Player): { success: boolean; reason?: string } {
+  const item = p.hubDeposit?.raw?.find(i => i.id === itemId);
+  if (!item) return { success: false, reason: "Item not found in drop bay" };
+
+  const fee = getProcessFee(item.mass);
+  if (p.credits < fee) {
+    return { success: false, reason: `Need ${fee}¢ processing fee (have ${p.credits}¢)` };
+  }
+
+  PlayerAccess.modifyCredits(-fee, p);
+  PlayerAccess.removeHubDepositItem(itemId, p);
+
+  const now = Date.now() / 1000;
+  const duration = item.kind === "asteroid"
+    ? C.HUB.ASTEROID_PROCESS_BASE + item.mass / C.HUB.ASTEROID_PROCESS_PER_MASS
+    : C.HUB.DEBRIS_PROCESS_BASE + item.mass / C.HUB.DEBRIS_PROCESS_PER_MASS;
+
+  const job: HubJob = {
+    id: `hub-${item.kind}-${Date.now()}`,
+    kind: item.kind,
+    startTime: now,
+    duration,
+    mass: item.mass,
+    oreWeights: item.oreWeights ? [...item.oreWeights] : undefined,
+    salvagePool: item.salvagePool ? [...item.salvagePool] : undefined,
+  };
+  PlayerAccess.addHubJob(job, p);
+  if (p === getState().player) {
+    logEvent(`Queued processing: ${item.label} (${fee}¢ fee)`, "system");
+  }
+  return { success: true };
+}
+
+export function smeltFromDeposit(oreKey: string, craftQty: number, p: Player): { success: boolean; reason?: string } {
+  const recipeId = ORE_TO_SMELT_RECIPE[oreKey];
+  if (!recipeId) return { success: false, reason: "No smelt recipe for this ore" };
+
+  const recipe = getRecipe(recipeId);
+  if (!recipe) return { success: false, reason: "Recipe not found" };
+
+  const oreInput = recipe.inputs.find(i => i.pool === "ore" && i.key === oreKey);
+  if (!oreInput) return { success: false, reason: "Invalid smelt recipe" };
+
+  const oreNeeded = oreInput.qty * craftQty;
+  const available = p.hubDeposit?.ore?.[oreKey] ?? 0;
+  if (available < oreNeeded) {
+    return { success: false, reason: `Need ${oreNeeded}× ${oreKey} ore (have ${available})` };
+  }
+
+  const fee = getSmeltFee(craftQty);
+  if (p.credits < fee) {
+    return { success: false, reason: `Need ${fee}¢ smelting fee (have ${p.credits}¢)` };
+  }
+
+  PlayerAccess.modifyCredits(-fee, p);
+  PlayerAccess.setHubDepositOre(oreKey, available - oreNeeded, p);
+
+  const now = Date.now() / 1000;
+  const duration = (recipe.duration ?? 10) * craftQty;
+  const job: HubJob = {
+    id: `hub-smelt-${Date.now()}-${random().toString(36).slice(2, 7)}`,
+    kind: "smelt",
+    startTime: now,
+    duration,
+    mass: 0,
+    smeltRecipeId: recipeId,
+    smeltQty: craftQty,
+  };
+  PlayerAccess.addHubJob(job, p);
+  if (p === getState().player) {
+    logEvent(`Queued smelt: ${recipe.label} ×${craftQty} (${fee}¢ fee)`, "system");
+  }
+  return { success: true };
+}
+
+export function tickHubQueue(p: Player = getState().player) {
+  if (!p) return;
+  if (!p.hubQueue?.length) return;
   const now = Date.now() / 1000;
   const completed: number[] = [];
 
-  for (let i = 0; i < G.P.hubQueue.length; i++) {
-    const job = G.P.hubQueue[i];
+  for (let i = 0; i < p.hubQueue.length; i++) {
+    const job = p.hubQueue[i];
     if (now - job.startTime < job.duration) continue;
     completed.push(i);
 
     if (job.kind === "debris") {
-      const rollBonus = G._statsCache?.salvageBonus ?? 0;
-      const drops = rollWreckSalvage(job.salvagePool, rollBonus);
-      for (const drop of drops) {
-        if (drop.kind === "loot") {
-          const cur = G.P.hubOutput.loot[drop.payload] ?? 0;
-          G.P.hubOutput.loot[drop.payload] = cur + drop.qty;
-        } else if (drop.kind === "module" && drop.instance) {
-          G.P.hubOutput.modules.push(drop.instance);
+      completeDebrisProcessing(job.mass, job.salvagePool, p);
+    } else if (job.kind === "asteroid") {
+      completeAsteroidProcessing(job.mass, job.oreWeights ?? [1, 0, 0], p);
+    } else if (job.kind === "smelt" && job.smeltRecipeId) {
+      const recipe = getRecipe(job.smeltRecipeId);
+      if (!recipe) continue;
+      const qty = job.smeltQty ?? 1;
+      const skillMult = recipe.outputSkill ? 1 + (p.skills[recipe.outputSkill] || 0) * 0.05 : 1;
+      for (const out of recipe.outputs) {
+        const totalQty = Math.floor(out.qty * qty * skillMult);
+        if (out.pool === "refined") {
+          const cur = p.hubOutput?.refined?.[out.key] ?? 0;
+          PlayerAccess.setHubOutputRefined(out.key, cur + totalQty, p);
+        } else if (out.pool === "ore") {
+          const cur = p.hubOutput?.ore?.[out.key] ?? 0;
+          PlayerAccess.setHubOutputOre(out.key, cur + totalQty, p);
+        } else if (out.pool === "loot") {
+          const cur = p.hubOutput?.loot?.[out.key] ?? 0;
+          PlayerAccess.setHubOutputLoot(out.key, cur + totalQty, p);
         }
       }
-      const xp = Math.max(5, Math.floor(job.mass * 0.015));
-      addSkillXp("salvage", xp);
-      logEvent(`Debris processed — salvage ready · Salvage +${xp} XP`, "loot");
-    } else if (job.kind === "asteroid") {
-      // Roll ore type weighted by oreWeights
-      const weights = job.oreWeights ?? [1, 0, 0];
-      const total = weights.reduce((a, b) => a + b, 0) || 1;
-      const roll = Math.random() * total;
-      let cum = 0;
-      let key: string = ORE_KEYS[0];
-      for (let k = 0; k < ORE_KEYS.length; k++) {
-        cum += weights[k] ?? 0;
-        if (roll < cum) { key = ORE_KEYS[k]; break; }
+      if (p === getState().player) {
+        logEvent(`Smelting complete: ${recipe.label} ×${qty}`, "loot");
       }
-
-      const skillLv = G.P.skills?.["metallurgy"] ?? 0;
-      const yieldMult = 0.6 + skillLv * 0.03;
-      const qty = Math.max(1, Math.floor((10 + job.mass / 80) * yieldMult));
-      const cur = G.P.hubOutput.ore[key] ?? 0;
-      G.P.hubOutput.ore[key] = cur + qty;
-
-      const xp = Math.max(10, Math.floor(job.mass * 0.025));
-      addSkillXp("metallurgy", xp);
-      logEvent(`Asteroid processed — ${qty}× ${key} ore ready · Metallurgy +${xp} XP`, "loot");
     }
   }
 
-  // Remove completed jobs back-to-front
   for (let i = completed.length - 1; i >= 0; i--) {
-    G.P.hubQueue.splice(completed[i], 1);
+    PlayerAccess.spliceHubQueue(completed[i], 1, p);
   }
 }
 
-export function collectHubOutput(): {
+export function collectHubOutput(p: Player = getState().player): {
   loot: Record<string, number>;
   ore: Record<string, number>;
-  modules: typeof G.P.hubOutput.modules;
+  refined: Record<string, number>;
+  modules: ModuleInstance[];
 } {
   const out = {
-    loot: { ...G.P.hubOutput.loot },
-    ore: { ...G.P.hubOutput.ore },
-    modules: [...G.P.hubOutput.modules],
+    loot: { ...p.hubOutput.loot, ...p.hubDeposit.loot },
+    ore: { ...p.hubOutput.ore },
+    refined: { ...(p.hubOutput.refined ?? {}) },
+    modules: [...p.hubOutput.modules, ...p.hubDeposit.modules],
   };
 
-  // Transfer loot into player cargo
   for (const [key, qty] of Object.entries(out.loot)) {
-    const cur = G.P.loot[key] ?? 0;
-    G.P.loot[key] = cur + qty;
+    const cur = p.loot[key] ?? 0;
+    PlayerAccess.setLoot(key, cur + qty, p);
   }
 
-  // Transfer ore into player cargo
   for (const [key, qty] of Object.entries(out.ore)) {
-    const cur = G.P.ore[key] ?? 0;
-    G.P.ore[key] = cur + qty;
+    const cur = p.ore[key] ?? 0;
+    PlayerAccess.setOre(key, cur + qty, p);
   }
 
-  // Transfer modules into player cargo
+  for (const [key, qty] of Object.entries(out.refined)) {
+    const cur = p.refined[key] ?? 0;
+    PlayerAccess.setRefined(key, cur + qty, p);
+  }
+
   for (const inst of out.modules) {
-    G.P.moduleCargo.push(inst);
+    PlayerAccess.addModuleCargo(inst, p);
   }
 
-  // Clear output
-  G.P.hubOutput = { loot: {}, ore: {}, modules: [] };
+  PlayerAccess.setHubOutput({ loot: {}, ore: {}, refined: {}, modules: [] }, p);
+  PlayerAccess.setHubDeposit({
+    raw: [...p.hubDeposit.raw],
+    ore: { ...p.hubDeposit.ore },
+    loot: {},
+    modules: [],
+  }, p);
   return out;
 }
 
-export function hasHubOutput(): boolean {
-  const o = G.P.hubOutput;
+export function hasHubDeposit(p: Player): boolean {
+  const d = p.hubDeposit;
+  if (!d) return false;
+  return (
+    (d.raw?.length ?? 0) > 0 ||
+    Object.values(d.ore).some(v => v > 0) ||
+    Object.values(d.loot).some(v => v > 0) ||
+    d.modules.length > 0
+  );
+}
+
+export function hasHubOutput(p: Player = getState().player): boolean {
+  const o = p.hubOutput;
+  const d = p.hubDeposit;
   return (
     Object.values(o.loot).some(v => v > 0) ||
     Object.values(o.ore).some(v => v > 0) ||
-    o.modules.length > 0
+    Object.values(o.refined ?? {}).some(v => v > 0) ||
+    o.modules.length > 0 ||
+    Object.values(d?.loot ?? {}).some(v => v > 0) ||
+    (d?.modules?.length ?? 0) > 0
   );
+}
+
+export function getSmeltRecipeForOre(oreKey: string): string | null {
+  return ORE_TO_SMELT_RECIPE[oreKey] ?? null;
 }

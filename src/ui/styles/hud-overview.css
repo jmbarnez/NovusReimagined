@@ -108,7 +108,7 @@
 }
 
 #hud-overview-panel .ov-table th:nth-child(4) {
-  width: 65px; /* Name */
+  width: 70px; /* Name */
 }
 
 #hud-overview-panel .ov-table th:nth-child(5) {
@@ -119,9 +119,23 @@
 }
 
 #hud-overview-panel .ov-table th:nth-child(6) {
-  width: 35px; /* Act */
+  width: 34px; /* Sig */
 }
 #hud-overview-panel .ov-table td:nth-child(6) {
+  text-align: right;
+}
+
+#hud-overview-panel .ov-table th:nth-child(7) {
+  width: 38px; /* dV */
+}
+#hud-overview-panel .ov-table td:nth-child(7) {
+  text-align: right;
+}
+
+#hud-overview-panel .ov-table th:nth-child(8) {
+  width: 35px; /* Act */
+}
+#hud-overview-panel .ov-table td:nth-child(8) {
   text-align: center;
   padding: 1px 2px;
 }

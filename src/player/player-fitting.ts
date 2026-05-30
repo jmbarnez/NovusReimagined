@@ -1,5 +1,5 @@
-import { G } from "../state.js";
-import { PlayerAccess } from "../state-access.js";
+
+import { PlayerAccess, getState } from "../state-access.js";
 import { SHIPS } from "../data/ships.js";
 import { MODULES } from "../data/modules.js";
 import { invalidate } from "./player-stats.js";
@@ -11,14 +11,23 @@ import { sfxPowerCycle } from "../audio/procedural.js";
 import { getInstance } from "../utils/items.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { tryActivate as tryActivateAbility, ABILITY_BY_ID } from "./abilities.js";
+import { playerHardpointRack } from "../utils/hardpoints.js";
 
 export function syncSlotHeat() {
-  const p = G.P;
+  const p = getState().player;
   const s = SHIPS[p.shipId];
+  const hardpointRack = playerHardpointRack(p);
+  const hardpointCount = s.fitting[hardpointRack] || 0;
   const pull = (n: number, prev: number[] | undefined) => {
     const nn = Math.max(0, n | 0);
     const a = Array(nn).fill(0);
     if (prev && prev.length) for (let i = 0; i < Math.min(nn, prev.length); i++) a[i] = +prev[i] || 0;
+    return a;
+  };
+  const pullBool = (n: number, prev: boolean[] | undefined) => {
+    const nn = Math.max(0, n | 0);
+    const a = Array(nn).fill(false);
+    if (prev && prev.length) for (let i = 0; i < Math.min(nn, prev.length); i++) a[i] = !!prev[i];
     return a;
   };
   const pullNull = (n: number, prev: (string | null)[] | undefined) => {
@@ -33,8 +42,10 @@ export function syncSlotHeat() {
     med: pull(s.fitting.med, p.slotHeat?.med),
     low: pull(s.fitting.low, p.slotHeat?.low),
   });
-  PlayerAccess.setTurretTargetsAll(pullNull(s.fitting.turret, p.turretTargets || []));
-  PlayerAccess.setTurretCdsAll(pull(s.fitting.turret, p.turretCds || []));
+  PlayerAccess.setTurretTargetsAll(pullNull(hardpointCount, p.turretTargets || []));
+  PlayerAccess.setTurretCdsAll(pull(hardpointCount, p.turretCds || []));
+  PlayerAccess.setTurretPowerAll(pullBool(hardpointCount, p.turretPower || []));
+  PlayerAccess.setTurretPowerCdAll(pull(hardpointCount, p.turretPowerCd || []));
   const moduleHp: Record<string, (number | null)[]> = p.moduleHp ? { ...p.moduleHp } : { turret: [], high: [], med: [], low: [] };
   const slotActive: Record<string, boolean[]> = p.slotActive ? { ...p.slotActive } : { turret: [], high: [], med: [], low: [] };
   for (const rack of RACK_TYPES) {
@@ -56,7 +67,7 @@ export function syncSlotHeat() {
 }
 
 export function validateFitting() {
-  const p = G.P;
+  const p = getState().player;
   const s = SHIPS[p.shipId];
   for (const r of RACK_TYPES) {
     const n = s.fitting[r] || 0;
@@ -72,7 +83,7 @@ export function validateFitting() {
       }
     }
   }
-  const nt = s.fitting.turret || 0;
+  const nt = s.fitting[playerHardpointRack(p)] || 0;
   if (p.fireControlSlot < 0 || p.fireControlSlot >= nt) p.fireControlSlot = 0;
   syncSlotHeat();
 }
@@ -83,7 +94,7 @@ export interface BarSlot {
 }
 
 export function barHotkeySlotList(): BarSlot[] {
-  const p = G.P;
+  const p = getState().player;
   const s = SHIPS[p.shipId];
   const o: BarSlot[] = [];
   for (let i = 0; i < (s.fitting.turret | 0); i++) o.push({ rack: "turret", idx: i });
@@ -100,49 +111,68 @@ export function applyBarHotkey(keyIndex: number) {
   toggleSlotDefaultAction(rack, idx);
 }
 
-export function toggleSlotDefaultAction(rack: string, idx: number) {
-  const instanceId = G.P.fitting[rack]?.[idx];
-  const instance = instanceId ? getInstance(instanceId) : null;
+import type { Player } from "../state.js";
+
+export function toggleSlotDefaultAction(rack: string, idx: number, p: Player = getState().player) {
+  const instanceId = p.fitting[rack]?.[idx];
+  const instance = instanceId ? getInstance(instanceId, p) : null;
   const m = instance ? MODULES[instance.baseId] : null;
   if (!m) return;
 
   // Ability modules: hotkey fires the attached ability rather than toggling the slot.
   if (m.ability && ABILITY_BY_ID[m.ability]) {
-    const r = tryActivateAbility(m.ability);
-    if (r === "fired") {
-      const def = ABILITY_BY_ID[m.ability];
-      floatText(G.P.x, G.P.y - 30, `${def.name.toUpperCase()}`, "#9adfff");
-    } else if (r === "cooldown") {
-      floatText(G.P.x, G.P.y - 30, `COOLDOWN`, "#ff8844");
-    } else if (r === "no-cap") {
-      floatText(G.P.x, G.P.y - 30, `NO CAP`, "#ff8844");
+    if (p === getState().player) {
+      const r = tryActivateAbility(m.ability);
+      if (r === "fired") {
+        const def = ABILITY_BY_ID[m.ability];
+        floatText(p.x, p.y - 30, `${def.name.toUpperCase()}`, "#9adfff");
+      } else if (r === "cooldown") {
+        floatText(p.x, p.y - 30, `COOLDOWN`, "#ff8844");
+      } else if (r === "no-cap") {
+        floatText(p.x, p.y - 30, `NO CAP`, "#ff8844");
+      }
     }
     return;
   }
 
-  if (rack === "turret") {
-    const cycling = (G.P.turretPowerCd?.[idx] || 0) > 0;
+  if (rack === playerHardpointRack(p)) {
+    const cycling = (p.turretPowerCd?.[idx] || 0) > 0;
     if (cycling) return;
-    PlayerAccess.setTurretPower(idx, !G.P.turretPower[idx]);
-    PlayerAccess.setTurretPowerCd(idx, TURRET_POWER_CYCLE_S);
-    sfxPowerCycle(G.P.turretPower[idx]);
-    floatText(G.P.x, G.P.y - 30, `${m.short || m.name} ${G.P.turretPower[idx] ? "POWERING UP" : "POWERING DOWN"}`, "#88ccff");
+    const nowPowered = !(p.turretPower?.[idx] ?? false);
+    if (p === getState().player) {
+      PlayerAccess.setTurretPower(idx, nowPowered);
+      PlayerAccess.setTurretPowerCd(idx, TURRET_POWER_CYCLE_S);
+      sfxPowerCycle(nowPowered);
+      floatText(p.x, p.y - 30, `${m.short || m.name} ${nowPowered ? "POWERING UP" : "POWERING DOWN"}`, "#88ccff");
+    } else {
+      p.turretPower[idx] = nowPowered;
+      if (!p.turretPowerCd) p.turretPowerCd = [];
+      p.turretPowerCd[idx] = TURRET_POWER_CYCLE_S;
+    }
   } else {
-    const nowActive = !(G.P.slotActive?.[rack]?.[idx] ?? true);
-    PlayerAccess.setSlotActive(rack, idx, nowActive);
-    invalidate();
-    emit("module:toggle", { rack, idx, active: nowActive, moduleId: instanceId! });
-    floatText(G.P.x, G.P.y - 30, `${m.short || m.name} ${nowActive ? "ON" : "OFF"}`, nowActive ? "#44ffaa" : "#ff8844");
+    const nowActive = !(p.slotActive?.[rack]?.[idx] ?? true);
+    if (p === getState().player) {
+      PlayerAccess.setSlotActive(rack, idx, nowActive);
+      invalidate(p);
+      emit("module:toggle", { rack, idx, active: nowActive, moduleId: instanceId! });
+      floatText(p.x, p.y - 30, `${m.short || m.name} ${nowActive ? "ON" : "OFF"}`, nowActive ? "#44ffaa" : "#ff8844");
+    } else {
+      if (!p.slotActive) p.slotActive = {};
+      if (!p.slotActive[rack]) p.slotActive[rack] = [];
+      p.slotActive[rack][idx] = nowActive;
+      invalidate(p);
+    }
   }
 }
 
 export function toggleRackPower(rack: string, wantOn: boolean, silent: boolean = false) {
   let changed = false;
-  if (rack === "turret") {
-    const n = G.P.fitting.turret?.length || 0;
+  const hardpointRack = playerHardpointRack(getState().player);
+  if (rack === hardpointRack) {
+    const n = getState().player.fitting[hardpointRack]?.length || 0;
     for (let i = 0; i < n; i++) {
-      if (G.P.fitting.turret?.[i] && G.P.turretPower?.[i] !== wantOn) {
-        const cycling = (G.P.turretPowerCd?.[i] || 0) > 0;
+      if (getState().player.fitting[hardpointRack]?.[i] && getState().player.turretPower?.[i] !== wantOn) {
+        const cycling = (getState().player.turretPowerCd?.[i] || 0) > 0;
         if (cycling) continue;
         PlayerAccess.setTurretPower(i, wantOn);
         PlayerAccess.setTurretPowerCd(i, TURRET_POWER_CYCLE_S);
@@ -150,9 +180,9 @@ export function toggleRackPower(rack: string, wantOn: boolean, silent: boolean =
       }
     }
   } else {
-    const n = G.P.fitting[rack]?.length || 0;
+    const n = getState().player.fitting[rack]?.length || 0;
     for (let i = 0; i < n; i++) {
-      if (G.P.fitting[rack]?.[i] && (G.P.slotActive?.[rack]?.[i] ?? true) !== wantOn) {
+      if (getState().player.fitting[rack]?.[i] && (getState().player.slotActive?.[rack]?.[i] ?? true) !== wantOn) {
         PlayerAccess.setSlotActive(rack, i, wantOn);
         changed = true;
       }
@@ -162,7 +192,7 @@ export function toggleRackPower(rack: string, wantOn: boolean, silent: boolean =
     if (!silent) {
       sfxPowerCycle(wantOn);
       const rackLabel = rack[0].toUpperCase() + rack.slice(1);
-      floatText(G.P.x, G.P.y - 30, `${rackLabel} RACK ${wantOn ? "ONLINE" : "OFFLINE"}`, wantOn ? "#44ffaa" : "#ff8844");
+      floatText(getState().player.x, getState().player.y - 30, `${rackLabel} RACK ${wantOn ? "ONLINE" : "OFFLINE"}`, wantOn ? "#44ffaa" : "#ff8844");
     }
     invalidate();
   }
@@ -179,7 +209,12 @@ export function toggleGlobalPower(wantOn: boolean) {
   if (changed) {
     sfxPowerCycle(wantOn);
     invalidate();
-    floatText(G.P.x, G.P.y - 30, `ALL SYSTEMS ${wantOn ? "ONLINE" : "OFFLINE"}`, wantOn ? "#44ffaa" : "#ff8844");
+    floatText(getState().player.x, getState().player.y - 30, `ALL SYSTEMS ${wantOn ? "ONLINE" : "OFFLINE"}`, wantOn ? "#44ffaa" : "#ff8844");
   }
   return wantOn;
 }
+
+export const applyToggleSlotMutation = toggleSlotDefaultAction;
+
+/** Replays a slot toggle during prediction reconciliation — same logic, same function. */
+export const replayPredictedToggleSlotAction = toggleSlotDefaultAction;

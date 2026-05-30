@@ -11,7 +11,7 @@ const STAR_MID_PARALLAX = 0.018;
 const STAR_NEAR_PARALLAX = 0.036;
 
 const WRAP_FAR  = 6000;
-const WRAP_MID  = 4000; // legacy compat with G.STARS
+const WRAP_MID  = 4000; // legacy compat with getState().STARS
 const WRAP_NEAR = 3000;
 const WRAP_DUST = 3000;
 

@@ -1,9 +1,9 @@
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 import type { System, Star, DustParticle } from "../types/world.js";
 import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
 import { W, H } from "../canvas.js";
 import { TAU } from "../constants.js";
-import { getState } from "../state-access.js";
+
 import { screenContainer, planetLayer } from "../pixi.js";
 import { initPlanetSprites } from "./pixi-planets.js";
 
@@ -98,14 +98,14 @@ function spawnStarSprites() {
       container.addChild(sprite);
     }
   };
-  spawnFor(farStarContainer!,  G.STARS_FAR  ?? []);
-  spawnFor(midStarContainer!,  G.STARS      ?? []);
-  spawnFor(nearStarContainer!, G.STARS_NEAR ?? []);
+  spawnFor(farStarContainer!,  getState().STARS_FAR  ?? []);
+  spawnFor(midStarContainer!,  getState().STARS      ?? []);
+  spawnFor(nearStarContainer!, getState().STARS_NEAR ?? []);
 }
 
 function spawnDustSprites() {
   dustContainer!.removeChildren();
-  for (const d of G.DUST ?? []) {
+  for (const d of getState().DUST ?? []) {
     const g = new Graphics() as Graphics & { _dustData?: DustParticle };
     const dotR = 0.6 + d.r * 3;
     g.circle(0, 0, dotR);
@@ -169,9 +169,9 @@ export function updateBackground(now: number, camX: number, camY: number) {
 
   updateNebulaMesh(now, camX, camY);
 
-  if (farStarContainer)  updateStarLayer(farStarContainer,  G.STARS_FAR  ?? [], WRAP_FAR,  STAR_FAR_PARALLAX,  Wc, Hc, now, 0,    camX, camY);
-  if (midStarContainer)  updateStarLayer(midStarContainer,  G.STARS      ?? [], WRAP_MID,  STAR_MID_PARALLAX,  Wc, Hc, now, 0.08, camX, camY);
-  if (nearStarContainer) updateStarLayer(nearStarContainer, G.STARS_NEAR ?? [], WRAP_NEAR, STAR_NEAR_PARALLAX, Wc, Hc, now, 0.22, camX, camY);
+  if (farStarContainer)  updateStarLayer(farStarContainer,  getState().STARS_FAR  ?? [], WRAP_FAR,  STAR_FAR_PARALLAX,  Wc, Hc, now, 0,    camX, camY);
+  if (midStarContainer)  updateStarLayer(midStarContainer,  getState().STARS      ?? [], WRAP_MID,  STAR_MID_PARALLAX,  Wc, Hc, now, 0.08, camX, camY);
+  if (nearStarContainer) updateStarLayer(nearStarContainer, getState().STARS_NEAR ?? [], WRAP_NEAR, STAR_NEAR_PARALLAX, Wc, Hc, now, 0.22, camX, camY);
   if (dustContainer)     updateDustLayer(dustContainer, Wc, Hc, now, camX, camY, starHue);
 
   updateSunScreenPos(Wc, Hc, camX, camY, sys);
@@ -220,7 +220,7 @@ function updateDustLayer(
   const tint = (Math.round(255 * tintR) << 16) | (Math.round(255 * tintG) << 8) | Math.round(255 * tintB);
   let i = 0;
   for (const child of container.children) {
-    const d = G.DUST?.[i]; if (!d) { i++; continue; }
+    const d = getState().DUST?.[i]; if (!d) { i++; continue; }
     const offX = camX * d.parallax;
     const offY = camY * d.parallax;
     child.x = ((d.ox - offX + now * d.drift)        % WRAP_DUST + WRAP_DUST) % WRAP_DUST;

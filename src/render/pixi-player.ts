@@ -6,7 +6,8 @@
  * a single minimal trail: small coloured dots that fade out.
  */
 import { ImageSource, Sprite, Texture } from "pixi.js";
-import { G, Client } from "../state.js";
+import { Client } from "../state.js";
+import { getState } from "../state-access.js";
 import { SHIPS } from "../data/ships.js";
 import { entityLayer, thrustLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
@@ -308,7 +309,7 @@ function buildTrailPool() {
 
 export function initPixiPlayer(): void {
   _dotTex = bakeDotTexture();
-  buildPlayerSprites(G.P?.shipId ?? "scout");
+  buildPlayerSprites(getState().player?.shipId ?? "scout");
   buildTrailPool();
 }
 
@@ -326,7 +327,7 @@ export function clearShipTextureCaches(): void {
 /** Destroy and rebuild the player hull + light sprites with freshly baked textures. */
 export function rebuildPlayerSprites(): void {
   destroyPlayerSprites();
-  buildPlayerSprites(G.P?.shipId ?? "scout");
+  buildPlayerSprites(getState().player?.shipId ?? "scout");
   // Rebuild trail pool with fresh dot texture.
   if (_dotTex) {
     for (const s of _trailPool) {
@@ -336,19 +337,19 @@ export function rebuildPlayerSprites(): void {
 }
 
 export function syncPixiPlayer(alpha: number, now: number): void {
-  if (!_hullSprite || !G.P) return;
+  if (!_hullSprite || !getState().player) return;
 
-  if (G.P.shipId !== _currentShipId) {
-    buildPlayerSprites(G.P.shipId);
+  if (getState().player.shipId !== _currentShipId) {
+    buildPlayerSprites(getState().player.shipId);
     return;
   }
 
-  const ix = lerp(G.P.px, G.P.x, alpha);
-  const iy = lerp(G.P.py, G.P.y, alpha);
-  const ia = lerp(G.P.prevAngle, G.P.angle, alpha);
+  const ix = lerp(getState().player.px, getState().player.x, alpha);
+  const iy = lerp(getState().player.py, getState().player.y, alpha);
+  const ia = lerp(getState().player.prevAngle, getState().player.angle, alpha);
 
   // Invincibility blink
-  if (G.P.invincible > 0 && Math.floor(now / 75) % 2 === 0) {
+  if (getState().player.invincible > 0 && Math.floor(now / 75) % 2 === 0) {
     _hullSprite.visible = false;
     if (_hullLightSprite) _hullLightSprite.visible = false;
     return;
@@ -360,7 +361,7 @@ export function syncPixiPlayer(alpha: number, now: number): void {
   _hullSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
 
   // Banking tilt
-  const latV = G.P.vx * Math.sin(ia) - G.P.vy * Math.cos(ia);
+  const latV = getState().player.vx * Math.sin(ia) - getState().player.vy * Math.cos(ia);
   const bankTilt = Math.max(-0.13, Math.min(0.13, latV * 0.0045));
   const angle = ia + (Math.abs(bankTilt) > 0.002 ? bankTilt : 0);
 
@@ -372,7 +373,7 @@ export function syncPixiPlayer(alpha: number, now: number): void {
   if (_hullLightSprite) {
     _hullLightSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
     if (Client.settings?.directionalLighting !== false && _shipLightTex.length) {
-      const sys = G.GALAXY?.[G.P?.sysIdx ?? 0];
+      const sys = getState().GALAXY?.[getState().player?.sysIdx ?? 0];
       const _sd = sys?.sunDir ?? 0;
       const sunDir = Math.atan2(Math.sin(_sd) * 3500 - iy, Math.cos(_sd) * 3500 - ix);
       let di = Math.round(((sunDir - angle) / TAU) * LIGHT_DIRS) % LIGHT_DIRS;
@@ -393,7 +394,7 @@ export function syncPixiPlayer(alpha: number, now: number): void {
 }
 
 export function syncPixiTrails(): void {
-  const trails = G.trails;
+  const trails = getState().trails;
   for (let i = 0; i < TRAIL_POOL; i++) {
     const s = _trailPool[i];
     if (!s) continue;

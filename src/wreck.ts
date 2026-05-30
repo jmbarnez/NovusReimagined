@@ -1,8 +1,8 @@
-import { G, Client } from "./state.js";
-import { SalvagerAccess, PlayerAccess } from "./state-access.js";
+import { Client } from "./state.js";
+import { SalvagerAccess, PlayerAccess, getState } from "./state-access.js";
 import { dst } from "./utils/math.js";
 import { floatText } from "./utils/fx.js";
-import { showPickupToast } from "./ui/hud/pickup-toasts.js";
+import { showPickupToast } from "./feedback.js";
 import { ORE, LOOT } from "./data/resources.js";
 import { progressMissions } from "./data/missions.js";
 import { MODULES } from "./data/modules.js";
@@ -11,6 +11,7 @@ import { ModuleInstance } from "./types/moduleInstance.js";
 import type { Enemy, WreckPiece, SalvagePickup, WreckSalvageEntry } from "./types/world.js";
 import { ENEMY_DEFS } from "./data/enemies.js";
 import { invalidateInstanceCache } from "./utils/items.js";
+import { getStats } from "./player/player-stats.js";
 import {
   addWreckPiece,
   addSalvagePickup,
@@ -59,7 +60,7 @@ function buildPieceShapes(path: number[][]): PieceShape[] {
   return shapes;
 }
 
-export function spawnWreck(enemy: Enemy) {
+export function spawnWreck(enemy: Enemy, _p?: import("./state.js").Player) {
   if (!enemy || typeof enemy.x !== "number" || typeof enemy.y !== "number") return;
   const def = ENEMY_DEFS[enemy.type as string];
   const sigR = def?.sigRadius ?? 25;
@@ -244,10 +245,10 @@ export function rollWreckSalvage(
 }
 
 function destroyWreckPiece(piece: WreckPiece) {
-  const idx = G.wreckPieces.indexOf(piece);
+  const idx = getState().wreckPieces.indexOf(piece);
   if (idx === -1) return;
 
-  const stats = G._statsCache;
+  const stats = getStats();
   const rollBonus = stats?.salvageBonus ?? 0;
   const drops = rollWreckSalvage(piece.salvagePool, rollBonus);
 
@@ -272,15 +273,15 @@ function destroyWreckPiece(piece: WreckPiece) {
   spawnPieceDestructionFx(piece);
   sfxWreckPieceDestroy(piece.x, piece.y);
   removeSensorLock(piece.id);
-  if (G.salvager.targetPieceId === piece.id) {
+  if (getState().salvager?.targetPieceId === piece.id) {
     SalvagerAccess.update({ active: false, targetPieceId: null });
   }
   removeWreckPiece(idx);
 }
 
 export function updateWreckPieces(dt: number) {
-  for (let i = G.wreckPieces.length - 1; i >= 0; i--) {
-    const p = G.wreckPieces[i];
+  for (let i = getState().wreckPieces.length - 1; i >= 0; i--) {
+    const p = getState().wreckPieces[i];
     p.age += dt;
     p.despawnTimer -= dt;
     if (p.despawnTimer <= 0) {
@@ -306,13 +307,13 @@ export function updateWreckPieces(dt: number) {
 
 export function updateSalvagePickups(dt: number) {
   const drag = Math.pow(SALVAGE_PICKUP_DRAG, dt);
-  tickAndCull(G.salvagePickups, dt, (s) => {
+  tickAndCull(getState().salvagePickups, dt, (s) => {
     s.life -= dt;
     s.bob += dt * C.ECONOMY.SALVAGE_PICKUP.bobRate;
 
     // Apply magnetic pull toward the player ship
-    const dx = G.P.x - s.x;
-    const dy = G.P.y - s.y;
+    const dx = getState().player.x - s.x;
+    const dy = getState().player.y - s.y;
     const dist = Math.hypot(dx, dy);
     if (dist < 200 && dist > 0.01) {
       const forcePct = 1 - dist / 200;
@@ -348,7 +349,7 @@ export function updateSalvagePickups(dt: number) {
     s.vx *= drag; s.vy *= drag;
 
     if (s.life <= 0) return true;
-    if (dst(G.P.x, G.P.y, s.x, s.y) < PICKUP_RANGE) {
+    if (dst(getState().player.x, getState().player.y, s.x, s.y) < PICKUP_RANGE) {
       collectSalvagePickup(s);
       return true;
     }
@@ -357,12 +358,12 @@ export function updateSalvagePickups(dt: number) {
 
 function collectSalvagePickup(s: SalvagePickup) {
   if (s.kind === "ore") {
-    PlayerAccess.setOre(s.payload, (G.P.ore[s.payload] || 0) + s.qty);
+    PlayerAccess.setOre(s.payload, (getState().player.ore[s.payload] || 0) + s.qty);
     progressMissions("mining", s.qty, s.payload);
     showPickupToast("ore", s.payload, s.qty);
     sfxItemPickup("ore", s.x, s.y);
   } else if (s.kind === "loot") {
-    PlayerAccess.setLoot(s.payload, (G.P.loot[s.payload] || 0) + s.qty);
+    PlayerAccess.setLoot(s.payload, (getState().player.loot[s.payload] || 0) + s.qty);
     progressMissions("salvage", s.qty, s.payload);
     showPickupToast("loot", s.payload, s.qty);
     sfxItemPickup("loot", s.x, s.y);
@@ -379,7 +380,7 @@ function collectSalvagePickup(s: SalvagePickup) {
       sfxItemPickup("module", s.x, s.y);
     } catch {
       // Fallback: spawn scrap instead of crashing on bad module ID
-      PlayerAccess.setLoot("scrap", (G.P.loot.scrap || 0) + 1);
+      PlayerAccess.setLoot("scrap", (getState().player.loot.scrap || 0) + 1);
       showPickupToast("loot", "scrap", 1);
     }
   }

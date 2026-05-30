@@ -1,5 +1,6 @@
 import { Sprite, Texture, ImageSource } from "pixi.js";
-import { G, Client, AppMode } from "../state.js";
+import { Client, AppMode } from "../state.js";
+import { getState } from "../state-access.js";
 import type { Enemy } from "../types/world.js";
 import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
@@ -107,7 +108,7 @@ export function syncThrust(alpha: number, now: number) {
 }
 
 function _syncPlayerThrust(alpha: number, now: number) {
-  const p = G.P;
+  const p = getState().player;
   if (!p) return;
 
   const ship = SHIPS[p.shipId];

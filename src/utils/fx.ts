@@ -1,6 +1,6 @@
 import { TAU } from "../constants.js";
 import { addParticle, addBeam, addFloatText, addShockwave, addImpactDecal, removeImpactDecal } from "./entities.js";
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 
 export function spawnMuzzleFlash(x: number, y: number, angle: number, color: string, intensity = 6) {
   const n = Math.max(3, Math.round(intensity));
@@ -81,6 +81,25 @@ export function spawnMiningImpact(x: number, y: number) {
   spawnParticles(x, y, "#ff8822", 1, 45);
 }
 
+export function spawnMiningSparks(x: number, y: number, nx = 0, ny = -1, color = "#c8a060", scale = 1) {
+  for (let i = 0; i < Math.max(2, Math.round(5 * scale)); i++) {
+    const spread = (Math.random() - 0.5) * 1.4;
+    const tx = -ny;
+    const ty = nx;
+    const spd = 30 + Math.random() * 80 * scale;
+    addParticle({
+      x,
+      y,
+      color,
+      vx: (nx + tx * spread) * spd,
+      vy: (ny + ty * spread) * spd,
+      r: 1 + Math.random() * 1.5 * scale,
+      life: 0.25 + Math.random() * 0.2,
+      decay: 2.8,
+    });
+  }
+}
+
 function _spawnDebris(x: number, y: number, color: string, count: number, sizeScale: number) {
   for (let i = 0; i < count; i++) {
     const ox = (Math.random() - 0.5) * 20 * sizeScale;
@@ -93,7 +112,7 @@ function _spawnDebris(x: number, y: number, color: string, count: number, sizeSc
       const r = baseR * (0.5 + Math.random() * 0.6);
       pts.push([Math.cos(a) * r, Math.sin(a) * r]);
     }
-    if (G.impactDecals.length >= 78) removeImpactDecal(0);
+    if (getState().impactDecals.length >= 78) removeImpactDecal(0);
     addImpactDecal({ x: x + ox, y: y + oy, poly: pts, color, life: 5 + Math.random() * 4, maxLife: 9 });
   }
 }

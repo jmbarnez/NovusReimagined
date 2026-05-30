@@ -1,4 +1,5 @@
-import { G, type Player } from "../state.js";
+import { type Player } from "../state.js";
+import { getState } from "../state-access.js";
 import { C } from "../config/index.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { randomShipName, randomHailLine } from "../data/faction-comms.js";
@@ -69,7 +70,7 @@ export function buildFactionShip(sys: System, type: string, gate: Gate, exitGate
 }
 
 export function updateAmbientDirector(dt: number) {
-  const sys = G.GALAXY[0]; // Gated to starter system (sys-0)
+  const sys = getState().GALAXY[0]; // Gated to starter system (sys-0)
   if (!sys) return;
 
   // Count existing ambient neutral ships
@@ -115,7 +116,7 @@ export function updateAmbientDirector(dt: number) {
 let _miningLaserHum = 0;
 
 export function processAmbientBehavior(e: Enemy, dt: number) {
-  const sys = G.GALAXY[0];
+  const sys = getState().GALAXY[0];
   if (!sys) return;
 
   // 1. Check dialogue speech bubble timers
@@ -139,11 +140,11 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
   }
 
   // Check player if player is hostile (typically friendly to neutrals)
-  if (G.P.hp > 0 && isHostile(e.faction, "player")) {
-    const dist = Math.hypot(G.P.x - e.x, G.P.y - e.y);
+  if (getState().player.hp > 0 && isHostile(e.faction, "player")) {
+    const dist = Math.hypot(getState().player.x - e.x, getState().player.y - e.y);
     if (dist < closestHostileDist) {
       closestHostileDist = dist;
-      closestHostile = G.P;
+      closestHostile = getState().player;
     }
   }
 
@@ -338,8 +339,8 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
     case "engage": {
       let combatTarget = e._npcTarget;
       if (combatTarget) {
-        if ((combatTarget as unknown) === G.P) {
-          if (G.P.hp <= 0) combatTarget = null;
+        if ((combatTarget as unknown) === getState().player) {
+          if (getState().player.hp <= 0) combatTarget = null;
         } else {
           if (!(combatTarget as Enemy).alive) combatTarget = null;
         }
@@ -439,7 +440,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
 }
 
 function pickAsteroidTarget(e: Enemy) {
-  const sys = G.GALAXY[0];
+  const sys = getState().GALAXY[0];
   if (!sys || !sys.asteroids) return;
 
   let closestAst: Asteroid | null = null;
@@ -461,7 +462,7 @@ function pickAsteroidTarget(e: Enemy) {
 }
 
 function pickRandomPatrolWp(e: Enemy) {
-  const sys = G.GALAXY[0];
+  const sys = getState().GALAXY[0];
   if (!sys) return;
 
   // Pick a random spot between station and gates

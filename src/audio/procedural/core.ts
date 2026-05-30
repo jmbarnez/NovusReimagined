@@ -1,4 +1,4 @@
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 
 export let _ctx: AudioContext | null = null;
 export let _master: GainNode | null = null;
@@ -35,9 +35,9 @@ export function setSfxVolume(v: number) {
 }
 
 export function spatialAtten(x: number, y: number, maxDist = 3000) {
-  if (!G.P) return { atten: 1, pan: 0 };
-  const dx = x - G.P.x;
-  const dy = y - G.P.y;
+  if (!getState().player) return { atten: 1, pan: 0 };
+  const dx = x - getState().player.x;
+  const dy = y - getState().player.y;
   const dist = Math.hypot(dx, dy);
   const atten = Math.max(0, 1 - dist / maxDist);
   const pan = Math.max(-1, Math.min(1, dx / 600));

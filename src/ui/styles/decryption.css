@@ -1,0 +1,199 @@
+.decrypt-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 620px;
+  color: var(--hud-text-main);
+  font-size: 11px;
+}
+
+.decrypt-top,
+.decrypt-board,
+.decrypt-actions,
+.decrypt-readout div {
+  display: flex;
+}
+
+.decrypt-top,
+.decrypt-actions {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.decrypt-title {
+  color: var(--hud-text-bright);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.decrypt-meta,
+.decrypt-status,
+.decrypt-meter-label,
+.decrypt-readout span {
+  color: var(--hud-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 9px;
+}
+
+.decrypt-payload {
+  color: var(--hud-accent);
+  border: 1px solid color-mix(in srgb, var(--hud-accent) 40%, transparent);
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--hud-bg-elevated) 65%, transparent);
+}
+
+.decrypt-board {
+  gap: 14px;
+  align-items: stretch;
+}
+
+.decrypt-grid {
+  flex: 1;
+  display: grid;
+  gap: 10px;
+  min-height: 250px;
+  padding: 14px;
+  border: 1px solid var(--hud-border);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--hud-bg-window) 92%, #021016 8%), color-mix(in srgb, var(--hud-bg-deep) 94%, #01070c 6%));
+}
+
+.decrypt-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+}
+
+.decrypt-node {
+  position: relative;
+  min-height: 58px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-panel) 88%, #02161d 12%);
+  color: var(--hud-text-main);
+  cursor: default;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.decrypt-node.hidden {
+  color: var(--hud-text-faint);
+  border-style: dashed;
+}
+
+.decrypt-node.visited,
+.decrypt-node.current {
+  border-color: color-mix(in srgb, var(--hud-accent) 50%, var(--hud-border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hud-accent) 20%, transparent);
+}
+
+.decrypt-node.actionable {
+  cursor: pointer;
+  border-color: color-mix(in srgb, var(--hud-shield) 58%, var(--hud-border));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--hud-shield) 14%, transparent);
+}
+
+.decrypt-node.actionable:hover {
+  transform: translateY(-1px);
+  border-color: var(--hud-shield);
+}
+
+.decrypt-node:disabled {
+  opacity: 1;
+}
+
+.decrypt-node.type-cache {
+  color: var(--hud-accent);
+}
+
+.decrypt-node.type-reveal,
+.decrypt-node.type-stabilize {
+  color: var(--hud-shield);
+}
+
+.decrypt-node.type-corrupt,
+.decrypt-node.type-counter,
+.decrypt-node.type-dead {
+  color: var(--hud-danger);
+}
+
+.decrypt-node-label {
+  font-family: "Share Tech Mono", monospace;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+}
+
+.decrypt-side {
+  width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.decrypt-meter-block,
+.decrypt-readout {
+  border: 1px solid var(--hud-border);
+  background: color-mix(in srgb, var(--hud-bg-panel) 92%, #02090d 8%);
+  padding: 10px;
+}
+
+.decrypt-readout {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.decrypt-readout div {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.decrypt-readout b {
+  color: var(--hud-text-bright);
+  font-size: 12px;
+}
+
+.decrypt-meter {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.decrypt-seg {
+  height: 12px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 60%, transparent);
+}
+
+.decrypt-seg.trace.on {
+  background: color-mix(in srgb, var(--hud-danger) 76%, #2a0606 24%);
+  border-color: color-mix(in srgb, var(--hud-danger) 75%, var(--hud-border));
+}
+
+.decrypt-seg.integrity.on {
+  background: color-mix(in srgb, var(--hud-shield) 64%, #061f28 36%);
+  border-color: color-mix(in srgb, var(--hud-shield) 66%, var(--hud-border));
+}
+
+.decrypt-actions {
+  gap: 8px;
+}
+
+.decrypt-action {
+  min-width: 108px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--hud-border-accent) 72%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-bg-elevated) 72%, transparent);
+  color: var(--hud-text-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.decrypt-action.ghost {
+  border-color: var(--hud-border);
+}
+
+.decrypt-action:disabled {
+  opacity: 0.4;
+}

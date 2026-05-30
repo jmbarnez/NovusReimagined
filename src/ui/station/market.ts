@@ -1,5 +1,5 @@
 import "../styles/station-market.css";
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { MODULES } from "../../data/modules.js";
 import { ORE, LOOT } from "../../data/resources.js";
 import { ORE_MARKET_BUY, COMPONENT_MARKET_BUY } from "../../data/marketCatalog.js";
@@ -24,10 +24,10 @@ export function renderMarket() {
   if (q) mods = mods.filter(m => m.name.toLowerCase().includes(q) || m.rack.includes(q));
   if (stationState.mktSort === "price_asc")  mods.sort((a, b) => a.price - b.price);
   else if (stationState.mktSort === "price_desc") mods.sort((a, b) => b.price - a.price);
-  else if (stationState.mktSort === "owned") mods.sort((a, b) => (G.P.moduleCargo.filter(i => i.baseId === b.id).length) - (G.P.moduleCargo.filter(i => i.baseId === a.id).length));
+  else if (stationState.mktSort === "owned") mods.sort((a, b) => (getState().player.moduleCargo.filter(i => i.baseId === b.id).length) - (getState().player.moduleCargo.filter(i => i.baseId === a.id).length));
 
   const modRows = mods.map(m => {
-    const n = G.P.moduleCargo.filter(i => i.baseId === m.id).length;
+    const n = getState().player.moduleCargo.filter(i => i.baseId === m.id).length;
     const sp = Math.floor(m.price * 0.6);
 
     const bon = fmtModBonuses(m);
@@ -44,14 +44,14 @@ export function renderMarket() {
     <div class="mkt-row">
       <div class="mkt-icon">${iconSvg("ammo-hybrid")}</div>
       <div><span class="mkt-name">Hybrid Charges</span><span class="mkt-tag">ammo</span><div class="mkt-bonus">blasters · beams · 0.08¢ per shot</div></div>
-      <span class="mkt-have">${G.P.ammo?.hybrid ?? 0}</span>
+      <span class="mkt-have">${getState().player.ammo?.hybrid ?? 0}</span>
       <div class="mkt-cell"><button class="btn btn-buy mkt-btn" data-action="buyHybrid">+500 — 40¢</button></div>
       <div class="mkt-cell"><span class="mkt-dash">—</span></div>
     </div>
     <div class="mkt-row">
       <div class="mkt-icon">${iconSvg("ammo-missile")}</div>
       <div><span class="mkt-name">Missile Stack</span><span class="mkt-tag">ammo</span><div class="mkt-bonus">guided ordnance · 3.96¢ per shot</div></div>
-      <span class="mkt-have">${G.P.ammo?.missile ?? 0}</span>
+      <span class="mkt-have">${getState().player.ammo?.missile ?? 0}</span>
       <div class="mkt-cell"><button class="btn btn-buy mkt-btn" data-action="buyMissile">+24 — 95¢</button></div>
       <div class="mkt-cell"><span class="mkt-dash">—</span></div>
     </div>`;
@@ -59,9 +59,9 @@ export function renderMarket() {
   const LOOT_BUY: Record<string, number> = { scrap: 5, chip: 45, cell: 22, "intact-part": 30 };
   type Res = { id: string; label: string; qty: number; rate: number; action: string; attr: string };
   let res: Res[] = [
-    ...(["iron","crystal","exotic"] as const).map(k => ({ id:k, label:ORE[k].label, qty:G.P.ore[k]||0, rate:ORE_MARKET_BUY[k]||0, action:"sellOre", attr:`data-ore="${k}"` })),
-    ...(["scrap","chip","cell","intact-part"] as const).map(k => ({ id:k, label:LOOT[k].label, qty:G.P.loot[k]||0, rate:LOOT_BUY[k]||0, action:"sellLoot", attr:`data-loot="${k}"` })),
-    ...(["circuit","gear","harness","sensor_cluster"] as const).map(k => ({ id:k, label:k.replace("_"," "), qty:G.P.components[k]||0, rate:COMPONENT_MARKET_BUY[k]||100, action:"sellComp", attr:`data-comp="${k}"` })),
+    ...(["iron","crystal","exotic"] as const).map(k => ({ id:k, label:ORE[k].label, qty:getState().player.ore[k]||0, rate:ORE_MARKET_BUY[k]||0, action:"sellOre", attr:`data-ore="${k}"` })),
+    ...(["scrap","chip","cell","intact-part"] as const).map(k => ({ id:k, label:LOOT[k].label, qty:getState().player.loot[k]||0, rate:LOOT_BUY[k]||0, action:"sellLoot", attr:`data-loot="${k}"` })),
+    ...(["circuit","gear","harness","sensor_cluster"] as const).map(k => ({ id:k, label:k.replace("_"," "), qty:getState().player.components[k]||0, rate:COMPONENT_MARKET_BUY[k]||100, action:"sellComp", attr:`data-comp="${k}"` })),
   ];
   if (q) res = res.filter(r => r.label.toLowerCase().includes(q) || r.id.includes(q));
   if (stationState.mktSort === "price_asc")  res.sort((a, b) => a.rate - b.rate);

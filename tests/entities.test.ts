@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { G } from "../src/state.js";
+import { _G as G } from "../src/state.js";;
 import { clearSimulationEntities, addBullet } from "../src/utils/entities.js";
 
 describe("entity lifecycle", () => {

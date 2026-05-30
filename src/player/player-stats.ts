@@ -1,4 +1,4 @@
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 import { SHIPS, ShipDef } from "../data/ships.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "../data/modules.js";
 import { WEAPON_PROFILES, WeaponProfile } from "../data/weaponProfiles.js";
@@ -8,6 +8,7 @@ import { levelForSkillXp, WEAPON_SKILL, type WeaponDelivery } from "../data/skil
 import { getInstance } from "../utils/items.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { C } from "../config/index.js";
+import type { Player } from "../state.js";
 
 export interface ComputedStats {
   ship: ShipDef;
@@ -43,33 +44,58 @@ export interface ComputedStats {
   totalCPU: number;
   mineRange: number;
   massMult: number;
+  scanRange: number;
+  scanStrength: number;
+  scanResolveMult: number;
+  decryptPower: number;
+  decryptTraceResist: number;
 }
 
 import { invalidateInstanceCache } from "../utils/items.js";
 
-export function invalidate() {
-  G._statsCache = null;
+export function invalidate(p?: Player) {
+  if (!p || p === getState().player) {
+    getState()._statsCache = null;
+  }
   invalidateInstanceCache();
 }
 
-export function getStats(): ComputedStats {
-  return G._statsCache || (G._statsCache = computeStats());
+export function getStats(p?: Player): ComputedStats {
+  const targetPlayer = p ?? getState().player;
+  if (targetPlayer === getState().player) {
+    return getState()._statsCache || (getState()._statsCache = computeStats(undefined, targetPlayer));
+  }
+  return computeStats(undefined, targetPlayer);
 }
 
 /** Per-weapon-type skill bonus, applied at fire time (multiplier above 1.0). */
-export function weaponSkillBonus(delivery: WeaponDelivery): number {
+export function weaponSkillBonus(delivery: WeaponDelivery, p: Player = getState().player): number {
   const id = WEAPON_SKILL[delivery];
-  const lvl = levelForSkillXp(G.P.skillXp?.[id] || 0);
+  const lvl = levelForSkillXp(p.skillXp?.[id] || 0);
   return lvl * C.PLAYER.SKILL_POTENCY.weaponMultPerLevel;
 }
 
-function isModuleActive(m: ModuleDef, rack: "turret" | "high" | "med" | "low", idx: number): boolean {
-  return rack === "turret" ? (G.P.turretPower?.[idx] ?? false) : (G.P.slotActive?.[rack]?.[idx] ?? true);
+function isModuleActive(m: ModuleDef, rack: "turret" | "high" | "med" | "low", idx: number, p: Player): boolean {
+  return rack === "turret" ? (p.turretPower?.[idx] ?? false) : (p.slotActive?.[rack]?.[idx] ?? true);
 }
 
-export function computeStats(tempFitting?: Record<string, (string | null)[]>): ComputedStats {
-  const p = G.P;
-  const fitting = tempFitting || p.fitting;
+function isPlayer(obj: unknown): obj is Player {
+  return obj !== null && typeof obj === "object" && "shipId" in obj;
+}
+
+export function computeStats(
+  fittingOrPlayer?: Record<string, (string | null)[]> | Player,
+  playerArg?: Player
+): ComputedStats {
+  let p: Player;
+  let fitting: Record<string, (string | null)[]>;
+  if (isPlayer(fittingOrPlayer)) {
+    p = fittingOrPlayer;
+    fitting = p.fitting;
+  } else {
+    p = playerArg ?? getState().player;
+    fitting = (fittingOrPlayer as Record<string, (string | null)[]>) ?? p.fitting;
+  }
   const ship = SHIPS[p.shipId];
   const skLv = (id: string) => levelForSkillXp(p.skillXp?.[id] || 0);
   let wepB = 0, minB = 0, ehpB = 0, addPG = 0, engineMN = ship?.baseMainEngineMN ?? 7;
@@ -86,12 +112,12 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
     for (let idx = 0; idx < (fitting[rack]?.length || 0); idx++) {
       const instanceId = fitting[rack][idx];
       if (!instanceId) continue;
-      const instance = getInstance(instanceId);
+      const instance = getInstance(instanceId, p);
       if (!instance) continue;
       const m = MODULES[instance.baseId]; if (!m) continue;
       
       const durabilityScale = instance.durability / instance.maxDurability;
-      const active = isModuleActive(m, rack, idx) && instance.durability > 0;
+      const active = isModuleActive(m, rack, idx, p) && instance.durability > 0;
       const e = { ...m.effects };
       
       // Apply instance affixes
@@ -137,7 +163,7 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
   let lockScanMult = 1;
   const allMods = [...fitting.turret, ...fitting.high, ...fitting.med, ...fitting.low].filter(Boolean) as string[];
   for (const uid of allMods) {
-    const inst = getInstance(uid);
+    const inst = getInstance(uid, p);
     if (!inst) continue;
     const m = MODULES[inst.baseId];
     lockScanMult += m?.effects?.lockScanBonus || 0;
@@ -154,11 +180,11 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
     for (let idx = 0; idx < (fitting[rack]?.length || 0); idx++) {
       const uid = fitting[rack][idx];
       if (!uid) continue;
-      const inst = getInstance(uid);
+      const inst = getInstance(uid, p);
       if (!inst) continue;
       const m = MODULES[inst.baseId];
       if (m && MODULE_FLAGS.isShield(m)) {
-        if (isModuleActive(m, rack, idx) && inst.durability > 0) {
+        if (isModuleActive(m, rack, idx, p) && inst.durability > 0) {
           hasShieldSystem = true;
           break;
         }
@@ -168,7 +194,8 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
   }
 
   const maxShield = hasShieldSystem ? Math.floor((ship.shield || 0) * (1 + ehpB)) : 0;
-  if (!tempFitting) {
+  const isTemp = !!fittingOrPlayer && !isPlayer(fittingOrPlayer);
+  if (!isTemp) {
     p.maxHp = maxHp;
     p.maxStructure = maxStructure;
     p.maxShield = maxShield;
@@ -187,25 +214,20 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
   const maxSpd0 = ship.simMaxSpeedPx ?? 780;
   const turn0 = ship.simTurnRateRad ?? 2.6;
   const drag0 = ship.simDragPerSec ?? 0.9925;
-  const retroR = ship.simRetroRatio ?? 0.355;
-  const latR = ship.simLateralRatio ?? 0.478;
-  const cruiseMult = ship.cruiseSpeedMult ?? 1;
-  const baseEng = Math.max(0.01, ship.baseMainEngineMN ?? 7);
 
+  const cruiseMult = 1 + actSimThrustPct;
+  const agilityMult = 1 + actSimTurnPct;
+  const maxSpd = maxSpd0 * cruiseMult * (1 + actSimMaxSpeedPct);
+
+  const baseEng = ship?.baseMainEngineMN ?? 7;
   const engineRatio = engineMN / baseEng;
-  const agilityMult = 1 / Math.max(0.4, massMult);
   const thrustScalar = engineRatio * cruiseMult * agilityMult * (1 + simThrustPct);
-  let mainThrust = main0 * thrustScalar;
-  const retroThrust = main0 * retroR * thrustScalar;
-  const lateralThrust = main0 * latR * thrustScalar;
-  let maxSpeed = maxSpd0 * cruiseMult * (1 + simMaxSpeedPct) * (C.PLAYER.SPEED.engineRatioFloor + C.PLAYER.SPEED.engineRatioCeiling * Math.min(engineRatio, C.PLAYER.SPEED.engineRatioCap));
+  const maxSpeed = maxSpd * (C.PLAYER.SPEED.engineRatioFloor + C.PLAYER.SPEED.engineRatioCeiling * Math.min(engineRatio, C.PLAYER.SPEED.engineRatioCap));
   const turnRate = turn0 * agilityMult * (1 + simTurnPct);
-  const dragPerSec = Math.min(C.PLAYER.THRUST.dragMax, Math.max(C.PLAYER.THRUST.dragMin, drag0 + simDragAdd));
-
-  const minThrust = main0 * MIN_THRUST_PCT;
-  const minSpeed = maxSpd0 * MIN_THRUST_PCT;
-  if (mainThrust < minThrust) mainThrust = minThrust;
-  if (maxSpeed < minSpeed) maxSpeed = minSpeed;
+  const mainThrust = main0 * thrustScalar;
+  const retroThrust = (ship.simRetroThrustPx ?? main0 * ship.simRetroRatio) * thrustScalar;
+  const lateralThrust = (ship.simLateralThrustPx ?? main0 * ship.simLateralRatio) * thrustScalar;
+  const dragPerSec = Math.max(0.5, drag0 + simDragAdd);
 
   const baseEngineMN = engineMN - actEngineMN;
   const baseEngineRatio = baseEngineMN / baseEng;
@@ -225,7 +247,7 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
   let hasMiner = false;
   for (const uid of fitting.turret) {
     if (!uid) continue;
-    const inst = getInstance(uid);
+    const inst = getInstance(uid, p);
     const m = inst ? MODULES[inst.baseId] : null;
     if (m && MODULE_FLAGS.isMiningTurret(m)) hasMiner = true;
   }
@@ -235,7 +257,7 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
   for (let i = 0; i < (fitting.high?.length ?? 0); i++) {
     const uid = fitting.high?.[i];
     if (!uid) continue;
-    const inst = getInstance(uid);
+    const inst = getInstance(uid, p);
     const m = inst ? MODULES[inst.baseId] : null;
     if (!m?.isSalvager) continue;
     hasSalvager = true;
@@ -258,37 +280,54 @@ export function computeStats(tempFitting?: Record<string, (string | null)[]>): C
     totalCPU: ship.fitting.cpu || 0,
     mineRange,
     massMult,
+    scanRange: 1,
+    scanStrength: 1,
+    scanResolveMult: 1,
+    decryptPower: 1,
+    decryptTraceResist: 1,
   };
 }
 
 export function computeScaledWeaponProfile(baseId: string, weaponTurret: ModuleDef | null, ship: ShipDef): WeaponProfile {
   const baseProf = WEAPON_PROFILES[baseId] || WEAPON_PROFILES.default;
   const rangeScale = ((ship.turretRangeKm || C.PLAYER.TURRET.rangeKmReference) / C.PLAYER.TURRET.rangeKmReference) * C.PLAYER.TURRET.rangeScaleMultiplier;
-  const wProf = { ...baseProf, range: Math.max(C.PLAYER.TURRET.rangeMinPx, Math.round(baseProf.range * rangeScale)) };
+  const wProf: WeaponProfile = { ...baseProf, range: Math.max(C.PLAYER.TURRET.rangeMinPx, Math.round(baseProf.range * rangeScale)) };
   if (baseProf.type === "projectile" && baseProf.spd > 0) {
     const trk = weaponTurret?.trackingSpeed ?? C.PLAYER.TURRET.defaultTrackingSpeed;
     wProf.spd = Math.max(C.PLAYER.TURRET.projectileSpeedMin, Math.round(baseProf.spd * (C.PLAYER.TURRET.projectileSpeedBase + trk * C.PLAYER.TURRET.projectileSpeedPerTracking)));
   }
+
+  const optKm = weaponTurret?.optimalRange ?? 0;
+  const fallKm = weaponTurret?.falloff ?? 0;
+  const edge = C.COMBAT.RANGE_MODEL.edgeFalloffs;
+  if (optKm + fallKm > 0) {
+    const denom = optKm + edge * fallKm;
+    wProf.optimalPx = Math.round(wProf.range * (optKm / denom));
+    wProf.falloffPx = Math.max(1, Math.round(wProf.range * (fallKm / denom)));
+  } else {
+    wProf.optimalPx = wProf.range;
+    wProf.falloffPx = C.COMBAT.RANGE_MODEL.minFalloffPx;
+  }
+
   return wProf;
 }
 
-export function getWeaponProfileForSlot(idx: number): WeaponProfile | null {
-  const p = G.P;
+export function getWeaponProfileForSlot(idx: number, p: Player = getState().player): WeaponProfile | null {
   const ship = SHIPS[p.shipId];
-  const uid = G.P.fitting.turret[idx];
-  const inst = uid ? getInstance(uid) : null;
+  const uid = p.fitting.turret[idx];
+  const inst = uid ? getInstance(uid, p) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m) return null;
   return computeScaledWeaponProfile(inst!.baseId, m, ship);
 }
 
-export function hasCommsEquipment(): boolean {
-  const fitting = G.P?.fitting;
+export function hasCommsEquipment(p: Player = getState().player): boolean {
+  const fitting = p?.fitting;
   if (!fitting) return false;
   for (const rack of ["turret", "high", "med", "low"] as const) {
     for (const uid of fitting[rack] || []) {
       if (!uid) continue;
-      const inst = getInstance(uid);
+      const inst = getInstance(uid, p);
       if (!inst) continue;
       const m = MODULES[inst.baseId];
       if (m && (m as { isComms?: boolean }).isComms) return true;

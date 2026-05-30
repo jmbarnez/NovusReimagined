@@ -1,5 +1,6 @@
 import "./styles/station-base.css";
-import { G, Client } from "../state.js";
+import { Client } from "../state.js";
+import { getState } from "../state-access.js";
 import { undockStation } from "../dock.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../audio/procedural.js";
 import { on } from "../events.js";
@@ -163,7 +164,7 @@ export function buildStationUI(st: Station) {
   if (!el) return;
   el.querySelector("#st-name")!.textContent = st.name;
   el.querySelector("#st-meta")!.textContent = `Services: ${st.services.join(" · ")}`;
-  const sys = G.GALAXY[G.P.sysIdx];
+  const sys = getState().GALAXY[getState().player.sysIdx];
   const sec = sys?.security ?? 0.5;
   const secColor = sec >= 0.7 ? "var(--hud-positive)" : sec >= 0.4 ? "var(--hud-accent)" : "var(--hud-danger)";
   const secLabel = sec >= 0.7 ? "HIGH SEC" : sec >= 0.4 ? "MID SEC" : "LOW SEC";
@@ -181,16 +182,16 @@ export function buildStationUI(st: Station) {
     el.querySelector(`#panel-${(first as HTMLElement).dataset.tab}`)!.classList.add("active");
   }
   stationState.selectedRecipeId = null;
-  stationState.craftQueue = G.P.craftQueue;
-  const ring = G.GALAXY[G.P.sysIdx]?.ring ?? 0;
-  stationState._stationContracts = generateContractsForStation(st, G.P.sysIdx, ring);
+  stationState.craftQueue = getState().player.craftQueue;
+  const ring = getState().GALAXY[getState().player.sysIdx]?.ring ?? 0;
+  stationState._stationContracts = generateContractsForStation(st, getState().player.sysIdx, ring);
   renderStationUI();
 }
 
 export function renderStationUI() {
   const el = document.getElementById("station-overlay");
   if (!el || !Client.stationOpen) return;
-  el.querySelector("#st-cr")!.textContent = `${G.P.credits}¢`;
+  el.querySelector("#st-cr")!.textContent = `${getState().player.credits}¢`;
   const undockKey = document.getElementById("st-undock-key");
   if (undockKey) undockKey.textContent = fmtKey(Client.settings.keybinds.dock);
 

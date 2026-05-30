@@ -8,6 +8,7 @@ export interface Keybinds {
   brake: string;
   settings: string;
   skills: string;
+  eventLog: string;
   perf: string;
 }
 
@@ -81,6 +82,8 @@ export interface Settings {
   mipmapping: boolean;
   lensFlare: boolean;
   bloomIntensity: number;
+  uiScale: number;
+  language: "en" | "es";
 }
 
 export const DEFAULT_KEYBINDS: Keybinds = {
@@ -91,6 +94,7 @@ export const DEFAULT_KEYBINDS: Keybinds = {
   brake: "Space",
   settings: "Escape",
   skills: "KeyK",
+  eventLog: "KeyC",
   perf: "Backquote",
 };
 
@@ -102,6 +106,7 @@ export const KEYBIND_LABELS: Record<string, string> = {
   brake: "Brake",
   settings: "Settings",
   skills: "Skills Window",
+  eventLog: "Comms Log",
   perf: "Performance Overlay",
 };
 
@@ -353,6 +358,8 @@ export const DEFAULT_SETTINGS: Settings = {
   mipmapping: true,
   lensFlare: true,
   bloomIntensity: 1.0,
+  uiScale: 1.0,
+  language: "en",
 };
 
 export function loadSettings(): Settings {
@@ -377,6 +384,8 @@ export function loadSettings(): Settings {
         mipmapping: parsed.mipmapping ?? true,
         lensFlare:   parsed.lensFlare   ?? true,
         bloomIntensity: parsed.bloomIntensity ?? 1.0,
+        uiScale: parsed.uiScale ?? 1.0,
+        language: (parsed.language === "es" ? "es" : "en") as "en" | "es",
       };
     }
   } catch {}

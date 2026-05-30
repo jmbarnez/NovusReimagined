@@ -1,0 +1,86 @@
+#pause-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 550;
+  font-family: var(--font-family);
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--hud-bg-deep) 55%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.pause-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 280px;
+  padding: 28px 36px 32px;
+  background: var(--hud-bg-window);
+  border: 1px solid var(--hud-border);
+  border-top: 3px solid var(--hud-border-accent);
+  border-radius: 4px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
+  text-align: center;
+}
+
+.pause-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  color: var(--hud-text-bright);
+}
+
+.pause-btn {
+  padding: 12px 20px;
+  background: transparent;
+  color: var(--hud-text-main);
+  border: 1px solid var(--hud-border-soft);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+}
+
+.pause-btn:hover {
+  background: color-mix(in srgb, var(--hud-accent) 10%, transparent);
+  border-color: var(--hud-border);
+  color: var(--hud-text-bright);
+}
+
+.pause-btn-primary {
+  border-color: color-mix(in srgb, var(--hud-accent) 45%, var(--hud-border));
+  color: var(--hud-text-bright);
+}
+
+.pause-btn-primary:hover {
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--hud-accent) 20%, transparent);
+}
+
+.pause-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.pause-btn-exit {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-danger) 18%, transparent);
+  color: var(--hud-danger);
+  border-color: color-mix(in srgb, var(--hud-danger) 50%, transparent);
+}
+
+.pause-btn-exit:hover {
+  background: color-mix(in srgb, var(--hud-danger) 40%, transparent);
+  color: var(--hud-text-bright);
+  border-color: var(--hud-danger);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hud-danger) 35%, transparent);
+}

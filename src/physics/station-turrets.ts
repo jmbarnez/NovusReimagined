@@ -1,4 +1,4 @@
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 import { dst, angleDiff } from "../utils/math.js";
 import { addBullet } from "../utils/entities.js";
 import {
@@ -11,7 +11,7 @@ import { liveEnemies } from "../utils/game.js";
 import { isHostile } from "../combat/factions.js";
 
 export function updateStationTurrets(dt: number) {
-  const sys = G.GALAXY[G.P.sysIdx];
+  const sys = getState().GALAXY[getState().player.sysIdx];
   if (!sys || !sys.stations) return;
 
   for (const st of sys.stations) {

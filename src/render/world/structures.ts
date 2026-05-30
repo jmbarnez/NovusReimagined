@@ -1,4 +1,5 @@
 import { getState } from "../../state-access.js";
+
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { isVisible } from "../../utils/game.js";

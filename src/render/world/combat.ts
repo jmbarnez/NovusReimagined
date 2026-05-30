@@ -1,5 +1,6 @@
+
+import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
-import { Client, G } from "../../state.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { lerp } from "../../utils/math.js";
@@ -165,8 +166,9 @@ export function drawBeams(sys: System) {
 
 export function drawMiningLaser(now: number) {
   const state = getState();
-  if (!state.miningLaser.active) return;
-  const { x1, y1, x2, y2, phase, hitNx, hitNy, hitR } = state.miningLaser;
+  const miningLaser = state.miningLaser;
+  if (!miningLaser?.active) return;
+  const { x1, y1, x2, y2, phase, hitNx, hitNy, hitR } = miningLaser;
   const pulse = 0.82 + 0.18 * Math.sin(now * 0.022);
   const hittingAsteroid = hitR > 0;
   let endX = x2, endY = y2;
@@ -205,7 +207,7 @@ export function drawMiningLaser(now: number) {
 
     // GPU-drawn sparks: ore-colored, directional ejection, real physics.
     // Spawned each frame so the PixiJS sprite pool renders them additively.
-    const oreColor = state.miningLaser.oreColor || "#a0a5aa";
+    const oreColor = miningLaser.oreColor || "#a0a5aa";
     const sparkPalette = [oreColor, "#ffffff", oreColor, "#ffffff"];
     const normalAngle = Math.atan2(hitNy || 0, hitNx || 1);
     const sparkCount = 2;
@@ -239,7 +241,7 @@ export function drawMiningLaser(now: number) {
 
 export function drawSalvagerBeam() {
   const sv = getSalvagerBeam();
-  if (!sv.active) return;
+  if (!sv?.active) return;
   const { x1, y1, x2, y2, phase } = sv;
   const pulse = 0.7 + 0.3 * Math.sin(phase * 2.5);
 
@@ -281,7 +283,7 @@ export function drawSalvagerBeam() {
 
 export function drawTractorBeam() {
   const tr = getTractorBeam();
-  if (!tr.active && !tr.tooHeavy) return;
+  if (!tr || (!tr.active && !tr.tooHeavy)) return;
   const { x1, y1, x2, y2, phase, active, tooHeavy } = tr;
   const pulse = 0.7 + 0.3 * Math.sin(phase * 3.0);
 
@@ -297,7 +299,7 @@ export function drawTractorBeam() {
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     ctx.setLineDash([]);
   } else {
-    const t = G.P.tractorTightness ?? 0.5;
+    const t = getState().player.tractorTightness ?? 0.5;
     const beamScale = 0.6 + t * 0.8;
 
     // Outer glow — cyan

@@ -64,3 +64,7 @@ export const STATION_TURRET_RANGE = 500;
 export const STATION_TURRET_DAMAGE = 12;
 export const STATION_TURRET_RELOAD = 1.5;
 export const STATION_TURRET_ALIGN_TOLERANCE = 0.26;
+
+// Title screen baseline resolution for responsive scaling in title-nav.ts
+export const TITLE_BASE_W = 1920;
+export const TITLE_BASE_H = 1080;

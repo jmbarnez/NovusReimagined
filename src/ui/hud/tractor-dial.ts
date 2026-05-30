@@ -1,4 +1,4 @@
-import { G } from "../../state.js";
+import { getState, PlayerAccess } from "../../state-access.js";
 import { MODULES, MODULE_FLAGS, type ModuleDef } from "../../data/modules.js";
 import { getInstance } from "../../utils/items.js";
 import { hudState } from "./state.js";
@@ -25,11 +25,11 @@ function getDialEl(): HTMLElement {
     el.addEventListener("wheel", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      const current = G.P.tractorTightness ?? 0.5;
+      const current = getState().player.tractorTightness ?? 0.5;
       const dir = ev.deltaY < 0 ? 1 : -1;
       const next = Math.max(0, Math.min(1, current + dir * 0.05));
       if (next !== current) {
-        G.P.tractorTightness = next;
+        PlayerAccess.setTractorTightness(next);
         sfxBlip(800 + next * 600, 0.02);
         savePlayer();
       }
@@ -41,7 +41,7 @@ function getDialEl(): HTMLElement {
       ev.stopPropagation();
       _isDragging = true;
       _startY = ev.clientY;
-      _startVal = G.P.tractorTightness ?? 0.5;
+      _startVal = getState().player.tractorTightness ?? 0.5;
       document.addEventListener("mousemove", onDragMove);
       document.addEventListener("mouseup", onDragEnd);
     });
@@ -53,7 +53,7 @@ function onDragMove(ev: MouseEvent) {
   if (!_isDragging) return;
   const deltaY = _startY - ev.clientY; // drag UP = tighten
   const sensitivity = 0.005; // 200px drag covers full 0-1 range
-  const current = G.P.tractorTightness ?? 0.5;
+  const current = getState().player.tractorTightness ?? 0.5;
   const next = Math.max(0, Math.min(1, _startVal + deltaY * sensitivity));
   if (next !== current) {
     const oldStep = Math.round(current * 20);
@@ -61,7 +61,7 @@ function onDragMove(ev: MouseEvent) {
     if (oldStep !== newStep) {
       sfxBlip(800 + next * 600, 0.02);
     }
-    G.P.tractorTightness = next;
+    PlayerAccess.setTractorTightness(next);
   }
 }
 
@@ -77,7 +77,7 @@ function onDragEnd() {
 export function updateTractorDial() {
   const el = getDialEl();
 
-  const ft = G.P.fitting?.turret || [];
+  const ft = getState().player.fitting?.turret || [];
   let tractorIdx = -1;
   let tractorMod: ModuleDef | null = null;
   for (let i = 0; i < ft.length; i++) {
@@ -86,7 +86,7 @@ export function updateTractorDial() {
     const inst = getInstance(uid);
     const m = inst ? MODULES[inst.baseId] : null;
     if (m && MODULE_FLAGS.isTractor(m)) {
-      if (G.P.turretPower?.[i]) {
+      if (getState().player.turretPower?.[i]) {
         tractorIdx = i;
         tractorMod = m;
         break;
@@ -112,7 +112,7 @@ export function updateTractorDial() {
     el.style.transform = "translate(-50%, -100%)";
   }
 
-  const t = G.P.tractorTightness ?? 0.5;
+  const t = getState().player.tractorTightness ?? 0.5;
   const pct = Math.round(t * 100);
   const pullMult = 0.45 + t * 1.10;
   const baseCap = tractorMod.capDrainPerSec ?? 3;

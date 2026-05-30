@@ -167,3 +167,19 @@ export function resizePixi() {
     rebuildPlayerSprites();
   }
 }
+
+export function destroyPixi() {
+  if (app) {
+    app.destroy(true, { children: true, texture: false });
+  }
+  app = null;
+  worldContainer = null;
+  screenContainer = null;
+  planetLayer = null;
+  stationLayer = null;
+  thrustLayer = null;
+  entityLayer = null;
+  effectLayer = null;
+  worldGradeFilter = null;
+  _pixiReady = false;
+}

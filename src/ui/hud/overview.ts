@@ -1,5 +1,5 @@
 import "../styles/hud-overview.css";
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 import type { System } from "../../types/world.js";
 import { GATE_RANGE } from "../../constants.js";
 import { dst } from "../../utils/math.js";
@@ -57,12 +57,16 @@ export function updateHudOverviewPanel() {
         ? `<button type="button" class="ov-lock" data-lock-id="${r.id}">Lock</button>`
         : "—";
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
+      const sig = String(r.sig);
+      const relV = typeof r.relV === "number" ? Math.round(r.relV).toString() : String(r.relV);
       tr.innerHTML = `
         <td class="ov-icon">${r.icon}</td>
         <td class="ov-st">${r.status}</td>
         <td>${r.cls}</td>
         <td class="ov-name">${r.name.slice(0, 12)}</td>
         <td class="ov-num ov-dist">${dist}</td>
+        <td class="ov-num ov-sig">${sig}</td>
+        <td class="ov-num ov-relV">${relV}</td>
         <td>${lockBtn}</td>`;
       
       tr.addEventListener("contextmenu", (ev) => {
@@ -76,9 +80,15 @@ export function updateHudOverviewPanel() {
       hudState.ovEntries.appendChild(tr);
     } else {
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
+      const sig = String(r.sig);
+      const relV = typeof r.relV === "number" ? Math.round(r.relV).toString() : String(r.relV);
       const dCell = tr.querySelector(".ov-dist");
+      const sigCell = tr.querySelector(".ov-sig");
+      const rCell = tr.querySelector(".ov-relV");
       const sCell = tr.querySelector(".ov-st");
       if (dCell && dCell.textContent !== dist) dCell.textContent = dist;
+      if (sigCell && sigCell.textContent !== sig) sigCell.textContent = sig;
+      if (rCell && rCell.textContent !== relV) rCell.textContent = relV;
       if (sCell && sCell.innerHTML !== r.status) sCell.innerHTML = r.status;
       
       // Re-append to ensure the DOM elements match the sorted rows order
@@ -194,8 +204,8 @@ export function updateDockPrompt(sys: System | null | undefined) {
   // Gate prompt takes priority
   if (sys?.gates) {
     for (const g of sys.gates) {
-      if (dst(G.P.x, G.P.y, g.x, g.y) < g.radius + GATE_RANGE) {
-        const tgt = G.GALAXY[g.targetSysIdx];
+      if (dst(getState().player.x, getState().player.y, g.x, g.y) < g.radius + GATE_RANGE) {
+        const tgt = getState().GALAXY[g.targetSysIdx];
         if (hudState.dockPrompt) {
           hudState.dockPrompt.textContent = `[F] Jump to ${tgt?.name || "Gate"}`;
           hudState.dockPrompt.classList.add("visible");
@@ -210,7 +220,7 @@ export function updateDockPrompt(sys: System | null | undefined) {
     for (const st of sys.stations) {
       if (!st.isProcessingHub) continue;
       const interactR = (st.collectRadius ?? 220) + 80;
-      if (dst(G.P.x, G.P.y, st.x, st.y) < interactR) {
+      if (dst(getState().player.x, getState().player.y, st.x, st.y) < interactR) {
         if (hudState.dockPrompt) {
           hudState.dockPrompt.textContent = "[F] Processing Hub";
           hudState.dockPrompt.classList.add("visible");

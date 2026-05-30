@@ -54,11 +54,14 @@ export interface ShipDef {
   lockRangeKm: number;
   turretRangeKm: number;
   miningRangeKm: number;
+  passiveScanRangeKm?: number;
   cruiseSpeedMult: number;
   hullMassKg: number;
   baseMainEngineMN: number;
   cruiseAccelMult: number;
   simMainThrustPx: number;
+  simRetroThrustPx?: number;
+  simLateralThrustPx?: number;
   simRetroRatio: number;
   simLateralRatio: number;
   simMaxSpeedPx: number;
@@ -93,6 +96,7 @@ export const SHIPS: Record<string, ShipDef> = {
     lockRangeKm: 86,
     turretRangeKm: 58,
     miningRangeKm: 8,
+    passiveScanRangeKm: 54,
     cruiseSpeedMult: 1.0,
     hullMassKg: 680000,
     baseMainEngineMN: 7,
@@ -111,10 +115,10 @@ export const SHIPS: Record<string, ShipDef> = {
     fitting: {
       powergrid: 38,
       cpu: 200,
-      turret: 2,
+      turret: 0,
       high: 2,
-      med: 3,
-      low: 3,
+      med: 1,
+      low: 1,
     },
     render: {
       path: [

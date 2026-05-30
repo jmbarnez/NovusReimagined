@@ -9,9 +9,10 @@
  * Cooldown state lives module-local (keyed by ability id) so it does not
  * pollute the saved Player shape.
  */
-import { G } from "../state.js";
-import { PlayerAccess } from "../state-access.js";
+
+import { PlayerAccess, getState } from "../state-access.js";
 import { addTrailSegment } from "../utils/entities.js";
+import type { Player } from "../state.js";
 
 export interface AbilityDef {
   id: string;
@@ -38,20 +39,20 @@ export const ABILITIES: AbilityDef[] = [
     description: "Short-range jump along current heading.",
     onActivate: () => {
       const BLINK_DIST = 320;
-      const c = Math.cos(G.P.angle), s = Math.sin(G.P.angle);
+      const c = Math.cos(getState().player.angle), s = Math.sin(getState().player.angle);
       for (let i = 1; i <= 6; i++) {
         const t = i / 6;
         addTrailSegment({
-          x: G.P.x + c * BLINK_DIST * t,
-          y: G.P.y + s * BLINK_DIST * t,
+          x: getState().player.x + c * BLINK_DIST * t,
+          y: getState().player.y + s * BLINK_DIST * t,
           color: "#9ad8ff",
           width: 3,
           life: 0.45,
         });
       }
-      PlayerAccess.updatePhysics({ x: G.P.x + c * BLINK_DIST, y: G.P.y + s * BLINK_DIST });
-      PlayerAccess.updatePhysics({ px: G.P.x, py: G.P.y });
-      if ((G.P.invincible ?? 0) < 0.25) PlayerAccess.setInvincible(0.25);
+      PlayerAccess.updatePhysics({ x: getState().player.x + c * BLINK_DIST, y: getState().player.y + s * BLINK_DIST });
+      PlayerAccess.updatePhysics({ px: getState().player.x, py: getState().player.y });
+      if ((getState().player.invincible ?? 0) < 0.25) PlayerAccess.setInvincible(0.25);
     },
   },
   {
@@ -62,7 +63,7 @@ export const ABILITIES: AbilityDef[] = [
     duration: 2,
     description: "Brief invincibility shield.",
     onActivate: () => {
-      PlayerAccess.setInvincible(Math.max(G.P.invincible ?? 0, 2));
+      PlayerAccess.setInvincible(Math.max(getState().player.invincible ?? 0, 2));
     },
   },
 ];
@@ -101,26 +102,26 @@ export function activeMovementMultipliers(): { thrust: number; speed: number } {
 
 export type ActivateResult = "fired" | "cooldown" | "no-cap" | "aborted" | "missing";
 
-export function tryActivate(id: string): ActivateResult {
+export function tryActivate(id: string, p: Player = getState().player): ActivateResult {
   const def = ABILITY_BY_ID[id];
   if (!def) return "missing";
-  if (!G.P || G.P.hp <= 0) return "aborted";
+  if (!p || p.hp <= 0) return "aborted";
   const s = _state.get(id)!;
   if (s.cd > 0) return "cooldown";
-  if ((G.P.energy ?? 0) < def.capCost) return "no-cap";
+  if ((p.energy ?? 0) < def.capCost) return "no-cap";
 
   if (def.onActivate) {
     const ok = def.onActivate();
     if (ok === false) return "aborted";
   }
 
-  PlayerAccess.setEnergy(Math.max(0, G.P.energy - def.capCost));
+  PlayerAccess.setEnergy(Math.max(0, p.energy - def.capCost), p);
   s.cd = def.cooldown;
   s.remaining = def.duration;
   return "fired";
 }
 
-export function tickAbilities(dt: number) {
+export function tickAbilities(dt: number, _p?: Player) {
   for (const s of _state.values()) {
     if (s.cd > 0) s.cd = Math.max(0, s.cd - dt);
     if (s.remaining > 0) s.remaining = Math.max(0, s.remaining - dt);

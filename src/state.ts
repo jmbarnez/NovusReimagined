@@ -28,6 +28,7 @@ import type {
   WreckPiece,
   SalvagePickup,
   WreckSalvageEntry,
+  SignatureContact,
 } from "./types/world.js";
 import { DEFAULT_SETTINGS } from "./data/settings.js";
 import type { Settings } from "./data/settings.js";
@@ -36,19 +37,64 @@ import type { MissionContract } from "./data/missions.js";
 import type { ModuleInstance } from "./types/moduleInstance.js";
 import type { CraftJob } from "./data/industryRecipes.js";
 
+export interface ActiveScanTarget {
+  startedAt: number;
+  pulseRange: number;
+  strength: number;
+  angle: number;
+  coneDeg: number;
+}
+
+export interface GameEffect {
+  type: "floatText" | "explosion" | "shockwave" | "impact" | "beam";
+  payload?: {
+    x?: number;
+    y?: number;
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
+    text?: string;
+    color?: string;
+    bgColor?: string;
+    scale?: number;
+    tier?: "small" | "medium" | "large" | number;
+    width?: number;
+  };
+}
+
+export interface HubDepositItem {
+  id: string;
+  kind: "asteroid" | "debris";
+  label: string;
+  mass: number;
+  oreWeights?: number[];
+  salvagePool?: WreckSalvageEntry[];
+}
+
+export interface HubDeposit {
+  raw: HubDepositItem[];
+  ore: Record<string, number>;
+  loot: Record<string, number>;
+  modules: ModuleInstance[];
+}
+
 export interface HubJob {
   id: string;
-  kind: "debris" | "asteroid";
+  kind: "asteroid" | "debris" | "smelt";
   startTime: number;
   duration: number;
   mass: number;
-  salvagePool?: WreckSalvageEntry[];
   oreWeights?: number[];
+  salvagePool?: WreckSalvageEntry[];
+  smeltRecipeId?: string;
+  smeltQty?: number;
 }
 
 export interface HubOutput {
   loot: Record<string, number>;
   ore: Record<string, number>;
+  refined?: Record<string, number>;
   modules: ModuleInstance[];
 }
 
@@ -113,6 +159,7 @@ export interface Player {
   fitting: Record<string, (string | null)[]>;
   moduleHp: Record<string, (number | null)[]>;
   slotActive: Record<string, boolean[]>;
+  slotPowerCd?: Record<string, number[]>;
   _assignTargetId: string | null;
   slotHeat?: Record<string, number[]>;
   _colCooldown?: number;
@@ -122,6 +169,34 @@ export interface Player {
   tractorTightness?: number;
   hubQueue: HubJob[];
   hubOutput: HubOutput;
+  hubDeposit: HubDeposit;
+  inputKeys?: { space: boolean } | null;
+  inputMouseWorld?: { x: number; y: number } | null;
+  waypoint?: { x: number; y: number } | null;
+  navCommand?: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;
+  gateCooldowns?: Record<string, number>;
+  gatesCleared?: string[];
+  tutorial: { active: boolean; step: number; completed: boolean; skipped: boolean; stepEnteredAt?: number };
+  pilotName: string;
+  scannedSiteIds: string[];
+  completedSiteIds: string[];
+  netId?: string;
+  netInputFrame?: unknown;
+  discoveredConcentricSectors: number[];
+  discoveredLocalRegionIds: string[];
+  stationOffers: MissionContract[];
+  stationOfferStationId: string | null;
+  miningLaser?: MiningLaserState | null;
+  salvager?: SalvagerState | null;
+  tractor?: TractorState | null;
+  warpCooldown?: number;
+  warpTargetIdx?: number;
+  detectedSignatures: SignatureContact[];
+  activeScan: ActiveScanTarget | null;
+  scannerAngle: number;
+  scannerConeDeg: number;
+  mapScannerActive: boolean;
+  mapScannerStrength: number;
 }
 
 export interface MiningLaserState {
@@ -132,8 +207,8 @@ export interface MiningLaserState {
   hitR: number;
   hitNx: number;
   hitNy: number;
-  oreKey: string;
-  oreColor: string;
+  oreKey?: string;
+  oreColor?: string;
 }
 
 export interface SalvagerState {
@@ -164,6 +239,7 @@ export interface ImpactDecal {
 
 export interface GameState {
   P: Player;
+  players: Map<string, Player>;
   bullets: Bullet[];
   enemyBullets: EnemyBullet[];
   beams: Beam[];
@@ -186,6 +262,7 @@ export interface GameState {
   DUST: DustParticle[];
   _statsCache: ComputedStats | null;
   spatialGrid: SpatialGrid | null;
+  pendingEffects: GameEffect[];
 }
 
 export interface ClientState {
@@ -213,10 +290,20 @@ export interface ClientState {
   showPerf: boolean;
   gameStarted: boolean;
   _lastBridgeRender: number;
+  mapPanX: number;
+  mapPanY: number;
+  mapZoom: number;
+  multiplayerRole?: "none" | "host" | "client" | null;
+  pauseOpen: boolean;
+  mapDragging: boolean;
+  mapDragLastSx: number;
+  mapDragLastSy: number;
+  systemMapTransform?: unknown;
 }
 
-export const G: GameState = {
+export const _G: GameState = {
   P: null as unknown as Player,  // overwritten in main.ts init() before any game code runs
+  players: new Map(),
   bullets: [],
   enemyBullets: [],
   beams: [],
@@ -239,6 +326,7 @@ export const G: GameState = {
   DUST: [],
   _statsCache: null,
   spatialGrid: null,
+  pendingEffects: [],
 };
 
 export const Client: ClientState = {
@@ -267,5 +355,21 @@ export const Client: ClientState = {
   showPerf: false,
   gameStarted: false,
   _lastBridgeRender: 0,
+  mapPanX: 0,
+  mapPanY: 0,
+  mapZoom: 1.0,
+  multiplayerRole: null,
+  pauseOpen: false,
+  mapDragging: false,
+  mapDragLastSx: 0,
+  mapDragLastSy: 0,
+  systemMapTransform: null,
 };
-;
+
+export function isPlayerReady(): boolean {
+  return _G.P !== null && _G.P !== undefined;
+}
+
+export function isGameplayPaused(): boolean {
+  return Client.pauseOpen || Client.settingsOpen;
+}

@@ -1,17 +1,20 @@
 import "../styles/station-industry.css";
-import { G, Client } from "../../state.js";
-import { PlayerAccess } from "../../state-access.js";
+import { Client } from "../../state.js";
+import { PlayerAccess, getState } from "../../state-access.js";
 import { MACHINES, RECIPES, poolItemLabel, type IndustryPool, createCraftJob, tickCraftJobs, CraftJob } from "../../data/industryRecipes.js";
 import { escHtml } from "../../utils/format.js";
 import { stationState, iconSvg } from "./shared.js";
-import { sfxConfirm, sfxError } from "../../audio/procedural.js";
+import { sfxBlip, sfxConfirm, sfxError } from "../../audio/procedural.js";
 import { logEvent } from "../hud-overlay.js";
+import { queueFrameAction } from "../../sim/input.js";
+
+let lastContainer: HTMLElement | null = null;
 
 function playerPool(pool: IndustryPool): Record<string, number> {
-  if (pool === "ore")       return G.P.ore;
-  if (pool === "refined")   return G.P.refined;
-  if (pool === "loot")      return G.P.loot;
-  if (pool === "component") return G.P.components;
+  if (pool === "ore")       return getState().player.ore;
+  if (pool === "refined")   return getState().player.refined;
+  if (pool === "loot")      return getState().player.loot;
+  if (pool === "component") return getState().player.components;
   return {};
 }
 
@@ -43,17 +46,17 @@ function formatTime(seconds: number): string {
 }
 
 export function tickCraftQueue() {
-  if (G.P.craftQueue.length === 0) return;
+  if (getState().player.craftQueue.length === 0) return;
 
   const completed: CraftJob[] = [];
-  PlayerAccess.setCraftQueue(tickCraftJobs(G.P.craftQueue, (job) => {
+  PlayerAccess.setCraftQueue(tickCraftJobs(getState().player.craftQueue, (job) => {
     completed.push(job);
   }));
 
   for (const job of completed) {
     const recipe = RECIPES.find(r => r.id === job.recipeId);
     if (!recipe) continue;
-    const skillMult = recipe.outputSkill ? 1 + (G.P.skills[recipe.outputSkill] || 0) * 0.05 : 1;
+    const skillMult = recipe.outputSkill ? 1 + (getState().player.skills[recipe.outputSkill] || 0) * 0.05 : 1;
     for (const out of recipe.outputs) {
       const totalQty = Math.floor(out.qty * job.qty * skillMult);
       const cur = playerPool(out.pool)[out.key] || 0;
@@ -73,9 +76,15 @@ export function tickCraftQueue() {
   }
 }
 
-export function renderIndustry() {
-  const div = document.getElementById("panel-industry");
+export function updateIndustryProgress() {
+  tickCraftQueue();
+  if (lastContainer) renderIndustry(lastContainer);
+}
+
+export function renderIndustry(container?: HTMLElement) {
+  const div = container || lastContainer || document.getElementById("panel-industry");
   if (!div) return;
+  lastContainer = div;
 
   const q = stationState.indSearch.trim().toLowerCase();
   let filtered = RECIPES.filter(r => r.machine === stationState.indTab);
@@ -111,7 +120,7 @@ export function renderIndustry() {
 
   const recipeList = filtered.map(r => {
     const isActive = stationState.selectedRecipeId === r.id;
-    const needsBP = r.requiresBlueprint && !G.P.blueprints[r.id];
+    const needsBP = r.requiresBlueprint && !getState().player.blueprints[r.id];
     return `
       <div class="ind-item ${isActive ? 'active' : ''} ${needsBP ? 'locked' : ''}" data-action="selectRecipe" data-recipe="${r.id}">
         <div class="ind-item-icon">${iconSvg(r.outputs[0].key, 12)}</div>
@@ -130,9 +139,9 @@ export function renderIndustry() {
   const selected = RECIPES.find(r => r.id === stationState.selectedRecipeId);
 
   if (selected) {
-    const needsBP = selected.requiresBlueprint && !G.P.blueprints[selected.id];
+    const needsBP = selected.requiresBlueprint && !getState().player.blueprints[selected.id];
     const affordable = canAffordRecipe(selected.id, stationState.craftQty);
-    const skillMult = selected.outputSkill ? 1 + (G.P.skills[selected.outputSkill] || 0) * 0.05 : 1;
+    const skillMult = selected.outputSkill ? 1 + (getState().player.skills[selected.outputSkill] || 0) * 0.05 : 1;
     const duration = selected.duration ?? 10;
     const totalTime = duration * stationState.craftQty;
     const machine = MACHINES.find(m => m.id === selected.machine);
@@ -202,7 +211,7 @@ export function renderIndustry() {
 }
 
 function renderQueuePanel(): string {
-  const queue = G.P.craftQueue;
+  const queue = getState().player.craftQueue;
   const now = Date.now();
 
   if (queue.length === 0) {
@@ -250,4 +259,71 @@ function renderQueuePanel(): string {
       ${jobsHtml}
     </div>
   `;
+}
+
+export function handleIndustryAction(action: string, btn: HTMLElement): boolean {
+  if (action === "indTab") {
+    const tab = btn.dataset.tab || "refinery";
+    stationState.indTab = tab;
+    sfxBlip(640, 0.04);
+    renderIndustry();
+    return true;
+  }
+  if (action === "selectRecipe") {
+    const recipe = btn.dataset.recipe || "";
+    stationState.selectedRecipeId = recipe;
+    sfxBlip(640, 0.04);
+    renderIndustry();
+    return true;
+  }
+  if (action === "buyBP") {
+    const recipeId = btn.dataset.recipe || "";
+    const r = RECIPES.find(recipe => recipe.id === recipeId);
+    const cost = r?.blueprintCost ?? 0;
+    if (!r || getState().player.credits < cost) {
+      sfxError();
+      return true;
+    }
+    queueFrameAction({ type: "buyBlueprint", payload: { recipeId } });
+    sfxConfirm();
+    return true;
+  }
+  if (action === "queueJob") {
+    const recipeId = btn.dataset.recipe || "";
+    if (!canAffordRecipe(recipeId, stationState.craftQty)) {
+      sfxError();
+      return true;
+    }
+    queueFrameAction({ type: "queueIndustryJob", payload: { recipeId, qty: stationState.craftQty } });
+    sfxConfirm();
+    return true;
+  }
+  if (action === "cancelJob") {
+    const jobId = btn.dataset.jobId || "";
+    queueFrameAction({ type: "cancelIndustryJob", payload: { jobId } });
+    sfxBlip();
+    return true;
+  }
+  return false;
+}
+
+export function handleIndustryFieldEvent(target: EventTarget | null): boolean {
+  if (!target) return false;
+  const el = target as HTMLElement;
+  if (el.id === "ind-search-input") {
+    stationState.indSearch = (el as HTMLInputElement).value;
+    renderIndustry();
+    return true;
+  }
+  if (el.id === "ind-sort-select") {
+    stationState.indSort = (el as HTMLSelectElement).value;
+    renderIndustry();
+    return true;
+  }
+  if (el.id === "ind-qty-sel") {
+    stationState.craftQty = parseInt((el as HTMLSelectElement).value, 10) || 1;
+    renderIndustry();
+    return true;
+  }
+  return false;
 }

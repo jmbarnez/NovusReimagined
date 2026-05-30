@@ -1,19 +1,20 @@
+import "./ui/styles/loading.css";
 import { Asteroid } from "./types/world.js";
-import { G, Client } from "./state.js";
-import { WorldAccess, PlayerAccess } from "./state-access.js";
+import { Client } from "./state.js";
+import { WorldAccess, PlayerAccess, getState } from "./state-access.js";
 import { buildGalaxy, populateSystem } from "./world-gen.js";
-import { makePlayer, loadPlayer, savePlayer } from "./player/player-data.js";
+import { makePlayer, savePlayer } from "./player/player-data.js";
 import { computeStats } from "./player/player-stats.js";
 import { validateFitting } from "./player/player-fitting.js";
 import { initInput } from "./input.js";
 import { ensureBridgeUI } from "./ui/bridge.js";
 import { initSettings } from "./ui/settings.js";
 import { SpatialGrid } from "./utils/spatial.js";
-import { initGameLoop, enterSpaceMode } from "./game-loop.js";
+import { initGameLoop } from "./game-loop.js";
 import { MODULES, MODULE_FLAGS } from "./data/modules.js";
 import { ModuleRarity } from "./data/moduleRarity.js";
 import { getInstance } from "./utils/items.js";
-import { logEvent, initHudOverlay } from "./ui/hud-overlay.js";
+import { initHudOverlay } from "./ui/hud-overlay.js";
 import { initBackgroundStars } from "./render/background.js";
 import { initPixi, resizePixi } from "./pixi.js";
 import { initPixiBackground } from "./render/pixi-background.js";
@@ -23,6 +24,7 @@ import { initPixiPlayer } from "./render/pixi-player.js";
 import { initVignette } from "./render/pixi-vignette.js";
 
 import { showTitleScreen } from "./ui/title-screen.js";
+import { dismissLoadingScreen, markBootPhase } from "./ui/loading-screen.js";
 import { C } from "./config/index.js";
 
 /**
@@ -31,6 +33,7 @@ import { C } from "./config/index.js";
 async function boot() {
   try {
     // 1. Core Systems
+    markBootPhase("start");
     WorldAccess.setSpatialGrid(new SpatialGrid(C.PHYSICS.SPAWN_GRID.cellSize));
     initSettings();
     initInput();
@@ -38,20 +41,23 @@ async function boot() {
     // 2. UI Pre-init
     ensureBridgeUI();
     initHudOverlay();
+    markBootPhase("ui");
 
     // 3. World & Player Data
     WorldAccess.setGalaxy(buildGalaxy());
     initBackgroundStars(Client.settings?.backgroundDetail || "high");
     WorldAccess.initPlayer(makePlayer());
     
-    const sysIdx = G.P.sysIdx || 0;
-    if (!G.GALAXY[sysIdx]) PlayerAccess.setSysIdx(0);
-    populateSystem(G.GALAXY[G.P.sysIdx]);
+    const sysIdx = getState().player.sysIdx || 0;
+    if (!getState().GALAXY[sysIdx]) PlayerAccess.setSysIdx(0);
+    populateSystem(getState().GALAXY[getState().player.sysIdx]);
 
     setupPlayerSpawn();
     validatePlayerFitting();
     computeStats();
     clampPlayerVitals();
+
+    markBootPhase("world");
 
     // 4. Rendering Engines
     await initPixi();
@@ -66,60 +72,11 @@ async function boot() {
     Client.camx = 0;
     Client.camy = 0;
     initGameLoop();
+    markBootPhase("pixi");
 
-    // 6. Show Title Screen and handle transition
-    showTitleScreen(
-      // onContinue
-      () => {
-        const savedPlayer = loadPlayer();
-        WorldAccess.initPlayer(savedPlayer);
-
-        const sysIdx = G.P.sysIdx || 0;
-        if (!G.GALAXY[sysIdx]) PlayerAccess.setSysIdx(0);
-        populateSystem(G.GALAXY[G.P.sysIdx]);
-
-        validatePlayerFitting();
-        computeStats();
-        clampPlayerVitals();
-
-        Client.camx = G.P.x;
-        Client.camy = G.P.y;
-
-        enterSpaceMode();
-
-        const sys = G.GALAXY[G.P.sysIdx];
-        if (sys) {
-          logEvent(`Neural link restored. System entry: ${sys.name} (SEC ${sys.security.toFixed(1)})`, "system");
-        }
-      },
-      // onNewGame
-      () => {
-        const freshPlayer = makePlayer();
-        WorldAccess.initPlayer(freshPlayer);
-        savePlayer(); // Initialize the file
-
-        const sysIdx = G.P.sysIdx || 0;
-        if (!G.GALAXY[sysIdx]) PlayerAccess.setSysIdx(0);
-        populateSystem(G.GALAXY[G.P.sysIdx]);
-
-        setupPlayerSpawn();
-        validatePlayerFitting();
-        computeStats();
-        clampPlayerVitals();
-
-        savePlayer(); // Save exact coordinates and initial setup
-
-        Client.camx = G.P.x;
-        Client.camy = G.P.y;
-
-        enterSpaceMode();
-
-        const sys = G.GALAXY[G.P.sysIdx];
-        if (sys) {
-          logEvent(`Neural link initiated. System entry: ${sys.name} (SEC ${sys.security.toFixed(1)})`, "system");
-        }
-      }
-    );
+    // 6. Show Title Screen
+    dismissLoadingScreen();
+    showTitleScreen();
 
   } catch (err) {
     console.error("FATAL BOOT ERROR:", err);
@@ -127,9 +84,9 @@ async function boot() {
 }
 
 function setupPlayerSpawn() {
-  if (G.P.pendingHomeSpawn) {
+  if (getState().player.pendingHomeSpawn) {
     PlayerAccess.setPendingHomeSpawn(false);
-    const sys = G.GALAXY[G.P.sysIdx];
+    const sys = getState().GALAXY[getState().player.sysIdx];
 
     // Prefer spawning near the first station in the system
     const st = sys?.stations?.[0];
@@ -155,13 +112,13 @@ function setupPlayerSpawn() {
     } else {
       PlayerAccess.updatePhysics({ x: 0, y: 0 });
     }
-    PlayerAccess.updatePhysics({ px: G.P.x, py: G.P.y });
+    PlayerAccess.updatePhysics({ px: getState().player.x, py: getState().player.y });
   }
 }
 
 function validatePlayerFitting() {
   validateFitting();
-  const hasWeapon = G.P.fitting.turret.some((uid: string | null) => {
+  const hasWeapon = getState().player.fitting.turret.some((uid: string | null) => {
     if (!uid) return false;
     const inst = getInstance(uid);
     if (!inst) return false;
@@ -169,7 +126,7 @@ function validatePlayerFitting() {
     return m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m);
   });
   if (!hasWeapon) {
-    const firstEmpty = G.P.fitting.turret.findIndex((id: string | null) => id === null);
+    const firstEmpty = getState().player.fitting.turret.findIndex((id: string | null) => id === null);
     if (firstEmpty >= 0) {
       const fallbackUid = `${C.SPAWNING.FALLBACK_WEAPON.uidPrefix}-${Date.now()}`;
       PlayerAccess.addModuleCargo({
@@ -184,9 +141,9 @@ function validatePlayerFitting() {
 }
 
 function clampPlayerVitals() {
-  if (G.P.hp > G.P.maxHp) PlayerAccess.setHp(G.P.maxHp);
-  if (G.P.structure > G.P.maxStructure) PlayerAccess.setStructure(G.P.maxStructure);
-  if (G.P.structure < 0) PlayerAccess.setStructure(0);
+  if (getState().player.hp > getState().player.maxHp) PlayerAccess.setHp(getState().player.maxHp);
+  if (getState().player.structure > getState().player.maxStructure) PlayerAccess.setStructure(getState().player.maxStructure);
+  if (getState().player.structure < 0) PlayerAccess.setStructure(0);
 }
 
 boot();

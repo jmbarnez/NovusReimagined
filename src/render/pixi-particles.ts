@@ -11,7 +11,7 @@
  * are in PixiJS and the draw order is correct.
  */
 import { Container, ImageSource, Sprite, Texture } from "pixi.js";
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 import { app, effectLayer, pixiDpr } from "../pixi.js";
 
 const POOL_SIZE = 512;
@@ -84,13 +84,13 @@ export function initPixiParticles(): void {
 }
 
 /**
- * Sync sprite pool with G.particles. Call once per rendered frame,
+ * Sync sprite pool with getState().particles. Call once per rendered frame,
  * after physics has already updated particle positions and pruned dead ones.
  */
 export function syncPixiParticles(): void {
   if (!_container) return;
 
-  const particles = G.particles;
+  const particles = getState().particles;
   const half = TEX_SIZE / 2;
 
   for (let i = 0; i < POOL_SIZE; i++) {

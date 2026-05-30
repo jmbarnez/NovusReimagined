@@ -1,5 +1,6 @@
 import "./styles/bridge.css";
-import { G, Client } from "../state.js";
+import { Client } from "../state.js";
+import { getState } from "../state-access.js";
 import { SHIPS } from "../data/ships.js";
 import { dst } from "../utils/math.js";
 import { escHtml, formatDistance } from "../utils/format.js";
@@ -37,7 +38,7 @@ export function showBridgeToast(msg: string) {
 }
 
 export function buildLocalOverviewRows(): OverviewRow[] {
-  const ship = SHIPS[G.P.shipId];
+  const ship = SHIPS[getState().player.shipId];
   const range = getSensorContactRangePx(ship);
   const rows: OverviewRow[] = [];
   rows.push({
@@ -55,12 +56,12 @@ export function buildLocalOverviewRows(): OverviewRow[] {
   if (!sys) return rows;
   for (const e of sys.enemies) {
     if (!e.alive) continue;
-    const d = dst(G.P.x, G.P.y, e.x, e.y);
+    const d = dst(getState().player.x, getState().player.y, e.x, e.y);
     if (d > range) continue;
-    const slot = G.P.lockQueue.find((s) => s.id === e.id);
+    const slot = getState().player.lockQueue.find((s) => s.id === e.id);
     let status = "";
     if (slot?.resolving) status += `<span class="ov-plock ov-scanning">SCAN</span>`;
-    else if (slot && !slot.resolving) status += `<span class="ov-plock${G.P.targetLock?.id === e.id ? " ov-primary" : ""}">LOCK${G.P.targetLock?.id === e.id ? "●" : ""}</span>`;
+    else if (slot && !slot.resolving) status += `<span class="ov-plock${getState().player.targetLock?.id === e.id ? " ov-primary" : ""}">LOCK${getState().player.targetLock?.id === e.id ? "●" : ""}</span>`;
     if (e.hasLockOnPlayer) status += `<span class="ov-threat ov-threat-locked" title="Has locked you">◉</span>`;
     else if (e.targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="Locking you">▲</span>`;
     if (!status) status = "—";
@@ -72,18 +73,18 @@ export function buildLocalOverviewRows(): OverviewRow[] {
       name: e.name,
       dist: Math.round(d),
       sig: Math.round(e.sigRadius || 30),
-      relV: Math.round(Math.hypot(G.P.vx - (e.vx || 0), G.P.vy - (e.vy || 0))),
+      relV: Math.round(Math.hypot(getState().player.vx - (e.vx || 0), getState().player.vy - (e.vy || 0))),
       status,
     });
   }
   for (const a of sys.asteroids) {
     if (a.depleted || a.hp <= 0) continue;
-    const d = dst(G.P.x, G.P.y, a.x, a.y) - a.radius;
+    const d = dst(getState().player.x, getState().player.y, a.x, a.y) - a.radius;
     if (d > range) continue;
-    const slot = G.P.lockQueue.find((s) => s.id === a.id);
+    const slot = getState().player.lockQueue.find((s) => s.id === a.id);
     let status = "—";
     if (slot?.resolving) status = "SCAN";
-    else if (slot && !slot.resolving) status = G.P.targetLock?.id === a.id ? "LOCK●" : "LOCK";
+    else if (slot && !slot.resolving) status = getState().player.targetLock?.id === a.id ? "LOCK●" : "LOCK";
     rows.push({
       kind: "asteroid",
       id: a.id,
@@ -97,7 +98,7 @@ export function buildLocalOverviewRows(): OverviewRow[] {
     });
   }
   for (const st of sys.stations) {
-    const d = dst(G.P.x, G.P.y, st.x, st.y);
+    const d = dst(getState().player.x, getState().player.y, st.x, st.y);
     if (d > range) continue;
     rows.push({
       kind: "station",
@@ -113,9 +114,9 @@ export function buildLocalOverviewRows(): OverviewRow[] {
   }
   for (let gi = 0; gi < sys.gates.length; gi++) {
     const g = sys.gates[gi];
-    const d = dst(G.P.x, G.P.y, g.x, g.y);
+    const d = dst(getState().player.x, getState().player.y, g.x, g.y);
     if (d > range) continue;
-    const tgt = G.GALAXY[g.targetSysIdx];
+    const tgt = getState().GALAXY[g.targetSysIdx];
     rows.push({
       kind: "gate",
       id: `gate-${gi}`,
@@ -143,7 +144,7 @@ export function buildLocalOverviewRows(): OverviewRow[] {
 }
 
 export function renderBridgeOverviewHTML(): string {
-  const ship = SHIPS[G.P.shipId];
+  const ship = SHIPS[getState().player.shipId];
   const rangePx = Math.round(getSensorContactRangePx(ship));
   const sys = curSys();
   const rows = buildLocalOverviewRows();

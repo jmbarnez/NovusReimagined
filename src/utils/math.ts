@@ -1,5 +1,15 @@
 import { TAU } from "../constants.js";
 
+let activeRng: (() => number) | null = null;
+
+export function setActiveRng(rng: (() => number) | null) {
+  activeRng = rng;
+}
+
+export function random(): number {
+  return activeRng ? activeRng() : Math.random();
+}
+
 export function randId(): string {
   return "id-" + Math.random().toString(36).slice(2, 9);
 }
@@ -81,6 +91,7 @@ export function resolveElasticCollision(
   minDist: number,
   restitution: number
 ): number {
+  if (dist <= 0 || !Number.isFinite(dist)) return 0;
   const overlap = minDist - dist;
   const nx = dx / dist;
   const ny = dy / dist;
@@ -108,4 +119,14 @@ export function resolveElasticCollision(
     e2.vy = e2vy + (j / m2) * ny;
   }
   return closing;
+}
+
+export function rayCircleSurfaceHit(ox: number, oy: number, cx: number, cy: number, radius: number): { x: number; y: number; nx: number; ny: number } {
+  const d = Math.hypot(cx - ox, cy - oy);
+  if (d > 0.001) {
+    const dx = (cx - ox) / d;
+    const dy = (cy - oy) / d;
+    return { x: cx - dx * radius, y: cy - dy * radius, nx: -dx, ny: -dy };
+  }
+  return { x: ox, y: oy, nx: 1, ny: 0 };
 }

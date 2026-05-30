@@ -1,0 +1,41 @@
+/* ── Onboarding Banner ── */
+#hud-onboard {
+  position: absolute;
+  top: 15%; left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: rgba(3, 5, 8, 0.85);
+  border: 1px solid var(--hud-border-soft);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-family);
+  font-size: 10px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 1s ease-out, transform 1s ease-out;
+  opacity: 1;
+}
+
+#hud-onboard.fade-out {
+  opacity: 0;
+  transform: translate(-50%, -10px);
+}
+
+#hud-onboard .onboard-title {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hud-accent);
+  margin-bottom: 6px;
+}
+
+#hud-onboard .onboard-line {
+  line-height: 14px;
+  color: var(--hud-text-main);
+}
+
+#hud-onboard .onboard-k {
+  font-weight: 700;
+  color: var(--hud-text-bright);
+}

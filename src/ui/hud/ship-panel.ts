@@ -1,5 +1,5 @@
 import "../styles/ship-panel.css";
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { SHIPS } from "../../data/ships.js";
 import { MODULES, MODULE_FLAGS, DamageProfile } from "../../data/modules.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
@@ -149,7 +149,7 @@ function rebuildStatsTab() {
 /** Caches dynamic element targets for efficient live-checking */
 function cacheTurretCardRefs() {
   turretCardNodes.clear();
-  const ship = SHIPS[G.P.shipId];
+  const ship = SHIPS[getState().player.shipId];
   if (!ship) return;
   const numTurrets = ship.fitting.turret || 0;
   for (let idx = 0; idx < numTurrets; idx++) {
@@ -191,7 +191,7 @@ function cacheTurretCardRefs() {
 
 /** Compiles HTML representation of stats and sub-cards */
 export function renderStatsTabHTML(): string {
-  const p = G.P;
+  const p = getState().player;
   const st = getStats();
   const ship = SHIPS[p.shipId];
 
@@ -371,7 +371,7 @@ export function renderStatsTabHTML(): string {
 
 /** Compiles HTML representation of a single turret slot card */
 function renderTurretCard(idx: number): string {
-  const uid = G.P.fitting.turret[idx];
+  const uid = getState().player.fitting.turret[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
 
@@ -417,7 +417,7 @@ function renderTurretCard(idx: number): string {
   } else {
     const prof = getWeaponProfileForSlot(idx) ?? WEAPON_PROFILES[inst.baseId] ?? WEAPON_PROFILES.default;
     const dmgParts = damageTypeLabel(m.damageProfile);
-    const ammoLeft = prof.ammoType ? (G.P.ammo[prof.ammoType] || 0) : 0;
+    const ammoLeft = prof.ammoType ? (getState().player.ammo[prof.ammoType] || 0) : 0;
     const ammoText = prof.ammoType ? `${prof.ammoType} (${ammoLeft})` : "—";
     
     specRows = `
@@ -483,7 +483,7 @@ function renderTurretCard(idx: number): string {
 export function updateShipPanelLive() {
   if (!isOpen("cargo") || activeShipTab !== "stats") return;
 
-  const p = G.P;
+  const p = getState().player;
   const st = getStats();
 
   // 1. Stat cell values

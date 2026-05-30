@@ -28,7 +28,7 @@ export interface Recipe {
   duration?: number;
   /** Enables a "× All" batch button. */
   batchable?: boolean;
-  /** Skill key (on G.P.skills) applied as a 5%-per-level output multiplier. */
+  /** Skill key (on getState().player.skills) applied as a 5%-per-level output multiplier. */
   outputSkill?: string;
   requiresBlueprint?: boolean;
   blueprintCost?: number;

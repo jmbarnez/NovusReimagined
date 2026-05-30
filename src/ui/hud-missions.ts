@@ -1,5 +1,6 @@
 import "./styles/hud-missions.css";
-import { G, Client } from "../state.js";
+import { Client } from "../state.js";
+import { getState } from "../state-access.js";
 import { fmtCompact } from "../utils/format.js";
 import type { MissionContract } from "../data/missions.js";
 
@@ -26,7 +27,7 @@ export function getMissionsPanelEl() {
 export function updateMissionsPanel() {
   if (!_panel || Client.stationOpen) return;
 
-  const contracts = G.P?.contracts ?? [];
+  const contracts = getState().player?.contracts ?? [];
   const active = contracts.filter(c => c.status === "active" || c.status === "complete");
 
   if (active.length === 0) {

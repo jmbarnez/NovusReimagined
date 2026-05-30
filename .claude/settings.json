@@ -52,7 +52,8 @@
       "Bash(xargs -I {} sh -c 'wc -l {} | awk \"{print \\\\$1 \\\\\" \\\\\" \\\\\"{}\\\\\"}\"')",
       "Bash(Get-Content -Path \"src\\\\data\\\\enemies.ts\")",
       "Bash(Measure-Object -Line)",
-      "PowerShell(\\(Get-Content \"c:\\\\Users\\\\JBCry\\\\Desktop\\\\Novus\\\\src\\\\data\\\\enemies.ts\" | Measure-Object -Line\\).Lines)"
+      "PowerShell(\\(Get-Content \"c:\\\\Users\\\\JBCry\\\\Desktop\\\\Novus\\\\src\\\\data\\\\enemies.ts\" | Measure-Object -Line\\).Lines)",
+      "Bash(echo \"---EXIT $?---\")"
     ]
   }
 }

@@ -1,0 +1,17 @@
+import { type Player } from "../state.js";
+import type { InputFrame } from "../sim/input.js";
+
+export function isHeadlessServer(): boolean {
+  return (globalThis as { IS_SERVER?: boolean }).IS_SERVER === true;
+}
+
+/** Bind per-player network input directly to the Player state. */
+export function bindPlayerNetInput(p: Player, frame: InputFrame | null | undefined): boolean {
+  p.inputKeys = frame ? { space: !!frame.keys.space } : { space: false };
+  p.inputMouseWorld = frame
+    ? { x: frame.mouseWorld.x, y: frame.mouseWorld.y }
+    : { x: p.x + Math.cos(p.angle) * 200, y: p.y + Math.sin(p.angle) * 200 };
+  p.waypoint = frame ? (frame.waypoint ? { ...frame.waypoint } : null) : (p.waypoint ?? null);
+  p.navCommand = frame ? (frame.navCommand ? { ...frame.navCommand } : null) : (p.navCommand ?? null);
+  return !!frame;
+}

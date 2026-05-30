@@ -1,0 +1,128 @@
+import { random } from "../utils/math.js";
+import { Client, type Player } from "../state.js";
+import { PlayerAccess, getState } from "../state-access.js";
+import {
+  TUTORIAL_BOOST_GATES,
+  getBoostGatesForTrack,
+  detectGateCrossing,
+  gatePillarPositions,
+  getGateControlHint,
+  type TutorialBoostGate,
+} from "../data/tutorial-layout.js";
+import { getCurrentTutorialStep } from "../data/tutorial.js";
+import { addParticle } from "../utils/entities.js";
+import { sfxBlip } from "../audio/procedural.js";
+import { logEvent } from "../feedback.js";
+
+const gateHintsShown = new Set<string>();
+
+export function resetTutorialTrackState(p: Player): void {
+  p.gateCooldowns = {};
+  p.gatesCleared = [];
+  gateHintsShown.clear();
+}
+
+export function getTutorialGateCooldown(gateId: string, p: Player): number {
+  return p.gateCooldowns?.[gateId] ?? 0;
+}
+
+export function getTutorialGatesClearedCount(trackId: string, p: Player): number {
+  if (!p.gatesCleared) return 0;
+  let n = 0;
+  for (const gate of getBoostGatesForTrack(trackId)) {
+    if (p.gatesCleared.includes(gate.id)) n++;
+  }
+  return n;
+}
+
+export function getTutorialGateTotalCount(trackId: string): number {
+  return getBoostGatesForTrack(trackId).length;
+}
+
+function playerCrossedGate(gate: TutorialBoostGate, p: Player): boolean {
+  return detectGateCrossing(gate, p.x, p.y, p.px, p.py, p.vx, p.vy);
+}
+
+function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false): void {
+  if (!p.gateCooldowns) p.gateCooldowns = {};
+  p.gateCooldowns[gate.id] = gate.cooldownS;
+  if (!p.gatesCleared) p.gatesCleared = [];
+  if (!p.gatesCleared.includes(gate.id)) {
+    p.gatesCleared.push(gate.id);
+  }
+
+  const nx = Math.cos(gate.angle);
+  const ny = Math.sin(gate.angle);
+  const isForward = (p.vx * nx + p.vy * ny) >= 0;
+  const dir = isForward ? 1 : -1;
+
+  const vx = p.vx + nx * gate.strength * dir;
+  const vy = p.vy + ny * gate.strength * dir;
+  PlayerAccess.updatePhysics({ vx, vy }, p);
+
+  if (isReplaying) return;
+
+  const { left, right } = gatePillarPositions(gate);
+  const baseAngle = gate.angle + (isForward ? 0 : Math.PI);
+  for (let i = 0; i < 16; i++) {
+    const t = random();
+    const bx = left.x + (right.x - left.x) * t;
+    const by = left.y + (right.y - left.y) * t;
+    const a = baseAngle + (random() - 0.5) * 0.5;
+    const sp = 100 + random() * 160;
+    addParticle({
+      x: bx + (random() - 0.5) * 16,
+      y: by + (random() - 0.5) * 16,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp,
+      life: 0.4 + random() * 0.3,
+      color: "#66ddff",
+      r: 2 + random() * 3,
+    });
+  }
+  if (p === getState().player) {
+    sfxBlip(720 + random() * 240, 0.06);
+  }
+}
+
+function tickGateHints(gates: TutorialBoostGate[], p: Player): void {
+  for (const gate of gates) {
+    const hint = getGateControlHint(gate);
+    if (!hint || gateHintsShown.has(gate.id)) continue;
+    if (Math.hypot(p.x - gate.x, p.y - gate.y) > 720) continue;
+    gateHintsShown.add(gate.id);
+    if (p === getState().player) {
+      logEvent(hint, "system");
+    }
+  }
+}
+
+function tickBoostGates(dt: number, gates: TutorialBoostGate[], p: Player, isReplaying = false): void {
+  if (!p.gateCooldowns) p.gateCooldowns = {};
+  for (const gate of gates) {
+    const cd = p.gateCooldowns[gate.id] ?? 0;
+    if (cd > 0) p.gateCooldowns[gate.id] = Math.max(0, cd - dt);
+  }
+
+  tickGateHints(gates, p);
+
+  for (const gate of gates) {
+    if ((p.gateCooldowns[gate.id] ?? 0) > 0) continue;
+    if (!playerCrossedGate(gate, p)) continue;
+    applyGateBoost(gate, p, isReplaying);
+  }
+}
+
+/** Slingshot boost gates — fly through the arch between pillars. */
+export function updateTutorialTrack(dt: number, p: Player, isReplaying = false): void {
+  if (!p.tutorial?.active || p.sysIdx !== 0 || (p === getState().player && Client.stationOpen)) return;
+
+  const currentStep = getCurrentTutorialStep(p);
+  const gates = currentStep?.nav?.trackId ? getBoostGatesForTrack(currentStep.nav.trackId) : TUTORIAL_BOOST_GATES;
+  tickBoostGates(dt, gates, p, isReplaying);
+}
+
+/** @deprecated alias */
+export function getTutorialBoostCooldown(gateId: string): number {
+  return getTutorialGateCooldown(gateId, getState().player);
+}

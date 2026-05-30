@@ -6,6 +6,7 @@ import { ECONOMY } from "./economy.js";
 import { WORLD } from "./world.js";
 import { SPAWNING } from "./spawning.js";
 import { PHYSICS } from "./physics.js";
+import { SCANNING } from "./scanning.js";
 
 export const C = {
   COMBAT,
@@ -16,6 +17,16 @@ export const C = {
   WORLD,
   SPAWNING,
   PHYSICS,
+  SCANNING,
+  HUB: {
+    PROCESS_MIN_FEE: 15,
+    PROCESS_FEE_PER_MASS: 0.02,
+    SMELT_FEE_PER_BATCH: 25,
+    ASTEROID_PROCESS_BASE: 8,
+    ASTEROID_PROCESS_PER_MASS: 0.02,
+    DEBRIS_PROCESS_BASE: 5,
+    DEBRIS_PROCESS_PER_MASS: 0.015,
+  },
 };
 
 export { COMBAT } from "./combat.js";
@@ -26,3 +37,4 @@ export { ECONOMY } from "./economy.js";
 export { WORLD } from "./world.js";
 export { SPAWNING } from "./spawning.js";
 export { PHYSICS } from "./physics.js";
+export { SCANNING } from "./scanning.js";

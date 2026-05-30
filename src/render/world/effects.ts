@@ -1,5 +1,6 @@
-import { getState } from "../../state-access.js";
+
 import { ctx } from "../../canvas.js";
+import { getState } from "../../state-access.js";
 import { TAU } from "../../constants.js";
 import { isVisible } from "../../utils/game.js";
 import { addImpactDecal, removeImpactDecal } from "../../utils/entities.js";

@@ -1,4 +1,5 @@
-import { G, Client } from "../../state.js";
+import { Client } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { dst } from "../../utils/math.js";
 import { fmtDuration, hasHubOutput } from "../../hub.js";
 import type { System, Station } from "../../types/world.js";
@@ -42,8 +43,8 @@ export function updateHubTooltip(sys: System | null) {
   }
 
   const now = Date.now() / 1000;
-  const queue = G.P.hubQueue ?? [];
-  const output = G.P.hubOutput ?? { loot: {}, ore: {}, modules: [] };
+  const queue = getState().player.hubQueue ?? [];
+  const output = getState().player.hubOutput ?? { loot: {}, ore: {}, modules: [] };
 
   let html = `<div class="hub-tooltip-pane">`;
   html += `<div class="hub-tooltip-title">INDUSTRIAL PROCESSING HUB</div>`;

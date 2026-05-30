@@ -1,6 +1,6 @@
 import "../styles/hud-lock-rail.css";
-import { G } from "../../state.js";
-import { PlayerAccess } from "../../state-access.js";
+
+import { PlayerAccess, getState } from "../../state-access.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { dst } from "../../utils/math.js";
 import { hudState } from "./state.js";
@@ -199,8 +199,8 @@ function colorMixTranslucent(color: string, alpha: number): string {
 /* ── Lock Rail ── */
 export function updateLockRail(st: ComputedStats, now: number) {
   ensureLockQueue();
-  const queue = G.P.lockQueue;
-  const primaryId = G.P.targetLock?.id;
+  const queue = getState().player.lockQueue;
+  const primaryId = getState().player.targetLock?.id;
 
   // Remove cards for targets no longer in queue
   for (const [id, card] of hudState.lockCards) {
@@ -371,7 +371,7 @@ export function createLockCard(id: string) {
 
   el.addEventListener("click", () => {
     sfxBlip();
-    if (G.P._assignTargetId === id) {
+    if (getState().player._assignTargetId === id) {
       PlayerAccess.setAssignTargetId(null);
     } else {
       PlayerAccess.setAssignTargetId(id);
@@ -421,7 +421,7 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
 
   const enemy = isEnemy ? (t as Enemy) : null;
 
-  const isAssigned = G.P._assignTargetId === t.id;
+  const isAssigned = getState().player._assignTargetId === t.id;
 
   // Toggle resolved class with advanced retro context classes
   const targetLockClass = enemy && enemy.hasLockOnPlayer ? " target-locked" : enemy && enemy.targetingPlayer ? " target-targeting" : "";
@@ -482,7 +482,7 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     structLabel.textContent = maxSt > 0 ? `${Math.round(stPct * 100)}%` : "0%";
 
     // Telemetry Matrix
-    const d = Math.round(dst(G.P.x, G.P.y, t.x, t.y));
+    const d = Math.round(dst(getState().player.x, getState().player.y, t.x, t.y));
     const speed = isAst ? 0 : Math.round(Math.hypot(t.vx || 0, t.vy || 0));
     const trs = enemy ? Math.round(transversalVs(enemy)) : 0;
     const sig = Math.round(enemy ? (enemy.sigRadius || 30) : (t.radius || 30));
@@ -544,14 +544,14 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
   let assignText = "";
   if (isPiece) {
     const assignedSalv: number[] = [];
-    for (let hi = 0; hi < (G.P.highTargets?.length || 0); hi++) {
-      if (G.P.highTargets[hi] === t.id) assignedSalv.push(hi + 1);
+    for (let hi = 0; hi < (getState().player.highTargets?.length || 0); hi++) {
+      if (getState().player.highTargets[hi] === t.id) assignedSalv.push(hi + 1);
     }
     assignText = assignedSalv.length ? `S${assignedSalv.join(",")}` : "";
   } else {
     const assignedTurrets: number[] = [];
-    for (let ti = 0; ti < (G.P.turretTargets?.length || 0); ti++) {
-      if (G.P.turretTargets[ti] === t.id) assignedTurrets.push(ti + 1);
+    for (let ti = 0; ti < (getState().player.turretTargets?.length || 0); ti++) {
+      if (getState().player.turretTargets[ti] === t.id) assignedTurrets.push(ti + 1);
     }
     assignText = assignedTurrets.length ? assignedTurrets.join(",") : "";
   }

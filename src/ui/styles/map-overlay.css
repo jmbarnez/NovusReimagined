@@ -1,0 +1,210 @@
+/* ── System Map Overlay ── */
+.map-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 110;
+  font-family: var(--font-family), sans-serif;
+  user-select: none;
+}
+
+/* Centered Top Header */
+.map-header {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 14px;
+  
+  background: var(--hud-bg-window);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--hud-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
+.map-header h1 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hud-text-dim);
+  margin: 0;
+}
+
+.map-header p {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--hud-text-dim);
+  margin: 0;
+  opacity: 0.75;
+}
+
+/* Bottom-Left Legend Card with dynamic height */
+.map-legend {
+  position: absolute;
+  bottom: calc(var(--hud-bottom-h) + 16px);
+  left: 16px;
+  pointer-events: auto;
+  
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  width: auto;
+  min-width: 140px;
+  
+  background: var(--hud-bg-window);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--hud-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.map-legend-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hud-accent);
+  border-bottom: 1px solid var(--hud-border-soft);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.map-legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--hud-text-main);
+}
+
+.map-legend-shape {
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Map scanner control panel (system map) ── */
+#map-scanner-panel {
+  display: none;
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--hud-bottom-h) + 16px);
+  z-index: 120;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--hud-bg-window);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--hud-border);
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+}
+
+.map-scanner-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+#map-scanner-panel button {
+  background: color-mix(in srgb, var(--hud-bg-elevated) 60%, transparent);
+  border: 1px solid var(--hud-border-soft);
+  color: var(--hud-text-main);
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: var(--font-family), sans-serif;
+  font-size: 10px;
+  transition: all 0.15s ease;
+}
+
+#map-scanner-panel button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--hud-bg-elevated) 95%, transparent);
+  border-color: var(--hud-border);
+  color: var(--hud-text-bright);
+}
+
+#map-scanner-panel button.active {
+  border-color: var(--hud-accent);
+  color: var(--hud-text-bright);
+  background: color-mix(in srgb, var(--hud-accent) 15%, var(--hud-bg-elevated));
+}
+
+#map-scanner-panel button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.map-scanner-power {
+  min-width: 36px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.map-scanner-dial {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.map-scanner-dial-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--hud-text-dim);
+  letter-spacing: 0.06em;
+}
+
+.map-scanner-strength {
+  width: 72px;
+  height: 4px;
+  accent-color: var(--hud-accent);
+  cursor: pointer;
+}
+
+.map-scanner-strength:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.map-survey-cones {
+  display: flex;
+  gap: 4px;
+}
+
+.map-scanner-status {
+  color: var(--hud-text-dim);
+  font-weight: 500;
+  font-size: 9px;
+  text-align: right;
+  max-width: 280px;
+  line-height: 1.3;
+}

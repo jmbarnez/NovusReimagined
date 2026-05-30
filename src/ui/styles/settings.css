@@ -1,4 +1,4 @@
-#settings-overlay{display:none;position:fixed;inset:0;z-index:250;font-family: var(--font-family);align-items:center;justify-content:center;background:var(--hud-bg-deep);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+#settings-overlay{display:none;position:fixed;inset:0;z-index:650;font-family: var(--font-family);align-items:center;justify-content:center;background:var(--hud-bg-deep);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 #settings-panel {
   position: relative;
   display: flex;

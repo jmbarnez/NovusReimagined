@@ -1,3 +1,6 @@
+import type { SlotNode } from "./slots.js";
+import type { LockCard } from "./targeting.js";
+
 export const hudState = {
   root: null as HTMLElement | null,
   sysName: null as HTMLElement | null,
@@ -10,9 +13,9 @@ export const hudState = {
   dockPrompt: null as HTMLElement | null,
   statusFills: [] as HTMLElement[],
   slotsContainer: null as HTMLElement | null,
-  slotNodes: new Map<string, any>(),
+  slotNodes: new Map<string, SlotNode>(),
   rackSwitchNodes: new Map<string, HTMLElement>(),
-  lockCards: new Map<string, any>(),
+  lockCards: new Map<string, LockCard>(),
   lastLockCount: 0,
   lastSlotState: "",
 
@@ -20,6 +23,9 @@ export const hudState = {
   enemyCtxMenu: null as HTMLElement | null,
 
   logEntries: null as HTMLElement | null,
+  logPanel: null as HTMLElement | null,
+  logPopout: false,
+  scannerPopout: false,
 
   xpPopup: null as HTMLElement | null,
   xpAccum: new Map<string, number>(),

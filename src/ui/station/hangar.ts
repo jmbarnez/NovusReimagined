@@ -1,5 +1,6 @@
 import "../styles/station-hangar.css";
-import { G, Client } from "../../state.js";
+import { Client } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { SHIPS } from "../../data/ships.js";
 import { MODULES } from "../../data/modules.js";
 import { getStats, computeStats, ComputedStats } from "../../player/player-stats.js";
@@ -62,10 +63,10 @@ export function updateStatsGrid() {
 
 export function setPreview(rack: "turret" | "high" | "med" | "low", idx: number, instanceId: string | null) {
   const temp = {
-    turret: [...G.P.fitting.turret],
-    high: [...G.P.fitting.high],
-    med: [...G.P.fitting.med],
-    low: [...G.P.fitting.low],
+    turret: [...getState().player.fitting.turret],
+    high: [...getState().player.fitting.high],
+    med: [...getState().player.fitting.med],
+    low: [...getState().player.fitting.low],
   };
   temp[rack][idx] = instanceId;
   stationState.previewFitting = temp;
@@ -87,16 +88,16 @@ function renderSlot(rack: string, i: number, instanceId: string | null): string 
   // Collect all UIDs currently fitted across all racks
   const fittedUids = new Set<string>();
   for (const r of ["turret", "high", "med", "low"] as const) {
-    for (const uid of G.P.fitting[r]) {
+    for (const uid of getState().player.fitting[r]) {
       if (uid) fittedUids.add(uid);
     }
   }
-  const availInstances = G.P.moduleCargo.filter(inst =>
+  const availInstances = getState().player.moduleCargo.filter(inst =>
     MODULES[inst.baseId]?.rack === rack && !fittedUids.has(inst.uid)
   );
 
   if (instance && m) {
-    const hp = G.P.moduleHp?.[rack]?.[i] ?? MODULE_HP_MAX;
+    const hp = getState().player.moduleHp?.[rack]?.[i] ?? MODULE_HP_MAX;
     const durPct = Math.round((instance.durability / instance.maxDurability) * 100);
     const dmgTag = instance.durability <= 0 ? ` <span style="color:var(--hud-danger)">[OFFLINE]</span>` : durPct < 100 ? ` <span style="color:var(--hud-hull)">[DUR ${durPct}%]</span>` : "";
     const bonuses = fmtModBonuses(m);
@@ -150,14 +151,14 @@ export function renderHangar() {
   if (!div) return;
   const st = getStats();
   const pst = stationState.previewFitting ? computeStats(stationState.previewFitting) : null;
-  const ship = SHIPS[G.P.shipId];
+  const ship = SHIPS[getState().player.shipId];
 
-  const hullRep = Math.max(0, st.maxHp - G.P.hp);
-  const structRep = Math.max(0, st.maxStructure - G.P.structure);
-  const shieldRep = Math.max(0, st.maxShield - G.P.shield);
+  const hullRep = Math.max(0, st.maxHp - getState().player.hp);
+  const structRep = Math.max(0, st.maxStructure - getState().player.structure);
+  const shieldRep = Math.max(0, st.maxShield - getState().player.shield);
   let moduleDamageTotal = 0;
   for (const rack of ["turret", "high", "med", "low"] as const) {
-    const slots = G.P.fitting?.[rack];
+    const slots = getState().player.fitting?.[rack];
     if (!slots) continue;
     for (let i = 0; i < slots.length; i++) {
       const uid = slots[i];
@@ -176,15 +177,15 @@ export function renderHangar() {
   const RL: Record<string, string> = { turret: "Turret Slots", high: "Utility Slots", med: "Medium Slots", low: "Low Slots" };
 
   const racks = (["turret", "high", "med", "low"] as const).map(rack => {
-    const slots = G.P.fitting[rack].map((uid: string | null, i: number) => renderSlot(rack, i, uid)).join("");
+    const slots = getState().player.fitting[rack].map((uid: string | null, i: number) => renderSlot(rack, i, uid)).join("");
     return `<div class="frack"><h4>${RL[rack]}</h4>${slots}</div>`;
   }).join("");
 
   const invSections = [
-    { label: "Ore", data: G.P.ore, pool: "ore" as const },
-    { label: "Refined", data: G.P.refined, pool: "refined" as const },
-    { label: "Loot", data: G.P.loot, pool: "loot" as const },
-    { label: "Components", data: G.P.components, pool: "component" as const },
+    { label: "Ore", data: getState().player.ore, pool: "ore" as const },
+    { label: "Refined", data: getState().player.refined, pool: "refined" as const },
+    { label: "Loot", data: getState().player.loot, pool: "loot" as const },
+    { label: "Components", data: getState().player.components, pool: "component" as const },
   ].map(sec => {
     const entries = Object.entries(sec.data).filter(([, qty]) => qty > 0);
     if (entries.length === 0) return "";
@@ -198,13 +199,13 @@ export function renderHangar() {
   const ammoHtml = `
     <div class="inv-section">
       <div class="inv-section-title">Ammunition</div>
-      <div class="inv-row"><span class="inv-icon">${iconSvg("ammo-hybrid", 12)}</span><span class="inv-name">Hybrid</span><span class="inv-qty">${G.P.ammo?.hybrid ?? 0}</span></div>
-      <div class="inv-row"><span class="inv-icon">${iconSvg("ammo-missile", 12)}</span><span class="inv-name">Missile</span><span class="inv-qty">${G.P.ammo?.missile ?? 0}</span></div>
+      <div class="inv-row"><span class="inv-icon">${iconSvg("ammo-hybrid", 12)}</span><span class="inv-name">Hybrid</span><span class="inv-qty">${getState().player.ammo?.hybrid ?? 0}</span></div>
+      <div class="inv-row"><span class="inv-icon">${iconSvg("ammo-missile", 12)}</span><span class="inv-name">Missile</span><span class="inv-qty">${getState().player.ammo?.missile ?? 0}</span></div>
     </div>`;
 
   const invHtml = invSections || `<div class="inv-empty">No resources in cargo.</div>`;
 
-  const active = G.P.contracts.filter(c => c.status === "active" || c.status === "complete");
+  const active = getState().player.contracts.filter(c => c.status === "active" || c.status === "complete");
   const activeRows = active.map(c => {
     const { current, required } = c.objective;
     const pct = required > 0 ? Math.min(current / required, 1) : 0;
@@ -226,10 +227,10 @@ export function renderHangar() {
   div.innerHTML = `
   <h3>Ship Status</h3>
   <div class="row"><span class="lbl">Active Ship</span><span class="val" style="font-weight:600">${ship.name}</span><span class="stag">${ship.role}</span></div>
-  <div class="row"><span class="lbl">Hull / Structure / Shield</span><span class="val">${Math.round(G.P.hp)}/${st.maxHp} · ${Math.round(G.P.structure)}/${st.maxStructure} · ${Math.round(G.P.shield)}/${st.maxShield}</span></div>
-  <div class="row"><span class="lbl">Ammunition</span><span class="val">HYB ${G.P.ammo?.hybrid ?? 0}  ·  MSL ${G.P.ammo?.missile ?? 0}</span></div>
+  <div class="row"><span class="lbl">Hull / Structure / Shield</span><span class="val">${Math.round(getState().player.hp)}/${st.maxHp} · ${Math.round(getState().player.structure)}/${st.maxStructure} · ${Math.round(getState().player.shield)}/${st.maxShield}</span></div>
+  <div class="row"><span class="lbl">Ammunition</span><span class="val">HYB ${getState().player.ammo?.hybrid ?? 0}  ·  MSL ${getState().player.ammo?.missile ?? 0}</span></div>
   ${Client.activeStation?.services.includes("repair") && needsRepair ? `<div class="row"><span class="lbl">Repair & Recharge</span><button class="btn" data-action="repair">Repair All (${repCost}¢)</button></div>` : ""}
-  <div class="row"><span class="lbl">Home Station</span><span class="val">${G.GALAXY[G.P.homeSysIdx ?? 0]?.name || "HOME BASE ALPHA"}${G.P.homeSysIdx === G.P.sysIdx ? " (current)" : ""}</span>${G.P.homeSysIdx !== G.P.sysIdx ? `<button class="btn" data-action="setHome">Set as Home</button>` : ""}</div>
+  <div class="row"><span class="lbl">Home Station</span><span class="val">${getState().GALAXY[getState().player.homeSysIdx ?? 0]?.name || "HOME BASE ALPHA"}${getState().player.homeSysIdx === getState().player.sysIdx ? " (current)" : ""}</span>${getState().player.homeSysIdx !== getState().player.sysIdx ? `<button class="btn" data-action="setHome">Set as Home</button>` : ""}</div>
 
   <div class="st-fitting-container" style="margin-top:16px;">
     <aside>

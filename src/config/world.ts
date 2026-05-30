@@ -94,4 +94,41 @@ export const WORLD = {
     ring2: { lo: 0.3, hi: 0.6 },
     ring3: { lo: 0.0, hi: 0.3 },
   },
+  ORBITS: {
+    referenceRadius: 1000,
+    radiusExponent: 0.5,
+    angularSpeedBase: 0.01,
+    jitterMin: 0.8,
+    jitterMax: 1.2,
+    siteMultiplier: 1.0,
+    stationMultiplier: 0.5,
+    planetMultiplier: 0.25,
+    asteroidMultiplier: 1.0,
+    gateMultiplier: 0.75,
+  },
+  CONCENTRIC: {
+    sectors: [
+      { idx: 1, x: 0, y: 0, r: 8000, name: "Novus Prime Core", security: 0.8 },
+      { idx: 2, x: -8000, y: 8000, r: 12000, name: "Inner Belt", security: 0.5 },
+      { idx: 3, x: -8000, y: -8000, r: 12000, name: "Outer Belt", security: 0.2 },
+      { idx: 4, x: 12000, y: 0, r: 15000, name: "Deep Space", security: 0.0 },
+    ],
+    localRegions: [
+      { id: "core-center", name: "Core Center", x: 0, y: 0, sectorIdx: 1, radius: 500 },
+      { id: "inner-outpost", name: "Outpost Ruins", x: -8000, y: 8000, sectorIdx: 2, radius: 800 },
+      { id: "outer-scrap", name: "Scrap Fields", x: -8000, y: -8000, sectorIdx: 3, radius: 1000 },
+      { id: "deep-void", name: "Deep Void", x: 12000, y: 0, sectorIdx: 4, radius: 1500 },
+    ],
+    asteroids: [
+      { idx: 1, clusters: 4, lo: 1000, hi: 3000, weights: [0.94, 0.04, 0.02] },
+      { idx: 2, clusters: 6, lo: 3500, hi: 6000, weights: [0.60, 0.35, 0.05] },
+      { idx: 3, clusters: 8, lo: 6500, hi: 9000, weights: [0.30, 0.50, 0.20] },
+      { idx: 4, clusters: 10, lo: 9500, hi: 12000, weights: [0.10, 0.40, 0.50] },
+    ],
+  },
+  MAP: {
+    localRegionDiscoverRadius: 400,
+    localRegionScanRadius: 1000,
+    surveyRangeCapPx: 12000,
+  },
 };

@@ -25,8 +25,9 @@
  * a different approach.
  */
 import { ImageSource, Sprite, Graphics, Text, TextStyle, Texture } from "pixi.js";
-import { G, Client } from "../state.js";
-import type { Enemy } from "../types/world.js";
+import { Client } from "../state.js";
+import { getState } from "../state-access.js";
+import type { Enemy, LockSlot } from "../types/world.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { entityLayer, effectLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
@@ -259,7 +260,7 @@ interface EnemyBundle {
 }
 
 const _bundles = new Map<string, EnemyBundle>();
-const _lockMap = new Map<string, any>();
+const _lockMap = new Map<string, LockSlot>();
 
 function createBundle(e: { id: string; type: string; name: string; level?: number; hp: number }): EnemyBundle {
   const hull = new Sprite(getEnemyTexture(e.type));
@@ -372,7 +373,7 @@ export function clearEnemyTextureCaches(): void {
 export function syncPixiEntities(alpha: number, now: number): void {
   if (!entityLayer || !effectLayer) return;
 
-  const sys = G.GALAXY?.[G.P?.sysIdx ?? 0];
+  const sys = getState().GALAXY?.[getState().player?.sysIdx ?? 0];
   const liveEnemies: Enemy[] = sys?._liveEnemies ?? [];
   const lod = Client.zoom < 0.4;
   const lightOn = !lod && Client.settings?.directionalLighting !== false;
@@ -382,9 +383,9 @@ export function syncPixiEntities(alpha: number, now: number): void {
 
   // Build lock lookup (primary + queue)
   _lockMap.clear();
-  const primaryId = G.P.targetLock?.id;
-  if (Array.isArray(G.P.lockQueue)) {
-    for (const slot of G.P.lockQueue) _lockMap.set(slot.id, slot);
+  const primaryId = getState().player.targetLock?.id;
+  if (Array.isArray(getState().player.lockQueue)) {
+    for (const slot of getState().player.lockQueue) _lockMap.set(slot.id, slot);
   }
 
   const activeIds = new Set<string>();

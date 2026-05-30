@@ -3,6 +3,7 @@
  */
 
 import type { Station } from "./types/world.js";
+import type { AppMode } from "./state.js";
 
 export interface EventMap {
   "simulation:clear": void;
@@ -13,6 +14,15 @@ export interface EventMap {
   "mission:completed": { contract: import("./data/missions.js").MissionContract };
   "station:open": { station: Station };
   "station:close": void;
+  "sector:crossed": { toIdx: number };
+  "net:tick-sync": { tick: number; resetPrediction?: boolean };
+  "app:mode-change": { mode: AppMode; prevMode: AppMode };
+  "tutorial:step-change": { step: number };
+  "tutorial:step-complete": { step: number; id: string };
+  "tutorial:hangar-tour-change": void;
+  "tutorial:hud-tour-change": void;
+  "tutorial:complete": { sysIdx: number };
+  "tutorial:skip": { sysIdx: number };
 }
 
 const _handlers: Partial<Record<string, Array<(data: unknown) => void>>> = {};

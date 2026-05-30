@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dst, angleDiff, lerp, mulberry32, hashStr, rpick } from "../src/utils/math.js";
+import { dst, angleDiff, lerp, mulberry32, hashStr, rpick, rayCircleSurfaceHit, resolveElasticCollision } from "../src/utils/math.js";
 
 const TAU = Math.PI * 2;
 
@@ -24,6 +24,13 @@ describe("math utils", () => {
     expect(lerp(0, 10, 0.5)).toBe(5);
   });
 
+  it("rayCircleSurfaceHit returns the near-side circle intersection", () => {
+    const hit = rayCircleSurfaceHit(0, 0, 100, 0, 20);
+    expect(hit.x).toBeCloseTo(80);
+    expect(hit.y).toBeCloseTo(0);
+    expect(Math.hypot(hit.x - 100, hit.y)).toBeCloseTo(20);
+  });
+
   it("mulberry32 is deterministic for same seed", () => {
     const rng1 = mulberry32(12345);
     const rng2 = mulberry32(12345);
@@ -44,5 +51,14 @@ describe("math utils", () => {
   it("rpick returns an element when array has items", () => {
     const v = rpick(() => 0, [10, 20, 30]);
     expect([10, 20, 30]).toContain(v);
+  });
+
+  it("resolveElasticCollision returns 0 closing speed when dist is 0", () => {
+    const a = { x: 0, y: 0, vx: 10, vy: 0 };
+    const b = { x: 0, y: 0, vx: -5, vy: 0 };
+    const closing = resolveElasticCollision(a, b, 800, 450, 0, 0, 0, 40, 0.28);
+    expect(closing).toBe(0);
+    expect(Number.isFinite(a.vx)).toBe(true);
+    expect(Number.isFinite(b.vx)).toBe(true);
   });
 });

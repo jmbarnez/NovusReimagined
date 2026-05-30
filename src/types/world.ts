@@ -69,6 +69,9 @@ export interface Station {
   structureType?: "standard" | "home" | "industrial";
   isProcessingHub?: boolean;
   collectRadius?: number;
+  dropZoneOffset?: { dx?: number; dy?: number; x?: number; y?: number };
+  dropZoneRadius?: number;
+  _orbitSpeed?: number;
 }
 
 export interface Gate {
@@ -79,6 +82,7 @@ export interface Gate {
   targetSysIdx: number;
   radius: number;
   spin: number;
+  _orbitSpeed?: number;
 }
 
 export interface Planet {
@@ -91,6 +95,7 @@ export interface Planet {
   hasRing: boolean;
   ringTilt: number;
   moons: number;
+  _orbitSpeed?: number;
   _gradCache?: {
     glow: CanvasGradient;
     base: CanvasGradient;
@@ -109,6 +114,13 @@ export interface EnemyFitting {
   low?: (string | null)[];
   _tempInstances?: import("./moduleInstance.js").ModuleInstance[];
   [key: string]: (string | null)[] | import("./moduleInstance.js").ModuleInstance[] | undefined;
+}
+
+export interface ResistProfile {
+  em: number;
+  therm: number;
+  kin: number;
+  exp: number;
 }
 
 export interface Enemy {
@@ -146,6 +158,8 @@ export interface Enemy {
   structure?: number;
   maxStructure?: number;
   weaponMult?: number;
+  resists?: ResistProfile;
+  _lastHitByPlayer?: Player;
 
   // AI/combat scratch state (set during ticks)
   targetingPlayer?: boolean;
@@ -154,6 +168,7 @@ export interface Enemy {
   thrustFx?: boolean;
   _orbitDir?: 1 | -1;
   _lastPlayerHitAt?: number;
+  _lastPlayerHitBy?: Player;
   _lastPlayerHitKind?: "projectile" | "beam" | "missile";
   _npcTarget?: Enemy | Player | null;
   _npcLockTimer?: number;
@@ -219,6 +234,7 @@ export interface Asteroid {
   crystals?: AsteroidCrystal[];
   spawnX?: number;
   spawnY?: number;
+  _orbitSpeed?: number;
 }
 
 // ── Background silhouettes (gas giants / derelicts) ──────────────────────
@@ -243,6 +259,55 @@ export interface Silhouette {
   };
 }
 
+// ── Hidden Sites ─────────────────────────────────────────────────────────
+
+export type HiddenSiteFamily = "resource" | "derelict" | "relic" | "combat" | string;
+
+export interface HiddenSite {
+  id: string;
+  systemId: number;
+  family: HiddenSiteFamily;
+  name: string;
+  x: number;
+  y: number;
+  threatLevel: number;
+  signatureStrength: number;
+  signatureSize: number;
+  scanDifficulty: number;
+  decryptDifficulty: number;
+  state: "hidden" | "detected" | "resolved" | "cleared";
+  rewardSeed: number;
+  hasEncryptedContent: boolean;
+  siteTypeId: string;
+  requiredSurveyLevel: number;
+  isTutorialSite?: boolean;
+  _orbitSpeed?: number;
+}
+
+export type SignatureClassification = "relic" | "derelict" | "resource" | "combat" | "unknown" | string;
+export type SignatureStrengthLabel = "weak" | "medium" | "strong";
+
+export interface SignatureContact {
+  siteId: string;
+  systemId: number;
+  signalStrength: number;
+  progress: number;
+  confidence: number;
+  state: "detected" | "classified" | "resolved";
+  bearingDeg: number;
+  bearingErrorDeg: number;
+  classification: SignatureClassification;
+  strengthLabel: SignatureStrengthLabel;
+  driftPhase: number;
+  lastKnownX: number;
+  lastKnownY: number;
+  pulseSamples: number;
+  lastPulseX: number;
+  lastPulseY: number;
+  parallaxFactor: number;
+}
+
+
 // ── System ───────────────────────────────────────────────────────────────
 
 export interface System {
@@ -262,6 +327,8 @@ export interface System {
   planets: Planet[];
   nebulaHues: number[];
   starHue: number;
+  hiddenSites?: HiddenSite[];
+  _isNovusPrime?: boolean;
 
   // Visual identity fields (A1)
   archetype?: string;

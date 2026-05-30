@@ -1,5 +1,5 @@
-import { G } from "../state.js";
-import { PlayerAccess } from "../state-access.js";
+
+import { PlayerAccess, getState } from "../state-access.js";
 import { getStats } from "../player/player-stats.js";
 import { showDamageNumber } from "../combat/damage-display.js";
 import { damageEnemy, damageAsteroid } from "../combat.js";
@@ -11,16 +11,18 @@ import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { sfxProjectileImpact, sfxBeamImpact } from "../audio/procedural.js";
 import type { SpatialQueryResult } from "../utils/spatial.js";
 import type { Enemy, Asteroid } from "../types/world.js";
+import type { Player } from "../state.js";
 
-export function updateCombat(dt: number) {
-  const st = getStats();
-  if (G.P.shootCd > 0) PlayerAccess.setShootCd(G.P.shootCd - dt);
-  if (G.P.targetLock) {
-    const tl = G.P.targetLock;
-    const lost = isTargetDestroyed(tl) || Math.hypot(G.P.x - tl.x, G.P.y - tl.y) > 3500;
-    if (lost) PlayerAccess.setTargetLock(null);
+export function updateCombat(dt: number, p: Player = getState().player, opts?: { lockPredictionOnly?: boolean }) {
+  const st = getStats(p);
+  if (p.shootCd > 0) PlayerAccess.setShootCd(p.shootCd - dt, p);
+  if (p.targetLock) {
+    const tl = p.targetLock;
+    const lost = !tl || isTargetDestroyed(tl) || Math.hypot(p.x - tl.x, p.y - tl.y) > 3500;
+    if (lost) PlayerAccess.setTargetLock(null, p);
   }
-  updateSensorLocks(dt, st);
+  updateSensorLocks(dt, st, p);
+  void opts;
 }
 
 const _bHits: SpatialQueryResult<Enemy | Asteroid>[] = [];
@@ -53,11 +55,30 @@ export function isPointInAsteroid(bx: number, by: number, ast: Asteroid, bSz: nu
   return inside;
 }
 
-export function updateProjectiles(dt: number) {
-  const grid = G.spatialGrid;
+export function asteroidSegmentPolygonHit(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  ast: Asteroid,
+  bSz = 0,
+): { t: number; x: number; y: number } | null {
+  const moveDist = Math.hypot(x1 - x0, y1 - y0);
+  const steps = Math.max(1, Math.ceil(moveDist / 5));
+  for (let s = 0; s <= steps; s++) {
+    const t = s / steps;
+    const x = x0 + (x1 - x0) * t;
+    const y = y0 + (y1 - y0) * t;
+    if (isPointInAsteroid(x, y, ast, bSz)) return { t, x, y };
+  }
+  return null;
+}
 
-  for (let i = G.bullets.length - 1; i >= 0; i--) {
-    const b = G.bullets[i]; b.px = b.x; b.py = b.y; b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+export function updateProjectiles(dt: number) {
+  const grid = getState().spatialGrid;
+
+  for (let i = getState().bullets.length - 1; i >= 0; i--) {
+    const b = getState().bullets[i]; b.px = b.x; b.py = b.y; b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
 
     if (grid) {
       const bRad = b.sz || 2;
@@ -115,7 +136,7 @@ export function updateProjectiles(dt: number) {
 
       // --- Resolve whichever hit comes first along the path ---
       if (astTarget && astTarget.data && astHitDist <= enemyHitDist) {
-        const isMining = b.owner === G.P && b.weaponId && MODULE_FLAGS.isMiningTurret(MODULES[b.weaponId]);
+        const isMining = b.owner === getState().player && b.weaponId && MODULE_FLAGS.isMiningTurret(MODULES[b.weaponId]);
         if (isMining) {
           damageAsteroid(astTarget.data, b.dmg, hitX, hitY);
           sfxBeamImpact("mining", hitX, hitY);
@@ -126,7 +147,7 @@ export function updateProjectiles(dt: number) {
         b.life = 0;
       } else if (enemyTarget && enemyTarget.data) {
         spawnImpactFlash(b.x, b.y, b.color || "#ff4422");
-        if (b.owner === G.P) sfxProjectileImpact(b.x, b.y, b.weaponId || b.kind || "projectile");
+        if (b.owner === getState().player) sfxProjectileImpact(b.x, b.y, b.weaponId || b.kind || "projectile");
         damageEnemy(enemyTarget.data, b.dmg, b.x, b.y, b.owner, b.kind);
         b.life = 0;
       }

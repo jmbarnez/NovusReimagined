@@ -13,13 +13,11 @@
   overflow: hidden;
 }
 #hud-log-header {
-  padding: 2px 6px;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #5a7088;
-  background: rgba(6,10,16,0.98);
-  border-bottom: 1px solid rgba(30,42,55,0.6);
+  padding: 0 4px;
+  font-size: 7px;
+  color: var(--hud-text-dim);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 55%, transparent);
+  border-bottom: 1px solid var(--hud-border-soft);
   flex-shrink: 0;
 }
 #hud-log-entries {
@@ -43,3 +41,47 @@
 .log-entry.log-loot    { color: #66cc88; }
 .log-entry.log-warn    { color: #e8c06a; }
 .log-entry.log-system  { color: #aabbcc; }
+.log-entry.log-chat,
+.log-entry.log-chat-self { color: #7ec8ff; }
+.log-entry.log-chat-system { color: #b6c4d5; }
+
+.hud-log-chat-input-row {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 4px 5px;
+  background: rgba(4, 8, 12, 0.94);
+  border-top: 1px solid var(--hud-border-soft);
+}
+
+.hud-log-chat-prefix {
+  flex: 0 0 auto;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--hud-accent);
+}
+
+.hud-log-chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 19px;
+  box-sizing: border-box;
+  padding: 2px 5px;
+  font-family: var(--font-family);
+  font-size: 9px;
+  color: var(--hud-text-bright);
+  background: rgba(0, 0, 0, 0.34);
+  border: 1px solid var(--hud-border-soft);
+  border-radius: 2px;
+  outline: none;
+}
+
+.hud-log-chat-input::placeholder {
+  color: rgba(138, 164, 192, 0.56);
+}
+
+.hud-log-chat-input:focus {
+  border-color: var(--hud-border-accent);
+  box-shadow: 0 0 8px rgba(80, 160, 220, 0.18);
+}

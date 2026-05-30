@@ -1,5 +1,5 @@
 import "../styles/hud-xp.css";
-import { G } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { levelForSkillXp, xpForSkillLevel, MAX_SKILL_LEVEL } from "../../data/skills.js";
 import { hudState, XP_VISIBLE_MS, XP_FADE_MS, SKILL_NAMES, SKILL_ICONS } from "./state.js";
 
@@ -7,7 +7,7 @@ import { hudState, XP_VISIBLE_MS, XP_FADE_MS, SKILL_NAMES, SKILL_ICONS } from ".
 export function showXpEarned(skillId: string, amount: number) {
   if (!hudState.xpPopup || amount <= 0) return;
   if (!hudState.xpAccum.has(skillId)) {
-    hudState.xpBefore.set(skillId, (G.P.skillXp[skillId] || 0) - amount);
+    hudState.xpBefore.set(skillId, (getState().player.skillXp[skillId] || 0) - amount);
   }
   hudState.xpAccum.set(skillId, (hudState.xpAccum.get(skillId) || 0) + amount);
   renderXpPopup();
@@ -39,7 +39,7 @@ export function renderXpPopup() {
   for (const [id, amt] of hudState.xpAccum) {
     const icon = SKILL_ICONS[id] || "⭐";
     const name = SKILL_NAMES[id] || id;
-    const totalXp = G.P.skillXp[id] || 0;
+    const totalXp = getState().player.skillXp[id] || 0;
     const beforeXp = hudState.xpBefore.get(id) ?? totalXp;
     const pctNow = skillProgress(totalXp) * 100;
     const pctFrom = skillProgress(Math.max(0, beforeXp)) * 100;

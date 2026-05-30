@@ -94,6 +94,7 @@ export function buildEnemyFromSpawn(sys: System, zone: SpawnZone, entry: { type:
     sigRadius: def.sigRadius || 30,
     accuracy: def.accuracy ?? 1.0,
     fitting: buildEnemyFitting(entry.type, entry.level, f),
+    faction: "hostile",
   };
 
   if (en.fitting.turret) {

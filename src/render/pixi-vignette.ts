@@ -2,6 +2,7 @@ import { Sprite, Texture, Filter, UniformGroup } from "pixi.js";
 import { defaultFilterVert } from "pixi.js";
 import { Client, AppMode } from "../state.js";
 import { getState } from "../state-access.js";
+
 import { app } from "../pixi.js";
 
 // Fragment: screen-space directional border flashes reactive to damage direction.

@@ -15,7 +15,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/ui/styles/loading.css" />
+    <link rel="stylesheet" href="/src/ui/styles/hud-base.css" />
+    <script>performance.mark('novus:html-parsed');</script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body {
@@ -29,7 +30,62 @@
     </style>
   </head>
   <body>
+    <div id="loading">
+      <div class="cockpit-stars"></div>
+      <div class="cockpit-canopy-top"></div>
+      <div class="cockpit-canopy-left"></div>
+      <div class="cockpit-canopy-right"></div>
+      <div class="cockpit-canopy-bottom"></div>
+      
+      <div class="cockpit-dashboard cockpit-dashboard--two-monitors">
+        <!-- MONITOR 1 (LEFT/CENTER): Primary Interface & Loading Bar -->
+        <div class="cockpit-monitor monitor-center">
+          <div class="monitor-bezel-line"></div>
+          <div class="monitor-header">
+            <span class="monitor-tag">MON-1 // PRIMARY</span>
+            <span class="monitor-title">NEURAL LINK PROCESSOR</span>
+          </div>
+          <div class="monitor-content">
+            <div class="ld-title">NOVUS</div>
+            <div class="ld-sep"></div>
+            <div class="ld-sub">Initializing neural interface</div>
+            
+            <!-- Styled visual loading progress bar -->
+            <div class="ld-progress-bar">
+              <div class="ld-progress-fill" style="width: 0%;"></div>
+            </div>
+            
+            <div class="ld-status">Neural link pending<span class="ld-dots"></span></div>
+          </div>
+        </div>
+        
+        <!-- MONITOR 2 (RIGHT): System Console & Telemetry Stats -->
+        <div class="cockpit-monitor monitor-right">
+          <div class="monitor-bezel-line"></div>
+          <div class="monitor-header">
+            <span class="monitor-tag">MON-2 // LOGS</span>
+            <span class="monitor-title">SYSTEM CONSOLE DIAGNOSTICS</span>
+          </div>
+          <div class="monitor-content">
+            <div class="ld-console" aria-hidden="true">
+              <div class="ld-console-line">&gt; Initializing pilot interface...</div>
+            </div>
+            <div class="nav-grid-stats">
+              <div class="stat-cell">
+                <div class="cell-lbl">SECTOR CONTROL</div>
+                <div class="cell-val">STANDBY</div>
+              </div>
+              <div class="stat-cell">
+                <div class="cell-lbl">NEURAL SYNC</div>
+                <div class="cell-val">CONNECTING</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <canvas id="c"></canvas>
+    <div id="world-tutorial-layer"></div>
     <div id="hud-overlay" style="display: none;"></div>
     <div id="bridge-overlay" style="display: none;">
       <div class="bridge-backdrop" id="bridge-backdrop" aria-hidden="true"></div>

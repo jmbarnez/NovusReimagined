@@ -1,9 +1,8 @@
 import { addXp, addSkillXp } from "../player/player-data.js";
 import { spawnParticles } from "./fx.js";
 import { addSalvagePickup, addShockwave } from "./entities.js";
-import { logEvent } from "../ui/hud-overlay.js";
+import { logEvent } from "../feedback.js";
 import { ORE } from "../data/resources.js";
-import { ctx } from "../canvas.js";
 import { sfxShipExplosion } from "../audio/procedural.js";
 import type { Asteroid } from "../types/world.js";
 
@@ -25,6 +24,8 @@ export interface AsteroidDebris {
   radius: number;
   fill: string;
   stroke: string;
+  tintHue?: number;
+  tintSat?: number;
   life: number;
   maxLife: number;
 }
@@ -50,6 +51,11 @@ export function updateAsteroidDebris(dt: number) {
 }
 
 export function drawAsteroidDebris() {
+  if (typeof document === "undefined") return;
+  const canvasEl = document.getElementById("c") as HTMLCanvasElement | null;
+  const ctx = canvasEl?.getContext("2d");
+  if (!ctx) return;
+
   for (const d of asteroidDebrisList) {
     ctx.save();
     ctx.translate(d.x, d.y);
@@ -103,7 +109,7 @@ export function harvestAsteroid(asteroid: Asteroid, miningMult: number): Harvest
   return { depleted, dmg, oreKey: key, amount: 0 };
 }
 
-export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, miningMult = 1.0) {
+export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, miningMult = 1.0, _p?: import("../state.js").Player) {
   // 1. Roll which ore type is main yield
   const ores = ["iron", "crystal", "exotic"];
   const roll = Math.random();

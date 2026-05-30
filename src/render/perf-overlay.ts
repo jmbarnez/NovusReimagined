@@ -1,5 +1,6 @@
-import { getState } from "../state-access.js";
+
 import { Client } from "../state.js";
+import { getState } from "../state-access.js";
 import { curSys } from "../utils/game.js";
 import { sfxBlip } from "../audio/procedural.js";
 

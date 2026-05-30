@@ -62,6 +62,12 @@ export interface ModuleDef {
   tractorMaxMassKg?: number;
   tractorPullAccel?: number;
   isShield?: boolean;
+  isScanner?: boolean;
+  scanRange?: number;
+  scanStrength?: number;
+  scanResolveMult?: number;
+  decryptPower?: number;
+  decryptTraceResist?: number;
   /**
    * If set, activating this module via hotkey fires the named ability
    * (see src/player/abilities.ts) instead of toggling slot power. The module
@@ -410,6 +416,24 @@ export const MODULES: Record<string, ModuleDef> = {
     cpu: 8,
     massKg: 800,
     effects: { weaponMultBonus: 0.05 },
+  },
+  "tu-civilian-scanner": {
+    id: "tu-civilian-scanner",
+    name: "Civilian Scanner",
+    short: "Civ Scanner",
+    desc: "Basic academy scanner package for local survey and signal work.",
+    rack: "low",
+    price: 60,
+    powergrid: 0,
+    cpu: 3,
+    massKg: 120,
+    effects: { lockScanBonus: 0.05 },
+    isScanner: true,
+    scanRange: 1.05,
+    scanStrength: 1.05,
+    scanResolveMult: 1.05,
+    decryptPower: 1.05,
+    decryptTraceResist: 1.05,
   },
   "lo-dcu": {
     id: "lo-dcu",

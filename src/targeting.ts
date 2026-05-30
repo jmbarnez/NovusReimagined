@@ -1,5 +1,4 @@
-import { G } from "./state.js";
-import { PlayerAccess } from "./state-access.js";
+import { PlayerAccess, getState } from "./state-access.js";
 import { SHIPS, ShipDef } from "./data/ships.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "./data/modules.js";
 import { dst } from "./utils/math.js";
@@ -14,25 +13,28 @@ import { C } from "./config/index.js";
 import type { Enemy, Asteroid, WreckPiece, LockSlot } from "./types/world.js";
 import type { ComputedStats } from "./player/player-stats.js";
 import type { ModuleInstance } from "./types/moduleInstance.js";
+import type { Player } from "./state.js";
 
 export function isWreckPieceTarget(id: string): boolean {
   return typeof id === "string" && id.startsWith("piece-");
 }
 
-export function getWeaponTurretAtSlot(idx: number): ModuleDef | null {
-  const uid = G.P.fitting?.turret?.[idx];
+export function getWeaponTurretAtSlot(idx: number, p: Player | null = getState().player): ModuleDef | null {
+  if (!p) return null;
+  const uid = p.fitting?.turret?.[idx];
   if (!uid) return null;
-  const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
+  const inst = p.moduleCargo.find(inst => inst.uid === uid);
   const m = inst ? MODULES[inst.baseId] : null;
   return m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m) ? m : null;
 }
 
-export function resolveWeaponTurret(fitting?: { turret?: (string | null)[] }): ModuleDef | null {
-  const f = fitting || G.P.fitting;
+export function resolveWeaponTurret(fitting?: { turret?: (string | null)[] }, p: Player | null = getState().player): ModuleDef | null {
+  if (!p) return null;
+  const f = fitting || p.fitting;
   if (!f?.turret) return null;
   for (const uid of f.turret) {
     if (!uid) continue;
-    const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
+    const inst = p.moduleCargo.find(inst => inst.uid === uid);
     const m = inst ? MODULES[inst.baseId] : null;
     if (m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m)) return m;
   }
@@ -47,16 +49,27 @@ export function getSensorContactRangePx(ship: ShipDef): number {
   return C.TARGETING.SENSOR.baseRangePx * ((ship.sensorContactRangeKm || C.TARGETING.LOCK.referenceKm) / C.TARGETING.LOCK.referenceKm);
 }
 
+export function getPassiveScanRangePx(ship: ShipDef): number {
+  return 2900 * ((ship.passiveScanRangeKm ?? 54) / 72);
+}
+
 export function isAsteroidTarget(id: string): boolean {
   return typeof id === "string" && id.startsWith("ast-");
 }
 
-export function targetByLockId(id: string): Enemy | Asteroid | WreckPiece | null {
-  const sys = curSys();
+export function targetByLockId(id: string, p: Player = getState().player): Enemy | Asteroid | WreckPiece | null {
+  const sys = curSys(p);
   if (!sys) return null;
   const en = sys._enemyMap?.get(id);
   if (en && en.alive) return en;
-  const ast = sys._asteroidMap?.get(id);
+  let ast = sys._asteroidMap?.get(id);
+  if (!ast && isAsteroidTarget(id)) {
+    ast = sys.asteroids.find((a) => a.id === id);
+    if (ast) {
+      if (!sys._asteroidMap) sys._asteroidMap = new Map();
+      sys._asteroidMap.set(id, ast);
+    }
+  }
   if (ast && !ast.depleted && ast.hp > 0) {
     if (!ast.name) {
       const ores = ["Iron", "Crystal", "Exotic"];
@@ -73,8 +86,8 @@ export function targetByLockId(id: string): Enemy | Asteroid | WreckPiece | null
     return ast;
   }
   if (isWreckPieceTarget(id)) {
-    const p = G.wreckPieces.find((p) => p.id === id);
-    return p && p.hp > 0 ? p : null;
+    const wreck = getState().wreckPieces.find((w) => w.id === id);
+    return wreck && wreck.hp > 0 ? wreck : null;
   }
   return null;
 }
@@ -91,17 +104,17 @@ export function enemyByLockId(id: string): Enemy | null {
  * take noticeably longer. Maps dist/sensorRange ∈ [0,1] → multiplier in
  * roughly [0.65, 1.4]. Returns 1 if the target is missing/sensor range is 0.
  */
-function distanceLockFactor(target: Enemy | Asteroid | WreckPiece): number {
+function distanceLockFactor(target: Enemy | Asteroid | WreckPiece, p: Player = getState().player): number {
   if (!target) return 1;
-  const ship = SHIPS[G.P.shipId];
+  const ship = SHIPS[p.shipId];
   const sensorRange = getSensorContactRangePx(ship) || 1;
-  const d = dst(G.P.x, G.P.y, target.x, target.y);
+  const d = dst(p.x, p.y, target.x, target.y);
   const t = Math.max(0, Math.min(1.1, d / sensorRange));
   return 0.65 + 0.75 * t;
 }
 
-export function computeLockTimeSec(target: Enemy | Asteroid | WreckPiece, st: ComputedStats): number {
-  const distFactor = distanceLockFactor(target);
+export function computeLockTimeSec(target: Enemy | Asteroid | WreckPiece, st: ComputedStats, p: Player = getState().player): number {
+  const distFactor = distanceLockFactor(target, p);
   if (isAsteroidTarget(target.id)) {
     // Asteroid surface scan — meaningful baseline so it isn't instant, with
     // distance scaling for big-rock surveying at long range.
@@ -116,12 +129,18 @@ export function computeLockTimeSec(target: Enemy | Asteroid | WreckPiece, st: Co
   return base * distFactor;
 }
 
-export function ensureLockQueue(): void {
-  if (!Array.isArray(G.P.lockQueue)) PlayerAccess.setLockQueue([]);
+export function ensureLockQueue(p: Player = getState().player): void {
+  if (!Array.isArray(p.lockQueue)) {
+    if (p === getState().player) {
+      PlayerAccess.setLockQueue([]);
+    } else {
+      p.lockQueue = [];
+    }
+  }
 }
 
-export function maxTargetLocks(): number {
-  const s = SHIPS[G.P.shipId];
+export function maxTargetLocks(p: Player = getState().player): number {
+  const s = SHIPS[p.shipId];
   return Math.min(C.TARGETING.MAX_TARGET_LOCKS_CAP, Math.max(1, C.TARGETING.MAX_TARGET_LOCKS_BASE + ((s.lockBonusTicks as number) | 0)));
 }
 
@@ -151,64 +170,98 @@ export function computeEnemyLevel(enemy: Enemy): number {
   return Math.max(C.TARGETING.ENEMY_LEVEL.levelMin, Math.min(C.TARGETING.ENEMY_LEVEL.levelMax, Math.round(raw * C.TARGETING.ENEMY_LEVEL.levelScale) + C.TARGETING.ENEMY_LEVEL.levelOffset));
 }
 
-export function transversalVs(e: Enemy): number {
-  const rx = e.x - G.P.x, ry = e.y - G.P.y;
+export function transversalVs(e: Enemy, p: Player = getState().player): number {
+  const rx = e.x - p.x, ry = e.y - p.y;
   const r2 = rx * rx + ry * ry;
   if (r2 < 4) return 0;
-  const rvx = (e.vx || 0) - G.P.vx, rvy = (e.vy || 0) - G.P.vy;
+  const rvx = (e.vx || 0) - p.vx, rvy = (e.vy || 0) - p.vy;
   return Math.abs(rx * rvy - ry * rvx) / Math.sqrt(r2);
 }
 
-export function syncPrimaryTargetLock(): void {
-  ensureLockQueue();
-  for (const slot of G.P.lockQueue) {
+export function syncPrimaryTargetLock(p: Player = getState().player): void {
+  ensureLockQueue(p);
+  for (const slot of p.lockQueue) {
     if (slot.resolving) continue;
-    const t = targetByLockId(slot.id);
+    const t = targetByLockId(slot.id, p);
     if (t) {
-      PlayerAccess.setTargetLock(t);
+      if (p === getState().player) {
+        PlayerAccess.setTargetLock(t);
+      } else {
+        p.targetLock = t;
+      }
       return;
     }
   }
-  PlayerAccess.setTargetLock(null);
-}
-
-export function clearSensorLocks(): void {
-  PlayerAccess.setLockQueue([]);
-  PlayerAccess.setTargetLock(null);
-  if (G.P.turretTargets) {
-    PlayerAccess.setTurretTargetsAll(Array(G.P.turretTargets.length).fill(null));
-  }
-  if (G.P.highTargets) {
-    for (let i = 0; i < G.P.highTargets.length; i++) PlayerAccess.setHighTarget(i, null);
+  if (p === getState().player) {
+    PlayerAccess.setTargetLock(null);
+  } else {
+    p.targetLock = null;
   }
 }
 
-export function removeSensorLock(id: string): void {
-  ensureLockQueue();
-  PlayerAccess.setLockQueue(G.P.lockQueue.filter((s) => s.id !== id));
-  if (G.P.turretTargets) {
-    for (let i = 0; i < G.P.turretTargets.length; i++) {
-      if (G.P.turretTargets[i] === id) PlayerAccess.setTurretTarget(i, null);
+export function clearSensorLocks(p: Player = getState().player, _opts?: { suppressFrameAction?: boolean }): void {
+  if (p === getState().player) {
+    PlayerAccess.setLockQueue([]);
+    PlayerAccess.setTargetLock(null);
+    if (p.turretTargets) {
+      PlayerAccess.setTurretTargetsAll(Array(p.turretTargets.length).fill(null));
+    }
+    if (p.highTargets) {
+      for (let i = 0; i < p.highTargets.length; i++) PlayerAccess.setHighTarget(i, null);
+    }
+  } else {
+    p.lockQueue = [];
+    p.targetLock = null;
+    if (p.turretTargets) {
+      p.turretTargets.fill(null);
+    }
+    if (p.highTargets) {
+      p.highTargets.fill(null);
     }
   }
-  if (G.P.highTargets) {
-    for (let i = 0; i < G.P.highTargets.length; i++) {
-      if (G.P.highTargets[i] === id) PlayerAccess.setHighTarget(i, null);
+}
+
+export function removeSensorLock(id: string, p: Player = getState().player, _opts?: { suppressFrameAction?: boolean }): void {
+  ensureLockQueue(p);
+  const nextQueue = p.lockQueue.filter((s) => s.id !== id);
+  if (p === getState().player) {
+    PlayerAccess.setLockQueue(nextQueue);
+    if (p.turretTargets) {
+      for (let i = 0; i < p.turretTargets.length; i++) {
+        if (p.turretTargets[i] === id) PlayerAccess.setTurretTarget(i, null);
+      }
+    }
+    if (p.highTargets) {
+      for (let i = 0; i < p.highTargets.length; i++) {
+        if (p.highTargets[i] === id) PlayerAccess.setHighTarget(i, null);
+      }
+    }
+  } else {
+    p.lockQueue = nextQueue;
+    if (p.turretTargets) {
+      for (let i = 0; i < p.turretTargets.length; i++) {
+        if (p.turretTargets[i] === id) p.turretTargets[i] = null;
+      }
+    }
+    if (p.highTargets) {
+      for (let i = 0; i < p.highTargets.length; i++) {
+        if (p.highTargets[i] === id) p.highTargets[i] = null;
+      }
     }
   }
-  syncPrimaryTargetLock();
+  syncPrimaryTargetLock(p);
 }
 
 // When a lock resolves, if there is exactly one powered mining/salvager turret
 // with no target assigned, auto-assign it and play a soft chime.
-function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean): void {
+function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean, p: Player = getState().player): void {
   if (!isAst && !isPiece) return;
-  const turretSlots = G.P.fitting?.turret || [];
+  const turretSlots = p.fitting?.turret || [];
   const candidates: number[] = [];
   for (let i = 0; i < turretSlots.length; i++) {
     const uid = turretSlots[i];
     if (!uid) continue;
-    const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
+    const inst = p.moduleCargo.find(inst => inst.uid === uid);
     const m = inst ? MODULES[inst.baseId] : null;
     if (!m) continue;
     const isMiner = MODULE_FLAGS.isMiningTurret(m);
@@ -216,20 +269,25 @@ function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean
     const isTractor = MODULE_FLAGS.isTractor(m);
     if (isAst && !isMiner && !isTractor) continue;
     if (isPiece && !isSalv && !isTractor) continue;
-    if (!(G.P.turretPower?.[i])) continue;
-    if (G.P.turretTargets?.[i]) continue;
+    if (!(p.turretPower?.[i])) continue;
+    if (p.turretTargets?.[i]) continue;
     candidates.push(i);
   }
   if (candidates.length !== 1) return; // only auto-assign when unambiguous
-  PlayerAccess.setTurretTarget(candidates[0], id);
-  sfxTurretAssign();
+  if (p === getState().player) {
+    PlayerAccess.setTurretTarget(candidates[0], id);
+    sfxTurretAssign();
+  } else {
+    if (!p.turretTargets) p.turretTargets = [];
+    p.turretTargets[candidates[0]] = id;
+  }
 }
 
-function autoFillUnboundWeaponTurrets(): void {
-  const turretSlots = G.P.fitting?.turret;
+function autoFillUnboundWeaponTurrets(p: Player = getState().player): void {
+  const turretSlots = p.fitting?.turret;
   if (!turretSlots) return;
   let firstEnemyLock: string | null = null;
-  for (const slot of G.P.lockQueue) {
+  for (const slot of p.lockQueue) {
     if (slot.resolving) continue;
     if (isAsteroidTarget(slot.id) || isWreckPieceTarget(slot.id)) continue;
     firstEnemyLock = slot.id;
@@ -239,97 +297,249 @@ function autoFillUnboundWeaponTurrets(): void {
   for (let i = 0; i < turretSlots.length; i++) {
     const uid = turretSlots[i];
     if (!uid) continue;
-    const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
+    const inst = p.moduleCargo.find(inst => inst.uid === uid);
     const m = inst ? MODULES[inst.baseId] : null;
     if (!m?.weaponDelivery || MODULE_FLAGS.isMiningTurret(m) || MODULE_FLAGS.isSalvager(m)) continue;
-    if (!G.P.turretPower?.[i]) continue;
-    if (G.P.turretTargets?.[i]) continue;
-    PlayerAccess.setTurretTarget(i, firstEnemyLock);
-    sfxTurretAssign();
+    if (!p.turretPower?.[i]) continue;
+    if (p.turretTargets?.[i]) continue;
+    if (p === getState().player) {
+      PlayerAccess.setTurretTarget(i, firstEnemyLock);
+      sfxTurretAssign();
+    } else {
+      if (!p.turretTargets) p.turretTargets = [];
+      p.turretTargets[i] = firstEnemyLock;
+    }
   }
 }
 
-export function updateSensorLocks(dt: number, st: ComputedStats): void {
-  ensureLockQueue();
-  const ship = SHIPS[G.P.shipId];
+export function updateSensorLocks(dt: number, st: ComputedStats, p: Player = getState().player): void {
+  ensureLockQueue(p);
+  const ship = SHIPS[p.shipId];
   const sensorRange = getSensorContactRangePx(ship);
   const dropRange = sensorRange * C.TARGETING.SENSOR.dropRangeMultiplier;
-  for (let i = G.P.lockQueue.length - 1; i >= 0; i--) {
-    const slot = G.P.lockQueue[i];
-    const t = targetByLockId(slot.id);
+  for (let i = p.lockQueue.length - 1; i >= 0; i--) {
+    const slot = p.lockQueue[i];
+    const t = targetByLockId(slot.id, p);
     if (!t || isTargetDestroyed(t)) {
-      PlayerAccess.spliceLockQueue(i, 1);
-      if (G.P.targetLock?.id === slot.id) syncPrimaryTargetLock();
-      if (G.P.turretTargets) {
-        for (let j = 0; j < G.P.turretTargets.length; j++) {
-          if (G.P.turretTargets[j] === slot.id) PlayerAccess.setTurretTarget(j, null);
+      if (p === getState().player) PlayerAccess.spliceLockQueue(i, 1);
+      else p.lockQueue.splice(i, 1);
+      if (p.targetLock?.id === slot.id) syncPrimaryTargetLock(p);
+      if (p.turretTargets) {
+        for (let j = 0; j < p.turretTargets.length; j++) {
+          if (p.turretTargets[j] === slot.id) {
+            if (p === getState().player) PlayerAccess.setTurretTarget(j, null);
+            else p.turretTargets[j] = null;
+          }
         }
       }
-      if (G.P.highTargets) {
-        for (let j = 0; j < G.P.highTargets.length; j++) {
-          if (G.P.highTargets[j] === slot.id) PlayerAccess.setHighTarget(j, null);
+      if (p.highTargets) {
+        for (let j = 0; j < p.highTargets.length; j++) {
+          if (p.highTargets[j] === slot.id) {
+            if (p === getState().player) PlayerAccess.setHighTarget(j, null);
+            else p.highTargets[j] = null;
+          }
         }
       }
       continue;
     }
-    if (dst(G.P.x, G.P.y, t.x, t.y) > dropRange) {
-      PlayerAccess.spliceLockQueue(i, 1);
-      sfxLockLost();
-      floatText(t.x, t.y - 25, "LOCK LOST", "#cc8844");
-      if (G.P.targetLock?.id === slot.id) syncPrimaryTargetLock();
-      if (G.P.turretTargets) {
-        for (let j = 0; j < G.P.turretTargets.length; j++) {
-          if (G.P.turretTargets[j] === slot.id) PlayerAccess.setTurretTarget(j, null);
+    if (dst(p.x, p.y, t.x, t.y) > dropRange) {
+      if (p === getState().player) PlayerAccess.spliceLockQueue(i, 1);
+      else p.lockQueue.splice(i, 1);
+      if (p === getState().player) {
+        sfxLockLost();
+        floatText(t.x, t.y - 25, "LOCK LOST", "#cc8844");
+      }
+      if (p.targetLock?.id === slot.id) syncPrimaryTargetLock(p);
+      if (p.turretTargets) {
+        for (let j = 0; j < p.turretTargets.length; j++) {
+          if (p.turretTargets[j] === slot.id) {
+            if (p === getState().player) PlayerAccess.setTurretTarget(j, null);
+            else p.turretTargets[j] = null;
+          }
         }
       }
-      if (G.P.highTargets) {
-        for (let j = 0; j < G.P.highTargets.length; j++) {
-          if (G.P.highTargets[j] === slot.id) PlayerAccess.setHighTarget(j, null);
+      if (p.highTargets) {
+        for (let j = 0; j < p.highTargets.length; j++) {
+          if (p.highTargets[j] === slot.id) {
+            if (p === getState().player) PlayerAccess.setHighTarget(j, null);
+            else p.highTargets[j] = null;
+          }
         }
       }
       continue;
     }
     if (slot.resolving) {
-      slot.acc = (slot.acc || 0) + dt;
-      if (slot.acc >= computeLockTimeSec(t, st)) {
-        slot.resolving = false;
-        syncPrimaryTargetLock();
+      const nextAcc = (slot.acc || 0) + dt;
+      if (p === getState().player) PlayerAccess.updateLockQueueSlot(slot.id, { acc: nextAcc });
+      else slot.acc = nextAcc;
+      if (nextAcc >= computeLockTimeSec(t, st, p)) {
+        if (p === getState().player) PlayerAccess.updateLockQueueSlot(slot.id, { resolving: false });
+        else slot.resolving = false;
+        syncPrimaryTargetLock(p);
         const isAst = isAsteroidTarget(t.id);
         const isPiece = isWreckPieceTarget(t.id);
-        if (!isAst) sfxLockAcquired();
-        tryAutoAssignSpecialTurret(t.id, isAst, isPiece);
+        if (p === getState().player) {
+          if (!isAst) sfxLockAcquired();
+        }
+        tryAutoAssignSpecialTurret(t.id, isAst, isPiece, p);
         if (!isAst && !isPiece) {
           // Auto-assign selected turret for enemies
-          const turretSlot = G.P.fireControlSlot ?? 0;
-          const slotUid = G.P.fitting?.turret?.[turretSlot];
-          const slotInst = slotUid ? G.P.moduleCargo.find(inst => inst.uid === slotUid) : null;
+          const turretSlot = p.fireControlSlot ?? 0;
+          const slotUid = p.fitting?.turret?.[turretSlot];
+          const slotInst = slotUid ? p.moduleCargo.find(inst => inst.uid === slotUid) : null;
           const m = slotInst ? MODULES[slotInst.baseId] : null;
           if (m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m) && !MODULE_FLAGS.isSalvager(m)) {
-            if ((G.P.turretPower?.[turretSlot]) && !(G.P.turretTargets?.[turretSlot])) {
-              PlayerAccess.setTurretTarget(turretSlot, t.id);
-              sfxTurretAssign();
+            if ((p.turretPower?.[turretSlot]) && !(p.turretTargets?.[turretSlot])) {
+              if (p === getState().player) {
+                PlayerAccess.setTurretTarget(turretSlot, t.id);
+                sfxTurretAssign();
+              } else {
+                if (!p.turretTargets) p.turretTargets = [];
+                p.turretTargets[turretSlot] = t.id;
+              }
             }
           }
         }
       }
     }
   }
-  autoFillUnboundWeaponTurrets();
+  autoFillUnboundWeaponTurrets(p);
 }
 
-export function requestSensorLock(id: string): void {
-  ensureLockQueue();
-  const i = G.P.lockQueue.findIndex((s) => s.id === id);
+export function requestSensorLock(id: string, p: Player = getState().player, opts?: { suppressFrameAction?: boolean }): void {
+  ensureLockQueue(p);
+  const i = p.lockQueue.findIndex((s) => s.id === id);
   if (i >= 0) {
-    const [slot] = PlayerAccess.spliceLockQueue(i, 1);
-    PlayerAccess.unshiftLockQueue(slot);
-    syncPrimaryTargetLock();
+    if (p.lockQueue[i]?.resolving) return;
+    selectLockTarget(id, p, opts);
     return;
   }
-  while (G.P.lockQueue.length >= maxTargetLocks()) {
-    PlayerAccess.popLockQueue();
-    floatText(G.P.x, G.P.y - 38, "LOCK CAP — DROPPED TAIL", "#cc8844");
+  while (p.lockQueue.length >= maxTargetLocks(p)) {
+    if (p === getState().player) PlayerAccess.popLockQueue();
+    else p.lockQueue.pop();
+    if (p === getState().player) {
+      floatText(p.x, p.y - 38, "LOCK CAP — DROPPED TAIL", "#cc8844");
+    }
   }
-  PlayerAccess.unshiftLockQueue({ id, resolving: true, acc: 0 });
-  syncPrimaryTargetLock();
+  if (p === getState().player) PlayerAccess.unshiftLockQueue({ id, resolving: true, acc: 0 });
+  else p.lockQueue.unshift({ id, resolving: true, acc: 0 });
+  syncPrimaryTargetLock(p);
+}
+
+export function selectLockTarget(
+  id: string,
+  p: Player = getState().player,
+  opts?: { suppressFrameAction?: boolean }
+): void {
+  ensureLockQueue(p);
+  const i = p.lockQueue.findIndex((s) => s.id === id);
+  if (i < 0) return;
+
+  if (p._assignTargetId === id) {
+    if (p === getState().player) {
+      PlayerAccess.setAssignTargetId(null);
+    } else {
+      p._assignTargetId = null;
+    }
+    return;
+  }
+
+  if (i > 0) {
+    if (p === getState().player) {
+      const [slot] = PlayerAccess.spliceLockQueue(i, 1);
+      if (slot) PlayerAccess.unshiftLockQueue(slot);
+    } else {
+      const [slot] = p.lockQueue.splice(i, 1);
+      if (slot) p.lockQueue.unshift(slot);
+    }
+  }
+
+  if (p === getState().player) {
+    PlayerAccess.setAssignTargetId(id);
+  } else {
+    p._assignTargetId = id;
+  }
+  syncPrimaryTargetLock(p);
+}
+
+function isPlayerObj(obj: unknown): obj is Player {
+  return obj !== null && typeof obj === "object" && "shipId" in obj;
+}
+
+export function turretModuleAcceptsTarget(m: ModuleDef, targetId: string): boolean {
+  if (isAsteroidTarget(targetId)) {
+    return !!MODULE_FLAGS.isMiningTurret(m);
+  }
+  if (isWreckPieceTarget(targetId)) {
+    return !!MODULE_FLAGS.isSalvager(m);
+  }
+  return !!(m.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m) && !MODULE_FLAGS.isSalvager(m));
+}
+
+export function assignModuleSlotToTarget(
+  slotIdx: number,
+  targetId: string | null,
+  arg3?: unknown,
+  arg4?: unknown
+): boolean {
+  let p: Player = getState().player;
+  let opts: { silent?: boolean; suppressFrameAction?: boolean; clearAssign?: boolean } = {};
+
+  if (isPlayerObj(arg3)) {
+    p = arg3;
+    if (arg4 && !isPlayerObj(arg4)) {
+      opts = arg4 as { silent?: boolean; suppressFrameAction?: boolean; clearAssign?: boolean };
+    }
+  } else if (arg3) {
+    opts = arg3 as { silent?: boolean; suppressFrameAction?: boolean; clearAssign?: boolean };
+    if (isPlayerObj(arg4)) {
+      p = arg4;
+    }
+  } else if (isPlayerObj(arg4)) {
+    p = arg4;
+  }
+
+  if (targetId === null) {
+    if (p === getState().player) {
+      PlayerAccess.setTurretTarget(slotIdx, null);
+    } else {
+      if (!p.turretTargets) p.turretTargets = [];
+      p.turretTargets[slotIdx] = null;
+    }
+    return true;
+  }
+
+  ensureLockQueue(p);
+
+  const lockSlot = p.lockQueue.find((s) => s.id === targetId);
+  if (!lockSlot) {
+    if (!opts?.silent && typeof window !== "undefined" && p === getState().player) {
+      floatText(p.x, p.y - 30, "TARGET NOT LOCKED", "#ff8844");
+    }
+    return false;
+  }
+
+  const target = targetByLockId(targetId, p);
+  if (!target) return false;
+
+  const uid = p.fitting?.turret?.[slotIdx];
+  if (!uid) return false;
+  const inst = p.moduleCargo.find(inst => inst.uid === uid);
+  const m = inst ? MODULES[inst.baseId] : null;
+  if (!m) return false;
+
+  if (!turretModuleAcceptsTarget(m, targetId)) {
+    if (!opts?.silent && typeof window !== "undefined" && p === getState().player) {
+      floatText(p.x, p.y - 30, "INVALID TARGET TYPE", "#ff8844");
+    }
+    return false;
+  }
+
+  if (p === getState().player) {
+    PlayerAccess.setTurretTarget(slotIdx, targetId);
+  } else {
+    if (!p.turretTargets) p.turretTargets = [];
+    p.turretTargets[slotIdx] = targetId;
+  }
+  return true;
 }

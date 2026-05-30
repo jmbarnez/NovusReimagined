@@ -1,5 +1,6 @@
 import { HUD_SIDE_W, HUD_BOTTOM_H, LOCK_RAIL_H } from "./constants.js";
-import { G, Client } from "./state.js";
+import { Client } from "./state.js";
+import { getState } from "./state-access.js";
 
 const canvas = document.getElementById("c") as HTMLCanvasElement;
 const _ctx = canvas.getContext("2d", { alpha: true });

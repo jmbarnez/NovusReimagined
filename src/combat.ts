@@ -1,4 +1,5 @@
-import { G, Client, type Player } from "./state.js";
+import { Client, type Player } from "./state.js";
+import { getState, PlayerAccess } from "./state-access.js";
 import { dst, aimAngle } from "./utils/math.js";
 import { ensureAmmoDefaults, addXp, addSkillXp } from "./player/player-data.js";
 import { getStats, getWeaponProfileForSlot, weaponSkillBonus } from "./player/player-stats.js";
@@ -10,7 +11,7 @@ import { clearSensorLocks, syncPrimaryTargetLock, targetByLockId, isAsteroidTarg
 import { liveEnemies, curSys } from "./utils/game.js";
 import { MODULES, MODULE_FLAGS, type ModuleDef } from "./data/modules.js";
 import { SHIPS } from "./data/ships.js";
-import { flashSlotFire, logEvent } from "./ui/hud-overlay.js";
+import { flashSlotFire, logEvent } from "./feedback.js";
 import { progressMissions } from "./data/missions.js";
 import { showDamageNumber } from "./combat/damage-display.js";
 import { sfxWeaponFire, sfxShipExplosion, sfxProjectileImpact } from "./audio/procedural.js";
@@ -29,11 +30,11 @@ function aimDeviationCone(baseScatter: number, distScatter: number, capRad: numb
 }
 
 function computeAimDeviationInternal(target: Enemy | Asteroid | WreckPiece, turretMod: ModuleDef | null, wProf: WeaponProfile): { deviation: number; sig: number; dist: number } {
-  const dist = Math.max(1, dst(G.P.x, G.P.y, target.x, target.y));
+  const dist = Math.max(1, dst(getState().player.x, getState().player.y, target.x, target.y));
   const tracking = turretMod?.trackingSpeed ?? 0.5;
   const sig = (target as Enemy).sigRadius || 30;
   const delivery = (turretMod?.weaponDelivery ?? "projectile") as WeaponDelivery;
-  const skillLvl = G.P.skills[WEAPON_SKILL[delivery]] || 0;
+  const skillLvl = getState().player.skills[WEAPON_SKILL[delivery]] || 0;
   const skill = C.COMBAT.PLAYER_AIM.skillBase + skillLvl * C.COMBAT.PLAYER_AIM.skillPerWeaponLevel;
   const distRatio = Math.min(dist / Math.max(1, wProf.range), C.COMBAT.PLAYER_AIM.distanceRatioCap);
   const baseScatter = sig * C.COMBAT.PLAYER_AIM.sigMultiplier;
@@ -69,29 +70,29 @@ export function computeEnemyAimDeviation(enemy: Enemy, dist: number): number {
 }
 
 function isTurretReady(idx: number): boolean {
-  return (G.P.turretPower?.[idx] ?? false) && (G.P.turretPowerCd?.[idx] || 0) <= 0;
+  return (getState().player.turretPower?.[idx] ?? false) && (getState().player.turretPowerCd?.[idx] || 0) <= 0;
 }
 
 function getTurretWorldPos(turretIdx: number): { x: number; y: number } {
-  const ship = SHIPS[G.P.shipId];
+  const ship = SHIPS[getState().player.shipId];
   const offsets = ship?.render?.turretOffsets || [[24, 0]];
   const off = offsets[turretIdx % offsets.length] || offsets[0];
-  const sa = G.P.angle;
+  const sa = getState().player.angle;
   return {
-    x: G.P.x + Math.cos(sa) * off[0] - Math.sin(sa) * off[1],
-    y: G.P.y + Math.sin(sa) * off[0] + Math.cos(sa) * off[1],
+    x: getState().player.x + Math.cos(sa) * off[0] - Math.sin(sa) * off[1],
+    y: getState().player.y + Math.sin(sa) * off[0] + Math.cos(sa) * off[1],
   };
 }
 
 export function fireSelectedTurret(isAutoFire = false) {
   if (Client.stationOpen || Client.showMap || Client.bridgeOpen || Client.settingsOpen) return;
-  const slot = G.P.fireControlSlot ?? 0;
-  const uid = G.P.fitting?.turret?.[slot];
-  const inst = uid ? G.P.moduleCargo.find(inst => inst.uid === uid) : null;
+  const slot = getState().player.fireControlSlot ?? 0;
+  const uid = getState().player.fitting?.turret?.[slot];
+  const inst = uid ? getState().player.moduleCargo.find(inst => inst.uid === uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m || MODULE_FLAGS.isMiningTurret(m) || !m.weaponDelivery) return;
   if (!isTurretReady(slot)) {
-    if (!isAutoFire) floatText(G.P.x, G.P.y - 32, "TURRET OFFLINE", "#ff6644");
+    if (!isAutoFire) floatText(getState().player.x, getState().player.y - 32, "TURRET OFFLINE", "#ff6644");
     return;
   }
   playerShoot(slot, null, isAutoFire);
@@ -99,31 +100,32 @@ export function fireSelectedTurret(isAutoFire = false) {
 
 export function updateTurretCooldowns(dt: number) {
   if (Client.stationOpen || Client.showMap || Client.bridgeOpen || Client.settingsOpen) return;
-  const n = G.P.turretCds?.length || 0;
+  const n = getState().player.turretCds?.length || 0;
   for (let i = 0; i < n; i++) {
-    if ((G.P.turretCds[i] || 0) > 0) G.P.turretCds[i] -= dt;
+    const nextCd = (getState().player.turretCds[i] || 0) - dt;
+    if ((getState().player.turretCds[i] || 0) > 0) PlayerAccess.setTurretCd(i, nextCd);
   }
 
-  const turretSlots = G.P.fitting?.turret || [];
+  const turretSlots = getState().player.fitting?.turret || [];
   for (let i = 0; i < turretSlots.length; i++) {
     const uid = turretSlots[i];
     if (!uid) continue;
-    const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
+    const inst = getState().player.moduleCargo.find(inst => inst.uid === uid);
     const m = inst ? MODULES[inst.baseId] : null;
     if (!m?.weaponDelivery || MODULE_FLAGS.isMiningTurret(m)) continue;
     if (!isTurretReady(i)) continue;
-    if ((G.P.turretCds?.[i] || 0) > 0) continue;
+    if ((getState().player.turretCds?.[i] || 0) > 0) continue;
 
-    const assignedId = G.P.turretTargets?.[i];
+    const assignedId = getState().player.turretTargets?.[i];
     if (!assignedId) continue;
 
-    const lockSlot = G.P.lockQueue?.find((s) => s.id === assignedId && !s.resolving);
+    const lockSlot = getState().player.lockQueue?.find((s) => s.id === assignedId && !s.resolving);
     if (!lockSlot) continue;
 
     const target = targetByLockId(assignedId);
     if (!target) continue;
 
-    const dist = dst(G.P.x, G.P.y, target.x, target.y);
+    const dist = dst(getState().player.x, getState().player.y, target.x, target.y);
     const wProf = getWeaponProfileForSlot(i);
     if (!wProf || dist > wProf.range * C.COMBAT.TURRET_RANGE_OVERSHOOT) continue;
 
@@ -135,9 +137,10 @@ function validatePlayerShootRequirements(
   slotIdx: number,
   isAutoFire: boolean
 ): { uid: string; inst: ModuleInstance; turretMod: ModuleDef; wProf: WeaponProfile; capNeed: number; ammoKey: string; ammoCost: number } | null {
-  const uid = G.P.fitting?.turret?.[slotIdx];
+  const p = getState().player;
+  const uid = p.fitting?.turret?.[slotIdx];
   if (!uid) return null;
-  const inst = G.P.moduleCargo.find(inst => inst.uid === uid);
+  const inst = p.moduleCargo.find(inst => inst.uid === uid);
   if (!inst) return null;
   const turretMod = MODULES[inst.baseId];
   if (!turretMod) return null;
@@ -146,16 +149,16 @@ function validatePlayerShootRequirements(
   const wProf = getWeaponProfileForSlot(slotIdx);
   if (!wProf) return null;
 
-  if ((G.P.turretCds?.[slotIdx] || 0) > 0) return null;
+  if ((p.turretCds?.[slotIdx] || 0) > 0) return null;
 
   const capNeed = wProf.ec + CAP_FIRE_SURCHARGE;
-  if (G.P.energy < capNeed) return null;
+  if (p.energy < capNeed) return null;
 
   const ammoKey = wProf.ammoType || "hybrid";
   const ammoCost = wProf.ammoPerShot ?? 1;
-  if (ammoCost > 0 && (G.P.ammo[ammoKey as keyof typeof G.P.ammo] ?? 0) < ammoCost) {
+  if (ammoCost > 0 && (p.ammo[ammoKey as keyof typeof p.ammo] ?? 0) < ammoCost) {
     if (!isAutoFire) {
-      floatText(G.P.x, G.P.y - 22, "NO AMMO", "#ff9944");
+      floatText(p.x, p.y - 22, "NO AMMO", "#ff9944");
       logEvent("Weapon failed: ammunition depleted", "warn");
     }
     return null;
@@ -166,12 +169,12 @@ function validatePlayerShootRequirements(
 
 function calculatePredictiveAimAngle(actualTarget: Enemy | Asteroid | WreckPiece | null, wProf: WeaponProfile): number {
   if (!actualTarget) {
-    return aimAngle(G.P.x, G.P.y, Client.mouseWorld.x, Client.mouseWorld.y);
+    return aimAngle(getState().player.x, getState().player.y, Client.mouseWorld.x, Client.mouseWorld.y);
   }
 
   // Predictive aim: calculate intercept point
-  const tx = actualTarget.x - G.P.x;
-  const ty = actualTarget.y - G.P.y;
+  const tx = actualTarget.x - getState().player.x;
+  const ty = actualTarget.y - getState().player.y;
   const tvx = (actualTarget as Enemy).vx || 0;
   const tvy = (actualTarget as Enemy).vy || 0;
   const bspd = wProf.spd;
@@ -194,7 +197,7 @@ function calculatePredictiveAimAngle(actualTarget: Enemy | Asteroid | WreckPiece
 
   const ix = actualTarget.x + (t > 0 ? tvx * t : 0);
   const iy = actualTarget.y + (t > 0 ? tvy * t : 0);
-  return Math.atan2(iy - G.P.y, ix - G.P.x);
+  return Math.atan2(iy - getState().player.y, ix - getState().player.x);
 }
 
 function fireBeamWeapon(ox: number, oy: number, angle: number, wProf: WeaponProfile, finalDmg: number, delivery: WeaponDelivery) {
@@ -217,7 +220,7 @@ function fireBeamWeapon(ox: number, oy: number, angle: number, wProf: WeaponProf
   const ex2 = ox + dx * hitDist, ey2 = oy + dy * hitDist;
   spawnBeam(ox, oy, ex2, ey2, wProf.color, 3);
   if (hitEnemy) {
-    damageEnemy(hitEnemy, finalDmg, ex2, ey2, G.P, delivery);
+    damageEnemy(hitEnemy, finalDmg, ex2, ey2, getState().player, delivery);
     spawnBeamImpactSubtle(ex2, ey2, wProf.color);
     sfxProjectileImpact(ex2, ey2, "beam");
   } else {
@@ -231,6 +234,7 @@ export function playerShoot(slotIdx = 0, targetEnemy: Enemy | Asteroid | WreckPi
   if (!reqs) return false;
 
   const { turretMod, wProf, capNeed, ammoKey, ammoCost } = reqs;
+  const p = getState().player;
   const st = getStats();
 
   let actualTarget = targetEnemy;
@@ -241,9 +245,12 @@ export function playerShoot(slotIdx = 0, targetEnemy: Enemy | Asteroid | WreckPi
     ? computeHitChance(actualTarget, turretMod, wProf)
     : 1;
 
-  G.P.turretCds[slotIdx] = wProf.rate;
-  G.P.energy -= capNeed;
-  if (ammoKey !== "none") G.P.ammo[ammoKey as keyof typeof G.P.ammo] -= ammoCost;
+  PlayerAccess.setTurretCd(slotIdx, wProf.rate);
+  PlayerAccess.setEnergy(p.energy - capNeed);
+  if (ammoKey !== "none") {
+    const nextAmmo = (p.ammo[ammoKey as keyof typeof p.ammo] ?? 0) - ammoCost;
+    PlayerAccess.setAmmo(ammoKey as "hybrid" | "missile", nextAmmo);
+  }
 
   flashSlotFire(slotIdx);
 
@@ -272,7 +279,7 @@ export function playerShoot(slotIdx = 0, targetEnemy: Enemy | Asteroid | WreckPi
       life: wProf.range / wProf.spd,
       dmg: finalDmg,
       color: wProf.color, sz: wProf.sz, trail: wProf.trail,
-      owner: G.P,
+      owner: getState().player,
       kind: turretMod.weaponDelivery ?? null,
       weaponId: turretMod.id,
       hitChance,
@@ -319,7 +326,7 @@ export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner
     if (e.structure < 0) e.structure = 0;
   }
 
-  if (!owner || owner === G.P) {
+  if (!owner || owner === getState().player) {
     e._lastPlayerHitAt = performance.now();
     if (weaponKind === "projectile" || weaponKind === "beam" || weaponKind === "missile") {
       e._lastPlayerHitKind = weaponKind;
@@ -355,7 +362,7 @@ export function killEnemy(e: Enemy) {
   const playerParticipated = e._lastPlayerHitAt && (performance.now() - e._lastPlayerHitAt) < PLAYER_PARTICIPATION_WINDOW_MS;
   if (playerParticipated) {
     if (e.faction !== "neutral") {
-      G.P.kills++;
+      PlayerAccess.setKills(getState().player.kills + 1);
       progressMissions("bounty", 1, e.type);
       addXp(XP_PER_KILL);
       const kind: WeaponDelivery = (e._lastPlayerHitKind as WeaponDelivery) ?? "projectile";
@@ -378,3 +385,5 @@ export function killEnemy(e: Enemy) {
   }
 }
 
+export { normalizeProfile, applyResists } from "./combat/resists.js";
+export { computeHitQuality } from "./combat/hit-quality.js";

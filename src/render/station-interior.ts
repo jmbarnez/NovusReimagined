@@ -1,4 +1,5 @@
 import { getState } from "../state-access.js";
+
 import { ctx, W, H } from "../canvas.js";
 import { TAU } from "../constants.js";
 import { shipPath } from "./world.js";

@@ -1,9 +1,8 @@
-import { G, Client } from "../state.js";
+import { Client, type Player } from "../state.js";
 import type { Asteroid, Enemy, WreckPiece } from "../types/world.js";
 import type { SpatialQueryResult } from "../utils/spatial.js";
-import { PlayerAccess, clearNav } from "../state-access.js";
+import { PlayerAccess, clearNav, getState } from "../state-access.js";
 import { enemyByLockId } from "../targeting.js";
-import { W, H } from "../canvas.js";
 import {
   ACCEL, FRICTION, ANG_FRICTION,
   PLAYER_MASS, ASTEROID_DENSITY, ENEMY_MASS,
@@ -23,26 +22,26 @@ import { C } from "../config/index.js";
 import { activeMovementMultipliers } from "../player/abilities.js";
 
 
-export function updateShip(dt: number) {
+export function updateShip(dt: number, _p?: Player) {
   const st = getStats();
-  if (!Number.isFinite(G.P.vx)) PlayerAccess.updatePhysics({ vx: 0 });
-  if (!Number.isFinite(G.P.vy)) PlayerAccess.updatePhysics({ vy: 0 });
-  if (!Number.isFinite(G.P.va)) PlayerAccess.updatePhysics({ va: 0 });
-  if (!Number.isFinite(G.P.angle)) PlayerAccess.updatePhysics({ angle: 0 });
-  if (!Number.isFinite(G.P.x)) PlayerAccess.updatePhysics({ x: 0 });
-  if (!Number.isFinite(G.P.y)) PlayerAccess.updatePhysics({ y: 0 });
+  if (!Number.isFinite(getState().player.vx)) PlayerAccess.updatePhysics({ vx: 0 });
+  if (!Number.isFinite(getState().player.vy)) PlayerAccess.updatePhysics({ vy: 0 });
+  if (!Number.isFinite(getState().player.va)) PlayerAccess.updatePhysics({ va: 0 });
+  if (!Number.isFinite(getState().player.angle)) PlayerAccess.updatePhysics({ angle: 0 });
+  if (!Number.isFinite(getState().player.x)) PlayerAccess.updatePhysics({ x: 0 });
+  if (!Number.isFinite(getState().player.y)) PlayerAccess.updatePhysics({ y: 0 });
 
-  // Build cargo map once per tick to avoid repeated O(N*M) lookups inside G.P.moduleCargo
+  // Build cargo map once per tick to avoid repeated O(N*M) lookups inside getState().player.moduleCargo
   const cargoMap = new Map<string, import("../types/moduleInstance.js").ModuleInstance>();
-  if (Array.isArray(G.P.moduleCargo)) {
-    for (let i = 0; i < G.P.moduleCargo.length; i++) {
-      const inst = G.P.moduleCargo[i];
+  if (Array.isArray(getState().player.moduleCargo)) {
+    for (let i = 0; i < getState().player.moduleCargo.length; i++) {
+      const inst = getState().player.moduleCargo[i];
       if (inst && inst.uid) cargoMap.set(inst.uid, inst);
     }
   }
 
   PlayerAccess.updatePhysics({ thrustFx: false });
-  const speed = Math.hypot(G.P.vx, G.P.vy);
+  const speed = Math.hypot(getState().player.vx, getState().player.vy);
   let ax = 0, ay = 0;
   let at = 0;
 
@@ -53,8 +52,8 @@ export function updateShip(dt: number) {
     if (!target) {
       clearNav();
     } else {
-      const dx = target.x - G.P.x;
-      const dy = target.y - G.P.y;
+      const dx = target.x - getState().player.x;
+      const dy = target.y - getState().player.y;
       const d = Math.hypot(dx, dy);
       const targetAngle = Math.atan2(dy, dx);
       const hysteresis = 30;
@@ -68,14 +67,14 @@ export function updateShip(dt: number) {
         } else {
           desiredAngle = targetAngle + (Math.PI / 2) * nav.dir;
         }
-        const diff = angleDiff(G.P.angle, desiredAngle);
+        const diff = angleDiff(getState().player.angle, desiredAngle);
         at = diff * C.PHYSICS.SHIP.turnRateMultiplier;
         ax = Math.cos(desiredAngle);
         ay = Math.sin(desiredAngle);
         PlayerAccess.updatePhysics({ thrustFx: true });
       } else if (nav.mode === "keepRange") {
         // Face target so weapons stay on it
-        const diff = angleDiff(G.P.angle, targetAngle);
+        const diff = angleDiff(getState().player.angle, targetAngle);
         at = diff * C.PHYSICS.SHIP.turnRateMultiplier;
 
         if (d > nav.rangePx + hysteresis) {
@@ -95,36 +94,36 @@ export function updateShip(dt: number) {
     }
   } else if (Client.waypoint && !Client.stationOpen && !Client.bridgeOpen && !Client.settingsOpen) {
     const wp = Client.waypoint;
-    const dx = wp.x - G.P.x;
-    const dy = wp.y - G.P.y;
+    const dx = wp.x - getState().player.x;
+    const dy = wp.y - getState().player.y;
     const dist = Math.hypot(dx, dy);
     const wpAngle = Math.atan2(dy, dx);
 
     if (dist < 30) {
       Client.waypoint = null;
     } else {
-      const diff = angleDiff(G.P.angle, wpAngle);
+      const diff = angleDiff(getState().player.angle, wpAngle);
       at = diff * C.PHYSICS.SHIP.turnRateMultiplier;
       ax = Math.cos(wpAngle);
       ay = Math.sin(wpAngle);
       PlayerAccess.updatePhysics({ thrustFx: true });
     }
   } else if (!Client.stationOpen && !Client.bridgeOpen && !Client.settingsOpen && !Client.cursorUnlocked) {
-    const targetAngle = aimAngle(G.P.x, G.P.y, Client.mouseWorld.x, Client.mouseWorld.y);
-    const diff = angleDiff(G.P.angle, targetAngle);
+    const targetAngle = aimAngle(getState().player.x, getState().player.y, Client.mouseWorld.x, Client.mouseWorld.y);
+    const diff = angleDiff(getState().player.angle, targetAngle);
     at = diff * C.PHYSICS.SHIP.turnRateMultiplier;
   }
 
-  const isThrusting = G.P.thrustFx && speed > C.PHYSICS.SHIP.minSpeedForThrust;
+  const isThrusting = getState().player.thrustFx && speed > C.PHYSICS.SHIP.minSpeedForThrust;
 
   if (Client.keys[" "]) {
-    PlayerAccess.updatePhysics({ vx: G.P.vx * C.PHYSICS.SHIP.brakeVelocityRetention, vy: G.P.vy * C.PHYSICS.SHIP.brakeVelocityRetention, va: G.P.va * C.PHYSICS.SHIP.brakeAngularRetention });
+    PlayerAccess.updatePhysics({ vx: getState().player.vx * C.PHYSICS.SHIP.brakeVelocityRetention, vy: getState().player.vy * C.PHYSICS.SHIP.brakeVelocityRetention, va: getState().player.va * C.PHYSICS.SHIP.brakeAngularRetention });
   }
 
   let capDrained = false;
   let anyStateChanged = false;
   for (const rack of RACK_TYPES) {
-    const slots = G.P.fitting?.[rack] || [];
+    const slots = getState().player.fitting?.[rack] || [];
     for (let i = 0; i < slots.length; i++) {
       const uid = slots[i];
       if (!uid) continue;
@@ -133,11 +132,11 @@ export function updateShip(dt: number) {
       const m = MODULES[inst.baseId];
       if (!m?.isActive || !m.capDrainPerSec) continue;
       if (MODULE_FLAGS.isTractor(m)) continue;
-      if (!(G.P.slotActive?.[rack]?.[i] ?? true)) continue;
+      if (!(getState().player.slotActive?.[rack]?.[i] ?? true)) continue;
       if (inst.baseId === "me-ab1" && !isThrusting) continue;
       const drain = m.capDrainPerSec * dt;
-      if (G.P.energy >= drain) {
-        PlayerAccess.setEnergy(G.P.energy - drain);
+      if (getState().player.energy >= drain) {
+        PlayerAccess.setEnergy(getState().player.energy - drain);
         capDrained = true;
       } else {
         PlayerAccess.setSlotActive(rack, i, false);
@@ -151,14 +150,14 @@ export function updateShip(dt: number) {
   let turnRate = st.turnRate;
   let mainThrust = st.mainThrust;
   let drag = st.dragPerSec;
-  const medSlots = G.P.fitting?.med || [];
+  const medSlots = getState().player.fitting?.med || [];
   const abUid = medSlots.find(uid => {
     if (!uid) return false;
     const inst = cargoMap.get(uid);
     return inst?.baseId === "me-ab1";
   });
   const abIdx = abUid ? medSlots.indexOf(abUid) : -1;
-  const abActive = abIdx >= 0 && !!(G.P.slotActive?.med?.[abIdx] ?? true);
+  const abActive = abIdx >= 0 && !!(getState().player.slotActive?.med?.[abIdx] ?? true);
   const abOn = abIdx >= 0 && abActive;
   if (abIdx >= 0 && !abActive) {
     thrustScale = st.baseThrustScale ?? st.thrustScale;
@@ -171,34 +170,34 @@ export function updateShip(dt: number) {
   const mult = activeMovementMultipliers();
   mainThrust *= mult.thrust;
 
-  PlayerAccess.updatePhysics({ vx: G.P.vx + ax * mainThrust * dt, vy: G.P.vy + ay * mainThrust * dt, va: G.P.va + at * turnRate * dt });
+  PlayerAccess.updatePhysics({ vx: getState().player.vx + ax * mainThrust * dt, vy: getState().player.vy + ay * mainThrust * dt, va: getState().player.va + at * turnRate * dt });
   // Cap to ability-boosted max speed when an active speed multiplier is in play.
   if (mult.speed > 1) {
     const cap = (st.maxSpeed || 0) * mult.speed;
     if (cap > 0) {
-      const sp = Math.hypot(G.P.vx, G.P.vy);
-      if (sp > cap) { const k = cap / sp; PlayerAccess.updatePhysics({ vx: G.P.vx * k, vy: G.P.vy * k }); }
+      const sp = Math.hypot(getState().player.vx, getState().player.vy);
+      if (sp > cap) { const k = cap / sp; PlayerAccess.updatePhysics({ vx: getState().player.vx * k, vy: getState().player.vy * k }); }
     }
   }
 
-  PlayerAccess.updatePhysics({ vx: G.P.vx * drag, vy: G.P.vy * drag, va: G.P.va * ANG_FRICTION });
+  PlayerAccess.updatePhysics({ vx: getState().player.vx * drag, vy: getState().player.vy * drag, va: getState().player.va * ANG_FRICTION });
 
   // Snap negligible velocity to zero — eliminates perpetual micro-drift
   // that the camera would chase, causing fine vibration.
-  if (Math.abs(G.P.vx) < 0.01) PlayerAccess.updatePhysics({ vx: 0 });
-  if (Math.abs(G.P.vy) < 0.01) PlayerAccess.updatePhysics({ vy: 0 });
-  if (Math.abs(G.P.va) < 0.001) PlayerAccess.updatePhysics({ va: 0 });
+  if (Math.abs(getState().player.vx) < 0.01) PlayerAccess.updatePhysics({ vx: 0 });
+  if (Math.abs(getState().player.vy) < 0.01) PlayerAccess.updatePhysics({ vy: 0 });
+  if (Math.abs(getState().player.va) < 0.001) PlayerAccess.updatePhysics({ va: 0 });
 
-  PlayerAccess.updatePhysics({ px: G.P.x, py: G.P.y, prevAngle: G.P.angle });
-  PlayerAccess.updatePhysics({ x: G.P.x + G.P.vx * dt, y: G.P.y + G.P.vy * dt, angle: G.P.angle + G.P.va * dt });
+  PlayerAccess.updatePhysics({ px: getState().player.x, py: getState().player.y, prevAngle: getState().player.angle });
+  PlayerAccess.updatePhysics({ x: getState().player.x + getState().player.vx * dt, y: getState().player.y + getState().player.vy * dt, angle: getState().player.angle + getState().player.va * dt });
 
-  const currentSpeed = Math.hypot(G.P.vx, G.P.vy);
+  const currentSpeed = Math.hypot(getState().player.vx, getState().player.vy);
   if (currentSpeed > 8) {
-    const cos = Math.cos(G.P.angle);
-    const sin = Math.sin(G.P.angle);
+    const cos = Math.cos(getState().player.angle);
+    const sin = Math.sin(getState().player.angle);
     const rearDist = C.PHYSICS.SHIP.thrustTrailRearDist;
-    const wx = G.P.x - cos * rearDist;
-    const wy = G.P.y - sin * rearDist;
+    const wx = getState().player.x - cos * rearDist;
+    const wy = getState().player.y - sin * rearDist;
 
     addTrailSegment({
       x: wx,
@@ -206,46 +205,47 @@ export function updateShip(dt: number) {
       color: abOn ? C.PHYSICS.SHIP.thrustTrailABColor : C.PHYSICS.SHIP.thrustTrailNormalColor,
       width: abOn ? C.PHYSICS.SHIP.thrustTrailABWidth : C.PHYSICS.SHIP.thrustTrailNormalWidth,
       life: C.PHYSICS.SHIP.thrustTrailLife,
-      angle: G.P.angle,
+      angle: getState().player.angle,
     });
   }
 
-  if ((G.P._colCooldown ?? 0) > 0) PlayerAccess.setColCooldown((G.P._colCooldown ?? 0) - dt);
+  if ((getState().player._colCooldown ?? 0) > 0) PlayerAccess.setColCooldown((getState().player._colCooldown ?? 0) - dt);
 
   resolveSolidCollisions();
 
-  if (G.P.invincible > 0) PlayerAccess.setInvincible(G.P.invincible - dt);
+  if (getState().player.invincible > 0) PlayerAccess.setInvincible(getState().player.invincible - dt);
   if ((Client.combatHeat ?? 0) > 0) {
     PlayerAccess.setCombatHeat(Math.max(0, Client.combatHeat - dt * 0.25));
   }
-  if (G.P.shieldHitGlow > 0) {
-    PlayerAccess.setShieldHitGlow(G.P.shieldHitGlow - dt * 2.5);
-    if (G.P.shieldHitGlow <= 0) {
+  if (getState().player.shieldHitGlow > 0) {
+    PlayerAccess.setShieldHitGlow(getState().player.shieldHitGlow - dt * 2.5);
+    if (getState().player.shieldHitGlow <= 0) {
       PlayerAccess.setShieldHitGlow(0);
       PlayerAccess.setShieldHitAngle(0);
     }
   }
-  if (G.P.hullHitGlow > 0) {
-    PlayerAccess.setHullHitGlow(G.P.hullHitGlow - dt * 3.0);
-    if (G.P.hullHitGlow <= 0) {
+  if (getState().player.hullHitGlow > 0) {
+    PlayerAccess.setHullHitGlow(getState().player.hullHitGlow - dt * 3.0);
+    if (getState().player.hullHitGlow <= 0) {
       PlayerAccess.setHullHitGlow(0);
       PlayerAccess.setHullHitAngle(0);
     }
   }
-  if ((G.P.structureHitGlow ?? 0) > 0) {
-    PlayerAccess.setStructureHitGlow((G.P.structureHitGlow ?? 0) - dt * 3.0);
-    if (G.P.structureHitGlow! <= 0) {
+  if ((getState().player.structureHitGlow ?? 0) > 0) {
+    PlayerAccess.setStructureHitGlow((getState().player.structureHitGlow ?? 0) - dt * 3.0);
+    if (getState().player.structureHitGlow! <= 0) {
       PlayerAccess.setStructureHitGlow(0);
       PlayerAccess.setStructureHitAngle(0);
     }
   }
 
-  PlayerAccess.setShield(Math.min(st.maxShield, G.P.shield + st.shieldRegen * dt));
-  PlayerAccess.setEnergy(Math.min(st.maxEnergy, G.P.energy + st.energyRegen * dt));
+  PlayerAccess.setShield(Math.min(st.maxShield, getState().player.shield + st.shieldRegen * dt));
+  PlayerAccess.setEnergy(Math.min(st.maxEnergy, getState().player.energy + st.energyRegen * dt));
 
-  if (G.P.slotHeat) {
-    for (const rack of Object.keys(G.P.slotHeat)) {
-      const heat = G.P.slotHeat[rack];
+  const slotHeat = getState().player.slotHeat;
+  if (slotHeat) {
+    for (const rack of Object.keys(slotHeat)) {
+      const heat = slotHeat[rack] ?? [];
       for (let i = 0; i < heat.length; i++) {
         if (heat[i] > 0) PlayerAccess.setSlotHeat(rack, i, Math.max(0, heat[i] - dt * 0.15));
       }
@@ -259,12 +259,12 @@ export function updateShip(dt: number) {
 const _colHits: SpatialQueryResult<unknown>[] = [];
 
 function resolveSolidCollisions() {
-  const grid = G.spatialGrid;
+  const grid = getState().spatialGrid;
   if (!grid) return;
-  const playerR = SHIPS[G.P.shipId]?.colRadius ?? 20;
+  const playerR = SHIPS[getState().player.shipId]?.colRadius ?? 20;
 
   _colHits.length = 0;
-  grid.query(G.P.x, G.P.y, playerR, null, _colHits);
+  grid.query(getState().player.x, getState().player.y, playerR, null, _colHits);
 
   for (let i = 0; i < _colHits.length; i++) {
     const h = _colHits[i];
@@ -281,9 +281,9 @@ function resolveSolidCollisions() {
       const ast = h.data as Asteroid;
       if (!ast) continue;
       const mA = ast.radius * ast.radius * ASTEROID_DENSITY;
-      const closing = resolveElasticCollision(G.P, ast, PLAYER_MASS, mA, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
+      const closing = resolveElasticCollision(getState().player, ast, PLAYER_MASS, mA, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
 
-      if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
+      if (closing > COLLISION_DMG_THRESHOLD && (getState().player._colCooldown || 0) <= 0) {
         const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE;
         damagePlayer(dmg, ast.x, ast.y);
         PlayerAccess.setColCooldown(COLLISION_COOLDOWN);
@@ -292,9 +292,9 @@ function resolveSolidCollisions() {
     } else if (h.type === "enemy") {
       const en = h.data as Enemy;
       if (!en) continue;
-      const closing = resolveElasticCollision(G.P, en, PLAYER_MASS, ENEMY_MASS, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
+      const closing = resolveElasticCollision(getState().player, en, PLAYER_MASS, ENEMY_MASS, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
 
-      if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
+      if (closing > COLLISION_DMG_THRESHOLD && (getState().player._colCooldown || 0) <= 0) {
         const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.5;
         damagePlayer(dmg, en.x, en.y);
         PlayerAccess.setColCooldown(COLLISION_COOLDOWN);
@@ -305,9 +305,9 @@ function resolveSolidCollisions() {
       if (!piece || piece.hp <= 0) continue;
       // Piece mass proportional to radius^2 (flat debris slab approximation).
       const pieceMass = piece.radius * piece.radius * 0.8;
-      const closing = resolveElasticCollision(G.P, piece, PLAYER_MASS, pieceMass, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
+      const closing = resolveElasticCollision(getState().player, piece, PLAYER_MASS, pieceMass, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION);
 
-      if (closing > COLLISION_DMG_THRESHOLD && (G.P._colCooldown || 0) <= 0) {
+      if (closing > COLLISION_DMG_THRESHOLD && (getState().player._colCooldown || 0) <= 0) {
         const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.4;
         damagePlayer(dmg, piece.x, piece.y);
         PlayerAccess.setColCooldown(COLLISION_COOLDOWN);

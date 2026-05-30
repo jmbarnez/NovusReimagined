@@ -1,0 +1,54 @@
+/* ── Perf Window ── */
+.perf-window {
+  position: fixed;
+  left: 10px;
+  top: 22px;
+  width: 440px;
+  z-index: 90;
+  display: none;
+  flex-direction: column;
+  background: rgba(10,14,20,0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(60,75,95,0.45);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  font-family: var(--font-family);
+  font-size: 11px;
+  color: #8899aa;
+  pointer-events: auto;
+}
+.perf-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px;
+  background: var(--hud-bg-elevated);
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+  cursor: grab;
+  user-select: none;
+}
+.perf-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #a0b0c4;
+}
+.perf-close {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: #6a7a8a;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.perf-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.perf-body {
+  padding: 6px 10px;
+  line-height: 15px;
+}
+.perf-fps { color: #7ab8d8; }

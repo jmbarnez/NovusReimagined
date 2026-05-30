@@ -1,6 +1,6 @@
 import "../styles/hud-slots.css";
-import { G } from "../../state.js";
-import { PlayerAccess } from "../../state-access.js";
+
+import { PlayerAccess, getState } from "../../state-access.js";
 import { SHIPS, type ShipDef, type ShipFitting } from "../../data/ships.js";
 import { MODULES, MODULE_FLAGS } from "../../data/modules.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
@@ -18,6 +18,8 @@ import { iconSvg } from "../station/shared.js";
 import type { ComputedStats } from "../../player/player-stats.js";
 import { savePlayer } from "../../player/player-data.js";
 import { sfxBlip } from "../../audio/procedural.js";
+import { playerHardpointRack } from "../../utils/hardpoints.js";
+import { getSlotPowerCd, isSlotPoweredOn } from "../../utils/slot-power.js";
 
 export interface SlotNode {
   el: HTMLElement;
@@ -33,7 +35,7 @@ export interface SlotNode {
 export function updateSlots(ship: ShipDef, st: ComputedStats, now: number) {
   const ft = ship.fitting;
   const nSlots = (ft.turret | 0) + (ft.high | 0) + (ft.med | 0) + (ft.low | 0);
-  const stateKey = `${nSlots}|${G.P._assignTargetId ?? "-"}`;
+  const stateKey = `${nSlots}|${getState().player._assignTargetId ?? "-"}`;
 
   // Rebuild slots if ship/fitting changed
   if (stateKey !== hudState.lastSlotState) {
@@ -70,23 +72,23 @@ export function getRackState(rack: string): "on" | "off" | "partial" {
   let count = 0;
 
   const checkSlot = (r: "turret" | "high" | "med" | "low", i: number) => {
-    const slots = G.P.fitting[r];
+    const slots = getState().player.fitting[r];
     if (!slots || !slots[i]) return;
     count++;
-    const power = r === "turret" ? (G.P.turretPower?.[i] ?? false) : (G.P.slotActive[r]?.[i] ?? true);
+    const power = isSlotPoweredOn(r, i, getState().player);
     if (power) allOff = false;
     else allOn = false;
   };
 
   if (rack === "global") {
     for (const r of RACK_ORDER as ("turret" | "high" | "med" | "low")[]) {
-      const slots = G.P.fitting[r];
+      const slots = getState().player.fitting[r];
       const n = slots ? slots.length : 0;
       for (let i = 0; i < n; i++) checkSlot(r, i);
     }
   } else {
     const r = rack as "turret" | "high" | "med" | "low";
-    const slots = G.P.fitting[r];
+    const slots = getState().player.fitting[r];
     const n = slots ? slots.length : 0;
     for (let i = 0; i < n; i++) checkSlot(r, i);
   }
@@ -161,7 +163,7 @@ export function rebuildSlots(ship: ShipDef) {
       el.appendChild(muzzle);
 
       el.addEventListener("click", (e) => onSlotClick(e, rack, idx));
-      if (rack === "turret") {
+      if (rack === playerHardpointRack(getState().player)) {
         el.addEventListener("contextmenu", (e) => onTurretContextMenu(e, rack, idx));
       }
       el.addEventListener("mouseenter", (e) => showSlotTooltip(rack, idx, e.clientX, e.clientY));
@@ -180,15 +182,15 @@ export function rebuildSlots(ship: ShipDef) {
 export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx: number, st: ComputedStats, now: number) {
   const { el, cdOverlay, heatFill, subEl, nameEl } = node;
   const r = rack as "turret" | "high" | "med" | "low";
-  const uid = G.P.fitting[r]?.[idx];
+  const uid = getState().player.fitting[r]?.[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
-  const pending = G.P._assignTargetId != null;
+  const pending = getState().player._assignTargetId != null;
 
-  const isTurret = rack === "turret";
-  const ownPower = isTurret ? (G.P.turretPower?.[idx] ?? false) : (G.P.slotActive[r]?.[idx] ?? true);
+  const isTurret = rack === playerHardpointRack(getState().player);
+  const ownPower = isSlotPoweredOn(r, idx, getState().player);
   const isPowered = ownPower;
-  const powerCd = isTurret ? (G.P.turretPowerCd?.[idx] || 0) : 0;
+  const powerCd = getSlotPowerCd(r, idx, getState().player);
   const isSlotActive = isPowered && powerCd <= 0;
 
   const durPct = inst ? Math.round((inst.durability / inst.maxDurability) * 100) : 100;
@@ -204,11 +206,11 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   if (modDamaged) cls += " module-damaged";
   if (modOffline) cls += " module-offline";
 
-  if (isTurret && idx === (G.P.fireControlSlot ?? 0)) cls += " turret-selected";
+  if (isTurret && idx === (getState().player.fireControlSlot ?? 0)) cls += " turret-selected";
 
   const assignedId = isTurret
-    ? (G.P.turretTargets?.[idx] ?? null)
-    : (rack === "high" && m?.isSalvager ? (G.P.highTargets?.[idx] ?? null) : null);
+    ? (getState().player.turretTargets?.[idx] ?? null)
+    : (rack === "high" && m?.isSalvager ? (getState().player.highTargets?.[idx] ?? null) : null);
   if (assignedId != null) cls += " target-assigned";
 
   const canAssign = isTurret && (m?.weaponDelivery || MODULE_FLAGS.isMiningTurret(m));
@@ -260,7 +262,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
         strBtn.textContent = btnText;
       }
     }
-    const t = G.P.tractorTightness ?? 0.5;
+    const t = getState().player.tractorTightness ?? 0.5;
     strBtn.style.setProperty("--tightness", String(t));
   } else {
     if (strBtn) {
@@ -269,7 +271,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   }
 
   // Heat / module HP bar (dirty-check)
-  const heat = G.P.slotHeat?.[r]?.[idx] || 0;
+  const heat = getState().player.slotHeat?.[r]?.[idx] || 0;
   let barW: string, barCls: string;
   if (modDamaged || modOffline) {
     const hpPct = inst ? inst.durability / inst.maxDurability : 0;
@@ -291,7 +293,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   let cdH = "0%";
   if (isWeaponTurret) {
     const prof = WEAPON_PROFILES[inst!.baseId] || WEAPON_PROFILES.default;
-    const cdVal = G.P.turretCds?.[idx] || 0;
+    const cdVal = getState().player.turretCds?.[idx] || 0;
     if (cdVal > 0 && prof.rate > 0) {
       const pct = Math.max(0, Math.min(1, cdVal / prof.rate));
       cdH = `${pct * 100}%`;
@@ -329,7 +331,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     subCls = "sl-sub off";
   } else if (isWeaponTurret) {
     const prof = WEAPON_PROFILES[inst!.baseId] || WEAPON_PROFILES.default;
-    const cdVal = G.P.turretCds?.[idx] || 0;
+    const cdVal = getState().player.turretCds?.[idx] || 0;
     let cdStr = "RDY";
     if (cdVal > 0 && prof.rate > 0) {
       const r = Math.round((1 - cdVal / prof.rate) * 100);
@@ -389,34 +391,39 @@ export function onRackSwitchZoneClick(rack: string, wantOn: boolean) {
 
 export function onSlotClick(e: MouseEvent, rack: string, idx: number) {
   const r = rack as "turret" | "high" | "med" | "low";
-  const uid = G.P.fitting[r]?.[idx];
+  const uid = getState().player.fitting[r]?.[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   const node = hudState.slotNodes.get(`${rack}|${idx}`) as SlotNode | undefined;
 
   // Shift+click on turret assigns target
-  if (rack === "turret" && e.shiftKey) {
+  if (rack === playerHardpointRack(getState().player) && e.shiftKey) {
     if (!m) return;
-    if (G.P._assignTargetId != null) {
-      PlayerAccess.setTurretTarget(idx, G.P._assignTargetId);
-      const target = targetByLockId(G.P._assignTargetId);
-      floatText(G.P.x, G.P.y - 30, `TURRET → ${target?.name || "TARGET"}`, "#44ffaa");
+    if (getState().player._assignTargetId != null) {
+      const assignTargetId = getState().player._assignTargetId;
+      if (!assignTargetId) return;
+      PlayerAccess.setTurretTarget(idx, assignTargetId);
+      const target = targetByLockId(assignTargetId);
+      floatText(getState().player.x, getState().player.y - 30, `TURRET → ${target?.name || "TARGET"}`, "#44ffaa");
       PlayerAccess.setAssignTargetId(null);
-    } else if (G.P.targetLock) {
-      PlayerAccess.setTurretTarget(idx, G.P.targetLock.id);
-      floatText(G.P.x, G.P.y - 30, `${m.short || m.name} → ${G.P.targetLock.name || "TARGET"}`, "#44ffaa");
+    } else {
+      const targetLock = getState().player.targetLock;
+      if (!targetLock) return;
+      PlayerAccess.setTurretTarget(idx, targetLock.id);
+      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} → ${targetLock.name || "TARGET"}`, "#44ffaa");
     }
     return;
   }
 
   // Shift+click on salvager high slot assigns locked wreck
   if (rack === "high" && e.shiftKey && m?.isSalvager) {
-    if (G.P.targetLock) {
-      PlayerAccess.setHighTarget(idx, G.P.targetLock.id);
-      floatText(G.P.x, G.P.y - 30, `${m.short || m.name} → ${G.P.targetLock.name || "WRECK"}`, "#00e8c8");
+    const targetLock = getState().player.targetLock;
+    if (targetLock) {
+      PlayerAccess.setHighTarget(idx, targetLock.id);
+      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} → ${targetLock.name || "WRECK"}`, "#00e8c8");
     } else {
       PlayerAccess.setHighTarget(idx, null);
-      floatText(G.P.x, G.P.y - 30, `${m.short || m.name} UNASSIGNED`, "#ffaa44");
+      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} UNASSIGNED`, "#ffaa44");
     }
     return;
   }
@@ -430,7 +437,7 @@ export function onSlotClick(e: MouseEvent, rack: string, idx: number) {
 export function flashSlotFire(slotIdx: number) {
   // slotIdx is the global index across all racks (turret first, then high, etc.)
   // We need to map it back to rack+idx
-  const ship = SHIPS[G.P.shipId];
+  const ship = SHIPS[getState().player.shipId];
   if (!ship) return;
   let count = 0;
   for (const rack of RACK_ORDER) {

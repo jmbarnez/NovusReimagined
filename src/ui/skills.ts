@@ -1,4 +1,4 @@
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 import { SKILL_IDS, SKILL_DEF, SKILL_CATEGORIES, CATEGORY_LABELS, CATEGORY_COLORS, xpForSkillLevel, levelForSkillXp, MAX_SKILL_LEVEL, type SkillId } from "../data/skills.js";
 import { escHtml } from "../utils/format.js";
 import "./styles/skills.css";
@@ -8,7 +8,7 @@ let _hoveredSkillId: string | null = null;
 function renderSkillDetail(id: string | null) {
   if (!id) return "<div style='color:#3a5060;font-size:10px;padding:8px 0;'>Hover a skill to see details.</div>";
   const def = SKILL_DEF[id as SkillId];
-  const p = G.P;
+  const p = getState().player;
   const xp = p.skillXp?.[id] || 0;
   const lvl = levelForSkillXp(xp);
   const nextXp = lvl < MAX_SKILL_LEVEL ? xpForSkillLevel(lvl + 1) : xpForSkillLevel(MAX_SKILL_LEVEL);
@@ -30,7 +30,7 @@ function renderSkillDetail(id: string | null) {
 }
 
 export function renderSkillsContent() {
-  const p = G.P;
+  const p = getState().player;
   const totalLvl = SKILL_IDS.reduce((sum, id) => sum + levelForSkillXp(p.skillXp?.[id] || 0), 0);
   const maxTotal = SKILL_IDS.length * MAX_SKILL_LEVEL;
 

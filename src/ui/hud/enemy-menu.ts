@@ -1,6 +1,6 @@
 import "../styles/hud-enemy-menu.css";
-import { G, Client } from "../../state.js";
-import { setNavCommand, clearNav } from "../../state-access.js";
+import { Client } from "../../state.js";
+import { setNavCommand, clearNav, getState } from "../../state-access.js";
 import { requestSensorLock, removeSensorLock } from "../../targeting.js";
 import { hudState } from "./state.js";
 import { formatDistance } from "../../utils/format.js";
@@ -13,10 +13,10 @@ export function showEnemyCtxMenu(x: number, y: number, enemyId: string) {
   if (!hudState.enemyCtxMenu) return;
   activeEnemyId = enemyId;
 
-  const sys = G.GALAXY[G.P.sysIdx];
+  const sys = getState().GALAXY[getState().player.sysIdx];
   const enemy = sys?.enemies?.find((x) => x.id === enemyId);
   const isNeutral = enemy?.faction === "neutral";
-  const isLocked = G.P.lockQueue?.some((slot) => slot.id === enemyId && !slot.resolving) ?? false;
+  const isLocked = getState().player.lockQueue?.some((slot) => slot.id === enemyId && !slot.resolving) ?? false;
   const hasNav = Client.navCommand !== null;
 
   const presets = [150, 300, 500, 1000, 1500, 2000, 3000, 5000];
@@ -105,14 +105,14 @@ export function onEnemyCtxItemClick(e: Event) {
     const rangePx = parseFloat(target.dataset.range!);
     setNavCommand({ mode: "keepRange", targetId: activeEnemyId, rangePx, dir: 1 });
   } else if (action === "toggle-lock") {
-    const isLocked = G.P.lockQueue?.some((slot) => slot.id === activeEnemyId && !slot.resolving) ?? false;
+    const isLocked = getState().player.lockQueue?.some((slot) => slot.id === activeEnemyId && !slot.resolving) ?? false;
     if (isLocked) {
       removeSensorLock(activeEnemyId);
     } else {
       requestSensorLock(activeEnemyId);
     }
   } else if (action === "hail") {
-    const sys = G.GALAXY[G.P.sysIdx];
+    const sys = getState().GALAXY[getState().player.sysIdx];
     const enemy = sys?.enemies?.find((x) => x.id === activeEnemyId);
     if (enemy) {
       enemy._speech = {

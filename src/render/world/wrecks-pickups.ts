@@ -1,5 +1,5 @@
-import { getState } from "../../state-access.js";
 import { Client } from "../../state.js";
+import { getState } from "../../state-access.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { dst } from "../../utils/math.js";
@@ -10,9 +10,10 @@ import { getModule } from "../../data/modules.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { PICKUP_LIFE_S } from "../../wreck.js";
 import { getUIFont } from "../ui-font.js";
+import type { LockSlot } from "../../types/world.js";
 
 // ── Wreck debris pieces ───────────────────────────────────────────────────
-const _wreckLockMap = new Map<string, any>();
+const _wreckLockMap = new Map<string, LockSlot>();
 
 export function drawWreckPieces(now: number) {
   _wreckLockMap.clear();

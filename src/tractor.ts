@@ -1,4 +1,5 @@
-import { G, Client } from "./state.js";
+import { Client } from "./state.js";
+import { getState, PlayerAccess, TractorAccess } from "./state-access.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "./data/modules.js";
 import { getInstance } from "./utils/items.js";
 import { dst } from "./utils/math.js";
@@ -8,6 +9,7 @@ import { curSys } from "./utils/game.js";
 import { ASTEROID_DENSITY } from "./constants.js";
 import { invalidate } from "./player/player-stats.js";
 import type { Asteroid, WreckPiece, LockSlot } from "./types/world.js";
+import { findFirstPoweredModuleSlot } from "./utils/module-slots.js";
 
 export const TRACTOR_RANGE = 600;
 
@@ -16,31 +18,20 @@ let _tooHeavyTimer = 0;
 let _prevCarryKg = 0;
 
 function findTractorSlot(): { idx: number; mod: ModuleDef } | null {
-  const turrets = G.P.fitting?.turret;
-  if (!turrets) return null;
-  for (let i = 0; i < turrets.length; i++) {
-    const uid = turrets[i];
-    if (!uid) continue;
-    const inst = getInstance(uid);
-    const m = inst ? MODULES[inst.baseId] : null;
-    if (!m || !MODULE_FLAGS.isTractor(m)) continue;
-    const powered = G.P.turretPower?.[i] ?? false;
-    if (powered) return { idx: i, mod: m };
-  }
-  return null;
+  return findFirstPoweredModuleSlot(MODULE_FLAGS.isTractor, getState().player);
 }
 
 function resolveAssignedTarget(slotIdx: number): { entity: Asteroid | WreckPiece; mass: number; id: string } | null {
-  const assignedId = G.P.turretTargets?.[slotIdx];
+  const assignedId = getState().player.turretTargets?.[slotIdx];
   if (!assignedId) return null;
 
-  const lockSlot = G.P.lockQueue?.find((s: LockSlot) => s.id === assignedId);
+  const lockSlot = getState().player.lockQueue?.find((s: LockSlot) => s.id === assignedId);
   if (!lockSlot || lockSlot.resolving) return null;
 
   if (isWreckPieceTarget(assignedId)) {
-    const piece = G.wreckPieces.find((p) => p.id === assignedId);
+    const piece = getState().wreckPieces.find((p) => p.id === assignedId);
     if (!piece || piece.hp <= 0) return null;
-    if (dst(G.P.x, G.P.y, piece.x, piece.y) > TRACTOR_RANGE) return null;
+    if (dst(getState().player.x, getState().player.y, piece.x, piece.y) > TRACTOR_RANGE) return null;
     const mass = piece.radius * piece.radius * 0.8;
     return { entity: piece, mass, id: assignedId };
   }
@@ -50,7 +41,7 @@ function resolveAssignedTarget(slotIdx: number): { entity: Asteroid | WreckPiece
     if (!sys) return null;
     const ast = sys._asteroidMap?.get(assignedId);
     if (!ast || ast.depleted || ast.hp <= 0) return null;
-    if (dst(G.P.x, G.P.y, ast.x, ast.y) > TRACTOR_RANGE) return null;
+    if (dst(getState().player.x, getState().player.y, ast.x, ast.y) > TRACTOR_RANGE) return null;
     const mass = ast.radius * ast.radius * ASTEROID_DENSITY;
     return { entity: ast, mass, id: assignedId };
   }
@@ -60,37 +51,42 @@ function resolveAssignedTarget(slotIdx: number): { entity: Asteroid | WreckPiece
 
 function setCarryKg(kg: number) {
   if (kg !== _prevCarryKg) {
-    G.P.tractorCarryKg = kg;
+    PlayerAccess.setTractorCarryKg(kg);
     _prevCarryKg = kg;
     invalidate();
   }
 }
 
 export function updateTractor(dt: number) {
-  const tr = G.tractor;
+  if (!getState().tractor) {
+    TractorAccess.update({
+      active: false,
+      targetId: null,
+      tooHeavy: false,
+      x1: 0,
+      y1: 0,
+      x2: 0,
+      y2: 0,
+      phase: 0,
+    });
+  }
 
   const slot = findTractorSlot();
   if (!slot) {
-    tr.active = false;
-    tr.targetId = null;
-    tr.tooHeavy = false;
+    TractorAccess.update({ active: false, targetId: null, tooHeavy: false });
     setCarryKg(0);
     return;
   }
 
   if (Client.stationOpen || Client.showMap || Client.bridgeOpen || Client.settingsOpen) {
-    tr.active = false;
-    tr.targetId = null;
-    tr.tooHeavy = false;
+    TractorAccess.update({ active: false, targetId: null, tooHeavy: false });
     setCarryKg(0);
     return;
   }
 
   const resolved = resolveAssignedTarget(slot.idx);
   if (!resolved) {
-    tr.active = false;
-    tr.targetId = null;
-    tr.tooHeavy = false;
+    TractorAccess.update({ active: false, targetId: null, tooHeavy: false });
     setCarryKg(0);
     return;
   }
@@ -98,32 +94,33 @@ export function updateTractor(dt: number) {
   const { entity, mass, id } = resolved;
   const maxMass = slot.mod.tractorMaxMassKg ?? 3000;
 
-  const t = G.P.tractorTightness ?? 0.5;
+  const t = getState().player.tractorTightness ?? 0.5;
   const pullMult = 0.45 + t * 1.10;
   const drainMult = 0.5 + t * 1.5;
   const drain = (slot.mod.capDrainPerSec ?? 3) * drainMult * dt;
 
-  if (G.P.energy < drain) {
-    tr.active = false;
-    tr.tooHeavy = false;
-    tr.targetId = null;
-    floatText(G.P.x, G.P.y - 35, "No cap", "#ff8844");
+  if (getState().player.energy < drain) {
+    TractorAccess.update({ active: false, tooHeavy: false, targetId: null });
+    floatText(getState().player.x, getState().player.y - 35, "No cap", "#ff8844");
     setCarryKg(0);
     return;
   }
 
   // Drain capacitor continuously
-  G.P.energy -= drain;
+  PlayerAccess.setEnergy(getState().player.energy - drain);
 
   // Set active coordinates & animate phase
-  tr.targetId = id;
-  tr.x1 = G.P.x; tr.y1 = G.P.y;
-  tr.x2 = entity.x; tr.y2 = entity.y;
-  tr.phase += dt * 5;
+  TractorAccess.update({
+    targetId: id,
+    x1: getState().player.x,
+    y1: getState().player.y,
+    x2: entity.x,
+    y2: entity.y,
+    phase: (getState().tractor?.phase ?? 0) + dt * 5,
+  });
 
   if (mass > maxMass) {
-    tr.active = false;
-    tr.tooHeavy = true;
+    TractorAccess.update({ active: false, tooHeavy: true });
     setCarryKg(0);
     _tooHeavyTimer -= dt;
     if (_tooHeavyTimer <= 0) {
@@ -131,13 +128,12 @@ export function updateTractor(dt: number) {
       _tooHeavyTimer = TOO_HEAVY_TEXT_INTERVAL;
     }
   } else {
-    tr.active = true;
-    tr.tooHeavy = false;
+    TractorAccess.update({ active: true, tooHeavy: false });
     setCarryKg(mass);
 
     // Apply pull force toward player
-    const dx = G.P.x - entity.x;
-    const dy = G.P.y - entity.y;
+    const dx = getState().player.x - entity.x;
+    const dy = getState().player.y - entity.y;
     const dist = Math.hypot(dx, dy);
     if (dist > 1) {
       const pullAccel = slot.mod.tractorPullAccel ?? 140;
@@ -149,6 +145,6 @@ export function updateTractor(dt: number) {
   }
 }
 
-export function getTractorBeam() {
-  return G.tractor;
+export function getTractorBeam(p = getState().player) {
+  return p?.tractor ?? getState().tractor;
 }

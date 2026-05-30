@@ -1,3 +1,10 @@
+import { beforeEach } from "vitest";
+import { _G as G } from "../src/state.js";;
+
+beforeEach(() => {
+  G.players = new Map();
+});
+
 // DOM setup for Vitest (jsdom environment)
 // Canvas and other required elements must exist before modules load.
 

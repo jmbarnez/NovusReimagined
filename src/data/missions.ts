@@ -1,9 +1,14 @@
-import { G } from "../state.js";
+import { getState } from "../state-access.js";
 import { emit } from "../events.js";
-import { logEvent } from "../ui/hud-overlay.js";
+import { logEvent } from "../feedback.js";
 import type { Station } from "../types/world.js";
+import type { Player } from "../state.js";
 
-export type MissionType = "bounty" | "mining" | "delivery" | "salvage";
+export type MissionType = "bounty" | "mining" | "delivery" | "salvage" | "tutorial";
+
+export const TUTORIAL_MISSION_ID = "mc_academy_training";
+export const TUTORIAL_ACADEMY_STATION_ID = "station-sys-0-academy";
+export const TUTORIAL_GRADUATION_REWARD = 2500;
 
 export interface MissionContract {
   id: string;
@@ -143,17 +148,20 @@ export function generateContractsForStation(station: Station, sysIdx: number, ri
 
 // ── Progress tracking ────────────────────────────────────────────────────────
 
-export function progressMissions(type: MissionType, amount: number, target?: string): void {
-  if (!G.P?.contracts) return;
-  for (const c of G.P.contracts) {
+export function progressMissions(type: MissionType, amount: number, target?: string, p: Player = getState().player): void {
+  if (!p?.contracts) return;
+  for (const c of p.contracts) {
+    if (isTutorialContract(c)) continue;
     if (c.status !== "active") continue;
     if (c.objective.type !== type) continue;
     if (target && c.objective.target !== "any" && c.objective.target !== target) continue;
     c.objective.current = Math.min(c.objective.current + amount, c.objective.required);
     if (c.objective.current >= c.objective.required) {
       c.status = "complete";
-      emit("mission:completed", { contract: c });
-      logEvent(`Contract complete: ${c.title} — dock to claim ${c.reward} CR`, "loot");
+      if (p === getState().player) {
+        emit("mission:completed", { contract: c });
+        logEvent(`Contract complete: ${c.title} — dock to claim ${c.reward} CR`, "loot");
+      }
     }
   }
 }
@@ -161,14 +169,15 @@ export function progressMissions(type: MissionType, amount: number, target?: str
 // ── Delivery check on dock ───────────────────────────────────────────────────
 
 function getPlayerStock(target: string): number {
-  const p = G.P;
+  const p = getState().player;
   if (!p) return 0;
   return (p.ore[target] ?? 0) + (p.loot[target] ?? 0) + (p.refined[target] ?? 0);
 }
 
-export function checkDeliveryContracts(station: Station): void {
-  if (!G.P?.contracts) return;
-  for (const c of G.P.contracts) {
+export function checkDeliveryContracts(station: Station, p: Player = getState().player): void {
+  if (!getState().player?.contracts) return;
+  for (const c of getState().player.contracts) {
+    if (isTutorialContract(c)) continue;
     if (c.status !== "active") continue;
     if (c.type !== "delivery") continue;
     if (c.stationId !== station.id) continue;
@@ -179,5 +188,42 @@ export function checkDeliveryContracts(station: Station): void {
       emit("mission:completed", { contract: c });
       logEvent(`Contract complete: ${c.title} — dock to claim ${c.reward} CR`, "loot");
     }
+  }
+}
+
+// ── Tutorial Helpers ─────────────────────────────────────────────────────────
+
+export function isTutorialContract(c: MissionContract): boolean {
+  return c.id === TUTORIAL_MISSION_ID;
+}
+
+export function createTutorialMission(currentStep: number, requiredSteps: number): MissionContract {
+  return {
+    id: TUTORIAL_MISSION_ID,
+    type: "tutorial",
+    title: "Academy Training",
+    description: "Complete Academy training and warp to Novus Prime.",
+    reward: TUTORIAL_GRADUATION_REWARD,
+    stationId: TUTORIAL_ACADEMY_STATION_ID,
+    sysIdx: 0,
+    objective: {
+      type: "tutorial",
+      target: "step",
+      required: requiredSteps,
+      current: currentStep,
+    },
+    status: "active",
+  };
+}
+
+export function findTutorialContract(p: Player): MissionContract | undefined {
+  return p.contracts?.find(c => isTutorialContract(c));
+}
+
+export function syncTutorialMissionProgress(p: Player): void {
+  const c = findTutorialContract(p);
+  if (!c) return;
+  if (p.tutorial) {
+    c.objective.current = p.tutorial.step;
   }
 }

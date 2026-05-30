@@ -1,5 +1,6 @@
+
+import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
-import { G, Client } from "../../state.js";
 import { ctx } from "../../canvas.js";
 import { TAU } from "../../constants.js";
 import { lerp, dst } from "../../utils/math.js";
@@ -35,7 +36,7 @@ export function drawLockBrackets(
   let alpha: number;
   let lineWidth: number;
 
-  const sys = G.GALAXY?.[G.P?.sysIdx ?? 0];
+  const sys = getState().GALAXY?.[getState().player?.sysIdx ?? 0];
   const enemy = sys?._enemyMap?.get(entityId);
   const isEnemy = !!enemy;
 

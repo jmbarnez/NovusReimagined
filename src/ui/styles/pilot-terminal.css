@@ -1,0 +1,409 @@
+/* Shared pilot computer terminal chrome (profile, connect, host) */
+
+.pilot-terminal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 204, 68, 0.045) 0%, transparent 32%),
+    rgba(3, 6, 11, 0.96);
+  font-family: var(--font-family);
+  color: var(--hud-text-main);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pilot-terminal-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 204, 68, 0.04) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.pilot-terminal-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.14) 3px,
+    rgba(0, 0, 0, 0.14) 4px
+  );
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.pilot-terminal-corners .pt-corner {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  opacity: 0.45;
+  z-index: 2;
+  pointer-events: none;
+}
+.pt-corner.tl {
+  top: 16px;
+  left: 16px;
+  border-top: 1px solid var(--hud-accent);
+  border-left: 1px solid var(--hud-accent);
+}
+.pt-corner.tr {
+  top: 16px;
+  right: 16px;
+  border-top: 1px solid var(--hud-accent);
+  border-right: 1px solid var(--hud-accent);
+}
+.pt-corner.bl {
+  bottom: 16px;
+  left: 16px;
+  border-bottom: 1px solid var(--hud-accent);
+  border-left: 1px solid var(--hud-accent);
+}
+.pt-corner.br {
+  bottom: 16px;
+  right: 16px;
+  border-bottom: 1px solid var(--hud-accent);
+  border-right: 1px solid var(--hud-accent);
+}
+
+.pilot-terminal-header {
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+  padding: 24px 28px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.pilot-terminal-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--hud-text-bright);
+}
+
+.pilot-terminal-subtitle {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--hud-text-dim);
+  text-transform: uppercase;
+}
+
+.pilot-terminal-body {
+  position: relative;
+  z-index: 5;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.2fr);
+  gap: 16px;
+  padding: 8px 24px 24px;
+  min-height: 0;
+}
+
+@media (max-width: 720px) {
+  .pilot-terminal-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+}
+
+.pilot-terminal-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 16px;
+  background: rgba(8, 12, 18, 0.92);
+  border: 1px solid var(--hud-border-soft);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.44);
+  position: relative;
+  overflow: hidden;
+}
+
+.pilot-terminal-dashboard::before,
+.pilot-terminal-console-wrap::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(140, 118, 70, 0.75);
+  z-index: 10;
+}
+
+.pilot-terminal-dashboard::after,
+.pilot-terminal-console-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 38%);
+  pointer-events: none;
+  z-index: 9;
+}
+
+.pilot-terminal-dashboard-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--hud-text-dim);
+  text-transform: uppercase;
+  position: relative;
+  z-index: 11;
+}
+
+.pilot-terminal-dashboard-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+  z-index: 11;
+}
+
+.pilot-terminal-console-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: rgba(8, 12, 18, 0.92);
+  border: 1px solid var(--hud-border-soft);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.44);
+  position: relative;
+  overflow: hidden;
+}
+
+.pilot-terminal-console-wrap .hud-dock-header {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 11;
+}
+
+.pilot-terminal-console-entries {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 12px;
+  font-size: 10px;
+  line-height: 15px;
+  font-family: inherit;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-border-soft) transparent;
+  position: relative;
+  z-index: 11;
+}
+
+.pilot-terminal-console-entries .log-entry {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pilot-terminal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.pilot-terminal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pilot-terminal-field label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--hud-text-dim);
+  text-transform: uppercase;
+}
+
+.pilot-terminal-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  letter-spacing: 0.08em;
+  color: var(--hud-text-bright);
+  background: rgba(5, 8, 12, 0.95);
+  border: 1px solid var(--hud-border-soft);
+  outline: none;
+}
+
+.pilot-terminal-input:focus {
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 0 1px rgba(255, 204, 68, 0.35);
+}
+
+.pilot-terminal-readonly {
+  font-size: 13px;
+  color: var(--hud-text-main);
+  padding: 8px 0;
+}
+
+.pilot-terminal-hint {
+  font-size: 10px;
+  color: var(--hud-text-dim);
+  margin-top: 8px;
+}
+
+.pilot-terminal-error {
+  font-size: 10px;
+  color: var(--hud-hull);
+  min-height: 14px;
+}
+
+.pilot-terminal-status-line {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--hud-cap);
+  animation: pilot-status-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pilot-status-pulse {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pilot-terminal-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--hud-border-soft);
+}
+
+.pilot-terminal-meta-row .meta-label {
+  color: var(--hud-text-dim);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pilot-terminal-meta-row .meta-val {
+  color: var(--hud-text-bright);
+  font-family: inherit;
+  text-align: right;
+  word-break: break-all;
+}
+
+.btn-pilot-primary,
+.btn-pilot-secondary,
+.btn-pilot-danger {
+  padding: 10px 18px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.btn-pilot-primary {
+  color: var(--hud-text-bright);
+  border-color: color-mix(in srgb, var(--hud-accent) 42%, var(--hud-border-soft));
+  background: color-mix(in srgb, var(--hud-accent) 7%, rgba(8, 12, 18, 0.92));
+}
+
+.btn-pilot-primary:hover {
+  background: color-mix(in srgb, var(--hud-accent) 14%, rgba(8, 12, 18, 0.94));
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 0 1px rgba(255, 204, 68, 0.24);
+}
+
+.btn-pilot-secondary {
+  color: var(--hud-text-dim);
+  border-color: var(--hud-border-soft);
+  background: rgba(7, 11, 17, 0.92);
+}
+
+.btn-pilot-secondary:hover {
+  color: var(--hud-text-bright);
+  border-color: var(--hud-border);
+  background: rgba(16, 24, 34, 0.96);
+}
+
+.btn-pilot-danger {
+  color: var(--hud-danger);
+  border-color: color-mix(in srgb, var(--hud-danger) 45%, transparent);
+  background: rgba(42, 14, 14, 0.94);
+}
+
+.btn-pilot-danger:hover {
+  background: rgba(66, 20, 20, 0.96);
+  box-shadow: 0 0 0 1px rgba(238, 68, 68, 0.22);
+}
+
+.pilot-terminal-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+/* Join screen — LAN session list */
+.pilot-session-list-wrap {
+  margin-bottom: 16px;
+}
+
+.pilot-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.pilot-session-empty {
+  font-size: 11px;
+  color: var(--hud-text-dim);
+  letter-spacing: 0.06em;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.pilot-session-row {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: rgba(7, 11, 17, 0.92);
+  border: 1px solid var(--hud-border-soft);
+  color: var(--hud-text-main);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pilot-session-row:hover {
+  border-color: var(--hud-accent);
+  background: color-mix(in srgb, var(--hud-accent) 8%, rgba(7, 11, 17, 0.94));
+}
+
+.pilot-session-row--selected {
+  border-color: var(--hud-accent);
+  background: color-mix(in srgb, var(--hud-accent) 12%, rgba(7, 11, 17, 0.96));
+  color: var(--hud-text-bright);
+}

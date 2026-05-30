@@ -1,4 +1,33 @@
 export const COMBAT = {
+  // Back-compat surface used by combat/stats modules.
+  RANGE_MODEL: {
+    edgeFalloffs: 2,
+    minFalloffPx: 24,
+    defaultSig: 35,
+    sigRef: 35,
+    missThreshold: 0.12,
+    jitterMin: 0.15,
+  },
+  TRACKING: {
+    trackingFloor: 0.08,
+    k: 1.0,
+  },
+  MISSILE: {
+    launchSpeed: 220,
+    cruiseSpeed: 820,
+    accel: 680,
+    turnRate: 3.2,
+    maxLife: 2.2,
+    lifetimeMultiplier: 1.0,
+  },
+  RESISTS: {
+    min: -0.75,
+    max: 0.85,
+  },
+  TURRET_ORIGIN: {
+    forwardPx: 14,
+    localDownPx: 0,
+  },
   PLAYER_AIM: {
     skillBase: 0.80,
     skillPerWeaponLevel: 0.08,
