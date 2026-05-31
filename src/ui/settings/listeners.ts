@@ -29,16 +29,15 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     bubble.innerHTML = `<div class="tip-impact ${impactClass[impact] || "tip-impact-none"}">PERF IMPACT: ${impact}</div><div class="tip-desc">${desc}</div>`;
     bubble.style.visibility = "hidden";
     bubble.style.display = "block";
-    const scale = Client.settings?.uiScale ?? 1.0;
     const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
     const r = icon.getBoundingClientRect();
-    let left = r.left - (bw * scale) - 8;
+    let left = r.left - bw - 8;
     if (left < 8) left = r.right + 8;
-    let top = r.top + r.height / 2 - (bh * scale) / 2;
+    let top = r.top + r.height / 2 - bh / 2;
     if (top < 8) top = 8;
-    if (top + (bh * scale) > window.innerHeight - 8) top = window.innerHeight - (bh * scale) - 8;
-    bubble.style.left = `${left / scale}px`;
-    bubble.style.top = `${top / scale}px`;
+    if (top + bh > window.innerHeight - 8) top = window.innerHeight - bh - 8;
+    bubble.style.left = `${left}px`;
+    bubble.style.top = `${top}px`;
     bubble.style.visibility = "visible";
   });
   el.addEventListener("mouseout", (e) => {
@@ -57,16 +56,22 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     Client.settingsOpen = false;
   });
 
-  const panel = el.querySelector("#settings-panel") as HTMLElement;
-  const closeBtn = panel.querySelector(".eve-win-close") as HTMLElement;
-  const expandBtn = panel.querySelector(".eve-win-expand") as HTMLElement;
-  bindWindowChromeButton(closeBtn);
-  closeBtn.addEventListener("click", (ev) => {
-    ev.stopPropagation();
-    sfxBlip();
-    closeSettings();
-  });
-  attachSingleWindowExpand(panel, expandBtn, { embedded: true });
+  const panel = el.id === "settings-panel" ? el : el.querySelector("#settings-panel");
+  if (panel) {
+    const closeBtn = panel.querySelector(".eve-win-close") as HTMLElement | null;
+    const expandBtn = panel.querySelector(".eve-win-expand") as HTMLElement | null;
+    if (closeBtn) {
+      bindWindowChromeButton(closeBtn);
+      closeBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        sfxBlip();
+        closeSettings();
+      });
+    }
+    if (expandBtn) {
+      attachSingleWindowExpand(panel as HTMLElement, expandBtn, { embedded: true });
+    }
+  }
 
   // Tab strip — toggle which panel is visible.
   el.querySelectorAll(".settings-tab").forEach((tab) => {
@@ -79,6 +84,7 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
         p.classList.toggle("active", (p as HTMLElement).dataset.tabPanel === name));
     });
   });
+  el.querySelector("#settings-exit")!.addEventListener("click", () => { sfxBlip(); closeSettings(); });
   el.querySelector("#settings-reset")!.addEventListener("click", () => { sfxBlip(); resetSettings(); });
   el.querySelector("#settings-save")!.addEventListener("click", () => {
     sfxConfirm();
@@ -157,6 +163,7 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     (document.getElementById("ui-scale-val") as HTMLElement).textContent = v.toFixed(2) + "x";
     saveSettings(Client.settings);
     refreshTheme();
+    window.dispatchEvent(new Event("resize"));
   });
 
   el.querySelector("#settings-language")!.addEventListener("change", (e) => {

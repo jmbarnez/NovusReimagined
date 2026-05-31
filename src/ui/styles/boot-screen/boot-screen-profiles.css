@@ -1,0 +1,327 @@
+/* Boot Screen — Profile Selection & Creation */
+
+.profile-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 16px 14px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-border-soft) transparent;
+}
+
+.profile-header {
+  flex-shrink: 0;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.profile-title {
+  color: var(--hud-text-bright);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.profile-sub {
+  margin-top: 4px;
+  color: var(--hud-text-dim);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ── Card Grid ── */
+.profile-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-content: start;
+  min-height: 0;
+}
+
+/* ── Profile Card ── */
+.profile-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: color-mix(in srgb, var(--hud-bg-panel) 65%, var(--hud-bg-deep) 35%);
+  border: 1px solid color-mix(in srgb, var(--hud-border) 50%, transparent);
+  border-radius: 8px;
+  text-align: left;
+  cursor: default;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.profile-card:hover {
+  border-color: color-mix(in srgb, var(--hud-shield) 45%, var(--hud-border));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--hud-shield) 12%, transparent);
+  transform: translateY(-1px);
+}
+
+.profile-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hud-accent) 18%, var(--hud-bg-elevated));
+  color: var(--hud-text-bright);
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.profile-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-name {
+  color: var(--hud-text-bright);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-ship {
+  color: var(--hud-text-dim);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Stats ── */
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-stat-lbl {
+  color: var(--hud-text-dim);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.profile-stat-val {
+  color: var(--hud-text-main);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-stat-val.highlight-lvl {
+  color: var(--hud-accent);
+  font-weight: 700;
+}
+
+.profile-stat-val.highlight-credits {
+  color: color-mix(in srgb, var(--hud-positive) 80%, var(--hud-text-main) 20%);
+}
+
+/* ── Actions ── */
+.profile-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.profile-continue-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--hud-shield) 40%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-shield) 8%, var(--hud-bg-elevated));
+  color: var(--hud-text-bright);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.profile-continue-btn:hover {
+  border-color: var(--hud-shield);
+  background: color-mix(in srgb, var(--hud-shield) 16%, var(--hud-bg-elevated));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-shield) 30%, transparent);
+}
+
+.profile-delete-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--hud-danger) 40%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-danger) 8%, var(--hud-bg-elevated));
+  color: color-mix(in srgb, var(--hud-danger) 80%, var(--hud-text-dim) 20%);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.profile-delete-btn:hover {
+  border-color: var(--hud-danger);
+  background: color-mix(in srgb, var(--hud-danger) 18%, var(--hud-bg-elevated));
+  color: var(--hud-danger);
+}
+
+/* ── New Profile Card ── */
+.profile-card--new {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--hud-bg-deep) 55%, var(--hud-bg-panel) 45%);
+  border: 1px dashed color-mix(in srgb, var(--hud-border) 60%, transparent);
+  cursor: pointer;
+  min-height: 160px;
+}
+
+.profile-card--new:hover {
+  border-color: color-mix(in srgb, var(--hud-accent) 50%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-accent) 6%, var(--hud-bg-deep));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--hud-accent) 10%, transparent);
+}
+
+.profile-new-icon {
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--hud-accent);
+  line-height: 1;
+}
+
+.profile-new-label {
+  color: var(--hud-text-bright);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.profile-new-hint {
+  color: var(--hud-text-dim);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Footer / Back ── */
+.profile-footer {
+  flex-shrink: 0;
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-footer--create {
+  gap: 10px;
+}
+
+/* ── Creation Form ── */
+.profile-screen--create .profile-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+  max-width: 320px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-field label {
+  color: var(--hud-text-dim);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.profile-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  letter-spacing: 0.08em;
+  color: var(--hud-text-bright);
+  background: rgba(5, 8, 12, 0.95);
+  border: 1px solid var(--hud-border-soft);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.profile-input:focus {
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 0 1px rgba(255, 204, 68, 0.35);
+}
+
+.profile-readonly {
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--hud-text-main);
+}
+
+.profile-error {
+  min-height: 16px;
+  font-size: 10px;
+  color: var(--hud-danger);
+}
+
+/* ── Scrollbar ── */
+.profile-screen::-webkit-scrollbar {
+  width: 4px;
+}
+
+.profile-screen::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-screen::-webkit-scrollbar-thumb {
+  background: rgba(40, 55, 70, 0.6);
+  border-radius: 2px;
+}
+
+/* ── Responsive: single column on very narrow monitors ── */
+@media (max-width: 420px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}

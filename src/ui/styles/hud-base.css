@@ -7,6 +7,7 @@
  */
 :root {
   --font-family: 'Orbitron', sans-serif;
+  --ui-scale: 1;
   --hud-scanner-w: 280px;
   --hud-minimap-w: 102px;
   /* surfaces */
@@ -51,11 +52,15 @@ input, button, select, textarea, table, th, td {
 #hud-overlay {
   position: fixed;
   inset: 0;
+  width: calc(100vw / var(--ui-scale));
+  height: calc(100vh / var(--ui-scale));
   z-index: 10;
   pointer-events: none;
   font-family: var(--font-family);
   color: var(--hud-text-main);
   user-select: none;
+  transform: scale(var(--ui-scale));
+  transform-origin: top left;
   --hud-bottom-h: 95px;
 }
 #hud-overlay > * {

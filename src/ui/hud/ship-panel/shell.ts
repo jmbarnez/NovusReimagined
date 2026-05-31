@@ -1,5 +1,5 @@
 import { sfxBlip } from "../../../audio/procedural.js";
-import { renderInventoryHTML } from "../../inventory.js";
+import { renderInventoryHTML } from "../../inventory/index.js";
 import { t } from "../../../utils/i18n.js";
 import { renderStatsTabHTML, rebuildStatsTab } from "./stats.js";
 import {

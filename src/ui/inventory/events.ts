@@ -17,9 +17,18 @@ export interface InventoryEventHandlers {
 }
 
 export function getInventoryPanes(): HTMLElement[] {
-  return INVENTORY_PANE_IDS
+  // First check for known pane IDs
+  const panes = INVENTORY_PANE_IDS
     .map((id) => document.getElementById(id))
     .filter((el): el is HTMLElement => el !== null);
+
+  // Also check for inventory panes inside HUD windows (e.g., floating cargo window)
+  const hudCargoPane = document.querySelector("#hud-win-cargo .br-pane");
+  if (hudCargoPane && hudCargoPane instanceof HTMLElement) {
+    panes.push(hudCargoPane);
+  }
+
+  return panes;
 }
 
 const paneClickAttached = new Set<string>();

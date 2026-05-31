@@ -7,7 +7,7 @@ import { dst } from "./utils/math.js";
 
 import { curSys } from "./utils/game.js";
 import { requestSensorLock } from "./targeting.js";
-import { toggleSettings, closeSettings, listeningFor } from "./ui/settings.js";
+import { toggleSettings, closeSettings, listeningFor } from "./ui/settings/index.js";
 import { toggleCargoWindow, toggleScannerDock, toggleSkillsWindow, toggleHubWindow, toggleEventLogPanel } from "./ui/hud-overlay.js";
 import { closeTopmostWindow } from "./ui/hud/windows.js";
 import { applyBarHotkey, barHotkeySlotList, toggleSlotDefaultAction } from "./player/player-fitting.js";

@@ -1,4 +1,4 @@
-#bridge-overlay{display:none;position:fixed;inset:0;z-index:95;font-family: var(--font-family);color:var(--hud-text-main);}
+#bridge-overlay{display:none;position:fixed;inset:0;width:calc(100vw / var(--ui-scale));height:calc(100vh / var(--ui-scale));z-index:95;font-family: var(--font-family);color:var(--hud-text-main);transform:scale(var(--ui-scale));transform-origin:top left;}
 .bridge-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.35);}
 .bridge-workspace{position:absolute;inset:0;overflow:hidden;}
 .bridge-toast{position:absolute;top:8px;right:12px;min-height:18px;padding:2px 8px;font-size:10px;color:var(--hud-accent);opacity:0;transition:opacity .2s;background:var(--hud-bg-deep);border:1px solid var(--hud-border);z-index:220;}

@@ -1,0 +1,268 @@
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-family);
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0%, rgba(1, 3, 8, 0.2) 72%, rgba(1, 3, 8, 0.56) 100%),
+    rgba(1, 3, 8, 0.22);
+  opacity: 1;
+  transition: opacity 0.35s ease;
+  color: var(--hud-text-main);
+  --cockpit-inner-left: 10%;
+  --cockpit-inner-right: 10%;
+  --cockpit-top: 66px;
+  --cockpit-bottom: 66px;
+  --cockpit-max-width: 1200px;
+}
+
+#loading.out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#loading::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(30, 50, 80, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 50, 80, 0.04) 1px, transparent 1px),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.05) 2px, rgba(0, 0, 0, 0.05) 4px);
+  background-size: 60px 60px, 60px 60px, auto;
+  animation: gridDrift 20s linear infinite;
+  opacity: 1;
+  pointer-events: none;
+}
+
+#loading::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid var(--hud-border-soft);
+  pointer-events: none;
+}
+
+@keyframes gridDrift {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 60px 60px, 60px 60px, 0 0; }
+}
+
+.cockpit-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image:
+    radial-gradient(circle at 12% 24%, rgba(255, 255, 255, 0.8) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 76% 18%, rgba(255, 255, 255, 0.6) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 64% 70%, rgba(255, 255, 255, 0.75) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 28% 78%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 85% 58%, rgba(255, 255, 255, 0.45) 0 1px, transparent 1.5px);
+}
+
+.cockpit-dashboard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: min(1180px, calc(100vw - 72px));
+  max-width: calc(100% - (var(--cockpit-inner-left) + var(--cockpit-inner-right)));
+  height: min(560px, calc(100vh - 128px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.78fr);
+  grid-template-rows: 1fr;
+  gap: 14px;
+  align-items: stretch;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+}
+
+.cockpit-monitor {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--hud-bg-window) 58%, var(--hud-bg-panel) 42%) 0%,
+      color-mix(in srgb, var(--hud-bg-panel) 80%, var(--hud-bg-deep) 20%) 100%);
+  border: 1px solid color-mix(in srgb, var(--hud-border) 72%, transparent);
+  border-radius: 12px;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.44),
+    0 0 0 1px color-mix(in srgb, var(--hud-border-soft) 40%, transparent) inset,
+    0 0 24px color-mix(in srgb, var(--hud-accent) 10%, transparent) inset;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.cockpit-monitor::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(140deg,
+      color-mix(in srgb, var(--hud-text-bright) 8%, transparent) 0%,
+      transparent 36%,
+      transparent 68%,
+      color-mix(in srgb, var(--hud-accent) 10%, transparent) 100%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.cockpit-monitor::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid color-mix(in srgb, var(--hud-border-accent) 28%, transparent);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.monitor-bezel-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--hud-shield) 20%, transparent) 0%,
+    var(--hud-shield) 30%,
+    color-mix(in srgb, var(--hud-accent) 65%, var(--hud-shield) 35%) 70%,
+    color-mix(in srgb, var(--hud-accent) 24%, transparent) 100%);
+}
+
+.monitor-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--hud-border-soft) 86%, transparent);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--hud-bg-window) 34%, transparent) 0%,
+    transparent 100%);
+  text-transform: uppercase;
+}
+
+.monitor-tag {
+  color: var(--hud-text-dim);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+.monitor-title {
+  color: color-mix(in srgb, var(--hud-text-bright) 92%, var(--hud-accent) 8%);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-align: right;
+}
+
+.monitor-content {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 20px 18px 18px;
+}
+
+.monitor-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--hud-text-bright) 4%, transparent) 0%,
+      transparent 36%),
+    radial-gradient(circle at 50% -8%,
+      color-mix(in srgb, var(--hud-accent) 8%, transparent) 0%,
+      transparent 55%);
+  pointer-events: none;
+}
+
+.monitor-center .monitor-content {
+  justify-content: center;
+}
+
+.monitor-right .monitor-content {
+  justify-content: flex-start;
+}
+
+.ld-console {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 14px;
+  background: var(--hud-bg-deep);
+  border: 1px solid var(--hud-border-soft);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-border-soft) transparent;
+}
+
+.ld-console-line {
+  color: color-mix(in srgb, var(--hud-text-main) 85%, var(--hud-accent) 15%);
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  font-family: var(--font-family);
+}
+
+.ld-console-line + .ld-console-line {
+  margin-top: 4px;
+}
+
+.boot-telemetry {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--hud-bg-deep) 72%, var(--hud-bg-panel) 28%);
+  border: 1px solid var(--hud-border-soft);
+  border-radius: 6px;
+}
+
+.telemetry-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.telemetry-lbl {
+  color: var(--hud-text-dim);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.telemetry-val {
+  color: var(--hud-text-bright);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .cockpit-dashboard {
+    width: min(760px, calc(100vw - 24px));
+    height: min(640px, calc(100vh - 84px));
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .cockpit-monitor {
+    min-height: 0;
+  }
+}

@@ -1,18 +1,10 @@
+import "../styles/settings.css";
 import { t } from "../../utils/i18n.js";
 import { windowHeadButtonsHTML } from "../hud/window-chrome.js";
 import { attachSettingsListeners } from "./listeners.js";
 
-export function ensureSettingsUI() {
-  if (document.getElementById("settings-overlay")) return;
-  const el = document.createElement("div");
-  el.id = "settings-overlay";
-  el.innerHTML = `
-    <div id="settings-panel" class="eve-window">
-      <div class="eve-win-head">
-        <div class="eve-win-title">${t("settings.title")}</div>
-        <div class="eve-win-sub">${t("settings.subtitle")}</div>
-        ${windowHeadButtonsHTML()}
-      </div>
+export function settingsContentHTML(): string {
+  return `
       <div class="settings-tabs" id="settings-tabs">
         <button class="settings-tab active" data-tab="audio">${t("settings.tab.audio")}</button>
         <button class="settings-tab" data-tab="video">${t("settings.tab.video")}</button>
@@ -122,9 +114,24 @@ export function ensureSettingsUI() {
         </div>
       </div>
       <div class="eve-win-foot" id="settings-footer">
+        <button id="settings-exit" class="btn-exit">${t("common.exit")}</button>
         <button id="settings-reset">${t("settings.reset")}</button>
         <button id="settings-save">${t("common.save")}</button>
+      </div>`;
+}
+
+export function ensureSettingsUI() {
+  if (document.getElementById("settings-overlay")) return;
+  const el = document.createElement("div");
+  el.id = "settings-overlay";
+  el.innerHTML = `
+    <div id="settings-panel" class="eve-window">
+      <div class="eve-win-head">
+        <div class="eve-win-title">${t("settings.title")}</div>
+        <div class="eve-win-sub">${t("settings.subtitle")}</div>
+        ${windowHeadButtonsHTML()}
       </div>
+      ${settingsContentHTML()}
     </div>`;
   document.body.appendChild(el);
 

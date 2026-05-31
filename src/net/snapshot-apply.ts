@@ -8,6 +8,7 @@ import { addBullet, addEnemyBullet, addWreckPiece, addSalvagePickup } from "../u
 import type { DamageProfile, WeaponDelivery } from "../data/modules.js";
 import type { SalvagePickup } from "../types/world.js";
 import { showPickupToast } from "../feedback.js";
+import { emit } from "../events.js";
 import { makeRemotePlayerStub, type RemotePlayerBrief } from "./remote-peers.js";
 
 function toWeaponDelivery(kind: EntitySnapshot["kind"]): WeaponDelivery | null {
@@ -176,6 +177,8 @@ export function applySnapshotToG(snap: WorldSnapshot, isFullSnapshot = false) {
     if (snap.player.fitting) {
       PlayerAccess.setFittingAll(cloneArrayRecord(snap.player.fitting), p);
     }
+
+    emit("inventory:changed");
     if (slotActiveChanged) {
       invalidate(p);
     }

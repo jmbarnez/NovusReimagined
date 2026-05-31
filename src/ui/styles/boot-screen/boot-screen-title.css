@@ -1,0 +1,330 @@
+/* Boot Screen - Title / Loading content inside left monitor */
+
+.ld-title {
+  position: relative;
+  margin: 0;
+  color: var(--hud-text-bright);
+  font-size: clamp(32px, 4vw, 64px);
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow:
+    0 0 28px var(--hud-shield),
+    0 0 60px var(--hud-shield),
+    0 0 110px var(--hud-shield);
+  animation: titleBreath 4s ease-in-out infinite;
+}
+
+.ld-sep {
+  width: min(320px, 68%);
+  height: 1px;
+  margin: 16px auto 14px;
+  background: linear-gradient(90deg, transparent, var(--hud-border), transparent);
+}
+
+.ld-sub {
+  color: var(--hud-text-dim);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.ld-progress-bar {
+  width: min(360px, 78%);
+  height: 16px;
+  margin: 34px auto 0;
+  padding: 3px;
+  border: 1px solid var(--hud-border-soft);
+  background: var(--hud-bg-deep);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.ld-progress-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--hud-shield), var(--hud-text-bright));
+  transition: width 0.28s ease;
+}
+
+.ld-status {
+  margin-top: 22px;
+  color: var(--hud-text-dim);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.ld-dots::after {
+  content: "";
+  animation: ld-dots 1.6s steps(4, end) infinite;
+}
+
+/* Title menu buttons */
+.ld-menu-actions {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 28px;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ld-btn-start {
+  min-height: 48px;
+  padding: 12px 18px;
+  border: 1px solid var(--hud-border);
+  background: var(--hud-bg-elevated);
+  color: var(--hud-text-bright);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.ld-btn-start:hover {
+  border-color: var(--hud-shield);
+  background: color-mix(in srgb, var(--hud-shield) 10%, var(--hud-bg-elevated));
+  color: var(--hud-text-bright);
+  box-shadow: 0 0 20px var(--hud-shield);
+  transform: scale(1.03);
+}
+
+.ld-btn-start::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.ld-btn-start:hover::after {
+  left: 100%;
+}
+
+.ld-btn-start:focus-visible {
+  outline: none;
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 0 1px rgba(255, 204, 68, 0.4);
+}
+
+.ld-btn-secondary {
+  color: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ld-btn-secondary:hover {
+  color: var(--hud-text-bright);
+}
+
+.ld-btn-danger {
+  color: color-mix(in srgb, var(--hud-text-bright) 92%, var(--hud-danger) 8%);
+  border-color: color-mix(in srgb, var(--hud-danger) 55%, var(--hud-border) 45%);
+  background: color-mix(in srgb, var(--hud-danger) 14%, var(--hud-bg-elevated));
+}
+
+.ld-btn-danger:hover {
+  border-color: var(--hud-danger);
+  background: color-mix(in srgb, var(--hud-danger) 22%, var(--hud-bg-elevated));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--hud-danger) 55%, transparent);
+}
+
+.ld-btn-settings {
+  color: color-mix(in srgb, var(--hud-text-bright) 88%, var(--hud-accent) 12%);
+  border-color: color-mix(in srgb, var(--hud-border) 70%, var(--hud-accent) 30%);
+  background: color-mix(in srgb, var(--hud-accent) 10%, var(--hud-bg-elevated));
+}
+
+.ld-btn-settings:hover {
+  border-color: var(--hud-accent);
+  background: color-mix(in srgb, var(--hud-accent) 18%, var(--hud-bg-elevated));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--hud-accent) 45%, transparent);
+}
+
+/* Loading -> title phase transition */
+#loading.ld-title-mode .ld-sub,
+#loading.ld-title-mode .ld-progress-bar,
+#loading.ld-title-mode .ld-status {
+  display: none;
+}
+
+#loading.ld-title-mode .ld-menu-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Settings button inside monitor */
+.title-settings-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hud-border);
+  background: var(--hud-bg-elevated);
+  color: var(--hud-text-bright);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  z-index: 10;
+}
+
+.title-settings-btn:hover {
+  border-color: var(--hud-shield);
+  background: color-mix(in srgb, var(--hud-shield) 10%, var(--hud-bg-elevated));
+  box-shadow: 0 0 12px var(--hud-shield);
+}
+
+.title-settings-btn:focus-visible {
+  outline: none;
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 0 1px rgba(255, 204, 68, 0.45);
+}
+
+/* ── Confirmation Modal ── */
+.confirm-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--hud-bg-deep) 85%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+.confirm-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  padding: 24px;
+  background: var(--hud-bg-window);
+  border: 1px solid var(--hud-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  text-align: center;
+}
+
+.modal-glow-amber {
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--hud-accent), transparent);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+.modal-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.modal-title {
+  margin: 0 0 10px;
+  color: var(--hud-text-bright);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.modal-message {
+  margin: 0 0 20px;
+  color: var(--hud-text-main);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-modal {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--hud-border);
+  background: var(--hud-bg-elevated);
+  color: var(--hud-text-bright);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.btn-modal:hover {
+  border-color: var(--hud-shield);
+  background: color-mix(in srgb, var(--hud-shield) 10%, var(--hud-bg-elevated));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-shield) 35%, transparent);
+}
+
+.btn-overwrite {
+  border-color: color-mix(in srgb, var(--hud-danger) 55%, var(--hud-border) 45%);
+  background: color-mix(in srgb, var(--hud-danger) 14%, var(--hud-bg-elevated));
+}
+
+.btn-overwrite:hover {
+  border-color: var(--hud-danger);
+  background: color-mix(in srgb, var(--hud-danger) 22%, var(--hud-bg-elevated));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-danger) 45%, transparent);
+}
+
+@keyframes ld-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75% { content: "..."; }
+}
+
+@keyframes titleBreath {
+  0%, 100% {
+    text-shadow:
+      0 0 28px var(--hud-shield),
+      0 0 60px var(--hud-shield),
+      0 0 110px var(--hud-shield);
+  }
+  50% {
+    text-shadow:
+      0 0 48px var(--hud-shield),
+      0 0 90px var(--hud-shield),
+      0 0 150px var(--hud-shield);
+  }
+}

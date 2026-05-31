@@ -1,6 +1,8 @@
+import "../styles/inventory.css";
 import { sfxBlip } from "../../audio/procedural.js";
 import { queueFrameAction } from "../../sim/input.js";
 import { t } from "../../utils/i18n.js";
+import { on } from "../../events.js";
 import {
   INV_STATE,
   persistInventoryViewMode,
@@ -8,7 +10,7 @@ import {
   type InventoryItem,
   INVENTORY_PANE_IDS,
 } from "./state.js";
-import { normalizeItems } from "./tree.js";
+import { getItemsForContainer, normalizeItems } from "./tree.js";
 import { renderInventoryHTML } from "./render.js";
 import {
   attachInventoryListeners as attachPaneListeners,
@@ -55,11 +57,9 @@ export function jettisonItem(itemId: string, qty: number | null = null) {
   rerenderInventory();
 }
 
-export function splitStack(itemId: string, newQty: number) {
-  const all = normalizeItems();
-  const it = all.find((x) => x.id === itemId);
-  if (!it || newQty <= 0 || newQty >= it.qty) return;
-  showCargoToast(t("inventory.splitConfirmed", { name: it.name, newQty, remainder: it.qty - newQty }));
+export function splitStack(_itemId: string, _newQty: number) {
+  // Split-stack is not supported by the current quantity-map inventory model.
+  // Use jettison-partial instead.
 }
 
 export function selectTreeNode(nodeId: string) {
@@ -88,9 +88,14 @@ export function selectItem(itemId: string | null) {
   rerenderInventory();
 }
 
+let _filterDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function setFilter(text: string) {
   INV_STATE.filterText = text.trim().toLowerCase();
-  rerenderInventory();
+  if (_filterDebounceTimer) clearTimeout(_filterDebounceTimer);
+  _filterDebounceTimer = setTimeout(() => {
+    rerenderInventory();
+  }, 80);
 }
 
 export function showItemContextMenu(itemId: string, x: number, y: number) {
@@ -162,22 +167,65 @@ function getOverlayHandlers(): InventoryOverlayHandlers {
   return {
     onCloseContextMenu: closeContextMenu,
     onJettisonItem: jettisonItem,
-    onSplitStack: splitStack,
     onShowInfoPanel: showInfoPanel,
     onFitAction: queueFitAction,
     onRerender: rerenderInventory,
   };
 }
 
+// ─── Smart re-render: avoid innerHTML rebuild when only selection changes ───
+
+let _lastContentHash = "";
+let _lastSelectedId: string | null = null;
+
+function computeContentHash(): string {
+  const items = getItemsForContainer(INV_STATE.selectedTreeId);
+  const filtered = INV_STATE.filterText
+    ? items.filter((it: InventoryItem) => it.name.toLowerCase().includes(INV_STATE.filterText) || it.group.toLowerCase().includes(INV_STATE.filterText))
+    : items;
+  const sorted = [...filtered].sort((a, b) => {
+    const d = INV_STATE.sortDir;
+    switch (INV_STATE.sortKey) {
+      case "group": return d * a.group.localeCompare(b.group);
+      case "qty": return d * (a.qty - b.qty);
+      case "vol": return d * ((a.vol || 0) * a.qty - (b.vol || 0) * b.qty);
+      default: return d * a.name.localeCompare(b.name);
+    }
+  });
+  return `${INV_STATE.selectedTreeId}|${INV_STATE.viewMode}|${INV_STATE.sortKey}|${INV_STATE.sortDir}|${INV_STATE.filterText}|${sorted.map((i) => `${i.id}:${i.qty}`).join(",")}|${Array.from(INV_STATE.expanded).join(",")}`;
+}
+
+function updateSelectionOnly(pane: HTMLElement) {
+  for (const el of pane.querySelectorAll(".inv-item")) {
+    const itemId = (el as HTMLElement).dataset.item;
+    el.classList.toggle("is-selected", itemId === INV_STATE.selectedItemId);
+  }
+}
+
 function rerenderInventory() {
   hideInvHoverTip();
+  const hash = computeContentHash();
+  const onlySelectionChanged = hash === _lastContentHash && INV_STATE.selectedItemId !== _lastSelectedId;
   const handlers = getEventHandlers();
+
   for (const pane of getInventoryPanes()) {
-    pane.innerHTML = renderInventoryHTML();
-    attachInventoryListenersToPane(pane, handlers);
+    if (onlySelectionChanged && pane.querySelector(".inv-item")) {
+      updateSelectionOnly(pane);
+    } else {
+      pane.innerHTML = renderInventoryHTML();
+      attachInventoryListenersToPane(pane, handlers);
+    }
   }
+
+  _lastContentHash = hash;
+  _lastSelectedId = INV_STATE.selectedItemId;
   updateInvOverlays(getOverlayHandlers());
 }
+
+// Re-render inventory when server snapshot updates cargo / fitting state.
+on("inventory:changed", () => {
+  rerenderInventory();
+});
 
 export function mountInventoryInPane(paneId: string): void {
   const pane = document.getElementById(paneId);

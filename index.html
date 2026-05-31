@@ -16,6 +16,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/ui/styles/hud-base.css" />
+    <link rel="stylesheet" href="/src/ui/styles/boot-screen.css" />
     <script>performance.mark('novus:html-parsed');</script>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,18 +27,14 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-      #c { display: block; width: 100vw; height: 100vh; cursor: none; vertical-align: top; background: transparent; }
+      #c { display: block; width: 100vw; height: 100vh; cursor: none; background: transparent; }
     </style>
   </head>
   <body>
     <div id="loading">
       <div class="cockpit-stars"></div>
-      <div class="cockpit-canopy-top"></div>
-      <div class="cockpit-canopy-left"></div>
-      <div class="cockpit-canopy-right"></div>
-      <div class="cockpit-canopy-bottom"></div>
-      
-      <div class="cockpit-dashboard cockpit-dashboard--two-monitors">
+
+      <div class="cockpit-dashboard">
         <!-- MONITOR 1 (LEFT/CENTER): Primary Interface & Loading Bar -->
         <div class="cockpit-monitor monitor-center">
           <div class="monitor-bezel-line"></div>
@@ -49,13 +46,21 @@
             <div class="ld-title">NOVUS</div>
             <div class="ld-sep"></div>
             <div class="ld-sub">Initializing neural interface</div>
-            
+
             <!-- Styled visual loading progress bar -->
             <div class="ld-progress-bar">
               <div class="ld-progress-fill" style="width: 0%;"></div>
             </div>
-            
+
             <div class="ld-status">Neural link pending<span class="ld-dots"></span></div>
+
+            <!-- Title screen menu buttons (hidden during loading) -->
+            <div class="ld-menu-actions">
+              <button type="button" id="title-sp" class="ld-btn-start">SINGLE PLAYER</button>
+              <button type="button" id="title-mp" class="ld-btn-start ld-btn-secondary">MULTIPLAYER</button>
+              <button type="button" id="title-settings" class="ld-btn-start ld-btn-settings" aria-label="Open settings">⚙ SETTINGS</button>
+              <button type="button" id="title-exit" class="ld-btn-start ld-btn-danger">SAFE EXIT</button>
+            </div>
           </div>
         </div>
         
@@ -70,19 +75,27 @@
             <div class="ld-console" aria-hidden="true">
               <div class="ld-console-line">&gt; Initializing pilot interface...</div>
             </div>
-            <div class="nav-grid-stats">
-              <div class="stat-cell">
-                <div class="cell-lbl">SECTOR CONTROL</div>
-                <div class="cell-val">STANDBY</div>
+            <div class="boot-telemetry">
+              <div class="telemetry-row">
+                <span class="telemetry-lbl">SUBSYSTEM</span>
+                <span class="telemetry-val" id="boot-telemetry-subsystem">IDLE</span>
               </div>
-              <div class="stat-cell">
-                <div class="cell-lbl">NEURAL SYNC</div>
-                <div class="cell-val">CONNECTING</div>
+              <div class="telemetry-row">
+                <span class="telemetry-lbl">PROGRESS</span>
+                <span class="telemetry-val" id="boot-telemetry-progress">0%</span>
+              </div>
+              <div class="telemetry-row">
+                <span class="telemetry-lbl">MEMORY</span>
+                <span class="telemetry-val" id="boot-telemetry-memory">—</span>
+              </div>
+              <div class="telemetry-row">
+                <span class="telemetry-lbl">STATUS</span>
+                <span class="telemetry-val" id="boot-telemetry-status">STANDBY</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+    </div>
     </div>
     <canvas id="c"></canvas>
     <div id="world-tutorial-layer"></div>

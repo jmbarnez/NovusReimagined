@@ -3,9 +3,10 @@ import { Client, AppMode } from "../state.js";
 import { savePlayer } from "../player/player-data.js";
 import { restoreGameFromSave } from "../utils/restore-save.js";
 import { sfxBlip, sfxConfirm } from "../audio/procedural.js";
-import { openSettings } from "./settings.js";
+import { openSettings } from "./settings/index.js";
 import { logEvent } from "./hud-overlay.js";
 import { getState } from "../state-access.js";
+import { syncActiveProfile } from "../data/profiles.js";
 import { t } from "../utils/i18n.js";
 import { on } from "../events.js";
 
@@ -82,6 +83,7 @@ export function initPauseMenu() {
     ) {
       return;
     }
+    syncActiveProfile();
     window.location.reload();
   });
 }

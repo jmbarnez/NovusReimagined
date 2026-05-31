@@ -24,6 +24,7 @@ import { tickTutorial } from "../tutorial.js";
 import { on } from "../events.js";
 import { transitionTo } from "../ui/transition-manager.js";
 import { drawFrame } from "./render-pass.js";
+import { dismissLoadingScreen } from "../ui/loading-screen.js";
 import {
   gameClient,
   ensureGameplayConnected,
@@ -195,6 +196,7 @@ export async function enterSpaceMode() {
   netLog(`enterSpaceMode begin conn=${conn}`);
 
   try {
+    dismissLoadingScreen();
     document.querySelectorAll(".title-screen").forEach((el) => el.remove());
     document
       .querySelectorAll("#pilot-join-screen, #pilot-host-screen, #pilot-profile-screen")

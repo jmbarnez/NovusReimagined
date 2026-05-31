@@ -23,6 +23,7 @@ export interface EventMap {
   "tutorial:hud-tour-change": void;
   "tutorial:complete": { sysIdx: number };
   "tutorial:skip": { sysIdx: number };
+  "inventory:changed": void;
 }
 
 const _handlers: Partial<Record<string, Array<(data: unknown) => void>>> = {};

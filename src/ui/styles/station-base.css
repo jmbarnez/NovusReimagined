@@ -3,8 +3,12 @@
   display: none;
   position: fixed;
   inset: 0;
+  width: calc(100vw / var(--ui-scale));
+  height: calc(100vh / var(--ui-scale));
   z-index: 200;
   font-family: var(--font-family);
+  transform: scale(var(--ui-scale));
+  transform-origin: top left;
 }
 
 /* ── Main Grid ── */

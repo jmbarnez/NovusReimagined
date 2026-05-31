@@ -19,6 +19,7 @@ import { ModuleInstance } from "../types/moduleInstance.js";
 import { createTutorialMission } from "../data/missions.js";
 import { TUTORIAL_STEP_COUNT } from "../data/tutorial.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
+import { syncActiveProfile } from "../data/profiles.js";
 
 export function defaultFitting(shipId: string): Record<string, (string | null)[]> {
   const s = SHIPS[shipId];
@@ -265,6 +266,7 @@ export function loadPlayer(): Player {
 export function savePlayer() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(getState().player));
+    syncActiveProfile();
   } catch (e) {
     console.warn("[save] localStorage failed:", e);
   }

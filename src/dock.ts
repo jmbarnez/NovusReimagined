@@ -14,9 +14,10 @@ import { populateSystem } from "./world-gen.js";
 import type { Station, Gate } from "./types/world.js";
 
 async function ensureStationInterface(st: Station): Promise<void> {
-  const { ensureStationUI, buildStationUI } = await import("./ui/station.js");
+  const { ensureStationUI, buildStationView, renderStationView } = await import("./ui/station/index.js");
   ensureStationUI();
-  buildStationUI(st);
+  buildStationView(st);
+  renderStationView();
 }
 
 function logDockEvent(msg: string, type: string = "system"): void {

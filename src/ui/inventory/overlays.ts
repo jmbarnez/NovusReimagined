@@ -381,7 +381,6 @@ function buildContextMenuHTML(itemId: string): string {
     } else {
       rows.push({ action: "jettison-all", label: t("inventory.jettison") });
     }
-    if (it.qty > 1) rows.push({ action: "split", label: t("inventory.splitStack") });
   }
 
   rows.push({ action: "info", label: t("inventory.showInfo") });
@@ -405,7 +404,6 @@ export interface ContextFitAction {
 export interface InventoryOverlayHandlers {
   onCloseContextMenu: () => void;
   onJettisonItem: (itemId: string, qty: number | null) => void;
-  onSplitStack: (itemId: string, newQty: number) => void;
   onShowInfoPanel: (itemId: string, anchorX?: number, anchorY?: number) => void;
   onFitAction: (action: ContextFitAction) => void;
   onRerender: () => void;
@@ -489,13 +487,6 @@ export function updateInvContextOverlay(handlers: InventoryOverlayHandlers) {
       }
       sfxConfirm();
       handlers.onJettisonItem(itemId, n);
-    } else if (action === "split") {
-      const all = normalizeItems();
-      const it = all.find((i) => i.id === itemId);
-      if (it && it.qty > 1) {
-        sfxConfirm();
-        handlers.onSplitStack(itemId, Math.floor(it.qty / 2));
-      }
     } else if (action === "info") {
       sfxBlip();
       const { x: ax, y: ay } = cm;

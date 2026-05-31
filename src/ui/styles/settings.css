@@ -1,4 +1,4 @@
-#settings-overlay{display:none;position:fixed;inset:0;z-index:650;font-family: var(--font-family);align-items:center;justify-content:center;background:var(--hud-bg-deep);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+#settings-overlay{display:none;position:fixed;inset:0;z-index:10010;font-family: var(--font-family);align-items:center;justify-content:center;background:var(--hud-bg-deep);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 #settings-panel {
   position: relative;
   display: flex;
@@ -7,6 +7,55 @@
   height: min(560px, 90vh);
   background: var(--hud-bg-window);
   z-index: 251;
+}
+
+.monitor-settings-panel {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: none;
+}
+
+.settings-back-btn {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin: 8px 8px 0;
+  padding: 6px 12px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);
+  color: var(--hud-text-bright);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.settings-back-btn:hover {
+  border-color: var(--hud-accent);
+  background: color-mix(in srgb, var(--hud-accent) 12%, var(--hud-bg-elevated));
+}
+
+.monitor-center .monitor-content.monitor-settings-open {
+  padding: 0;
+  overflow: hidden;
+}
+
+.monitor-center .monitor-content.monitor-settings-open > #settings-panel {
+  width: 100%;
+  height: 100%;
+}
+
+.monitor-center .monitor-content.monitor-settings-open::before {
+  inset: 0;
 }
 #settings-panel::after {
   content: "";
@@ -45,6 +94,7 @@
 #settings-body h3.accent-video{border-left:3px solid var(--hud-positive);padding-left:8px;}
 #settings-body h3.accent-camera{border-left:3px solid var(--hud-hull);padding-left:8px;}
 #settings-body h3.accent-combat{border-left:3px solid var(--hud-danger);padding-left:8px;}
+#settings-body h3 .settings-tip-icon{float:right;margin-left:8px;}
 .settings-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
 .settings-row label{font-size:11px;color:var(--hud-text-main);width:80px;}
 .settings-val{font-size:10px;color:var(--hud-text-dim);min-width:36px;text-align:right;}
@@ -306,6 +356,23 @@
 #settings-save:disabled{opacity:0.7;cursor:default;}
 .btn-exit{padding:5px 12px;background:color-mix(in srgb, var(--hud-danger) 18%, transparent);color:var(--hud-danger);border:1px solid color-mix(in srgb, var(--hud-danger) 50%, transparent);cursor:pointer;font-family:inherit;font-size:10px;letter-spacing:0.04em;transition:all 0.15s;margin-right:auto;}
 .btn-exit:hover{background:color-mix(in srgb, var(--hud-danger) 40%, transparent);color:var(--hud-text-bright);border-color:var(--hud-danger);box-shadow:0 0 10px color-mix(in srgb, var(--hud-danger) 35%, transparent);}
+.settings-select{
+  padding:5px 8px;
+  font-family:inherit;
+  font-size:11px;
+  color:var(--hud-text-bright);
+  background:color-mix(in srgb, var(--hud-bg-deep) 80%, var(--hud-bg-panel) 20%);
+  border:1px solid var(--hud-border-soft);
+  border-radius:3px;
+  cursor:pointer;
+  outline:none;
+  min-width:120px;
+  transition:border-color 0.15s, box-shadow 0.15s;
+}
+.settings-select:focus{
+  border-color:var(--hud-accent);
+  box-shadow:0 0 6px color-mix(in srgb, var(--hud-accent) 30%, transparent);
+}
 .settings-tip-icon{font-size:11px;color:var(--hud-text-faint);cursor:help;margin-left:auto;padding:1px 5px;line-height:1;user-select:none;transition:color 0.15s;flex-shrink:0;}
 .settings-tip-icon:hover{color:var(--hud-shield);}
 #settings-tooltip-bubble{display:none;position:fixed;z-index:9999;max-width:220px;background:var(--hud-bg-window);border:1px solid var(--hud-border);padding:8px 10px;font-family: var(--font-family);font-size:10px;color:var(--hud-text-main);line-height:1.5;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.6);}

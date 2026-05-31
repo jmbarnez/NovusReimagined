@@ -7,7 +7,7 @@ import { escHtml, formatDistance } from "../utils/format.js";
 import { curSys } from "../utils/game.js";
 import { getSensorContactRangePx } from "../targeting.js";
 import { enemyClassLabel } from "../targeting.js";
-import { renderInventoryHTML, attachInventoryListeners, resetInventoryUI } from "./inventory.js";
+import { renderInventoryHTML, attachInventoryListeners, resetInventoryUI } from "./inventory/index.js";
 import { sfxBlip } from "../audio/procedural.js";
 import { on } from "../events.js";
 import type { Enemy, Asteroid } from "../types/world.js";

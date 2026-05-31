@@ -8,7 +8,7 @@ import { renderHangar } from "./hangar.js";
 import { renderMarket } from "./market.js";
 import { renderContracts } from "./contracts.js";
 import { renderIndustry } from "./industry.js";
-import { mountInventoryInPane, resetInventoryUI } from "../inventory.js";
+import { mountInventoryInPane, resetInventoryUI } from "../inventory/index.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../tutorial-hangar-guide.js";
 import { t } from "../../utils/i18n.js";
 import { getState } from "../../state-access.js";
@@ -62,6 +62,7 @@ export function buildStationView(st: Station): void {
     ? getState().player.stationOffers
     : [];
   resetInventoryUI();
+  renderStationView();
 }
 
 export function renderStationView(): void {

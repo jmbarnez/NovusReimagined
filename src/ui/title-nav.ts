@@ -39,8 +39,14 @@ export function mountTitleMenu(id: string, innerHtml: string): TitleMenuMount {
     const userScale = Client.settings?.uiScale ?? 1.0;
     const targetScale = (window.innerHeight / 1080) * 1.25 * userScale;
     const finalScale = Math.max(0.35, Math.min(maxScale * 0.95, targetScale));
-    
+
     scaleRoot.style.transform = `scale(${finalScale})`;
+
+    const settingsBtn = overlay.querySelector(".title-settings-btn") as HTMLElement | null;
+    if (settingsBtn) {
+      settingsBtn.style.transform = `scale(${finalScale})`;
+      settingsBtn.style.transformOrigin = "top right";
+    }
   };
 
   handleResize();

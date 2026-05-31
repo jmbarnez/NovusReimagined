@@ -12,6 +12,8 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "common.done": "Done",
     "common.yes": "Yes",
     "common.no": "No",
+    "common.back": "Back",
+    "common.exit": "Exit",
 
     // ─── settings ──────────────────────────────────────────────
     "settings.title": "SETTINGS",
@@ -539,6 +541,8 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "common.done": "Hecho",
     "common.yes": "Sí",
     "common.no": "No",
+    "common.back": "Atrás",
+    "common.exit": "Salir",
 
     // ─── settings ──────────────────────────────────────────────
     "settings.title": "CONFIGURACIÓN",
