@@ -6,6 +6,7 @@ import { hudState } from "./state.js";
 import { formatDistance } from "../../utils/format.js";
 import { hasCommsEquipment } from "../../player/player-stats.js";
 import { randomHailLine } from "../../data/faction-comms.js";
+import { t } from "../../utils/i18n.js";
 
 let activeEnemyId: string | null = null;
 
@@ -29,26 +30,26 @@ export function showEnemyCtxMenu(x: number, y: number, enemyId: string) {
 
   let hailHtml = "";
   if (isNeutral && enemy?.hailable && hasCommsEquipment()) {
-    hailHtml = `<div class="ctx-item" data-action="hail">Hail Ship</div><div class="ctx-sep"></div>`;
+    hailHtml = `<div class="ctx-item" data-action="hail">${t("enemyMenu.hail")}</div><div class="ctx-sep"></div>`;
   }
 
   hudState.enemyCtxMenu.innerHTML = `
     ${hailHtml}
     <div class="ctx-item ctx-has-submenu">
-      Orbit <span class="ctx-arrow">▸</span>
+      ${t("enemyMenu.orbit")} <span class="ctx-arrow">▸</span>
       <div class="ctx-submenu">
         ${orbitSubmenu}
       </div>
     </div>
     <div class="ctx-item ctx-has-submenu">
-      Keep at Range <span class="ctx-arrow">▸</span>
+      ${t("enemyMenu.keepRange")} <span class="ctx-arrow">▸</span>
       <div class="ctx-submenu">
         ${keepRangeSubmenu}
       </div>
     </div>
     <div class="ctx-sep"></div>
-    <div class="ctx-item" data-action="toggle-lock">${isLocked ? "Unlock Target" : "Lock Target"}</div>
-    <div class="ctx-item ${hasNav ? '' : 'disabled'}" data-action="stop">Stop</div>
+    <div class="ctx-item" data-action="toggle-lock">${isLocked ? t("enemyMenu.unlockTarget") : t("enemyMenu.lockTarget")}</div>
+    <div class="ctx-item ${hasNav ? '' : 'disabled'}" data-action="stop">${t("enemyMenu.stop")}</div>
   `;
 
   hudState.enemyCtxMenu.style.display = "block";

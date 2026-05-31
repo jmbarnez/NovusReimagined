@@ -4,7 +4,6 @@ import { getCurrentTutorialStep, isStationHangarTabActive } from "../data/tutori
 import { getHangarGuidePanel, type HangarGuideTarget } from "../data/hangar-tutorial-guide.js";
 
 const HIGHLIGHT_CLASS = "tutorial-hangar-highlight";
-const DIM_CLASS = "station-hangar-tour-dim";
 
 function currentHangarPhase(stepId: string, snapshot: Record<string, unknown>): number {
   const key = stepId === "hangar-turrets" ? "hangarCombatPhase" : "hangarReviewPhase";
@@ -20,7 +19,7 @@ function resolveGuideTarget(target: HangarGuideTarget): HTMLElement | null {
     case "hangar-stats":
       return document.getElementById("hangar-stats-panel");
     case "hangar-cargo":
-      return document.getElementById("hangar-cargo-section");
+      return document.getElementById("hangar-pane-cargo");
     case "hud-missions":
       return document.getElementById("hud-missions");
     case "hangar-undock":
@@ -44,7 +43,7 @@ function clearHighlights(): void {
   document.querySelectorAll(`.${HIGHLIGHT_CLASS}`).forEach((el) => {
     el.classList.remove(HIGHLIGHT_CLASS);
   });
-  document.getElementById("st-ui")?.classList.remove(DIM_CLASS);
+  document.getElementById("st-dimmer")?.classList.remove("active");
 }
 
 export function clearHangarTutorialGuide(): void {
@@ -64,7 +63,7 @@ export function syncHangarTutorialGuide(snapshot: Record<string, unknown> = {}):
   const panel = getHangarGuidePanel(step.id, phase);
   if (!panel) return;
 
-  document.getElementById("st-ui")?.classList.add(DIM_CLASS);
+  document.getElementById("st-dimmer")?.classList.add("active");
 
   if (panel.stationTab) activateStationTab(panel.stationTab);
 

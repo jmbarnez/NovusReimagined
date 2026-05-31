@@ -10,7 +10,6 @@ import { stationState, CONTRACT_TYPE_ICONS, fmtModBonuses, iconSvg } from "./sha
 import { getInstance } from "../../utils/items.js";
 import { ModuleInstance } from "../../types/moduleInstance.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
-import { poolItemLabel } from "../../data/industryRecipes.js";
 
 export function buildStatHtml(st: ComputedStats, pst: ComputedStats | null): string {
   const getValue = (obj: unknown, k: string): unknown => k.split('.').reduce((o: unknown, i: string) => (o as Record<string, unknown>)?.[i], obj);
@@ -181,30 +180,6 @@ export function renderHangar() {
     return `<div class="frack"><h4>${RL[rack]}</h4>${slots}</div>`;
   }).join("");
 
-  const invSections = [
-    { label: "Ore", data: getState().player.ore, pool: "ore" as const },
-    { label: "Refined", data: getState().player.refined, pool: "refined" as const },
-    { label: "Loot", data: getState().player.loot, pool: "loot" as const },
-    { label: "Components", data: getState().player.components, pool: "component" as const },
-  ].map(sec => {
-    const entries = Object.entries(sec.data).filter(([, qty]) => qty > 0);
-    if (entries.length === 0) return "";
-    const rows = entries.map(([key, qty]) => {
-      const label = poolItemLabel(sec.pool, key);
-      return `<div class="inv-row"><span class="inv-icon">${iconSvg(key, 12)}</span><span class="inv-name">${escHtml(label)}</span><span class="inv-qty">${qty}</span></div>`;
-    }).join("");
-    return `<div class="inv-section"><div class="inv-section-title">${sec.label}</div>${rows}</div>`;
-  }).join("");
-
-  const ammoHtml = `
-    <div class="inv-section">
-      <div class="inv-section-title">Ammunition</div>
-      <div class="inv-row"><span class="inv-icon">${iconSvg("ammo-hybrid", 12)}</span><span class="inv-name">Hybrid</span><span class="inv-qty">${getState().player.ammo?.hybrid ?? 0}</span></div>
-      <div class="inv-row"><span class="inv-icon">${iconSvg("ammo-missile", 12)}</span><span class="inv-name">Missile</span><span class="inv-qty">${getState().player.ammo?.missile ?? 0}</span></div>
-    </div>`;
-
-  const invHtml = invSections || `<div class="inv-empty">No resources in cargo.</div>`;
-
   const active = getState().player.contracts.filter(c => c.status === "active" || c.status === "complete");
   const activeRows = active.map(c => {
     const { current, required } = c.objective;
@@ -246,8 +221,8 @@ export function renderHangar() {
     <main>
       <h3>Active Fitting</h3>
       ${racks}
-      <h3>Inventory</h3>
-      <div class="st-inventory-container">${invHtml}${ammoHtml}</div>
+      <h3>Cargo</h3>
+      <div id="hangar-pane-cargo"></div>
     </main>
   </div>`;
 }

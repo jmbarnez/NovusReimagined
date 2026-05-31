@@ -15,6 +15,7 @@ import {
   getHangarCombatSwapHint,
 } from "./hangar-tutorial-guide.js";
 import { tutorialKey } from "./tutorial-controls.js";
+import { t } from "../utils/i18n.js";
 import {
   type TutorialZone,
   type TutorialCtx,
@@ -58,28 +59,28 @@ export function getTutorialStepObjective(step: TutorialStep, snapshot: Record<st
 
 export const HUD_TOUR_PANELS = [
   {
-    label: "Vitals Monitor",
-    body: "Tracks your ship's shields, hull armor, structure, and capacitor energy in real time.",
+    label: t("tutorial.hudTour.vitals.label"),
+    body: t("tutorial.hudTour.vitals.body"),
   },
   {
-    label: "Module Slots",
-    body: "Shows fitted weapons and tools. Use the numbered hotkeys to power modules on and off.",
+    label: t("tutorial.hudTour.modules.label"),
+    body: t("tutorial.hudTour.modules.body"),
   },
   {
-    label: "Lock Rail",
-    body: "Shows locks and lock progress. Click a target card, then a powered module slot, to assign that module.",
+    label: t("tutorial.hudTour.lockRail.label"),
+    body: t("tutorial.hudTour.lockRail.body"),
   },
   {
-    label: "Local Overview",
-    body: "Lists nearby contacts such as asteroids, ships, stations, and stargates. Click a contact to request a lock.",
+    label: t("tutorial.hudTour.overview.label"),
+    body: t("tutorial.hudTour.overview.body"),
   },
   {
-    label: "Comms Log",
-    body: "Shows system alerts and chat. Use the input bar to message other pilots in the system.",
+    label: t("tutorial.hudTour.comms.label"),
+    body: t("tutorial.hudTour.comms.body"),
   },
   {
-    label: "Missions & Log",
-    body: "Tracks objectives, rewards, and tutorial progress. You can skip training from the tutorial card at any time.",
+    label: t("tutorial.hudTour.missions.label"),
+    body: t("tutorial.hudTour.missions.body"),
   }
 ];
 
@@ -100,7 +101,7 @@ export function getHudTourPanel(
 }
 
 export function tutorialHangarHint(task: string): string {
-  return `Dock at the Academy (${tutorialKey("dock")}) → Hangar tab to ${task}`;
+  return t("tutorial.step.hangarHigh.objective", { dockKey: tutorialKey("dock") });
 }
 
 export function getHangarTourPanel(
@@ -129,13 +130,13 @@ export function getTutorialStepHint(
   }
   if (step.id === "hangar-high") {
     if (snapshot.hangarReviewComplete === true) {
-      return "Objective complete — press Next to fly to the mining range.";
+      return t("tutorial.step.hangarHigh.complete");
     }
     if (!Client.stationOpen) {
       return tutorialHangarHint("begin the loadout walkthrough");
     }
     if (!isStationHangarTabActive()) {
-      return "Click the Hangar tab — the tour will highlight each area as you go.";
+      return t("tutorial.step.hangarHigh.hangarTabHint");
     }
     const phase = typeof snapshot.hangarReviewPhase === "number"
       ? snapshot.hangarReviewPhase
@@ -144,13 +145,13 @@ export function getTutorialStepHint(
   }
   if (step.id === "hangar-turrets") {
     if (snapshot.hangarReviewComplete === true) {
-      return "Objective complete — press Next to fly to the gunnery bay.";
+      return t("tutorial.step.hangarTurrets.complete");
     }
     if (!Client.stationOpen) {
       return tutorialHangarHint("swap in your combat loadout");
     }
     if (!isStationHangarTabActive()) {
-      return "Click the Hangar tab — the tour will highlight each area as you go.";
+      return t("tutorial.step.hangarHigh.hangarTabHint");
     }
     const phase = typeof snapshot.hangarCombatPhase === "number"
       ? snapshot.hangarCombatPhase

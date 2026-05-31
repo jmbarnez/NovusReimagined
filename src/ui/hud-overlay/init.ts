@@ -100,8 +100,8 @@ export function initHudOverlay() {
                   <th class="ov-sortable" data-sort="class"><span class="th-text">${t("hud.class")}</span><div class="ov-resizer"></div></th>
                   <th class="ov-sortable" data-sort="name"><span class="th-text">${t("common.name")}</span><div class="ov-resizer"></div></th>
                   <th class="ov-sortable" data-sort="dist"><span class="th-text">${t("hud.dist")}</span><div class="ov-resizer"></div></th>
-                  <th><span class="th-text">Sig</span><div class="ov-resizer"></div></th>
-                  <th><span class="th-text">dV</span><div class="ov-resizer"></div></th>
+                  <th><span class="th-text">${t("hud.sig")}</span><div class="ov-resizer"></div></th>
+                  <th><span class="th-text">${t("bridge.overviewDv")}</span><div class="ov-resizer"></div></th>
                   <th><span class="th-text">${t("hud.act")}</span></th>
                 </tr></thead>
                 <tbody></tbody>

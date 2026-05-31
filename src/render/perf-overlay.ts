@@ -3,6 +3,7 @@ import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import { curSys } from "../utils/game.js";
 import { sfxBlip } from "../audio/procedural.js";
+import { t } from "../utils/i18n.js";
 
 let _lastSampleTime = 0;
 let _frameCount = 0;
@@ -26,9 +27,9 @@ function ensurePerfWindow() {
   el.className = "perf-window";
   el.innerHTML = `
     <div class="perf-head">
-      <span class="perf-title">Performance</span>
+      <span class="perf-title">${t("perf.title")}</span>
       <span style="flex:1"></span>
-      <button type="button" class="perf-close" title="Close">×</button>
+      <button type="button" class="perf-close" title="${t("common.close")}">×</button>
     </div>
     <div class="perf-body"></div>
   `;

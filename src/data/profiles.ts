@@ -11,6 +11,7 @@ import { SAVE_KEY } from "../constants.js";
 import { getState } from "../state-access.js";
 import type { Player } from "../state.js";
 import { loadPlayer, savePlayer } from "../player/player-data.js";
+import { t } from "../utils/i18n.js";
 
 const PROFILES_INDEX_KEY = "novus-profiles-v1";
 const ACTIVE_PROFILE_KEY = "novus-active-profile-id";
@@ -201,11 +202,11 @@ export function timeAgo(iso: string): string {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
-    return "just now";
+    if (days > 0) return t("timeAgo.days", { n: days });
+    if (hours > 0) return t("timeAgo.hours", { n: hours });
+    if (minutes > 0) return t("timeAgo.minutes", { n: minutes });
+    return t("timeAgo.justNow");
   } catch {
-    return "unknown";
+    return t("timeAgo.unknown");
   }
 }

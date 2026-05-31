@@ -15,6 +15,7 @@ import {
 } from "./tutorial-layout.js";
 import { tutorialKey } from "./tutorial-controls.js";
 import { getHangarGuidePanel } from "./hangar-tutorial-guide.js";
+import { t } from "../utils/i18n.js";
 import {
   type TutorialZone,
   type TutorialCtx,
@@ -50,10 +51,10 @@ function initTrackProgress(ctx: TutorialCtx, trackId: string): void {
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "hud-tour",
-    title: "HUD Overview",
+    title: t("tutorial.step.hudTour.title"),
     objective: (snapshot) => {
       const phase = typeof snapshot?.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-      return `Review HUD panel ${phase + 1} of 6, then press Next`;
+      return t("tutorial.step.hudTour.objective", { n: phase + 1, total: 6 });
     },
     zone: { x: 0, y: 0, r: 0 },
     beaconColor: 0x55aaff,
@@ -67,14 +68,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "fly-academy",
-    title: "Academy Approach",
-    objective: () =>
-      `Fly east to the Academy hub — follow the guide lane, fly through each slingshot gate for a boost, or open the system map (${tutorialKey("map")}) and click the Academy for a nav waypoint`,
-    hint: () =>
-      `Right-click ahead to set course. Thread each gate between the pillars for a slingshot boost. ${tutorialKey("brake")} to slow down.`,
+    title: t("tutorial.step.flyAcademy.title"),
+    objective: () => t("tutorial.step.flyAcademy.objective", { mapKey: tutorialKey("map") }),
+    hint: () => t("tutorial.step.flyAcademy.hint", { brakeKey: tutorialKey("brake") }),
     zone: tutorialRegionZone("fly-academy"),
     beaconColor: 0x55aaff,
-    nav: { trackId: "approach", label: "Academy", targetX: 0, targetY: 0 },
+    nav: { trackId: "approach", label: t("world.location.academy"), targetX: 0, targetY: 0 },
     onEnter(ctx) {
       initTrackProgress(ctx, "approach");
     },
@@ -88,14 +87,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "hangar-high",
-    title: "Hangar — Hardpoints",
+    title: t("tutorial.step.hangarHigh.title"),
     objective: (snapshot) => {
       if (Client.stationOpen && snapshot?.hangarReviewComplete !== true) {
         const phase = typeof snapshot?.hangarReviewPhase === "number" ? snapshot.hangarReviewPhase : 0;
         const panel = getHangarGuidePanel("hangar-high", phase);
         if (panel) return `${panel.label}: ${panel.body}`;
       }
-      return `Dock at the Academy (${tutorialKey("dock")}), review the Hangar walkthrough, then undock to continue toward the mining range`;
+      return t("tutorial.step.hangarHigh.objective", { dockKey: tutorialKey("dock") });
     },
     zone: tutorialRegionZone("hangar-high"),
     beaconColor: 0x88ff88,
@@ -115,12 +114,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "fly-mining",
-    title: "Mining Spoke",
-    objective: "Follow the guide lane from the Academy to the Mining Range asteroid belt",
-    hint: "Your mining laser is in high slot 1 (hotkey 1) and the tractor beam is in slot 2. Chevrons mark the lane — fly through each gate opening for a slingshot boost.",
+    title: t("tutorial.step.flyMining.title"),
+    objective: t("tutorial.step.flyMining.objective"),
+    hint: t("tutorial.step.flyMining.hint"),
     zone: tutorialRegionZone("fly-mining"),
     beaconColor: 0x88ccff,
-    nav: { trackId: "spoke-mining", label: "Mining Range", targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
+    nav: { trackId: "spoke-mining", label: t("world.region.miningRange"), targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
     onEnter(ctx) {
       initTrackProgress(ctx, "spoke-mining");
     },
@@ -133,10 +132,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "targeting",
-    title: "Scanner Range",
-    objective: "Left-click an asteroid to request a sensor lock, then wait for the lock to resolve",
-    hint: () =>
-      `Asteroids show on your overview (${tutorialKey("overview")}) and as contacts on the lock rail. ${tutorialKey("brake")} to hold position while the scan completes — the lock card fills as resolution progresses.`,
+    title: t("tutorial.step.targeting.title"),
+    objective: t("tutorial.step.targeting.objective"),
+    hint: () => t("tutorial.step.targeting.hint", { overviewKey: tutorialKey("overview"), brakeKey: tutorialKey("brake") }),
     zone: tutorialRegionZone("targeting"),
     beaconColor: 0x88ccff,
     isComplete(ctx) {
@@ -146,13 +144,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "mining",
-    title: "Mining Range",
-    objective: "Power the mining laser, assign it to your asteroid lock, fly into range, and collect ore",
-    hint: () =>
-      `Press 1 to activate the civilian mining laser in high slot 1. Click your resolved lock card, then click that slot to assign. Fly close until the mining beam connects.`,
+    title: t("tutorial.step.mining.title"),
+    objective: t("tutorial.step.mining.objective"),
+    hint: () => t("tutorial.step.mining.hint"),
     zone: tutorialRegionZone("mining"),
     beaconColor: 0xaa88ff,
-    nav: { trackId: "spoke-mining", label: "Mining Range", targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
+    nav: { trackId: "spoke-mining", label: t("world.region.miningRange"), targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
     onEnter(ctx) {
       ctx.snapshot.ore = totalOre(ctx.player);
     },
@@ -164,12 +161,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "fly-station",
-    title: "Return to Academy",
-    objective: "Follow the guide lane back to the Academy hub with your mined ore",
-    hint: "Fly the return spoke — pass through the boost gates. Once docked, Industry can refine the ore you collected.",
+    title: t("tutorial.step.flyStation.title"),
+    objective: t("tutorial.step.flyStation.objective"),
+    hint: t("tutorial.step.flyStation.hint"),
     zone: tutorialRegionZone("fly-station"),
     beaconColor: 0x88ff88,
-    nav: { trackId: "spoke-mining-return", label: "Academy", targetX: 0, targetY: 0 },
+    nav: { trackId: "spoke-mining-return", label: t("world.location.academy"), targetX: 0, targetY: 0 },
     onEnter(ctx) {
       initTrackProgress(ctx, "spoke-mining-return");
     },
@@ -183,10 +180,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "industry",
-    title: "Industry Bench",
-    objective: () =>
-      `Dock at the Academy (${tutorialKey("dock")}), open Industry, and queue Ferro bar refining`,
-    hint: "Dock at the central station, open Industry, choose Smelter, then queue Ferro bar refining. The queue panel shows live progress while the job runs.",
+    title: t("tutorial.step.industry.title"),
+    objective: () => t("tutorial.step.industry.objective", { dockKey: tutorialKey("dock") }),
+    hint: t("tutorial.step.industry.hint"),
     zone: tutorialRegionZone("industry"),
     beaconColor: 0x88ff88,
     onEnter(ctx) {
@@ -203,14 +199,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "hangar-turrets",
-    title: "Hangar — Combat Loadout",
+    title: t("tutorial.step.hangarTurrets.title"),
     objective: (snapshot) => {
       if (Client.stationOpen && snapshot?.hangarReviewComplete !== true) {
         const phase = typeof snapshot?.hangarCombatPhase === "number" ? snapshot.hangarCombatPhase : 0;
         const panel = getHangarGuidePanel("hangar-turrets", phase);
         if (panel) return `${panel.label}: ${panel.body}`;
       }
-      return `Dock at the Academy (${tutorialKey("dock")}), open Hangar, swap the mining laser and tractor for the autocannon and salvager, then undock`;
+      return t("tutorial.step.hangarTurrets.objective", { dockKey: tutorialKey("dock") });
     },
     zone: tutorialRegionZone("hangar-turrets"),
     beaconColor: 0xff8866,
@@ -232,12 +228,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "fly-gunnery",
-    title: "Gunnery Spoke",
-    objective: "Follow the guide lane from the Academy to the gunnery bay",
-    hint: "Your autocannon should be in high slot 1 (hotkey 1) and salvager in slot 2. Revisit the Hangar if you still have mining modules fitted.",
+    title: t("tutorial.step.flyGunnery.title"),
+    objective: t("tutorial.step.flyGunnery.objective"),
+    hint: t("tutorial.step.flyGunnery.hint"),
     zone: tutorialRegionZone("fly-gunnery"),
     beaconColor: 0xff8866,
-    nav: { trackId: "spoke-gunnery", label: "Gunnery Bay", targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
+    nav: { trackId: "spoke-gunnery", label: t("world.region.gunneryBay"), targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
     onEnter(ctx) {
       initTrackProgress(ctx, "spoke-gunnery");
     },
@@ -250,13 +246,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "gunnery",
-    title: "Gunnery Bay",
-    objective: "Lock a target dummy and destroy it with your autocannon (high slot 1)",
-    hint: () =>
-      `Press 1 to power the autocannon in high slot 1, click the dummy's lock card, then click slot 1 to assign.`,
+    title: t("tutorial.step.gunnery.title"),
+    objective: t("tutorial.step.gunnery.objective"),
+    hint: () => t("tutorial.step.gunnery.hint"),
     zone: tutorialRegionZone("gunnery"),
     beaconColor: 0xff8866,
-    nav: { trackId: "spoke-gunnery", label: "Gunnery Bay", targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
+    nav: { trackId: "spoke-gunnery", label: t("world.region.gunneryBay"), targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
     onEnter(ctx) {
       const step = findStep("gunnery");
       ctx.snapshot.dummyCount = step ? countAliveTargetDummiesInZone(step.zone, ctx.player) : 0;
@@ -272,11 +267,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "scan-signature",
-    title: "Signal Trace",
-    objective: () =>
-      `Open the system map (${tutorialKey("map")}), aim at the southeast beacon sector, and Pulse to resolve the training signature`,
-    hint: () =>
-      `${tutorialKey("map")} opens the map — power your survey scanner in low slot 1 (hotkey 4), click near the beacon to aim the scan cone, then press Scan on the toolbar`,
+    title: t("tutorial.step.scanSignature.title"),
+    objective: () => t("tutorial.step.scanSignature.objective", { mapKey: tutorialKey("map") }),
+    hint: () => t("tutorial.step.scanSignature.hint", { mapKey: tutorialKey("map") }),
     zone: tutorialRegionZone("scan-signature"),
     beaconColor: 0x6fd3ff,
     onEnter() {
@@ -289,14 +282,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "fly-signature",
-    title: "Datacore Approach",
-    objective: "Follow the guide lane to the resolved training signature",
-    hint: "The cross marker shows where the datacore waits — fly the lit corridor to reach it",
+    title: t("tutorial.step.flySignature.title"),
+    objective: t("tutorial.step.flySignature.objective"),
+    hint: t("tutorial.step.flySignature.hint"),
     zone: tutorialRegionZone("fly-signature"),
     beaconColor: 0x6fd3ff,
     nav: {
       trackId: "spoke-signature",
-      label: "Signal Trace",
+      label: t("world.region.signalTrace"),
       targetX: TUTORIAL_TRAINING_SITE_X,
       targetY: TUTORIAL_TRAINING_SITE_Y,
     },
@@ -312,11 +305,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "breach-signature",
-    title: "Breach Datacore",
-    objective: () =>
-      `Breach the training datacore (${tutorialKey("dock")} at the marker or from the overview)`,
-    hint: () =>
-      `Get close to the signature marker and press ${tutorialKey("dock")} to begin the breach sequence`,
+    title: t("tutorial.step.breachSignature.title"),
+    objective: () => t("tutorial.step.breachSignature.objective", { dockKey: tutorialKey("dock") }),
+    hint: () => t("tutorial.step.breachSignature.hint", { dockKey: tutorialKey("dock") }),
     zone: tutorialRegionZone("breach-signature"),
     beaconColor: 0x6fd3ff,
     isComplete(ctx) {
@@ -326,12 +317,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "fly-gate",
-    title: "Stargate Spoke",
-    objective: "Follow the final guide lane to the Novus Prime stargate at the sector rim",
-    hint: "The stargate awakens when you begin this leg — fly the spoke and pass through the boost gates.",
+    title: t("tutorial.step.flyGate.title"),
+    objective: t("tutorial.step.flyGate.objective"),
+    hint: t("tutorial.step.flyGate.hint"),
     zone: tutorialRegionZone("fly-gate"),
     beaconColor: 0xffffff,
-    nav: { trackId: "spoke-gate", label: "Stargate", targetX: TUTORIAL_GATE.x, targetY: TUTORIAL_GATE.y },
+    nav: { trackId: "spoke-gate", label: t("world.location.stargate"), targetX: TUTORIAL_GATE.x, targetY: TUTORIAL_GATE.y },
     onEnter(ctx) {
       initTrackProgress(ctx, "spoke-gate");
     },
@@ -344,10 +335,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "graduation",
-    title: "Stargate Graduation",
-    objective: () => `Warp to Novus Prime — fly to the stargate and press ${tutorialKey("dock")} to jump`,
-    hint: () =>
-      `Enter the stargate's interact range and press ${tutorialKey("dock")} to warp out. Press Graduate once you arrive in Novus Prime.`,
+    title: t("tutorial.step.graduation.title"),
+    objective: () => t("tutorial.step.graduation.objective", { dockKey: tutorialKey("dock") }),
+    hint: () => t("tutorial.step.graduation.hint", { dockKey: tutorialKey("dock") }),
     zone: tutorialRegionZone("graduation"),
     beaconColor: 0xffffff,
     onEnter(ctx) {

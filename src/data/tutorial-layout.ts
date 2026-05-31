@@ -6,6 +6,7 @@ import {
   resolveTutorialGateHint,
   type TutorialGateHintKey,
 } from "./tutorial-controls.js";
+import { t } from "../utils/i18n.js";
 
 /** Cadet system sun sits far west; approach lane runs west→east into the Academy; training zones branch east. */
 export const TUTORIAL_SUN_DIR = Math.PI;
@@ -14,7 +15,7 @@ export const TUTORIAL_SECTOR = {
   x: 0,
   y: 0,
   radius: 4500,
-  name: "S.T.A.R.T Training Sector",
+  name: t("world.sector.start"),
   security: 1.0,
 } as const;
 
@@ -74,11 +75,11 @@ export interface TutorialLocalRegion {
 }
 
 export const TUTORIAL_LOCAL_REGIONS: TutorialLocalRegion[] = [
-  { id: "tut-flight", name: "Flight Deck", x: -1650, y: -140, r: 200, stepId: "fly-academy" },
-  { id: "tut-mining", name: "Mining Range", x: 2800, y: 0, r: TUTORIAL_MINING_ZONE_R, stepId: "targeting" },
-  { id: "tut-industry", name: "Industry Bench", x: 0, y: 0, r: 280, stepId: "industry" },
-  { id: "tut-gunnery", name: "Gunnery Bay", x: 2200, y: 1600, r: 160, stepId: "gunnery" },
-  { id: "tut-signature", name: "Signal Trace", x: 2000, y: 2900, r: 240, stepId: "signature" },
+  { id: "tut-flight", name: t("world.region.flightDeck"), x: -1650, y: -140, r: 200, stepId: "fly-academy" },
+  { id: "tut-mining", name: t("world.region.miningRange"), x: 2800, y: 0, r: TUTORIAL_MINING_ZONE_R, stepId: "targeting" },
+  { id: "tut-industry", name: t("world.region.industryBench"), x: 0, y: 0, r: 280, stepId: "industry" },
+  { id: "tut-gunnery", name: t("world.region.gunneryBay"), x: 2200, y: 1600, r: 160, stepId: "gunnery" },
+  { id: "tut-signature", name: t("world.region.signalTrace"), x: 2000, y: 2900, r: 240, stepId: "signature" },
 ];
 
 // ─── Guided track lanes (hub-and-spoke) ───
@@ -369,12 +370,12 @@ function buildBoostGatesForTrack(
 }
 
 export const TUTORIAL_BOOST_GATES: TutorialBoostGate[] = [
-  ...buildBoostGatesForTrack("approach", GATE_FRACTIONS, 220),
-  ...buildBoostGatesForTrack("spoke-mining", GATE_FRACTIONS, 200),
-  ...buildBoostGatesForTrack("spoke-mining-return", GATE_FRACTIONS, 200),
-  ...buildBoostGatesForTrack("spoke-gunnery", GATE_FRACTIONS, 200),
-  ...buildBoostGatesForTrack("spoke-signature", GATE_FRACTIONS, 200),
-  ...buildBoostGatesForTrack("spoke-gate", GATE_FRACTIONS, 210),
+  ...buildBoostGatesForTrack("approach", GATE_FRACTIONS, 200),
+  ...buildBoostGatesForTrack("spoke-mining", GATE_FRACTIONS, 180),
+  ...buildBoostGatesForTrack("spoke-mining-return", GATE_FRACTIONS, 180),
+  ...buildBoostGatesForTrack("spoke-gunnery", GATE_FRACTIONS, 180),
+  ...buildBoostGatesForTrack("spoke-signature", GATE_FRACTIONS, 180),
+  ...buildBoostGatesForTrack("spoke-gate", GATE_FRACTIONS, 190),
 ];
 
 /** @deprecated alias */

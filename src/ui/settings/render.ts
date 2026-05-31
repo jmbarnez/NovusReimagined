@@ -160,7 +160,7 @@ export function renderSettings() {
       return `<div class="kb-row">
         <span class="kb-label">${label}</span>
         <button class="kb-key${isListening ? " listening" : ""}" data-action="${action}">
-          ${isListening ? "Press key..." : fmtKey(bound)}
+          ${isListening ? t("settings.pressKey") : fmtKey(bound)}
         </button>
       </div>`;
     }).join("");

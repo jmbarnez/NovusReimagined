@@ -1,6 +1,7 @@
 import "../styles/hud-slots.css";
 
-import { PlayerAccess, getState } from "../../state-access.js";
+import { getState } from "../../state-access.js";
+import { queueFrameAction } from "../../sim/input.js";
 import { SHIPS, type ShipDef, type ShipFitting } from "../../data/ships.js";
 import { MODULES, MODULE_FLAGS } from "../../data/modules.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
@@ -20,6 +21,7 @@ import { savePlayer } from "../../player/player-data.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
 import { getSlotPowerCd, isSlotPoweredOn } from "../../utils/slot-power.js";
+import { t } from "../../utils/i18n.js";
 
 export interface SlotNode {
   el: HTMLElement;
@@ -108,7 +110,7 @@ export function rebuildSlots(ship: ShipDef) {
   const ft = ship.fitting;
 
   // Global master switch
-  const globalSwitch = createRackSwitch("global", "ALL");
+  const globalSwitch = createRackSwitch("global", t("ship.allSystems"));
   hudState.slotsContainer.appendChild(globalSwitch);
   hudState.rackSwitchNodes.set("global", globalSwitch);
 
@@ -142,7 +144,6 @@ export function rebuildSlots(ship: ShipDef) {
       el.appendChild(name);
 
       const sub = document.createElement("div");
-      name.className = "sl-name empty"; // keep layout classes consistent
       sub.className = "sl-sub";
       el.appendChild(sub);
 
@@ -241,7 +242,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
       strBtn = document.createElement("button");
       strBtn.className = "sl-str-toggle";
       strBtn.textContent = btnText;
-      strBtn.title = "Tractor Beam Controls (Click to show/hide, Scroll/Drag dial to adjust)";
+      strBtn.title = t("ship.tractorControls");
       el.appendChild(strBtn);
 
       strBtn.addEventListener("click", (ev) => {
@@ -262,8 +263,8 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
         strBtn.textContent = btnText;
       }
     }
-    const t = getState().player.tractorTightness ?? 0.5;
-    strBtn.style.setProperty("--tightness", String(t));
+    const tightness = getState().player.tractorTightness ?? 0.5;
+    strBtn.style.setProperty("--tightness", String(tightness));
   } else {
     if (strBtn) {
       strBtn.remove();
@@ -318,34 +319,34 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   // Subtext (dirty-check)
   let subText = "", subCls = "sl-sub";
   if (modOffline) {
-    subText = "OFFLINE";
+    subText = t("ship.offline");
     subCls = "sl-sub off damage-offline";
   } else if (modDamaged) {
-    subText = `DMGD ${durPct}%`;
+    subText = `${t("ship.damagedAbbr")} ${durPct}%`;
     subCls = "sl-sub damaged";
   } else if (isTurret && powerCd > 0) {
-    subText = isPowered ? "PWR DN..." : "PWR UP...";
+    subText = isPowered ? t("ship.pwrDown") : t("ship.pwrUp");
     subCls = "sl-sub cycling";
   } else if (isTurret && !isPowered) {
-    subText = "OFFLINE";
+    subText = t("ship.offline");
     subCls = "sl-sub off";
   } else if (isWeaponTurret) {
     const prof = WEAPON_PROFILES[inst!.baseId] || WEAPON_PROFILES.default;
     const cdVal = getState().player.turretCds?.[idx] || 0;
-    let cdStr = "RDY";
+    let cdStr = t("ship.ready");
     if (cdVal > 0 && prof.rate > 0) {
       const r = Math.round((1 - cdVal / prof.rate) * 100);
       cdStr = `${Math.max(0, Math.min(100, r))}%`;
     }
     if (assignedId != null) {
-      const t = targetByLockId(assignedId);
-      subText = `→${t ? (t.name || "").slice(0, 3) : "?"} ${cdStr}`;
+      const tgt = targetByLockId(assignedId);
+      subText = `→${tgt ? (tgt.name || "").slice(0, 3) : "?"} ${cdStr}`;
       subCls = "sl-sub assigned";
     } else {
-      subText = `${prof.rate.toFixed(2)}s H${Math.round(heat * 100)} ${cdStr}`;
+      subText = `${prof.rate.toFixed(2)}s ${t("ship.heatAbbr")}${Math.round(heat * 100)} ${cdStr}`;
     }
   } else if (m) {
-    subText = isSlotActive ? "ON" : "OFF";
+    subText = isSlotActive ? t("ship.online") : t("ship.offline");
     subCls = isSlotActive ? "sl-sub on" : "sl-sub off";
   }
   if (subEl.textContent !== subText) subEl.textContent = subText;
@@ -356,11 +357,11 @@ export function createRackSwitch(rack: string, label: string): HTMLElement {
   const el = document.createElement("div");
   el.className = `rack-master-switch ${rack === "global" ? "global" : "rack-" + rack}`;
   el.dataset.rack = rack;
-  el.title = rack === "global" ? "All Systems" : `${rack[0].toUpperCase() + rack.slice(1)} Rack`;
+  el.title = rack === "global" ? t("ship.allSystems") : `${t("inventory.slot" + (rack[0].toUpperCase() + rack.slice(1)))} ${t("ship.rack")}`;
 
   const onBtn = document.createElement("div");
   onBtn.className = "rms-btn rms-on";
-  onBtn.textContent = "ON";
+  onBtn.textContent = t("ship.online");
   el.appendChild(onBtn);
 
   const sep = document.createElement("div");
@@ -370,7 +371,7 @@ export function createRackSwitch(rack: string, label: string): HTMLElement {
 
   const offBtn = document.createElement("div");
   offBtn.className = "rms-btn rms-off";
-  offBtn.textContent = "OFF";
+  offBtn.textContent = t("ship.offline");
   el.appendChild(offBtn);
 
   el.addEventListener("click", (e) => {
@@ -402,15 +403,15 @@ export function onSlotClick(e: MouseEvent, rack: string, idx: number) {
     if (getState().player._assignTargetId != null) {
       const assignTargetId = getState().player._assignTargetId;
       if (!assignTargetId) return;
-      PlayerAccess.setTurretTarget(idx, assignTargetId);
+      queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: idx, targetId: assignTargetId } });
       const target = targetByLockId(assignTargetId);
-      floatText(getState().player.x, getState().player.y - 30, `TURRET → ${target?.name || "TARGET"}`, "#44ffaa");
-      PlayerAccess.setAssignTargetId(null);
+      floatText(getState().player.x, getState().player.y - 30, `TURRET → ${target?.name || t("ship.target")}`, "#44ffaa");
+      queueFrameAction({ type: "selectLockTarget", payload: { id: assignTargetId } });
     } else {
       const targetLock = getState().player.targetLock;
       if (!targetLock) return;
-      PlayerAccess.setTurretTarget(idx, targetLock.id);
-      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} → ${targetLock.name || "TARGET"}`, "#44ffaa");
+      queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: idx, targetId: targetLock.id } });
+      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} → ${targetLock.name || t("ship.target")}`, "#44ffaa");
     }
     return;
   }
@@ -419,11 +420,11 @@ export function onSlotClick(e: MouseEvent, rack: string, idx: number) {
   if (rack === "high" && e.shiftKey && m?.isSalvager) {
     const targetLock = getState().player.targetLock;
     if (targetLock) {
-      PlayerAccess.setHighTarget(idx, targetLock.id);
-      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} → ${targetLock.name || "WRECK"}`, "#00e8c8");
+      queueFrameAction({ type: "setHighTarget", payload: { idx, targetId: targetLock.id } });
+      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} → ${targetLock.name || t("ship.wreck")}`, "#00e8c8");
     } else {
-      PlayerAccess.setHighTarget(idx, null);
-      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} UNASSIGNED`, "#ffaa44");
+      queueFrameAction({ type: "setHighTarget", payload: { idx, targetId: null } });
+      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} ${t("ship.unassigned")}`, "#ffaa44");
     }
     return;
   }

@@ -3,6 +3,7 @@ import {
   TUTORIAL_TRAINING_SITE_X,
   TUTORIAL_TRAINING_SITE_Y,
 } from "./tutorial-layout.js";
+import { t } from "../utils/i18n.js";
 
 export {
   TUTORIAL_TRAINING_SITE_X,
@@ -15,7 +16,7 @@ export const TUTORIAL_TRAINING_SITE_ID = "site-sys-0-training";
 export const TUTORIAL_TRAINING_SITE_TYPE: SiteTypeDef = {
   id: "tutorial-training-core",
   family: "resource",
-  name: "Training Datacore",
+  name: t("site.trainingDatacore"),
   scanDifficulty: 0.55,
   signatureStrength: 0.92,
   signatureSize: 0.85,

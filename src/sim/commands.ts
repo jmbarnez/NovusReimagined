@@ -90,6 +90,11 @@ export interface AssignModuleSlotToTargetCommand {
   };
 }
 
+export interface SetHighTargetCommand {
+  type: "setHighTarget";
+  payload: { idx: number; targetId: string | null };
+}
+
 export interface SyncTutorialStepCommand {
   type: "syncTutorialStep";
   payload: Player["tutorial"];
@@ -230,6 +235,7 @@ export type GameCommand =
   | SetFireControlSlotCommand
   | ToggleSlotDefaultActionCommand
   | AssignModuleSlotToTargetCommand
+  | SetHighTargetCommand
   | SyncTutorialStepCommand
   | SkipTutorialCommand
   | CompleteSiteCommand
@@ -334,6 +340,11 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
         p,
         { ...command.payload.opts, suppressFrameAction: true },
       );
+      break;
+    case "setHighTarget":
+      if (!Number.isInteger(command.payload.idx) || command.payload.idx < 0) break;
+      if (command.payload.targetId !== null && typeof command.payload.targetId !== "string") break;
+      PlayerAccess.setHighTarget(command.payload.idx, command.payload.targetId, p);
       break;
     case "requestSensorLock":
       if (!command.payload.id) break;

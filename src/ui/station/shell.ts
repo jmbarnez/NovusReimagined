@@ -21,6 +21,7 @@ export function ensureStationUI(): void {
   const el = document.createElement("div");
   el.id = "station-overlay";
   el.innerHTML = `
+    <div id="st-dimmer"></div>
     <div id="st-ui">
       <aside id="st-sidebar">
         <div id="st-station-info">

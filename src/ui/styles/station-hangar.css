@@ -5,64 +5,6 @@
 }
 
 /* ── Hangar Inventory ── */
-.st-inventory-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.inv-section {
-  background: color-mix(in srgb, var(--hud-bg-panel) 40%, transparent);
-  border: 1px solid var(--hud-border-soft);
-  border-radius: 6px;
-  padding: 10px;
-}
-
-.inv-section-title {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--hud-text-faint);
-  border-bottom: 1px solid var(--hud-border-soft);
-  padding-bottom: 4px;
-  margin-bottom: 6px;
-}
-
-.inv-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 0;
-  border-bottom: 1px solid var(--hud-border-soft);
-}
-
-.inv-row:last-child {
-  border-bottom: none;
-}
-
-.inv-icon {
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.inv-name {
-  font-size: 10px;
-  color: var(--hud-text-dim);
-  flex: 1;
-}
-
-.inv-qty {
-  font-size: 10px;
-  color: var(--hud-text-bright);
-  font-weight: 600;
-  text-align: right;
-}
-
 .inv-empty {
   font-size: 10px;
   color: var(--hud-text-faint);

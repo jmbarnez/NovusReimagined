@@ -3,10 +3,11 @@ import { PlayerAccess, MiningAccess, SalvagerAccess, TractorAccess, getState } f
 import { invalidate } from "../player/player-stats.js";
 import type { WorldSnapshot, EntitySnapshot } from "../sim/snapshot.js";
 import { populateSystem } from "../world-gen.js";
+import { rebuildSpatialGrid } from "../utils/spatial.js";
 import { netLog } from "../ui/net-console.js";
 import { addBullet, addEnemyBullet, addWreckPiece, addSalvagePickup } from "../utils/entities.js";
 import type { DamageProfile, WeaponDelivery } from "../data/modules.js";
-import type { SalvagePickup } from "../types/world.js";
+import type { Enemy, Asteroid, SalvagePickup } from "../types/world.js";
 import { showPickupToast } from "../feedback.js";
 import { emit } from "../events.js";
 import { makeRemotePlayerStub, type RemotePlayerBrief } from "./remote-peers.js";
@@ -436,9 +437,51 @@ export function applySnapshotToG(snap: WorldSnapshot, isFullSnapshot = false) {
         e.angle = snapEnt.angle || 0;
         e.hp = snapEnt.hp || 0;
         e.maxHp = snapEnt.maxHp || 100;
+        if (snapEnt.shield !== undefined) e.shield = snapEnt.shield;
+        if (snapEnt.maxShield !== undefined) e.maxShield = snapEnt.maxShield;
+        if (snapEnt.structure !== undefined) e.structure = snapEnt.structure;
+        if (snapEnt.maxStructure !== undefined) e.maxStructure = snapEnt.maxStructure;
+        snapEnemies.delete(e.id);
       } else {
         e.alive = false;
       }
+    }
+    // Create any enemies present in snapshot but missing locally
+    for (const snapEnt of snapEnemies.values()) {
+      const newEn: Enemy = {
+        id: String(snapEnt.id),
+        type: snapEnt.enemyType || "unknown",
+        name: snapEnt.name || "Unknown",
+        x: snapEnt.x,
+        y: snapEnt.y,
+        px: snapEnt.x,
+        py: snapEnt.y,
+        spawnX: snapEnt.x,
+        spawnY: snapEnt.y,
+        hp: snapEnt.hp || 0,
+        maxHp: snapEnt.maxHp || 100,
+        vx: snapEnt.vx,
+        vy: snapEnt.vy,
+        angle: snapEnt.angle || 0,
+        prevAngle: snapEnt.angle || 0,
+        speed: snapEnt.speed ?? 100,
+        credits: 0,
+        loot: {},
+        alive: true,
+        respawnTimer: 0,
+        aggroRange: 250,
+        sigRadius: snapEnt.sigRadius ?? 30,
+        fitting: { turret: [], high: [], med: [], low: [] },
+        turretCds: [],
+        shield: snapEnt.shield ?? 0,
+        maxShield: snapEnt.maxShield ?? 0,
+        structure: snapEnt.structure ?? 0,
+        maxStructure: snapEnt.maxStructure ?? 0,
+        level: snapEnt.level ?? 1,
+        faction: snapEnt.faction ?? "hostile",
+        weaponRange: snapEnt.weaponRange,
+      };
+      sys.enemies.push(newEn);
     }
   }
 
@@ -453,7 +496,46 @@ export function applySnapshotToG(snap: WorldSnapshot, isFullSnapshot = false) {
         a.vy = snapEnt.vy;
         a.hp = snapEnt.hp || 0;
         a.maxHp = snapEnt.maxHp || 100;
+        a.spinAngle = snapEnt.spinAngle ?? a.spinAngle;
+        a.spinVel = snapEnt.spinVel ?? a.spinVel;
+        snapAsteroids.delete(a.id);
       }
     }
+    // Create any asteroids present in snapshot but missing locally
+    for (const snapEnt of snapAsteroids.values()) {
+      const newAst: Asteroid = {
+        id: String(snapEnt.id),
+        x: snapEnt.x,
+        y: snapEnt.y,
+        px: snapEnt.x,
+        py: snapEnt.y,
+        vx: snapEnt.vx,
+        vy: snapEnt.vy,
+        radius: snapEnt.radius ?? 20,
+        shape: [[1, 0], [0.5, 0.87], [-0.5, 0.87], [-1, 0], [-0.5, -0.87], [0.5, -0.87]],
+        hp: snapEnt.hp || 0,
+        maxHp: snapEnt.maxHp || 100,
+        oreWeights: snapEnt.oreWeights ?? [1, 0, 0],
+        richness: snapEnt.richness ?? 1,
+        depleted: !!snapEnt.depleted,
+        respawnTimer: 0,
+        spinAngle: snapEnt.spinAngle ?? 0,
+        spinVel: snapEnt.spinVel ?? 0,
+        prevSpin: snapEnt.spinAngle ?? 0,
+        tintHue: snapEnt.tintHue ?? 180,
+        tintSat: snapEnt.tintSat ?? 40,
+        name: snapEnt.name ?? "Asteroid",
+      };
+      sys.asteroids.push(newAst);
+    }
   }
+
+  // Rebuild lookup maps so new entities are visible to physics and rendering
+  sys._enemyMap = new Map();
+  for (const e of sys.enemies) sys._enemyMap.set(e.id, e);
+  sys._asteroidMap = new Map();
+  for (const a of sys.asteroids) sys._asteroidMap.set(a.id, a);
+
+  // Rebuild cached live arrays so the renderer sees them on the next frame
+  rebuildSpatialGrid(snap.player.sysIdx);
 }

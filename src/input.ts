@@ -1,6 +1,6 @@
 import { Client } from "./state.js";
 import type { Enemy, Station } from "./types/world.js";
-import { PlayerAccess, clearNav, getState } from "./state-access.js";
+import { clearNav, getState } from "./state-access.js";
 import { showEnemyCtxMenu } from "./ui/hud/enemy-menu.js";
 import { undockStation, tryWarp } from "./dock.js";
 import { dst } from "./utils/math.js";
@@ -8,9 +8,11 @@ import { dst } from "./utils/math.js";
 import { curSys } from "./utils/game.js";
 import { requestSensorLock } from "./targeting.js";
 import { toggleSettings, closeSettings, listeningFor } from "./ui/settings/index.js";
+import { togglePauseMenu, closePauseMenu } from "./ui/pause-menu.js";
 import { toggleCargoWindow, toggleScannerDock, toggleSkillsWindow, toggleHubWindow, toggleEventLogPanel } from "./ui/hud-overlay.js";
 import { closeTopmostWindow } from "./ui/hud/windows.js";
-import { applyBarHotkey, barHotkeySlotList, toggleSlotDefaultAction } from "./player/player-fitting.js";
+import { applyBarHotkey, barHotkeySlotList } from "./player/player-fitting.js";
+import { queueFrameAction } from "./sim/input.js";
 import { playBackgroundMusic } from "./audio/music.js";
 import { resumeAudio, sfxTurretAssign } from "./audio/procedural.js";
 import { playerHardpointRack } from "./utils/hardpoints.js";
@@ -23,6 +25,7 @@ export function initInput() {
     "#bridge-overlay",
     "#settings-overlay",
     "#wreck-overlay",
+    "#pause-overlay",
     "#title-screen",
     ".eve-window",
     "#hud-bottom",
@@ -63,11 +66,13 @@ export function initInput() {
 
     if (e.code === keybinds.settings) {
       if (Client.settingsOpen) { closeSettings(); return; }
+      const pauseOverlay = document.getElementById("pause-overlay");
+      if (pauseOverlay && pauseOverlay.style.display === "flex") { closePauseMenu(); return; }
       if (Client.showMap) { Client.showMap = false; return; }
       if (Client.stationOpen) { undockStation(); return; }
-      // Close topmost hud window first, then fall through to settings
+      // Close topmost hud window first, then fall through to pause menu
       if (closeTopmostWindow()) return;
-      toggleSettings();
+      togglePauseMenu();
       return;
     }
 
@@ -151,12 +156,13 @@ export function initInput() {
       if (idx < slots.length && slots[idx].rack === hardpointRack) {
         const tIdx = slots[idx].idx;
         if (!(getState().player.turretPower?.[tIdx] ?? false)) {
-          toggleSlotDefaultAction(hardpointRack, tIdx);
+          queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack: hardpointRack, idx: tIdx } });
         }
-        PlayerAccess.setFireControlSlot(tIdx);
-        if (getState().player._assignTargetId) {
-          PlayerAccess.setTurretTarget(tIdx, getState().player._assignTargetId);
-          PlayerAccess.setAssignTargetId(null);
+        queueFrameAction({ type: "setFireControlSlot", payload: { slot: tIdx } });
+        const assignTargetId = getState().player._assignTargetId;
+        if (assignTargetId != null) {
+          queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: tIdx, targetId: assignTargetId } });
+          queueFrameAction({ type: "selectLockTarget", payload: { id: assignTargetId } });
           sfxTurretAssign();
         }
       } else {

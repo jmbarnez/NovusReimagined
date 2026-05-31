@@ -7,6 +7,7 @@ import { buildLocalOverviewRows } from "../bridge.js";
 import { hudState } from "./state.js";
 import { showEnemyCtxMenu } from "./enemy-menu.js";
 import { formatDistance } from "../../utils/format.js";
+import { t } from "../../utils/i18n.js";
 
 /* ── Overview Panel ── */
 export function updateHudOverviewPanel() {
@@ -54,8 +55,8 @@ export function updateHudOverviewPanel() {
       tr.className = `ov-row ov-row-${r.kind}`;
       tr.setAttribute("data-id", r.id);
       const lockBtn = (r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid")
-        ? `<button type="button" class="ov-lock" data-lock-id="${r.id}">Lock</button>`
-        : "—";
+        ? `<button type="button" class="ov-lock" data-lock-id="${r.id}">${t("bridge.lockBtn")}</button>`
+        : t("bridge.dash");
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       const sig = String(r.sig);
       const relV = typeof r.relV === "number" ? Math.round(r.relV).toString() : String(r.relV);
@@ -105,7 +106,7 @@ export function updateHudOverviewPanelHeaders() {
   const ths = hudState.ovPanel.querySelectorAll("thead th[data-sort]");
   for (const th of ths) {
     const key = (th as HTMLElement).dataset.sort;
-    const label = key === "state" ? "State" : key === "class" ? "Class" : key === "name" ? "Name" : "Dist";
+    const label = key === "state" ? t("hud.state") : key === "class" ? t("hud.class") : key === "name" ? t("common.name") : t("hud.dist");
     const ind = hudState.ovSortKey === key ? (hudState.ovSortDir === 1 ? " ↑" : " ↓") : "";
     const textEl = th.querySelector(".th-text");
     if (textEl) {
@@ -207,7 +208,7 @@ export function updateDockPrompt(sys: System | null | undefined) {
       if (dst(getState().player.x, getState().player.y, g.x, g.y) < g.radius + GATE_RANGE) {
         const tgt = getState().GALAXY[g.targetSysIdx];
         if (hudState.dockPrompt) {
-          hudState.dockPrompt.textContent = `[F] Jump to ${tgt?.name || "Gate"}`;
+          hudState.dockPrompt.textContent = t("hud.jumpTo", { name: tgt?.name || t("bridge.gateFallback") });
           hudState.dockPrompt.classList.add("visible");
         }
         return;
@@ -222,7 +223,7 @@ export function updateDockPrompt(sys: System | null | undefined) {
       const interactR = (st.collectRadius ?? 220) + 80;
       if (dst(getState().player.x, getState().player.y, st.x, st.y) < interactR) {
         if (hudState.dockPrompt) {
-          hudState.dockPrompt.textContent = "[F] Processing Hub";
+          hudState.dockPrompt.textContent = t("hud.processingHub");
           hudState.dockPrompt.classList.add("visible");
         }
         return;

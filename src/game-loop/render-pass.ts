@@ -65,7 +65,8 @@ export function drawFrame(now: number, alpha: number, frameDt: number) {
 }
 
 function drawTitleState(now: number, width: number, height: number, sys: System) {
-  // Slow cinematic camera pan
+  // Slow cinematic camera pan — background stays alive with nebula drift.
+  // Only the left monitor content changes during loading → title.
   Client.camx += 0.8;
   Client.camy += 0.4;
 

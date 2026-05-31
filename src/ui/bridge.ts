@@ -11,6 +11,7 @@ import { renderInventoryHTML, attachInventoryListeners, resetInventoryUI } from 
 import { sfxBlip } from "../audio/procedural.js";
 import { on } from "../events.js";
 import type { Enemy, Asteroid } from "../types/world.js";
+import { t } from "../utils/i18n.js";
 
 export { attachInventoryListeners, resetInventoryUI };
 
@@ -60,10 +61,10 @@ export function buildLocalOverviewRows(): OverviewRow[] {
     if (d > range) continue;
     const slot = getState().player.lockQueue.find((s) => s.id === e.id);
     let status = "";
-    if (slot?.resolving) status += `<span class="ov-plock ov-scanning">SCAN</span>`;
-    else if (slot && !slot.resolving) status += `<span class="ov-plock${getState().player.targetLock?.id === e.id ? " ov-primary" : ""}">LOCK${getState().player.targetLock?.id === e.id ? "●" : ""}</span>`;
-    if (e.hasLockOnPlayer) status += `<span class="ov-threat ov-threat-locked" title="Has locked you">◉</span>`;
-    else if (e.targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="Locking you">▲</span>`;
+    if (slot?.resolving) status += `<span class="ov-plock ov-scanning">${t("bridge.scan")}</span>`;
+    else if (slot && !slot.resolving) status += `<span class="ov-plock${getState().player.targetLock?.id === e.id ? " ov-primary" : ""}">${getState().player.targetLock?.id === e.id ? t("bridge.lockPrimary") : t("bridge.lock")}</span>`;
+    if (e.hasLockOnPlayer) status += `<span class="ov-threat ov-threat-locked" title="${t("bridge.hasLockedYou")}">◉</span>`;
+    else if (e.targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="${t("bridge.lockingYou")}">▲</span>`;
     if (!status) status = "—";
     rows.push({
       kind: e.faction === "neutral" ? "neutral" : "hostile",
@@ -82,15 +83,15 @@ export function buildLocalOverviewRows(): OverviewRow[] {
     const d = dst(getState().player.x, getState().player.y, a.x, a.y) - a.radius;
     if (d > range) continue;
     const slot = getState().player.lockQueue.find((s) => s.id === a.id);
-    let status = "—";
-    if (slot?.resolving) status = "SCAN";
-    else if (slot && !slot.resolving) status = getState().player.targetLock?.id === a.id ? "LOCK●" : "LOCK";
+    let status = t("bridge.dash");
+    if (slot?.resolving) status = t("bridge.scan");
+    else if (slot && !slot.resolving) status = getState().player.targetLock?.id === a.id ? t("bridge.lockPrimary") : t("bridge.lock");
     rows.push({
       kind: "asteroid",
       id: a.id,
       icon: "▫",
       cls: "AST",
-      name: a.name || `Asteroid ${a.id.split("-").pop()}`,
+      name: a.name || t("hud.asteroidFallback", { id: a.id.split("-").pop() || "" }),
       dist: Math.round(Math.max(0, d)),
       sig: Math.round(a.radius * 2),
       relV: "—",
@@ -122,7 +123,7 @@ export function buildLocalOverviewRows(): OverviewRow[] {
       id: `gate-${gi}`,
       icon: "◇",
       cls: "GATE",
-      name: tgt ? `→ ${tgt.name}` : "Gate",
+      name: tgt ? `→ ${tgt.name}` : t("bridge.gateFallback"),
       dist: Math.round(d),
       sig: "—",
       relV: "—",
@@ -152,8 +153,8 @@ export function renderBridgeOverviewHTML(): string {
     .map((r: OverviewRow) => {
       const lockBtn =
         r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid"
-          ? `<button type="button" class="ov-lock" data-lock-id="${escHtml(r.id)}">Lock</button>`
-          : "—";
+          ? `<button type="button" class="ov-lock" data-lock-id="${escHtml(r.id)}">${t("bridge.lockBtn")}</button>`
+          : t("bridge.dash");
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       return `<tr class="ov-row ov-row-${r.kind}" data-id="${escHtml(r.id)}">
       <td class="ov-icon">${r.icon}</td>
@@ -172,7 +173,7 @@ export function renderBridgeOverviewHTML(): string {
     <div class="ov-wrap">
       <table class="ov-table">
         <thead><tr>
-          <th></th><th>State</th><th>Class</th><th>Name</th><th>Dist</th><th>Sig</th><th>ΔV</th><th>Act</th>
+          <th></th><th>${t("hud.state")}</th><th>${t("hud.class")}</th><th>${t("common.name")}</th><th>${t("hud.dist")}</th><th>${t("hud.sig")}</th><th>${t("bridge.overviewDv")}</th><th>${t("hud.act")}</th>
         </tr></thead>
         <tbody>${body}</tbody>
       </table>
@@ -198,8 +199,8 @@ export function updateBridgeOverview() {
       tr.dataset.id = r.id;
       const lockBtn =
         r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid"
-          ? `<button type="button" class="ov-lock" data-lock-id="${escHtml(r.id)}">Lock</button>`
-          : "—";
+          ? `<button type="button" class="ov-lock" data-lock-id="${escHtml(r.id)}">${t("bridge.lockBtn")}</button>`
+          : t("bridge.dash");
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       tr.innerHTML = `
         <td class="ov-icon">${r.icon}</td>

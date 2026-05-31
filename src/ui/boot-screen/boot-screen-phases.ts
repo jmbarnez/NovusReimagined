@@ -20,6 +20,7 @@ export function registerLoadingConsole(): void {
 export function dismissLoadingScreen(): void {
   const loadingEl = document.getElementById("loading");
   if (!loadingEl) return;
+  loadingEl.style.opacity = "";
   loadingEl.classList.add("out");
   loadingEl.style.pointerEvents = "none";
 }
@@ -32,10 +33,10 @@ export function transitionToTitleScreen(): void {
 }
 
 const telemetryByPhase: Record<string, { subsystem: string; progress: string; status: string }> = {
-  start: { subsystem: "KERNEL", progress: "12%", status: "INIT" },
-  ui:    { subsystem: "HUD RENDERER", progress: "38%", status: "LOAD" },
-  world: { subsystem: "GALAXY GEN", progress: "62%", status: "BUILD" },
-  pixi:  { subsystem: "PIXEL PIPE", progress: "91%", status: "LINK" },
+  start: { subsystem: t("boot.kernel"), progress: "12%", status: t("boot.init") },
+  ui:    { subsystem: t("boot.hudRenderer"), progress: "38%", status: t("boot.load") },
+  world: { subsystem: t("boot.galaxyGen"), progress: "62%", status: t("boot.build") },
+  pixi:  { subsystem: t("boot.pixelPipe"), progress: "91%", status: t("boot.link") },
 };
 
 function updateTelemetry(phase: string): void {
@@ -50,7 +51,7 @@ function updateTelemetry(phase: string): void {
   if (status)    status.textContent    = data.status;
   if (memory) {
     const mem = (performance as unknown as Record<string, unknown>).memory as { usedJSHeapSize?: number } | undefined;
-    memory.textContent = mem ? `${(mem.usedJSHeapSize! / 1048576).toFixed(1)} MB` : "—";
+    memory.textContent = mem ? `${(mem.usedJSHeapSize! / 1048576).toFixed(1)} MB` : t("common.dash");
   }
 }
 
@@ -73,7 +74,7 @@ export function markBootPhase(name: string): void {
 
       if (name === "start") consoleEl.innerHTML = "";
       const lines = linesByPhase[name] ?? [];
-      const time = new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      const time = new Date().toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
       for (const line of lines) {
         const div = document.createElement("div");
         div.className = "ld-console-line";
@@ -92,6 +93,18 @@ export function markBootPhase(name: string): void {
         pixi: "100%",
       };
       progressFill.style.width = widthByPhase[name] ?? progressFill.style.width;
+    }
+
+    const subEl = document.getElementById("ld-sub");
+    if (subEl) {
+      const subByPhase: Record<string, string> = {
+        start: t("loading.init"),
+        ui:    t("loading.hud"),
+        world: t("loading.worldGen"),
+        pixi:  t("loading.pixi"),
+      };
+      const text = subByPhase[name] ?? subEl.textContent ?? "";
+      subEl.textContent = text.replace(/^>\s*/, "");
     }
 
     updateTelemetry(name);

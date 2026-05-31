@@ -57,19 +57,24 @@ function drawOctPlatform(
   active: boolean,
   pulse: number,
 ): void {
-  const verts: { x: number; y: number }[] = [];
-  for (let i = 0; i < 8; i++) {
-    const a = rot + (i / 8) * TAU + TAU / 16;
-    verts.push({ x: x + Math.cos(a) * PYLON_R, y: y + Math.sin(a) * PYLON_R });
+  // Octagon — inline moveTo/lineTo to avoid per-frame array allocation
+  const r = PYLON_R;
+  const base = rot + TAU / 16;
+  gfx.moveTo(x + Math.cos(base) * r, y + Math.sin(base) * r);
+  for (let i = 1; i < 8; i++) {
+    const a = base + (i / 8) * TAU;
+    gfx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
   }
-  gfx.moveTo(verts[0].x, verts[0].y);
-  for (let i = 1; i < 8; i++) gfx.lineTo(verts[i].x, verts[i].y);
   gfx.closePath();
   gfx.fill({ color: COL.hullDark, alpha: active ? 0.94 : 0.5 });
   gfx.stroke({ color: COL.hullEdge, width: 1.4, alpha: active ? 0.85 : 0.35 });
 
-  gfx.moveTo(verts[0].x, verts[0].y);
-  for (let i = 1; i < 8; i++) gfx.lineTo(verts[i].x, verts[i].y);
+  // Steel rim (second pass, slightly different alpha)
+  gfx.moveTo(x + Math.cos(base) * r, y + Math.sin(base) * r);
+  for (let i = 1; i < 8; i++) {
+    const a = base + (i / 8) * TAU;
+    gfx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+  }
   gfx.closePath();
   gfx.stroke({ color: COL.steelRim, width: 0.7, alpha: active ? 0.45 + pulse * 0.2 : 0.15 });
 

@@ -1,6 +1,7 @@
 import { Client } from "../state.js";
 import { DEFAULT_KEYBINDS, type Keybinds } from "./settings.js";
 import { fmtKey } from "../utils/format.js";
+import { t } from "../utils/i18n.js";
 
 /** Resolve a player keybind to a short display label. */
 export function tutorialKey(action: keyof Keybinds): string {
@@ -28,30 +29,30 @@ export function resolveTutorialGateHint(key: TutorialGateHintKey): string {
   const dock = tutorialKey("dock");
   switch (key) {
     case "move-course":
-      return "Right-click ahead to set course — your ship thrusts toward the waypoint";
+      return t("tutorial.gateHint.moveCourse");
     case "brake-gate":
-      return `${brake} brakes — use it to line up with the gate opening`;
+      return t("tutorial.gateHint.brakeGate", { brakeKey: brake });
     case "gate-boost":
-      return "Fly through the gate pillars for a slingshot boost";
+      return t("tutorial.gateHint.gateBoost");
     case "gate-lane":
-      return "Thread the opening dead-center — chevrons mark the lane";
+      return t("tutorial.gateHint.gateLane");
     case "gate-boost-short":
-      return "Fly through the gate opening for a boost";
+      return t("tutorial.gateHint.gateBoostShort");
     case "gate-steady":
-      return "Hold course — boost gates reward clean passes";
+      return t("tutorial.gateHint.gateSteady");
     case "brake-overshoot":
-      return `${brake} to brake if you overshoot the Academy`;
+      return t("tutorial.gateHint.brakeOvershoot", { brakeKey: brake });
     case "gate-momentum":
-      return "Thread the gate — momentum carries you to gunnery";
+      return t("tutorial.gateHint.gateMomentum");
     case "gate-center":
-      return "Fly through center for the slingshot";
+      return t("tutorial.gateHint.gateCenter");
     case "gate-pillars":
-      return "Gate boost — stay between the pillars";
+      return t("tutorial.gateHint.gatePillars");
     case "gate-clean":
-      return "Clean pass through the gate opening";
+      return t("tutorial.gateHint.gateClean");
     case "gate-last":
-      return "Last boost gate before the stargate";
+      return t("tutorial.gateHint.gateLast");
     case "gate-dock":
-      return `Fly through — then dock at the gate (${dock})`;
+      return t("tutorial.gateHint.gateDock", { dockKey: dock });
   }
 }

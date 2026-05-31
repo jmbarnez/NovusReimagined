@@ -96,6 +96,52 @@ src/
 | `G.P.hubQueue`, `G.P.hubOutput`, `G.P.hubDeposit` | hub UI/HUD | `sim/commands.ts`, `physics.ts` | Process/smelt/collect are command-driven, ticked server-side |
 | `Client.camx/Client.camy` | render | `utils/camera.ts` | Camera update called from `physics/ship.ts` tick |
 
+## Internationalization (i18n)
+
+The game supports English (`en`) and Spanish (`es`). All user-facing strings must go through the translation system rather than being hardcoded.
+
+### Translation Helper
+
+`src/utils/i18n.ts` exports `t(key: string, vars?: Record<string, string | number>): string`.
+- `key` uses dot-namespaced convention: `namespace.subkey` (e.g. `hud.shield`, `pause.save`).
+- `vars` replaces `{name}`-style placeholders in the translated string.
+- If a key is missing for the current language, `t` falls back to returning the key itself.
+
+Example:
+```ts
+import { t } from "../../utils/i18n.js";
+
+el.textContent = t("hud.shield");
+el.textContent = t("hud.jumpTo", { name: sys.name });
+```
+
+### Translation Dictionary
+
+All strings live in `src/data/strings.ts` inside the `STRINGS` record:
+```ts
+export const STRINGS: Record<Language, Record<string, string>> = {
+  en: { "hud.shield": "Shield", ... },
+  es: { "hud.shield": "Escudo", ... },
+};
+```
+
+Rules when adding or editing strings:
+- **Always add both `en` and `es` entries.** Keep the two blocks in sync (same keys, same order).
+- Use descriptive, namespaced keys: `profile.title`, `ship.offline`, `enemyMenu.orbit`.
+- For UI labels that appear together, keep them under the same namespace (e.g. `profile.*` for the profile screen).
+- Run `npm run typecheck` after editing `strings.ts` to catch syntax issues.
+
+### Current Language
+
+`Client.settings.language` is the source of truth. It is persisted via `saveSettings()` and reloaded on boot. Changing the language triggers a full page reload so all UI strings re-render from `t()`.
+
+### Auditing for Untranslated Strings
+
+When adding new UI features:
+1. Search the file for raw English text in `innerHTML`, `textContent`, `confirm()`, `alert()`, `prompt()`, and `logEvent()` calls.
+2. Add the required keys to `src/data/strings.ts` (both languages).
+3. Replace the hardcoded text with `t("key")` or `t("key", { var: value })`.
+
 ## Adding New Content
 
 **New ship type:**

@@ -394,7 +394,7 @@ export function openDecryptionWindowForSite(siteId: string) {
   const site = getSite(siteId);
   if (!site || !site.hasEncryptedContent || getState().player.completedSiteIds.includes(siteId)) return;
   if (dst(getState().player.x, getState().player.y, site.x, site.y) > 280) {
-    logEvent(`Move within 280m of ${site.name} to establish a stable decrypt link.`, "system");
+    logEvent(t("decrypt.moveCloser", { name: site.name }), "system");
     sfxError();
     return;
   }

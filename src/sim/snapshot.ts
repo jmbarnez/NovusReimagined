@@ -113,6 +113,22 @@ export interface EntitySnapshot {
   tractor?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetId: string | null; tooHeavy: boolean } | null;
   spinAngle?: number;
   spinVel?: number;
+  /** Enemy type string (e.g. "drone") for reconstructing missing enemies. */
+  enemyType?: string;
+  shield?: number;
+  maxShield?: number;
+  structure?: number;
+  maxStructure?: number;
+  level?: number;
+  faction?: "hostile" | "neutral" | "player" | "friendly";
+  weaponRange?: number;
+  sigRadius?: number;
+  speed?: number;
+  /** Asteroid reconstruction fields. */
+  oreWeights?: number[];
+  richness?: number;
+  tintHue?: number;
+  tintSat?: number;
 }
 
 export interface WorldSnapshot {
@@ -205,6 +221,17 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
             type: "enemy",
             x: q(en.x), y: q(en.y), vx: q(en.vx), vy: q(en.vy), angle: q(en.angle),
             hp: en.hp, maxHp: en.maxHp,
+            enemyType: en.type,
+            name: en.name,
+            shield: en.shield,
+            maxShield: en.maxShield,
+            structure: en.structure,
+            maxStructure: en.maxStructure,
+            level: en.level,
+            faction: en.faction,
+            weaponRange: en.weaponRange,
+            sigRadius: en.sigRadius,
+            speed: en.speed,
           });
         }
       }
@@ -216,6 +243,12 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
           x: q(ast.x), y: q(ast.y), vx: q(ast.vx || 0), vy: q(ast.vy || 0),
           hp: ast.hp, maxHp: ast.maxHp, depleted: ast.depleted,
           spinAngle: q(ast.spinAngle), spinVel: q(ast.spinVel),
+          radius: ast.radius,
+          name: ast.name,
+          oreWeights: ast.oreWeights,
+          richness: ast.richness,
+          tintHue: ast.tintHue,
+          tintSat: ast.tintSat,
         });
       }
     }

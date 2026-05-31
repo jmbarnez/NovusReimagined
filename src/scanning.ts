@@ -18,6 +18,7 @@ import type { HiddenSite, SignatureClassification, SignatureContact, SignatureSt
 
 const SCAN_PULSE_MS = 3500;
 let surveyBlockedLogged = new Set<string>();
+const SURVEY_BLOCKED_LOG_MAX = 500;
 const BASE_SCAN_RATE = 0.32;
 const DETECT_FLOOR = 0.08;
 const DETECT_PROGRESS = 0.16;
@@ -312,6 +313,10 @@ function meetsSurveyRequirement(site: HiddenSite, p: Player): boolean {
 
 function logSurveyBlocked(site: HiddenSite) {
   if (surveyBlockedLogged.has(site.id)) return;
+  if (surveyBlockedLogged.size >= SURVEY_BLOCKED_LOG_MAX) {
+    const first = surveyBlockedLogged.values().next().value;
+    if (first) surveyBlockedLogged.delete(first);
+  }
   surveyBlockedLogged.add(site.id);
   const required = site.requiredSurveyLevel ?? 0;
   logEvent(`Surveying level ${required} required to resolve this signature.`, "system");

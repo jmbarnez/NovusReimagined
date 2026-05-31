@@ -1,5 +1,6 @@
 import { getState, PlayerAccess } from "./state-access.js";
 import { updateShip } from "./physics/ship.js";
+import { updateTutorialTrack } from "./physics/tutorial-track.js";
 import { updateCombat, updateProjectiles } from "./physics/combat-physics.js";
 import { updateNpcs, updateEnemyBullets, updateAsteroids, updateMining, resolveNpcAsteroidCollisions, updateEnemyRespawns } from "./physics/npcs.js";
 import { updateStationTurrets } from "./physics/station-turrets.js";
@@ -19,6 +20,7 @@ export function tick(dt: number) {
   rebuildSpatialGrid();
   tickAbilities(dt);
   updateShip(dt);
+  updateTutorialTrack(dt, getState().player);
   updateTurretPowerCd(dt);
   updateTurretCooldowns(dt);
   updateCombat(dt);

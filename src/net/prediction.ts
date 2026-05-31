@@ -181,6 +181,9 @@ export class PredictionManager {
         case "clearSensorLocks":
           clearSensorLocks(p, { suppressFrameAction: true });
           break;
+        case "setHighTarget":
+          PlayerAccess.setHighTarget(action.payload.idx, action.payload.targetId, p);
+          break;
       }
     }
   }

@@ -48,7 +48,7 @@ export function renderStatsTabHTML(): string {
       <div class="sp-sect-h">${t("ship.specifications")}</div>
       <div class="sp-stats-grid">
         ${card(t("common.name"), ship.name)}
-        ${card(t("ship.role"), ship.role)}
+        ${card(t("pilot.callsign"), p.pilotName)}
         ${card(t("ship.sigRadius"), `${getEffectiveSignatureRadius(getState().player)} m`)}
         ${card(t("ship.hullMass"), `${ship.hullMassKg.toLocaleString()} kg`)}
         ${card(t("ship.massModifier"), `${st.massMult.toFixed(2)}x`)}

@@ -371,5 +371,5 @@ export function isPlayerReady(): boolean {
 }
 
 export function isGameplayPaused(): boolean {
-  return Client.pauseOpen || Client.settingsOpen;
+  return Client.settingsOpen;
 }

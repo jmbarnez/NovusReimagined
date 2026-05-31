@@ -1,4 +1,4 @@
-import { Client } from "../state.js";
+import { Client, type Player } from "../state.js";
 import { WorldAccess, PlayerAccess, getState } from "../state-access.js";
 import { SAVE_KEY } from "../constants.js";
 import { C } from "../config/index.js";
@@ -66,35 +66,71 @@ export function clampPlayerVitals() {
   if (getState().player.structure < 0) PlayerAccess.setStructure(0);
 }
 
+export interface InitGameSessionOpts {
+  clearSim?: boolean;
+  redirectTutorial?: boolean;
+  setupSpawn?: boolean;
+  spawnNearStationIfRedirected?: boolean;
+  setPendingHomeSpawnFalse?: boolean;
+  tutorialOverlay?: boolean;
+}
+
+/** Shared initialization sequence used by every gameplay entry path. */
+export function initGameSession(player: Player, opts: InitGameSessionOpts = {}): void {
+  if (opts.clearSim) clearSimulationEntities();
+
+  WorldAccess.initPlayer(player);
+
+  let redirected = false;
+  if (opts.redirectTutorial) {
+    redirected = redirectCompletedTutorialPlayer();
+  }
+
+  const sysIdx = player.sysIdx || 0;
+  if (!getState().GALAXY[sysIdx]) PlayerAccess.setSysIdx(0);
+  const sys = getState().GALAXY[player.sysIdx];
+  if (sys && !sys._ready) populateSystem(sys);
+
+  if (opts.spawnNearStationIfRedirected && redirected) {
+    spawnNearFirstStation(player, getState().GALAXY, player.sysIdx);
+    PlayerAccess.updatePhysics({ x: player.x, y: player.y, px: player.px, py: player.py });
+  }
+
+  if (opts.setupSpawn) {
+    setupPlayerSpawn(player, getState().GALAXY);
+    PlayerAccess.updatePhysics({ x: player.x, y: player.y, px: player.px, py: player.py });
+  }
+
+  if (opts.setPendingHomeSpawnFalse) {
+    PlayerAccess.setPendingHomeSpawn(false);
+  }
+
+  ensurePlayerHasWeapon();
+  computeStats(player);
+  clampPlayerVitals();
+
+  Client.camx = player.x;
+  Client.camy = player.y;
+
+  if (opts.tutorialOverlay ?? player.tutorial.active) {
+    initTutorial();
+    initTutorialOverlay(true);
+  } else {
+    hideTutorialOverlay();
+    initTutorialOverlay(false);
+  }
+}
+
 /** Reload player and current system from localStorage (title Continue / pause Load). */
 export function restoreGameFromSave(): boolean {
   if (!localStorage.getItem(SAVE_KEY)) return false;
 
-  clearSimulationEntities();
-  WorldAccess.initPlayer(loadPlayer());
-  const redirected = redirectCompletedTutorialPlayer();
-
-  const sysIdx = getState().player.sysIdx || 0;
-  if (!getState().GALAXY[sysIdx]) PlayerAccess.setSysIdx(0);
-  populateSystem(getState().GALAXY[getState().player.sysIdx]);
-  if (redirected) {
-    spawnNearFirstStation(getState().player, getState().GALAXY, getState().player.sysIdx);
-    PlayerAccess.updatePhysics({ x: getState().player.x, y: getState().player.y, px: getState().player.px, py: getState().player.py });
-  }
-
-  ensurePlayerHasWeapon();
-  computeStats(getState().player);
-  clampPlayerVitals();
-
-  Client.camx = getState().player.x;
-  Client.camy = getState().player.y;
-
-  if (getState().player.tutorial.active) {
-    initTutorial();
-    initTutorialOverlay(true);
-  } else {
-    initTutorialOverlay(false);
-  }
+  const loaded = loadPlayer();
+  initGameSession(loaded, {
+    clearSim: true,
+    redirectTutorial: true,
+    spawnNearStationIfRedirected: true,
+  });
 
   return true;
 }
@@ -102,7 +138,6 @@ export function restoreGameFromSave(): boolean {
 /** Load the local pilot for a remote join — no solo tutorial UI. */
 export function prepareRemoteJoinPilot(): void {
   netLog("prepareRemoteJoinPilot: loading pilot for remote join");
-  clearSimulationEntities();
 
   let isLocalHostActive = false;
   if (typeof localStorage !== "undefined") {
@@ -119,36 +154,20 @@ export function prepareRemoteJoinPilot(): void {
     netLog("prepareRemoteJoinPilot: active local host detected. Using fresh pilot to avoid same-machine save collision.");
   }
 
-  if (localStorage.getItem(SAVE_KEY) && !isLocalHostActive) {
-    WorldAccess.initPlayer(loadPlayer());
-    redirectCompletedTutorialPlayer();
-  } else {
-    WorldAccess.initPlayer(makePlayer());
+  const player = (localStorage.getItem(SAVE_KEY) && !isLocalHostActive) ? loadPlayer() : makePlayer();
+  if (!localStorage.getItem(SAVE_KEY) || isLocalHostActive) {
     netLog("prepareRemoteJoinPilot: initialized fresh player");
   }
 
-  const sysIdx = getState().player.sysIdx || 0;
-  if (!getState().GALAXY[sysIdx]) PlayerAccess.setSysIdx(0);
-  populateSystem(getState().GALAXY[getState().player.sysIdx]);
+  initGameSession(player, {
+    clearSim: true,
+    redirectTutorial: true,
+    setupSpawn: true,
+    setPendingHomeSpawnFalse: true,
+  });
 
-  setupPlayerSpawn(getState().player, getState().GALAXY);
-  PlayerAccess.updatePhysics({ x: getState().player.x, y: getState().player.y, px: getState().player.px, py: getState().player.py });
-  PlayerAccess.setPendingHomeSpawn(false);
-
-  ensurePlayerHasWeapon();
-  computeStats(getState().player);
-  clampPlayerVitals();
-
-  if (getState().player.tutorial.active) {
-    initTutorial();
-    initTutorialOverlay(true);
+  if (player.tutorial.active) {
     netLog("prepareRemoteJoinPilot: tutorial active for remote join");
-  } else {
-    hideTutorialOverlay();
-    initTutorialOverlay(false);
   }
-
-  Client.camx = getState().player.x;
-  Client.camy = getState().player.y;
-  netLog(`prepareRemoteJoinPilot done sys=${getState().player.sysIdx} pos=(${getState().player.x.toFixed(0)},${getState().player.y.toFixed(0)})`);
+  netLog(`prepareRemoteJoinPilot done sys=${player.sysIdx} pos=(${player.x.toFixed(0)},${player.y.toFixed(0)})`);
 }

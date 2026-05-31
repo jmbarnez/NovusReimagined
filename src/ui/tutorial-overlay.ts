@@ -222,7 +222,7 @@ function updateNavProgress() {
   if (navProgressFillEl) navProgressFillEl.style.width = `${Math.round(progress * 100)}%`;
   if (navProgressLabelEl) {
     navProgressLabelEl.textContent = remaining != null
-      ? `${(remaining / 1000).toFixed(1)} km to ${step.nav.label}`
+      ? t("tutorial.navProgress", { distance: (remaining / 1000).toFixed(1), label: step.nav.label })
       : "";
   }
 }
@@ -246,7 +246,7 @@ function renderStep() {
   if (cardEl) cardEl.hidden = false;
   if (completeEl) completeEl.hidden = true;
   if (confirmEl) confirmEl.hidden = true;
-  if (counterEl) counterEl.textContent = `Step ${getState().player.tutorial.step + 1} / ${TUTORIAL_STEP_COUNT}`;
+  if (counterEl) counterEl.textContent = t("tutorial.stepCounter", { n: getState().player.tutorial.step + 1, total: TUTORIAL_STEP_COUNT });
   if (titleEl) titleEl.textContent = step.title;
   if (objectiveEl) objectiveEl.textContent = getTutorialStepObjective(step, snapshot);
   syncTourCopy(step);

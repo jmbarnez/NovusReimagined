@@ -20,7 +20,9 @@ import { updateEngineSound } from "../audio/procedural.js";
 import { addTrailSegment } from "../utils/entities.js";
 import { C } from "../config/index.js";
 import { activeMovementMultipliers } from "../player/abilities.js";
+import type { ModuleInstance } from "../types/moduleInstance.js";
 
+let _cargoMap = new Map<string, ModuleInstance>();
 
 export function updateShip(dt: number, _p?: Player) {
   const st = getStats();
@@ -31,14 +33,15 @@ export function updateShip(dt: number, _p?: Player) {
   if (!Number.isFinite(getState().player.x)) PlayerAccess.updatePhysics({ x: 0 });
   if (!Number.isFinite(getState().player.y)) PlayerAccess.updatePhysics({ y: 0 });
 
-  // Build cargo map once per tick to avoid repeated O(N*M) lookups inside getState().player.moduleCargo
-  const cargoMap = new Map<string, import("../types/moduleInstance.js").ModuleInstance>();
+  // Build cargo map once per tick using a reused Map to avoid GC pressure
+  _cargoMap.clear();
   if (Array.isArray(getState().player.moduleCargo)) {
     for (let i = 0; i < getState().player.moduleCargo.length; i++) {
       const inst = getState().player.moduleCargo[i];
-      if (inst && inst.uid) cargoMap.set(inst.uid, inst);
+      if (inst && inst.uid) _cargoMap.set(inst.uid, inst);
     }
   }
+  const cargoMap = _cargoMap;
 
   PlayerAccess.updatePhysics({ thrustFx: false });
   const speed = Math.hypot(getState().player.vx, getState().player.vy);

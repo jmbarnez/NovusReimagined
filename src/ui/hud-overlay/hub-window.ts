@@ -117,7 +117,7 @@ function openHubWindow() {
   hubActiveTab = "processing";
   const div = getHubWindowBody();
   renderHubWindow(div);
-  openHudWindow("industrial-hub", "Industrial Processing Hub", div, stopHubRefresh);
+  openHudWindow("industrial-hub", t("hud.hubTitle"), div, stopHubRefresh);
   ensureHubWindowListeners();
   startHubRefresh();
 }
@@ -285,9 +285,9 @@ function renderHubProcessingContent(container: HTMLElement) {
       const elapsed = now - job.startTime;
       const pct = Math.min(100, Math.floor((elapsed / job.duration) * 100));
       const remaining = Math.max(0, job.duration - elapsed);
-      let label = "Processing";
+      let label = t("hud.processingLabel");
       if (job.kind === "smelt" && job.smeltRecipeId) {
-        label = getRecipe(job.smeltRecipeId)?.label ?? "Smelt";
+        label = getRecipe(job.smeltRecipeId)?.label ?? t("hud.smeltFallback");
         if (job.smeltQty && job.smeltQty > 1) label += ` ×${job.smeltQty}`;
       } else if (job.kind === "asteroid") {
         label = t("hud.crushing");
@@ -332,7 +332,7 @@ function renderHubProcessingContent(container: HTMLElement) {
     html += `<button type="button" id="hub-collect-btn" style="width:100%;padding:6px;background:#3a2a05;border:1px solid #ff9922;color:#ffcc44;cursor:pointer;border-radius:3px;font-size:11px;">${t("hud.collectAll")}</button>`;
   }
 
-  html += `<div style="margin-top:8px;font-size:9px;color:#556677;text-align:right;">Wallet: ${getState().player.credits}¢</div>`;
+  html += `<div style="margin-top:8px;font-size:9px;color:#556677;text-align:right;">${t("hud.wallet", { credits: getState().player.credits })}</div>`;
 
   container.innerHTML = html;
 }

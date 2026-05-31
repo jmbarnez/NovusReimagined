@@ -257,6 +257,8 @@ interface EnemyBundle {
   lastStructure: number;
   lastLockKey: string;
   wasLocked: boolean;
+  lastTextColor: string;
+  lastCardKey: string;
 }
 
 const _bundles = new Map<string, EnemyBundle>();
@@ -305,7 +307,7 @@ function createBundle(e: { id: string; type: string; name: string; level?: numbe
   speechText.visible = false;
   effectLayer!.addChild(speechText);
 
-  return { hull, hullLight, lightTex, hpBar, shieldBar, structureBar, nameText, levelBg, levelText, indicator, speechText, lastHp: e.hp, lastShield: -1, lastStructure: -1, lastLockKey: "", wasLocked: false };
+  return { hull, hullLight, lightTex, hpBar, shieldBar, structureBar, nameText, levelBg, levelText, indicator, speechText, lastHp: e.hp, lastShield: -1, lastStructure: -1, lastLockKey: "", wasLocked: false, lastTextColor: "", lastCardKey: "" };
 }
 
 function destroyBundle(id: string) {
@@ -489,7 +491,10 @@ export function syncPixiEntities(alpha: number, now: number): void {
         lvlStr = e.level ? String(e.level) : "ALLY";
       }
 
-      b.nameText.style.fill = textColor;
+      if (b.lastTextColor !== textColor) {
+        b.nameText.style.fill = textColor;
+        b.lastTextColor = textColor;
+      }
       b.levelText.text = lvlStr;
 
       const cardW = b.levelText.width + padX * 2;
@@ -498,17 +503,18 @@ export function syncPixiEntities(alpha: number, now: number): void {
       const totalW = cardW + nameBoxW;
       const startX = ix - totalW / 2;
 
-      // Draw both flush connected cards on the levelBg Graphics element
-      b.levelBg.clear()
-        // 1. Level card on the left
-        .roundRect(0, -padH / 2, cardW, padH, 2.5)
-        .fill({ color: tagColor })
-        .stroke({ color: 0x000000, width: 1 })
-        // 2. Translucent black name box on the right connected flush
-        .roundRect(cardW, -padH / 2, nameBoxW, padH, 2.5)
-        .fill({ color: 0x000000, alpha: 0.55 })
-        .stroke({ color: 0x000000, width: 1 });
-
+      // Only rebuild card geometry when dimensions or colors change
+      const cardKey = `${tagColor}|${lvlStr}|${cardW}|${nameBoxW}`;
+      if (b.lastCardKey !== cardKey) {
+        b.levelBg.clear()
+          .roundRect(0, -padH / 2, cardW, padH, 2.5)
+          .fill({ color: tagColor })
+          .stroke({ color: 0x000000, width: 1 })
+          .roundRect(cardW, -padH / 2, nameBoxW, padH, 2.5)
+          .fill({ color: 0x000000, alpha: 0.55 })
+          .stroke({ color: 0x000000, width: 1 });
+        b.lastCardKey = cardKey;
+      }
       b.levelBg.x = startX;
       b.levelBg.y = nameY;
       b.levelBg.alpha = 1;

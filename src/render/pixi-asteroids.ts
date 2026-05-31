@@ -25,6 +25,7 @@ const ROCK_OUTLINE = { color: 0x080604, width: 1.5, alpha: 0.92 } as const;
 // ─── Single-pass Graphics ────────────────────────────────────────────────────
 let _asteroidGfx: Graphics | null = null;
 const _asteroidLockMap = new Map<string, LockSlot>();
+const _flatPts: number[] = [];
 
 // Helper to convert HSL to hex number for PixiJS
 function hslInt(h: number, s: number, l: number): number {
@@ -71,9 +72,9 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
         .fill({ color: 0x000000, alpha: 0.25 });
 
       // 2. Build rotated and translated asteroid polygon coordinates
-      const flatPts: number[] = [];
+      _flatPts.length = 0;
       for (const pt of a.shape) {
-        flatPts.push((pt[0] * cos - pt[1] * sin) * a.radius + a.x, (pt[0] * sin + pt[1] * cos) * a.radius + a.y);
+        _flatPts.push((pt[0] * cos - pt[1] * sin) * a.radius + a.x, (pt[0] * sin + pt[1] * cos) * a.radius + a.y);
       }
 
       // Draw the main body disc
@@ -82,7 +83,7 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
       const l = 20 + hp * 10;
       const colNum = hslInt(h, s, l);
 
-      _asteroidGfx.poly(flatPts, true)
+      _asteroidGfx.poly(_flatPts, true)
         .fill({ color: colNum })
         .stroke(ROCK_OUTLINE);
 
@@ -112,16 +113,16 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
     const fade = Math.min(1, d.life / (d.maxLife * 0.4));
     const cos = Math.cos(d.angle);
     const sin = Math.sin(d.angle);
-    const flatPts: number[] = [];
+    _flatPts.length = 0;
     for (const pt of d.pts) {
-      flatPts.push(
+      _flatPts.push(
         (pt[0] * cos - pt[1] * sin) * d.radius + d.x,
         (pt[0] * sin + pt[1] * cos) * d.radius + d.y,
       );
     }
 
     const colNum = hslInt(d.tintHue ?? 32, d.tintSat ?? 34, 22);
-    _asteroidGfx.poly(flatPts, true)
+    _asteroidGfx.poly(_flatPts, true)
       .fill({ color: colNum, alpha: fade })
       .stroke({ ...ROCK_OUTLINE, alpha: ROCK_OUTLINE.alpha * fade });
   }

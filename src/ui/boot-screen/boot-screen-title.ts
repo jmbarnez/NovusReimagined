@@ -2,6 +2,7 @@ import { sfxBlip } from "../../audio/procedural.js";
 import { openSettingsOnBootMonitor } from "../settings/index.js";
 import { showMultiplayerMenu } from "../title-multiplayer.js";
 import { showSinglePlayerMenu } from "../title-single-player.js";
+import { t } from "../../utils/i18n.js";
 
 /**
  * Boot Screen Title Controller
@@ -31,7 +32,7 @@ export function bindTitleScreenEvents(): void {
 
   monitor.querySelector("#title-exit")?.addEventListener("click", () => {
     sfxBlip();
-    if (!confirm("Safely exit Novus? Any unsaved progress will be lost.")) return;
+    if (!confirm(t("title.exitConfirm"))) return;
     window.open("about:blank", "_self");
     window.close();
   });
@@ -45,16 +46,16 @@ export function restoreTitleScreen(): void {
   monitor.innerHTML = `
     <div class="ld-title">NOVUS</div>
     <div class="ld-sep"></div>
-    <div class="ld-sub">Initializing neural interface</div>
+    <div class="ld-sub">${t("title.initializing")}</div>
     <div class="ld-progress-bar">
       <div class="ld-progress-fill" style="width: 100%;"></div>
     </div>
-    <div class="ld-status">Neural link pending<span class="ld-dots"></span></div>
+    <div class="ld-status">${t("title.neuralPending")}<span class="ld-dots"></span></div>
     <div class="ld-menu-actions">
-      <button type="button" id="title-sp" class="ld-btn-start">SINGLE PLAYER</button>
-      <button type="button" id="title-mp" class="ld-btn-start ld-btn-secondary">MULTIPLAYER</button>
-      <button type="button" id="title-settings" class="ld-btn-start ld-btn-settings" aria-label="Open settings">⚙ SETTINGS</button>
-      <button type="button" id="title-exit" class="ld-btn-start ld-btn-danger">SAFE EXIT</button>
+      <button type="button" id="title-sp" class="ld-btn-start">${t("title.singleplayer")}</button>
+      <button type="button" id="title-mp" class="ld-btn-start ld-btn-secondary">${t("title.multiplayer")}</button>
+      <button type="button" id="title-settings" class="ld-btn-start ld-btn-settings" aria-label="${t("title.settings")}">⚙ ${t("title.settings")}</button>
+      <button type="button" id="title-exit" class="ld-btn-start ld-btn-danger">${t("title.safeExit")}</button>
     </div>
   `;
 

@@ -12,6 +12,7 @@ import {
   isTutorialContract,
 } from "./missions.js";
 import { TUTORIAL_STEP_COUNT } from "./tutorial.js";
+import { t } from "../utils/i18n.js";
 
 export interface TutorialStepReward {
   credits: number;
@@ -57,7 +58,7 @@ export function grantTutorialStepReward(stepId: string): void {
   if (!reward) return;
   if (reward.credits > 0) {
     PlayerAccess.modifyCredits(reward.credits);
-    logEvent(`Academy Training +${reward.credits} CR`, "loot");
+    logEvent(t("tutorial.missionReward", { credits: reward.credits }), "loot");
   }
   if (reward.skillXp > 0) {
     addSkillXp(reward.skillId, reward.skillXp, getState().player);
@@ -74,7 +75,7 @@ export function finalizeTutorialMission(fromSkip: boolean): void {
   const contract = findTutorialContract(getState().player);
   if (!fromSkip && contract) {
     PlayerAccess.modifyCredits(TUTORIAL_GRADUATION_REWARD);
-    logEvent(`Academy Training complete — +${TUTORIAL_GRADUATION_REWARD} CR`, "loot");
+    logEvent(t("tutorial.missionComplete", { credits: TUTORIAL_GRADUATION_REWARD }), "loot");
     
     // Grant Player Level XP and Skill XP upon normal graduation completion
     addXp(500, getState().player);

@@ -37,6 +37,23 @@ let _floatGfx: Graphics | null = null;
 const _pickupLabels = new Map<SalvagePickup, Text>();
 const _floatLabels = new Map<FloatText, Text>();
 
+// Reusable Sets/Maps to avoid per-frame GC allocation
+const _activePickupRefs = new Set<SalvagePickup>();
+const _activeFloatRefs = new Set<FloatText>();
+const _lockSlotById = new Map<string, LockSlot>();
+const _wreckFlatPts: number[] = [];
+const _decalFlatPts: number[] = [];
+
+// Shared pickup label style base — Pixi clones it per Text instance
+const _sharedPickupStyle = new TextStyle({
+  fontFamily: getUIFont(),
+  fontSize: 7,
+  fontWeight: "bold",
+  align: "center",
+  fill: "#ffffff",
+  stroke: { color: "#000000", width: 2.5 },
+});
+
 // Helper to convert hex colors
 function hexStringToNumber(hex: string): number {
   const clean = hex.replace("#", "");
@@ -149,9 +166,9 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
   _wreckGfx.clear();
   const primaryId = getState().player.targetLock?.id;
   const selectedId = getState().player._assignTargetId;
-  const lockSlotById = new Map<string, LockSlot>();
+  _lockSlotById.clear();
   if (Array.isArray(getState().player.lockQueue)) {
-    for (const slot of getState().player.lockQueue) lockSlotById.set(slot.id, slot);
+    for (const slot of getState().player.lockQueue) _lockSlotById.set(slot.id, slot);
   }
 
   if (getState().wreckPieces) {
@@ -173,22 +190,22 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       // Flat rotated/translated polygon points in world space
       const cos = Math.cos(p.angle);
       const sin = Math.sin(p.angle);
-      const flatPts: number[] = [];
+      _wreckFlatPts.length = 0;
       for (const pt of pts) {
-        flatPts.push(pt[0] * cos - pt[1] * sin + p.x, pt[0] * sin + pt[1] * cos + p.y);
+        _wreckFlatPts.push(pt[0] * cos - pt[1] * sin + p.x, pt[0] * sin + pt[1] * cos + p.y);
       }
 
       // Draw the main body
-      _wreckGfx.poly(flatPts, true)
+      _wreckGfx.poly(_wreckFlatPts, true)
         .fill({ color: fillCol, alpha: 0.78 * fade })
         .stroke({ color: strokeCol, width: borderWidth, alpha: borderAlpha });
 
       // Explosion/Hit overlays
       if (explosionPhase > 0) {
-        _wreckGfx.poly(flatPts, true).fill({ color: 0xffb060, alpha: explosionPhase * 0.55 * fade });
+        _wreckGfx.poly(_wreckFlatPts, true).fill({ color: 0xffb060, alpha: explosionPhase * 0.55 * fade });
       }
       if (p.hitFlash > 0) {
-        _wreckGfx.poly(flatPts, true).fill({ color: 0x9fffe5, alpha: (p.hitFlash / 0.18) * 0.7 * fade });
+        _wreckGfx.poly(_wreckFlatPts, true).fill({ color: 0x9fffe5, alpha: (p.hitFlash / 0.18) * 0.7 * fade });
       }
 
       // Standard HP Bar below wreck
@@ -200,7 +217,7 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       }
 
       // Target lock brackets (corner boxes drawn flat in world space)
-      const slot = lockSlotById.get(p.id);
+      const slot = _lockSlotById.get(p.id);
       if (slot) {
         drawTargetLockBrackets(
           _wreckGfx, p.x, p.y, p.radius ?? 14, slot, p.id === primaryId, now, "neutral", undefined, fade,
@@ -214,12 +231,12 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
 
   // ── 2. Sync Salvage Pickups ────────────────────────────────────────────────
   _pickupGfx.clear();
-  const activePickupRefs = new Set<SalvagePickup>();
+  _activePickupRefs.clear();
 
   if (getState().salvagePickups) {
     for (const s of getState().salvagePickups) {
       if (!isVisible(s.x, s.y, 60)) continue;
-      activePickupRefs.add(s);
+      _activePickupRefs.add(s);
 
       const fade = s.life < 8 ? s.life / 8 : 1;
       const bobY = Math.sin(s.bob) * 2.5;
@@ -306,19 +323,13 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       // Text labeling inside effectLayer
       let textObj = _pickupLabels.get(s);
       if (!textObj) {
-        const textStyle = new TextStyle({
-          fontFamily: getUIFont(),
-          fontSize: 7,
-          fontWeight: "bold",
-          align: "center",
-          fill: colStr,
-          stroke: { color: "#000000", width: 2.5 },
-        });
-        textObj = new Text({ text: label + qtyStr, style: textStyle });
+        textObj = new Text({ text: label + qtyStr, style: _sharedPickupStyle });
         textObj.anchor.set(0.5, 0);
         effectLayer!.addChild(textObj);
         _pickupLabels.set(s, textObj);
       }
+      textObj.style.fill = colStr;
+      textObj.text = label + qtyStr;
 
       // Position text card below pickup
       textObj.x = px;
@@ -329,7 +340,7 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
 
   // Clean obsolete pickup text objects
   for (const [s, textObj] of _pickupLabels.entries()) {
-    if (!activePickupRefs.has(s)) {
+    if (!_activePickupRefs.has(s)) {
       effectLayer!.removeChild(textObj);
       textObj.destroy();
       _pickupLabels.delete(s);
@@ -358,46 +369,37 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       const colNum = hexStringToNumber(d.color);
 
       // Decal polygon points (drawn flat in world space coordinates)
-      const flatPts: number[] = [];
+      _decalFlatPts.length = 0;
       for (const pt of d.poly) {
-        flatPts.push(pt[0] + d.x, pt[1] + d.y);
+        _decalFlatPts.push(pt[0] + d.x, pt[1] + d.y);
       }
 
-      _decalGfx.poly(flatPts, true)
+      _decalGfx.poly(_decalFlatPts, true)
         .fill({ color: colNum, alpha: a });
     }
   }
 
   // ── 5. Sync Floating Text Cards ────────────────────────────────────────────
   _floatGfx.clear();
-  const activeFloatRefs = new Set<FloatText>();
+  _activeFloatRefs.clear();
 
   if (getState().floatTexts) {
     for (const f of getState().floatTexts) {
       if (!isVisible(f.x, f.y, 20)) continue;
-      activeFloatRefs.add(f);
+      _activeFloatRefs.add(f);
 
       const alphaVal = f.life ?? 1;
 
       let textObj = _floatLabels.get(f);
       if (!textObj) {
-        const textStyle = new TextStyle({
-          fontFamily: getUIFont(),
-          fontSize: 11.5,
-          fontWeight: "bold",
-          fill: f.color ?? "#ffffff",
-          align: "center",
-          stroke: f.bgColor ? undefined : { color: "#000000", width: 3.5 },
-        });
-        // Translucent card format
-        if (f.bgColor) {
-          textStyle.fill = "#000000";
-        }
-        textObj = new Text({ text: f.text, style: textStyle });
+        textObj = new Text({ text: f.text, style: _sharedPickupStyle });
         textObj.anchor.set(0.5, 0.5);
         effectLayer!.addChild(textObj);
         _floatLabels.set(f, textObj);
       }
+      textObj.style.fill = f.bgColor ? "#000000" : (f.color ?? "#ffffff");
+      if (!f.bgColor) textObj.style.stroke = { color: "#000000", width: 3.5 };
+      textObj.text = f.text;
 
       textObj.x = f.x;
       textObj.y = f.y;
@@ -420,7 +422,7 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
 
   // Clean obsolete float texts
   for (const [f, textObj] of _floatLabels.entries()) {
-    if (!activeFloatRefs.has(f)) {
+    if (!_activeFloatRefs.has(f)) {
       effectLayer!.removeChild(textObj);
       textObj.destroy();
       _floatLabels.delete(f);

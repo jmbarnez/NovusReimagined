@@ -1,3 +1,4 @@
+import "../../styles/ship-panel.css";
 import { sfxBlip } from "../../../audio/procedural.js";
 import { renderInventoryHTML } from "../../inventory/index.js";
 import { t } from "../../../utils/i18n.js";

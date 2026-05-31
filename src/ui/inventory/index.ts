@@ -205,15 +205,16 @@ function updateSelectionOnly(pane: HTMLElement) {
 function rerenderInventory() {
   hideInvHoverTip();
   const hash = computeContentHash();
-  const onlySelectionChanged = hash === _lastContentHash && INV_STATE.selectedItemId !== _lastSelectedId;
+  const contentChanged = hash !== _lastContentHash;
+  const selectionChanged = INV_STATE.selectedItemId !== _lastSelectedId;
   const handlers = getEventHandlers();
 
   for (const pane of getInventoryPanes()) {
-    if (onlySelectionChanged && pane.querySelector(".inv-item")) {
-      updateSelectionOnly(pane);
-    } else {
+    if (contentChanged) {
       pane.innerHTML = renderInventoryHTML();
       attachInventoryListenersToPane(pane, handlers);
+    } else if (selectionChanged && pane.querySelector(".inv-item")) {
+      updateSelectionOnly(pane);
     }
   }
 

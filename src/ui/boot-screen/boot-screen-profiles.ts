@@ -11,16 +11,12 @@ import { getState } from "../../state-access.js";
 import { getProfiles, activateProfile, createProfile, deleteProfile, timeAgo, type ProfileMeta } from "../../data/profiles.js";
 import { pushMonitorMenu } from "../monitor-nav.js";
 import { makePlayer, validatePilotName } from "../../player/player-data.js";
-import { computeStats } from "../../player/player-stats.js";
-import { populateSystem } from "../../world-gen.js";
 import { enterSpaceMode } from "../../game-loop.js";
 import { logEvent } from "../hud-overlay.js";
 import { t } from "../../utils/i18n.js";
-import { ensurePlayerHasWeapon, clampPlayerVitals } from "../../utils/restore-save.js";
-import { setupPlayerSpawn as resolveSpawn, needsSpawnResolution } from "../../utils/player-spawn.js";
-import { initTutorial } from "../../tutorial.js";
-import { initTutorialOverlay } from "../tutorial-overlay.js";
+import { initGameSession, restoreGameFromSave } from "../../utils/restore-save.js";
 import { bindTitleScreenEvents } from "../title-screen.js";
+import { Client } from "../../state.js";
 
 /* ──────────────────────────────────────────────────────────── */
 /*  Profile Selection Screen                                   */
@@ -34,19 +30,19 @@ export function showProfileSelection(): void {
   const menuHtml = `
     <div class="profile-screen">
       <div class="profile-header">
-        <div class="profile-title">NEURAL LINKS</div>
-        <div class="profile-sub">SELECT PILOT PROFILE</div>
+        <div class="profile-title">${t("profile.title")}</div>
+        <div class="profile-sub">${t("profile.subtitle")}</div>
       </div>
       <div class="profile-grid">
         ${cardsHtml}
-        <button type="button" id="profile-new" class="profile-card profile-card--new" aria-label="Create new profile">
+        <button type="button" id="profile-new" class="profile-card profile-card--new" aria-label="${t("profile.newHint")}">
           <div class="profile-new-icon">+</div>
-          <div class="profile-new-label">NEW NEURAL LINK</div>
-          <div class="profile-new-hint">Establish a new pilot identity</div>
+          <div class="profile-new-label">${t("profile.newLink")}</div>
+          <div class="profile-new-hint">${t("profile.newHint")}</div>
         </button>
       </div>
       <div class="profile-footer">
-        <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">BACK</button>
+        <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">${t("common.back")}</button>
       </div>
     </div>
   `;
@@ -62,10 +58,11 @@ export function showProfileSelection(): void {
         e.stopPropagation();
         sfxConfirm();
         if (activateProfile(id)) {
+          restoreGameFromSave();
           enterSpaceMode();
           const sys = getState().GALAXY[getState().player.sysIdx];
           if (sys) {
-            logEvent(`Neural link restored. System entry: ${sys.name} (SEC ${sys.security.toFixed(1)})`, "system");
+            logEvent(t("game.neuralRestored", { sys: sys.name, sec: sys.security.toFixed(1) }), "system");
           }
         }
       });
@@ -76,7 +73,7 @@ export function showProfileSelection(): void {
         e.stopPropagation();
         sfxBlip();
         const pilotName = (card.querySelector(".profile-name") as HTMLElement)?.textContent ?? "this profile";
-        if (!confirm(`Permanently delete pilot "${pilotName}"? This cannot be undone.`)) return;
+        if (!confirm(t("profile.confirmDelete", { name: pilotName }))) return;
         deleteProfile(id);
         showProfileSelection();
       });
@@ -92,8 +89,8 @@ export function showProfileSelection(): void {
 
 /** Build the HTML for a single profile card. */
 function renderProfileCard(p: ProfileMeta): string {
-  const shipName = SHIPS[p.shipId]?.name ?? "Unknown Vessel";
-  const systemName = getState().GALAXY[p.sysIdx]?.name ?? "Unknown Sector";
+  const shipName = SHIPS[p.shipId]?.name ?? t("profile.unknownVessel");
+  const systemName = getState().GALAXY[p.sysIdx]?.name ?? t("profile.unknownSector");
   const creditsFmt = p.credits.toLocaleString();
   const lastPlayed = timeAgo(p.updatedAt);
 
@@ -108,25 +105,25 @@ function renderProfileCard(p: ProfileMeta): string {
       </div>
       <div class="profile-stats">
         <div class="profile-stat">
-          <span class="profile-stat-lbl">LEVEL</span>
+          <span class="profile-stat-lbl">${t("profile.level")}</span>
           <span class="profile-stat-val highlight-lvl">${p.level}</span>
         </div>
         <div class="profile-stat">
-          <span class="profile-stat-lbl">LOCATION</span>
+          <span class="profile-stat-lbl">${t("profile.location")}</span>
           <span class="profile-stat-val">${escapeHtml(systemName)}</span>
         </div>
         <div class="profile-stat">
-          <span class="profile-stat-lbl">CREDITS</span>
+          <span class="profile-stat-lbl">${t("profile.credits")}</span>
           <span class="profile-stat-val highlight-credits">${creditsFmt} CR</span>
         </div>
         <div class="profile-stat">
-          <span class="profile-stat-lbl">LAST PLAYED</span>
+          <span class="profile-stat-lbl">${t("profile.lastPlayed")}</span>
           <span class="profile-stat-val">${lastPlayed}</span>
         </div>
       </div>
       <div class="profile-actions">
-        <button type="button" class="profile-continue-btn" data-profile-continue>CONTINUE</button>
-        <button type="button" class="profile-delete-btn" data-profile-delete aria-label="Delete profile">×</button>
+        <button type="button" class="profile-continue-btn" data-profile-continue>${t("profile.continue")}</button>
+        <button type="button" class="profile-delete-btn" data-profile-delete aria-label="${t("profile.delete")}">×</button>
       </div>
     </div>
   `;
@@ -137,35 +134,35 @@ function renderProfileCard(p: ProfileMeta): string {
 /* ──────────────────────────────────────────────────────────── */
 
 function showProfileCreation(): void {
-  const shipName = SHIPS.scout?.name ?? "Class-I Scout";
+  const shipName = SHIPS.scout?.name ?? t("profile.unknownVessel");
 
   const html = `
     <div class="profile-screen profile-screen--create">
       <div class="profile-header">
-        <div class="profile-title">NEURAL LINK REGISTRY</div>
-        <div class="profile-sub">ESTABLISH NEW PILOT IDENTITY</div>
+        <div class="profile-title">${t("profile.registryTitle")}</div>
+        <div class="profile-sub">${t("profile.registrySubtitle")}</div>
       </div>
       <div class="profile-form">
         <div class="profile-field">
-          <label for="profile-callsign">Callsign</label>
+          <label for="profile-callsign">${t("pilot.callsign")}</label>
           <input
             type="text"
             id="profile-callsign"
             class="profile-input"
             maxlength="16"
             autocomplete="off"
-            placeholder="Enter callsign..."
+            placeholder="${t("pilot.callsignPlaceholder")}"
           />
           <div class="profile-error" id="profile-error"></div>
         </div>
         <div class="profile-field">
-          <label>Hull Class</label>
+          <label>${t("pilot.hullClass")}</label>
           <div class="profile-readonly">${escapeHtml(shipName)}</div>
         </div>
       </div>
       <div class="profile-footer profile-footer--create">
-        <button type="button" id="profile-establish" class="ld-btn-start">ESTABLISH LINK</button>
-        <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">BACK</button>
+        <button type="button" id="profile-establish" class="ld-btn-start">${t("profile.establishLink")}</button>
+        <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">${t("common.back")}</button>
       </div>
     </div>
   `;
@@ -186,38 +183,18 @@ function showProfileCreation(): void {
       sfxConfirm();
       errorEl.textContent = "";
 
-      // Create a fresh player, populate the galaxy, and set up the spawn.
+      // Create a fresh player and initialize the session.
       const freshPlayer = makePlayer();
       freshPlayer.pilotName = result.name ?? input.value.trim();
 
-      getState().player = freshPlayer;
-
-      const sysIdx = freshPlayer.sysIdx || 0;
-      if (!getState().GALAXY[sysIdx]) {
-        getState().player.sysIdx = 0;
-      }
-      populateSystem(getState().GALAXY[getState().player.sysIdx]);
-
-      if (needsSpawnResolution(getState().player)) {
-        resolveSpawn(getState().player, getState().GALAXY);
-      }
-
-      ensurePlayerHasWeapon();
-      computeStats();
-      clampPlayerVitals();
+      initGameSession(freshPlayer, { setupSpawn: true });
 
       // Persist as a new profile.
       const profileId = createProfile(getState().player);
-      logEvent(`Callsign registered: ${freshPlayer.pilotName}`, "system");
+      logEvent(t("profile.callsignRegistered", { name: freshPlayer.pilotName }), "system");
 
       // Enter the game.
       enterSpaceMode();
-      if (getState().player.tutorial.active) {
-        initTutorial();
-        initTutorialOverlay(true);
-      } else {
-        initTutorialOverlay(false);
-      }
 
       const sys = getState().GALAXY[getState().player.sysIdx];
       if (sys) {

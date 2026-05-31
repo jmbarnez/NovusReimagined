@@ -1,5 +1,6 @@
 
 import { PlayerAccess, getState } from "../state-access.js";
+import { queueFrameAction } from "../sim/input.js";
 import { SHIPS } from "../data/ships.js";
 import { MODULES } from "../data/modules.js";
 import { invalidate } from "./player-stats.js";
@@ -108,7 +109,7 @@ export function applyBarHotkey(keyIndex: number) {
   const slots = barHotkeySlotList();
   if (keyIndex < 0 || keyIndex >= slots.length) return;
   const { rack, idx } = slots[keyIndex];
-  toggleSlotDefaultAction(rack, idx);
+  queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack, idx } });
 }
 
 import type { Player } from "../state.js";
@@ -166,7 +167,7 @@ export function toggleSlotDefaultAction(rack: string, idx: number, p: Player = g
 }
 
 export function toggleRackPower(rack: string, wantOn: boolean, silent: boolean = false) {
-  let changed = false;
+  let queued = false;
   const hardpointRack = playerHardpointRack(getState().player);
   if (rack === hardpointRack) {
     const n = getState().player.fitting[hardpointRack]?.length || 0;
@@ -174,29 +175,27 @@ export function toggleRackPower(rack: string, wantOn: boolean, silent: boolean =
       if (getState().player.fitting[hardpointRack]?.[i] && getState().player.turretPower?.[i] !== wantOn) {
         const cycling = (getState().player.turretPowerCd?.[i] || 0) > 0;
         if (cycling) continue;
-        PlayerAccess.setTurretPower(i, wantOn);
-        PlayerAccess.setTurretPowerCd(i, TURRET_POWER_CYCLE_S);
-        changed = true;
+        queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack: hardpointRack, idx: i } });
+        queued = true;
       }
     }
   } else {
     const n = getState().player.fitting[rack]?.length || 0;
     for (let i = 0; i < n; i++) {
       if (getState().player.fitting[rack]?.[i] && (getState().player.slotActive?.[rack]?.[i] ?? true) !== wantOn) {
-        PlayerAccess.setSlotActive(rack, i, wantOn);
-        changed = true;
+        queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack, idx: i } });
+        queued = true;
       }
     }
   }
-  if (changed) {
+  if (queued) {
     if (!silent) {
       sfxPowerCycle(wantOn);
       const rackLabel = rack[0].toUpperCase() + rack.slice(1);
       floatText(getState().player.x, getState().player.y - 30, `${rackLabel} RACK ${wantOn ? "ONLINE" : "OFFLINE"}`, wantOn ? "#44ffaa" : "#ff8844");
     }
-    invalidate();
   }
-  return changed;
+  return queued;
 }
 
 export function toggleGlobalPower(wantOn: boolean) {
@@ -208,7 +207,6 @@ export function toggleGlobalPower(wantOn: boolean) {
   }
   if (changed) {
     sfxPowerCycle(wantOn);
-    invalidate();
     floatText(getState().player.x, getState().player.y - 30, `ALL SYSTEMS ${wantOn ? "ONLINE" : "OFFLINE"}`, wantOn ? "#44ffaa" : "#ff8844");
   }
   return wantOn;

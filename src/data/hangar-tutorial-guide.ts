@@ -1,4 +1,5 @@
 import { tutorialKey } from "./tutorial-controls.js";
+import { t } from "../utils/i18n.js";
 
 export type HangarGuideTarget =
   | "station-tab-hangar"
@@ -19,72 +20,72 @@ export interface HangarGuidePanel {
 
 export const HANGAR_REVIEW_GUIDE: HangarGuidePanel[] = [
   {
-    label: "Ship Cargo",
+    label: t("tutorial.hangar.cargo.label"),
     target: "hangar-cargo",
     stationTab: "hangar",
-    body: "Your full cargo hold, shared with flight. Use it to inspect modules and fit or unfit gear. The autocannon and salvager wait here until the combat swap.",
+    body: t("tutorial.hangar.cargo.body"),
   },
   {
-    label: "Active Fitting",
+    label: t("tutorial.hangar.activeFitting.label"),
     target: "hangar-fitting",
     stationTab: "hangar",
-    body: "Your current training fit has a mining laser in high slot 1, a tractor beam in high slot 2, and a survey scanner in low slot 1.",
+    body: t("tutorial.hangar.activeFitting.body"),
   },
   {
-    label: "Ship Statistics",
+    label: t("tutorial.hangar.shipStats.label"),
     target: "hangar-stats",
     stationTab: "hangar",
-    body: "Hull, shields, powergrid, and CPU update here. Hover a fitting action to preview stat changes before committing.",
+    body: t("tutorial.hangar.shipStats.body"),
   },
   {
-    label: "Training Mission",
+    label: t("tutorial.hangar.trainingMission.label"),
     target: "hud-missions",
-    body: "Academy Training tracks your overall progress under the minimap. Each step pays credits and skill XP, with a larger graduation bonus at the end.",
+    body: t("tutorial.hangar.trainingMission.body"),
   },
   {
-    label: "Undock",
+    label: t("tutorial.hangar.undock.label"),
     target: "hangar-undock",
     stationTab: "hangar",
-    body: `Press ${tutorialKey("dock")} or click Undock when you are ready — the mining range is next on the tutorial lane.`,
+    body: t("tutorial.hangar.undock.body", { dockKey: tutorialKey("dock") }),
   },
 ];
 
 export const HANGAR_COMBAT_SWAP_GUIDE: HangarGuidePanel[] = [
   {
-    label: "Combat Loadout",
+    label: t("tutorial.hangar.combatLoadout.label"),
     target: "hangar-fitting",
     stationTab: "hangar",
-    body: "The belt used mining tools. Gunnery needs the autocannon and salvager from cargo, so swap both high slots to the combat fit.",
+    body: t("tutorial.hangar.combatLoadout.body"),
   },
   {
-    label: "Unfit Mining Laser",
+    label: t("tutorial.hangar.unfitMiner.label"),
     target: "hangar-slot-high-0",
     stationTab: "hangar",
-    body: "Unfit the mining laser from high slot 1 using the Unfit control. The module returns to cargo.",
+    body: t("tutorial.hangar.unfitMiner.body"),
   },
   {
-    label: "Unfit Tractor Beam",
+    label: t("tutorial.hangar.unfitTractor.label"),
     target: "hangar-slot-high-1",
     stationTab: "hangar",
-    body: "Unfit the tractor beam from high slot 2 the same way. Both mining modules stay in cargo if you need them again.",
+    body: t("tutorial.hangar.unfitTractor.body"),
   },
   {
-    label: "Fit Autocannon",
+    label: t("tutorial.hangar.fitAutocannon.label"),
     target: "hangar-slot-high-0",
     stationTab: "hangar",
-    body: "Select the Civilian Autocannon from the slot menu and click Fit to install it in high slot 1.",
+    body: t("tutorial.hangar.fitAutocannon.body"),
   },
   {
-    label: "Fit Salvager",
+    label: t("tutorial.hangar.fitSalvager.label"),
     target: "hangar-slot-high-1",
     stationTab: "hangar",
-    body: "Fit the Civilian Salvager into high slot 2. Salvagers strip wrecks — you will use weapons at the gunnery bay.",
+    body: t("tutorial.hangar.fitSalvager.body"),
   },
   {
-    label: "Undock",
+    label: t("tutorial.hangar.combatUndock.label"),
     target: "hangar-undock",
     stationTab: "hangar",
-    body: `When both combat modules are fitted, press ${tutorialKey("dock")} or click Undock — the gunnery spoke is next.`,
+    body: t("tutorial.hangar.combatUndock.body", { dockKey: tutorialKey("dock") }),
   },
 ];
 

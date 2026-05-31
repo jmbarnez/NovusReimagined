@@ -14,6 +14,7 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "common.no": "No",
     "common.back": "Back",
     "common.exit": "Exit",
+    "common.dash": "—",
 
     // ─── settings ──────────────────────────────────────────────
     "settings.title": "SETTINGS",
@@ -366,6 +367,23 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "loading.pixiTextures": "> Baking planetary textures...",
     "loading.pixiShaders": "> Shaders compiled. Systems nominal.",
 
+    // ─── boot telemetry ─────────────────────────────────────────
+    "boot.kernel": "KERNEL",
+    "boot.hudRenderer": "HUD RENDERER",
+    "boot.galaxyGen": "GALAXY GEN",
+    "boot.pixelPipe": "PIXEL PIPE",
+    "boot.init": "INIT",
+    "boot.load": "LOAD",
+    "boot.build": "BUILD",
+    "boot.link": "LINK",
+
+    // ─── time ago ─────────────────────────────────────────────
+    "timeAgo.days": "{n}d ago",
+    "timeAgo.hours": "{n}h ago",
+    "timeAgo.minutes": "{n}m ago",
+    "timeAgo.justNow": "just now",
+    "timeAgo.unknown": "unknown",
+
     // ─── decrypt ───────────────────────────────────────────────
     "decrypt.open": "Open Cache",
     "decrypt.civA": "CIV-A",
@@ -406,6 +424,124 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "tutorial.continue": "Continue tutorial",
     "tutorial.welcomeTitle": "Welcome to Novus Prime",
     "tutorial.welcomeSub": "Your training is complete. The galaxy awaits.",
+    "tutorial.stepCounter": "Step {n} / {total}",
+    "tutorial.navProgress": "{distance} km to {label}",
+    "tutorial.missionReward": "Academy Training +{credits} CR",
+    "tutorial.missionComplete": "Academy Training complete — +{credits} CR",
+
+    // ─── tutorial steps ─────────────────────────────────────────
+    "tutorial.step.hudTour.title": "HUD Overview",
+    "tutorial.step.hudTour.objective": "Review HUD panel {n} of {total}, then press Next",
+    "tutorial.step.flyAcademy.title": "Academy Approach",
+    "tutorial.step.flyAcademy.objective": "Fly east to the Academy hub — follow the guide lane, fly through each slingshot gate for a boost, or open the system map ({mapKey}) and click the Academy for a nav waypoint",
+    "tutorial.step.flyAcademy.hint": "Right-click ahead to set course. Thread each gate between the pillars for a slingshot boost. {brakeKey} to slow down.",
+    "tutorial.step.hangarHigh.title": "Hangar — Hardpoints",
+    "tutorial.step.hangarHigh.objective": "Dock at the Academy ({dockKey}), review the Hangar walkthrough, then undock to continue toward the mining range",
+    "tutorial.step.flyMining.title": "Mining Spoke",
+    "tutorial.step.flyMining.objective": "Follow the guide lane from the Academy to the Mining Range asteroid belt",
+    "tutorial.step.flyMining.hint": "Your mining laser is in high slot 1 (hotkey 1) and the tractor beam is in slot 2. Chevrons mark the lane — fly through each gate opening for a slingshot boost.",
+    "tutorial.step.targeting.title": "Scanner Range",
+    "tutorial.step.targeting.objective": "Left-click an asteroid to request a sensor lock, then wait for the lock to resolve",
+    "tutorial.step.targeting.hint": "Asteroids show on your overview ({overviewKey}) and as contacts on the lock rail. {brakeKey} to hold position while the scan completes — the lock card fills as resolution progresses.",
+    "tutorial.step.mining.title": "Mining Range",
+    "tutorial.step.mining.objective": "Power the mining laser, assign it to your asteroid lock, fly into range, and collect ore",
+    "tutorial.step.mining.hint": "Press 1 to activate the civilian mining laser in high slot 1. Click your resolved lock card, then click slot 1 to assign. Fly close until the mining beam connects.",
+    "tutorial.step.flyStation.title": "Return to Academy",
+    "tutorial.step.flyStation.objective": "Follow the guide lane back to the Academy hub with your mined ore",
+    "tutorial.step.flyStation.hint": "Fly the return spoke — pass through the boost gates. Once docked, Industry can refine the ore you collected.",
+    "tutorial.step.industry.title": "Industry Bench",
+    "tutorial.step.industry.objective": "Dock at the Academy ({dockKey}), open Industry, and queue Ferro bar refining",
+    "tutorial.step.industry.hint": "Dock at the central station, open Industry, choose Smelter, then queue Ferro bar refining. The queue panel shows live progress while the job runs.",
+    "tutorial.step.hangarTurrets.title": "Hangar — Combat Loadout",
+    "tutorial.step.hangarTurrets.objective": "Dock at the Academy ({dockKey}), open Hangar, swap the mining laser and tractor for the autocannon and salvager, then undock",
+    "tutorial.step.flyGunnery.title": "Gunnery Spoke",
+    "tutorial.step.flyGunnery.objective": "Follow the guide lane from the Academy to the gunnery bay",
+    "tutorial.step.flyGunnery.hint": "Your autocannon should be in high slot 1 (hotkey 1) and salvager in slot 2. Revisit the Hangar if you still have mining modules fitted.",
+    "tutorial.step.gunnery.title": "Gunnery Bay",
+    "tutorial.step.gunnery.objective": "Lock a target dummy and destroy it with your autocannon (high slot 1)",
+    "tutorial.step.gunnery.hint": "Press 1 to power the autocannon in high slot 1, click the dummy's lock card, then click slot 1 to assign.",
+    "tutorial.step.scanSignature.title": "Signal Trace",
+    "tutorial.step.scanSignature.objective": "Open the system map ({mapKey}), aim at the southeast beacon sector, and Pulse to resolve the training signature",
+    "tutorial.step.scanSignature.hint": "{mapKey} opens the map — power your survey scanner in low slot 1 (hotkey 4), click near the beacon to aim the scan cone, then press Scan on the toolbar",
+    "tutorial.step.flySignature.title": "Datacore Approach",
+    "tutorial.step.flySignature.objective": "Follow the guide lane to the resolved training signature",
+    "tutorial.step.flySignature.hint": "The cross marker shows where the datacore waits — fly the lit corridor to reach it",
+    "tutorial.step.breachSignature.title": "Breach Datacore",
+    "tutorial.step.breachSignature.objective": "Breach the training datacore ({dockKey} at the marker or from the overview)",
+    "tutorial.step.breachSignature.hint": "Get close to the signature marker and press {dockKey} to begin the breach sequence",
+    "tutorial.step.flyGate.title": "Stargate Spoke",
+    "tutorial.step.flyGate.objective": "Follow the final guide lane to the Novus Prime stargate at the sector rim",
+    "tutorial.step.flyGate.hint": "The stargate awakens when you begin this leg — fly the spoke and pass through the boost gates.",
+    "tutorial.step.graduation.title": "Stargate Graduation",
+    "tutorial.step.graduation.objective": "Warp to Novus Prime — fly to the stargate and press {dockKey} to jump",
+    "tutorial.step.graduation.hint": "Enter the stargate's interact range and press {dockKey} to warp out. Press Graduate once you arrive in Novus Prime.",
+    "tutorial.step.hangarHigh.complete": "Objective complete — press Next to fly to the mining range.",
+    "tutorial.step.hangarTurrets.complete": "Objective complete — press Next to fly to the gunnery bay.",
+    "tutorial.step.hangarHigh.hangarTabHint": "Click the Hangar tab — the tour will highlight each area as you go.",
+
+    // ─── tutorial HUD tour ────────────────────────────────────
+    "tutorial.hudTour.vitals.label": "Vitals Monitor",
+    "tutorial.hudTour.vitals.body": "Tracks your ship's shields, hull armor, structure, and capacitor energy in real time.",
+    "tutorial.hudTour.modules.label": "Module Slots",
+    "tutorial.hudTour.modules.body": "Shows fitted weapons and tools. Use the numbered hotkeys to power modules on and off.",
+    "tutorial.hudTour.lockRail.label": "Lock Rail",
+    "tutorial.hudTour.lockRail.body": "Shows locks and lock progress. Click a target card, then a powered module slot, to assign that module.",
+    "tutorial.hudTour.overview.label": "Local Overview",
+    "tutorial.hudTour.overview.body": "Lists nearby contacts such as asteroids, ships, stations, and stargates. Click a contact to request a lock.",
+    "tutorial.hudTour.comms.label": "Comms Log",
+    "tutorial.hudTour.comms.body": "Shows system alerts and chat. Use the input bar to message other pilots in the system.",
+    "tutorial.hudTour.missions.label": "Missions & Log",
+    "tutorial.hudTour.missions.body": "Tracks objectives, rewards, and tutorial progress. You can skip training from the tutorial card at any time.",
+
+    // ─── tutorial gate hints ──────────────────────────────────
+    "tutorial.gateHint.moveCourse": "Right-click ahead to set course — your ship thrusts toward the waypoint",
+    "tutorial.gateHint.brakeGate": "{brakeKey} brakes — use it to line up with the gate opening",
+    "tutorial.gateHint.gateBoost": "Fly through the gate pillars for a slingshot boost",
+    "tutorial.gateHint.gateLane": "Thread the opening dead-center — chevrons mark the lane",
+    "tutorial.gateHint.gateBoostShort": "Fly through the gate opening for a boost",
+    "tutorial.gateHint.gateSteady": "Hold course — boost gates reward clean passes",
+    "tutorial.gateHint.brakeOvershoot": "{brakeKey} to brake if you overshoot the Academy",
+    "tutorial.gateHint.gateMomentum": "Thread the gate — momentum carries you to gunnery",
+    "tutorial.gateHint.gateCenter": "Fly through center for the slingshot",
+    "tutorial.gateHint.gatePillars": "Gate boost — stay between the pillars",
+    "tutorial.gateHint.gateClean": "Clean pass through the gate opening",
+    "tutorial.gateHint.gateLast": "Last boost gate before the stargate",
+    "tutorial.gateHint.gateDock": "Fly through — then dock at the gate ({dockKey})",
+
+    // ─── tutorial hangar guide ────────────────────────────────
+    "tutorial.hangar.cargo.label": "Ship Cargo",
+    "tutorial.hangar.cargo.body": "Your full cargo hold, shared with flight. Use it to inspect modules and fit or unfit gear. The autocannon and salvager wait here until the combat swap.",
+    "tutorial.hangar.activeFitting.label": "Active Fitting",
+    "tutorial.hangar.activeFitting.body": "Your current training fit has a mining laser in high slot 1, a tractor beam in high slot 2, and a survey scanner in low slot 1.",
+    "tutorial.hangar.shipStats.label": "Ship Statistics",
+    "tutorial.hangar.shipStats.body": "Hull, shields, powergrid, and CPU update here. Hover a fitting action to preview stat changes before committing.",
+    "tutorial.hangar.trainingMission.label": "Training Mission",
+    "tutorial.hangar.trainingMission.body": "Academy Training tracks your overall progress under the minimap. Each step pays credits and skill XP, with a larger graduation bonus at the end.",
+    "tutorial.hangar.undock.label": "Undock",
+    "tutorial.hangar.undock.body": "Press {dockKey} or click Undock when you are ready — the mining range is next on the tutorial lane.",
+    "tutorial.hangar.combatLoadout.label": "Combat Loadout",
+    "tutorial.hangar.combatLoadout.body": "The belt used mining tools. Gunnery needs the autocannon and salvager from cargo, so swap both high slots to the combat fit.",
+    "tutorial.hangar.unfitMiner.label": "Unfit Mining Laser",
+    "tutorial.hangar.unfitMiner.body": "Unfit the mining laser from high slot 1 using the Unfit control. The module returns to cargo.",
+    "tutorial.hangar.unfitTractor.label": "Unfit Tractor Beam",
+    "tutorial.hangar.unfitTractor.body": "Unfit the tractor beam from high slot 2 the same way. Both mining modules stay in cargo if you need them again.",
+    "tutorial.hangar.fitAutocannon.label": "Fit Autocannon",
+    "tutorial.hangar.fitAutocannon.body": "Select the Civilian Autocannon from the slot menu and click Fit to install it in high slot 1.",
+    "tutorial.hangar.fitSalvager.label": "Fit Salvager",
+    "tutorial.hangar.fitSalvager.body": "Fit the Civilian Salvager into high slot 2. Salvagers strip wrecks — you will use weapons at the gunnery bay.",
+    "tutorial.hangar.combatUndock.label": "Undock",
+    "tutorial.hangar.combatUndock.body": "When both combat modules are fitted, press {dockKey} or click Undock — the gunnery spoke is next.",
+
+    // ─── world / sector names ───────────────────────────────────
+    "world.sector.start": "S.T.A.R.T Training Sector",
+    "world.region.flightDeck": "Flight Deck",
+    "world.region.miningRange": "Mining Range",
+    "world.region.industryBench": "Industry Bench",
+    "world.region.gunneryBay": "Gunnery Bay",
+    "world.region.signalTrace": "Signal Trace",
+    "world.location.academy": "Academy",
+    "world.location.stargate": "Stargate",
+    "site.trainingDatacore": "Training Datacore",
 
     // ─── missions ──────────────────────────────────────────────
     "mission.title": "MISSIONS",
@@ -528,6 +664,71 @@ export const STRINGS: Record<Language, Record<string, string>> = {
 
     // ─── game start ────────────────────────────────────────────
     "game.neuralLink": "Neural link initiated. System entry: {sys} (SEC {sec})",
+    "game.neuralRestored": "Neural link restored. System entry: {sys} (SEC {sec})",
+
+    // ─── profile ───────────────────────────────────────────────
+    "profile.title": "NEURAL LINKS",
+    "profile.subtitle": "SELECT PILOT PROFILE",
+    "profile.newLink": "NEW NEURAL LINK",
+    "profile.newHint": "Establish a new pilot identity",
+    "profile.confirmDelete": "Permanently delete pilot \"{name}\"? This cannot be undone.",
+    "profile.unknownVessel": "Unknown Vessel",
+    "profile.unknownSector": "Unknown Sector",
+    "profile.level": "LEVEL",
+    "profile.location": "LOCATION",
+    "profile.credits": "CREDITS",
+    "profile.lastPlayed": "LAST PLAYED",
+    "profile.continue": "CONTINUE",
+    "profile.registryTitle": "NEURAL LINK REGISTRY",
+    "profile.registrySubtitle": "ESTABLISH NEW PILOT IDENTITY",
+    "profile.establishLink": "ESTABLISH LINK",
+    "profile.delete": "Delete profile",
+    "profile.callsignRegistered": "Callsign registered: {name}",
+
+    // ─── title screen ──────────────────────────────────────────
+    "title.safeExit": "SAFE EXIT",
+    "title.exitConfirm": "Safely exit Novus? Any unsaved progress will be lost.",
+    "title.initializing": "Initializing neural interface",
+    "title.neuralPending": "Neural link pending",
+
+    // ─── settings extras ───────────────────────────────────────
+    "settings.pressKey": "Press key...",
+
+    // ─── decrypt extras ────────────────────────────────────────
+    "decrypt.moveCloser": "Move within 280m of {name} to establish a stable decrypt link.",
+
+    // ─── pause extras ──────────────────────────────────────────
+    "pause.saveLoaded": "Save loaded. System entry: {sys} (SEC {sec})",
+
+    // ─── hud extras ────────────────────────────────────────────
+    "hud.wallet": "Wallet: {credits}¢",
+    "hud.processingLabel": "Processing",
+    "hud.smeltFallback": "Smelt",
+    "hud.hubTitle": "Industrial Processing Hub",
+    "hud.jumpTo": "[F] Jump to {name}",
+    "hud.processingHub": "[F] Processing Hub",
+    "hud.asteroidFallback": "Asteroid {id}",
+
+    // ─── enemy menu ──────────────────────────────────────────────
+    "enemyMenu.hail": "Hail Ship",
+    "enemyMenu.orbit": "Orbit",
+    "enemyMenu.keepRange": "Keep at Range",
+    "enemyMenu.unlockTarget": "Unlock Target",
+    "enemyMenu.lockTarget": "Lock Target",
+    "enemyMenu.stop": "Stop",
+
+    // ─── ship extras ───────────────────────────────────────────
+    "ship.allSystems": "All Systems",
+    "ship.rack": "Rack",
+    "ship.tractorControls": "Tractor Beam Controls (Click to show/hide, Scroll/Drag dial to adjust)",
+    "ship.damagedAbbr": "DMGD",
+    "ship.heatAbbr": "H",
+    "ship.target": "TARGET",
+    "ship.wreck": "WRECK",
+    "ship.unassigned": "UNASSIGNED",
+
+    // ─── perf overlay ────────────────────────────────────────────
+    "perf.title": "Performance",
   },
 
   es: {
@@ -543,6 +744,7 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "common.no": "No",
     "common.back": "Atrás",
     "common.exit": "Salir",
+    "common.dash": "—",
 
     // ─── settings ──────────────────────────────────────────────
     "settings.title": "CONFIGURACIÓN",
@@ -895,6 +1097,23 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "loading.pixiTextures": "> Horneando texturas planetarias...",
     "loading.pixiShaders": "> Shaders compilados. Sistemas nominales.",
 
+    // ─── boot telemetry ─────────────────────────────────────────
+    "boot.kernel": "KERNEL",
+    "boot.hudRenderer": "RENDERIZADOR HUD",
+    "boot.galaxyGen": "GEN GALAXIA",
+    "boot.pixelPipe": "TUBO PIXEL",
+    "boot.init": "INIT",
+    "boot.load": "CARGA",
+    "boot.build": "CONSTRUIR",
+    "boot.link": "ENLACE",
+
+    // ─── time ago ─────────────────────────────────────────────
+    "timeAgo.days": "hace {n}d",
+    "timeAgo.hours": "hace {n}h",
+    "timeAgo.minutes": "hace {n}m",
+    "timeAgo.justNow": "ahora mismo",
+    "timeAgo.unknown": "desconocido",
+
     // ─── decrypt ───────────────────────────────────────────────
     "decrypt.open": "Abrir Caja Fuerte",
     "decrypt.civA": "CIV-A",
@@ -935,6 +1154,124 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "tutorial.continue": "Continuar tutorial",
     "tutorial.welcomeTitle": "Bienvenido a Novus Prime",
     "tutorial.welcomeSub": "Su entrenamiento está completo. La galaxia le espera.",
+    "tutorial.stepCounter": "Paso {n} / {total}",
+    "tutorial.navProgress": "{distance} km a {label}",
+    "tutorial.missionReward": "Entrenamiento de la Academia +{credits} CR",
+    "tutorial.missionComplete": "Entrenamiento de la Academia completo — +{credits} CR",
+
+    // ─── tutorial steps ─────────────────────────────────────────
+    "tutorial.step.hudTour.title": "Visión General del HUD",
+    "tutorial.step.hudTour.objective": "Revise el panel del HUD {n} de {total}, luego presione Siguiente",
+    "tutorial.step.flyAcademy.title": "Aproximación a la Academia",
+    "tutorial.step.flyAcademy.objective": "Vuele al este hacia el centro de la Academia — siga el carril guía, vuele a través de cada portal de slingshot para un impulso, o abra el mapa del sistema ({mapKey}) y haga clic en la Academia para un punto de navegación",
+    "tutorial.step.flyAcademy.hint": "Haga clic derecho adelante para establecer rumbo. Atraviese cada portal entre los pilares para un impulso de slingshot. {brakeKey} para frenar.",
+    "tutorial.step.hangarHigh.title": "Hangar — Puntos Duros",
+    "tutorial.step.hangarHigh.objective": "Atraque en la Academia ({dockKey}), revise el recorrido del Hangar, luego desatrague para continuar hacia el rango de minería",
+    "tutorial.step.flyMining.title": "Brazo Minero",
+    "tutorial.step.flyMining.objective": "Siga el carril guía desde la Academia hasta el cinturón de asteroides del Rango de Minería",
+    "tutorial.step.flyMining.hint": "Su láser minero está en el slot alto 1 (tecla 1) y el rayo tractor en el slot 2. Los galones marcan el carril — vuele a través de cada apertura de portal para un impulso de slingshot.",
+    "tutorial.step.targeting.title": "Rango del Escáner",
+    "tutorial.step.targeting.objective": "Haga clic izquierdo en un asteroide para solicitar un bloqueo de sensor, luego espere a que se resuelva",
+    "tutorial.step.targeting.hint": "Los asteroides aparecen en su panorama ({overviewKey}) y como contactos en la barra de bloqueos. {brakeKey} para mantener posición mientras se completa el escaneo — la tarjeta de bloqueo se llena a medida que avanza la resolución.",
+    "tutorial.step.mining.title": "Rango de Minería",
+    "tutorial.step.mining.objective": "Active el láser minero, asígnelo a su bloqueo de asteroide, vuele a rango y recolecte mineral",
+    "tutorial.step.mining.hint": "Presione 1 para activar el láser minero civil en el slot alto 1. Haga clic en su tarjeta de bloqueo resuelto, luego haga clic en el slot 1 para asignar. Acerquese hasta que el rayo minero conecte.",
+    "tutorial.step.flyStation.title": "Regreso a la Academia",
+    "tutorial.step.flyStation.objective": "Siga el carril guía de regreso al centro de la Academia con su mineral extraído",
+    "tutorial.step.flyStation.hint": "Vuele el brazo de regreso — pase por los portales de impulso. Una vez atracado, Industria puede refinar el mineral que recolectó.",
+    "tutorial.step.industry.title": "Banco de Industria",
+    "tutorial.step.industry.objective": "Atraque en la Academia ({dockKey}), abra Industria, y encole el refinado de barras de Ferro",
+    "tutorial.step.industry.hint": "Atraque en la estación central, abra Industria, elija Fundición, luego encole el refinado de barras de Ferro. El panel de cola muestra el progreso en vivo mientras el trabajo se ejecuta.",
+    "tutorial.step.hangarTurrets.title": "Hangar — Equipo de Combate",
+    "tutorial.step.hangarTurrets.objective": "Atraque en la Academia ({dockKey}), abra el Hangar, cambie el láser minero y el tractor por el cañón automático y el salvager, luego desatrague",
+    "tutorial.step.flyGunnery.title": "Brazo de Artillería",
+    "tutorial.step.flyGunnery.objective": "Siga el carril guía desde la Academia hasta la bahía de artillería",
+    "tutorial.step.flyGunnery.hint": "Su cañón automático debe estar en el slot alto 1 (tecla 1) y el salvager en el slot 2. Vuelva al Hangar si aún tiene módulos de minería equipados.",
+    "tutorial.step.gunnery.title": "Bahía de Artillería",
+    "tutorial.step.gunnery.objective": "Bloquee un blanco de entrenamiento y destrúyalo con su cañón automático (slot alto 1)",
+    "tutorial.step.gunnery.hint": "Presione 1 para activar el cañón automático en el slot alto 1, haga clic en la tarjeta de bloqueo del blanco, luego haga clic en el slot 1 para asignar.",
+    "tutorial.step.scanSignature.title": "Rastro de Señal",
+    "tutorial.step.scanSignature.objective": "Abra el mapa del sistema ({mapKey}), apunte al sector sureste de la baliza, y Pulse para resolver la firma de entrenamiento",
+    "tutorial.step.scanSignature.hint": "{mapKey} abre el mapa — active su escáner de prospección en el slot bajo 1 (tecla 4), haga clic cerca de la baliza para apuntar el cono de escaneo, luego presione Escanear en la barra de herramientas",
+    "tutorial.step.flySignature.title": "Aproximación al Datacore",
+    "tutorial.step.flySignature.objective": "Siga el carril guía hasta la firma de entrenamiento resuelta",
+    "tutorial.step.flySignature.hint": "La marca de cruz muestra dónde espera el datacore — vuele por el corredor iluminado para llegar",
+    "tutorial.step.breachSignature.title": "Violación del Datacore",
+    "tutorial.step.breachSignature.objective": "Viole el datacore de entrenamiento ({dockKey} en la marca o desde el panorama)",
+    "tutorial.step.breachSignature.hint": "Acérquese a la marca de la firma y presione {dockKey} para iniciar la secuencia de violación",
+    "tutorial.step.flyGate.title": "Brazo de la Puerta Estelar",
+    "tutorial.step.flyGate.objective": "Siga el carril guía final hasta la puerta estelar de Novus Prime en el borde del sector",
+    "tutorial.step.flyGate.hint": "La puerta estelar se despierta cuando comienza este tramo — vuele el brazo y pase por los portales de impulso.",
+    "tutorial.step.graduation.title": "Graduación en la Puerta Estelar",
+    "tutorial.step.graduation.objective": "Viaje a Novus Prime — vuele a la puerta estelar y presione {dockKey} para saltar",
+    "tutorial.step.graduation.hint": "Entre en el rango de interacción de la puerta estelar y presione {dockKey} para salir. Presione Graduarse una vez que llegue a Novus Prime.",
+    "tutorial.step.hangarHigh.complete": "Objetivo completado — presione Siguiente para volar al rango de minería.",
+    "tutorial.step.hangarTurrets.complete": "Objetivo completado — presione Siguiente para volar a la bahía de artillería.",
+    "tutorial.step.hangarHigh.hangarTabHint": "Haga clic en la pestaña Hangar — el recorrido resaltará cada área a medida que avanza.",
+
+    // ─── tutorial HUD tour ────────────────────────────────────
+    "tutorial.hudTour.vitals.label": "Monitor de Vitalidades",
+    "tutorial.hudTour.vitals.body": "Rastrea los escudos, blindaje del casco, estructura y energía del capacitor de su nave en tiempo real.",
+    "tutorial.hudTour.modules.label": "Slots de Módulos",
+    "tutorial.hudTour.modules.body": "Muestra armas y herramientas equipadas. Use las teclas numéricas para activar y desactivar módulos.",
+    "tutorial.hudTour.lockRail.label": "Barra de Bloqueos",
+    "tutorial.hudTour.lockRail.body": "Muestra bloqueos y progreso de bloqueo. Haga clic en una tarjeta de objetivo, luego en un slot de módulo activado, para asignar ese módulo.",
+    "tutorial.hudTour.overview.label": "Panorama Local",
+    "tutorial.hudTour.overview.body": "Lista contactos cercanos como asteroides, naves, estaciones y puertas estelares. Haga clic en un contacto para solicitar un bloqueo.",
+    "tutorial.hudTour.comms.label": "Registro de Comunicaciones",
+    "tutorial.hudTour.comms.body": "Muestra alertas del sistema y chat. Use la barra de entrada para enviar mensajes a otros pilotos en el sistema.",
+    "tutorial.hudTour.missions.label": "Misiones y Registro",
+    "tutorial.hudTour.missions.body": "Rastrea objetivos, recompensas y progreso del tutorial. Puede saltar el entrenamiento desde la tarjeta del tutorial en cualquier momento.",
+
+    // ─── tutorial gate hints ──────────────────────────────────
+    "tutorial.gateHint.moveCourse": "Haga clic derecho adelante para establecer rumbo — su nave empuja hacia el punto de ruta",
+    "tutorial.gateHint.brakeGate": "{brakeKey} frena — úselo para alinearse con la apertura del portal",
+    "tutorial.gateHint.gateBoost": "Vuele a través de los pilares del portal para un impulso de slingshot",
+    "tutorial.gateHint.gateLane": "Atraviese el centro exacto — los galones marcan el carril",
+    "tutorial.gateHint.gateBoostShort": "Vuele a través de la apertura del portal para un impulso",
+    "tutorial.gateHint.gateSteady": "Mantenga el rumbo — los portales de impulso recompensan pasadas limpias",
+    "tutorial.gateHint.brakeOvershoot": "{brakeKey} para frenar si se pasa de la Academia",
+    "tutorial.gateHint.gateMomentum": "Atraviese el portal — el momentum lo lleva a artillería",
+    "tutorial.gateHint.gateCenter": "Vuele por el centro para el slingshot",
+    "tutorial.gateHint.gatePillars": "Impulso del portal — manténgase entre los pilares",
+    "tutorial.gateHint.gateClean": "Pasada limpia a través de la apertura del portal",
+    "tutorial.gateHint.gateLast": "Último portal de impulso antes de la puerta estelar",
+    "tutorial.gateHint.gateDock": "Vuele a través — luego atrague en la puerta ({dockKey})",
+
+    // ─── tutorial hangar guide ────────────────────────────────
+    "tutorial.hangar.cargo.label": "Carga de la Nave",
+    "tutorial.hangar.cargo.body": "Su bodega de carga completa, compartida con vuelo. Úsela para inspeccionar módulos y equipar o desequipar equipo. El cañón automático y el salvager esperan aquí hasta el cambio de combate.",
+    "tutorial.hangar.activeFitting.label": "Equipo Activo",
+    "tutorial.hangar.activeFitting.body": "Su configuración de entrenamiento actual tiene un láser minero en el slot alto 1, un rayo tractor en el slot alto 2 y un escáner de prospección en el slot bajo 1.",
+    "tutorial.hangar.shipStats.label": "Estadísticas de la Nave",
+    "tutorial.hangar.shipStats.body": "El casco, escudos, red eléctrica y CPU se actualizan aquí. Pase el cursor sobre una acción de equipamiento para previsualizar cambios de estadísticas antes de confirmar.",
+    "tutorial.hangar.trainingMission.label": "Misión de Entrenamiento",
+    "tutorial.hangar.trainingMission.body": "El Entrenamiento de la Academia rastrea su progreso general bajo el minimapa. Cada paso paga créditos y XP de habilidad, con una bonificación de graduación mayor al final.",
+    "tutorial.hangar.undock.label": "Desatracar",
+    "tutorial.hangar.undock.body": "Presione {dockKey} o haga clic en Desatracar cuando esté listo — el rango de minería es el siguiente en el carril del tutorial.",
+    "tutorial.hangar.combatLoadout.label": "Equipo de Combate",
+    "tutorial.hangar.combatLoadout.body": "El cinturón usaba herramientas de minería. Artillería necesita el cañón automático y el salvager de la carga, así que cambie ambos slots altos al equipo de combate.",
+    "tutorial.hangar.unfitMiner.label": "Desequipar Láser Minero",
+    "tutorial.hangar.unfitMiner.body": "Desequipe el láser minero del slot alto 1 usando el control de Desequipar. El módulo regresa a la carga.",
+    "tutorial.hangar.unfitTractor.label": "Desequipar Rayo Tractor",
+    "tutorial.hangar.unfitTractor.body": "Desequipe el rayo tractor del slot alto 2 de la misma manera. Ambos módulos de minería permanecen en la carga si los necesita de nuevo.",
+    "tutorial.hangar.fitAutocannon.label": "Equipar Cañón Automático",
+    "tutorial.hangar.fitAutocannon.body": "Seleccione el Cañón Automático Civil del menú del slot y haga clic en Equipar para instalarlo en el slot alto 1.",
+    "tutorial.hangar.fitSalvager.label": "Equipar Salvager",
+    "tutorial.hangar.fitSalvager.body": "Equipe el Salvager Civil en el slot alto 2. Los salvegadores desmantelan restos — usará armas en la bahía de artillería.",
+    "tutorial.hangar.combatUndock.label": "Desatracar",
+    "tutorial.hangar.combatUndock.body": "Cuando ambos módulos de combate estén equipados, presione {dockKey} o haga clic en Desatracar — el brazo de artillería es el siguiente.",
+
+    // ─── world / sector names ───────────────────────────────────
+    "world.sector.start": "Sector de Entrenamiento S.T.A.R.T",
+    "world.region.flightDeck": "Plataforma de Vuelo",
+    "world.region.miningRange": "Rango de Minería",
+    "world.region.industryBench": "Banco de Industria",
+    "world.region.gunneryBay": "Bahía de Artillería",
+    "world.region.signalTrace": "Rastro de Señal",
+    "world.location.academy": "Academia",
+    "world.location.stargate": "Puerta Estelar",
+    "site.trainingDatacore": "Datacore de Entrenamiento",
 
     // ─── missions ──────────────────────────────────────────────
     "mission.title": "MISIONES",
@@ -1057,5 +1394,70 @@ export const STRINGS: Record<Language, Record<string, string>> = {
 
     // ─── game start ────────────────────────────────────────────
     "game.neuralLink": "Enlace neural iniciado. Entrada al sistema: {sys} (SEC {sec})",
+    "game.neuralRestored": "Enlace neural restaurado. Entrada al sistema: {sys} (SEC {sec})",
+
+    // ─── profile ───────────────────────────────────────────────
+    "profile.title": "ENLACES NEURALES",
+    "profile.subtitle": "SELECCIONAR PERFIL DE PILOTO",
+    "profile.newLink": "NUEVO ENLACE NEURAL",
+    "profile.newHint": "Establecer una nueva identidad de piloto",
+    "profile.confirmDelete": "¿Eliminar permanentemente al piloto \"{name}\"? Esto no se puede deshacer.",
+    "profile.unknownVessel": "Nave Desconocida",
+    "profile.unknownSector": "Sector Desconocido",
+    "profile.level": "NIVEL",
+    "profile.location": "UBICACIÓN",
+    "profile.credits": "CRÉDITOS",
+    "profile.lastPlayed": "ÚLTIMA SESIÓN",
+    "profile.continue": "CONTINUAR",
+    "profile.registryTitle": "REGISTRO DE ENLACES NEURALES",
+    "profile.registrySubtitle": "ESTABLECER NUEVA IDENTIDAD DE PILOTO",
+    "profile.establishLink": "ESTABLECER ENLACE",
+    "profile.delete": "Eliminar perfil",
+    "profile.callsignRegistered": "Señal registrada: {name}",
+
+    // ─── title screen ──────────────────────────────────────────
+    "title.safeExit": "SALIDA SEGURA",
+    "title.exitConfirm": "¿Salir de Novus de forma segura? Cualquier progreso no guardado se perderá.",
+    "title.initializing": "Inicializando interfaz neural",
+    "title.neuralPending": "Enlace neural pendiente",
+
+    // ─── settings extras ───────────────────────────────────────
+    "settings.pressKey": "Presione tecla...",
+
+    // ─── decrypt extras ────────────────────────────────────────
+    "decrypt.moveCloser": "Acérquese a menos de 280m de {name} para establecer un enlace de descifrado estable.",
+
+    // ─── pause extras ──────────────────────────────────────────
+    "pause.saveLoaded": "Partida cargada. Entrada al sistema: {sys} (SEC {sec})",
+
+    // ─── hud extras ────────────────────────────────────────────
+    "hud.wallet": "Cartera: {credits}¢",
+    "hud.processingLabel": "Procesando",
+    "hud.smeltFallback": "Fundir",
+    "hud.hubTitle": "Centro de Procesamiento Industrial",
+    "hud.jumpTo": "[F] Saltar a {name}",
+    "hud.processingHub": "[F] Centro de Procesamiento",
+    "hud.asteroidFallback": "Asteroide {id}",
+
+    // ─── enemy menu ──────────────────────────────────────────────
+    "enemyMenu.hail": "Saludar Nave",
+    "enemyMenu.orbit": "Orbitar",
+    "enemyMenu.keepRange": "Mantener Distancia",
+    "enemyMenu.unlockTarget": "Desbloquear Objetivo",
+    "enemyMenu.lockTarget": "Bloquear Objetivo",
+    "enemyMenu.stop": "Detener",
+
+    // ─── ship extras ───────────────────────────────────────────
+    "ship.allSystems": "Todos los Sistemas",
+    "ship.rack": "Bandeja",
+    "ship.tractorControls": "Controles del Rayo Tractor (Clic para mostrar/ocultar, Desplazar/Arrastrar dial para ajustar)",
+    "ship.damagedAbbr": "DAÑO",
+    "ship.heatAbbr": "C",
+    "ship.target": "OBJETIVO",
+    "ship.wreck": "RESTOS",
+    "ship.unassigned": "SIN ASIGNAR",
+
+    // ─── perf overlay ────────────────────────────────────────────
+    "perf.title": "Rendimiento",
   },
 };

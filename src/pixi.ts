@@ -79,6 +79,7 @@ export async function initPixi(): Promise<Application> {
     // rotation stays smooth.
     roundPixels: true,
     background: "#000000",
+    backgroundAlpha: 0,
     preference: "webgl",
     // Disable auto-ticker so the game loop controls when pixi renders.
     // Call app.render() once per game frame after updating sprite positions.
