@@ -14,7 +14,7 @@
   pointer-events: none;
   opacity: 0;
   z-index: 50;
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 #hud-xp-popup.visible { opacity: 1; transition: opacity 0.2s ease-in; }
@@ -29,7 +29,7 @@
   white-space: nowrap;
 }
 #hud-xp-popup .xp-icon { 
-  font-size: 14px; 
+  font-size: calc(14px * var(--effective-font-scale, 1)); 
   grid-column: 1; 
   grid-row: 1;
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.2));

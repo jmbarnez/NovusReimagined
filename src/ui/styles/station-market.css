@@ -31,7 +31,7 @@
   border-radius: 2px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   letter-spacing: 0.04em;
   text-transform: uppercase;
   transition: all 0.1s;
@@ -56,7 +56,7 @@
   border-radius: 2px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   letter-spacing: 0.05em;
   text-transform: uppercase;
   transition: all 0.1s;
@@ -82,7 +82,7 @@
   border: 1px solid var(--hud-border-soft);
   border-radius: 2px;
   font-family: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   padding: 4px 8px;
 }
 
@@ -98,7 +98,7 @@
   border: 1px solid var(--hud-border-soft);
   border-radius: 2px;
   font-family: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   padding: 4px 8px;
   cursor: pointer;
 }
@@ -133,13 +133,13 @@
 }
 
 .mkt-name {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
   margin-right: 6px;
 }
 
 .mkt-tag {
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -147,19 +147,19 @@
 }
 
 .mkt-bonus {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-positive);
   margin-top: 2px;
 }
 
 .mkt-have {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   text-align: right;
 }
 
 .mkt-rate {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   text-align: right;
 }
@@ -169,7 +169,7 @@
 }
 
 .mkt-btn {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   padding: 3px 8px;
   width: 100%;
 }
@@ -177,12 +177,12 @@
 .mkt-dash {
   display: block;
   text-align: center;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
 }
 
 .mkt-empty {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   padding: 16px 0;
   text-align: center;

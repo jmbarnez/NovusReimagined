@@ -3,6 +3,7 @@
  * Used by Pixi entity labels.
  */
 import { Graphics, Text, TextStyle } from "pixi.js";
+import { Client } from "../state.js";
 import { getUIFont } from "./ui-font.js";
 
 export const WORLD_LABEL_PAD_X = 6;
@@ -28,7 +29,9 @@ export function getWorldLabelTextStyle(): TextStyle {
 }
 
 export function refreshWorldLabelTextStyle(): void {
-  getWorldLabelTextStyle().fontFamily = getUIFont();
+  const style = getWorldLabelTextStyle();
+  style.fontFamily = getUIFont();
+  style.fontSize = 11 * (Client.settings?.fontScale ?? 1.0);
 }
 
 /** Title-case label text; bracketed key hints (e.g. [F]) stay uppercase. */

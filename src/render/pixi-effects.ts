@@ -74,6 +74,13 @@ const _sharedPickupStyle = new TextStyle({
   stroke: { color: "#000000", width: 2.5 },
 });
 
+export function refreshEffectFonts(): void {
+  const font = getUIFont();
+  const scale = Client.settings?.fontScale ?? 1.0;
+  _sharedPickupStyle.fontFamily = font;
+  _sharedPickupStyle.fontSize = 7 * scale;
+}
+
 // Helper to convert hex colors
 function hexStringToNumber(hex: string): number {
   const clean = hex.replace("#", "");

@@ -12,7 +12,7 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
   pointer-events: none;
   font-family: var(--font-family);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   line-height: 1.45;
 }
@@ -24,24 +24,24 @@
   margin-bottom: 4px;
 }
 .hmt-icon {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   color: var(--hud-accent);
 }
 .hmt-title {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-bright);
   letter-spacing: 0.02em;
 }
 .hmt-type {
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--hud-text-faint);
   margin-bottom: 6px;
 }
 .hmt-desc {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
   margin-bottom: 8px;
   line-height: 1.4;
@@ -51,7 +51,7 @@
   margin-bottom: 4px;
   padding-top: 6px;
   border-top: 1px solid var(--hud-border-soft);
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -76,7 +76,7 @@
 }
 .hmt-note {
   margin-top: 6px;
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   color: var(--hud-positive);
   font-style: italic;
 }

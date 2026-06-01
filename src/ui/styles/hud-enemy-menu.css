@@ -6,7 +6,7 @@
   border: 1px solid rgba(50, 70, 90, 0.8);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
   font-family: var(--font-family);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
   min-width: 140px;
   padding: 3px 0;
@@ -43,7 +43,7 @@
 
 #enemy-ctx-menu .ctx-arrow {
   margin-left: 8px;
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   transition: transform 0.1s ease;
 }

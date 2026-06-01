@@ -40,7 +40,7 @@
 }
 
 #st-name {
-  font-size: 13px;
+  font-size: calc(13px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--hud-text-bright);
@@ -50,14 +50,14 @@
 }
 
 #st-meta {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   line-height: 1.4;
 }
 
 #st-sec-badge {
   margin-top: 8px;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   letter-spacing: 0.06em;
   color: var(--hud-text-faint);
 }
@@ -66,7 +66,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
 }
 
 #st-cr {
@@ -96,7 +96,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   letter-spacing: 0.04em;
   text-transform: uppercase;
   transition: all 0.15s ease;
@@ -149,7 +149,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   letter-spacing: 0.06em;
   text-transform: uppercase;
   transition: all 0.15s ease;
@@ -163,7 +163,7 @@
 }
 
 .st-kbd {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   padding: 1px 5px;
   background: color-mix(in srgb, black 40%, transparent);
   border: 1px solid var(--hud-border-soft);
@@ -211,7 +211,7 @@
 
 /* ── Typography & Utilities ── */
 h3 {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -221,7 +221,7 @@ h3 {
 }
 
 h4 {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -237,18 +237,18 @@ h4 {
 }
 
 .lbl {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   min-width: 120px;
 }
 
 .val {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
 }
 
 .stag {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
 }
 
@@ -256,7 +256,7 @@ h4 {
   background: color-mix(in srgb, var(--hud-danger) 15%, var(--hud-bg-deep));
   border: 1px solid color-mix(in srgb, var(--hud-danger) 35%, transparent);
   color: var(--hud-danger);
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   padding: 6px 10px;
   margin-bottom: 10px;
 }
@@ -268,7 +268,7 @@ h4 {
   border: 1px solid var(--hud-border-soft);
   cursor: pointer;
   font-family: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   border-radius: 2px;
   transition: all 0.1s ease;
 }
@@ -329,13 +329,13 @@ h4 {
 }
 
 .nm {
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
   margin-bottom: 4px;
 }
 
 .dc {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   margin-bottom: 6px;
 }

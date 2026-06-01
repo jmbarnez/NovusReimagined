@@ -6,12 +6,12 @@
   padding: 8px;
   pointer-events: auto;
   font-family: var(--font-family);
-  font-size: 7.5px;
+  font-size: calc(7.5px * var(--effective-font-scale, 1));
   color: var(--hud-text-main, var(--hud-text-main));
   overflow-y: auto;
 }
 .hm-header {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.12em;
   color: #5a7088;
@@ -21,7 +21,7 @@
 
 
 .hm-empty {
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim, var(--hud-text-dim));
   text-align: center;
   line-height: 1.5;
@@ -41,7 +41,7 @@
   background: rgba(0,10,5,0.92);
 }
 .hm-title {
-  font-size: 7.5px;
+  font-size: calc(7.5px * var(--effective-font-scale, 1));
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -57,7 +57,7 @@
   gap: 3px;
 }
 .hm-prog {
-  font-size: 6.5px;
+  font-size: calc(6.5px * var(--effective-font-scale, 1));
   color: #4a90b8;
   letter-spacing: 0;
   flex: 1;
@@ -66,14 +66,14 @@
   white-space: nowrap;
 }
 .hm-done {
-  font-size: 6.5px;
+  font-size: calc(6.5px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-positive);
   letter-spacing: 0.08em;
   animation: hm-pulse 1.4s ease-in-out infinite;
 }
 .hm-reward {
-  font-size: 6.5px;
+  font-size: calc(6.5px * var(--effective-font-scale, 1));
   color: #c8a855;
   white-space: nowrap;
   flex-shrink: 0;

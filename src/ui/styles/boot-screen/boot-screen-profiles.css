@@ -19,7 +19,7 @@
 
 .profile-title {
   color: var(--hud-text-bright);
-  font-size: 16px;
+  font-size: calc(16px * var(--effective-font-scale, 1));
   font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -28,7 +28,7 @@
 .profile-sub {
   margin-top: 4px;
   color: var(--hud-text-dim);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -79,7 +79,7 @@
   border-radius: 50%;
   background: color-mix(in srgb, var(--hud-accent) 18%, var(--hud-bg-elevated));
   color: var(--hud-text-bright);
-  font-size: 14px;
+  font-size: calc(14px * var(--effective-font-scale, 1));
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -93,7 +93,7 @@
 
 .profile-name {
   color: var(--hud-text-bright);
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -104,7 +104,7 @@
 
 .profile-ship {
   color: var(--hud-text-dim);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   letter-spacing: 0.06em;
 }
 
@@ -123,14 +123,14 @@
 
 .profile-stat-lbl {
   color: var(--hud-text-dim);
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .profile-stat-val {
   color: var(--hud-text-main);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   letter-spacing: 0.04em;
   white-space: nowrap;
   overflow: hidden;
@@ -160,7 +160,7 @@
   background: color-mix(in srgb, var(--hud-shield) 8%, var(--hud-bg-elevated));
   color: var(--hud-text-bright);
   font-family: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -186,7 +186,7 @@
   background: color-mix(in srgb, var(--hud-danger) 8%, var(--hud-bg-elevated));
   color: color-mix(in srgb, var(--hud-danger) 80%, var(--hud-text-dim) 20%);
   font-family: inherit;
-  font-size: 16px;
+  font-size: calc(16px * var(--effective-font-scale, 1));
   line-height: 1;
   cursor: pointer;
   border-radius: 4px;
@@ -217,7 +217,7 @@
 }
 
 .profile-new-icon {
-  font-size: 28px;
+  font-size: calc(28px * var(--effective-font-scale, 1));
   font-weight: 300;
   color: var(--hud-accent);
   line-height: 1;
@@ -225,7 +225,7 @@
 
 .profile-new-label {
   color: var(--hud-text-bright);
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -233,7 +233,7 @@
 
 .profile-new-hint {
   color: var(--hud-text-dim);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   letter-spacing: 0.06em;
 }
 
@@ -269,7 +269,7 @@
 
 .profile-field label {
   color: var(--hud-text-dim);
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -278,7 +278,7 @@
 .profile-input {
   width: 100%;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: calc(14px * var(--effective-font-scale, 1));
   font-family: inherit;
   letter-spacing: 0.08em;
   color: var(--hud-text-bright);
@@ -295,13 +295,13 @@
 
 .profile-readonly {
   padding: 10px 0;
-  font-size: 13px;
+  font-size: calc(13px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
 }
 
 .profile-error {
   min-height: 16px;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-danger);
 }
 

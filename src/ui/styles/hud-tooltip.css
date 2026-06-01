@@ -10,7 +10,7 @@
   box-shadow: 0 8px 32px rgba(0,0,0,0.75);
   padding: 12px 14px;
   font-family: var(--font-family);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: #8899aa;
   line-height: 1.55;
   pointer-events: none;
@@ -23,19 +23,19 @@
   margin-bottom: 2px;
 }
 .tt-rarity {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .tt-name {
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: #ddeeff;
   letter-spacing: 0.02em;
 }
 .tt-rack-label {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: #556677;
   margin-bottom: 8px;
   letter-spacing: 0.04em;
@@ -46,7 +46,7 @@
   border-top: 1px solid rgba(50,70,90,0.3);
 }
 .tt-section-title {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: #6688aa;
   letter-spacing: 0.08em;
@@ -61,20 +61,20 @@
 }
 .tt-label {
   color: #556677;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
 }
 .tt-val {
   color: #aabbcc;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   text-align: right;
 }
 .tt-bonuses {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: #66aacc;
   line-height: 1.6;
 }
 .tt-affixes {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   line-height: 1.7;
 }
 .tt-affix-pos {
@@ -89,7 +89,7 @@
 }
 .tt-dur-pct {
   font-weight: 700;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
 }
 .tt-dur-bar {
   width: 100%;
@@ -107,7 +107,7 @@
   margin-top: 10px;
   padding-top: 8px;
   border-top: 1px solid rgba(50,70,90,0.25);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: #445566;
   font-style: italic;
   line-height: 1.5;

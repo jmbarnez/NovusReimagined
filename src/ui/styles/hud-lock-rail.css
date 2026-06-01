@@ -233,7 +233,7 @@
 
 .lock-card .lc-name {
   font-family: var(--font-family);
-  font-size: 8.5px;
+  font-size: calc(8.5px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-bright);
   white-space: nowrap;
@@ -247,7 +247,7 @@
 
 .lock-card .lc-level {
   font-family: var(--font-family);
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 900;
   color: var(--lc-theme);
   background: rgba(0, 0, 0, 0.5);
@@ -263,7 +263,7 @@
 
 /* Targeting indicator in header */
 .lock-card .lc-target {
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
   line-height: 1;
   pointer-events: none;
@@ -295,7 +295,7 @@
 
 .lock-card .lc-metric {
   font-family: var(--font-family);
-  font-size: 7.5px;
+  font-size: calc(7.5px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   white-space: nowrap;
   line-height: 1.1;
@@ -308,7 +308,7 @@
 /* ── Meta label ── */
 .lock-card .lc-meta {
   font-family: var(--font-family);
-  font-size: 7.5px;
+  font-size: calc(7.5px * var(--effective-font-scale, 1));
   font-weight: 900;
   color: var(--lc-theme);
   padding: 4px 8px;
@@ -326,7 +326,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-family);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 900;
   color: var(--lc-theme);
   letter-spacing: 2px;
@@ -356,7 +356,7 @@
   border: 1px solid var(--lc-border);
   border-radius: 50%; /* Modern circular minimalist close */
   font-family: var(--font-family);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-dim);
   cursor: pointer;
@@ -392,7 +392,7 @@
   background: var(--hud-border-accent);
   color: var(--hud-bg-deep);
   font-family: var(--font-family);
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 900;
   border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -448,7 +448,7 @@
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   font-family: var(--font-family);
-  font-size: 5px;
+  font-size: calc(5px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: rgba(255, 255, 255, 0.95);
   display: flex;

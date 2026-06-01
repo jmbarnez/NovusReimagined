@@ -1,4 +1,5 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Client } from "../state.js";
 import { effectLayer, worldContainer } from "../pixi.js";
 import { getState } from "../state-access.js";
 import type { System, Station, Gate } from "../types/world.js";
@@ -101,6 +102,19 @@ function ensureGateText(id: string, text: string, x: number, y: number, fill: st
   t.position.set(x, y);
   t.alpha = 1;
   return t;
+}
+
+export function refreshStationOverlayFonts(): void {
+  const font = getUIFont();
+  const scale = Client.settings?.fontScale ?? 1.0;
+  for (const t of stationLabels.values()) {
+    t.style.fontFamily = font;
+    t.style.fontSize = 10 * scale;
+  }
+  for (const t of gateLabels.values()) {
+    t.style.fontFamily = font;
+    t.style.fontSize = 11 * scale;
+  }
 }
 
 function drawStationOverlay(g: Graphics, st: Station, sysSecurity: number, now: number) {

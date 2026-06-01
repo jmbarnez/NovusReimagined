@@ -84,7 +84,7 @@ input, button, select, textarea, table, th, td {
 }
 
 .hud-dock-title {
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   letter-spacing: 0.08em;
   color: var(--hud-text-dim);
   text-transform: uppercase;

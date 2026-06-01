@@ -46,6 +46,15 @@ const _typingStyle = new TextStyle({
   stroke: { color: "#000000", width: 3 },
 });
 
+export function refreshChatBubbleFonts(): void {
+  const font = getUIFont();
+  const scale = Client.settings?.fontScale ?? 1.0;
+  _bubbleStyle.fontFamily = font;
+  _bubbleStyle.fontSize = 10 * scale;
+  _typingStyle.fontFamily = font;
+  _typingStyle.fontSize = 11 * scale;
+}
+
 function ensureBubbleLayer(): Container | null {
   const root = effectLayer ?? worldContainer ?? screenContainer;
   if (!root) return null;

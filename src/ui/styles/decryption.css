@@ -4,7 +4,7 @@
   gap: 12px;
   min-width: 620px;
   color: var(--hud-text-main);
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
 }
 
 .decrypt-top,
@@ -22,7 +22,7 @@
 
 .decrypt-title {
   color: var(--hud-text-bright);
-  font-size: 13px;
+  font-size: calc(13px * var(--effective-font-scale, 1));
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -34,7 +34,7 @@
   color: var(--hud-text-dim);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
 }
 
 .decrypt-payload {
@@ -121,7 +121,7 @@
 .decrypt-node-label {
   font-family: "Share Tech Mono", monospace;
   letter-spacing: 0.12em;
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
 }
 
 .decrypt-side {
@@ -150,7 +150,7 @@
 
 .decrypt-readout b {
   color: var(--hud-text-bright);
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
 }
 
 .decrypt-meter {

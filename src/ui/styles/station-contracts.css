@@ -26,7 +26,7 @@
 }
 
 .ct-mini-icon {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: color-mix(in srgb, var(--hud-shield) 80%, white);
 }
 
@@ -35,7 +35,7 @@
 }
 
 .ct-mini-title {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-weight: 600;
   color: var(--hud-text-bright);
   white-space: nowrap;
@@ -48,13 +48,13 @@
 }
 
 .ct-mini-progress {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   letter-spacing: 1px;
 }
 
 .ct-mini-empty {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   font-style: italic;
   padding: 4px 0;
@@ -73,7 +73,7 @@
 }
 
 .ct-section-head {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--hud-text-dim);
@@ -87,7 +87,7 @@
 }
 .ct-cap {
   color: var(--hud-text-faint);
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 400;
 }
 
@@ -110,13 +110,13 @@
   gap: 6px;
 }
 .ct-icon {
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   flex-shrink: 0;
   color: color-mix(in srgb, var(--hud-shield) 80%, white);
 }
 .ct-card.ct-done .ct-icon { color: var(--hud-positive); }
 .ct-title {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-bright);
   flex: 1;
@@ -126,14 +126,14 @@
 }
 .ct-card.ct-done .ct-title { color: color-mix(in srgb, var(--hud-positive) 85%, white); }
 .ct-reward {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-accent);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .ct-desc {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   line-height: 1.4;
 }
@@ -144,7 +144,7 @@
   gap: 6px;
 }
 .ct-bar {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   letter-spacing: 0;
   flex: 1;
@@ -154,7 +154,7 @@
 }
 .ct-card.ct-done .ct-bar { color: var(--hud-positive); }
 .ct-count {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   white-space: nowrap;
 }
@@ -165,7 +165,7 @@
   gap: 6px;
 }
 .ct-complete-note {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-positive);
   opacity: 0.7;
 }
@@ -177,7 +177,7 @@
   border: 1px solid var(--hud-border-soft);
   cursor: pointer;
   font-family: inherit;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   border-radius: 2px;
   transition: all 0.1s ease;
 }
@@ -198,7 +198,7 @@
 .st-btn-sm.ct-abandon:hover { color: var(--hud-danger); border-color: color-mix(in srgb, var(--hud-danger) 40%, transparent); }
 
 .ct-empty {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   padding: 8px 0;
   text-align: center;

@@ -2,6 +2,8 @@
   display: none;
   position: fixed;
   inset: 0;
+  width: calc(100vw / var(--ui-scale));
+  height: calc(100vh / var(--ui-scale));
   z-index: 550;
   font-family: var(--font-family);
   align-items: center;
@@ -9,6 +11,8 @@
   background: color-mix(in srgb, var(--hud-bg-deep) 55%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  transform: scale(var(--ui-scale));
+  transform-origin: top left;
 }
 
 .pause-panel {
@@ -28,7 +32,7 @@
 
 .pause-title {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: calc(14px * var(--effective-font-scale, 1));
   font-weight: 800;
   letter-spacing: 0.35em;
   color: var(--hud-text-bright);
@@ -40,7 +44,7 @@
   color: var(--hud-text-main);
   border: 1px solid var(--hud-border-soft);
   font-family: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   font-weight: 600;
   letter-spacing: 0.2em;
   cursor: pointer;

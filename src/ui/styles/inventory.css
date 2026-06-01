@@ -12,7 +12,7 @@
   background: transparent;
   color: var(--hud-text-dim);
   cursor: pointer;
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -34,7 +34,7 @@
   border: 1px solid var(--hud-border);
   color: var(--hud-text-main);
   padding: 3px 8px;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-family: inherit;
   cursor: pointer;
   border-radius: 2px;
@@ -76,7 +76,7 @@
   padding: 4px 8px;
   border-bottom: 1px solid var(--hud-border-soft);
   color: var(--hud-text-main);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-family: var(--font-family), inherit;
 }
 .inv-item-row:hover {
@@ -107,14 +107,14 @@
   gap: 1px;
 }
 .inv-item-name {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .inv-item-sub {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -124,7 +124,7 @@
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
   color: var(--hud-text-dim);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   min-width: 32px;
   text-align: right;
 }
@@ -185,7 +185,7 @@
   height: 48px;
 }
 .inv-grid-qty {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-variant-numeric: tabular-nums;
   color: var(--hud-text-bright);
   background: color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);
@@ -203,7 +203,7 @@
 /* ─── Info Panel (HUD Window) ─── */
 .inv-info-content {
   padding: 8px;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
   font-family: var(--font-family), inherit;
 }
@@ -227,14 +227,14 @@
   min-width: 0;
 }
 .inv-info-name {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .inv-info-sub {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
 }
 .inv-info-body {
@@ -254,17 +254,17 @@
 }
 .inv-info-k {
   color: var(--hud-text-dim);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
 }
 .inv-info-v {
   color: var(--hud-text-bright);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
 }
 .inv-info-muted {
   color: var(--hud-text-faint);
 }
 .inv-info-section-title {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -284,7 +284,7 @@
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
 }
 .inv-info-rec-name {
   color: var(--hud-text-bright);
@@ -293,13 +293,13 @@
   color: var(--hud-text-dim);
 }
 .inv-info-desc {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   line-height: 1.4;
   margin: 0;
 }
 .inv-info-bonuses {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-accent);
 }
 .inv-info-dur {
@@ -315,11 +315,11 @@
   border-radius: 2px;
 }
 .inv-info-affixes {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-bright);
 }
 .inv-info-p {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   margin: 0;
 }
@@ -338,12 +338,12 @@
   font-family: var(--font-family), inherit;
 }
 .inv-hover-tip-name {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-weight: 600;
   margin-bottom: 2px;
 }
 .inv-hover-tip-sub {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
 }
 
@@ -357,7 +357,7 @@
   border: 1px solid var(--hud-border);
   padding: 4px 10px;
   border-radius: 2px;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-accent);
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
   pointer-events: none;

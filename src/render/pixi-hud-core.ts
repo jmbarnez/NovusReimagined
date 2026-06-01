@@ -118,6 +118,15 @@ export function initPixiHUD(): void {
   hudContainer.addChild(targetLabel);
 }
 
+export function refreshHudFonts(): void {
+  const font = getUIFont();
+  const scale = Client.settings?.fontScale ?? 1.0;
+  if (speedStyle) { speedStyle.fontFamily = font; speedStyle.fontSize = 8 * scale; }
+  if (shieldStyle) { shieldStyle.fontFamily = font; shieldStyle.fontSize = 8 * scale; }
+  if (warningStyle) { warningStyle.fontFamily = font; warningStyle.fontSize = 9 * scale; }
+  if (targetStyle) { targetStyle.fontFamily = font; targetStyle.fontSize = 9 * scale; }
+}
+
 export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
   if (!hudContainer) return;
 

@@ -6,6 +6,7 @@
  * the playable world, mimicking the pre-migration on-screen overlay.
  */
 import { Container, Graphics, Text } from "pixi.js";
+import { Client } from "../state.js";
 import { screenContainer } from "../pixi.js";
 import { getState } from "../state-access.js";
 import { TAU } from "../constants.js";
@@ -82,6 +83,13 @@ function ensureLayer(): Container | null {
     warpLayer.addChild(t);
   }
   return warpLayer;
+}
+
+export function refreshWarpScreenFonts(): void {
+  const scale = Client.settings?.fontScale ?? 1.0;
+  if (titleText) { titleText.style.fontFamily = getUIFont(); titleText.style.fontSize = 10 * scale; }
+  if (destText) { destText.style.fontFamily = getUIFont(); destText.style.fontSize = 24 * scale; }
+  if (secText) { secText.style.fontFamily = getUIFont(); secText.style.fontSize = 10 * scale; }
 }
 
 export function syncPixiWarpScreen(now: number): void {

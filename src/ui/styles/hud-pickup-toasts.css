@@ -22,7 +22,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
   pointer-events: none;
   font-family: var(--font-family);
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   color: var(--hud-text-bright);
   white-space: nowrap;
   animation: slideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;

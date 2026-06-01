@@ -60,6 +60,12 @@ export function initPixiTargetArrows(): void {
   }
 }
 
+export function refreshTargetArrowFonts(): void {
+  const font = getUIFont();
+  const scale = Client.settings?.fontScale ?? 1.0;
+  if (labelStyle) { labelStyle.fontFamily = font; labelStyle.fontSize = 8 * scale; }
+}
+
 function getArrow(): Graphics {
   const arrow = arrowPool[poolIndex];
   arrow.clear();
@@ -302,9 +308,4 @@ export function destroyPixiTargetArrows(): void {
   screenContainer?.removeChild(arrowsContainer);
   arrowsContainer.destroy();
   arrowsContainer = null;
-}
-
-export function refreshTargetArrowFonts(): void {
-  const font = getUIFont();
-  if (labelStyle) labelStyle.fontFamily = font;
 }

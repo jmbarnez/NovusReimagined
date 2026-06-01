@@ -234,9 +234,13 @@ function getLevelColor(level: number): number {
 /** Re-apply the active UI font to all live enemy name/level labels. */
 export function refreshEntityFonts() {
   const font = getUIFont();
+  const scale = Client.settings?.fontScale ?? 1.0;
   _nameStyle.fontFamily = font;
+  _nameStyle.fontSize = 9 * scale;
   _levelStyle.fontFamily = font;
+  _levelStyle.fontSize = 9 * scale;
   _speechStyle.fontFamily = font;
+  _speechStyle.fontSize = 10 * scale;
 }
 
 // ─── Per-enemy sprite bundle ──────────────────────────────────────────────────

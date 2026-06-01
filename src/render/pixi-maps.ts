@@ -66,13 +66,16 @@ function rgbaToHex(color: string): number {
 
 // Text styles - created fresh each time to avoid null issues
 function createNameStyle(): TextStyle {
-  return new TextStyle({ fontFamily: getUIFont(), fontSize: 9, fill: "#ffffff", align: "center" });
+  const scale = Client.settings?.fontScale ?? 1.0;
+  return new TextStyle({ fontFamily: getUIFont(), fontSize: 9 * scale, fill: "#ffffff", align: "center" });
 }
 function createSmallStyle(): TextStyle {
-  return new TextStyle({ fontFamily: getUIFont(), fontSize: 8, fill: "#6688aa", align: "center" });
+  const scale = Client.settings?.fontScale ?? 1.0;
+  return new TextStyle({ fontFamily: getUIFont(), fontSize: 8 * scale, fill: "#6688aa", align: "center" });
 }
 function createBoldStyle(): TextStyle {
-  return new TextStyle({ fontFamily: getUIFont(), fontSize: 10, fontWeight: "bold", fill: "#ffffff", align: "center" });
+  const scale = Client.settings?.fontScale ?? 1.0;
+  return new TextStyle({ fontFamily: getUIFont(), fontSize: 10 * scale, fontWeight: "bold", fill: "#ffffff", align: "center" });
 }
 
 // Cached state

@@ -11,7 +11,7 @@
   gap: 2px;
 }
 .hud-bar-label {
-  font-size: 6px; font-weight: 700;
+  font-size: calc(6px * var(--effective-font-scale, 1)); font-weight: 700;
   color: var(--hud-text-dim);
   min-width: 20px;
 }
@@ -69,7 +69,7 @@
 /* ── Telemetry ── */
 #hud-telem {
   padding: 0 8px;
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -79,7 +79,7 @@
 
 /* ── Speed Indicator ── */
 #hud-speed {
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-dim);
   letter-spacing: 0.05em;
@@ -87,7 +87,7 @@
 }
 .hud-bar-label.speed-label {
   min-width: 0;
-  font-size: 6.5px;
+  font-size: calc(6.5px * var(--effective-font-scale, 1));
 }
 .hud-bar-fill.speed { background: linear-gradient(180deg, #99bbff, #4466aa); }
 .hud-bar-fill.speed.overdrive { background: linear-gradient(180deg, #00ffff, #0088aa); box-shadow: 0 0 6px rgba(0,255,255,0.5); }
@@ -95,7 +95,7 @@
 /* ── Stats Row ── */
 #hud-stats-row {
   padding: 0 8px;
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   white-space: nowrap;
   overflow: hidden;

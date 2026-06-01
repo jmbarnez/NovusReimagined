@@ -31,7 +31,7 @@
 
 #hud-overview-panel .ov-table th {
   background: color-mix(in srgb, var(--hud-bg-window) 65%, transparent);
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   padding: 4px 6px;
   font-family: var(--font-family), inherit;
   text-align: left;
@@ -55,7 +55,7 @@
 
 #hud-overview-panel .ov-table td {
   padding: 3px 6px;
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-family: var(--font-family), inherit;
   white-space: nowrap;
   overflow: hidden;
@@ -145,7 +145,7 @@
 /* ── Overview Interaction Elements ── */
 #hud-overview-panel .ov-lock {
   padding: 1px 3px;
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   font-weight: 700;
   font-family: var(--font-family), inherit;
   background: var(--hud-bg-elevated);

@@ -14,7 +14,7 @@
 }
 
 .ind-machine-header {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--hud-accent);
@@ -37,7 +37,7 @@
 }
 
 .ind-recipe-name {
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
   margin-bottom: 6px;
 }
@@ -52,11 +52,11 @@
 
 .io-arrow {
   color: var(--hud-text-faint);
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
 }
 
 .io-pill {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   padding: 2px 6px;
   border-radius: 3px;
   display: inline-flex;
@@ -80,7 +80,7 @@
 }
 
 .ind-bp-warn {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-danger);
   margin-bottom: 6px;
 }
@@ -129,7 +129,7 @@
   border-radius: 3px;
   color: var(--hud-text-dim);
   font-family: var(--font-family);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -160,7 +160,7 @@
   border-radius: 3px;
   color: var(--hud-text-main);
   font-family: var(--font-family);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   outline: none;
 }
 
@@ -175,7 +175,7 @@
   border-radius: 3px;
   color: var(--hud-text-main);
   font-family: var(--font-family);
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   outline: none;
   cursor: pointer;
 }
@@ -220,7 +220,7 @@
 }
 
 .ind-item-label {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
   flex: 1;
 }
@@ -238,7 +238,7 @@
   padding: 20px 10px;
   text-align: center;
   color: var(--hud-text-faint);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-style: italic;
 }
 
@@ -263,7 +263,7 @@
   padding: 10px 12px;
   border-bottom: 1px solid var(--hud-border-soft);
   background: color-mix(in srgb, var(--hud-bg-deep) 15%, transparent);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-dim);
   text-transform: uppercase;
@@ -274,7 +274,7 @@
 }
 
 .ind-queue-count {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   font-weight: 400;
 }
@@ -292,12 +292,12 @@
   align-items: center;
   justify-content: center;
   color: var(--hud-text-faint);
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   gap: 8px;
 }
 
 .ind-queue-empty-icon {
-  font-size: 28px;
+  font-size: calc(28px * var(--effective-font-scale, 1));
   opacity: 0.15;
 }
 
@@ -324,7 +324,7 @@
 
 .ind-queue-job-name {
   flex: 1;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-bright);
   font-weight: 600;
 }
@@ -339,7 +339,7 @@
   border: 1px solid color-mix(in srgb, var(--hud-danger) 30%, transparent);
   border-radius: 3px;
   color: var(--hud-danger);
-  font-size: 14px;
+  font-size: calc(14px * var(--effective-font-scale, 1));
   cursor: pointer;
   line-height: 1;
   transition: all 0.1s ease;
@@ -370,7 +370,7 @@
 .ind-queue-job-footer {
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
 }
 
 .ind-queue-pct {
@@ -390,12 +390,12 @@
   height: 100%;
   color: var(--hud-text-faint);
   font-style: italic;
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   gap: 12px;
 }
 
 .ind-empty-icon {
-  font-size: 40px;
+  font-size: calc(40px * var(--effective-font-scale, 1));
   opacity: 0.08;
 }
 
@@ -411,7 +411,7 @@
 }
 
 .ind-details-title {
-  font-size: 16px;
+  font-size: calc(16px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-bright);
   text-transform: uppercase;
@@ -419,7 +419,7 @@
 }
 
 .ind-details-subtitle {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   margin-top: 4px;
 }
@@ -429,7 +429,7 @@
 }
 
 .ind-section-title {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--hud-text-faint);
@@ -457,7 +457,7 @@
   background: color-mix(in srgb, var(--hud-bg-elevated) 60%, transparent);
   border: 1px solid var(--hud-border-soft);
   border-radius: 3px;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   display: flex;
   align-items: center;
   gap: 5px;
@@ -475,7 +475,7 @@
 
 .io-pill em {
   font-style: normal;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
 }
 
@@ -485,7 +485,7 @@
 }
 
 .ind-skill-bonus {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-shield);
   margin-top: 8px;
   font-style: italic;
@@ -510,7 +510,7 @@
   border-radius: 4px;
   color: var(--hud-text-bright);
   font-family: var(--font-family);
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   font-weight: 700;
   outline: none;
   cursor: pointer;
@@ -521,7 +521,7 @@
   flex: 1;
   height: 36px;
   font-family: var(--font-family);
-  font-size: 12px;
+  font-size: calc(12px * var(--effective-font-scale, 1));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -550,7 +550,7 @@
 
 .ind-time-estimate {
   margin-top: 6px;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   text-align: center;
 }

@@ -3,7 +3,7 @@
   position: fixed;
   top: 106px; right: 5px; left: auto;
   width: 130px;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   font-family: var(--font-family);
   color: var(--hud-text-main);
@@ -18,7 +18,7 @@
   position: fixed;
   top: 119px; right: 5px; left: auto;
   width: 130px;
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
   font-family: var(--font-family);
   text-align: right;

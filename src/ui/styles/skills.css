@@ -16,7 +16,7 @@
 }
 
 .sk-total {
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   letter-spacing: 0.04em;
   flex: 1;
@@ -37,7 +37,7 @@
 }
 
 .sk-cat-head {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -78,7 +78,7 @@
 }
 
 .sk-icon {
-  font-size: 20px;
+  font-size: calc(20px * var(--effective-font-scale, 1));
   line-height: 1;
   margin-bottom: 3px;
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
@@ -93,7 +93,7 @@
 }
 
 .sk-name {
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   text-align: center;
   letter-spacing: 0.02em;
@@ -109,7 +109,7 @@
   position: absolute;
   top: 3px;
   right: 5px;
-  font-size: 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--sk-color, var(--hud-text-dim));
   line-height: 1;
@@ -137,7 +137,7 @@
 }
 
 .sk-pct {
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   letter-spacing: 0.04em;
 }
@@ -165,7 +165,7 @@
 }
 
 .skd-icon {
-  font-size: 30px;
+  font-size: calc(30px * var(--effective-font-scale, 1));
   line-height: 1;
   flex-shrink: 0;
   margin-right: 10px;
@@ -178,7 +178,7 @@
 }
 
 .skd-name {
-  font-size: 11px;
+  font-size: calc(11px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.04em;
   margin-bottom: 2px;
@@ -186,7 +186,7 @@
 }
 
 .skd-desc {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   margin-bottom: 6px;
   line-height: 1.35;
@@ -196,7 +196,7 @@
 .skd-lvl-row {
   display: flex;
   gap: 6px;
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   margin-bottom: 2px;
 }
@@ -222,7 +222,7 @@
 }
 
 .skd-pct {
-  font-size: 9px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
   margin-bottom: 6px;
 }

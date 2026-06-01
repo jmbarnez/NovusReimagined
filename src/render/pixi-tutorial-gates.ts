@@ -1,4 +1,5 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import { effectLayer } from "../pixi.js";
 import { isVisible } from "../utils/game.js";
@@ -45,6 +46,13 @@ const _hintStyle = new TextStyle({
   align: "center",
   stroke: { color: "#000000", width: 3 },
 });
+
+export function refreshTutorialGateFonts(): void {
+  const font = getUIFont();
+  const scale = Client.settings?.fontScale ?? 1.0;
+  _hintStyle.fontFamily = font;
+  _hintStyle.fontSize = 10 * scale;
+}
 
 function drawOctPlatform(
   gfx: Graphics,

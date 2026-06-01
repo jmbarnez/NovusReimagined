@@ -28,7 +28,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 6px 8px;
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   line-height: 12px;
   font-family: var(--font-family);
   background: transparent;
@@ -66,7 +66,7 @@
 
 .hud-log-chat-prefix {
   flex: 0 0 auto;
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-accent);
 }
@@ -78,7 +78,7 @@
   box-sizing: border-box;
   padding: 2px 5px;
   font-family: var(--font-family);
-  font-size: 8px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
   color: var(--hud-text-bright);
   background: color-mix(in srgb, var(--hud-bg-deep) 70%, transparent);
   border: 1px solid color-mix(in srgb, var(--hud-border-soft) 75%, transparent);
@@ -100,7 +100,7 @@
   height: 17px;
   padding: 0 7px;
   font-family: var(--font-family);
-  font-size: 7px;
+  font-size: calc(7px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: color-mix(in srgb, var(--hud-text-bright) 88%, #050607 12%);
   background: linear-gradient(180deg,

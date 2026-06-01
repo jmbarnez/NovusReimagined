@@ -12,6 +12,14 @@ import { listeningFor, setListeningFor } from "./state.js";
 import { refreshEntityFonts } from "../../render/pixi-entities.js";
 import { refreshCelestialFonts } from "../../render/pixi-celestial.js";
 import { refreshWorldLabelTextStyle } from "../../render/world-label-card.js";
+import { refreshHudFonts } from "../../render/pixi-hud-core.js";
+import { refreshChatBubbleFonts } from "../../render/pixi-chat-bubbles.js";
+import { refreshStationOverlayFonts } from "../../render/pixi-station-overlays.js";
+import { refreshEffectFonts } from "../../render/pixi-effects.js";
+import { refreshTargetArrowFonts } from "../../render/pixi-target-arrows.js";
+import { refreshTutorialGateFonts } from "../../render/pixi-tutorial-gates.js";
+import { refreshWarpScreenFonts } from "../../render/pixi-warp-screen.js";
+import { refreshEffectsOverlayFonts } from "../../render/pixi-effects-overlay.js";
 
 export function renderSettings() {
   const settings = Client.settings;
@@ -120,6 +128,14 @@ export function renderSettings() {
         refreshWorldLabelTextStyle();
         refreshEntityFonts();
         refreshCelestialFonts();
+        refreshHudFonts();
+        refreshChatBubbleFonts();
+        refreshStationOverlayFonts();
+        refreshEffectFonts();
+        refreshTargetArrowFonts();
+        refreshTutorialGateFonts();
+        refreshWarpScreenFonts();
+        refreshEffectsOverlayFonts();
         renderSettings();
       });
     });
