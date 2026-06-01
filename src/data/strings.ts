@@ -34,7 +34,6 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "settings.colorGrading": "Color Grading",
     "settings.mipmapping": "Mipmapping",
     "settings.lensFlare": "Lens Flare",
-    "settings.smoothing": "Smoothing",
     "settings.theme": "Theme",
     "settings.font": "Font",
     "settings.reticle": "Reticle",
@@ -58,7 +57,6 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "settings.tip.colorGrading": "Per-system colour tint that shifts warm/cool based on star class. Applies a PixiJS ColorMatrixFilter.",
     "settings.tip.mipmapping": "Smooths textures when zoomed out to prevent edge shimmering, at the cost of some sharpness.",
     "settings.tip.lensFlare": "Cinematic anamorphic streak and ghost circles anchored to the system star.",
-    "settings.tip.smoothing": "Lerp factor for camera follow. Lower = more lag and smoothness. Higher = snappier tracking. No rendering cost.",
     "settings.tip.uiScale": "Scales the size and font-size of all user interface overlays.",
 
     // ─── pause ─────────────────────────────────────────────────
@@ -784,7 +782,6 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "settings.colorGrading": "Gradación de Color",
     "settings.mipmapping": "Mipmapping",
     "settings.lensFlare": "Destello de Lente",
-    "settings.smoothing": "Suavizado",
     "settings.theme": "Tema",
     "settings.font": "Fuente",
     "settings.reticle": "Retícula",
@@ -808,7 +805,6 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "settings.tip.colorGrading": "Tinte de color por sistema que cambia a cálido/frío según la clase estelar. Aplica un ColorMatrixFilter de PixiJS.",
     "settings.tip.mipmapping": "Suaviza las texturas al alejar el zoom para evitar parpadeos en los bordes, a costa de algo de nitidez.",
     "settings.tip.lensFlare": "Rastro anamórfico cinematográfico y círculos fantasma anclados a la estrella del sistema.",
-    "settings.tip.smoothing": "Factor de interpolación para el seguimiento de la cámara. Menor = más retraso y suavidad. Mayor = seguimiento más rápido. Sin costo de renderizado.",
     "settings.tip.uiScale": "Escala el tamaño y tamaño de fuente de todas las superposiciones de la interfaz de usuario.",
 
     // ─── pause ─────────────────────────────────────────────────

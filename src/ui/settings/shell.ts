@@ -93,13 +93,6 @@ export function settingsContentHTML(): string {
           <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="${t("settings.tip.lensFlare")}">ⓘ</span>
         </div>
 
-        <h3 class="accent-camera">Camera</h3>
-        <div class="settings-row">
-          <label>${t("settings.smoothing")}</label>
-          <input type="range" id="camera-smoothing" min="0.02" max="0.20" step="0.01" value="0.08">
-          <span id="camera-smoothing-val" class="settings-val">0.08</span>
-          <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="${t("settings.tip.smoothing")}">ⓘ</span>
-        </div>
         </div>
         <div class="settings-tab-panel" data-tab-panel="interface">
         <h3 class="accent-theme">${t("settings.theme")}</h3>

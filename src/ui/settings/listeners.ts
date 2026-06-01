@@ -3,7 +3,7 @@ import { saveSettings } from "../../data/settings.js";
 import { sfxBlip, sfxConfirm, setSfxVolume } from "../../audio/procedural.js";
 import { setMusicVolume } from "../../audio/music.js";
 import { resize } from "../../canvas.js";
-import { resizePixi } from "../../pixi.js";
+import { resizePixi, syncColorGrading } from "../../pixi.js";
 import { refreshTheme } from "../hud-overlay.js";
 import { clearShipTextureCaches, rebuildPlayerSprites } from "../../render/pixi-player.js";
 import { clearEnemyTextureCaches } from "../../render/pixi-entities.js";
@@ -153,7 +153,9 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     saveSettings(Client.settings);
   });
   el.querySelector("#color-grade-toggle")!.addEventListener("change", (e) => {
-    Client.settings.colorGrading = (e.target as HTMLInputElement).checked;
+    const checked = (e.target as HTMLInputElement).checked;
+    Client.settings.colorGrading = checked;
+    syncColorGrading(checked);
     setCustomPreset();
     saveSettings(Client.settings);
   });
@@ -171,12 +173,6 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     saveSettings(Client.settings);
   });
 
-  el.querySelector("#camera-smoothing")!.addEventListener("input", (e) => {
-    const v = parseFloat((e.target as HTMLInputElement).value);
-    Client.settings.cameraSmoothing = v;
-    (document.getElementById("camera-smoothing-val") as HTMLElement).textContent = v.toFixed(2);
-    saveSettings(Client.settings);
-  });
 
   el.querySelector("#ui-scale")!.addEventListener("input", (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);

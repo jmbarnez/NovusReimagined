@@ -4,7 +4,7 @@ import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
 import { W, H } from "../canvas.js";
 import { TAU } from "../constants.js";
 
-import { screenContainer, planetLayer } from "../pixi.js";
+import { screenContainer, planetLayer, worldGradeFilter } from "../pixi.js";
 import { initPlanetSprites } from "./pixi-planets.js";
 
 import {
@@ -164,6 +164,19 @@ export function updateBackground(now: number, camX: number, camY: number) {
     if (sys) {
       setNebulaSystem(sys);
       if (planetLayer) initPlanetSprites(planetLayer, sys);
+      if (worldGradeFilter) {
+        const sc = (sys.starClass ?? "G").toUpperCase();
+        // Warm (K/M) → boost red, cut blue. Cool (O/B) → boost blue, cut red.
+        let rMul = 1.0, bMul = 1.0, rOff = 0, bOff = 0;
+        if (sc === "O" || sc === "B") { rMul = 0.94; bMul = 1.08; rOff = -0.02; bOff = 0.02; }
+        else if (sc === "A") { rMul = 0.97; bMul = 1.04; rOff = -0.01; bOff = 0.01; }
+        else if (sc === "F" || sc === "G") { rMul = 1.02; bMul = 0.98; rOff = 0.01; bOff = -0.01; }
+        else if (sc === "K" || sc === "M") { rMul = 1.08; bMul = 0.92; rOff = 0.02; bOff = -0.02; }
+        worldGradeFilter.matrix[0] = rMul;
+        worldGradeFilter.matrix[12] = bMul;
+        worldGradeFilter.matrix[4] = rOff;
+        worldGradeFilter.matrix[14] = bOff;
+      }
     }
   }
 

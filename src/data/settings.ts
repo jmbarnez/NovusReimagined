@@ -96,7 +96,6 @@ export interface Settings {
   nebulaDensity: number;
   colorGrading: boolean;
   vignetteEnabled: boolean;
-  cameraSmoothing: number;
   directionalLighting: boolean;
   atmosphericRim: boolean;
   mipmapping: boolean;
@@ -393,7 +392,6 @@ export const DEFAULT_SETTINGS: Settings = {
   nebulaDensity: 1.0,
   colorGrading: true,
   vignetteEnabled: true,
-  cameraSmoothing: 0.08,
   directionalLighting: true,
   atmosphericRim: true,
   mipmapping: true,
@@ -422,7 +420,6 @@ export function loadSettings(): Settings {
         nebulaDensity: parsed.nebulaDensity ?? 1.0,
         colorGrading: parsed.colorGrading ?? true,
         vignetteEnabled: parsed.vignetteEnabled ?? true,
-        cameraSmoothing: parsed.cameraSmoothing ?? 0.08,
         directionalLighting: parsed.directionalLighting ?? true,
         atmosphericRim: parsed.atmosphericRim ?? true,
         mipmapping: parsed.mipmapping ?? true,

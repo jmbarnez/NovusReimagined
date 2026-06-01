@@ -145,7 +145,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   syncPixiTutorialGates(now);
   syncPixiStationOverlays(now, sys);
   syncPixiStationTurrets(now, sys);
-  syncPixiLensFlare(width, height);
+  if (Client.settings?.lensFlare) syncPixiLensFlare(width, height);
   syncPixiWaypoint(now);
   syncPixiDamageFlash(width, height);
   syncPixiShockwaves();
@@ -161,7 +161,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   syncPixiHUD(width, height, now);
   syncPixiTargetArrows(width, height, camxR, camyR, now);
   syncPixiTutorialGuideArrow(width, height, camxR, camyR, now);
-  updateVignette();
+  if (Client.settings?.vignetteEnabled) updateVignette();
   renderPixi();
 
   // Clear the front Canvas 2D layer so the Pixi world (behind it) is visible.

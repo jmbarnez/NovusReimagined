@@ -169,6 +169,18 @@ export function resizePixi() {
   }
 }
 
+export function syncColorGrading(enabled: boolean) {
+  if (!worldContainer || !worldGradeFilter) return;
+  const filters = worldContainer.filters ?? [];
+  const hasIt = filters.includes(worldGradeFilter);
+  if (enabled && !hasIt) {
+    worldContainer.filters = [...filters, worldGradeFilter];
+  } else if (!enabled && hasIt) {
+    worldContainer.filters = filters.filter((f) => f !== worldGradeFilter);
+    worldGradeFilter.reset();
+  }
+}
+
 export function destroyPixi() {
   if (app) {
     app.destroy(true, { children: true, texture: false });

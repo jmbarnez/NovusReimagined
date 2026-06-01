@@ -47,11 +47,6 @@ export function renderSettings() {
   const lensFlareToggle = document.getElementById("lens-flare-toggle") as HTMLInputElement | null;
   if (lensFlareToggle) lensFlareToggle.checked = settings.lensFlare ?? true;
 
-  const camSlider = document.getElementById("camera-smoothing") as HTMLInputElement | null;
-  if (camSlider) camSlider.value = String(settings.cameraSmoothing ?? 0.08);
-  const camVal = document.getElementById("camera-smoothing-val") as HTMLElement | null;
-  if (camVal) camVal.textContent = (settings.cameraSmoothing ?? 0.08).toFixed(2);
-
   const uiScaleSlider = document.getElementById("ui-scale") as HTMLInputElement | null;
   if (uiScaleSlider) uiScaleSlider.value = String(settings.uiScale ?? 1.0);
   const uiScaleVal = document.getElementById("ui-scale-val") as HTMLElement | null;
