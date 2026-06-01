@@ -2,7 +2,6 @@ import { Client, type Player } from "../state.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import { floatText, spawnImpactFlash, spawnParticles } from "../utils/fx.js";
 import { respawnPlayer } from "../utils/game.js";
-import { sfxShieldImpact, sfxHullImpact } from "../audio/procedural.js";
 import { MODULE_DAMAGE_CHANCE, MODULE_DAMAGE_RATIO, RACK_TYPES } from "../constants.js";
 import { invalidate } from "../player/player-stats.js";
 import { MODULES } from "../data/modules.js";
@@ -116,7 +115,10 @@ export function damagePlayer(
     PlayerAccess.setShieldHitAngle(Math.atan2(sourceY - p.y, sourceX - p.x), p);
     if (isLocalPlayer) {
       PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.35));
-      sfxShieldImpact(Math.min(1, rawDmg / 20));
+      getState().pendingEffects.push({
+        type: "shieldImpact",
+        payload: { vol: Math.min(1, rawDmg / 20) },
+      });
     }
     if (p.shield < 0) {
       overflow = -p.shield;
@@ -162,7 +164,10 @@ export function damagePlayer(
   }
 
   if (isLocalPlayer && (displayType === "hull" || displayType === "structure")) {
-    sfxHullImpact(Math.min(1, rawDmg / 15));
+    getState().pendingEffects.push({
+      type: "hullImpact",
+      payload: { vol: Math.min(1, rawDmg / 15) },
+    });
   }
 
   if (p.structure <= 0) {

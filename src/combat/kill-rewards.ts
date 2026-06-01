@@ -8,7 +8,7 @@ import { floatText, spawnExplosion } from "../utils/fx.js";
 import { removeSensorLock } from "../targeting.js";
 import { logEvent } from "../feedback.js";
 import { progressMissions } from "../data/missions.js";
-import { sfxShipExplosion } from "../audio/procedural.js";
+import { getState } from "../state-access.js";
 import { spawnWreck } from "../wreck.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { addSalvagePickup } from "../utils/entities.js";
@@ -47,7 +47,16 @@ export function killEnemy(e: Enemy) {
   const exScale = e.type === "raider" ? C.COMBAT.EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.EXPLOSION_SCALE.pirate : C.COMBAT.EXPLOSION_SCALE.default;
   const exTier: "small" | "medium" | "large" = e.type === "raider" ? "large" : e.type === "pirate" ? "medium" : "small";
   spawnExplosion(e.x, e.y, "#ff4422", exScale, exTier);
-  sfxShipExplosion(e.x, e.y, e.type === "raider" ? C.COMBAT.SFX_EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.SFX_EXPLOSION_SCALE.pirate : C.COMBAT.SFX_EXPLOSION_SCALE.default);
+  getState().pendingEffects.push({
+    type: "explosion",
+    payload: {
+      x: e.x,
+      y: e.y,
+      color: "#ff4422",
+      scale: exScale,
+      tier: exTier,
+    },
+  });
 
   const playerParticipated = e._lastPlayerHitAt && (performance.now() - e._lastPlayerHitAt) < C.COMBAT.PLAYER_PARTICIPATION_WINDOW_MS;
   const isTutorialEnemy = TUTORIAL_ENEMY_TYPES.has(e.type);

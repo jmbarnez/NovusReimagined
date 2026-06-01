@@ -9,10 +9,12 @@
   font-family: var(--font-family);
   transform: scale(var(--ui-scale));
   transform-origin: top left;
+  isolation: isolate;
 }
 
 /* ── Main Grid ── */
 #st-ui {
+  position: relative;
   display: grid;
   grid-template-columns: 260px 1fr;
   grid-template-rows: 1fr;
@@ -345,7 +347,7 @@ h4 {
   display: none;
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 10;
   pointer-events: none;
 }
 
@@ -361,7 +363,7 @@ h4 {
 
 .tutorial-hangar-highlight {
   position: relative;
-  z-index: 2;
+  z-index: 20 !important;
   outline: 2px solid var(--hud-accent);
   outline-offset: 0;
   box-shadow:

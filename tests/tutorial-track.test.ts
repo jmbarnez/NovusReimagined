@@ -4,6 +4,7 @@ import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import {
   TUTORIAL_TRACKS,
+  TUTORIAL_BOOST_GATES,
   TUTORIAL_SPAWN,
   trackTotalArcLength,
   trackArcLengthProgress,
@@ -83,6 +84,19 @@ describe("tutorial tracks", () => {
       nx * 40,
       ny * 40,
     )).toBe(false);
+  });
+
+  it("keeps boost gates centered and aligned on their guide tracks", () => {
+    for (const gate of TUTORIAL_BOOST_GATES) {
+      const track = getTutorialTrackById(gate.trackId)!;
+      const prox = distToTrack(track, gate.x, gate.y);
+      const angleDelta = Math.atan2(Math.sin(gate.angle - prox.tangentAngle), Math.cos(gate.angle - prox.tangentAngle));
+      expect(prox.dist).toBeLessThan(1);
+      expect(Math.abs(angleDelta)).toBeLessThan(0.001);
+      if (gate.trackId !== "approach") {
+        expect(prox.arcLength).toBeGreaterThan(300);
+      }
+    }
   });
 });
 

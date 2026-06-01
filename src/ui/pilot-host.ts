@@ -108,7 +108,7 @@ export function showPilotHostScreen(onClose: () => void, options: PilotHostScree
       targetLine: listenAddr,
       mount: options.mount,
       embedded: options.embedded,
-      task: () => ensureGameplayConnected(),
+      task: () => ensureGameplayConnected({ reconnectLocal: true }),
       onSuccess: async () => {
         await enterSpaceMode();
         logEvent(`Host relay active on ${listenAddr}`, "system");

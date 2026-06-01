@@ -8,7 +8,6 @@ import { floatText } from "./utils/fx.js";
 import { isWreckPieceTarget } from "./targeting.js";
 import { addSkillXp } from "./player/player-data.js";
 import { damageWreckPiece } from "./wreck.js";
-import { sfxIndustrialBeam } from "./audio/procedural.js";
 import { forEachFittedModuleSlot, getFittedModuleDef, isModuleSlotPowered } from "./utils/module-slots.js";
 import type { AssignableRack } from "./utils/module-slots.js";
 
@@ -92,7 +91,10 @@ export function updateSalvager(dt: number) {
   // Throttled beam hum
   _beamSfxTimer -= dt;
   if (_beamSfxTimer <= 0) {
-    sfxIndustrialBeam("salvage", piece.x, piece.y);
+    getState().pendingEffects.push({
+      type: "industrialBeam",
+      payload: { delivery: "salvage", x: piece.x, y: piece.y },
+    });
     _beamSfxTimer = BEAM_SFX_INTERVAL;
   }
 

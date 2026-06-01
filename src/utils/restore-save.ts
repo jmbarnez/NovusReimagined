@@ -2,7 +2,7 @@ import { Client, type Player } from "../state.js";
 import { WorldAccess, PlayerAccess, getState } from "../state-access.js";
 import { SAVE_KEY } from "../constants.js";
 import { C } from "../config/index.js";
-import { loadPlayer, makePlayer } from "../player/player-data.js";
+import { clearTransientPlayerInput, loadPlayer, makePlayer } from "../player/player-data.js";
 import { computeStats } from "../player/player-stats.js";
 import { validateFitting } from "../player/player-fitting.js";
 import { populateSystem } from "../world-gen.js";
@@ -79,6 +79,7 @@ export interface InitGameSessionOpts {
 export function initGameSession(player: Player, opts: InitGameSessionOpts = {}): void {
   if (opts.clearSim) clearSimulationEntities();
 
+  clearTransientPlayerInput(player);
   WorldAccess.initPlayer(player);
 
   let redirected = false;

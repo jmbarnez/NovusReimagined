@@ -19,6 +19,12 @@ function ensureDimmerSegments(dimmer: HTMLElement): HTMLElement[] {
   return segments;
 }
 
+function resetDimmerSegments(dimmer: HTMLElement): void {
+  for (const segment of ensureDimmerSegments(dimmer)) {
+    segment.removeAttribute("style");
+  }
+}
+
 function syncStationDimmerCutout(target: HTMLElement | null): void {
   const dimmer = document.getElementById("st-dimmer");
   if (!dimmer) return;
@@ -81,7 +87,10 @@ function clearHighlights(): void {
   document.querySelectorAll(`.${HIGHLIGHT_CLASS}`).forEach((el) => {
     el.classList.remove(HIGHLIGHT_CLASS);
   });
-  document.getElementById("st-dimmer")?.classList.remove("active");
+  const dimmer = document.getElementById("st-dimmer");
+  if (!dimmer) return;
+  dimmer.classList.remove("active");
+  resetDimmerSegments(dimmer);
 }
 
 export function clearHangarTutorialGuide(): void {
@@ -117,5 +126,7 @@ export function syncHangarTutorialGuide(snapshot: Record<string, unknown> = {}):
 
   el.classList.add(HIGHLIGHT_CLASS);
   syncStationDimmerCutout(el);
-  el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  if (typeof el.scrollIntoView === "function") {
+    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
 }

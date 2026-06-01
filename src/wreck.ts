@@ -21,7 +21,7 @@ import {
   addShockwave,
   tickAndCull,
 } from "./utils/entities.js";
-import { sfxCreditPickup, sfxItemPickup, sfxWreckPieceDestroy } from "./audio/procedural.js";
+import { sfxWreckPieceDestroy } from "./audio/procedural.js";
 import { removeSensorLock } from "./targeting.js";
 import { WRECK_PIECE_LINEAR_DRAG, WRECK_PIECE_ANGULAR_DRAG, SALVAGE_PICKUP_DRAG, TAU } from "./constants.js";
 import { C } from "./config/index.js";
@@ -361,23 +361,19 @@ function collectSalvagePickup(s: SalvagePickup) {
     PlayerAccess.setOre(s.payload, (getState().player.ore[s.payload] || 0) + s.qty);
     progressMissions("mining", s.qty, s.payload);
     showPickupToast("ore", s.payload, s.qty);
-    sfxItemPickup("ore", s.x, s.y);
   } else if (s.kind === "loot") {
     PlayerAccess.setLoot(s.payload, (getState().player.loot[s.payload] || 0) + s.qty);
     progressMissions("salvage", s.qty, s.payload);
     showPickupToast("loot", s.payload, s.qty);
-    sfxItemPickup("loot", s.x, s.y);
   } else if (s.kind === "credits") {
     PlayerAccess.modifyCredits(s.qty);
     showPickupToast("credits", "", s.qty);
-    sfxCreditPickup();
   } else {
     try {
       const inst = s.instance || generateModuleInstance(s.payload, 1, 1);
       PlayerAccess.addModuleCargo(inst);
       invalidateInstanceCache();
       showPickupToast("module", s.payload, 1, inst);
-      sfxItemPickup("module", s.x, s.y);
     } catch {
       // Fallback: spawn scrap instead of crashing on bad module ID
       PlayerAccess.setLoot("scrap", (getState().player.loot.scrap || 0) + 1);

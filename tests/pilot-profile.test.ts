@@ -48,4 +48,31 @@ describe("loadPlayer pilotName migration", () => {
     const p = loadPlayer();
     expect(p.pilotName).toBe("Stellar Fox");
   });
+
+  it("clears transient input state from loaded saves", () => {
+    const base = makePlayer();
+    base.pilotName = "Waypoint Test";
+    base.inputKeys = { space: true };
+    base.inputMouseWorld = { x: 123, y: 456 };
+    base.waypoint = { x: 1000, y: 2000 };
+    base.navCommand = { mode: "orbit", targetId: "station-1", rangePx: 500, dir: 1 };
+    base.netInputFrame = {
+      tick: 42,
+      keys: { space: true },
+      mouseWorld: { x: 7, y: 8 },
+      waypoint: { x: 9, y: 10 },
+      navCommand: null,
+      actions: [],
+    };
+
+    localStorage.setItem(SAVE_KEY, JSON.stringify(base));
+    const p = loadPlayer();
+
+    expect(p.pilotName).toBe("Waypoint Test");
+    expect(p.inputKeys).toBeNull();
+    expect(p.inputMouseWorld).toBeNull();
+    expect(p.waypoint).toBeNull();
+    expect(p.navCommand).toBeNull();
+    expect(p.netInputFrame).toBeNull();
+  });
 });

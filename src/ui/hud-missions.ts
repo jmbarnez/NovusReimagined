@@ -3,6 +3,7 @@ import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import { fmtCompact } from "../utils/format.js";
 import type { MissionContract } from "../data/missions.js";
+import { attachMissionTooltipListeners } from "./hud-mission-tooltip.js";
 
 let _panel: HTMLElement | null = null;
 
@@ -13,11 +14,11 @@ const TYPE_ICONS: Record<string, string> = {
   salvage: "◈",
 };
 
-export function initMissionsPanel(overlay: HTMLElement) {
-  if (_panel) return;
-  _panel = document.createElement("div");
+export function initMissionsPanel(mount: HTMLElement | null) {
+  if (!mount) return;
+  _panel = mount;
   _panel.id = "hud-missions";
-  // We no longer append here, switchTab handles it
+  attachMissionTooltipListeners(_panel);
 }
 
 export function getMissionsPanelEl() {
@@ -52,7 +53,7 @@ function renderContract(c: MissionContract): string {
     ? `<span class="hm-done">TURN IN</span>`
     : `<span class="hm-prog">${bar} ${current}/${required}</span>`;
   return `
-    <div class="${cls}">
+    <div class="${cls}" data-contract-id="${escTitle(c.id)}">
       <div class="hm-title">${icon} ${escTitle(c.title)}</div>
       <div class="hm-row">${statusText}<span class="hm-reward">${fmtCompact(c.reward)} CR</span></div>
     </div>`;

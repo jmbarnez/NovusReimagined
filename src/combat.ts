@@ -14,7 +14,7 @@ import { SHIPS } from "./data/ships.js";
 import { flashSlotFire, logEvent } from "./feedback.js";
 import { progressMissions } from "./data/missions.js";
 import { showDamageNumber } from "./combat/damage-display.js";
-import { sfxWeaponFire, sfxShipExplosion, sfxProjectileImpact } from "./audio/procedural.js";
+import { sfxProjectileImpact } from "./audio/procedural.js";
 import { spawnWreck } from "./wreck.js";
 import { destroyAsteroid } from "./utils/mining.js";
 import { C } from "./config/index.js";
@@ -258,7 +258,16 @@ export function playerShoot(slotIdx = 0, targetEnemy: Enemy | Asteroid | WreckPi
   const pos = getTurretWorldPos(slotIdx);
   const muzzleIntensity = turretMod.weaponDelivery === "missile" ? C.COMBAT.MUZZLE_FLASH.missileIntensity : turretMod.weaponDelivery === "projectile" && wProf.dmg >= C.COMBAT.MUZZLE_FLASH.heavyProjectileDmgThreshold ? C.COMBAT.MUZZLE_FLASH.heavyProjectileIntensity : C.COMBAT.MUZZLE_FLASH.defaultIntensity;
   spawnMuzzleFlash(pos.x, pos.y, angle, wProf.color, muzzleIntensity);
-  sfxWeaponFire(turretMod.weaponDelivery!, turretMod.id, 1, pos.x, pos.y);
+  getState().pendingEffects.push({
+    type: "weaponFire",
+    payload: {
+      delivery: turretMod.weaponDelivery!,
+      typeId: turretMod.id,
+      vol: 1,
+      x: pos.x,
+      y: pos.y,
+    },
+  });
 
   const delivery = (turretMod.weaponDelivery ?? "projectile") as WeaponDelivery;
   const weaponMult = st.weaponMult * (1 + weaponSkillBonus(delivery));
@@ -347,7 +356,16 @@ export function killEnemy(e: Enemy) {
   const exScale = e.type === "raider" ? C.COMBAT.EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.EXPLOSION_SCALE.pirate : C.COMBAT.EXPLOSION_SCALE.default;
   const exTier: "small" | "medium" | "large" = e.type === "raider" ? "large" : e.type === "pirate" ? "medium" : "small";
   spawnExplosion(e.x, e.y, "#ff4422", exScale, exTier);
-  sfxShipExplosion(e.x, e.y, e.type === "raider" ? C.COMBAT.SFX_EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.SFX_EXPLOSION_SCALE.pirate : C.COMBAT.SFX_EXPLOSION_SCALE.default);
+  getState().pendingEffects.push({
+    type: "explosion",
+    payload: {
+      x: e.x,
+      y: e.y,
+      color: "#ff4422",
+      scale: exScale,
+      tier: exTier,
+    },
+  });
 
   const playerParticipated = e._lastPlayerHitAt && (performance.now() - e._lastPlayerHitAt) < PLAYER_PARTICIPATION_WINDOW_MS;
   if (playerParticipated) {

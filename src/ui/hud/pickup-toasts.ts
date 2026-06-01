@@ -2,6 +2,7 @@ import { hudState } from "./state.js";
 import { ORE, LOOT } from "../../data/resources.js";
 import { MODULES } from "../../data/modules.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
+import { sfxCreditPickup, sfxItemPickup } from "../../audio/procedural.js";
 import type { ModuleInstance } from "../../types/moduleInstance.js";
 
 const ICON_SVG = (paths: string, vb: string = "0 0 16 16") => 
@@ -42,6 +43,7 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
     name = "Credits";
     icon = ICONS.credits;
     color = "#ffe066";
+    sfxCreditPickup();
   } else if (kind === "module") {
     const m = MODULES[payload];
     const rarityColor = instance ? RARITY_CONFIG[instance.rarity]?.color : "#00e8c8";
@@ -54,6 +56,10 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
     else if (rack === "med") icon = ICONS.med;
     else if (rack === "low") icon = ICONS.low;
     else icon = ICONS.module;
+  }
+
+  if (kind === "ore" || kind === "loot" || kind === "module") {
+    sfxItemPickup(kind);
   }
 
   const toast = document.createElement("div");

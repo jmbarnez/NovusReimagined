@@ -4,7 +4,6 @@ import { C } from "../config/index.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { randomShipName, randomHailLine } from "../data/faction-comms.js";
 import { addBeam } from "../utils/entities.js";
-import { sfxWeaponFire, sfxIndustrialBeam, sfxShipExplosion } from "../audio/procedural.js";
 import { buildEnemyFitting } from "../utils/spawn.js";
 import type { Enemy, Asteroid, Gate, Station, System } from "../types/world.js";
 import { liveEnemies, liveAsteroids } from "../utils/game.js";
@@ -302,7 +301,10 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
 
           _miningLaserHum -= dt;
           if (_miningLaserHum <= 0) {
-            sfxIndustrialBeam("mining", asteroid.x, asteroid.y);
+            getState().pendingEffects.push({
+              type: "industrialBeam",
+              payload: { delivery: "mining", x: asteroid.x, y: asteroid.y },
+            });
             _miningLaserHum = 0.55;
           }
         }

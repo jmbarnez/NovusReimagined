@@ -28,6 +28,7 @@ import {
   sendTypingToSocket,
 } from "./client-transport.js";
 import { floatText, spawnExplosion, spawnShockwave, spawnImpactFlash, spawnBeam } from "../utils/fx.js";
+import { sfxWeaponFire, sfxProjectileImpact, sfxShipExplosion, sfxShieldImpact, sfxHullImpact, sfxHostileLocking, sfxHostileLock, sfxUnderAttackPulse, sfxIndustrialBeam, sfxBlip, sfxBeamImpact } from "../audio/procedural.js";
 
 export type ClientConnectionState = "disconnected" | "connecting" | "connected" | "disconnecting";
 export type { RemotePlayerBrief } from "./remote-peers.js";
@@ -437,15 +438,45 @@ export class GameClient {
         break;
       case "explosion":
         spawnExplosion(p.x ?? 0, p.y ?? 0, p.color ?? "#ffffff", p.scale, typeof p.tier === "string" ? p.tier : undefined);
+        sfxShipExplosion(p.x ?? 0, p.y ?? 0, typeof p.scale === "number" ? p.scale : 1);
         break;
       case "shockwave":
         spawnShockwave(p.x ?? 0, p.y ?? 0, p.color ?? "#ffffff", p.scale);
         break;
       case "impact":
         spawnImpactFlash(p.x ?? 0, p.y ?? 0, p.color ?? "#ffffff");
+        if (p.delivery === "mining") {
+          sfxBeamImpact("mining", p.x ?? 0, p.y ?? 0);
+        } else {
+          sfxProjectileImpact(p.x ?? 0, p.y ?? 0, p.delivery ?? "projectile");
+        }
         break;
       case "beam":
         spawnBeam(p.x1 ?? 0, p.y1 ?? 0, p.x2 ?? 0, p.y2 ?? 0, p.color ?? "#ffffff", p.width);
+        break;
+      case "weaponFire":
+        sfxWeaponFire(p.delivery ?? "projectile", p.typeId ?? "default", p.vol ?? 1, p.x ?? 0, p.y ?? 0);
+        break;
+      case "shieldImpact":
+        sfxShieldImpact(p.vol ?? 1);
+        break;
+      case "hullImpact":
+        sfxHullImpact(p.vol ?? 1);
+        break;
+      case "hostileLocking":
+        sfxHostileLocking(p.x ?? 0, p.y ?? 0);
+        break;
+      case "hostileLock":
+        sfxHostileLock(p.x ?? 0, p.y ?? 0);
+        break;
+      case "underAttackPulse":
+        sfxUnderAttackPulse(p.count ?? 1, p.x ?? 0, p.y ?? 0);
+        break;
+      case "industrialBeam":
+        sfxIndustrialBeam((p.delivery as "mining" | "salvage") ?? "mining", p.x ?? 0, p.y ?? 0);
+        break;
+      case "blip":
+        sfxBlip(p.x ?? 880, p.y ?? 0.06);
         break;
       default:
         break;

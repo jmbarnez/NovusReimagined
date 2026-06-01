@@ -11,6 +11,7 @@ import { floatText } from "./utils/fx.js";
 import { populateSystem } from "./world-gen.js";
 import { app } from "./pixi.js";
 import type { Station, Gate } from "./types/world.js";
+import { canWarpThroughGate } from "./data/tutorial.js";
 
 async function ensureStationInterface(st: Station): Promise<void> {
   const { ensureStationUI, buildStationView, renderStationView } = await import("./ui/station/index.js");
@@ -56,7 +57,11 @@ export function getDockableStation(p: Player = getState().player, stationId?: st
 export function getWarpGateInRange(p: Player = getState().player, targetIdx?: number | null): Gate | null {
   const sys = curSys(p);
   if (!sys || (p.warpCooldown ?? 0) > 0) return null;
-  return sys.gates.find((g) => (targetIdx == null || g.targetSysIdx === targetIdx) && dst(p.x, p.y, g.x, g.y) < g.radius + GATE_RANGE) ?? null;
+  return sys.gates.find((g) =>
+    (targetIdx == null || g.targetSysIdx === targetIdx)
+    && canWarpThroughGate(g, sys.idx, p)
+    && dst(p.x, p.y, g.x, g.y) < g.radius + GATE_RANGE
+  ) ?? null;
 }
 
 export async function openStationUi(st: Station): Promise<void> {
@@ -101,6 +106,21 @@ export function undockStation() {
   closeStationUi();
 }
 
+function spawnNearStationFallback(targetIdx: number, p: Player): boolean {
+  const station = getState().GALAXY[targetIdx]?.stations?.find((st) => !st.isProcessingHub)
+    ?? getState().GALAXY[targetIdx]?.stations?.[0];
+  if (!station) return false;
+  const len = Math.hypot(station.x, station.y) || 1;
+  const nx = len > 0.5 ? station.x / len : 1;
+  const ny = len > 0.5 ? station.y / len : 0;
+  const exit = station.radius + 240;
+  PlayerAccess.updatePhysics({
+    x: station.x + nx * exit + (Math.random() - 0.5) * 32,
+    y: station.y + ny * exit + (Math.random() - 0.5) * 32,
+  }, p);
+  return true;
+}
+
 export function warpTo(targetIdx: number, p: Player = getState().player) {
   PlayerAccess.setWarpCooldown(2.5, p);
   if (p === getState().player) {
@@ -113,7 +133,7 @@ export function warpTo(targetIdx: number, p: Player = getState().player) {
     populateSystem(getState().GALAXY[targetIdx]);
   }
   const gates = getState().GALAXY[targetIdx].gates;
-  const back = gates?.find((g: Gate) => g.targetSysIdx === fromIdx) ?? gates?.[0];
+  const back = gates?.find((g: Gate) => g.targetSysIdx === fromIdx);
   if (back) {
     const len = Math.hypot(back.x, back.y) || 1;
     const nx = back.x / len, ny = back.y / len;
@@ -122,8 +142,8 @@ export function warpTo(targetIdx: number, p: Player = getState().player) {
       x: back.x + nx * exit + (Math.random() - 0.5) * 32,
       y: back.y + ny * exit + (Math.random() - 0.5) * 32,
     }, p);
-  } else {
-    console.warn(`[warp] system ${targetIdx} has no gates; spawning at origin`);
+  } else if (!spawnNearStationFallback(targetIdx, p)) {
+    console.warn(`[warp] system ${targetIdx} has no reciprocal gate or station; spawning at origin`);
     PlayerAccess.updatePhysics({ x: 0, y: 0 }, p);
   }
   PlayerAccess.updatePhysics({ px: p.x, py: p.y, vx: 0, vy: 0 }, p);

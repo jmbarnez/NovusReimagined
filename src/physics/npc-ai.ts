@@ -9,7 +9,7 @@ import type { Enemy } from "../types/world.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import { angleDiff } from "../utils/math.js";
 import { computeEnemyAimDeviation, damageEnemy } from "../combat.js";
-import { sfxHostileLocking, sfxHostileLock, sfxWeaponFire, sfxProjectileImpact, sfxUnderAttackPulse } from "../audio/procedural.js";
+import { sfxHostileLocking, sfxHostileLock, sfxWeaponFire, sfxUnderAttackPulse } from "../audio/procedural.js";
 import { damagePlayer } from "../combat/damage-display.js";
 import { addEnemyBullet, addBeam } from "../utils/entities.js";
 import { isHostile } from "../combat/factions.js";
@@ -130,7 +130,10 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
           const beamDist = d;
           const bX2 = e.x + Math.cos(shootAng) * beamDist;
           const bY2 = e.y + Math.sin(shootAng) * beamDist;
-          sfxWeaponFire("beam", baseId, 0.7, e.x, e.y);
+          getState().pendingEffects.push({
+            type: "weaponFire",
+            payload: { delivery: "beam", typeId: baseId, vol: 0.7, x: e.x, y: e.y },
+          });
           addBeam({ x1: e.x, y1: e.y, x2: bX2, y2: bY2, color: wProf.color, width: wProf.sz, life: C.ENEMIES.AI.BEAM_IMPACT_LIFE });
           
           if (isTargetPlayer) {
@@ -138,21 +141,30 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
             const perp = Math.abs((getState().player.x - e.x) * Math.sin(shootAng) - (getState().player.y - e.y) * Math.cos(shootAng));
             if (perp < Math.min(hitR * 0.6 + C.ENEMIES.AI.HIT_CHECK_RADIUS, C.ENEMIES.AI.BEAM_HIT_RADIUS_CAP)) {
               damagePlayer(Math.max(1, Math.floor(wProf.dmg * (e.weaponMult ?? 1.0))), e.x, e.y);
-              sfxProjectileImpact(bX2, bY2, "beam");
+              getState().pendingEffects.push({
+                type: "impact",
+                payload: { x: bX2, y: bY2, color: wProf.color, delivery: "beam" },
+              });
             }
           } else {
             const hitR = (target as Enemy).sigRadius ?? 20;
             const perp = Math.abs((target.x - e.x) * Math.sin(shootAng) - (target.y - e.y) * Math.cos(shootAng));
             if (perp < Math.min(hitR * 0.6 + C.ENEMIES.AI.HIT_CHECK_RADIUS, C.ENEMIES.AI.BEAM_HIT_RADIUS_CAP)) {
               damageEnemy(target as Enemy, Math.max(1, Math.floor(wProf.dmg * (e.weaponMult ?? 1.0))), bX2, bY2, undefined, "beam");
-              sfxProjectileImpact(bX2, bY2, "beam");
+              getState().pendingEffects.push({
+                type: "impact",
+                payload: { x: bX2, y: bY2, color: wProf.color, delivery: "beam" },
+              });
             }
           }
         } else {
           if (getState().enemyBullets.length < 200) {
             const bSpd = wProf.spd || 800;
             const bLife = (wProf.range * 1.1) / bSpd;
-            sfxWeaponFire("projectile", baseId, 0.8, e.x, e.y);
+            getState().pendingEffects.push({
+              type: "weaponFire",
+              payload: { delivery: "projectile", typeId: baseId, vol: 0.8, x: e.x, y: e.y },
+            });
             addEnemyBullet({
               x: e.x, y: e.y, px: e.x, py: e.y,
               vx: Math.cos(shootAng) * bSpd, vy: Math.sin(shootAng) * bSpd,
@@ -196,7 +208,10 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
 
     if ((target as unknown) === getState().player) {
       e.targetingPlayer = true;
-      sfxHostileLocking(e.x, e.y);
+      getState().pendingEffects.push({
+        type: "hostileLocking",
+        payload: { x: e.x, y: e.y },
+      });
     }
   }
 
@@ -234,7 +249,10 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
         e._npcHasLock = true;
         if (isPlayer) {
           e.hasLockOnPlayer = true;
-          sfxHostileLock(e.x, e.y);
+          getState().pendingEffects.push({
+            type: "hostileLock",
+            payload: { x: e.x, y: e.y },
+          });
         }
       }
     }
@@ -315,7 +333,10 @@ export function triggerAttackWarningPulse(allEnemies: Enemy[], dt: number, _p?: 
   if (lockedCount > 0 && closestLocked) {
     _attackPulseTimer -= dt;
     if (_attackPulseTimer <= 0) {
-      sfxUnderAttackPulse(lockedCount, closestLocked.x, closestLocked.y);
+      getState().pendingEffects.push({
+        type: "underAttackPulse",
+        payload: { count: lockedCount, x: closestLocked.x, y: closestLocked.y },
+      });
       _attackPulseTimer = C.ENEMIES.ATTACK_PULSE_INTERVAL;
     }
   } else {

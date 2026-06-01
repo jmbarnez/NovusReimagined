@@ -59,7 +59,7 @@ export function showProfileSelection(): void {
         sfxConfirm();
         if (activateProfile(id)) {
           restoreGameFromSave();
-          enterSpaceMode();
+          enterSpaceMode({ reconnectLocal: true });
           const sys = getState().GALAXY[getState().player.sysIdx];
           if (sys) {
             logEvent(t("game.neuralRestored", { sys: sys.name, sec: sys.security.toFixed(1) }), "system");

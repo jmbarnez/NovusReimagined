@@ -27,18 +27,6 @@ export interface OverviewRow {
   status: string;
 }
 
-export function overviewLockActionHTML(row: OverviewRow): string {
-  if (row.kind !== "hostile" && row.kind !== "neutral" && row.kind !== "asteroid") return t("bridge.dash");
-  const slot = getState().player.lockQueue.find((s) => s.id === row.id);
-  if (slot?.resolving) {
-    return `<button type="button" class="ov-lock ov-lock--scanning" data-lock-id="${escHtml(row.id)}" disabled>${t("bridge.scan")}</button>`;
-  }
-  if (slot) {
-    return `<button type="button" class="ov-lock ov-lock--locked" data-lock-id="${escHtml(row.id)}">${getState().player.targetLock?.id === row.id ? t("bridge.lockPrimary") : t("bridge.lock")}</button>`;
-  }
-  return `<button type="button" class="ov-lock" data-lock-id="${escHtml(row.id)}">${t("bridge.lockBtn")}</button>`;
-}
-
 let _bridgeToastTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function showBridgeToast(msg: string) {
@@ -172,7 +160,6 @@ export function renderBridgeOverviewHTML(): string {
       <td class="ov-num ov-dist">${dist}</td>
       <td class="ov-num ov-sig">${r.sig}</td>
       <td class="ov-num ov-relV">${r.relV}</td>
-      <td class="ov-action">${overviewLockActionHTML(r)}</td>
     </tr>`;
     })
     .join("");
@@ -181,7 +168,7 @@ export function renderBridgeOverviewHTML(): string {
     <div class="ov-wrap">
       <table class="ov-table">
         <thead><tr>
-          <th></th><th>${t("hud.state")}</th><th>${t("hud.class")}</th><th>${t("common.name")}</th><th>${t("hud.dist")}</th><th>${t("hud.sig")}</th><th>${t("bridge.overviewDv")}</th><th>${t("hud.act")}</th>
+          <th></th><th>${t("hud.state")}</th><th>${t("hud.class")}</th><th>${t("common.name")}</th><th>${t("hud.dist")}</th><th>${t("hud.sig")}</th><th>${t("bridge.overviewDv")}</th>
         </tr></thead>
         <tbody>${body}</tbody>
       </table>
@@ -213,8 +200,7 @@ export function updateBridgeOverview() {
         <td class="ov-name">${escHtml(r.name)}</td>
         <td class="ov-num ov-dist">${dist}</td>
         <td class="ov-num ov-sig">${r.sig}</td>
-        <td class="ov-num ov-relV">${r.relV}</td>
-        <td class="ov-action">${overviewLockActionHTML(r)}</td>`;
+        <td class="ov-num ov-relV">${r.relV}</td>`;
       tbody.appendChild(tr);
     } else {
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
@@ -222,13 +208,10 @@ export function updateBridgeOverview() {
       const sCell = tr.querySelector(".ov-st");
       const rCell = tr.querySelector(".ov-relV");
       const sigCell = tr.querySelector(".ov-sig");
-      const actionCell = tr.querySelector(".ov-action");
       if (dCell) dCell.textContent = dist;
       if (sCell) sCell.innerHTML = r.status;
       if (rCell) rCell.textContent = String(r.relV);
       if (sigCell) sigCell.textContent = String(r.sig);
-      const actionHtml = overviewLockActionHTML(r);
-      if (actionCell && actionCell.innerHTML !== actionHtml) actionCell.innerHTML = actionHtml;
       existing.delete(r.id);
     }
   }

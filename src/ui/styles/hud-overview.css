@@ -134,62 +134,6 @@
   text-align: right;
 }
 
-#hud-overview-panel .ov-table th:nth-child(8) {
-  width: 35px; /* Act */
-}
-#hud-overview-panel .ov-table td:nth-child(8) {
-  text-align: center;
-  padding: 1px 2px;
-}
-
-/* ── Overview Interaction Elements ── */
-#hud-overview-panel .ov-lock {
-  padding: 1px 3px;
-  font-size: calc(7px * var(--effective-font-scale, 1));
-  font-weight: 700;
-  font-family: var(--font-family), inherit;
-  background: var(--hud-bg-elevated);
-  border: 1px solid var(--hud-border-soft);
-  color: var(--hud-text-main);
-  border-radius: 2px;
-  cursor: pointer;
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  transition: all 0.1s ease;
-}
-
-#hud-overview-panel .ov-lock--locked {
-  color: var(--hud-accent);
-  border-color: color-mix(in srgb, var(--hud-accent) 55%, var(--hud-border-soft));
-}
-
-#hud-overview-panel .ov-lock--scanning,
-#hud-overview-panel .ov-lock:disabled {
-  color: var(--hud-shield);
-  border-color: color-mix(in srgb, var(--hud-shield) 45%, var(--hud-border-soft));
-  cursor: default;
-  opacity: 0.85;
-}
-
-#hud-overview-panel .ov-lock:hover {
-  background: var(--hud-accent);
-  color: #000000;
-  border-color: var(--hud-accent);
-}
-
-#hud-overview-panel .ov-lock:disabled:hover {
-  background: var(--hud-bg-elevated);
-  color: var(--hud-shield);
-  border-color: color-mix(in srgb, var(--hud-shield) 45%, var(--hud-border-soft));
-}
-
-#hud-overview-panel .ov-lock:active {
-  background: color-mix(in srgb, var(--hud-accent) 70%, #000);
-  color: #ffffff;
-  border-color: var(--hud-accent);
-}
-
 #hud-overview-panel .ov-row-neutral .ov-name,
 .ov-row-neutral .ov-name {
   color: #a0a5aa;

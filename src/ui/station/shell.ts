@@ -5,6 +5,7 @@ import { Client } from "../../state.js";
 import { stationState } from "./shared.js";
 import { bindStationDomEvents } from "./events.js";
 import { stationActionHandlers } from "./actions.js";
+import { t } from "../../utils/i18n.js";
 
 function onStationAction(e: Event): void {
   const target = e.target as HTMLElement | null;
@@ -33,12 +34,12 @@ export function ensureStationUI(): void {
           <div id="st-cr"></div>
         </div>
         <nav id="st-tabs">
-          <button class="st-tab" data-tab="hangar">Hangar</button>
-          <button class="st-tab" data-tab="market">Market</button>
-          <button class="st-tab" data-tab="industry">Industry</button>
-          <button class="st-tab" data-tab="contracts">Contracts</button>
+          <button class="st-tab" data-tab="hangar">${t("station.hangar")}</button>
+          <button class="st-tab" data-tab="market">${t("station.market")}</button>
+          <button class="st-tab" data-tab="industry">${t("station.industry")}</button>
+          <button class="st-tab" data-tab="contracts">${t("station.contracts")}</button>
         </nav>
-        <button id="st-undock" data-action="undock">⏏ Undock <kbd class="st-kbd" id="st-undock-key"></kbd></button>
+        <button id="st-undock" data-action="undock">${t("station.undock")} <kbd class="st-kbd" id="st-undock-key"></kbd></button>
       </aside>
       <main id="st-body">
         <div class="panel" id="panel-hangar"></div>

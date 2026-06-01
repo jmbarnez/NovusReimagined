@@ -16,7 +16,7 @@ import {
   getTutorialNavRemainingM,
   getCurrentTutorialStep,
 } from "../src/data/tutorial.js";
-import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R } from "../src/data/tutorial-layout.js";
+import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_GATE } from "../src/data/tutorial-layout.js";
 import type { System, Enemy, Gate } from "../src/types/world.js";
 import { getNovusPrimeIdx } from "../src/world/galaxy-build.js";
 import {
@@ -25,10 +25,13 @@ import {
   hasTutorialCombatLoadout,
 } from "../src/data/tutorial.js";
 import { TUTORIAL_STEP_REWARDS } from "../src/data/tutorial-mission.js";
-import { skipTutorial } from "../src/tutorial.js";
+import { skipTutorial, tickTutorial } from "../src/tutorial.js";
 import { SAVE_KEY } from "../src/constants.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { ENEMY_SPAWNS } from "../src/data/enemy-spawns.js";
+import { executeGameCommand } from "../src/sim/commands.js";
+import { updateWarp } from "../src/dock.js";
+import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../src/ui/tutorial-hangar-guide.js";
 
 function stepById(id: string) {
   const step = TUTORIAL_STEPS.find((s) => s.id === id);
@@ -309,6 +312,9 @@ describe("tutorial step completion", () => {
 describe("tutorial exit gate", () => {
   beforeEach(() => {
     installTestPlayer(makePlayer());
+    G.GALAXY = buildGalaxy();
+    populateSystem(G.GALAXY[0]!);
+    populateSystem(G.GALAXY[1]!);
     G.P.sysIdx = 0;
     G.P.tutorial.active = true;
   });
@@ -336,11 +342,109 @@ describe("tutorial exit gate", () => {
     expect(canWarpThroughGate(gate, 0, G.P)).toBe(true);
   });
 
+  it("rejects authoritative warp commands before graduation", () => {
+    const primeIdx = getNovusPrimeIdx();
+    if (primeIdx < 0) return;
+    G.P.tutorial.step = stepIndex("fly-gate");
+    G.P.x = TUTORIAL_GATE.x;
+    G.P.y = TUTORIAL_GATE.y;
+
+    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
+
+    expect(G.P.sysIdx).toBe(0);
+    expect(G.P.warpTargetIdx).toBe(-1);
+  });
+
+  it("graduates after using the final one-way gate to Novus Prime", () => {
+    const primeIdx = getNovusPrimeIdx();
+    if (primeIdx < 0) return;
+    G.P.tutorial.step = stepIndex("graduation");
+    G.P.x = TUTORIAL_GATE.x;
+    G.P.y = TUTORIAL_GATE.y;
+
+    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
+    expect(G.P.warpTargetIdx).toBe(primeIdx);
+
+    updateWarp(999);
+    tickTutorial(0);
+
+    expect(G.P.sysIdx).toBe(primeIdx);
+    expect(G.P.tutorial.active).toBe(false);
+    expect(G.P.tutorial.completed).toBe(true);
+    expect(G.P.homeSysIdx).toBe(primeIdx);
+    expect(Math.hypot(G.P.x, G.P.y)).toBeGreaterThan(100);
+  });
+
   it("shows the exit gate after tutorial ends", () => {
     G.P.tutorial.active = false;
     const primeIdx = getNovusPrimeIdx();
     if (primeIdx < 0) return;
     expect(shouldShowWarpGate({ targetSysIdx: primeIdx } as Gate, 0, G.P)).toBe(true);
+  });
+
+  it("does not generate a return gate from Novus Prime to the tutorial system", () => {
+    expect(G.GALAXY[1]?.gates.some((gate) => gate.targetSysIdx === 0)).toBe(false);
+  });
+});
+
+describe("station tutorial spotlight", () => {
+  beforeEach(() => {
+    installTestPlayer(makePlayer());
+    G.P.tutorial.active = true;
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+    Client.stationOpen = true;
+    document.body.innerHTML = `
+      <div id="station-overlay">
+        <div id="st-dimmer"></div>
+        <div id="st-ui">
+          <button class="st-tab active" data-tab="hangar"></button>
+          <div id="panel-hangar" class="panel active"></div>
+          <div id="hangar-pane-cargo"></div>
+        </div>
+      </div>
+    `;
+  });
+
+  afterEach(() => {
+    clearHangarTutorialGuide();
+    Client.stationOpen = false;
+    document.getElementById("station-overlay")?.remove();
+    if (!document.getElementById("c")) {
+      const canvas = document.createElement("canvas");
+      canvas.id = "c";
+      document.body.appendChild(canvas);
+    }
+  });
+
+  it("cuts the station dimmer around the highlighted hangar target", () => {
+    const dimmer = document.getElementById("st-dimmer")!;
+    const target = document.getElementById("hangar-pane-cargo")!;
+    Object.defineProperty(dimmer, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600 }),
+    });
+    Object.defineProperty(target, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 100, top: 120, right: 300, bottom: 220, width: 200, height: 100 }),
+    });
+
+    syncHangarTutorialGuide({ hangarReviewPhase: 0 });
+
+    const segments = Array.from(dimmer.querySelectorAll<HTMLElement>(".tutorial-dimmer-segment"));
+    expect(segments).toHaveLength(4);
+    expect(target.classList.contains("tutorial-hangar-highlight")).toBe(true);
+    expect(segments[0].style.height).toBe("112px");
+    expect(segments[1].style.top).toBe("228px");
+    expect(segments[2].style.width).toBe("92px");
+    expect(segments[3].style.left).toBe("308px");
+
+    clearHangarTutorialGuide();
+
+    expect(dimmer.classList.contains("active")).toBe(false);
+    expect(target.classList.contains("tutorial-hangar-highlight")).toBe(false);
+    for (const segment of segments) {
+      expect(segment.getAttribute("style")).toBeNull();
+    }
   });
 });
 

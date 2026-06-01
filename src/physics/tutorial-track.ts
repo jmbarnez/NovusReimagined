@@ -10,7 +10,6 @@ import {
   type TutorialBoostGate,
 } from "../data/tutorial-layout.js";
 import { addParticle } from "../utils/entities.js";
-import { sfxBlip } from "../audio/procedural.js";
 import { logEvent } from "../feedback.js";
 
 const gateHintsShown = new Set<string>();
@@ -80,7 +79,10 @@ function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false)
     });
   }
   if (p === getState().player) {
-    sfxBlip(720 + random() * 240, 0.06);
+    getState().pendingEffects.push({
+      type: "blip",
+      payload: { x: 720 + random() * 240, y: 0.06 },
+    });
   }
 }
 

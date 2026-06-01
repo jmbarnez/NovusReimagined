@@ -211,6 +211,11 @@ export function tickTutorial(_dt: number) {
     setTutorialGatePulse(0.6 + 0.4 * Math.sin(now * 4));
   }
 
+  if (step.id === "graduation" && step.isComplete(ctx)) {
+    completeTutorial(false);
+    return;
+  }
+
   if (step.id === "hangar-high") {
     if (!Client.stationOpen) {
       snapshot.hangarTabActive = false;

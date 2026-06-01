@@ -162,7 +162,7 @@ export function updateEngineSound(isThrusting: boolean, speedRatio = 0, afterbur
   const wasActive = n.active;
   n.active = isThrusting;
 
-  const baseVol = isThrusting ? 0.14 : 0;
+  const baseVol = isThrusting ? 0.35 : 0;
   const targetNoiseVol = baseVol * (afterburner ? 1.35 : 1.0);
   const targetRumbleVol = baseVol * 0.45 * (afterburner ? 1.5 : 1.0);
 

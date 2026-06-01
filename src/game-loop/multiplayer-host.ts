@@ -24,8 +24,28 @@ export const VITE_PREVIEW_PORT = 4174;
 /** Novus multiplayer / host WebSocket server (always). */
 export const GAME_SERVER_PORT = 4173;
 
+export interface EnsureGameplayConnectedOptions {
+  reconnectLocal?: boolean;
+}
+
 export function getMultiplayerPort(): number {
   return GAME_SERVER_PORT;
+}
+
+function resetLocalHostStateForReconnect(): void {
+  gameClient.disconnect();
+  resetServerWorker();
+  tauriWsStarted = false;
+  multiplayerRole = "none";
+  Client.multiplayerRole = "none";
+  lastHostHeartbeat = 0;
+  if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.removeItem("ss2-host-active");
+    } catch {
+      // ignore localStorage errors
+    }
+  }
 }
 
 export function updateHostHeartbeat() {
@@ -97,7 +117,19 @@ async function ensureTauriWsServer(): Promise<boolean> {
   } catch (err) {
     const msg = String(err);
     if (msg.includes("already running")) {
-      netLog(`[ERR] Tauri WS port ${port} is already in use — close other Novus instances/processes and retry`);
+      netLog(`[WARN] Tauri WS port ${port} already running — retrying relay restart`);
+      try {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("stop_server").catch(() => undefined);
+        await new Promise((resolve) => window.setTimeout(resolve, 150));
+        await invoke("start_server", { port });
+        tauriWsStarted = true;
+        netLog(`[OK] Tauri WS server listening on port ${port} after retry`);
+        return true;
+      } catch (retryErr) {
+        netLog(`[ERR] Tauri WS port ${port} is still unavailable — close other Novus instances/processes and retry`);
+        console.error("[GameLoop] Failed to restart Tauri WS server:", retryErr);
+      }
     } else {
       netLog(`[ERR] Failed to start Tauri WS server: ${err}`);
       console.error("[GameLoop] Failed to start Tauri WS server:", err);
@@ -188,7 +220,11 @@ async function forwardToServerWorker(type: string, payload: Record<string, unkno
   }
 }
 
-export async function ensureGameplayConnected(): Promise<boolean> {
+export async function ensureGameplayConnected(opts: EnsureGameplayConnectedOptions = {}): Promise<boolean> {
+  if (opts.reconnectLocal) {
+    netLog("ensureGameplayConnected: resetting local session for loaded save");
+    resetLocalHostStateForReconnect();
+  }
   if (gameClient.connectionState === "connected") {
     netLog("[OK] ensureGameplayConnected: already connected");
     return true;

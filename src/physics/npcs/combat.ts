@@ -18,7 +18,6 @@ import { ORE } from "../../data/resources.js";
 import { damagePlayer, showDamageNumber } from "../../combat/damage-display.js";
 import { getPlayerTurretOrigin } from "../../combat/turret-origin.js";
 import { harvestAsteroid, destroyAsteroid } from "../../utils/mining.js";
-import { sfxBeamImpact, sfxIndustrialBeam, sfxProjectileImpact } from "../../audio/procedural.js";
 import { C } from "../../config/index.js";
 import type { Enemy, Asteroid } from "../../types/world.js";
 import { type SpatialQueryResult } from "../../utils/spatial.js";
@@ -172,7 +171,10 @@ export function updateEnemyBullets(dt: number, sysIdx: number) {
 
     if (astHit && astHitT === earliestT) {
       spawnImpactFlash(astHitX, astHitY, b.color || "#ff6644");
-      sfxProjectileImpact(astHitX, astHitY, b.kind || "projectile");
+      getState().pendingEffects.push({
+        type: "impact",
+        payload: { x: astHitX, y: astHitY, color: b.color || "#ff6644", delivery: b.kind || "projectile" },
+      });
       removeEnemyBullet(i);
       continue;
     }
@@ -181,7 +183,10 @@ export function updateEnemyBullets(dt: number, sysIdx: number) {
       const variance = 0.5 + random() * 0.7;
       const finalDmg = Math.max(1, Math.floor((b.dmg || (2 + random() * 2)) * variance));
       damagePlayer(finalDmg, b.x, b.y, {}, hitPlayer);
-      sfxProjectileImpact(b.x, b.y, b.kind || "projectile");
+      getState().pendingEffects.push({
+        type: "impact",
+        payload: { x: b.x, y: b.y, color: b.color || "#ff6644", delivery: b.kind || "projectile" },
+      });
       removeEnemyBullet(i);
       continue;
     }
@@ -190,7 +195,10 @@ export function updateEnemyBullets(dt: number, sysIdx: number) {
       const variance = 0.5 + random() * 0.7;
       const finalDmg = Math.max(1, Math.floor((b.dmg || (2 + random() * 2)) * variance));
       damageEnemy(hitNpc, finalDmg, npcHitX, npcHitY, undefined, b.kind || "projectile");
-      sfxProjectileImpact(npcHitX, npcHitY, b.kind || "projectile");
+      getState().pendingEffects.push({
+        type: "impact",
+        payload: { x: npcHitX, y: npcHitY, color: b.color || "#ff6644", delivery: b.kind || "projectile" },
+      });
       removeEnemyBullet(i);
       continue;
     }
@@ -255,7 +263,10 @@ export function updateMining(dt: number, p: Player) {
     if (p === getState().player) {
       _miningHumTimer -= dt;
       if (_miningHumTimer <= 0) {
-        sfxIndustrialBeam("mining", surface.x, surface.y);
+        getState().pendingEffects.push({
+          type: "industrialBeam",
+          payload: { delivery: "mining", x: surface.x, y: surface.y },
+        });
         _miningHumTimer = 0.5;
       }
       _miningSparkTimer -= dt;
@@ -275,7 +286,12 @@ export function updateMining(dt: number, p: Player) {
     if (result.dmg > 0) {
       showDamageNumber(surface.x, surface.y, Math.round(result.dmg), "mining");
     }
-    if (p === getState().player) sfxBeamImpact("mining", surface.x, surface.y);
+    if (p === getState().player) {
+      getState().pendingEffects.push({
+        type: "impact",
+        payload: { x: surface.x, y: surface.y, color: "#ff8822", delivery: "mining" },
+      });
+    }
     PlayerAccess.setMineCd(0.45, p);
     if (result.oreKey) {
       MiningAccess.update({

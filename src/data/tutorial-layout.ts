@@ -197,7 +197,7 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
   },
   {
     id: "spoke-gunnery",
-    points: [HUB, { x: 1100, y: 800 }, TUTORIAL_GUNNERY_CENTER],
+    points: [HUB, TUTORIAL_GUNNERY_CENTER],
     halfWidth: 110,
     activeForSteps: ["fly-gunnery"],
   },
@@ -333,35 +333,6 @@ function pointAtArcLength(track: TutorialTrackSegment, arcLen: number): { x: num
   return track.points[track.points.length - 1];
 }
 
-const GATE_FRACTIONS = [0.2, 0.4, 0.6, 0.8];
-
-function buildBoostGatesForTrack(
-  trackId: string,
-  fractions: number[],
-  strength: number,
-  halfWidth = 108,
-): TutorialBoostGate[] {
-  const track = getTutorialTrackById(trackId);
-  if (!track) return [];
-  const total = trackTotalArcLength(track);
-  return fractions.map((fraction, i) => {
-    const arc = total * fraction;
-    const pt = pointAtArcLength(track, arc);
-    const angle = tangentAtArcLength(track, arc);
-    return {
-      id: `${trackId}-gate-${i}`,
-      x: pt.x,
-      y: pt.y,
-      angle,
-      halfWidth,
-      strength,
-      trackId,
-      cooldownS: 4,
-      pillarHeight: 150,
-    };
-  });
-}
-
 function buildEvenBoostGatesForTrackRange(
   trackId: string,
   count: number,
@@ -410,10 +381,10 @@ export const TUTORIAL_BOOST_GATES: TutorialBoostGate[] = [
   }),
   ...buildEvenBoostGatesForTrackRange("spoke-mining", 4, 180, 108, {
     endArc: segmentLength(HUB.x, HUB.y, TUTORIAL_BELT_CENTER.x, TUTORIAL_BELT_CENTER.y) - 500,
-    marginArc: 80,
+    marginArc: 340,
   }),
-  ...buildBoostGatesForTrack("spoke-gunnery", GATE_FRACTIONS, 180),
-  ...buildBoostGatesForTrack("spoke-gate", GATE_FRACTIONS, 190),
+  ...buildEvenBoostGatesForTrackRange("spoke-gunnery", 4, 180, 108, { marginArc: 340 }),
+  ...buildEvenBoostGatesForTrackRange("spoke-gate", 4, 190, 108, { marginArc: 340 }),
 ];
 
 /** @deprecated alias */

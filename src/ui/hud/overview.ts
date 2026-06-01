@@ -3,7 +3,7 @@ import { getState } from "../../state-access.js";
 import type { System } from "../../types/world.js";
 import { GATE_RANGE } from "../../constants.js";
 import { dst } from "../../utils/math.js";
-import { buildLocalOverviewRows, overviewLockActionHTML } from "../bridge.js";
+import { buildLocalOverviewRows } from "../bridge.js";
 import { hudState } from "./state.js";
 import { showEnemyCtxMenu } from "./enemy-menu.js";
 import { formatDistance } from "../../utils/format.js";
@@ -64,8 +64,7 @@ export function updateHudOverviewPanel() {
         <td class="ov-name">${r.name.slice(0, 12)}</td>
         <td class="ov-num ov-dist">${dist}</td>
         <td class="ov-num ov-sig">${sig}</td>
-        <td class="ov-num ov-relV">${relV}</td>
-        <td class="ov-action">${overviewLockActionHTML(r)}</td>`;
+        <td class="ov-num ov-relV">${relV}</td>`;
 
       tr.addEventListener("contextmenu", (ev) => {
         if (r.kind === "hostile" || r.kind === "neutral") {
@@ -84,13 +83,10 @@ export function updateHudOverviewPanel() {
       const sigCell = tr.querySelector(".ov-sig");
       const rCell = tr.querySelector(".ov-relV");
       const sCell = tr.querySelector(".ov-st");
-      const actionCell = tr.querySelector(".ov-action");
       if (dCell && dCell.textContent !== dist) dCell.textContent = dist;
       if (sigCell && sigCell.textContent !== sig) sigCell.textContent = sig;
       if (rCell && rCell.textContent !== relV) rCell.textContent = relV;
       if (sCell && sCell.innerHTML !== r.status) sCell.innerHTML = r.status;
-      const actionHtml = overviewLockActionHTML(r);
-      if (actionCell && actionCell.innerHTML !== actionHtml) actionCell.innerHTML = actionHtml;
 
       // Only re-append if this row is not already the last child (or not in correct position)
       const lastChild = hudState.ovEntries.lastElementChild;

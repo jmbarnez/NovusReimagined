@@ -51,6 +51,10 @@ let autoSaveTimer = 0;
 let currentTick = 0;
 let lastRenderedFrameTime = performance.now();
 
+export interface EnterSpaceModeOptions {
+  reconnectLocal?: boolean;
+}
+
 function getFrameLimitMs(): number {
   const fpsLimit = Client.settings?.fpsLimit ?? 0;
   if (!Number.isFinite(fpsLimit) || fpsLimit <= 0) return 0;
@@ -203,11 +207,20 @@ export function initGameLoop() {
   requestAnimationFrame(loop);
 }
 
-export async function enterSpaceMode() {
+export async function enterSpaceMode(opts: EnterSpaceModeOptions = {}) {
   const conn = gameClient.connectionState;
-  netLog(`enterSpaceMode begin conn=${conn}`);
+  netLog(`enterSpaceMode begin conn=${conn}${opts.reconnectLocal ? " reconnectLocal=true" : ""}`);
 
   try {
+    if (opts.reconnectLocal || conn !== "connected") {
+      const connected = await ensureGameplayConnected({ reconnectLocal: opts.reconnectLocal });
+      if (!connected) {
+        throw new Error("Authoritative gameplay connection failed");
+      }
+    } else {
+      netLog("[OK] enterSpaceMode: already connected");
+    }
+
     dismissLoadingScreen();
     document.querySelectorAll(".title-screen").forEach((el) => el.remove());
     document
@@ -233,12 +246,6 @@ export async function enterSpaceMode() {
     } catch (err) {
       netLog(`[WARN] resize failed: ${err}`);
       console.warn("[GameLoop] resize failed:", err);
-    }
-
-    if (conn !== "connected") {
-      await ensureGameplayConnected();
-    } else {
-      netLog("[OK] enterSpaceMode: already connected");
     }
 
     netLog(`[OK] enterSpaceMode complete conn=${gameClient.connectionState}`);

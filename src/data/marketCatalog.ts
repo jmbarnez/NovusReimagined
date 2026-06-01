@@ -18,13 +18,13 @@ export const COMPONENT_MARKET_BUY: Record<string, number> = {
 };
 
 export const ORE_MARKET_BLURB: Record<string, string> = {
-  iron: "Unrefined ferro ore — industry input.",
+  iron: "Unrefined ferro ore — fabrication input.",
   crystal: "Lattice-bearing raw crystal.",
   exotic: "Rare exotic particulate feedstock.",
 };
 
 export const COMPONENT_MARKET_BLURB: Record<string, string> = {
-  circuit: "Printed boards for advanced fits & industry.",
+  circuit: "Printed boards for advanced fits & fabrication.",
   gear: "Precision mechanical assemblies.",
   harness: "Shielded power & data harnesses.",
   sensor_cluster: "Integrated sensor package — advanced fits & builds.",
@@ -35,7 +35,7 @@ export const BLUEPRINT_MARKET_BUY: Record<string, number> = {
 };
 
 export const BLUEPRINT_MARKET_BLURB: Record<string, string> = {
-  sensor_cluster: "Fabrication license — Sensor cluster (Industry Workbench).",
+  sensor_cluster: "Fabrication license — Sensor cluster (Fabrication Workbench).",
 };
 
 export const MODULE_BLUEPRINT_MARKET_BUY: Record<string, number> = {};

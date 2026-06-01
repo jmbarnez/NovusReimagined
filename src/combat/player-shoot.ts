@@ -1,6 +1,6 @@
 import type { Player } from "../state.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
-import { PlayerAccess } from "../state-access.js";
+import { PlayerAccess, getState } from "../state-access.js";
 import { dst, random } from "../utils/math.js";
 import { ensureAmmoDefaults } from "../player/player-data.js";
 import { getStats, getWeaponProfileForSlot, weaponSkillBonus } from "../player/player-stats.js";
@@ -12,7 +12,6 @@ import { isAsteroidTarget, transversalVs } from "../targeting.js";
 import { MODULES, MODULE_FLAGS, type ModuleDef } from "../data/modules.js";
 import { getPlayerTurretOrigin } from "./turret-origin.js";
 import { flashSlotFire, logEvent } from "../feedback.js";
-import { sfxWeaponFire } from "../audio/procedural.js";
 import { aimDeviationCone, calculatePredictiveAimAngle } from "./aim.js";
 import { computeHitQuality } from "./hit-quality.js";
 import { fireBeamWeapon } from "./beam-weapon.js";
@@ -121,7 +120,16 @@ export function playerShoot(slotIdx: number, targetEnemy: Enemy | Asteroid | Wre
   const muzzleIntensity = turretMod.weaponDelivery === "missile" ? C.COMBAT.MUZZLE_FLASH.missileIntensity : turretMod.weaponDelivery === "projectile" && wProf.dmg >= C.COMBAT.MUZZLE_FLASH.heavyProjectileDmgThreshold ? C.COMBAT.MUZZLE_FLASH.heavyProjectileIntensity : C.COMBAT.MUZZLE_FLASH.defaultIntensity;
 
   spawnMuzzleFlash(origin.x, origin.y, angle, wProf.color, muzzleIntensity);
-  sfxWeaponFire(turretMod.weaponDelivery!, turretMod.id, 1, origin.x, origin.y);
+  getState().pendingEffects.push({
+    type: "weaponFire",
+    payload: {
+      delivery: turretMod.weaponDelivery!,
+      typeId: turretMod.id,
+      vol: 1,
+      x: origin.x,
+      y: origin.y,
+    },
+  });
 
   const weaponMult = st.weaponMult * (1 + weaponSkillBonus(delivery, p));
   const dmgProfile = turretMod.damageProfile ?? null;

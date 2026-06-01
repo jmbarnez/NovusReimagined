@@ -1,63 +1,74 @@
 /* ── Mission Contracts Panel (below minimap) ── */
 #hud-missions {
-  flex: 1;
+  position: fixed;
+  top: var(--hud-minimap-w);
+  right: 0;
+  width: var(--hud-minimap-w);
+  max-height: calc(100vh - var(--hud-minimap-w) - var(--hud-bottom-h) - 8px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: 4px 3px;
   pointer-events: auto;
+  z-index: 15;
   font-family: var(--font-family);
-  font-size: calc(7.5px * var(--effective-font-scale, 1));
+  font-size: calc(6.5px * var(--effective-font-scale, 1));
   color: var(--hud-text-main, var(--hud-text-main));
   overflow-y: auto;
+  background: color-mix(in srgb, var(--hud-bg-deep) 45%, transparent);
+  border-left: 1px solid var(--hud-border-soft);
+  border-bottom: 1px solid var(--hud-border-soft);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .hm-header {
-  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-size: calc(6.5px * var(--effective-font-scale, 1));
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   color: #5a7088;
-  margin-bottom: 8px;
+  margin-bottom: 3px;
   flex-shrink: 0;
 }
 
 
 .hm-empty {
-  font-size: calc(7px * var(--effective-font-scale, 1));
+  font-size: calc(6px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim, var(--hud-text-dim));
   text-align: center;
-  line-height: 1.5;
-  padding: 4px 0;
+  line-height: 1.35;
+  padding: 3px 0;
   opacity: 0.55;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
 }
 .hm-contract {
   background: rgba(0,2,6,0.88);
   border: 1px solid rgba(55,85,110,0.45);
   border-left: 2px solid rgba(72,144,160,0.7);
-  padding: 3px 5px;
-  margin-bottom: 3px;
+  padding: 2px 3px;
+  margin-bottom: 2px;
 }
 .hm-contract.complete {
   border-left-color: var(--hud-positive);
   background: rgba(0,10,5,0.92);
 }
 .hm-title {
-  font-size: calc(7.5px * var(--effective-font-scale, 1));
+  font-size: calc(6.5px * var(--effective-font-scale, 1));
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--hud-text-main, var(--hud-text-main));
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 .hm-contract.complete .hm-title { color: #74eaaa; }
 .hm-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 .hm-prog {
-  font-size: calc(6.5px * var(--effective-font-scale, 1));
+  font-size: calc(5.5px * var(--effective-font-scale, 1));
   color: #4a90b8;
   letter-spacing: 0;
   flex: 1;
@@ -66,17 +77,23 @@
   white-space: nowrap;
 }
 .hm-done {
-  font-size: calc(6.5px * var(--effective-font-scale, 1));
+  font-size: calc(5.5px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-positive);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   animation: hm-pulse 1.4s ease-in-out infinite;
 }
 .hm-reward {
-  font-size: calc(6.5px * var(--effective-font-scale, 1));
+  font-size: calc(5.5px * var(--effective-font-scale, 1));
   color: #c8a855;
   white-space: nowrap;
   flex-shrink: 0;
+}
+#hud-missions.hud-highlight,
+#hud-missions.tutorial-hangar-highlight {
+  position: fixed !important;
+  top: var(--hud-minimap-w) !important;
+  right: 0 !important;
 }
 @keyframes hm-pulse {
   0%, 100% { opacity: 1; }

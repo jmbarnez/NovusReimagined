@@ -8,7 +8,6 @@ import { spawnImpactFlash } from "../utils/fx.js";
 import { floatText } from "../utils/fx.js";
 import { removeBullet, updateBeams, updateParticles, updateShockwaves, updateFloatTexts, isTargetDestroyed } from "../utils/entities.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
-import { sfxProjectileImpact, sfxBeamImpact } from "../audio/procedural.js";
 import type { SpatialQueryResult } from "../utils/spatial.js";
 import type { Enemy, Asteroid } from "../types/world.js";
 import type { Player } from "../state.js";
@@ -139,15 +138,31 @@ export function updateProjectiles(dt: number) {
         const isMining = b.owner === getState().player && b.weaponId && MODULE_FLAGS.isMiningTurret(MODULES[b.weaponId]);
         if (isMining) {
           damageAsteroid(astTarget.data, b.dmg, hitX, hitY);
-          sfxBeamImpact("mining", hitX, hitY);
-        } else {
-          sfxProjectileImpact(hitX, hitY, b.weaponId || b.kind || "projectile");
         }
+        getState().pendingEffects.push({
+          type: "impact",
+          payload: {
+            x: hitX,
+            y: hitY,
+            color: b.color || "#ff4422",
+            delivery: isMining ? "mining" : (b.weaponId || b.kind || "projectile"),
+          },
+        });
         spawnImpactFlash(hitX, hitY, b.color || "#ff4422");
         b.life = 0;
       } else if (enemyTarget && enemyTarget.data) {
         spawnImpactFlash(b.x, b.y, b.color || "#ff4422");
-        if (b.owner === getState().player) sfxProjectileImpact(b.x, b.y, b.weaponId || b.kind || "projectile");
+        if (b.owner === getState().player) {
+          getState().pendingEffects.push({
+            type: "impact",
+            payload: {
+              x: b.x,
+              y: b.y,
+              color: b.color || "#ff4422",
+              delivery: b.weaponId || b.kind || "projectile",
+            },
+          });
+        }
         damageEnemy(enemyTarget.data, b.dmg, b.x, b.y, b.owner, b.kind);
         b.life = 0;
       }

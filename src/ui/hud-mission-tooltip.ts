@@ -10,7 +10,7 @@ import { SKILL_DEF } from "../data/skills.js";
 import { CONTRACT_TYPE_ICONS } from "./station/shared.js";
 
 const TOOLTIP_ID = "hud-mission-tooltip";
-let listenersAttached = false;
+let listenersPanel: HTMLElement | null = null;
 
 function findContractById(id: string): MissionContract | null {
   const match = getState().player?.contracts?.find(c => c.id === id);
@@ -101,8 +101,8 @@ function positionMissionTooltip(tip: HTMLElement, clientX: number, clientY: numb
 }
 
 export function attachMissionTooltipListeners(panel: HTMLElement): void {
-  if (listenersAttached) return;
-  listenersAttached = true;
+  if (listenersPanel === panel) return;
+  listenersPanel = panel;
 
   panel.addEventListener("mouseover", (e) => {
     const card = (e.target as HTMLElement).closest(".hm-contract") as HTMLElement | null;

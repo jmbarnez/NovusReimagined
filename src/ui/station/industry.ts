@@ -1,12 +1,21 @@
 import "../styles/station-industry.css";
 import { getState } from "../../state-access.js";
-import { MACHINES, RECIPES, poolItemLabel, type IndustryPool, createCraftJob } from "../../data/industryRecipes.js";
+import { MACHINES, RECIPES, poolItemLabel, type IndustryPool } from "../../data/industryRecipes.js";
 import { escHtml } from "../../utils/format.js";
 import { stationState, iconSvg } from "./shared.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../../audio/procedural.js";
 import { queueFrameAction } from "../../sim/input.js";
+import { t } from "../../utils/i18n.js";
 
 let lastContainer: HTMLElement | null = null;
+
+function resolveIndustryContainer(container?: HTMLElement): HTMLElement | null {
+  if (container) return container;
+  const stationPanel = document.getElementById("panel-industry");
+  if (stationPanel?.classList.contains("active")) return stationPanel;
+  if (lastContainer?.isConnected) return lastContainer;
+  return stationPanel;
+}
 
 function playerPool(pool: IndustryPool): Record<string, number> {
   if (pool === "ore")       return getState().player.ore;
@@ -44,11 +53,11 @@ function formatTime(seconds: number): string {
 }
 
 export function updateIndustryProgress() {
-  if (lastContainer) renderIndustry(lastContainer);
+  if (lastContainer?.isConnected) renderIndustry(lastContainer);
 }
 
 export function renderIndustry(container?: HTMLElement) {
-  const div = container || lastContainer || document.getElementById("panel-industry");
+  const div = resolveIndustryContainer(container);
   if (!div) return;
   lastContainer = div;
 
@@ -70,7 +79,7 @@ export function renderIndustry(container?: HTMLElement) {
     `<button class="ind-tab-btn${stationState.indTab===m.id?" active":""}" data-action="indTab" data-tab="${m.id}">${escHtml(m.label)}</button>`
   ).join("");
 
-  const sortOpts = [["name","Name"],["affordable","Affordable"]].map(
+  const sortOpts = [["name", t("common.name")],["affordable", t("market.affordable")]].map(
     ([v,l]) => `<option value="${v}"${stationState.indSort===v?" selected":""}>${l}</option>`
   ).join("");
 
@@ -78,7 +87,7 @@ export function renderIndustry(container?: HTMLElement) {
     <div class="ind-sidebar-controls">
       <div class="ind-tab-group">${tabBtns}</div>
       <div class="ind-controls-row">
-        <input class="ind-search-input" id="ind-search-input" type="text" placeholder="search…" value="${escHtml(stationState.indSearch)}">
+        <input class="ind-search-input" id="ind-search-input" type="text" placeholder="${escHtml(t("common.search"))}" value="${escHtml(stationState.indSearch)}">
         <select class="ind-sort-sel" id="ind-sort-select">${sortOpts}</select>
       </div>
     </div>
@@ -93,13 +102,13 @@ export function renderIndustry(container?: HTMLElement) {
         <div class="ind-item-label">${escHtml(r.label)}</div>
       </div>
     `;
-  }).join("") || `<div class="ind-empty-list">No recipes found.</div>`;
+  }).join("") || `<div class="ind-empty-list">${escHtml(t("industry.noRecipes"))}</div>`;
 
   let detailsHtml = `
-    <div class="ind-details-empty">
-      <div class="ind-empty-icon">⚒</div>
-      <div>Select a recipe to begin crafting</div>
-    </div>
+      <div class="ind-details-empty">
+        <div class="ind-empty-icon">⚒</div>
+        <div>${escHtml(t("industry.selectRecipe"))}</div>
+      </div>
   `;
 
   const selected = RECIPES.find(r => r.id === stationState.selectedRecipeId);
@@ -117,7 +126,7 @@ export function renderIndustry(container?: HTMLElement) {
 
     let actionHtml = "";
     if (needsBP) {
-      actionHtml = `<button class="ind-btn ind-btn-primary" data-action="buyBP" data-recipe="${selected.id}">Unlock Blueprint (${selected.blueprintCost}¢)</button>`;
+      actionHtml = `<button class="ind-btn ind-btn-primary" data-action="buyBP" data-recipe="${selected.id}">${escHtml(t("industry.unlock", { cost: selected.blueprintCost ?? 0 }))}</button>`;
     } else {
       const qtyOptions = [1, 5, 10, 25, 50].map(n =>
         `<option value="${n}"${stationState.craftQty===n?" selected":""}>×${n}</option>`
@@ -125,7 +134,7 @@ export function renderIndustry(container?: HTMLElement) {
       actionHtml = `
         <div class="ind-qty-row">
           <select class="ind-qty-sel" id="ind-qty-sel">${qtyOptions}</select>
-          <button class="ind-btn ind-btn-primary" ${affordable ? "" : "disabled"} data-action="queueJob" data-recipe="${selected.id}">Queue Job</button>
+          <button class="ind-btn ind-btn-primary" ${affordable ? "" : "disabled"} data-action="queueJob" data-recipe="${selected.id}">${escHtml(t("industry.queueJob"))}</button>
         </div>
         <div class="ind-time-estimate">${stationState.craftQty > 1 ? `${stationState.craftQty}× ` : ""}${formatTime(totalTime)} total</div>
       `;
@@ -139,12 +148,12 @@ export function renderIndustry(container?: HTMLElement) {
         </div>
 
         <div class="ind-section">
-          <div class="ind-section-title">Required Materials</div>
+          <div class="ind-section-title">${escHtml(t("industry.required"))}</div>
           <div class="ind-pill-list">${inputPills}</div>
         </div>
 
         <div class="ind-section">
-          <div class="ind-section-title">Production Output</div>
+          <div class="ind-section-title">${escHtml(t("industry.output"))}</div>
           <div class="ind-pill-list">${outputPills}</div>
           ${selected.outputSkill ? `<div class="ind-skill-bonus">+${((skillMult-1)*100).toFixed(0)}% from ${selected.outputSkill} skill</div>` : ""}
         </div>
@@ -182,10 +191,10 @@ function renderQueuePanel(): string {
 
   if (queue.length === 0) {
     return `
-      <div class="ind-queue-header">Crafting Queue</div>
+      <div class="ind-queue-header">${escHtml(t("industry.queue"))}</div>
       <div class="ind-queue-empty">
         <div class="ind-queue-empty-icon">◷</div>
-        <div>No active jobs</div>
+        <div>${escHtml(t("industry.noJobs"))}</div>
       </div>
     `;
   }
@@ -203,14 +212,14 @@ function renderQueuePanel(): string {
         <div class="ind-queue-job-header">
           <div class="ind-queue-job-icon">${iconSvg(recipe.outputs[0].key, 10)}</div>
           <div class="ind-queue-job-name">${escHtml(recipe.label)}${job.qty > 1 ? ` ×${job.qty}` : ""}</div>
-          <button class="ind-queue-cancel" data-action="cancelJob" data-job-id="${job.id}" title="Cancel job">×</button>
+          <button class="ind-queue-cancel" data-action="cancelJob" data-job-id="${job.id}" title="${escHtml(t("industry.cancelJob"))}">×</button>
         </div>
         <div class="ind-queue-progress-track">
           <div class="ind-queue-progress-fill" style="width:${pct}%"></div>
         </div>
         <div class="ind-queue-job-footer">
           <span class="ind-queue-pct">${pct}%</span>
-          <span class="ind-queue-time">${formatTime(remainingMs / 1000)} remaining</span>
+          <span class="ind-queue-time">${formatTime(remainingMs / 1000)} ${escHtml(t("industry.remaining"))}</span>
         </div>
       </div>
     `;
@@ -218,8 +227,8 @@ function renderQueuePanel(): string {
 
   return `
     <div class="ind-queue-header">
-      Crafting Queue
-      <span class="ind-queue-count">${queue.length} job${queue.length !== 1 ? "s" : ""}</span>
+      ${escHtml(t("industry.queue"))}
+      <span class="ind-queue-count">${queue.length} ${escHtml(t(queue.length === 1 ? "industry.job" : "industry.jobs"))}</span>
     </div>
     <div class="ind-queue-list">
       ${jobsHtml}

@@ -7,7 +7,6 @@ import "../styles/hud-logs.css";
 import "../styles/map-overlay.css";
 import "../styles/bridge.css";
 import { getState } from "../../state-access.js";
-import { queueFrameAction } from "../../sim/input.js";
 import { sfxConfirm } from "../../audio/procedural.js";
 import { initMissionsPanel } from "../hud-missions.js";
 import { t } from "../../utils/i18n.js";
@@ -103,7 +102,6 @@ export function initHudOverlay() {
                   <th class="ov-sortable" data-sort="dist"><span class="th-text">${t("hud.dist")}</span><div class="ov-resizer"></div></th>
                   <th><span class="th-text">${t("hud.sig")}</span><div class="ov-resizer"></div></th>
                   <th><span class="th-text">${t("bridge.overviewDv")}</span><div class="ov-resizer"></div></th>
-                  <th><span class="th-text">${t("hud.act")}</span></th>
                 </tr></thead>
                 <tbody></tbody>
               </table>
@@ -194,24 +192,6 @@ export function initHudOverlay() {
   });
   updateHudOverviewPanelHeaders();
   initOverviewResizers(hudState.ovPanel!);
-
-  const ovLockClick = (ev: MouseEvent) => {
-    const target = ev.target as Element | null;
-    const btn = target?.closest(".ov-lock") as HTMLElement | null;
-    if (!btn) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    sfxConfirm();
-    const id = btn.getAttribute("data-lock-id");
-    if (!id) return;
-    const existing = getState().player.lockQueue?.find((s) => s.id === id);
-    if (existing) {
-      queueFrameAction({ type: "selectLockTarget", payload: { id } });
-    } else {
-      queueFrameAction({ type: "requestSensorLock", payload: { id } });
-    }
-  };
-  document.body.addEventListener("click", ovLockClick);
   document.body.addEventListener("click", (ev) => {
     const btn = (ev.target as HTMLElement).closest("#hud-overview-panel .ov-decrypt");
     if (!btn) return;

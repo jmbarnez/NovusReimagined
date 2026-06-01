@@ -112,7 +112,7 @@ export function buildGalaxy(): System[] {
   const deepSpace = makeGalaxySystem(4, "Deep Space", 870, 0, 0.0, 4);
 
   cadet.links = [1];
-  prime.links = [0];
+  prime.links = [];
   NOVUS_PRIME_IDX = 1;
   return [cadet, prime, innerBelt, outerBelt, deepSpace];
 }

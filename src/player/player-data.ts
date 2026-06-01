@@ -186,6 +186,14 @@ export function makePlayer(): Player {
   };
 }
 
+export function clearTransientPlayerInput(p: Player): void {
+  p.inputKeys = null;
+  p.inputMouseWorld = null;
+  p.waypoint = null;
+  p.navCommand = null;
+  p.netInputFrame = null;
+}
+
 export function loadPlayer(): Player {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -195,6 +203,7 @@ export function loadPlayer(): Player {
     p.px = p.x; p.py = p.y; p.prevAngle = p.angle;
     p.shootCd = p.mineCd = 0; p.invincible = 1.5;
     p.thrustFx = false;
+    clearTransientPlayerInput(p);
     if (p.shield == null) p.shield = 0;
     p.shieldCd = 0;
     p.shieldHitGlow = 0;
