@@ -7,6 +7,7 @@ import { updateNpcs, updateEnemyBullets, updateAsteroids, updateMining, resolveN
 import { updateStationTurrets } from "./physics/station-turrets.js";
 import { updateWarp } from "./dock.js";
 import { rebuildSpatialGrid } from "./utils/spatial.js";
+import { allActivePlayers } from "./utils/game.js";
 import { updateWreckPiecesAndPickups } from "./wreck.js";
 import { updateSalvager } from "./salvager.js";
 import { updateTractor } from "./tractor.js";
@@ -22,7 +23,9 @@ import { updateMapScanner, updateScanning } from "./scanning.js";
 export function tick(dt: number) {
   rebuildSpatialGrid();
   tickAbilities(dt);
-  updateShip(dt);
+  for (const p of allActivePlayers()) {
+    updateShip(dt, p);
+  }
   updateTutorialTrack(dt, getState().player);
   updateTurretPowerCd(dt);
   updateTurretCooldowns(dt);

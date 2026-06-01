@@ -104,14 +104,6 @@
   z-index: 3;
 }
 
-.cockpit-monitor::after {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border: 1px solid color-mix(in srgb, var(--hud-border-accent) 28%, transparent);
-  pointer-events: none;
-  z-index: 3;
-}
 
 .monitor-bezel-line {
   position: absolute;

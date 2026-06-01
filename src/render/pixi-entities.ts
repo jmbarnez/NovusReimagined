@@ -378,6 +378,7 @@ export function syncPixiEntities(alpha: number, now: number): void {
   const sys = getState().GALAXY?.[getState().player?.sysIdx ?? 0];
   const liveEnemies: Enemy[] = sys?._liveEnemies ?? [];
   const lod = Client.zoom < 0.4;
+  const useFixedTickInterpolation = Client.multiplayerRole === "none";
   const lightOn = !lod && Client.settings?.directionalLighting !== false;
   const _sd = sys?.sunDir ?? 0;
   const sunWorldX = Math.cos(_sd) * 3500;
@@ -398,9 +399,9 @@ export function syncPixiEntities(alpha: number, now: number): void {
     if (!_bundles.has(e.id)) _bundles.set(e.id, createBundle(e));
     const b = _bundles.get(e.id)!;
 
-    const ix = lerp(e.px, e.x, alpha);
-    const iy = lerp(e.py, e.y, alpha);
-    const ia = lerp(e.prevAngle ?? e.angle, e.angle, alpha);
+    const ix = useFixedTickInterpolation ? lerp(e.px, e.x, alpha) : e.x;
+    const iy = useFixedTickInterpolation ? lerp(e.py, e.y, alpha) : e.y;
+    const ia = useFixedTickInterpolation ? lerp(e.prevAngle ?? e.angle, e.angle, alpha) : e.angle;
 
     // Hull
     b.hull.x = ix;

@@ -158,18 +158,14 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
     syncPixiSystemMap(mapWinRect.width, mapWinRect.height, now);
   }
   syncThrust(alpha, now);
+  syncPixiHUD(width, height, now);
+  syncPixiTargetArrows(width, height, camxR, camyR, now);
+  syncPixiTutorialGuideArrow(width, height, camxR, camyR, now);
   updateVignette();
   renderPixi();
 
   // Clear the front Canvas 2D layer so the Pixi world (behind it) is visible.
   ctx.clearRect(0, 0, width, height);
-
-  // PixiJS HUD (replaces Canvas 2D drawHUD)
-  syncPixiHUD(width, height, now);
-  
-  // PixiJS Target Arrows (replaces Canvas 2D drawTargetArrow/drawTutorialGuideArrow)
-  syncPixiTargetArrows(width, height, camxR, camyR, now);
-  syncPixiTutorialGuideArrow(width, height, camxR, camyR, now);
   
   // Canvas 2D map overlays sit above Pixi and are clipped to the map window body.
   if (mapWinRect) {

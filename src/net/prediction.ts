@@ -90,7 +90,12 @@ export class PredictionManager {
     } else {
       this.errorX = errX;
       this.errorY = errY;
-      PlayerAccess.updatePhysics({ x: local.x + this.errorX, y: local.y + this.errorY }, local);
+      PlayerAccess.updatePhysics({
+        x: local.x + this.errorX,
+        y: local.y + this.errorY,
+        px: local.px + this.errorX,
+        py: local.py + this.errorY,
+      }, local);
     }
   }
 
@@ -133,7 +138,15 @@ export class PredictionManager {
         this.errorY = 0;
       }
 
-      PlayerAccess.updatePhysics({ x: p.x + (this.errorX - prevErrX), y: p.y + (this.errorY - prevErrY) }, p);
+      const dx = this.errorX - prevErrX;
+      const dy = this.errorY - prevErrY;
+
+      PlayerAccess.updatePhysics({
+        x: p.x + dx,
+        y: p.y + dy,
+        px: p.px + dx,
+        py: p.py + dy,
+      }, p);
     }
   }
 

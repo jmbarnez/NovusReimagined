@@ -2,22 +2,27 @@
 .bridge-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.35);}
 .bridge-workspace{position:absolute;inset:0;overflow:hidden;}
 .bridge-toast{position:absolute;top:8px;right:12px;min-height:18px;padding:2px 8px;font-size:10px;color:var(--hud-accent);opacity:0;transition:opacity .2s;background:var(--hud-bg-deep);border:1px solid var(--hud-border);z-index:220;}
-.eve-window{position:absolute;display:flex;flex-direction:column;min-height:100px;min-width:200px;background:var(--hud-bg-panel);border:1px solid var(--hud-border);box-shadow:0 8px 32px rgba(0,0,0,0.6);resize:both;overflow:hidden;}
+.eve-window{position:absolute;display:flex;flex-direction:column;min-height:100px;min-width:200px;background:linear-gradient(180deg,color-mix(in srgb,var(--hud-bg-window) 58%,var(--hud-bg-panel) 42%) 0%,color-mix(in srgb,var(--hud-bg-panel) 80%,var(--hud-bg-deep) 20%) 100%);border:1px solid color-mix(in srgb,var(--hud-border) 72%,transparent);border-radius:12px;box-shadow:0 14px 28px color-mix(in srgb,var(--hud-bg-deep) 44%,transparent),0 0 0 1px color-mix(in srgb,var(--hud-border-soft) 40%,transparent) inset,0 0 24px color-mix(in srgb,var(--hud-accent) 8%,transparent) inset;resize:both;overflow:hidden;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.eve-window::before{content:"";position:absolute;inset:0;background:linear-gradient(140deg,color-mix(in srgb,var(--hud-text-bright) 8%,transparent) 0%,transparent 36%,transparent 68%,color-mix(in srgb,var(--hud-accent) 10%,transparent) 100%);border-radius:inherit;pointer-events:none;z-index:3;}
 .eve-window-overview{left:auto;right:8px;top:30px;width:320px;height:calc(80vh - 60px);min-width:180px;}
 .eve-window-cargo{left:calc(50% - 320px);top:calc(50% - 260px);width:640px;height:520px;min-width:360px;min-height:260px;}
 .eve-window-skills{left:8px;top:30px;width:370px;height:calc(80vh - 60px);min-width:260px;}
 .eve-window-missions{right:8px;top:60px;width:360px;height:360px;min-width:220px;}
 .eve-window.is-expanded{left:0!important;top:0!important;right:auto!important;width:100%!important;height:100%!important;resize:none;border-width:2px;border-color:var(--hud-border-accent);}
 .eve-window.is-expanded .eve-win-head{cursor:default;background:var(--hud-bg-panel);}
-.eve-win-head{flex-shrink:0;display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;background:var(--hud-bg-elevated);border-bottom:1px solid var(--hud-border-soft);cursor:grab;user-select:none;}
+.eve-win-head{flex-shrink:0;display:flex;align-items:center;gap:6px;height:26px;padding:0 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--hud-bg-window) 34%,transparent) 0%,transparent 100%);border-bottom:1px solid color-mix(in srgb,var(--hud-border-soft) 70%,transparent);cursor:grab;user-select:none;position:relative;z-index:2;backdrop-filter:blur(6px);}
 .eve-window-overview .eve-win-head{height:20px;background:color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);}
 .eve-window-skills .eve-win-head{height:20px;background:color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);}
 .eve-win-title{font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--hud-text-bright);}
 .eve-win-sub{font-size:8px;color:var(--hud-text-dim);flex:1;}
-.eve-win-btn{width:18px;height:18px;padding:0;border:1px solid var(--hud-border-soft);background:transparent;color:var(--hud-text-dim);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;}
-.eve-win-btn:hover{color:var(--hud-text-bright);background:var(--hud-bg-elevated);border-color:var(--hud-border);}
-.eve-win-body{flex:1;min-height:0;overflow:hidden;padding:0;background:color-mix(in srgb, var(--hud-bg-deep) 35%, transparent);display:flex;flex-direction:column;}
-.eve-win-foot{flex-shrink:0;min-height:4px;background:color-mix(in srgb, var(--hud-bg-elevated) 45%, transparent);border-top:1px solid var(--hud-border-soft);}
+.eve-win-btn{width:18px;height:18px;padding:0;border:1px solid color-mix(in srgb,var(--hud-border) 85%,var(--hud-border-soft) 15%);background:linear-gradient(180deg,color-mix(in srgb,var(--hud-bg-window) 65%,transparent) 0%,color-mix(in srgb,var(--hud-bg-panel) 85%,transparent) 100%);color:color-mix(in srgb,var(--hud-text-bright) 80%,#050607 20%);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;border-radius:4px;box-shadow:inset 0 0 8px rgba(255,255,255,0.05),0 2px 6px rgba(0,0,0,0.45);transition:border-color .15s ease,background .15s ease,color .15s ease,box-shadow .15s ease,transform .15s ease;line-height:0;}
+.eve-win-btn svg{display:block;width:12px;height:12px;pointer-events:none;}
+.eve-win-btn:hover{color:var(--hud-text-bright);background:linear-gradient(180deg,color-mix(in srgb,var(--hud-accent) 22%,var(--hud-bg-window) 78%) 0%,color-mix(in srgb,var(--hud-bg-panel) 92%,transparent) 100%);border-color:color-mix(in srgb,var(--hud-accent) 65%,var(--hud-border) 35%);box-shadow:0 0 12px color-mix(in srgb,var(--hud-accent) 30%,transparent);transform:translateY(-1px);}
+.eve-win-btn:active{transform:translateY(0);box-shadow:inset 0 0 10px color-mix(in srgb,var(--hud-bg-deep) 30%,transparent);}
+.eve-win-btn:focus-visible{outline:2px solid color-mix(in srgb,var(--hud-accent) 70%,transparent);outline-offset:1px;}
+.eve-win-close:hover{color:var(--hud-danger);text-shadow:0 0 8px color-mix(in srgb,var(--hud-danger) 70%,transparent);border-color:color-mix(in srgb,var(--hud-danger) 70%,var(--hud-border) 30%);background:linear-gradient(180deg,color-mix(in srgb,var(--hud-danger) 25%,var(--hud-bg-window) 75%) 0%,color-mix(in srgb,var(--hud-bg-panel) 85%,transparent) 100%);}
+.eve-win-body{flex:1;min-height:0;overflow:hidden;padding:0;background:color-mix(in srgb, var(--hud-bg-deep) 35%, transparent);display:flex;flex-direction:column;position:relative;z-index:2;}
+.eve-win-foot{flex-shrink:0;min-height:4px;background:color-mix(in srgb, var(--hud-bg-elevated) 45%, transparent);border-top:1px solid var(--hud-border-soft);position:relative;z-index:2;}
 .ov-meta{font-size:9px;color:var(--hud-text-dim);margin:0 0 6px;letter-spacing:0.02em;text-align:right;}
 .ov-wrap{overflow-x:auto;overflow-y:auto;max-height:none;border:1px solid var(--hud-border-soft);background:color-mix(in srgb, var(--hud-bg-deep) 65%, transparent);scrollbar-width:thin;scrollbar-color:var(--hud-border) transparent;}
 .ov-wrap::-webkit-scrollbar{width:4px;height:4px;}

@@ -20,6 +20,41 @@ import { getUIFont } from "./ui-font.js";
 let mmApp: Application | null = null;
 let mmContainer: Container | null = null;
 let mmCanvas: HTMLCanvasElement | null = null;
+let mmGfx: Graphics | null = null;
+let mmMask: Graphics | null = null;
+let mmSweepGfx: Graphics | null = null;
+let cachedThemeKey = "";
+let cachedHudBorder = 0x37556e;
+let cachedHudBorderSoft = 0x283746;
+let cachedHudBgDeep = 0x02050a;
+let lastMinimapRenderMs = 0;
+
+const MINIMAP_FRAME_MS = 1000 / 60;
+
+function colorToHex(color: string): number {
+  const trimmed = color.trim();
+  if (trimmed.startsWith("rgb")) {
+    const match = trimmed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+    if (match) return (parseInt(match[1], 10) << 16) | (parseInt(match[2], 10) << 8) | parseInt(match[3], 10);
+  }
+  if (trimmed.startsWith("#")) {
+    return parseInt(trimmed.replace("#", "0x"), 16);
+  }
+  return 0x37556e;
+}
+
+function syncThemeColors(): void {
+  const comp = getComputedStyle(document.documentElement);
+  const hudBorderStr = comp.getPropertyValue("--hud-border").trim() || "rgba(55, 85, 110, 0.65)";
+  const hudBorderSoftStr = comp.getPropertyValue("--hud-border-soft").trim() || "rgba(40, 55, 70, 0.5)";
+  const hudBgDeepStr = comp.getPropertyValue("--hud-bg-deep").trim() || "rgba(2, 5, 10, 0.92)";
+  const key = `${hudBorderStr}|${hudBorderSoftStr}|${hudBgDeepStr}`;
+  if (key === cachedThemeKey) return;
+  cachedThemeKey = key;
+  cachedHudBorder = colorToHex(hudBorderStr);
+  cachedHudBorderSoft = colorToHex(hudBorderSoftStr);
+  cachedHudBgDeep = colorToHex(hudBgDeepStr);
+}
 
 export function initPixiMinimap(): void {
   const container = document.getElementById("hud-minimap");
@@ -43,11 +78,26 @@ export function initPixiMinimap(): void {
 
     mmContainer = new Container();
     mmApp.stage.addChild(mmContainer);
+
+    mmGfx = new Graphics();
+    mmContainer.addChild(mmGfx);
+
+    mmSweepGfx = new Graphics();
+    mmContainer.addChild(mmSweepGfx);
+
+    mmMask = new Graphics();
+    mmMask.arc(HUD_MINIMAP_SIZE / 2, HUD_MINIMAP_SIZE / 2, HUD_MINIMAP_SIZE / 2 - 1, 0, TAU);
+    mmMask.fill({ color: 0xffffff, alpha: 1 });
+    mmContainer.addChild(mmMask);
+    mmGfx.mask = mmMask;
+    mmSweepGfx.mask = mmMask;
   });
 }
 
 export function syncPixiMinimap(now: number): void {
   if (!mmApp || !mmContainer || !mmCanvas) return;
+  if (now - lastMinimapRenderMs < MINIMAP_FRAME_MS) return;
+  lastMinimapRenderMs = now;
 
   const state = getState();
   const player = state.player;
@@ -57,7 +107,11 @@ export function syncPixiMinimap(now: number): void {
     return;
   }
   mmContainer.visible = true;
-  mmContainer.removeChildren();
+  if (!mmGfx || !mmSweepGfx) return;
+  const g = mmGfx;
+  const sweepGfx = mmSweepGfx;
+  g.clear();
+  sweepGfx.clear();
 
   const mmW = HUD_MINIMAP_SIZE;
   const mmH = HUD_MINIMAP_SIZE;
@@ -68,68 +122,35 @@ export function syncPixiMinimap(now: number): void {
   const range = getPassiveScanRangePx(ship);
   const scale = (mmH / 2) / range;
 
-  const g = new Graphics();
-  mmContainer.addChild(g);
-
-  // Query active theme from document element (matches Canvas 2D minimap)
-  const comp = getComputedStyle(document.documentElement);
-  const hudBorderStr = comp.getPropertyValue("--hud-border").trim() || "rgba(55, 85, 110, 0.65)";
-  const hudBorderSoftStr = comp.getPropertyValue("--hud-border-soft").trim() || "rgba(40, 55, 70, 0.5)";
-  const hudBgDeepStr = comp.getPropertyValue("--hud-bg-deep").trim() || "rgba(2, 5, 10, 0.92)";
-
-  const colorToHex = (color: string): number => {
-    color = color.trim();
-    if (color.startsWith("rgb")) {
-      const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
-      if (match) return (parseInt(match[1], 10) << 16) | (parseInt(match[2], 10) << 8) | parseInt(match[3], 10);
-    }
-    if (color.startsWith("#")) {
-      return parseInt(color.replace("#", "0x"), 16);
-    }
-    return 0x37556e;
-  };
-
-  const colorMixAlpha = (color: string, alpha: number): number => {
-    const hex = colorToHex(color);
-    return hex;
-  };
+  syncThemeColors();
 
   // Background circle + border
   const mmRadius = mmW / 2 - 1;
   g.arc(mmX, mmY, mmRadius, 0, TAU);
-  g.fill({ color: colorToHex(hudBgDeepStr), alpha: 0.35 });
-  g.stroke({ color: colorToHex(hudBorderStr), width: 1.5, alpha: 0.65 });
-
-  // Clipping mask
-  const mask = new Graphics();
-  mask.arc(mmX, mmY, mmRadius, 0, TAU);
-  mask.fill({ color: 0xffffff, alpha: 1 });
-  mmContainer.addChild(mask);
-  g.mask = mask;
+  g.fill({ color: cachedHudBgDeep, alpha: 0.35 });
+  g.stroke({ color: cachedHudBorder, width: 1.5, alpha: 0.65 });
 
   // Radar range rings
   const maxRadarR = mmW / 2 - 2;
   g.arc(mmX, mmY, maxRadarR * 0.35, 0, TAU);
-  g.stroke({ color: colorToHex(hudBorderSoftStr), width: 1, alpha: 0.35 });
+  g.stroke({ color: cachedHudBorderSoft, width: 1, alpha: 0.35 });
   g.arc(mmX, mmY, maxRadarR * 0.70, 0, TAU);
-  g.stroke({ color: colorToHex(hudBorderSoftStr), width: 1, alpha: 0.35 });
+  g.stroke({ color: cachedHudBorderSoft, width: 1, alpha: 0.35 });
   // Outer dashed ring (approximated with lower alpha since PixiJS has no setLineDash)
   g.arc(mmX, mmY, maxRadarR, 0, TAU);
-  g.stroke({ color: colorToHex(hudBorderStr), width: 1, alpha: 0.28 });
+  g.stroke({ color: cachedHudBorder, width: 1, alpha: 0.28 });
 
   // Radar sweep
   const sweepAngle = radarSweepAngle(now);
-  const sweepGrad = new Graphics();
-  sweepGrad.moveTo(mmX, mmY);
-  sweepGrad.arc(mmX, mmY, maxRadarR, sweepAngle - 0.38, sweepAngle);
-  sweepGrad.closePath();
-  sweepGrad.fill({ color: colorToHex(hudBorderStr), alpha: 0.14 });
-  mmContainer.addChild(sweepGrad);
+  sweepGfx.moveTo(mmX, mmY);
+  sweepGfx.arc(mmX, mmY, maxRadarR, sweepAngle - 0.38, sweepAngle);
+  sweepGfx.closePath();
+  sweepGfx.fill({ color: cachedHudBorder, alpha: 0.14 });
 
   // Sweep line
   g.moveTo(mmX, mmY);
   g.lineTo(mmX + Math.cos(sweepAngle) * maxRadarR, mmY + Math.sin(sweepAngle) * maxRadarR);
-  g.stroke({ color: colorToHex(hudBorderStr), width: 1.2, alpha: 0.45 });
+  g.stroke({ color: cachedHudBorder, width: 1.2, alpha: 0.45 });
 
   const pingOpacity = (px: number, py: number): number =>
     radarPingOpacity(px, py, mmX, mmY, sweepAngle);

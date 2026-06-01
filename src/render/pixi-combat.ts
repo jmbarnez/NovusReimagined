@@ -74,6 +74,7 @@ export function initPixiCombat(parent: Container): void {
 
 export function syncPixiCombat(now: number, alpha: number, sys: System): void {
   if (!_bulletGfx || !_beamGfx || !_utilityGfx) return;
+  const useFixedTickInterpolation = Client.multiplayerRole === "none";
 
   // 1. Sync Bullets (Projectiles and Enemy Projectiles)
   _bulletGfx.clear();
@@ -82,8 +83,8 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
   if (getState().bullets) {
     for (const b of getState().bullets) {
       if (!isVisible(b.x, b.y, 14)) continue;
-      const ix = lerp(b.px, b.x, alpha);
-      const iy = lerp(b.py, b.y, alpha);
+      const ix = useFixedTickInterpolation ? lerp(b.px, b.x, alpha) : b.x;
+      const iy = useFixedTickInterpolation ? lerp(b.py, b.y, alpha) : b.y;
       const spd = Math.hypot(b.vx, b.vy);
       const kind = b.kind || "projectile";
       const isMissile = kind === "missile";
@@ -140,8 +141,8 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
   if (getState().enemyBullets) {
     for (const b of getState().enemyBullets) {
       if (!isVisible(b.x, b.y, 14)) continue;
-      const ix = lerp(b.px, b.x, alpha);
-      const iy = lerp(b.py, b.y, alpha);
+      const ix = useFixedTickInterpolation ? lerp(b.px, b.x, alpha) : b.x;
+      const iy = useFixedTickInterpolation ? lerp(b.py, b.y, alpha) : b.y;
       const spd = Math.hypot(b.vx, b.vy);
       const sz = b.sz || 3;
       const colStr = b.color || "#ff5533";
