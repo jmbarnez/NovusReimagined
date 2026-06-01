@@ -3,7 +3,7 @@ import type { System } from "../types/world.js";
 import { defaultFilterVert } from "pixi.js";
 import { NOISE_GLSL } from "./shaders/noise.glsl.js";
 import { mkRng } from "../utils/math.js";
-import { W, H } from "../canvas.js";
+import { viewportW, viewportH } from "./viewport.js";
 
 interface NebulaUniforms {
   uTime: number;
@@ -235,8 +235,8 @@ function _applyArchetype(u: NebulaUniforms, arch: string, rng: () => number) {
 
 export function resizeNebulaMesh() {
   if (!_sprite) return;
-  _sprite.width  = Math.max(1, W());
-  _sprite.height = Math.max(1, H());
+  _sprite.width  = Math.max(1, viewportW());
+  _sprite.height = Math.max(1, viewportH());
 }
 
 export function destroyNebulaMesh() {

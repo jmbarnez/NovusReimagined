@@ -2,6 +2,7 @@ import { getState } from "../state-access.js";
 import type { System, Star, DustParticle } from "../types/world.js";
 import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
 import { W, H } from "../canvas.js";
+import { viewportW, viewportH } from "./viewport.js";
 import { TAU } from "../constants.js";
 
 import { screenContainer, planetLayer, worldGradeFilter } from "../pixi.js";
@@ -147,8 +148,8 @@ export function updateBackground(now: number, camX: number, camY: number) {
   const sys     = state.GALAXY?.[sysIdx];
   const starHue = sys?.starHue ?? 210;
 
-  const Wc = W();
-  const Hc = H();
+  const Wc = viewportW();
+  const Hc = viewportH();
 
   // Resize GPU nebula mesh when viewport changes
   if (Wc !== _lastWc || Hc !== _lastHc) {

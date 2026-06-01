@@ -181,7 +181,7 @@ export function strokeRoundRect(
   cx.strokeRect(x, y, w, h);
 }
 
-/** Station-style octagonal turret platform (see world-overlays drawStationTurrets). */
+/** Station-style octagonal turret platform (matches the platform drawn on station turrets in-world). */
 export function drawOctPlatform(ctx: IconPaintCtx, cx0: number, cy0: number, platR = 20): void {
   const { cx } = ctx;
   cx.save();

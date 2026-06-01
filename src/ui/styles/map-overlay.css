@@ -3,6 +3,12 @@
   background: transparent;
 }
 
+/* The map body hosts a Pixi canvas. Remove the bridge-window dark wash so the
+   map renders at full brightness instead of being dimmed by the body bg. */
+#hud-win-body-map {
+  background: transparent;
+}
+
 .map-overlay {
   position: relative;
   width: 100%;

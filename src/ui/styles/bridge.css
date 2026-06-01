@@ -23,6 +23,17 @@
 .eve-win-close:hover{color:var(--hud-danger);text-shadow:0 0 8px color-mix(in srgb,var(--hud-danger) 70%,transparent);border-color:color-mix(in srgb,var(--hud-danger) 70%,var(--hud-border) 30%);background:linear-gradient(180deg,color-mix(in srgb,var(--hud-danger) 25%,var(--hud-bg-window) 75%) 0%,color-mix(in srgb,var(--hud-bg-panel) 85%,transparent) 100%);}
 .eve-win-body{flex:1;min-height:0;overflow:hidden;padding:0;background:color-mix(in srgb, var(--hud-bg-deep) 35%, transparent);display:flex;flex-direction:column;position:relative;z-index:2;}
 .eve-win-foot{flex-shrink:0;min-height:4px;background:color-mix(in srgb, var(--hud-bg-elevated) 45%, transparent);border-top:1px solid var(--hud-border-soft);position:relative;z-index:2;}
+
+/* The map window is the only bridge window that draws real content (Pixi) into its body.
+   Disable the frosted-glass blur and the body wash on the map so the world behind it stays
+   sharp and the map renders at full brightness. Other windows (Overview, Skills, Missions,
+   Cargo) keep their backdrop-filter and body wash. */
+#hud-win-map,
+#hud-win-map .eve-win-head,
+#hud-win-map .eve-win-body {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 .ov-meta{font-size:9px;color:var(--hud-text-dim);margin:0 0 6px;letter-spacing:0.02em;text-align:right;}
 .ov-wrap{overflow-x:auto;overflow-y:auto;max-height:none;border:1px solid var(--hud-border-soft);background:color-mix(in srgb, var(--hud-bg-deep) 65%, transparent);scrollbar-width:thin;scrollbar-color:var(--hud-border) transparent;}
 .ov-wrap::-webkit-scrollbar{width:4px;height:4px;}

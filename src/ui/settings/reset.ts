@@ -4,7 +4,6 @@ import { setSfxVolume } from "../../audio/procedural.js";
 import { setMusicVolume } from "../../audio/music.js";
 import { initBackgroundStars } from "../../render/background.js";
 import { setNebulaSystem } from "../../render/pixi-nebula-gpu.js";
-import { resize } from "../../canvas.js";
 import { resizePixi } from "../../pixi.js";
 import { refreshBackground } from "../../render/pixi-background.js";
 import { refreshTheme } from "../hud-overlay.js";
@@ -24,7 +23,6 @@ export function resetSettings() {
   const state = getState();
   const curSys = state.GALAXY?.[state.player?.sysIdx ?? 0];
   setNebulaSystem(curSys);
-  resize();
   resizePixi();
   refreshBackground();
   refreshTheme();

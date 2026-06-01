@@ -2,7 +2,6 @@ import { Client } from "../../state.js";
 import { saveSettings } from "../../data/settings.js";
 import { sfxBlip, sfxConfirm, setSfxVolume } from "../../audio/procedural.js";
 import { setMusicVolume } from "../../audio/music.js";
-import { resize } from "../../canvas.js";
 import { resizePixi, syncColorGrading } from "../../pixi.js";
 import { refreshTheme } from "../hud-overlay.js";
 import { clearShipTextureCaches, rebuildPlayerSprites } from "../../render/pixi-player.js";
@@ -117,7 +116,6 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.renderScale = v;
     (document.getElementById("render-scale-val") as HTMLElement).textContent = v.toFixed(1) + "x";
-    resize();
     resizePixi();
     setCustomPreset();
     saveSettings(Client.settings);

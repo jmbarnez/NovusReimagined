@@ -6,7 +6,7 @@ import { isVisible } from "../utils/game.js";
 import { getUIFont } from "./ui-font.js";
 import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
 import { W, H } from "../canvas.js";
-import { viewCenterX, viewCenterY } from "./viewport.js";
+import { viewCenterX, viewCenterY, viewportW, viewportH } from "./viewport.js";
 
 let overlayLayer: Container | null = null;
 let shockwaveGfx: Graphics | null = null;
@@ -135,8 +135,8 @@ export function syncPixiFloatTexts(): void {
   const cards = ensureFloatCards();
   if (!layer || !cards) return;
   const state = getState();
-  const width = W();
-  const height = H();
+  const width = viewportW();
+  const height = viewportH();
   const viewCX = viewCenterX(width);
   const viewCY = viewCenterY(height);
   _floatTextKeepSet.clear();

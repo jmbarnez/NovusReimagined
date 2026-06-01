@@ -2,7 +2,21 @@ import { getState } from "../state-access.js";
 
 import { ctx, W, H } from "../canvas.js";
 import { TAU } from "../constants.js";
-import { shipPath } from "./world/entities.js";
+import { SHIPS } from "../data/ships.js";
+
+/** Draw a ship's hull outline on a Canvas 2D context using its render.path data.
+ *  This is a temporary inline replacement; the entire file is migrated to Pixi in PR 5. */
+function shipPath(shipId: string): void {
+  const def = SHIPS[shipId];
+  if (!def) return;
+  const path = def.render.path;
+  for (let i = 0; i < path.length; i++) {
+    const [x, y] = path[i];
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
 
 interface InteriorDust {
   x: number;

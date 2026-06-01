@@ -18,19 +18,8 @@ import { Client } from "./state.js";
 import { clearShipTextureCaches, rebuildPlayerSprites } from "./render/pixi-player.js";
 import { clearEnemyTextureCaches } from "./render/pixi-entities.js";
 import { clearStationTextureCaches } from "./render/pixi-stations.js";
-import { HUD_SIDE_W, HUD_BOTTOM_H, LOCK_RAIL_H } from "./constants.js";
-
-/** Playable rect (between the HUD bars in-game, full window on the title screen). */
-function playRect() {
-  const uiTop = 0;
-  const uiBottom = Client.gameStarted ? HUD_BOTTOM_H : 0;
-  const uiRight = Client.gameStarted ? HUD_SIDE_W : 0;
-  return {
-    top: uiTop,
-    width: Math.max(1, window.innerWidth - uiRight),
-    height: Math.max(1, window.innerHeight - uiTop - uiBottom),
-  };
-}
+import { LOCK_RAIL_H } from "./constants.js";
+import { playRect, setViewportSize } from "./render/viewport.js";
 
 let app: Application | null = null;
 let worldContainer: Container | null = null;
@@ -86,6 +75,7 @@ export async function initPixi(): Promise<Application> {
     autoStart: false,
   });
 
+  setViewportSize(rect.width, rect.height);
   _pixiReady = true;
 
   // Insert the PixiJS canvas behind the HUD canvas (#c, zIndex 1).
@@ -151,6 +141,7 @@ export function resizePixi() {
   const rect = playRect();
   app.renderer.resize(rect.width, rect.height);
   app.renderer.resolution = pixiDpr;
+  setViewportSize(rect.width, rect.height);
 
   const pixiCanvas = app.canvas as HTMLCanvasElement;
   if (pixiCanvas) {

@@ -1,4 +1,3 @@
-import { ctx } from "../canvas.js";
 import { mkRng, rf } from "../utils/math.js";
 import { TAU } from "../constants.js";
 
@@ -32,29 +31,6 @@ export function jaggedPoly(rng: () => number, baseR: number, jitter: number, nVe
     pts.push([Math.cos(a) * r, Math.sin(a) * r]);
   }
   return pts;
-}
-
-/**
- * Stroke the path currently set on `ctx` with a directional rim light.
- * The lit edge appears on the +(sunDx,sunDy) side. `boundsR` should roughly
- * match the entity radius so the gradient extents make sense.
- *
- * Caller pattern (after drawing a path):
- *     somePath(); ctx.fillStyle = ...; ctx.fill();
- *     somePath(); rimLightStroke(boundsR, sunDx, sunDy, "255,235,180", 0.55);
- */
-export function rimLightStroke(boundsR: number, sunDx: number, sunDy: number, rgb: string, alpha = 0.55, lineWidth = 1) {
-  const len = Math.max(2, boundsR);
-  const g = ctx.createLinearGradient(-sunDx * len, -sunDy * len, sunDx * len, sunDy * len);
-  g.addColorStop(0.0, "rgba(0,0,0,0)");
-  g.addColorStop(0.45, "rgba(0,0,0,0)");
-  g.addColorStop(0.85, `rgba(${rgb},${alpha * 0.7})`);
-  g.addColorStop(1.0, `rgba(${rgb},${alpha})`);
-  const prev = ctx.lineWidth;
-  ctx.strokeStyle = g;
-  ctx.lineWidth = lineWidth;
-  ctx.stroke();
-  ctx.lineWidth = prev;
 }
 
 /**

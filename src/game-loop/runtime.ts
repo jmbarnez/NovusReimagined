@@ -3,8 +3,8 @@ import { getState } from "../state-access.js";
 import { savePlayer } from "../player/player-data.js";
 import { updatePerfOverlay } from "../render/perf-overlay.js";
 import { initHudOverlay, destroyHudOverlay } from "../ui/hud-overlay.js";
-import { disposeCanvas } from "../canvas.js";
 import { destroyPixi } from "../pixi.js";
+import { destroyPixiChatBubbles } from "../render/pixi-chat-bubbles.js";
 import { TICK_DT, MAX_CATCH } from "../constants.js";
 import {
   updateTrails,
@@ -263,8 +263,8 @@ export function stopGameLoop() {
   stopMultiplayer();
   destroyHudOverlay();
   destroyChat();
+  destroyPixiChatBubbles();
   destroyPixi();
-  disposeCanvas();
 }
 
 // Dispose worker + listeners on HMR reload so dev sessions don't accumulate duplicates.
