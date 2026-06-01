@@ -195,8 +195,8 @@ export function initHudOverlay() {
   updateHudOverviewPanelHeaders();
   initOverviewResizers(hudState.ovPanel!);
 
-  hudState.ovPanel!.addEventListener("click", (ev) => {
-    const btn = (ev.target as HTMLElement).closest(".ov-lock");
+  document.body.addEventListener("click", (ev) => {
+    const btn = (ev.target as HTMLElement).closest("#hud-overview-panel .ov-lock");
     if (!btn) return;
     ev.preventDefault();
     ev.stopPropagation();
@@ -210,8 +210,8 @@ export function initHudOverlay() {
       queueFrameAction({ type: "requestSensorLock", payload: { id } });
     }
   });
-  hudState.ovPanel!.addEventListener("click", (ev) => {
-    const btn = (ev.target as HTMLElement).closest(".ov-decrypt");
+  document.body.addEventListener("click", (ev) => {
+    const btn = (ev.target as HTMLElement).closest("#hud-overview-panel .ov-decrypt");
     if (!btn) return;
     ev.stopPropagation();
     const siteId = btn.getAttribute("data-site-id");

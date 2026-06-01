@@ -165,6 +165,12 @@
   border-color: var(--hud-accent);
 }
 
+#hud-overview-panel .ov-lock:active {
+  background: color-mix(in srgb, var(--hud-accent) 70%, #000);
+  color: #ffffff;
+  border-color: var(--hud-accent);
+}
+
 #hud-overview-panel .ov-row-neutral .ov-name,
 .ov-row-neutral .ov-name {
   color: #a0a5aa;

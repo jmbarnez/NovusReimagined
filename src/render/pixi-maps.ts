@@ -1,6 +1,6 @@
 /**
  * PixiJS Maps Renderer
- * 
+ *
  * Migrates Canvas 2D galaxy map and system map to PixiJS.
  * Includes grid, star, sectors, objects, and overlays.
  */
@@ -8,7 +8,6 @@ import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import { app } from "../pixi.js";
-import { ctx } from "../canvas.js";
 import {
   computeSystemMapTransform,
   worldToMapScreen,
@@ -45,6 +44,7 @@ let vignetteGfx: Graphics | null = null;
 let labelContainer: Container | null = null;
 let mapMask: Graphics | null = null;
 let positioningContainer: Container | null = null;
+let overlayGfx: Graphics | null = null;
 
 /** Convert rgba(r,g,b,a) or #rrggbb string to PixiJS hex number. */
 function rgbaToHex(color: string): number {
@@ -162,6 +162,10 @@ export function initPixiMaps(): void {
   // Labels container
   labelContainer = new Container();
   mapContainer.addChild(labelContainer);
+
+  // Dynamic overlays (radar sweep, survey cone, tutorial tracks)
+  overlayGfx = new Graphics();
+  mapContainer.addChild(overlayGfx);
 
 }
 
@@ -470,25 +474,18 @@ export function drawPixiSystemMapCanvasOverlays(Wc: number, Hc: number, now: num
   const player = getState().player;
   const sys = curSys();
   const mapTransform = lastMapTransform ?? computeSystemMapTransform(Wc, Hc);
-  if (!player || !sys || !mapTransform) return;
+  if (!player || !sys || !mapTransform || !overlayGfx) return;
 
-  const zoom = Client.mapZoom || 1.0;
-  const panX = Client.mapPanX + (Wc / 2) * (1 - zoom);
-  const panY = Client.mapPanY + (Hc / 2) * (1 - zoom);
-  const bounds = syncMapWindowBounds(Wc, Hc);
-  const toMap = (mx: number, my: number) => worldToMapScreen(mx, my, mapTransform);
+  // syncMapWindowBounds is called inside syncPixiSystemMap to set positioningContainer.
+  // The overlay Graphics lives inside mapContainer, which already has zoom/pan applied,
+  // so we can draw in map-space coordinates directly.
+  overlayGfx.clear();
   const navStep = player.tutorial?.active ? getCurrentTutorialStep(player) : null;
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(bounds.baseX, bounds.baseY, bounds.width, bounds.height);
-  ctx.clip();
-  ctx.translate(bounds.baseX + panX, bounds.baseY + panY);
-  ctx.scale(zoom, zoom);
-  drawTutorialTracksOnMap(ctx, (wx, wy) => toMap(wx, wy), navStep?.nav?.trackId);
-  drawPassiveRadarOverlay(mapTransform, now);
-  drawMapSurveyOverlay(mapTransform, now);
-  ctx.restore();
+  if (navStep?.nav?.trackId) {
+    drawTutorialTracksOnMap(overlayGfx, (wx, wy) => worldToMapScreen(wx, wy, mapTransform), navStep.nav.trackId);
+  }
+  drawPassiveRadarOverlay(mapTransform, now, overlayGfx);
+  drawMapSurveyOverlay(mapTransform, now, overlayGfx);
 }
 
 export function destroyPixiMaps(): void {
@@ -510,6 +507,7 @@ export function destroyPixiMaps(): void {
   playerGfx?.destroy();
   vignetteGfx?.destroy();
   labelContainer?.destroy();
+  overlayGfx?.destroy();
 
   if (positioningContainer && app) {
     app.stage.removeChild(positioningContainer);
@@ -519,4 +517,5 @@ export function destroyPixiMaps(): void {
   mapContainer = null;
   mapMask = null;
   bgGfx = null;
+  overlayGfx = null;
 }

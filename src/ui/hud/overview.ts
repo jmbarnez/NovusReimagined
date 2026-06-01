@@ -69,7 +69,7 @@ export function updateHudOverviewPanel() {
         <td class="ov-num ov-sig">${sig}</td>
         <td class="ov-num ov-relV">${relV}</td>
         <td>${lockBtn}</td>`;
-      
+
       tr.addEventListener("contextmenu", (ev) => {
         if (r.kind === "hostile" || r.kind === "neutral") {
           ev.preventDefault();
@@ -91,10 +91,13 @@ export function updateHudOverviewPanel() {
       if (sigCell && sigCell.textContent !== sig) sigCell.textContent = sig;
       if (rCell && rCell.textContent !== relV) rCell.textContent = relV;
       if (sCell && sCell.innerHTML !== r.status) sCell.innerHTML = r.status;
-      
-      // Re-append to ensure the DOM elements match the sorted rows order
-      hudState.ovEntries.appendChild(tr);
-      
+
+      // Only re-append if this row is not already the last child (or not in correct position)
+      const lastChild = hudState.ovEntries.lastElementChild;
+      if (tr !== lastChild) {
+        hudState.ovEntries.appendChild(tr);
+      }
+
       existing.delete(r.id);
     }
   }
@@ -128,6 +131,7 @@ export function initOverviewResizers(panelEl: HTMLElement) {
     ths.forEach((th) => {
       total += th.getBoundingClientRect().width;
     });
+    table.style.minWidth = "100%";
     table.style.width = total + "px";
   };
 
@@ -143,6 +147,7 @@ export function initOverviewResizers(panelEl: HTMLElement) {
       });
       // Also adjust table total width to fit the saved values exactly
       let totalSaved = widths.reduce((sum, w) => sum + w, 0);
+      table.style.minWidth = "100%";
       table.style.width = totalSaved + "px";
     } catch (e) {
       console.error("Failed to load saved column widths", e);
@@ -177,6 +182,7 @@ export function initOverviewResizers(panelEl: HTMLElement) {
         // Sum current widths to update total table width
         colWidths[index] = newWidth;
         const total = colWidths.reduce((sum, w) => sum + w, 0);
+        table.style.minWidth = "100%";
         table.style.width = total + "px";
       };
 
@@ -191,6 +197,7 @@ export function initOverviewResizers(panelEl: HTMLElement) {
         
         // Finalize total table width
         const total = finalWidths.reduce((sum, w) => sum + w, 0);
+        table.style.minWidth = "100%";
         table.style.width = total + "px";
       };
 

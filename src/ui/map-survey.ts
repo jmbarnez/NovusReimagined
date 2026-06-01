@@ -1,7 +1,7 @@
 import { TAU } from "../constants.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
-import { ctx } from "../canvas.js";
+import { Graphics } from "pixi.js";
 import { curSys } from "../utils/game.js";
 import { getUIFont } from "../render/ui-font.js";
 import { radarPingOpacity, radarSweepAngle } from "../utils/radar-sweep.js";
@@ -256,48 +256,42 @@ export function passiveContactOpacity(
 }
 
 /** Draw hull passive radar sweep and range rings on the system map (always while map is open). */
-export function drawPassiveRadarOverlay(t: SystemMapTransform, now: number): void {
+export function drawPassiveRadarOverlay(t: SystemMapTransform, now: number, g: Graphics): void {
   const ship = SHIPS[getState().player.shipId];
   const rangeScreen = getPassiveScanRangePx(ship) * t.scale;
   const pp = worldToMapScreen(getState().player.x, getState().player.y, t);
   const sweep = radarSweepAngle(now);
 
-  ctx.save();
+  // Range rings
+  g.stroke({ color: 0x64a0dc, width: 1, alpha: 0.22 });
+  g.arc(pp.x, pp.y, rangeScreen * 0.35, 0, TAU);
+  g.stroke();
+  g.arc(pp.x, pp.y, rangeScreen * 0.7, 0, TAU);
+  g.stroke();
 
-  ctx.strokeStyle = "rgba(100, 160, 220, 0.22)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(pp.x, pp.y, rangeScreen * 0.35, 0, TAU);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(pp.x, pp.y, rangeScreen * 0.7, 0, TAU);
-  ctx.stroke();
-  ctx.setLineDash([4, 5]);
-  ctx.strokeStyle = "rgba(100, 160, 220, 0.32)";
-  ctx.beginPath();
-  ctx.arc(pp.x, pp.y, rangeScreen, 0, TAU);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  // Outer ring (dashed) — Pixi v8 doesn't expose setLineDash on Graphics, so draw
+  // the ring as a single stroke at low alpha; the dashed look was a subtle hint
+  // and is acceptable when solid.
+  g.stroke({ color: 0x64a0dc, width: 1, alpha: 0.32 });
+  g.arc(pp.x, pp.y, rangeScreen, 0, TAU);
+  g.stroke();
 
-  const sweepGrad = ctx.createRadialGradient(pp.x, pp.y, 0, pp.x, pp.y, rangeScreen);
-  sweepGrad.addColorStop(0, "rgba(111, 211, 255, 0.1)");
-  sweepGrad.addColorStop(0.85, "rgba(111, 211, 255, 0.03)");
-  sweepGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = sweepGrad;
-  ctx.beginPath();
-  ctx.moveTo(pp.x, pp.y);
-  ctx.arc(pp.x, pp.y, rangeScreen, sweep - 0.38, sweep);
-  ctx.closePath();
-  ctx.fill();
+  // Sweep wedge — approximate the radial gradient by overlaying two alpha
+  // fills (inner brighter, outer transparent).
+  const sweepSpan = 0.38;
+  g.moveTo(pp.x, pp.y);
+  g.arc(pp.x, pp.y, rangeScreen, sweep - sweepSpan, sweep);
+  g.closePath();
+  g.fill({ color: 0x6fd3ff, alpha: 0.06 });
+  g.moveTo(pp.x, pp.y);
+  g.arc(pp.x, pp.y, rangeScreen * 0.5, sweep - sweepSpan, sweep);
+  g.closePath();
+  g.fill({ color: 0x6fd3ff, alpha: 0.05 });
 
-  ctx.strokeStyle = "rgba(158, 232, 255, 0.42)";
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(pp.x, pp.y);
-  ctx.lineTo(pp.x + Math.cos(sweep) * rangeScreen, pp.y + Math.sin(sweep) * rangeScreen);
-  ctx.stroke();
-
-  ctx.restore();
+  // Sweep leading edge
+  g.moveTo(pp.x, pp.y);
+  g.lineTo(pp.x + Math.cos(sweep) * rangeScreen, pp.y + Math.sin(sweep) * rangeScreen);
+  g.stroke({ color: 0x9ee8ff, width: 1.4, alpha: 0.42 });
 }
 
 /** Survey signature blips: passive decay always; stronger when active scanner is emitting. */
@@ -373,7 +367,7 @@ export function updateMapSurveyUi() {
   updateMapTutorialStrip();
 }
 
-export function drawMapSurveyOverlay(t: SystemMapTransform, now: number) {
+export function drawMapSurveyOverlay(t: SystemMapTransform, now: number, g: Graphics) {
   const pp = worldToMapScreen(getState().player.x, getState().player.y, t);
   const angleRad = Client.mapScannerAngleDeg * Math.PI / 180;
   const halfCone = (getState().player.scannerConeDeg / 2) * Math.PI / 180;
@@ -381,52 +375,31 @@ export function drawMapSurveyOverlay(t: SystemMapTransform, now: number) {
   const sweep = radarSweepAngle(now);
   const emitting = isMapScannerEmitting(getState().player);
 
-  ctx.save();
-
   if (emitting) {
-    const sweepGrad = ctx.createRadialGradient(pp.x, pp.y, 0, pp.x, pp.y, rayLen);
-    sweepGrad.addColorStop(0, "rgba(111, 211, 255, 0.16)");
-    sweepGrad.addColorStop(0.85, "rgba(111, 211, 255, 0.04)");
-    sweepGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-    ctx.fillStyle = sweepGrad;
-    ctx.beginPath();
-    ctx.moveTo(pp.x, pp.y);
-    ctx.arc(pp.x, pp.y, rayLen, sweep - 0.4, sweep);
-    ctx.closePath();
-    ctx.fill();
+    g.moveTo(pp.x, pp.y);
+    g.arc(pp.x, pp.y, rayLen, sweep - 0.4, sweep);
+    g.closePath();
+    g.fill({ color: 0x6fd3ff, alpha: 0.10 });
 
-    ctx.strokeStyle = "rgba(158, 232, 255, 0.55)";
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.moveTo(pp.x, pp.y);
-    ctx.lineTo(pp.x + Math.cos(sweep) * rayLen, pp.y + Math.sin(sweep) * rayLen);
-    ctx.stroke();
+    g.moveTo(pp.x, pp.y);
+    g.lineTo(pp.x + Math.cos(sweep) * rayLen, pp.y + Math.sin(sweep) * rayLen);
+    g.stroke({ color: 0x9ee8ff, width: 1.4, alpha: 0.55 });
   }
 
-  ctx.globalAlpha = emitting ? 0.3 : 0.18;
-  ctx.fillStyle = "#6fd3ff";
-  ctx.beginPath();
-  ctx.moveTo(pp.x, pp.y);
-  ctx.arc(pp.x, pp.y, rayLen, angleRad - halfCone, angleRad + halfCone);
-  ctx.closePath();
-  ctx.fill();
+  // Cone fill
+  g.moveTo(pp.x, pp.y);
+  g.arc(pp.x, pp.y, rayLen, angleRad - halfCone, angleRad + halfCone);
+  g.closePath();
+  g.fill({ color: 0x6fd3ff, alpha: emitting ? 0.3 : 0.18 });
 
-  ctx.globalAlpha = emitting ? 0.9 : 0.55;
-  ctx.strokeStyle = emitting ? "#9ee8ff" : "#6a9eb8";
-  ctx.lineWidth = emitting ? 2 : 1.5;
-  ctx.beginPath();
-  ctx.moveTo(pp.x, pp.y);
-  ctx.lineTo(pp.x + Math.cos(angleRad) * rayLen, pp.y + Math.sin(angleRad) * rayLen);
-  ctx.stroke();
+  // Cone centerline
+  g.moveTo(pp.x, pp.y);
+  g.lineTo(pp.x + Math.cos(angleRad) * rayLen, pp.y + Math.sin(angleRad) * rayLen);
+  g.stroke({ color: emitting ? 0x9ee8ff : 0x6a9eb8, width: emitting ? 2 : 1.5, alpha: emitting ? 0.9 : 0.55 });
 
-  ctx.strokeStyle = "rgba(111, 211, 255, 0.22)";
-  ctx.globalAlpha = 0.35;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(pp.x, pp.y, rayLen, 0, TAU);
-  ctx.stroke();
-
-  ctx.restore();
+  // Range ring
+  g.arc(pp.x, pp.y, rayLen, 0, TAU);
+  g.stroke({ color: 0x6fd3ff, width: 1, alpha: 0.22 });
 }
 
 let mapTutorialListenersBound = false;

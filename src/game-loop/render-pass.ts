@@ -1,7 +1,7 @@
 import { Client, AppMode } from "../state.js";
 import { getState } from "../state-access.js";
 import type { System } from "../types/world.js";
-import { drawWarpScreen } from "../render/hud.js";
+import { syncPixiWarpScreen } from "../render/pixi-warp-screen.js";
 import { syncPixiPlanets } from "../render/pixi-planets.js";
 import { syncPixiCelestial } from "../render/pixi-celestial.js";
 import { syncPixiCombat } from "../render/pixi-combat.js";
@@ -10,7 +10,7 @@ import { syncPixiAsteroids } from "../render/pixi-asteroids.js";
 import { syncPixiHitEffects } from "../render/pixi-hit-effects.js";
 import { updateVignette } from "../render/pixi-vignette.js";
 import { syncThrust } from "../render/pixi-thrust.js";
-import { drawStationInterior } from "../render/station-interior.js";
+import { syncPixiStationInterior } from "../render/pixi-station-interior.js";
 import { drawPerfOverlay } from "../render/perf-overlay.js";
 import { updateHudOverlay } from "../ui/hud-overlay.js";
 import { updateTutorialOverlay } from "../ui/tutorial-overlay.js";
@@ -118,7 +118,7 @@ function drawTitleState(now: number, width: number, height: number, sys: System)
 
 function drawStationState(now: number, width: number, height: number) {
   renderPixi();
-  drawStationInterior(width, height, now);
+  syncPixiStationInterior(now);
   updateIndustryProgress();
   updateTutorialOverlay(width, height, now);
   drawPerfOverlay();
@@ -266,7 +266,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   timeMark("minimap");
 
   if (player && ((player.warpTargetIdx ?? -1) >= 0 || (player.warpCooldown ?? 0) > 2.0)) {
-    drawWarpScreen(width, height, now);
+    syncPixiWarpScreen(now);
   }
   timeMark("warpscreen");
 

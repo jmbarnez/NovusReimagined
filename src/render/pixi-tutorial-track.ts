@@ -121,9 +121,9 @@ export function destroyPixiTutorialTrack(): void {
   _trackGfx = null;
 }
 
-/** Draw the active goal track on the system map (canvas). */
+/** Draw the active goal track on the system map (Pixi Graphics). */
 export function drawTutorialTracksOnMap(
-  ctx: CanvasRenderingContext2D,
+  g: Graphics,
   worldToScreen: (wx: number, wy: number) => { x: number; y: number },
   trackId?: string,
 ): void {
@@ -132,16 +132,11 @@ export function drawTutorialTracksOnMap(
   const track = getTutorialTrackForNav(trackId);
   if (!track) return;
 
-  ctx.save();
-  ctx.setLineDash([6, 8]);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "rgba(85, 170, 255, 0.6)";
-  ctx.beginPath();
-  for (let i = 0; i < track.points.length; i++) {
-    const p = worldToScreen(track.points[i].x, track.points[i].y);
-    if (i === 0) ctx.moveTo(p.x, p.y);
-    else ctx.lineTo(p.x, p.y);
+  for (let i = 0; i < track.points.length - 1; i++) {
+    const a = worldToScreen(track.points[i].x, track.points[i].y);
+    const b = worldToScreen(track.points[i + 1].x, track.points[i + 1].y);
+    g.moveTo(a.x, a.y);
+    g.lineTo(b.x, b.y);
   }
-  ctx.stroke();
-  ctx.restore();
+  g.stroke({ color: 0x55aaff, width: 2, alpha: 0.6 });
 }
