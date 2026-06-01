@@ -202,7 +202,7 @@
 
 #hud-tutorial .tutorial-nav {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   gap: 8px;
   margin-top: 7px;
@@ -210,7 +210,6 @@
   border-top: 1px solid var(--hud-border-soft);
 }
 
-#hud-tutorial .tutorial-back-btn,
 #hud-tutorial .tutorial-next-btn {
   font-size: 10px;
   padding: 3px 10px;
@@ -218,23 +217,6 @@
   cursor: pointer;
   font-family: inherit;
   transition: all 0.12s ease;
-}
-
-#hud-tutorial .tutorial-back-btn {
-  border: 1px solid var(--hud-border-soft);
-  background: color-mix(in srgb, var(--hud-bg-deep) 90%, transparent);
-  color: var(--hud-text-dim);
-}
-
-#hud-tutorial .tutorial-back-btn:hover:not(:disabled) {
-  color: var(--hud-text-bright);
-  border-color: var(--hud-border);
-  background: var(--hud-bg-elevated);
-}
-
-#hud-tutorial .tutorial-back-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
 }
 
 #hud-tutorial .tutorial-next-btn {
@@ -395,10 +377,15 @@
 #hud-tour-dimmer {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
   z-index: 500;
   pointer-events: none;
   transition: opacity 0.25s ease;
+}
+
+.tutorial-dimmer-segment {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.7);
+  pointer-events: none;
 }
 
 #hud-tour-dimmer.hidden {

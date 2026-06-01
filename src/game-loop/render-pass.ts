@@ -33,7 +33,7 @@ import { syncPixiDamageFlash } from "../render/pixi-damage-flash.js";
 import { syncPixiShockwaves, syncPixiFloatTexts, syncPixiWorldBorder } from "../render/pixi-effects-overlay.js";
 import { syncPixiHUD } from "../render/pixi-hud-core.js";
 import { syncPixiTargetArrows, syncPixiTutorialGuideArrow } from "../render/pixi-target-arrows.js";
-import { syncPixiSystemMap } from "../render/pixi-maps.js";
+import { drawPixiSystemMapCanvasOverlays, syncPixiSystemMap } from "../render/pixi-maps.js";
 import { syncPixiMinimap } from "../render/pixi-minimap.js";
 import { isOpen } from "../ui/hud/windows.js";
 import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
@@ -152,6 +152,11 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   syncPixiFloatTexts();
   syncPixiWorldBorder(now, SECTOR_OUTER_RADIUS);
   syncPixiCrosshair();
+  const mapWinBody = isOpen("map") ? document.getElementById("hud-win-body-map") : null;
+  const mapWinRect = mapWinBody?.getBoundingClientRect();
+  if (mapWinRect) {
+    syncPixiSystemMap(mapWinRect.width, mapWinRect.height, now);
+  }
   syncThrust(alpha, now);
   updateVignette();
   renderPixi();
@@ -166,15 +171,9 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   syncPixiTargetArrows(width, height, camxR, camyR, now);
   syncPixiTutorialGuideArrow(width, height, camxR, camyR, now);
   
-  // Map overlay (system view only)
-  if (isOpen("map")) {
-    const winBody = document.getElementById("hud-win-body-map");
-    if (winBody) {
-      const rect = winBody.getBoundingClientRect();
-      syncPixiSystemMap(rect.width, rect.height, now);
-    } else {
-      syncPixiSystemMap(width, height, now);
-    }
+  // Canvas 2D map overlays sit above Pixi and are clipped to the map window body.
+  if (mapWinRect) {
+    drawPixiSystemMapCanvasOverlays(mapWinRect.width, mapWinRect.height, now);
   }
 
   // Minimap (always visible during gameplay)

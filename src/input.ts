@@ -17,7 +17,12 @@ import { playBackgroundMusic } from "./audio/music.js";
 import { resumeAudio } from "./audio/procedural.js";
 import { isEventLogToggleHotkey, isOverviewToggleHotkey } from "./input-hotkeys.js";
 
+let inputInitialized = false;
+
 export function initInput() {
+  if (inputInitialized) return;
+  inputInitialized = true;
+
   const canvasEl = document.getElementById("c") as HTMLCanvasElement;
   const uiPointerBlockSelector = [
     "#station-overlay",

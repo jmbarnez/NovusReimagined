@@ -8,7 +8,7 @@
  */
 
 import { SAVE_KEY } from "../constants.js";
-import { getState } from "../state-access.js";
+import { getState, WorldAccess } from "../state-access.js";
 import type { Player } from "../state.js";
 import { loadPlayer, savePlayer } from "../player/player-data.js";
 import { t } from "../utils/i18n.js";
@@ -97,7 +97,7 @@ export function activateProfile(id: string): boolean {
 
     localStorage.setItem(SAVE_KEY, raw);
     const player = loadPlayer();
-    getState().player = player;
+    WorldAccess.initPlayer(player);
     localStorage.setItem(ACTIVE_PROFILE_KEY, id);
     return true;
   } catch (e) {

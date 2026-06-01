@@ -1,6 +1,6 @@
 import { type Player } from "./state.js";
 import { getState } from "./state-access.js";
-import { PlayerAccess } from "./state-access.js";
+import { PlayerAccess, WorldAccess } from "./state-access.js";
 import type { HubJob } from "./state.js";
 import type { ModuleInstance } from "./types/moduleInstance.js";
 import { dst, random } from "./utils/math.js";
@@ -183,12 +183,9 @@ export function processFloatingItem(itemId: string, p: Player): { success: boole
   } else if (item.kind === "asteroid") {
     const sys = curSys(p);
     if (sys) {
-      const ast = sys.asteroids.find(a => a.id === itemId);
-      if (ast) {
+      if (sys.asteroids.some(a => a.id === itemId)) {
         removeSensorLock(itemId, p);
-        ast.depleted = true;
-        ast.hp = 0;
-        ast.respawnTimer = 90 + random() * 60;
+        WorldAccess.depleteAsteroid(p.sysIdx, itemId, 90 + random() * 60);
       }
     }
   }

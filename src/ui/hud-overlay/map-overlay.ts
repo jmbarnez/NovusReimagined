@@ -4,7 +4,7 @@ import type { System } from "../../types/world.js";
 import { shouldShowWarpGate } from "../../data/tutorial.js";
 import { t } from "../../utils/i18n.js";
 import { openHudWindow, isOpen, closeHudWindow, getHudWindow } from "../hud/windows.js";
-import { mapContainer, app, positioningContainer } from "../../render/pixi-maps.js";
+import { app, positioningContainer } from "../../render/pixi-maps.js";
 
 export function closeMapWindow() {
   Client.showMap = false;

@@ -1,9 +1,9 @@
-import { Client } from "../state.js";
+import { Client, type Player } from "../state.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import { floatText, spawnImpactFlash, spawnParticles } from "../utils/fx.js";
 import { respawnPlayer } from "../utils/game.js";
 import { sfxShieldImpact, sfxHullImpact } from "../audio/procedural.js";
-import { MODULE_DAMAGE_CHANCE, MODULE_DAMAGE_RATIO, MODULE_HP_MAX, RACK_TYPES } from "../constants.js";
+import { MODULE_DAMAGE_CHANCE, MODULE_DAMAGE_RATIO, RACK_TYPES } from "../constants.js";
 import { invalidate } from "../player/player-stats.js";
 import { MODULES } from "../data/modules.js";
 import { logEvent } from "../feedback.js";
@@ -53,39 +53,41 @@ export function showDamageNumber(x: number, y: number, amount: number | string, 
   });
 }
 
-function damageRandomModule(amount: number) {
+function damageRandomModule(amount: number, p: Player) {
   const candidates: { rack: string; idx: number; uid: string }[] = [];
   for (const rack of RACK_TYPES) {
-    const slots = getState().player.fitting?.[rack];
+    const slots = p.fitting?.[rack];
     if (!slots) continue;
     for (let i = 0; i < slots.length; i++) {
       const uid = slots[i];
       if (!uid) continue;
-      const inst = getInstance(uid);
-      if (inst && inst.durability > 0 && (getState().player.slotActive?.[rack]?.[i] ?? true)) {
+      const inst = getInstance(uid, p);
+      if (inst && inst.durability > 0 && (p.slotActive?.[rack]?.[i] ?? true)) {
         candidates.push({ rack, idx: i, uid });
       }
     }
   }
   if (!candidates.length) return;
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
-  const inst = getInstance(pick.uid);
+  const inst = getInstance(pick.uid, p);
   if (!inst) return;
   const dmgAmt = Math.min(inst.durability, Math.max(1, Math.ceil(amount * MODULE_DAMAGE_RATIO)));
-  inst.durability -= dmgAmt;
+  PlayerAccess.setModuleDurability(pick.uid, inst.durability - dmgAmt, p);
   const m = MODULES[inst.baseId];
   if (inst.durability <= 0) {
-    inst.durability = 0;
-    PlayerAccess.setSlotActive(pick.rack, pick.idx, false);
-    if (pick.rack === "turret" && getState().player.turretPower) {
-      PlayerAccess.setTurretPower(pick.idx, false);
+    PlayerAccess.setModuleDurability(pick.uid, 0, p);
+    PlayerAccess.setSlotActive(pick.rack, pick.idx, false, p);
+    if (pick.rack === "turret" && p.turretPower) {
+      PlayerAccess.setTurretPower(pick.idx, false, p);
     }
-    invalidate();
+    invalidate(p);
     const msg = m ? `${m.short || m.name} OFFLINE — critically damaged` : "Module OFFLINE";
-    logEvent(msg, "warn");
-    floatText(getState().player.x, getState().player.y - 38, "MODULE OFFLINE", "#ff4444");
-  } else {
-    floatText(getState().player.x, getState().player.y - 38, "MODULE HIT", "#ff8844");
+    if (p === getState().player) {
+      logEvent(msg, "warn");
+      floatText(p.x, p.y - 38, "MODULE OFFLINE", "#ff4444");
+    }
+  } else if (p === getState().player) {
+    floatText(p.x, p.y - 38, "MODULE HIT", "#ff8844");
   }
 }
 
@@ -96,39 +98,44 @@ export function damagePlayer(
   opts: { isMiss?: boolean; isCrit?: boolean } = {},
   p = getState().player,
 ) {
+  const isLocalPlayer = p === getState().player;
   if (opts.isMiss) {
-    showDamageNumber(getState().player.x, getState().player.y - 25, "MISS", "miss", "enemyToPlayer");
-    spawnParticles(sourceX, sourceY, DMG_COLORS.miss, 1, 50);
+    if (isLocalPlayer) {
+      showDamageNumber(p.x, p.y - 25, "MISS", "miss", "enemyToPlayer");
+      spawnParticles(sourceX, sourceY, DMG_COLORS.miss, 1, 50);
+    }
     return;
   }
 
   let displayType = "shield";
   let overflow = 0;
 
-  if (getState().player.shield > 0) {
-    PlayerAccess.setShield(getState().player.shield - rawDmg);
-    PlayerAccess.setShieldHitGlow(1);
-    PlayerAccess.setShieldHitAngle(Math.atan2(sourceY - getState().player.y, sourceX - getState().player.x));
-    PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.35));
-    sfxShieldImpact(Math.min(1, rawDmg / 20));
-    if (getState().player.shield < 0) {
-      overflow = -getState().player.shield;
-      PlayerAccess.setShield(0);
+  if (p.shield > 0) {
+    PlayerAccess.setShield(p.shield - rawDmg, p);
+    PlayerAccess.setShieldHitGlow(1, p);
+    PlayerAccess.setShieldHitAngle(Math.atan2(sourceY - p.y, sourceX - p.x), p);
+    if (isLocalPlayer) {
+      PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.35));
+      sfxShieldImpact(Math.min(1, rawDmg / 20));
+    }
+    if (p.shield < 0) {
+      overflow = -p.shield;
+      PlayerAccess.setShield(0, p);
     }
   } else {
     overflow = rawDmg;
   }
 
   if (overflow > 0) {
-    if (getState().player.hp > 0) {
-      PlayerAccess.setHp(getState().player.hp - Math.ceil(overflow));
+    if (p.hp > 0) {
+      PlayerAccess.setHp(p.hp - Math.ceil(overflow), p);
       displayType = "hull";
-      PlayerAccess.setHullHitGlow(1);
-      PlayerAccess.setHullHitAngle(Math.atan2(sourceY - getState().player.y, sourceX - getState().player.x));
-      PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.55));
-      if (getState().player.hp < 0) {
-        overflow = -getState().player.hp;
-        PlayerAccess.setHp(0);
+      PlayerAccess.setHullHitGlow(1, p);
+      PlayerAccess.setHullHitAngle(Math.atan2(sourceY - p.y, sourceX - p.x), p);
+      if (isLocalPlayer) PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.55));
+      if (p.hp < 0) {
+        overflow = -p.hp;
+        PlayerAccess.setHp(0, p);
       } else {
         overflow = 0;
       }
@@ -138,26 +145,28 @@ export function damagePlayer(
   }
 
   if (overflow > 0) {
-    PlayerAccess.setStructure(getState().player.structure - Math.ceil(overflow));
+    PlayerAccess.setStructure(p.structure - Math.ceil(overflow), p);
     displayType = "structure";
-    PlayerAccess.setStructureHitGlow(1);
-    PlayerAccess.setStructureHitAngle(Math.atan2(sourceY - getState().player.y, sourceX - getState().player.x));
-    if (getState().player.hp <= 0 && Math.random() < MODULE_DAMAGE_CHANCE) {
-      damageRandomModule(overflow);
+    PlayerAccess.setStructureHitGlow(1, p);
+    PlayerAccess.setStructureHitAngle(Math.atan2(sourceY - p.y, sourceX - p.x), p);
+    if (p.hp <= 0 && Math.random() < MODULE_DAMAGE_CHANCE) {
+      damageRandomModule(overflow, p);
     }
   }
 
   const displayDmg = opts.isCrit ? `${Math.round(rawDmg)}` : Math.round(rawDmg);
   const displayTypeFinal = opts.isCrit ? "crit" : displayType;
-  showDamageNumber(getState().player.x, getState().player.y - 25, displayDmg, displayTypeFinal, "enemyToPlayer");
-  spawnImpactFlash(sourceX, sourceY, DMG_COLORS[displayTypeFinal] || DMG_COLORS.hit);
+  if (isLocalPlayer) {
+    showDamageNumber(p.x, p.y - 25, displayDmg, displayTypeFinal, "enemyToPlayer");
+    spawnImpactFlash(sourceX, sourceY, DMG_COLORS[displayTypeFinal] || DMG_COLORS.hit);
+  }
 
-  if (displayType === "hull" || displayType === "structure") {
+  if (isLocalPlayer && (displayType === "hull" || displayType === "structure")) {
     sfxHullImpact(Math.min(1, rawDmg / 15));
   }
 
-  if (getState().player.structure <= 0) {
-    PlayerAccess.setStructure(0);
-    respawnPlayer();
+  if (p.structure <= 0) {
+    PlayerAccess.setStructure(0, p);
+    respawnPlayer(p);
   }
 }

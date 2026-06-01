@@ -345,8 +345,13 @@ h4 {
   display: none;
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
   z-index: 1;
+  pointer-events: none;
+}
+
+#st-dimmer .tutorial-dimmer-segment {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.55);
   pointer-events: none;
 }
 

@@ -7,17 +7,15 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
-import { screenContainer, app } from "../pixi.js";
+import { app } from "../pixi.js";
 import { ctx } from "../canvas.js";
 import {
   computeSystemMapTransform,
   worldToMapScreen,
   systemsVisibleOnMap,
   isSectorDiscovered,
-  isLocalRegionDiscovered,
   drawMapSurveyOverlay,
   drawPassiveRadarOverlay,
-  mapSignatureOpacity,
   passiveContactOpacity,
 } from "../ui/map-survey.js";
 import { TAU } from "../constants.js";
@@ -32,7 +30,6 @@ import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { dst } from "../utils/math.js";
 import { getPassiveScanRangePx } from "../targeting.js";
 import { SHIPS } from "../data/ships.js";
-import type { LocalRegionDef } from "../ui/map-survey.js";
 
 let mapContainer: Container | null = null;
 
@@ -82,6 +79,34 @@ function createBoldStyle(): TextStyle {
 let lastMapTransform: ReturnType<typeof computeSystemMapTransform> | null = null;
 
 export { mapContainer, app, positioningContainer };
+
+function syncMapWindowBounds(Wc: number, Hc: number): { baseX: number; baseY: number; width: number; height: number } {
+  const winBody = document.getElementById("hud-win-body-map");
+  if (!winBody || !app) {
+    positioningContainer?.position.set(0, 0);
+    if (mapMask) {
+      mapMask.clear();
+      mapMask.rect(0, 0, Wc, Hc);
+      mapMask.fill({ color: 0xffffff });
+    }
+    return { baseX: 0, baseY: 0, width: Wc, height: Hc };
+  }
+
+  const rect = winBody.getBoundingClientRect();
+  const pixiCanvas = app.canvas as HTMLCanvasElement;
+  const pixiRect = pixiCanvas.getBoundingClientRect();
+  const baseX = rect.left - pixiRect.left;
+  const baseY = rect.top - pixiRect.top;
+
+  positioningContainer?.position.set(baseX, baseY);
+  if (mapMask) {
+    mapMask.clear();
+    mapMask.rect(0, 0, rect.width, rect.height);
+    mapMask.fill({ color: 0xffffff });
+  }
+
+  return { baseX, baseY, width: rect.width, height: rect.height };
+}
 
 export function initPixiMaps(): void {
   if (!app) return;
@@ -153,43 +178,13 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
   positioningContainer.visible = true;
   labelContainer?.removeChildren();
 
-  // Position positioningContainer at window body position
-  const winBody = document.getElementById("hud-win-body-map");
   // Compute zoom/pan (shared for window and fallback paths)
   const zoom = Client.mapZoom || 1.0;
   const cx = Wc / 2;
   const cy = Hc / 2;
   const panX = Client.mapPanX + cx * (1 - zoom);
   const panY = Client.mapPanY + cy * (1 - zoom);
-  let baseX = 0;
-  let baseY = 0;
-
-  if (winBody && app) {
-    const rect = winBody.getBoundingClientRect();
-    const pixiCanvas = app.canvas as HTMLCanvasElement;
-    const pixiRect = pixiCanvas.getBoundingClientRect();
-    // Position container at window body position relative to PixiJS canvas
-    baseX = rect.left - pixiRect.left;
-    baseY = rect.top - pixiRect.top;
-
-    // Update mask to clip to window bounds (mask is in positioningContainer space, so at 0,0)
-    if (mapMask) {
-      mapMask.clear();
-      mapMask.rect(0, 0, rect.width, rect.height);
-      mapMask.fill({ color: 0xffffff });
-    }
-
-    // Position positioningContainer at window location
-    positioningContainer.position.set(baseX, baseY);
-  } else {
-    // Fallback: center on screen if window not found
-    positioningContainer.position.set(0, 0);
-    if (mapMask) {
-      mapMask.clear();
-      mapMask.rect(0, 0, Wc, Hc);
-      mapMask.fill({ color: 0xffffff });
-    }
-  }
+  syncMapWindowBounds(Wc, Hc);
 
   mapContainer.scale.set(zoom);
   mapContainer.position.set(panX, panY);
@@ -202,11 +197,6 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
   const { scale } = mapTransform;
   const toMap = (mx: number, my: number) => worldToMapScreen(mx, my, mapTransform);
 
-  // Check if transform changed significantly (for caching)
-  const transformChanged = !lastMapTransform ||
-    lastMapTransform.scale !== mapTransform.scale ||
-    lastMapTransform.centerMx !== mapTransform.centerMx ||
-    lastMapTransform.centerMy !== mapTransform.centerMy;
   lastMapTransform = mapTransform;
 
   // Background (drawn in positioningContainer space, unaffected by zoom/pan)
@@ -250,17 +240,8 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     gridGfx.stroke();
   }
 
-  // Canvas 2D overlays — match PixiJS transform (screen offset + pan + zoom)
-  ctx.save();
-  ctx.translate(baseX + panX, baseY + panY);
-  ctx.scale(zoom, zoom);
-
-  // Tutorial tracks (drawn on Canvas 2D layer on top of PixiJS map)
-  const navStep = player.tutorial?.active ? getCurrentTutorialStep(player) : null;
-  drawTutorialTracksOnMap(ctx, (wx, wy) => toMap(wx, wy), navStep?.nav?.trackId);
-
   // Sectors
-  if (sectorGfx && transformChanged) {
+  if (sectorGfx) {
     sectorGfx.clear();
 
     // Tutorial local zone rings
@@ -456,12 +437,11 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     }
   }
 
-  // Passive radar overlay (Canvas 2D layer)
-  drawPassiveRadarOverlay(mapTransform, now);
-
   // Waypoint
-  if (waypointGfx && Client.waypoint) {
+  if (waypointGfx) {
     waypointGfx.clear();
+  }
+  if (waypointGfx && Client.waypoint) {
     const wp = toMap(Client.waypoint.x, Client.waypoint.y);
     const ppLine = toMap(player.x, player.y);
 
@@ -484,10 +464,30 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     playerGfx.arc(pp.x, pp.y, 4, 0, TAU);
     playerGfx.fill({ color: rgbaToHex(theme.textBright), alpha: 1 });
   }
+}
 
-  // Map survey overlay (Canvas 2D layer)
+export function drawPixiSystemMapCanvasOverlays(Wc: number, Hc: number, now: number): void {
+  const player = getState().player;
+  const sys = curSys();
+  const mapTransform = lastMapTransform ?? computeSystemMapTransform(Wc, Hc);
+  if (!player || !sys || !mapTransform) return;
+
+  const zoom = Client.mapZoom || 1.0;
+  const panX = Client.mapPanX + (Wc / 2) * (1 - zoom);
+  const panY = Client.mapPanY + (Hc / 2) * (1 - zoom);
+  const bounds = syncMapWindowBounds(Wc, Hc);
+  const toMap = (mx: number, my: number) => worldToMapScreen(mx, my, mapTransform);
+  const navStep = player.tutorial?.active ? getCurrentTutorialStep(player) : null;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(bounds.baseX, bounds.baseY, bounds.width, bounds.height);
+  ctx.clip();
+  ctx.translate(bounds.baseX + panX, bounds.baseY + panY);
+  ctx.scale(zoom, zoom);
+  drawTutorialTracksOnMap(ctx, (wx, wy) => toMap(wx, wy), navStep?.nav?.trackId);
+  drawPassiveRadarOverlay(mapTransform, now);
   drawMapSurveyOverlay(mapTransform, now);
-
   ctx.restore();
 }
 

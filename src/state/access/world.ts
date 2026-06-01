@@ -44,4 +44,14 @@ export const WorldAccess = {
     const site = sys?.hiddenSites?.find((entry) => entry.id === siteId);
     if (site) site.state = state;
   },
+
+  depleteAsteroid(systemIdx: number, asteroidId: string, respawnTimer: number): boolean {
+    const sys = _G.GALAXY[systemIdx];
+    const asteroid = sys?.asteroids.find((entry) => entry.id === asteroidId);
+    if (!asteroid) return false;
+    asteroid.depleted = true;
+    asteroid.hp = 0;
+    asteroid.respawnTimer = respawnTimer;
+    return true;
+  },
 };

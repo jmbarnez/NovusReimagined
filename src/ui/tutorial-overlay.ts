@@ -21,7 +21,6 @@ import {
   getTutorialSnapshot,
   isCurrentStepComplete,
   advanceStep,
-  goBackStep,
   canAdvanceHangarTour,
   advanceHangarTutorialPanel,
   canAdvanceHudTour,
@@ -39,7 +38,6 @@ let tourLabelEl: HTMLElement | null = null;
 let hintEl: HTMLElement | null = null;
 let statusEl: HTMLElement | null = null;
 let counterEl: HTMLElement | null = null;
-let backBtn: HTMLButtonElement | null = null;
 let tourNextBtn: HTMLButtonElement | null = null;
 let nextBtn: HTMLButtonElement | null = null;
 let navProgressEl: HTMLElement | null = null;
@@ -50,6 +48,79 @@ let completeEl: HTMLElement | null = null;
 let visible = false;
 let showCompleteBannerActive = false;
 let lastReady = false;
+
+function getActiveTutorialHighlight(): HTMLElement | null {
+  return document.querySelector(".tutorial-hangar-highlight, .hud-highlight");
+}
+
+function ensureDimmerSegments(dimmer: HTMLElement): HTMLElement[] {
+  const existing = Array.from(dimmer.querySelectorAll<HTMLElement>(".tutorial-dimmer-segment"));
+  if (existing.length === 4) return existing;
+  dimmer.innerHTML = "";
+  const segments: HTMLElement[] = [];
+  for (let i = 0; i < 4; i++) {
+    const segment = document.createElement("div");
+    segment.className = "tutorial-dimmer-segment";
+    dimmer.appendChild(segment);
+    segments.push(segment);
+  }
+  return segments;
+}
+
+function syncDimmerCutout(dimmer: HTMLElement, target: HTMLElement | null, bounds: DOMRect): void {
+  const segments = ensureDimmerSegments(dimmer);
+  const pad = 8;
+  if (!target) {
+    segments[0].style.cssText = "left:0;top:0;width:100%;height:100%;";
+    for (let i = 1; i < segments.length; i++) segments[i].style.cssText = "display:none;";
+    return;
+  }
+
+  const rect = target.getBoundingClientRect();
+  const left = Math.max(0, rect.left - bounds.left - pad);
+  const top = Math.max(0, rect.top - bounds.top - pad);
+  const right = Math.min(bounds.width, rect.right - bounds.left + pad);
+  const bottom = Math.min(bounds.height, rect.bottom - bounds.top + pad);
+
+  segments[0].style.cssText = `display:block;left:0;top:0;width:100%;height:${top}px;`;
+  segments[1].style.cssText = `display:block;left:0;top:${bottom}px;width:100%;height:${Math.max(0, bounds.height - bottom)}px;`;
+  segments[2].style.cssText = `display:block;left:0;top:${top}px;width:${left}px;height:${Math.max(0, bottom - top)}px;`;
+  segments[3].style.cssText = `display:block;left:${right}px;top:${top}px;width:${Math.max(0, bounds.width - right)}px;height:${Math.max(0, bottom - top)}px;`;
+}
+
+function positionCardAwayFromHighlight(): void {
+  if (!root || !cardEl || !layerEl || cardEl.hidden) return;
+  const layerRect = layerEl.getBoundingClientRect();
+  const target = getActiveTutorialHighlight();
+  const cardRect = cardEl.getBoundingClientRect();
+  const margin = 16;
+  const preferredX = Math.max(margin, (layerRect.width - cardRect.width) / 2);
+  let x = preferredX;
+  let y = margin;
+
+  if (target) {
+    const rect = target.getBoundingClientRect();
+    const relativeTop = rect.top - layerRect.top;
+    const relativeBottom = rect.bottom - layerRect.top;
+    const spaceAbove = relativeTop - margin;
+    const spaceBelow = layerRect.height - relativeBottom - margin;
+    if (spaceBelow >= cardRect.height || spaceBelow >= spaceAbove) {
+      y = Math.min(layerRect.height - cardRect.height - margin, relativeBottom + margin);
+    } else {
+      y = Math.max(margin, relativeTop - cardRect.height - margin);
+    }
+    const targetCenterX = rect.left - layerRect.left + rect.width / 2;
+    if (Math.abs(targetCenterX - (x + cardRect.width / 2)) < cardRect.width * 0.65) {
+      const leftCandidate = Math.max(margin, rect.left - layerRect.left - cardRect.width - margin);
+      const rightCandidate = Math.min(layerRect.width - cardRect.width - margin, rect.right - layerRect.left + margin);
+      x = rect.left - layerRect.left > layerRect.width / 2 ? leftCandidate : rightCandidate;
+    }
+  }
+
+  root.style.left = `${Math.max(margin, Math.min(x, layerRect.width - cardRect.width - margin))}px`;
+  root.style.top = `${Math.max(margin, Math.min(y, layerRect.height - cardRect.height - margin))}px`;
+  root.style.transform = "none";
+}
 
 function xpPopupObscuresTutorial(): boolean {
   const xp = document.getElementById("hud-xp-popup");
@@ -89,6 +160,7 @@ function syncDimmerVisibility() {
       dimmer = document.createElement("div");
       dimmer.id = "hud-tour-dimmer";
       dimmer.className = "hidden";
+      ensureDimmerSegments(dimmer);
       hudOverlay.appendChild(dimmer);
     }
   }
@@ -99,6 +171,7 @@ function syncDimmerVisibility() {
     if (dimmer) {
       dimmer.classList.remove("hidden");
       dimmer.style.display = "block";
+      syncDimmerCutout(dimmer, getActiveTutorialHighlight(), dimmer.getBoundingClientRect());
     }
   } else {
     if (dimmer) {
@@ -188,15 +261,6 @@ function updateReadyState() {
     nextBtn.hidden = !ready;
     nextBtn.textContent = step?.id === "graduation" ? t("tutorial.graduate") : t("tutorial.next");
   }
-  if (backBtn) {
-    const snapshot = getTutorialSnapshot();
-    if (step?.id === "hud-tour") {
-      const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-      backBtn.disabled = phase <= 0;
-    } else {
-      backBtn.disabled = getState().player.tutorial.step <= 0;
-    }
-  }
   if (statusEl) {
     statusEl.hidden = !ready;
     statusEl.textContent = ready ? t("tutorial.objectiveComplete") : "";
@@ -262,11 +326,12 @@ function renderStep() {
   }
 
   root.style.display = "block";
-  syncDimmerVisibility();
   syncHangarGuideVisuals();
   syncHudHighlights();
+  syncDimmerVisibility();
   updateReadyState();
   updateNavProgress();
+  positionCardAwayFromHighlight();
 }
 
 function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>>) {
@@ -328,7 +393,6 @@ export function initTutorialOverlay(active: boolean) {
         <div class="tutorial-status" hidden>${t("tutorial.objectiveComplete")}</div>
         <div class="tutorial-hint"></div>
         <div class="tutorial-nav">
-          <button type="button" class="tutorial-back-btn">${t("tutorial.back")}</button>
           <button type="button" class="tutorial-tour-next-btn" hidden>${t("tutorial.next")}</button>
           <button type="button" class="tutorial-next-btn" hidden>${t("tutorial.next")}</button>
         </div>
@@ -361,7 +425,6 @@ export function initTutorialOverlay(active: boolean) {
     navProgressLabelEl = root.querySelector(".tutorial-nav-progress-label");
     statusEl = root.querySelector(".tutorial-status");
     hintEl = root.querySelector(".tutorial-hint");
-    backBtn = root.querySelector(".tutorial-back-btn");
     tourNextBtn = root.querySelector(".tutorial-tour-next-btn");
     nextBtn = root.querySelector(".tutorial-next-btn");
     confirmEl = root.querySelector(".tutorial-confirm");
@@ -381,21 +444,6 @@ export function initTutorialOverlay(active: boolean) {
       if (confirmEl) confirmEl.hidden = true;
       skipTutorial();
       hideTutorialOverlay();
-    });
-    backBtn?.addEventListener("click", () => {
-      const step = getCurrentTutorialStep(getState().player);
-      if (step?.id === "hud-tour") {
-        const snapshot = getTutorialSnapshot();
-        const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-        if (phase > 0) {
-          snapshot.hudTourPhase = phase - 1;
-          snapshot.hudTourComplete = false;
-          renderStep();
-          return;
-        }
-      }
-      goBackStep();
-      renderStep();
     });
     tourNextBtn?.addEventListener("click", () => {
       const step = getCurrentTutorialStep(getState().player);
@@ -490,7 +538,9 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   if (root) root.style.display = "block";
   updateHintVisibility();
   syncHudHighlights();
+  syncDimmerVisibility();
   updateNavProgress();
+  positionCardAwayFromHighlight();
 }
 
 export function destroyTutorialOverlay() {

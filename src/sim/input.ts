@@ -18,6 +18,9 @@ export interface InputFrame {
 const MAX_INPUT_COORD = 1_000_000;
 const MAX_NAV_RANGE = 10_000;
 const MAX_ACTIONS_PER_FRAME = 16;
+const RACK_IDS = new Set(["turret", "high", "med", "low"]);
+const AMMO_TYPES = new Set(["hybrid", "missile"]);
+const RESOURCE_CATEGORIES = new Set(["ore", "refined", "loot", "components"]);
 
 function finiteOrZero(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
@@ -29,6 +32,185 @@ function clampFinite(value: unknown, min: number, max: number): number {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function stringPayload(action: Record<string, unknown>, key: string): string | null {
+  const payload = action.payload;
+  if (!isRecord(payload)) return null;
+  const value = payload[key];
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function numberPayload(action: Record<string, unknown>, key: string): number | null {
+  const payload = action.payload;
+  if (!isRecord(payload)) return null;
+  const value = payload[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function optionalPayloadRecord(action: Record<string, unknown>): Record<string, unknown> {
+  return isRecord(action.payload) ? action.payload : {};
+}
+
+function sanitizeAction(action: Record<string, unknown>): GameCommand | null {
+  switch (action.type) {
+    case "fireSelectedTurret": {
+      const payload = optionalPayloadRecord(action);
+      return { type: "fireSelectedTurret", payload: { isAutoFire: payload.isAutoFire === true } };
+    }
+    case "dock": {
+      const payload = optionalPayloadRecord(action);
+      return typeof payload.stationId === "string" ? { type: "dock", payload: { stationId: payload.stationId } } : { type: "dock" };
+    }
+    case "undock":
+    case "interactSite":
+    case "clearSensorLocks":
+    case "setHomeSystem":
+    case "repairShip":
+    case "collectHubOutput":
+      return { type: action.type };
+    case "warp": {
+      const targetIdx = numberPayload(action, "targetIdx");
+      return targetIdx == null ? { type: "warp" } : { type: "warp", payload: { targetIdx } };
+    }
+    case "setFireControlSlot": {
+      const slot = numberPayload(action, "slot");
+      return slot == null ? null : { type: "setFireControlSlot", payload: { slot } };
+    }
+    case "toggleSlotDefaultAction": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.rack !== "string" || !RACK_IDS.has(payload.rack)) return null;
+      if (typeof payload.idx !== "number" || !Number.isFinite(payload.idx)) return null;
+      return { type: "toggleSlotDefaultAction", payload: { rack: payload.rack, idx: payload.idx } };
+    }
+    case "assignModuleSlotToTarget": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.slotIdx !== "number" || !Number.isFinite(payload.slotIdx)) return null;
+      if (payload.targetId !== null && typeof payload.targetId !== "string") return null;
+      const opts = isRecord(payload.opts)
+        ? { clearAssign: payload.opts.clearAssign === true, silent: payload.opts.silent === true }
+        : undefined;
+      return { type: "assignModuleSlotToTarget", payload: { slotIdx: payload.slotIdx, targetId: payload.targetId, opts } };
+    }
+    case "setHighTarget": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.idx !== "number" || !Number.isFinite(payload.idx)) return null;
+      if (payload.targetId !== null && typeof payload.targetId !== "string") return null;
+      return { type: "setHighTarget", payload: { idx: payload.idx, targetId: payload.targetId } };
+    }
+    case "syncTutorialStep": {
+      return isRecord(action.payload) ? { type: "syncTutorialStep", payload: action.payload as Player["tutorial"] } : null;
+    }
+    case "skipTutorial": {
+      const primeIdx = numberPayload(action, "primeIdx");
+      return primeIdx == null ? null : { type: "skipTutorial", payload: { primeIdx } };
+    }
+    case "completeSite": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.siteId !== "string") return null;
+      if (typeof payload.payload !== "number" || typeof payload.integrity !== "number") return null;
+      return { type: "completeSite", payload: { siteId: payload.siteId, payload: payload.payload, integrity: payload.integrity, partial: payload.partial === true } };
+    }
+    case "requestSensorLock":
+    case "removeSensorLock":
+    case "selectLockTarget": {
+      const id = stringPayload(action, "id");
+      return id == null ? null : { type: action.type, payload: { id } };
+    }
+    case "setTractorTightness": {
+      const value = numberPayload(action, "value");
+      return value == null ? null : { type: "setTractorTightness", payload: { value } };
+    }
+    case "setMapScannerPower": {
+      const payload = optionalPayloadRecord(action);
+      return { type: "setMapScannerPower", payload: { active: payload.active === true } };
+    }
+    case "setMapScannerCone": {
+      const coneDeg = numberPayload(action, "coneDeg");
+      return coneDeg === 180 || coneDeg === 90 || coneDeg === 45 || coneDeg === 15
+        ? { type: "setMapScannerCone", payload: { coneDeg } }
+        : null;
+    }
+    case "setMapScannerStrength":
+    case "startScanPulse": {
+      const key = action.type === "setMapScannerStrength" ? "strength" : "angleDeg";
+      const value = numberPayload(action, key);
+      return value == null ? null : { type: action.type, payload: { [key]: value } } as GameCommand;
+    }
+    case "queueIndustryJob": {
+      const recipeId = stringPayload(action, "recipeId");
+      const qty = numberPayload(action, "qty");
+      return recipeId == null || qty == null ? null : { type: "queueIndustryJob", payload: { recipeId, qty } };
+    }
+    case "cancelIndustryJob": {
+      const jobId = stringPayload(action, "jobId");
+      return jobId == null ? null : { type: "cancelIndustryJob", payload: { jobId } };
+    }
+    case "buyBlueprint": {
+      const recipeId = stringPayload(action, "recipeId");
+      return recipeId == null ? null : { type: "buyBlueprint", payload: { recipeId } };
+    }
+    case "buyAmmunition": {
+      const ammoType = stringPayload(action, "ammoType");
+      return ammoType != null && AMMO_TYPES.has(ammoType) ? { type: "buyAmmunition", payload: { ammoType: ammoType as "hybrid" | "missile" } } : null;
+    }
+    case "sellCargoResource": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.category !== "string" || !RESOURCE_CATEGORIES.has(payload.category)) return null;
+      if (typeof payload.key !== "string") return null;
+      return { type: "sellCargoResource", payload: { category: payload.category as "ore" | "refined" | "loot" | "components", key: payload.key } };
+    }
+    case "jettisonItem": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.itemId !== "string") return null;
+      if (payload.qty !== undefined && payload.qty !== null && typeof payload.qty !== "number") return null;
+      return { type: "jettisonItem", payload: { itemId: payload.itemId, qty: payload.qty } };
+    }
+    case "fitModule":
+    case "swapModule": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.rack !== "string" || !RACK_IDS.has(payload.rack)) return null;
+      if (typeof payload.slotIdx !== "number" || typeof payload.instanceId !== "string") return null;
+      return { type: action.type, payload: { rack: payload.rack as "turret" | "high" | "med" | "low", slotIdx: payload.slotIdx, instanceId: payload.instanceId } };
+    }
+    case "unfitModule": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.rack !== "string" || !RACK_IDS.has(payload.rack)) return null;
+      if (typeof payload.slotIdx !== "number") return null;
+      return { type: "unfitModule", payload: { rack: payload.rack as "turret" | "high" | "med" | "low", slotIdx: payload.slotIdx } };
+    }
+    case "turnInContract": {
+      const contractId = stringPayload(action, "contractId");
+      return contractId == null ? null : { type: "turnInContract", payload: { contractId } };
+    }
+    case "abandonContract": {
+      const contractId = stringPayload(action, "contractId");
+      return contractId == null ? null : { type: "abandonContract", payload: { contractId } };
+    }
+    case "acceptContract": {
+      const contractId = stringPayload(action, "contractId");
+      return contractId == null ? null : { type: "acceptContract", payload: { contractId } };
+    }
+    case "buyModule": {
+      const moduleId = stringPayload(action, "moduleId");
+      return moduleId == null ? null : { type: "buyModule", payload: { moduleId } };
+    }
+    case "sellModule": {
+      const moduleId = stringPayload(action, "moduleId");
+      return moduleId == null ? null : { type: "sellModule", payload: { moduleId } };
+    }
+    case "processHubFloatingItem": {
+      const itemId = stringPayload(action, "itemId");
+      return itemId == null ? null : { type: "processHubFloatingItem", payload: { itemId } };
+    }
+    case "smeltHubOre": {
+      const oreKey = stringPayload(action, "oreKey");
+      const qty = numberPayload(action, "qty");
+      return oreKey == null || qty == null ? null : { type: "smeltHubOre", payload: { oreKey, qty } };
+    }
+    default:
+      return null;
+  }
 }
 
 function sanitizePoint(value: unknown): { x: number; y: number } | null {
@@ -57,7 +239,8 @@ function sanitizeActions(value: unknown): GameCommand[] {
   for (let i = 0; i < value.length && actions.length < MAX_ACTIONS_PER_FRAME; i++) {
     const action = value[i];
     if (!isRecord(action) || typeof action.type !== "string") continue;
-    actions.push(action as unknown as GameCommand);
+    const sanitized = sanitizeAction(action);
+    if (sanitized) actions.push(sanitized);
   }
   return actions;
 }
