@@ -1,41 +1,55 @@
 import "../styles/hud-logs.css";
-import { hudState, MAX_LOG_ENTRIES } from "./state.js";
+import { MAX_LOG_ENTRIES } from "./state.js";
+
+interface LogEntry {
+  msg: string;
+  type: string;
+  time: string;
+  prefix?: string;
+}
 
 let logSink: HTMLElement | null = null;
-const pendingLogs: { msg: string; type: string; prefix?: string }[] = [];
+const logHistory: LogEntry[] = [];
 
-export function registerLogSink(sink: HTMLElement | null) {
+export function registerLogSink(sink: HTMLElement | null): void {
   logSink = sink;
-}
-
-export function flushPendingLogEntries() {
   if (!logSink) return;
-  while (pendingLogs.length > 0) {
-    const entry = pendingLogs.shift()!;
-    appendLogEntryDirect(logSink, entry.msg, entry.type, entry.prefix);
-  }
+  renderLogHistory(logSink);
 }
 
-export function appendLogEntry(msg: string, type: string = "info", prefix?: string) {
-  if (logSink) {
-    appendLogEntryDirect(logSink, msg, type, prefix);
-  } else {
-    pendingLogs.push({ msg, type, prefix });
-    logEvent(prefix ? `${prefix} ${msg}` : msg, type);
-  }
+export function flushPendingLogEntries(): void {
+  if (!logSink) return;
+  renderLogHistory(logSink);
 }
 
-function appendLogEntryDirect(sink: HTMLElement, msg: string, type: string, prefix?: string) {
-  const entry = document.createElement("div");
-  entry.className = `log-entry log-${type}`;
+export function appendLogEntry(msg: string, type: string = "info", prefix?: string): void {
   const time = new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  entry.textContent = prefix ? `[${time}] ${prefix} ${msg}` : `[${time}] ${msg}`;
+  const entry = { msg, type, time, prefix };
+  logHistory.push(entry);
+  while (logHistory.length > MAX_LOG_ENTRIES) {
+    logHistory.shift();
+  }
+
+  if (logSink) {
+    appendLogEntryDirect(logSink, entry);
+  }
+}
+
+function renderLogHistory(sink: HTMLElement): void {
+  sink.innerHTML = "";
+  for (const entry of logHistory) {
+    appendLogEntryDirect(sink, entry);
+  }
+}
+
+function appendLogEntryDirect(sink: HTMLElement, entryData: LogEntry): void {
+  const entry = document.createElement("div");
+  entry.className = `log-entry log-${entryData.type}`;
+  entry.textContent = entryData.prefix ? `[${entryData.time}] ${entryData.prefix} ${entryData.msg}` : `[${entryData.time}] ${entryData.msg}`;
   sink.appendChild(entry);
 
-  if (sink === hudState.logEntries) {
-    while (sink.children.length > MAX_LOG_ENTRIES) {
-      sink.removeChild(sink.firstChild!);
-    }
+  while (sink.children.length > MAX_LOG_ENTRIES) {
+    sink.removeChild(sink.firstChild!);
   }
 
   const isNearBottom = sink.scrollHeight - sink.scrollTop <= sink.clientHeight + 10;
@@ -45,7 +59,6 @@ function appendLogEntryDirect(sink: HTMLElement, msg: string, type: string, pref
 }
 
 /* ── Event Log ── */
-export function logEvent(msg: string, type: string = "info") {
-  if (!hudState.logEntries) return;
-  appendLogEntryDirect(hudState.logEntries, msg, type);
+export function logEvent(msg: string, type: string = "info"): void {
+  appendLogEntry(msg, type);
 }

@@ -11,6 +11,11 @@ import { runPilotConnection } from "./pilot-connecting.js";
 import { isTauriApp } from "../utils/app-exit.js";
 import { netLog } from "./net-console.js";
 
+interface PilotHostScreenOptions {
+  mount?: HTMLElement;
+  embedded?: boolean;
+}
+
 function pilotNameFromSave(): string {
   if (!localStorage.getItem(SAVE_KEY)) return "";
   try {
@@ -21,7 +26,7 @@ function pilotNameFromSave(): string {
   }
 }
 
-export function showPilotHostScreen(onClose: () => void): void {
+export function showPilotHostScreen(onClose: () => void, options: PilotHostScreenOptions = {}): void {
   const callsign = pilotNameFromSave();
   const hasPilot = callsign.length >= 3;
   const listenAddr = `127.0.0.1:${getMultiplayerPort()}`;
@@ -33,7 +38,9 @@ export function showPilotHostScreen(onClose: () => void): void {
     id: "pilot-host-screen",
     title: "HOST RELAY",
     subtitle: "PILOT COMPUTER",
-    showConsole: true,
+    mount: options.mount,
+    embedded: options.embedded,
+    showConsole: !options.embedded,
     dashboardHtml: `
       <div class="pilot-terminal-meta-row">
         <span class="meta-label">CALLSIGN</span>
@@ -99,6 +106,8 @@ export function showPilotHostScreen(onClose: () => void): void {
       label: "INITIALIZING HOST RELAY",
       subtitle: "SERVER WORKER",
       targetLine: listenAddr,
+      mount: options.mount,
+      embedded: options.embedded,
       task: () => ensureGameplayConnected(),
       onSuccess: async () => {
         await enterSpaceMode();
@@ -106,7 +115,7 @@ export function showPilotHostScreen(onClose: () => void): void {
         netLog(`[OK] Host listening ${listenAddr}`);
       },
       onFailure: () => {
-        showPilotHostScreen(onClose);
+        showPilotHostScreen(onClose, options);
       },
     });
   });

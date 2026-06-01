@@ -3,6 +3,7 @@ import { openSettingsOnBootMonitor } from "../settings/index.js";
 import { showMultiplayerMenu } from "../title-multiplayer.js";
 import { showSinglePlayerMenu } from "../title-single-player.js";
 import { t } from "../../utils/i18n.js";
+import { formatBuildLabel } from "../../data/version.js";
 
 /**
  * Boot Screen Title Controller
@@ -54,9 +55,12 @@ export function restoreTitleScreen(): void {
     <div class="ld-menu-actions">
       <button type="button" id="title-sp" class="ld-btn-start">${t("title.singleplayer")}</button>
       <button type="button" id="title-mp" class="ld-btn-start ld-btn-secondary">${t("title.multiplayer")}</button>
-      <button type="button" id="title-settings" class="ld-btn-start ld-btn-settings" aria-label="${t("title.settings")}">⚙ ${t("title.settings")}</button>
-      <button type="button" id="title-exit" class="ld-btn-start ld-btn-danger">${t("title.safeExit")}</button>
+      <div class="title-icon-row">
+        <button type="button" id="title-settings" class="ld-btn-start ld-btn-settings title-settings-icon" aria-label="${t("title.settings")}">⚙</button>
+        <button type="button" id="title-exit" class="ld-btn-start ld-btn-danger title-exit-icon" aria-label="${t("title.safeExit")}">⏻</button>
+      </div>
     </div>
+    <div class="title-build-label">${formatBuildLabel()}</div>
   `;
 
   bindTitleScreenEvents();

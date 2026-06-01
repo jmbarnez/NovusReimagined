@@ -9,6 +9,8 @@ export interface RunPilotConnectionOptions {
   label: string;
   subtitle?: string;
   targetLine?: string;
+  mount?: HTMLElement;
+  embedded?: boolean;
   task: () => Promise<boolean>;
   onSuccess: () => void | Promise<void>;
   onFailure: (err?: unknown) => void;
@@ -31,7 +33,9 @@ export function runPilotConnection(options: RunPilotConnectionOptions): void {
     id: "pilot-connecting-screen",
     title: "NEURAL LINK",
     subtitle: options.subtitle ?? "SYNCHRONIZATION",
-    showConsole: true,
+    mount: options.mount,
+    embedded: options.embedded,
+    showConsole: !options.embedded,
     showAbort: true,
     abortLabel: "ABORT CONNECTION",
     dashboardHtml: options.targetLine
@@ -54,9 +58,11 @@ export function runPilotConnection(options: RunPilotConnectionOptions): void {
   });
 
   terminal.setStatus(options.label);
-  registerLogSink(terminal.consoleEntries);
-  flushPendingLogEntries();
-  flushNetLogPending();
+  if (!options.embedded) {
+    registerLogSink(terminal.consoleEntries);
+    flushPendingLogEntries();
+    flushNetLogPending();
+  }
   appendLogEntry(`Phase: ${options.label}`, "system");
 
   activeConnectionAbort = () => {

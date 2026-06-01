@@ -15,6 +15,8 @@ export interface CreatePilotTerminalOptions {
   id: string;
   title: string;
   subtitle?: string;
+  mount?: HTMLElement;
+  embedded?: boolean;
   /** Extra dashboard markup below the status line slot */
   dashboardHtml?: string;
   showConsole?: boolean;
@@ -27,7 +29,7 @@ export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions):
   const showConsole = options.showConsole !== false;
   const overlay = document.createElement("div");
   overlay.id = options.id;
-  overlay.className = "pilot-terminal-overlay";
+  overlay.className = `pilot-terminal-overlay${options.embedded ? " pilot-terminal-overlay--embedded" : ""}`;
 
   overlay.innerHTML = `
     <div class="pilot-terminal-corners" aria-hidden="true">
@@ -66,7 +68,7 @@ export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions):
     </div>
   `;
 
-  document.body.appendChild(overlay);
+  (options.mount ?? document.body).appendChild(overlay);
 
   const statusEl = overlay.querySelector("[data-pilot-status]") as HTMLElement;
   const dashboardMain = overlay.querySelector("[data-pilot-dashboard]") as HTMLElement;

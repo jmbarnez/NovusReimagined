@@ -73,6 +73,7 @@ export interface Settings {
   sfxVolume: number;
   musicVolume: number;
   renderScale: number;
+  fpsLimit: number;
   backgroundDetail: string;
   colorGrading: boolean;
   vignetteEnabled: boolean;
@@ -349,6 +350,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sfxVolume: 1.0,
   musicVolume: 1.0,
   renderScale: 2.5,
+  fpsLimit: 0,
   backgroundDetail: "high",
   colorGrading: true,
   vignetteEnabled: true,
@@ -375,6 +377,7 @@ export function loadSettings(): Settings {
         sfxVolume: parsed.sfxVolume ?? 1.0,
         musicVolume: parsed.musicVolume ?? 1.0,
         renderScale: parsed.renderScale ?? 2.5,
+        fpsLimit: Number.isFinite(parsed.fpsLimit) ? parsed.fpsLimit : 0,
         backgroundDetail: parsed.backgroundDetail || "high",
         colorGrading: parsed.colorGrading ?? true,
         vignetteEnabled: parsed.vignetteEnabled ?? true,

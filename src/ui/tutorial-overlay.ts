@@ -53,6 +53,26 @@ function getActiveTutorialHighlight(): HTMLElement | null {
   return document.querySelector(".tutorial-hangar-highlight, .hud-highlight");
 }
 
+function getCardAnchorHighlight(step: ReturnType<typeof getCurrentTutorialStep>): HTMLElement | null {
+  if (!step) return null;
+  const highlighted = getActiveTutorialHighlight();
+  if (!highlighted) return null;
+  if (highlighted.classList.contains("tutorial-hangar-highlight")) return highlighted;
+  if (highlighted.classList.contains("hud-highlight")) {
+    const hudAnchoredSteps = new Set([
+      "hud-tour",
+      "targeting",
+      "mining",
+      "gunnery",
+      "scan-signature",
+      "breach-signature",
+      "graduation",
+    ]);
+    return hudAnchoredSteps.has(step.id) ? highlighted : null;
+  }
+  return null;
+}
+
 function ensureDimmerSegments(dimmer: HTMLElement): HTMLElement[] {
   const existing = Array.from(dimmer.querySelectorAll<HTMLElement>(".tutorial-dimmer-segment"));
   if (existing.length === 4) return existing;
@@ -88,32 +108,44 @@ function syncDimmerCutout(dimmer: HTMLElement, target: HTMLElement | null, bound
   segments[3].style.cssText = `display:block;left:${right}px;top:${top}px;width:${Math.max(0, bounds.width - right)}px;height:${Math.max(0, bottom - top)}px;`;
 }
 
-function positionCardAwayFromHighlight(): void {
+function positionCardForStep(): void {
   if (!root || !cardEl || !layerEl || cardEl.hidden) return;
+  const step = getCurrentTutorialStep(getState().player);
   const layerRect = layerEl.getBoundingClientRect();
-  const target = getActiveTutorialHighlight();
+  const target = getCardAnchorHighlight(step);
   const cardRect = cardEl.getBoundingClientRect();
   const margin = 16;
-  const preferredX = Math.max(margin, (layerRect.width - cardRect.width) / 2);
-  let x = preferredX;
+  const safeW = Math.max(1, layerRect.width - cardRect.width - margin * 2);
+  let x = margin + safeW / 2;
   let y = margin;
 
   if (target) {
     const rect = target.getBoundingClientRect();
-    const relativeTop = rect.top - layerRect.top;
-    const relativeBottom = rect.bottom - layerRect.top;
-    const spaceAbove = relativeTop - margin;
-    const spaceBelow = layerRect.height - relativeBottom - margin;
+    const targetLeft = rect.left - layerRect.left;
+    const targetRight = rect.right - layerRect.left;
+    const targetTop = rect.top - layerRect.top;
+    const targetBottom = rect.bottom - layerRect.top;
+    const targetCenterX = targetLeft + rect.width / 2;
+    const spaceAbove = targetTop - margin;
+    const spaceBelow = layerRect.height - targetBottom - margin;
+    const spaceLeft = targetLeft - margin;
+    const spaceRight = layerRect.width - targetRight - margin;
+
+    x = targetCenterX - cardRect.width / 2;
     if (spaceBelow >= cardRect.height || spaceBelow >= spaceAbove) {
-      y = Math.min(layerRect.height - cardRect.height - margin, relativeBottom + margin);
+      y = targetBottom + margin;
     } else {
-      y = Math.max(margin, relativeTop - cardRect.height - margin);
+      y = targetTop - cardRect.height - margin;
     }
-    const targetCenterX = rect.left - layerRect.left + rect.width / 2;
-    if (Math.abs(targetCenterX - (x + cardRect.width / 2)) < cardRect.width * 0.65) {
-      const leftCandidate = Math.max(margin, rect.left - layerRect.left - cardRect.width - margin);
-      const rightCandidate = Math.min(layerRect.width - cardRect.width - margin, rect.right - layerRect.left + margin);
-      x = rect.left - layerRect.left > layerRect.width / 2 ? leftCandidate : rightCandidate;
+
+    const overlapsTargetX = x < targetRight + margin && x + cardRect.width > targetLeft - margin;
+    const overlapsTargetY = y < targetBottom + margin && y + cardRect.height > targetTop - margin;
+    if (overlapsTargetX && overlapsTargetY) {
+      if (spaceRight >= cardRect.width || spaceRight >= spaceLeft) {
+        x = targetRight + margin;
+      } else {
+        x = targetLeft - cardRect.width - margin;
+      }
     }
   }
 
@@ -331,7 +363,7 @@ function renderStep() {
   syncDimmerVisibility();
   updateReadyState();
   updateNavProgress();
-  positionCardAwayFromHighlight();
+  positionCardForStep();
 }
 
 function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>>) {
@@ -540,7 +572,7 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   syncHudHighlights();
   syncDimmerVisibility();
   updateNavProgress();
-  positionCardAwayFromHighlight();
+  positionCardForStep();
 }
 
 export function destroyTutorialOverlay() {

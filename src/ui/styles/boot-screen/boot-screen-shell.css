@@ -80,7 +80,7 @@
       color-mix(in srgb, var(--hud-bg-window) 58%, var(--hud-bg-panel) 42%) 0%,
       color-mix(in srgb, var(--hud-bg-panel) 80%, var(--hud-bg-deep) 20%) 100%);
   border: 1px solid color-mix(in srgb, var(--hud-border) 72%, transparent);
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow:
     0 14px 28px color-mix(in srgb, var(--hud-bg-deep) 44%, transparent),
     0 0 0 1px color-mix(in srgb, var(--hud-border-soft) 40%, transparent) inset,

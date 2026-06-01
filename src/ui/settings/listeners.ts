@@ -114,6 +114,11 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     resizePixi();
     saveSettings(Client.settings);
   });
+  el.querySelector("#fps-limit")!.addEventListener("change", (e) => {
+    const v = parseInt((e.target as HTMLSelectElement).value, 10);
+    Client.settings.fpsLimit = Number.isFinite(v) ? v : 0;
+    saveSettings(Client.settings);
+  });
   el.querySelector("#bloom-intensity")!.addEventListener("input", (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.bloomIntensity = v;

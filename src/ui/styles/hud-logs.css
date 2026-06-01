@@ -24,9 +24,9 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 3px 5px;
-  font-size: 9px;
-  line-height: 13px;
+  padding: 2px 5px;
+  font-size: 8px;
+  line-height: 11px;
   font-family: var(--font-family);
   scrollbar-width: thin;
   scrollbar-color: rgba(40,55,70,0.6) transparent;
@@ -57,7 +57,7 @@
 
 .hud-log-chat-prefix {
   flex: 0 0 auto;
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 700;
   color: var(--hud-accent);
 }
@@ -65,11 +65,11 @@
 .hud-log-chat-input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 19px;
+  height: 17px;
   box-sizing: border-box;
   padding: 2px 5px;
   font-family: var(--font-family);
-  font-size: 9px;
+  font-size: 8px;
   color: var(--hud-text-bright);
   background: rgba(0, 0, 0, 0.34);
   border: 1px solid var(--hud-border-soft);

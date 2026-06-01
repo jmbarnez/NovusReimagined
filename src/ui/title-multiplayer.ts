@@ -1,45 +1,43 @@
 import { sfxBlip } from "../audio/procedural.js";
 import { pushMonitorMenu } from "./monitor-nav.js";
-import { showPilotHostScreen } from "./pilot-host.js";
 import { showPilotJoinScreen } from "./pilot-join.js";
 import { bindTitleScreenEvents } from "./title-screen.js";
+import { t } from "../utils/i18n.js";
 
 export function showMultiplayerMenu(): void {
   const menuHtml = `
-    <div class="ld-title" style="font-size: clamp(32px, 4vw, 56px);">MULTIPLAYER</div>
-    <div class="ld-sep"></div>
-    <div class="ld-sub">REMOTE NEURAL RELAY</div>
-    <div class="ld-menu-actions">
-      <button type="button" id="mp-host" class="ld-btn-start">HOST SESSION</button>
-      <button type="button" id="mp-find" class="ld-btn-start ld-btn-secondary">FIND &amp; JOIN</button>
-      <button type="button" id="mp-join" class="ld-btn-start ld-btn-secondary">JOIN BY ADDRESS</button>
-      <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">BACK</button>
+    <div class="multiplayer-menu-screen">
+      <div class="ld-title multiplayer-menu-title">${t("title.multiplayer")}</div>
+      <div class="ld-sep multiplayer-menu-sep"></div>
+      <div class="ld-sub multiplayer-menu-sub">${t("multiplayer.subtitle")}</div>
+      <div class="multiplayer-menu-grid">
+        <button type="button" id="mp-find" class="multiplayer-menu-card multiplayer-menu-card--primary">
+          <span class="multiplayer-menu-card-kicker">${t("multiplayer.find.kicker")}</span>
+          <span class="multiplayer-menu-card-title">${t("multiplayer.find")}</span>
+          <span class="multiplayer-menu-card-body">${t("multiplayer.find.body")}</span>
+        </button>
+        <button type="button" id="mp-join" class="multiplayer-menu-card">
+          <span class="multiplayer-menu-card-kicker">${t("multiplayer.join.kicker")}</span>
+          <span class="multiplayer-menu-card-title">${t("multiplayer.join")}</span>
+          <span class="multiplayer-menu-card-body">${t("multiplayer.join.body")}</span>
+        </button>
+      </div>
+      <div class="multiplayer-menu-footer">
+        <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">${t("common.back")}</button>
+      </div>
     </div>
   `;
 
   pushMonitorMenu(menuHtml, (monitor) => {
-    const openJoin = (autoScan: boolean) => {
-      const loading = document.getElementById("loading");
-      if (loading) loading.style.pointerEvents = "none";
+    const openJoin = (autoScan: boolean): void => {
       showPilotJoinScreen({
         autoScan,
-        onClose: () => {
-          if (loading) loading.style.pointerEvents = "";
-        },
-        onBack: () => {
-          if (loading) loading.style.pointerEvents = "";
-        },
+        mount: monitor,
+        embedded: true,
+        onClose: () => {},
+        onBack: () => {},
       });
     };
-
-    monitor.querySelector("#mp-host")?.addEventListener("click", () => {
-      sfxBlip();
-      const loading = document.getElementById("loading");
-      if (loading) loading.style.pointerEvents = "none";
-      showPilotHostScreen(() => {
-        if (loading) loading.style.pointerEvents = "";
-      });
-    });
 
     monitor.querySelector("#mp-find")?.addEventListener("click", () => {
       sfxBlip();

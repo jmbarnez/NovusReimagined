@@ -19,15 +19,15 @@
   flex-direction: column;
   overflow: hidden;
   transform: none;
+  flex: 1;
 }
 
 .settings-back-btn {
   flex-shrink: 0;
-  align-self: flex-start;
-  margin: 8px 8px 0;
-  padding: 6px 12px;
+  margin-right: auto;
+  padding: 5px 12px;
   border: 1px solid var(--hud-border-soft);
-  background: color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 65%, transparent);
   color: var(--hud-text-bright);
   font-family: inherit;
   font-size: 10px;
@@ -36,22 +36,25 @@
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 4px;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
 
 .settings-back-btn:hover {
   border-color: var(--hud-accent);
   background: color-mix(in srgb, var(--hud-accent) 12%, var(--hud-bg-elevated));
+  color: var(--hud-text-bright);
 }
 
 .monitor-center .monitor-content.monitor-settings-open {
   padding: 0;
   overflow: hidden;
+  display: flex;
 }
 
 .monitor-center .monitor-content.monitor-settings-open > #settings-panel {
   width: 100%;
   height: 100%;
+  flex: 1;
 }
 
 .monitor-center .monitor-content.monitor-settings-open::before {

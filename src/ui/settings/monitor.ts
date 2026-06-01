@@ -1,3 +1,4 @@
+import { sfxBlip } from "../../audio/procedural.js";
 import { t } from "../../utils/i18n.js";
 import { settingsContentHTML } from "./shell.js";
 import { attachSettingsListeners } from "./listeners.js";
@@ -17,9 +18,7 @@ export function openSettingsOnBootMonitor(restoreFn: () => void): void {
   const panel = document.createElement("div");
   panel.id = "settings-panel";
   panel.className = "eve-window monitor-settings-panel";
-  panel.innerHTML = `
-    <button class="settings-back-btn" id="settings-back">${t("common.back")}</button>
-    ${settingsContentHTML()}`;
+  panel.innerHTML = settingsContentHTML();
 
   monitor.innerHTML = "";
   monitor.appendChild(panel);
@@ -31,9 +30,18 @@ export function openSettingsOnBootMonitor(restoreFn: () => void): void {
   attachSettingsListeners(panel, bubble);
   renderSettings();
 
-  document.getElementById("settings-back")?.addEventListener("click", () => {
-    toggleSettingsMonitor();
-  });
+  const exitBtn = panel.querySelector("#settings-exit") as HTMLButtonElement | null;
+  if (exitBtn) {
+    const backBtn = exitBtn.cloneNode(true) as HTMLButtonElement;
+    backBtn.classList.remove("btn-exit");
+    backBtn.classList.add("settings-back-btn");
+    backBtn.textContent = t("common.back");
+    backBtn.addEventListener("click", () => {
+      sfxBlip();
+      toggleSettingsMonitor();
+    });
+    exitBtn.replaceWith(backBtn);
+  }
 }
 
 export function toggleSettingsMonitor(): void {

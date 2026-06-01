@@ -6,6 +6,7 @@
  */
 import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
 import { getState } from "../state-access.js";
+import { Client } from "../state.js";
 import { TAU, HUD_MINIMAP_SIZE } from "../constants.js";
 import { dst } from "../utils/math.js";
 import { curSys, liveEnemies, liveAsteroids } from "../utils/game.js";
@@ -29,7 +30,11 @@ let cachedHudBorderSoft = 0x283746;
 let cachedHudBgDeep = 0x02050a;
 let lastMinimapRenderMs = 0;
 
-const MINIMAP_FRAME_MS = 1000 / 60;
+function getMinimapFrameMs(): number {
+  const fpsLimit = Client.settings?.fpsLimit ?? 0;
+  if (!Number.isFinite(fpsLimit) || fpsLimit <= 0) return 0;
+  return 1000 / fpsLimit;
+}
 
 function colorToHex(color: string): number {
   const trimmed = color.trim();
@@ -96,7 +101,8 @@ export function initPixiMinimap(): void {
 
 export function syncPixiMinimap(now: number): void {
   if (!mmApp || !mmContainer || !mmCanvas) return;
-  if (now - lastMinimapRenderMs < MINIMAP_FRAME_MS) return;
+  const frameMs = getMinimapFrameMs();
+  if (frameMs > 0 && now - lastMinimapRenderMs < frameMs - 0.5) return;
   lastMinimapRenderMs = now;
 
   const state = getState();

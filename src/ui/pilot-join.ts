@@ -20,6 +20,8 @@ interface SavedServer {
 
 interface ShowPilotJoinOptions {
   autoScan?: boolean;
+  mount?: HTMLElement;
+  embedded?: boolean;
   onClose: () => void;
   onBack?: () => void;
 }
@@ -59,7 +61,9 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
     id: "pilot-join-screen",
     title: "JOIN SESSION",
     subtitle: "SESSION FINDER",
-    showConsole: true,
+    mount: options.mount,
+    embedded: options.embedded,
+    showConsole: !options.embedded,
     dashboardHtml: `
       <div class="pilot-session-list-wrap">
         <div class="pilot-terminal-dashboard-label">DISCOVERED RELAYS</div>
@@ -181,6 +185,7 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
         () => {
           showPilotJoinScreen(options);
         },
+        { mount: options.mount, embedded: options.embedded },
       );
       return;
     }
@@ -203,6 +208,8 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
       label: "NEURAL HANDSHAKE",
       subtitle: "REMOTE SYNC",
       targetLine: address,
+      mount: options.mount,
+      embedded: options.embedded,
       task: () => connectToRemote(address),
       onSuccess: async () => {
         await enterSpaceMode();

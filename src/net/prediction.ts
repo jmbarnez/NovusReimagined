@@ -42,9 +42,6 @@ export class PredictionManager {
 
     const local = getState().player;
     if (!local) return;
-    const oldX = local.x;
-    const oldY = local.y;
-
     // Replay remaining unacknowledged inputs to catch up from server tick to current predicted tick
     const oldSpace = Client.keys[" "];
     const oldMouseWorld = { ...Client.mouseWorld };
@@ -80,23 +77,12 @@ export class PredictionManager {
       Client.navCommand = oldNavCommand;
     }
 
-    const errX = oldX - local.x;
-    const errY = oldY - local.y;
-    const errorDist = Math.hypot(errX, errY);
-
-    if (errorDist > 50) {
-      this.errorX = 0;
-      this.errorY = 0;
-    } else {
-      this.errorX = errX;
-      this.errorY = errY;
-      PlayerAccess.updatePhysics({
-        x: local.x + this.errorX,
-        y: local.y + this.errorY,
-        px: local.px + this.errorX,
-        py: local.py + this.errorY,
-      }, local);
-    }
+    // Keep the replayed predicted state. applySnapshotToG() already rewound the
+    // player to the authoritative server tick before this method ran; moving
+    // back toward that server-tick position after replay causes visible rubber
+    // banding while flying.
+    this.errorX = 0;
+    this.errorY = 0;
   }
 
   public clear() {

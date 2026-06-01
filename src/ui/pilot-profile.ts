@@ -7,9 +7,15 @@ import { createPilotTerminalOverlay } from "./pilot-terminal/layout.js";
 import { appendLogEntry } from "./hud/logs.js";
 import { t } from "../utils/i18n.js";
 
+interface PilotProfileScreenOptions {
+  mount?: HTMLElement;
+  embedded?: boolean;
+}
+
 export function showPilotProfileScreen(
   onComplete: (pilotName: string) => void,
   onCancel?: () => void,
+  options: PilotProfileScreenOptions = {},
 ): void {
   const shipName = SHIPS[getState().player?.shipId ?? "scout"]?.name ?? "Class-I Scout";
 
@@ -17,7 +23,9 @@ export function showPilotProfileScreen(
     id: "pilot-profile-screen",
     title: t("pilot.title"),
     subtitle: t("pilot.subtitle"),
-    showConsole: true,
+    mount: options.mount,
+    embedded: options.embedded,
+    showConsole: !options.embedded,
     dashboardHtml: `
       <div class="pilot-terminal-field">
         <label for="pilot-name-input">${t("pilot.callsign")}</label>

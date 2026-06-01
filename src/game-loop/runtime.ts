@@ -49,6 +49,13 @@ let gameStarted = false;
 let rafId = 0;
 let autoSaveTimer = 0;
 let currentTick = 0;
+let lastRenderedFrameTime = performance.now();
+
+function getFrameLimitMs(): number {
+  const fpsLimit = Client.settings?.fpsLimit ?? 0;
+  if (!Number.isFinite(fpsLimit) || fpsLimit <= 0) return 0;
+  return 1000 / fpsLimit;
+}
 
 function isSimulationTickMode(): boolean {
   return Client.mode === AppMode.SPACE || Client.mode === AppMode.STATION;
@@ -119,6 +126,10 @@ function loop(now: number) {
   if (!gameStarted) return;
   rafId = requestAnimationFrame(loop);
 
+  const frameLimitMs = getFrameLimitMs();
+  if (frameLimitMs > 0 && now - lastRenderedFrameTime < frameLimitMs - 0.5) return;
+  lastRenderedFrameTime = now;
+
   updateHostHeartbeat();
 
   const frameTime = Math.min((now - lastFrameTime) / 1000, 0.1);
@@ -169,6 +180,7 @@ function showSpaceHud() {
 export function initGameLoop() {
   gameStarted = true;
   lastFrameTime = performance.now();
+  lastRenderedFrameTime = lastFrameTime;
   accumulator = 0;
   currentTick = 0;
 

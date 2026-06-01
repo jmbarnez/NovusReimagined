@@ -66,6 +66,11 @@
   transition: opacity 0.3s ease;
 }
 
+.ld-menu-actions > .ld-btn-start,
+.title-icon-row {
+  width: 100%;
+}
+
 .ld-btn-start {
   min-height: 48px;
   padding: 12px 18px;
@@ -83,6 +88,12 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.title-icon-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .ld-btn-start:hover {
@@ -148,6 +159,172 @@
   border-color: var(--hud-accent);
   background: color-mix(in srgb, var(--hud-accent) 18%, var(--hud-bg-elevated));
   box-shadow: 0 0 18px color-mix(in srgb, var(--hud-accent) 45%, transparent);
+}
+
+.title-settings-icon,
+.title-exit-icon {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.title-build-label {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 12px;
+  color: var(--hud-text-faint);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.multiplayer-menu-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-border-soft) transparent;
+}
+
+.multiplayer-menu-title {
+  max-width: 100%;
+  font-size: clamp(22px, 3.2vw, 40px);
+  letter-spacing: clamp(0.08em, 0.8vw, 0.18em);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.multiplayer-menu-sep {
+  margin: 12px auto 10px;
+}
+
+.multiplayer-menu-sub {
+  font-size: clamp(8px, 1.1vw, 10px);
+  letter-spacing: clamp(0.1em, 0.55vw, 0.18em);
+  line-height: 1.35;
+}
+
+.multiplayer-menu-grid {
+  width: 100%;
+  max-width: 560px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 18px auto 0;
+}
+
+.multiplayer-menu-card {
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--hud-border) 54%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--hud-bg-panel) 68%, var(--hud-bg-deep) 32%);
+  color: var(--hud-text-main);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.multiplayer-menu-card:hover {
+  border-color: color-mix(in srgb, var(--hud-shield) 58%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-shield) 8%, var(--hud-bg-panel));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--hud-shield) 16%, transparent);
+  transform: translateY(-1px);
+}
+
+.multiplayer-menu-card--primary {
+  border-color: color-mix(in srgb, var(--hud-accent) 54%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-accent) 8%, var(--hud-bg-panel));
+}
+
+.multiplayer-menu-card-kicker {
+  color: var(--hud-text-dim);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.multiplayer-menu-card-title {
+  color: var(--hud-text-bright);
+  font-size: clamp(10px, 1.35vw, 12px);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.multiplayer-menu-card-body {
+  color: var(--hud-text-dim);
+  font-size: clamp(9px, 1.1vw, 10px);
+  letter-spacing: 0.04em;
+  line-height: 1.42;
+}
+
+.multiplayer-menu-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .multiplayer-menu-screen {
+    justify-content: flex-start;
+    padding-top: 8px;
+  }
+
+  .multiplayer-menu-grid {
+    grid-template-columns: 1fr;
+    max-width: 360px;
+  }
+
+  .multiplayer-menu-card {
+    min-height: 112px;
+  }
+}
+
+@media (max-height: 620px) {
+  .multiplayer-menu-screen {
+    justify-content: flex-start;
+  }
+
+  .multiplayer-menu-grid {
+    margin-top: 12px;
+  }
+
+  .multiplayer-menu-card {
+    min-height: 104px;
+    padding: 10px;
+  }
+
+  .multiplayer-menu-card-body {
+    line-height: 1.32;
+  }
+
+  .multiplayer-menu-footer {
+    margin-top: 10px;
+  }
 }
 
 /* Loading -> title phase transition */

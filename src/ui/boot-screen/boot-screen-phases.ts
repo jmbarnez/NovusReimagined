@@ -1,5 +1,5 @@
 import { t } from "../../utils/i18n.js";
-import { flushPendingLogEntries, registerLogSink } from "../hud/logs.js";
+import { appendLogEntry, flushPendingLogEntries, registerLogSink } from "../hud/logs.js";
 
 /**
  * Boot Screen Phase Controller
@@ -63,25 +63,15 @@ export function markBootPhase(name: string): void {
   try {
     performance.mark(`novus:boot:${name}`);
 
-    const consoleEl = document.querySelector(".ld-console") as HTMLElement | null;
-    if (consoleEl) {
-      const linesByPhase: Record<string, string[]> = {
-        start: [t("loading.init"), t("loading.network"), t("loading.neural")],
-        ui: [t("loading.hud"), t("loading.hudMapping"), t("loading.hudLoaded")],
-        world: [t("loading.worldGen"), t("loading.worldPop"), t("loading.worldGrid")],
-        pixi: [t("loading.pixi"), t("loading.pixiTextures"), t("loading.pixiShaders")],
-      };
+    const linesByPhase: Record<string, string[]> = {
+      start: [t("loading.init"), t("loading.network"), t("loading.neural")],
+      ui: [t("loading.hud"), t("loading.hudMapping"), t("loading.hudLoaded")],
+      world: [t("loading.worldGen"), t("loading.worldPop"), t("loading.worldGrid")],
+      pixi: [t("loading.pixi"), t("loading.pixiTextures"), t("loading.pixiShaders")],
+    };
 
-      if (name === "start") consoleEl.innerHTML = "";
-      const lines = linesByPhase[name] ?? [];
-      const time = new Date().toLocaleTimeString(undefined, { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      for (const line of lines) {
-        const div = document.createElement("div");
-        div.className = "ld-console-line";
-        div.textContent = `[${time}] ${line}`;
-        consoleEl.appendChild(div);
-      }
-      consoleEl.scrollTop = consoleEl.scrollHeight;
+    for (const line of linesByPhase[name] ?? []) {
+      appendLogEntry(line.replace(/^>\s*/, ""), "system");
     }
 
     const progressFill = document.querySelector(".ld-progress-fill") as HTMLElement | null;

@@ -26,6 +26,8 @@ export function renderSettings() {
   if (renderSlider) renderSlider.value = String(settings.renderScale ?? 2.5);
   const renderVal = document.getElementById("render-scale-val") as HTMLElement | null;
   if (renderVal) renderVal.textContent = (settings.renderScale ?? 2.5).toFixed(1) + "x";
+  const fpsSelect = document.getElementById("fps-limit") as HTMLSelectElement | null;
+  if (fpsSelect) fpsSelect.value = String(settings.fpsLimit ?? 0);
 
   const bloomSlider = document.getElementById("bloom-intensity") as HTMLInputElement | null;
   if (bloomSlider) bloomSlider.value = String(settings.bloomIntensity ?? 1.0);
