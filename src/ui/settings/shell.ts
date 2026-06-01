@@ -29,9 +29,13 @@ export function settingsContentHTML(): string {
         <div class="settings-tab-panel" data-tab-panel="video">
         <h3 class="accent-video">${t("settings.tab.video")}</h3>
         <div class="settings-row">
+          <label>Preset</label>
+          <div id="preset-buttons" class="settings-btn-row"></div>
+        </div>
+        <div class="settings-row">
           <label>${t("settings.renderScale")}</label>
-          <input type="range" id="render-scale" min="0.5" max="2.5" step="0.1" value="2.5">
-          <span id="render-scale-val" class="settings-val">2.5x</span>
+          <input type="range" id="render-scale" min="0.5" max="2.5" step="0.1" value="2.2">
+          <span id="render-scale-val" class="settings-val">2.2x</span>
           <span class="settings-tip-icon" data-tip-impact="HIGH" data-tip-desc="${t("settings.tip.renderScale")}">ⓘ</span>
         </div>
         <div class="settings-row">
@@ -127,9 +131,9 @@ export function settingsContentHTML(): string {
         </div>
       </div>
       <div class="eve-win-foot" id="settings-footer">
-        <button id="settings-exit" class="btn-exit">${t("common.exit")}</button>
-        <button id="settings-reset">${t("settings.reset")}</button>
-        <button id="settings-save">${t("common.save")}</button>
+        <button id="settings-exit" class="settings-icon-btn">← ${t("common.exit")}</button>
+        <button id="settings-reset" class="settings-icon-btn">⟳ ${t("settings.reset")}</button>
+        <button id="settings-save" class="settings-icon-btn save">✓ ${t("common.save")}</button>
       </div>`;
 }
 

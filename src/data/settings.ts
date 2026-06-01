@@ -12,6 +12,21 @@ export interface Keybinds {
   perf: string;
 }
 
+export type KeybindAction = keyof Keybinds;
+
+export interface ControlSectionAction {
+  action: KeybindAction;
+  labelKey: string;
+  descriptionKey?: string;
+}
+
+export interface ControlSection {
+  id: string;
+  titleKey: string;
+  descriptionKey?: string;
+  actions: ControlSectionAction[];
+}
+
 /**
  * Comprehensive UI theme. Every color the DOM HUD/windows need is a token here.
  * Themes only specify the "bright" colors — gradient dark-ends and translucent
@@ -65,6 +80,8 @@ export function getFontStack(id: string): string {
   return (FONT_OPTIONS.find((f) => f.id === id) || FONT_OPTIONS[0]).stack;
 }
 
+export type VideoPreset = "performance" | "balanced" | "cinematic" | "custom";
+
 export interface Settings {
   theme: string;
   reticleStyle: string;
@@ -75,6 +92,8 @@ export interface Settings {
   renderScale: number;
   fpsLimit: number;
   backgroundDetail: string;
+  videoPreset: VideoPreset;
+  nebulaDensity: number;
   colorGrading: boolean;
   vignetteEnabled: boolean;
   cameraSmoothing: number;
@@ -99,17 +118,35 @@ export const DEFAULT_KEYBINDS: Keybinds = {
   perf: "Backquote",
 };
 
-export const KEYBIND_LABELS: Record<string, string> = {
-  inventory: "Inventory / Cargo",
-  overview: "Local Scanner / Overview",
-  map: "Galaxy Map",
-  dock: "Dock / Undock",
-  brake: "Brake",
-  settings: "Settings",
-  skills: "Skills Window",
-  eventLog: "Comms Log",
-  perf: "Performance Overlay",
-};
+export const CONTROL_SECTIONS: ControlSection[] = [
+  {
+    id: "navigation",
+    titleKey: "settings.controls.section.navigation",
+    actions: [
+      { action: "brake", labelKey: "settings.controls.brake" },
+      { action: "dock", labelKey: "settings.controls.dock" },
+      { action: "map", labelKey: "settings.controls.map" },
+    ],
+  },
+  {
+    id: "awareness",
+    titleKey: "settings.controls.section.awareness",
+    actions: [
+      { action: "overview", labelKey: "settings.controls.overview" },
+      { action: "eventLog", labelKey: "settings.controls.eventLog" },
+      { action: "perf", labelKey: "settings.controls.perf" },
+    ],
+  },
+  {
+    id: "systems",
+    titleKey: "settings.controls.section.systems",
+    actions: [
+      { action: "inventory", labelKey: "settings.controls.inventory" },
+      { action: "skills", labelKey: "settings.controls.skills" },
+      { action: "settings", labelKey: "settings.controls.settings" },
+    ],
+  },
+];
 
 export const HUD_THEMES: Record<string, UITheme> = {
   default: {
@@ -349,9 +386,11 @@ export const DEFAULT_SETTINGS: Settings = {
   keybinds: { ...DEFAULT_KEYBINDS },
   sfxVolume: 1.0,
   musicVolume: 1.0,
-  renderScale: 2.5,
-  fpsLimit: 0,
+  renderScale: 2.2,
+  fpsLimit: 90,
   backgroundDetail: "high",
+  videoPreset: "balanced",
+  nebulaDensity: 1.0,
   colorGrading: true,
   vignetteEnabled: true,
   cameraSmoothing: 0.08,
@@ -376,9 +415,11 @@ export function loadSettings(): Settings {
         keybinds: { ...DEFAULT_KEYBINDS, ...(parsed.keybinds || {}) },
         sfxVolume: parsed.sfxVolume ?? 1.0,
         musicVolume: parsed.musicVolume ?? 1.0,
-        renderScale: parsed.renderScale ?? 2.5,
-        fpsLimit: Number.isFinite(parsed.fpsLimit) ? parsed.fpsLimit : 0,
+        renderScale: parsed.renderScale ?? 2.2,
+        fpsLimit: Number.isFinite(parsed.fpsLimit) ? parsed.fpsLimit : 90,
         backgroundDetail: parsed.backgroundDetail || "high",
+        videoPreset: (parsed.videoPreset as VideoPreset) ?? "balanced",
+        nebulaDensity: parsed.nebulaDensity ?? 1.0,
         colorGrading: parsed.colorGrading ?? true,
         vignetteEnabled: parsed.vignetteEnabled ?? true,
         cameraSmoothing: parsed.cameraSmoothing ?? 0.08,

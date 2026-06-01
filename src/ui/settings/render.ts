@@ -1,5 +1,5 @@
 import { Client } from "../../state.js";
-import { saveSettings, HUD_THEMES, FONT_OPTIONS, KEYBIND_LABELS, DEFAULT_KEYBINDS, type Keybinds } from "../../data/settings.js";
+import { saveSettings, HUD_THEMES, FONT_OPTIONS, CONTROL_SECTIONS, DEFAULT_KEYBINDS, type Keybinds, type VideoPreset } from "../../data/settings.js";
 import { RETICLE_OPTIONS } from "../../data/reticles.js";
 import { refreshTheme } from "../hud-overlay.js";
 import { renderReticleStyle } from "../../render/reticle.js";
@@ -154,17 +154,85 @@ export function renderSettings() {
     });
   }
 
+  const presetContainer = document.getElementById("preset-buttons") as HTMLElement | null;
+  if (presetContainer) {
+    const presets: { id: string; label: string }[] = [
+      { id: "performance", label: "Performance" },
+      { id: "balanced", label: "Balanced" },
+      { id: "cinematic", label: "Cinematic" },
+      { id: "custom", label: "Custom" },
+    ];
+    presetContainer.innerHTML = presets.map((p) =>
+      `<button class="detail-btn${settings.videoPreset === p.id ? " active" : ""}" data-preset="${p.id}">${p.label}</button>`
+    ).join("");
+    presetContainer.querySelectorAll(".detail-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        sfxConfirm();
+        const preset = (btn as HTMLElement).dataset.preset! as VideoPreset;
+        settings.videoPreset = preset;
+        if (preset === "performance") {
+          settings.renderScale = 1.5;
+          settings.fpsLimit = 60;
+          settings.backgroundDetail = "low";
+          settings.bloomIntensity = 0.5;
+          settings.vignetteEnabled = false;
+          settings.directionalLighting = false;
+          settings.atmosphericRim = false;
+          settings.colorGrading = false;
+          settings.mipmapping = true;
+          settings.lensFlare = false;
+        } else if (preset === "balanced") {
+          settings.renderScale = 2.2;
+          settings.fpsLimit = 90;
+          settings.backgroundDetail = "high";
+          settings.bloomIntensity = 1.0;
+          settings.vignetteEnabled = true;
+          settings.directionalLighting = true;
+          settings.atmosphericRim = true;
+          settings.colorGrading = true;
+          settings.mipmapping = true;
+          settings.lensFlare = true;
+        } else if (preset === "cinematic") {
+          settings.renderScale = 2.5;
+          settings.fpsLimit = 0;
+          settings.backgroundDetail = "high";
+          settings.bloomIntensity = 1.5;
+          settings.vignetteEnabled = true;
+          settings.directionalLighting = true;
+          settings.atmosphericRim = true;
+          settings.colorGrading = true;
+          settings.mipmapping = true;
+          settings.lensFlare = true;
+        }
+        saveSettings(settings);
+        renderSettings();
+      });
+    });
+  }
+
   const list = document.getElementById("keybind-list") as HTMLElement | null;
   if (list) {
-    list.innerHTML = Object.entries(KEYBIND_LABELS).map(([action, label]) => {
-      const bound = settings.keybinds[action as keyof Keybinds] || DEFAULT_KEYBINDS[action as keyof Keybinds];
-      const isListening = listeningFor === action;
-      return `<div class="kb-row">
-        <span class="kb-label">${label}</span>
-        <button class="kb-key${isListening ? " listening" : ""}" data-action="${action}">
-          ${isListening ? t("settings.pressKey") : fmtKey(bound)}
-        </button>
-      </div>`;
+    list.innerHTML = CONTROL_SECTIONS.map((section) => {
+      const rows = section.actions.map(({ action, labelKey, descriptionKey }) => {
+        const bound = settings.keybinds[action] || DEFAULT_KEYBINDS[action];
+        const isListening = listeningFor === action;
+        return `<div class="kb-row">
+          <div class="kb-label-block">
+            <span class="kb-label">${t(labelKey)}</span>
+            ${descriptionKey ? `<span class="kb-desc">${t(descriptionKey)}</span>` : ""}
+          </div>
+          <button class="kb-key${isListening ? " listening" : ""}" data-action="${action}">
+            ${isListening ? t("settings.pressKey") : fmtKey(bound)}
+          </button>
+        </div>`;
+      }).join("");
+      return `<section class="kb-section" data-section="${section.id}">
+        <div class="kb-section-heading">
+          <h4>${t(section.titleKey)}</h4>
+          ${section.descriptionKey ? `<p>${t(section.descriptionKey)}</p>` : ""}
+        </div>
+        <div class="kb-section-body">${rows}</div>
+      </section>`;
     }).join("");
     list.querySelectorAll(".kb-key").forEach((btn) => {
       btn.addEventListener("click", () => {

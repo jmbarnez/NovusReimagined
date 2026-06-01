@@ -106,45 +106,60 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     setMusicVolume(v);
     saveSettings(Client.settings);
   });
+  const setCustomPreset = () => {
+    if (Client.settings.videoPreset !== "custom") {
+      Client.settings.videoPreset = "custom";
+      saveSettings(Client.settings);
+    }
+  };
+
   el.querySelector("#render-scale")!.addEventListener("input", (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.renderScale = v;
     (document.getElementById("render-scale-val") as HTMLElement).textContent = v.toFixed(1) + "x";
     resize();
     resizePixi();
+    setCustomPreset();
     saveSettings(Client.settings);
   });
   el.querySelector("#fps-limit")!.addEventListener("change", (e) => {
     const v = parseInt((e.target as HTMLSelectElement).value, 10);
     Client.settings.fpsLimit = Number.isFinite(v) ? v : 0;
+    setCustomPreset();
     saveSettings(Client.settings);
   });
   el.querySelector("#bloom-intensity")!.addEventListener("input", (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.bloomIntensity = v;
     (document.getElementById("bloom-intensity-val") as HTMLElement).textContent = v.toFixed(1) + "x";
+    setCustomPreset();
     saveSettings(Client.settings);
   });
   el.querySelector("#vignette-toggle")!.addEventListener("change", (e) => {
     Client.settings.vignetteEnabled = (e.target as HTMLInputElement).checked;
+    setCustomPreset();
     saveSettings(Client.settings);
   });
   el.querySelector("#dir-light-toggle")!.addEventListener("change", (e) => {
     Client.settings.directionalLighting = (e.target as HTMLInputElement).checked;
+    setCustomPreset();
     saveSettings(Client.settings);
     clearShipTextureCaches(); clearEnemyTextureCaches(); clearStationTextureCaches();
     rebuildPlayerSprites();
   });
   el.querySelector("#atm-rim-toggle")!.addEventListener("change", (e) => {
     Client.settings.atmosphericRim = (e.target as HTMLInputElement).checked;
+    setCustomPreset();
     saveSettings(Client.settings);
   });
   el.querySelector("#color-grade-toggle")!.addEventListener("change", (e) => {
     Client.settings.colorGrading = (e.target as HTMLInputElement).checked;
+    setCustomPreset();
     saveSettings(Client.settings);
   });
   el.querySelector("#mipmapping-toggle")!.addEventListener("change", (e) => {
     Client.settings.mipmapping = (e.target as HTMLInputElement).checked;
+    setCustomPreset();
     saveSettings(Client.settings);
     clearShipTextureCaches();
     clearEnemyTextureCaches();
@@ -152,6 +167,7 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
   });
   el.querySelector("#lens-flare-toggle")!.addEventListener("change", (e) => {
     Client.settings.lensFlare = (e.target as HTMLInputElement).checked;
+    setCustomPreset();
     saveSettings(Client.settings);
   });
 
