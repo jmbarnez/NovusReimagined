@@ -5,7 +5,6 @@ import { Client } from "../state.js";
 import { isVisible } from "../utils/game.js";
 import { getUIFont } from "./ui-font.js";
 import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
-import { W, H } from "../canvas.js";
 import { viewCenterX, viewCenterY, viewportW, viewportH } from "./viewport.js";
 
 let overlayLayer: Container | null = null;

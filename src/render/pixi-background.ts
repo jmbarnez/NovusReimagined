@@ -1,7 +1,6 @@
 import { getState } from "../state-access.js";
 import type { System, Star, DustParticle } from "../types/world.js";
 import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
-import { W, H } from "../canvas.js";
 import { viewportW, viewportH } from "./viewport.js";
 import { TAU } from "../constants.js";
 

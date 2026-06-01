@@ -9,6 +9,7 @@ import { GATE_RANGE, WARP_TIME } from "./constants.js";
 import { clearSensorLocks } from "./targeting.js";
 import { floatText } from "./utils/fx.js";
 import { populateSystem } from "./world-gen.js";
+import { app } from "./pixi.js";
 import type { Station, Gate } from "./types/world.js";
 
 async function ensureStationInterface(st: Station): Promise<void> {
@@ -70,7 +71,7 @@ export async function openStationUi(st: Station): Promise<void> {
     if (stationOverlay instanceof HTMLElement) stationOverlay.style.display = "flex";
     const hud = document.getElementById("hud-overlay");
     if (hud instanceof HTMLElement) hud.style.display = "none";
-    const canvas = document.getElementById("c");
+    const canvas = app?.canvas as HTMLCanvasElement | undefined;
     if (canvas instanceof HTMLElement) canvas.style.cursor = "default";
   }
   emit("station:open", { station: st });
@@ -86,7 +87,7 @@ export function closeStationUi(): void {
     if (stationOverlay instanceof HTMLElement) stationOverlay.style.display = "none";
     const hud = document.getElementById("hud-overlay");
     if (hud instanceof HTMLElement) hud.style.display = "block";
-    const canvas = document.getElementById("c");
+    const canvas = app?.canvas as HTMLCanvasElement | undefined;
     if (canvas instanceof HTMLElement) canvas.style.cursor = "none";
   }
   emit("station:close");

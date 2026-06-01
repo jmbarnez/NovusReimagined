@@ -16,6 +16,7 @@ Star Sonata uses a **server-authoritative** simulation. Whether the user is play
 - Avoid duplication; refactor shared logic into well-named utilities.
 - Write or update tests for any non-trivial change.
 - Leave the codebase cleaner than you found it.
+- **Pixi-only rendering**: All in-game rendering goes through PixiJS. The screen `<canvas id="c">` and `src/canvas.ts` were removed in the canvas-to-Pixi migration (see `docs/audit-2026-06-01.md`); `src/canvas.js` no longer exists. New code must not import from `canvas.js`, acquire a `CanvasRenderingContext2D`, or call `getElementById("c")`. `tests/canvas-2d-ban.test.ts` enforces this.
 
 ### 3. Self-Criticism & Review
 Before finalizing any change, pause and critically evaluate your own work:

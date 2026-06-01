@@ -3,7 +3,7 @@ import { Client } from "../state.js";
 import { bringToFront } from "./hud/windows.js";
 import { getState } from "../state-access.js";
 
-import { W, H, canvasLeft, canvasTop } from "../canvas.js";
+import { viewportW, viewportH } from "../render/viewport.js";
 import { on } from "../events.js";
 import {
   TUTORIAL_STEP_COUNT,
@@ -178,10 +178,10 @@ function syncTutorialLayerBounds() {
   layerEl.style.display = show ? "block" : "none";
   if (!show) return;
   layerEl.classList.toggle("tutorial-layer--over-station", Client.stationOpen);
-  layerEl.style.left = `${canvasLeft()}px`;
-  layerEl.style.top = `${canvasTop()}px`;
-  layerEl.style.width = `${W()}px`;
-  layerEl.style.height = `${H()}px`;
+  layerEl.style.left = "0px";
+  layerEl.style.top = "0px";
+  layerEl.style.width = `${viewportW()}px`;
+  layerEl.style.height = `${viewportH()}px`;
 }
 
 function syncDimmerVisibility() {

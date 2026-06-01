@@ -16,6 +16,7 @@ import { queueFrameAction } from "./sim/input.js";
 import { playBackgroundMusic } from "./audio/music.js";
 import { resumeAudio } from "./audio/procedural.js";
 import { isEventLogToggleHotkey, isOverviewToggleHotkey } from "./input-hotkeys.js";
+import { app } from "./pixi.js";
 
 let inputInitialized = false;
 
@@ -23,7 +24,7 @@ export function initInput() {
   if (inputInitialized) return;
   inputInitialized = true;
 
-  const canvasEl = document.getElementById("c") as HTMLCanvasElement;
+  const canvasEl = (app?.canvas as HTMLCanvasElement | undefined) ?? null;
   const uiPointerBlockSelector = [
     "#station-overlay",
     "#bridge-overlay",

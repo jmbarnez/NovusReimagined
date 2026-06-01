@@ -14,7 +14,6 @@ import { syncPixiStationInterior } from "../render/pixi-station-interior.js";
 import { drawPerfOverlay } from "../render/perf-overlay.js";
 import { updateHudOverlay } from "../ui/hud-overlay.js";
 import { updateTutorialOverlay } from "../ui/tutorial-overlay.js";
-import { ctx, W, H, canvasLeft, canvasTop } from "../canvas.js";
 import { renderPixi, worldContainer } from "../pixi.js";
 import { updatePixiBackground } from "../render/pixi-background.js";
 import { syncPixiParticles } from "../render/pixi-particles.js";
@@ -44,14 +43,11 @@ import { dst } from "../utils/math.js";
 import { closeStationUi } from "../dock.js";
 import { updateCamera } from "../utils/camera.js";
 import { setWorldView } from "../render/world-text.js";
-import { viewCenterX, viewCenterY } from "../render/viewport.js";
+import { viewCenterX, viewCenterY, viewportW, viewportH, viewportLeft, viewportTop } from "../render/viewport.js";
 import { updateIndustryProgress } from "../ui/station/industry.js";
 import { syncPixiCrosshair } from "../render/pixi-crosshair.js";
 
 // Cached damage flash gradients (keyed by color, invalidated on viewport resize)
-let damageFlashWc = 0;
-let damageFlashHc = 0;
-const damageFlashCache = new Map<string, CanvasGradient>();
 
 // ─── Cached DOM refs ─────────────────────────────────────────────────────────
 let _cachedMapWinBody: HTMLElement | null = null;
@@ -85,8 +81,8 @@ function timeFlush(totalThresholdMs = 16): void {
 }
 
 export function drawFrame(now: number, alpha: number, frameDt: number) {
-  const width = W();
-  const height = H();
+  const width = viewportW();
+  const height = viewportH();
   const sys = curSys(getState().player);
   if (!sys) return;
 
@@ -111,9 +107,6 @@ function drawTitleState(now: number, width: number, height: number, sys: System)
 
   updatePixiBackground(now, Client.camx, Client.camy);
   renderPixi();
-
-  // Clear the front Canvas 2D layer so the Pixi background (behind it) is visible.
-  ctx.clearRect(0, 0, width, height);
 }
 
 function drawStationState(now: number, width: number, height: number) {
@@ -148,8 +141,8 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   const camyR = Client.camy;
   const viewCX = viewCenterX(width);
   const viewCY = viewCenterY(height);
-  Client.mouseWorld.x = (Client.mouse.x - canvasLeft() - viewCX) / Client.zoom + camxR;
-  Client.mouseWorld.y = (Client.mouse.y - canvasTop() - viewCY) / Client.zoom + camyR;
+  Client.mouseWorld.x = (Client.mouse.x - viewportLeft() - viewCX) / Client.zoom + camxR;
+  Client.mouseWorld.y = (Client.mouse.y - viewportTop() - viewCY) / Client.zoom + camyR;
 
   updateViewportBounds(width, height, Client.zoom, camxR, camyR, 240);
   setWorldView(width, height, camxR, camyR, Client.zoom);
@@ -252,9 +245,6 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
     console.log("[PERF] worldContainer.filters active:", names);
   }
 
-  // Clear the front Canvas 2D layer so the Pixi world (behind it) is visible.
-  ctx.clearRect(0, 0, width, height);
-
   // Canvas 2D map overlays sit above Pixi and are clipped to the map window body.
   if (_cachedMapWinRect) {
     drawPixiSystemMapCanvasOverlays(_cachedMapWinRect.width, _cachedMapWinRect.height, now);
@@ -289,69 +279,4 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   timeMark("end");
 
   timeFlush(16);
-}
-
-function drawDamageFlash(width: number, height: number) {
-  const sGlow = getState().player.shieldHitGlow || 0;
-  const hGlow = getState().player.hullHitGlow || 0;
-  const strGlow = getState().player.structureHitGlow || 0;
-  const dmgFlash = Math.max(sGlow, hGlow, strGlow);
-  if (dmgFlash <= 0) return;
-
-  let flashColor: string;
-  if (strGlow > 0) flashColor = "238,28,28";
-  else if (hGlow > 0) flashColor = "238,153,68";
-  else flashColor = "68,204,255";
-
-  if (damageFlashWc !== width || damageFlashHc !== height) {
-    damageFlashCache.clear();
-    damageFlashWc = width;
-    damageFlashHc = height;
-  }
-  let grad = damageFlashCache.get(flashColor);
-  if (!grad) {
-    const cx = width / 2;
-    const cy = height / 2;
-    const diag = Math.hypot(width, height);
-    grad = ctx.createRadialGradient(cx, cy, diag * 0.32, cx, cy, diag * 0.55);
-    grad.addColorStop(0, "transparent");
-    grad.addColorStop(1, `rgb(${flashColor})`);
-    damageFlashCache.set(flashColor, grad);
-  }
-  ctx.globalAlpha = dmgFlash * 0.28;
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, width, height);
-  ctx.globalAlpha = 1;
-}
-
-function drawWaypoint() {
-  if (!Client.waypoint || !getState().player) return;
-  const { x, y } = Client.waypoint;
-  const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.004);
-
-  ctx.save();
-  ctx.globalAlpha = 0.5 + pulse * 0.3;
-  ctx.strokeStyle = "#55aaff";
-  ctx.lineWidth = 1.5;
-
-  const sz = 8 + pulse * 2;
-  ctx.beginPath();
-  ctx.moveTo(x, y - sz);
-  ctx.lineTo(x + sz, y);
-  ctx.lineTo(x, y + sz);
-  ctx.lineTo(x - sz, y);
-  ctx.closePath();
-  ctx.stroke();
-
-  ctx.globalAlpha = 0.15;
-  ctx.fillStyle = "#55aaff";
-  ctx.fill();
-
-  ctx.globalAlpha = 0.25;
-  ctx.setLineDash([4, 6]);
-  ctx.beginPath();
-  ctx.moveTo(getState().player.x, getState().player.y);
-  ctx.lineTo(x, y);
-  ctx.stroke();
-  ctx.restore();
 }

@@ -18,14 +18,29 @@ export const HUD_INSETS = {
 
 let _w = 0;
 let _h = 0;
+let _left = 0;
+let _top = 0;
 
 export function setViewportSize(w: number, h: number): void {
   _w = w;
   _h = h;
 }
 
+/**
+ * Set the on-screen offset of the play surface. Most layers are positioned
+ * at the window origin so this is 0/0; the bottom HUD sits over the Pixi
+ * canvas, but is rendered above it via DOM, so the playable area is
+ * anchored to (0,0) and the inset comes from `playRect` instead.
+ */
+export function setViewportOffset(left: number, top: number): void {
+  _left = left;
+  _top = top;
+}
+
 export function viewportW(): number { return _w; }
 export function viewportH(): number { return _h; }
+export function viewportLeft(): number { return _left; }
+export function viewportTop(): number { return _top; }
 
 /** Centre of the playable rectangle in screen pixels. */
 export function viewCenterX(Wc: number): number {

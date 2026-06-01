@@ -68,7 +68,9 @@ src/
   events.ts        Typed event bus for cross-module communication
   physics/         Fixed-timestep simulation (ship, npcs, projectiles, collision)
   player/          Player state: data, stats, fitting, skills
-  render/          PixiJS WebGL/WebGPU gameplay rendering & static 2D overlays
+  render/          PixiJS WebGL/WebGPU gameplay rendering. All in-game visuals
+                   go through Pixi; the screen `<canvas id="c">` and `canvas.ts`
+                   were removed in the 2026-06-01 migration.
   types/           Shared structural interfaces (entities, world, lock state)
   ui/              DOM-based overlays (station, bridge, inventory, settings)
   utils/           Pure utilities (math, spatial grid, FX helpers, camera, entities)

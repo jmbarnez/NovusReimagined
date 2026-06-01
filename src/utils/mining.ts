@@ -50,39 +50,6 @@ export function updateAsteroidDebris(dt: number) {
   }
 }
 
-export function drawAsteroidDebris() {
-  if (typeof document === "undefined") return;
-  const canvasEl = document.getElementById("c") as HTMLCanvasElement | null;
-  const ctx = canvasEl?.getContext("2d");
-  if (!ctx) return;
-
-  for (const d of asteroidDebrisList) {
-    ctx.save();
-    ctx.translate(d.x, d.y);
-    ctx.rotate(d.angle);
-
-    // Fade out in the last 40% of the life span
-    const fade = Math.min(1, d.life / (d.maxLife * 0.4));
-    ctx.globalAlpha = fade;
-
-    ctx.beginPath();
-    ctx.moveTo(d.pts[0][0] * d.radius, d.pts[0][1] * d.radius);
-    for (let i = 1; i < d.pts.length; i++) {
-      ctx.lineTo(d.pts[i][0] * d.radius, d.pts[i][1] * d.radius);
-    }
-    ctx.closePath();
-
-    ctx.fillStyle = d.fill;
-    ctx.strokeStyle = d.stroke;
-    ctx.lineWidth = 1.6;
-    ctx.lineJoin = "round";
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.restore();
-  }
-}
-
 export function harvestAsteroid(asteroid: Asteroid, miningMult: number): HarvestResult {
   if (asteroid.depleted || asteroid.hp <= 0) {
     return { depleted: true, dmg: 0, oreKey: null, amount: 0 };
