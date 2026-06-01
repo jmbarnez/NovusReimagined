@@ -340,7 +340,7 @@ function pointAtArcLength(track: TutorialTrackSegment, arcLen: number): { x: num
   return track.points[track.points.length - 1];
 }
 
-const GATE_FRACTIONS = [0.15, 0.325, 0.5, 0.675, 0.85];
+const GATE_FRACTIONS = [0.2, 0.4, 0.6, 0.8];
 
 function buildBoostGatesForTrack(
   trackId: string,
@@ -372,7 +372,6 @@ function buildBoostGatesForTrack(
 export const TUTORIAL_BOOST_GATES: TutorialBoostGate[] = [
   ...buildBoostGatesForTrack("approach", GATE_FRACTIONS, 200),
   ...buildBoostGatesForTrack("spoke-mining", GATE_FRACTIONS, 180),
-  ...buildBoostGatesForTrack("spoke-mining-return", GATE_FRACTIONS, 180),
   ...buildBoostGatesForTrack("spoke-gunnery", GATE_FRACTIONS, 180),
   ...buildBoostGatesForTrack("spoke-signature", GATE_FRACTIONS, 180),
   ...buildBoostGatesForTrack("spoke-gate", GATE_FRACTIONS, 190),

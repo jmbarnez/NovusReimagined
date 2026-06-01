@@ -9,7 +9,6 @@ import {
   getGateControlHint,
   type TutorialBoostGate,
 } from "../data/tutorial-layout.js";
-import { getCurrentTutorialStep } from "../data/tutorial.js";
 import { addParticle } from "../utils/entities.js";
 import { sfxBlip } from "../audio/procedural.js";
 import { logEvent } from "../feedback.js";
@@ -117,9 +116,7 @@ function tickBoostGates(dt: number, gates: TutorialBoostGate[], p: Player, isRep
 export function updateTutorialTrack(dt: number, p: Player, isReplaying = false): void {
   if (!p.tutorial?.active || p.sysIdx !== 0 || (p === getState().player && Client.stationOpen)) return;
 
-  const currentStep = getCurrentTutorialStep(p);
-  const gates = currentStep?.nav?.trackId ? getBoostGatesForTrack(currentStep.nav.trackId) : TUTORIAL_BOOST_GATES;
-  tickBoostGates(dt, gates, p, isReplaying);
+  tickBoostGates(dt, TUTORIAL_BOOST_GATES, p, isReplaying);
 }
 
 /** @deprecated alias */

@@ -2,16 +2,13 @@ import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { getState } from "../state-access.js";
 import { effectLayer } from "../pixi.js";
 import { isVisible } from "../utils/game.js";
-import { getCurrentTutorialStep } from "../data/tutorial.js";
 import {
-  getBoostGatesForTrack,
-  getTutorialTrackForNav,
+  TUTORIAL_BOOST_GATES,
   gatePillarPositions,
   type TutorialBoostGate,
 } from "../data/tutorial-layout.js";
 import { getTutorialGateCooldown } from "../physics/tutorial-track.js";
 import { getUIFont } from "./ui-font.js";
-import { dst } from "../utils/math.js";
 
 const TAU = Math.PI * 2;
 
@@ -239,11 +236,7 @@ export function syncPixiTutorialGates(now: number): void {
     return;
   }
 
-  // Only show gates for the currently active nav track to avoid overlap across spokes.
-  const currentStep = getCurrentTutorialStep(getState().player);
-  const activeTrackId = currentStep?.nav?.trackId;
-  const track = getTutorialTrackForNav(activeTrackId);
-  const gates = track ? getBoostGatesForTrack(activeTrackId) : [];
+  const gates = TUTORIAL_BOOST_GATES;
   const activeIds = new Set(gates.map((g) => g.id));
 
   for (const [id, bundle] of _gateBundles) {
