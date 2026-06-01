@@ -170,18 +170,22 @@ export function sfxProjectileImpact(x = 0, y = 0, kind = "projectile") {
   const t0 = now();
 
   if (kind === "beam") {
-    const dur = 0.08;
+    const dur = 0.12;
     const osc = ctx.createOscillator();
     osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(1200, t0);
-    osc.frequency.exponentialRampToValueAtTime(300, t0 + dur);
+    osc.frequency.setValueAtTime(800, t0);
+    osc.frequency.exponentialRampToValueAtTime(180, t0 + dur);
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 550;
+    filter.Q.value = 1.8;
     const g = ctx.createGain();
-    g.gain.setValueAtTime(0.1 * atten, t0);
+    g.gain.setValueAtTime(0.18 * atten, t0);
     g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
     const pn = connectToMaster(g, master, pan);
-    osc.connect(g);
+    osc.connect(filter).connect(g);
     osc.start(t0); osc.stop(t0 + dur);
-    _disconnectOnEnd(osc, g, pn!);
+    _disconnectOnEnd(osc, filter, g, pn!);
   } else if (kind === "missile") {
     const dur = 0.14;
     const noiseBuf = makeNoiseBuffer(ctx, dur);

@@ -89,7 +89,8 @@ export function updateHudOverviewPanel() {
       if (sigCell && sigCell.textContent !== sig) sigCell.textContent = sig;
       if (rCell && rCell.textContent !== relV) rCell.textContent = relV;
       if (sCell && sCell.innerHTML !== r.status) sCell.innerHTML = r.status;
-      if (actionCell) actionCell.innerHTML = overviewLockActionHTML(r);
+      const actionHtml = overviewLockActionHTML(r);
+      if (actionCell && actionCell.innerHTML !== actionHtml) actionCell.innerHTML = actionHtml;
 
       // Only re-append if this row is not already the last child (or not in correct position)
       const lastChild = hudState.ovEntries.lastElementChild;

@@ -9,7 +9,7 @@ import type { Enemy } from "../types/world.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import { angleDiff } from "../utils/math.js";
 import { computeEnemyAimDeviation, damageEnemy } from "../combat.js";
-import { sfxHostileLocking, sfxHostileLock, sfxWeaponFire, sfxUnderAttackPulse } from "../audio/procedural.js";
+import { sfxHostileLocking, sfxHostileLock, sfxWeaponFire, sfxProjectileImpact, sfxUnderAttackPulse } from "../audio/procedural.js";
 import { damagePlayer } from "../combat/damage-display.js";
 import { addEnemyBullet, addBeam } from "../utils/entities.js";
 import { isHostile } from "../combat/factions.js";
@@ -138,12 +138,14 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
             const perp = Math.abs((getState().player.x - e.x) * Math.sin(shootAng) - (getState().player.y - e.y) * Math.cos(shootAng));
             if (perp < Math.min(hitR * 0.6 + C.ENEMIES.AI.HIT_CHECK_RADIUS, C.ENEMIES.AI.BEAM_HIT_RADIUS_CAP)) {
               damagePlayer(Math.max(1, Math.floor(wProf.dmg * (e.weaponMult ?? 1.0))), e.x, e.y);
+              sfxProjectileImpact(bX2, bY2, "beam");
             }
           } else {
             const hitR = (target as Enemy).sigRadius ?? 20;
             const perp = Math.abs((target.x - e.x) * Math.sin(shootAng) - (target.y - e.y) * Math.cos(shootAng));
             if (perp < Math.min(hitR * 0.6 + C.ENEMIES.AI.HIT_CHECK_RADIUS, C.ENEMIES.AI.BEAM_HIT_RADIUS_CAP)) {
               damageEnemy(target as Enemy, Math.max(1, Math.floor(wProf.dmg * (e.weaponMult ?? 1.0))), bX2, bY2, undefined, "beam");
+              sfxProjectileImpact(bX2, bY2, "beam");
             }
           }
         } else {

@@ -1,12 +1,14 @@
-import { liveEnemies } from "../utils/game.js";
+import { liveEnemies, curSys } from "../utils/game.js";
 import { spawnBeam, spawnBeamImpactSubtle, spawnParticles } from "../utils/fx.js";
 import { sfxProjectileImpact } from "../audio/procedural.js";
 import type { WeaponDelivery } from "../data/skills.js";
 import type { DamageProfile } from "../data/modules.js";
 import type { WeaponProfile } from "../data/weaponProfiles.js";
 import type { Player } from "../state.js";
-import type { Enemy } from "../types/world.js";
+import type { Enemy, Asteroid } from "../types/world.js";
 import { damageEnemy } from "./damage-enemy.js";
+import { damageAsteroid } from "./damage-asteroid.js";
+import { asteroidSegmentPolygonHit } from "../physics/combat-physics.js";
 
 export function fireBeamWeapon(
   ox: number,
@@ -35,10 +37,31 @@ export function fireBeamWeapon(
       }
     }
   }
+
+  let hitAsteroid: Asteroid | null = null;
+  const sys = curSys(p);
+  if (sys) {
+    const bx = ox + dx * range;
+    const by = oy + dy * range;
+    for (const ast of sys.asteroids) {
+      if (ast.depleted || ast.hp <= 0) continue;
+      const hit = asteroidSegmentPolygonHit(ox, oy, bx, by, ast, 0);
+      if (hit && hit.t * range <= hitDist) {
+        hitDist = hit.t * range;
+        hitEnemy = null;
+        hitAsteroid = ast;
+      }
+    }
+  }
+
   const ex2 = ox + dx * hitDist, ey2 = oy + dy * hitDist;
   spawnBeam(ox, oy, ex2, ey2, wProf.color, 3);
   if (hitEnemy) {
     damageEnemy(hitEnemy, finalDmg, ex2, ey2, p, delivery, dmgProfile);
+    spawnBeamImpactSubtle(ex2, ey2, wProf.color);
+    sfxProjectileImpact(ex2, ey2, "beam");
+  } else if (hitAsteroid) {
+    damageAsteroid(hitAsteroid, finalDmg, ex2, ey2, p);
     spawnBeamImpactSubtle(ex2, ey2, wProf.color);
     sfxProjectileImpact(ex2, ey2, "beam");
   } else {

@@ -227,7 +227,8 @@ export function updateBridgeOverview() {
       if (sCell) sCell.innerHTML = r.status;
       if (rCell) rCell.textContent = String(r.relV);
       if (sigCell) sigCell.textContent = String(r.sig);
-      if (actionCell) actionCell.innerHTML = overviewLockActionHTML(r);
+      const actionHtml = overviewLockActionHTML(r);
+      if (actionCell && actionCell.innerHTML !== actionHtml) actionCell.innerHTML = actionHtml;
       existing.delete(r.id);
     }
   }

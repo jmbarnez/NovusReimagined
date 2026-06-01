@@ -251,8 +251,7 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
   }
 
   // ── 2. Sync Salvage Pickups ────────────────────────────────────────────────
-  const hasPickups = state.salvagePickups?.length > 0;
-  if (hasPickups) _pickupGfx.clear();
+  _pickupGfx.clear();
   _activePickupRefs.clear();
 
   if (state.salvagePickups) {
@@ -279,14 +278,12 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       let colStr: string;
       let icon: string;
       let iconSize = 5;
-      let isRare = false;
 
       if (s.kind === "credits") {
         label = `\xA2${s.qty}`;
         colStr = "#ffd700";
         icon = "box";
         iconSize = 4;
-        isRare = true;
       } else if (s.kind === "ore") {
         const def = ORE[s.payload] || REFINED[s.payload];
         colStr = def?.color ?? "#a0a5aa";
@@ -299,7 +296,6 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
         icon = "shard";
         label = def?.short ?? def?.name ?? s.payload;
         iconSize = 5;
-        isRare = s.instance?.rarity !== "Stock" && s.instance?.rarity !== undefined;
       } else {
         const def = LOOT[s.payload] || COMPONENTS[s.payload];
         colStr = def?.color ?? "#8899aa";
@@ -314,14 +310,6 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       const px = s.x;
       const py = s.y + bobY;
 
-      // Chromatic splits for rare items
-      if (isRare) {
-        // Red split
-        _pickupGfx.circle(px + 2 * warpScale, py, 14 * warpScale).fill({ color: colorNum, alpha: 0.12 * globalPulse * warpFlash * flicker * 0.35 });
-        // Cyan split
-        _pickupGfx.circle(px - 2 * warpScale, py, 14 * warpScale).fill({ color: 0x00ffff, alpha: 0.12 * globalPulse * warpFlash * flicker * 0.35 });
-      }
-
       // Vertical energy pillar
       _pickupGfx.poly([
         px - 2.5 * warpScale, py,
@@ -329,15 +317,6 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
         px + 1.0 * warpScale, py - pillarH * warpScale,
         px + 2.5 * warpScale, py
       ], true).fill({ color: colorNum, alpha: 0.25 * globalPulse * warpFlash * flicker });
-
-      // Ground glow halo
-      _pickupGfx.circle(px, py, 16 * warpScale).fill({ color: colorNum, alpha: 0.45 * globalPulse * warpFlash * flicker * 0.35 });
-
-      // Expanding energy pulses
-      const ringPhase = ((now * 0.0025 + s.bob * 0.3) % 1);
-      const ringRadius = 8 + ringPhase * 14;
-      const ringAlpha = (1 - ringPhase) * 0.2 * fade * flicker;
-      _pickupGfx.circle(px, py, ringRadius * warpScale).stroke({ color: colorNum, width: 1.0, alpha: ringAlpha });
 
       // Vector Icon shape in world space coordinates
       drawResourceIconGfx(_pickupGfx, icon, iconSize, colorNum, px, py, warpScale);

@@ -203,9 +203,6 @@ export function initHudOverlay() {
     ev.stopPropagation();
     sfxConfirm();
     const id = btn.getAttribute("data-lock-id");
-    const prevText = btn.textContent ?? "";
-    btn.textContent = "OK";
-    setTimeout(() => { btn.textContent = prevText; }, 200);
     if (!id) return;
     const existing = getState().player.lockQueue?.find((s) => s.id === id);
     if (existing) {

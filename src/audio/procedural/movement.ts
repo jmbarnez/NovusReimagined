@@ -179,28 +179,3 @@ export function updateEngineSound(isThrusting: boolean, speedRatio = 0, afterbur
     stopEngineNodes();
   }
 }
-
-export function sfxEngineThrust() {
-  const a = getAudio();
-  if (!a) return;
-  const { ctx, master } = a;
-  const t0 = now();
-  const dur = 0.15;
-
-  const noiseBuf = makeNoiseBuffer(ctx, dur);
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuf;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(500, t0);
-  filter.frequency.exponentialRampToValueAtTime(150, t0 + dur);
-
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.06, t0);
-  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
-
-  noise.connect(filter).connect(g).connect(master);
-  noise.start(t0); noise.stop(t0 + dur);
-  _disconnectOnEnd(noise, filter, g);
-}
