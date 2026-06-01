@@ -7,6 +7,13 @@ import { t } from "../utils/i18n.js";
 
 let chatUnsubscribe: (() => void) | null = null;
 let inputKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
+let sendClickHandler: ((e: MouseEvent) => void) | null = null;
+
+function sendChatInput(inputEl: HTMLInputElement): void {
+  const text = inputEl.value.trim();
+  if (text) gameClient.sendChatMessage(text);
+  inputEl.value = "";
+}
 
 function appendChatMessage(sender: string, text: string, isSystem = false) {
   const isSelf = !isSystem && sender === getPilotDisplayName(getState().player);
@@ -26,7 +33,6 @@ export function openChatTransmit() {
 
   showCommsLogPanel();
   inputRow.style.display = "flex";
-  inputEl.value = "";
   inputEl.focus();
 }
 
@@ -35,9 +41,11 @@ export function initChat() {
 
   const inputRow = document.getElementById("hud-log-chat-input-row");
   const inputEl = document.getElementById("hud-log-chat-input") as HTMLInputElement | null;
+  const sendBtn = document.getElementById("hud-log-chat-send") as HTMLButtonElement | null;
   if (!inputRow || !inputEl) return;
 
   appendChatMessage("SYSTEM", t("chat.welcome"), true);
+  inputRow.style.display = "flex";
 
   chatUnsubscribe = gameClient.onChatMessage((senderName, message) => {
     appendChatMessage(senderName, message);
@@ -47,10 +55,7 @@ export function initChat() {
     if (e.key === "Enter") {
       e.preventDefault();
       e.stopPropagation();
-      const text = inputEl.value.trim();
-      if (text) gameClient.sendChatMessage(text);
-      inputEl.value = "";
-      inputEl.blur();
+      sendChatInput(inputEl);
     } else if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
@@ -60,6 +65,14 @@ export function initChat() {
   };
 
   inputEl.addEventListener("keydown", inputKeydownHandler);
+
+  sendClickHandler = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sendChatInput(inputEl);
+    inputEl.focus();
+  };
+  sendBtn?.addEventListener("click", sendClickHandler);
 }
 
 export function destroyChat() {
@@ -71,7 +84,12 @@ export function destroyChat() {
   if (inputEl && inputKeydownHandler) {
     inputEl.removeEventListener("keydown", inputKeydownHandler);
   }
+  const sendBtn = document.getElementById("hud-log-chat-send");
+  if (sendBtn && sendClickHandler) {
+    sendBtn.removeEventListener("click", sendClickHandler);
+  }
   inputKeydownHandler = null;
+  sendClickHandler = null;
 
   const inputRow = document.getElementById("hud-log-chat-input-row");
   if (inputRow) inputRow.style.display = "none";

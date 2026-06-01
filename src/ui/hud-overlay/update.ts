@@ -17,7 +17,7 @@ import { updateDockPrompt, updateHudOverviewPanel, updateHudOverviewPanelHeaders
 import { updateShipPanelLive, buildShipPanelShell, attachShipPanelListeners } from "../hud/ship-panel/index.js";
 import { updateTractorDial } from "../hud/tractor-dial.js";
 import { updateHubTooltip } from "../hud/hub-tooltip.js";
-import { isPanelPopout, togglePanelVisibility } from "../hud/panel-popout.js";
+import { isPanelPopout, popOutPanel, dockInPanel, togglePanelVisibility } from "../hud/panel-popout.js";
 import { applyTheme } from "./theme.js";
 import { updateMapOverlayDOM } from "./map-overlay.js";
 import { maybeAutoCloseHubWindow } from "./hub-window.js";
@@ -126,7 +126,27 @@ export function toggleSkillsWindow() {
 }
 
 export function toggleScannerDock() {
-  togglePanelVisibility("scanner");
+  if (isPanelPopout("scanner")) {
+    const win = getHudWindow("scanner-overview");
+    if (win && win.style.display !== "none") {
+      // window visible → off
+      togglePanelVisibility("scanner");
+      return;
+    }
+    // window hidden but still popped out → treat as off: dock back
+    dockInPanel("scanner");
+    if (hudState.scannerDock) hudState.scannerDock.style.display = "flex";
+    return;
+  }
+  const host = hudState.scannerDock;
+  if (host && host.style.display !== "none") {
+    // mounted → window
+    popOutPanel("scanner");
+    return;
+  }
+  // off → mounted
+  dockInPanel("scanner");
+  if (host) host.style.display = "flex";
 }
 
 export function showCommsLogPanel() {
@@ -141,5 +161,24 @@ export function showCommsLogPanel() {
 }
 
 export function toggleEventLogPanel() {
-  togglePanelVisibility("event-log");
+  if (isPanelPopout("event-log")) {
+    const win = getHudWindow("event-log");
+    if (win && win.style.display !== "none") {
+      // window visible → off
+      togglePanelVisibility("event-log");
+      return;
+    }
+    // window hidden but still popped out → treat as off: dock back
+    dockInPanel("event-log");
+    if (hudState.logPanel) hudState.logPanel.style.display = "flex";
+    return;
+  }
+  if (hudState.logPanel && hudState.logPanel.style.display !== "none") {
+    // mounted → window
+    popOutPanel("event-log");
+    return;
+  }
+  // off → mounted
+  dockInPanel("event-log");
+  if (hudState.logPanel) hudState.logPanel.style.display = "flex";
 }

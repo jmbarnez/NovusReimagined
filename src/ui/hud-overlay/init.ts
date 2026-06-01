@@ -81,6 +81,7 @@ export function initHudOverlay() {
           <div id="hud-log-chat-input-row" class="hud-log-chat-input-row">
             <span class="hud-log-chat-prefix">${t("hud.chatPrefix")}</span>
             <input type="text" id="hud-log-chat-input" class="hud-log-chat-input" placeholder="${t("hud.chatPlaceholder")}" maxlength="128" autocomplete="off" />
+            <button type="button" id="hud-log-chat-send" class="hud-log-chat-send">SEND</button>
           </div>
         </div>
       </div>

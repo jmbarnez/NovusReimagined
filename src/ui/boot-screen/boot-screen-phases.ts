@@ -8,6 +8,33 @@ import { appendLogEntry, flushPendingLogEntries, registerLogSink } from "../hud/
  * Keep this file focused on phase/state mutations only.
  */
 
+/** Apply i18n translations to the static boot screen HTML immediately after settings load. */
+export function localizeBootScreen(): void {
+  const q = (sel: string): HTMLElement | null => document.querySelector(sel) as HTMLElement | null;
+  const mon1Tag   = q(".monitor-center .monitor-tag");
+  const mon1Title = q(".monitor-center .monitor-title");
+  const mon2Tag   = q(".monitor-right .monitor-tag");
+  const mon2Title = q(".monitor-right .monitor-title");
+  const consoleEl = q(".ld-console-line");
+  const subEl     = document.getElementById("boot-telemetry-subsystem");
+  const statusEl  = document.getElementById("boot-telemetry-status");
+  const rows      = document.querySelectorAll(".telemetry-row .telemetry-lbl");
+  if (mon1Tag)   mon1Tag.textContent   = t("boot.monitorTagPrimary");
+  if (mon1Title) mon1Title.textContent = t("boot.monitorTitlePrimary");
+  if (mon2Tag)   mon2Tag.textContent   = t("boot.monitorTagSecondary");
+  if (mon2Title) mon2Title.textContent = t("boot.monitorTitleSecondary");
+  if (consoleEl) consoleEl.textContent = t("boot.consoleInit");
+  if (subEl)     subEl.textContent     = t("boot.telemetryIdle");
+  if (statusEl)  statusEl.textContent  = t("boot.telemetryStandby");
+  const labels = [
+    t("boot.telemetrySubsystemLabel"),
+    t("boot.telemetryProgressLabel"),
+    t("boot.telemetryMemoryLabel"),
+    t("boot.telemetryStatusLabel"),
+  ];
+  rows.forEach((el, i) => { if (labels[i]) el.textContent = labels[i]; });
+}
+
 /** Register the right-monitor loading console as a system log sink. */
 export function registerLoadingConsole(): void {
   const consoleEl = document.querySelector(".ld-console") as HTMLElement | null;

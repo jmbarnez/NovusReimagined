@@ -8,7 +8,7 @@
 :root {
   --font-family: 'Orbitron', sans-serif;
   --ui-scale: 1;
-  --hud-scanner-w: 280px;
+  --hud-scanner-w: 360px;
   --hud-minimap-w: 102px;
   /* surfaces */
   --hud-bg-deep: rgba(2,5,10,0.88);
@@ -62,6 +62,7 @@ input, button, select, textarea, table, th, td {
   transform: scale(var(--ui-scale));
   transform-origin: top left;
   --hud-bottom-h: 95px;
+  --hud-mounted-panel-h: calc(var(--hud-bottom-h) * 2);
 }
 #hud-overlay > * {
   pointer-events: auto;
@@ -153,24 +154,54 @@ input, button, select, textarea, table, th, td {
   width: var(--hud-scanner-w);
   min-width: 200px;
   max-width: 38%;
-  height: var(--hud-bottom-h);
+  height: var(--hud-mounted-panel-h);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, var(--hud-bottom-top), var(--hud-bottom-bot));
-  border-top: 1px solid var(--hud-bottom-border);
-  border-left: 1px solid var(--hud-bottom-border);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--hud-bg-window) 58%, var(--hud-bg-panel) 42%) 0%,
+    color-mix(in srgb, var(--hud-bg-panel) 80%, var(--hud-bg-deep) 20%) 100%);
+  border: 1px solid color-mix(in srgb, var(--hud-border) 65%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--hud-border) 80%, transparent);
+  box-shadow:
+    0 14px 28px color-mix(in srgb, var(--hud-bg-deep) 44%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--hud-border-soft) 35%, transparent) inset,
+    0 0 20px color-mix(in srgb, var(--hud-accent) 6%, transparent) inset;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  isolation: isolate;
+  position: relative;
   flex-shrink: 0;
   pointer-events: auto;
   overflow: hidden;
 }
+
+#hud-scanner-dock::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(140deg,
+    color-mix(in srgb, var(--hud-text-bright) 12%, transparent) 0%,
+    transparent 42%,
+    transparent 70%,
+    color-mix(in srgb, var(--hud-accent) 8%, transparent) 100%);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#hud-scanner-dock > * {
+  position: relative;
+  z-index: 1;
+}
+
+#hud-scanner-header {
+  display: none;
+}
+
 #hud-scanner-body {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--hud-border) transparent;
+  overflow: hidden;
 }
-#hud-scanner-body::-webkit-scrollbar { width: 4px; }
-#hud-scanner-body::-webkit-scrollbar-track { background: transparent; }
-#hud-scanner-body::-webkit-scrollbar-thumb { background: var(--hud-border); border-radius: 2px; }

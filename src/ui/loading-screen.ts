@@ -6,6 +6,7 @@
  */
 export {
   dismissLoadingScreen,
+  localizeBootScreen,
   logBootTiming,
   markBootPhase,
   registerLoadingConsole,

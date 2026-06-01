@@ -23,7 +23,7 @@ import { initPixiMaps } from "./render/pixi-maps.js";
 import { initPixiMinimap } from "./render/pixi-minimap.js";
 
 import { bindTitleScreenEvents } from "./ui/title-screen.js";
-import { markBootPhase, registerLoadingConsole, transitionToTitleScreen } from "./ui/loading-screen.js";
+import { localizeBootScreen, markBootPhase, registerLoadingConsole, transitionToTitleScreen } from "./ui/loading-screen.js";
 import { migrateLegacySave } from "./data/profiles.js";
 import { C } from "./config/index.js";
 
@@ -34,6 +34,7 @@ async function boot() {
   try {
     // 0. Theme & Settings first so the boot screen never flashes default colors
     initSettings();
+    localizeBootScreen();
 
     // 1. Core Systems
     markBootPhase("start");

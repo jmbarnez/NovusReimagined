@@ -4,9 +4,10 @@
   display: flex;
   flex-direction: column;
   background: transparent;
-  border: none;
   overflow: hidden;
   min-height: 60px;
+  color: color-mix(in srgb, var(--hud-text-main) 85%, var(--hud-accent) 15%);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
 }
 
 #hud-overview-panel .ov-wrap {
@@ -14,7 +15,6 @@
   overflow-y: auto;
   overflow-x: hidden;
   background: transparent;
-  border: none;
   scrollbar-width: thin;
   scrollbar-color: rgba(40,55,70,0.6) transparent;
 }
@@ -30,7 +30,7 @@
 }
 
 #hud-overview-panel .ov-table th {
-  background: var(--hud-bg-panel);
+  background: color-mix(in srgb, var(--hud-bg-window) 65%, transparent);
   font-size: 7px;
   padding: 4px 6px;
   font-family: var(--font-family), inherit;
@@ -50,7 +50,7 @@
 
 #hud-overview-panel .ov-table th.ov-sortable:hover {
   color: var(--hud-accent);
-  background: var(--hud-bg-elevated);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 80%, transparent);
 }
 
 #hud-overview-panel .ov-table td {
@@ -63,6 +63,8 @@
   border-right: 1px solid var(--hud-border-soft); /* Excel vertical dividing line */
   border-bottom: 1px solid var(--hud-border-soft); /* Excel row line */
   vertical-align: middle;
+  background: color-mix(in srgb, var(--hud-bg-deep) 92%, transparent);
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 /* Remove final right border on table columns */

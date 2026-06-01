@@ -20,8 +20,8 @@ export function openSettingsOnBootMonitor(restoreFn: () => void): void {
   panel.className = "eve-window monitor-settings-panel";
   panel.innerHTML = `
     <div class="eve-win-head">
-      <span class="eve-win-title">COCKPIT // CONFIG</span>
-      <span class="eve-win-sub">Boot Monitor</span>
+      <span class="eve-win-title">${t("boot.settingsPanelTitle")}</span>
+      <span class="eve-win-sub">${t("boot.settingsPanelSubtitle")}</span>
     </div>
     ${settingsContentHTML()}`;
 
