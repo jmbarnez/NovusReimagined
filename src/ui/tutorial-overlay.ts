@@ -1,5 +1,6 @@
 import "./styles/hud-tutorial.css";
 import { Client } from "../state.js";
+import { bringToFront } from "./hud/windows.js";
 import { getState } from "../state-access.js";
 
 import { W, H, canvasLeft, canvasTop } from "../canvas.js";
@@ -365,6 +366,10 @@ export function initTutorialOverlay(active: boolean) {
     nextBtn = root.querySelector(".tutorial-next-btn");
     confirmEl = root.querySelector(".tutorial-confirm");
     completeEl = root.querySelector(".tutorial-complete");
+
+    root.addEventListener("mousedown", () => {
+      if (layerEl) bringToFront(layerEl);
+    });
 
     root.querySelector(".tutorial-skip-btn")?.addEventListener("click", () => {
       if (confirmEl) confirmEl.hidden = false;

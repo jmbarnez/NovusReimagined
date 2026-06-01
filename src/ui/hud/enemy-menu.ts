@@ -1,7 +1,7 @@
 import "../styles/hud-enemy-menu.css";
 import { Client } from "../../state.js";
 import { setNavCommand, clearNav, getState } from "../../state-access.js";
-import { requestSensorLock, removeSensorLock } from "../../targeting.js";
+import { queueFrameAction } from "../../sim/input.js";
 import { hudState } from "./state.js";
 import { formatDistance } from "../../utils/format.js";
 import { hasCommsEquipment } from "../../player/player-stats.js";
@@ -108,9 +108,9 @@ export function onEnemyCtxItemClick(e: Event) {
   } else if (action === "toggle-lock") {
     const isLocked = getState().player.lockQueue?.some((slot) => slot.id === activeEnemyId && !slot.resolving) ?? false;
     if (isLocked) {
-      removeSensorLock(activeEnemyId);
+      queueFrameAction({ type: "removeSensorLock", payload: { id: activeEnemyId } });
     } else {
-      requestSensorLock(activeEnemyId);
+      queueFrameAction({ type: "requestSensorLock", payload: { id: activeEnemyId } });
     }
   } else if (action === "hail") {
     const sys = getState().GALAXY[getState().player.sysIdx];

@@ -83,7 +83,14 @@ export function sanitizeInputFrame(value: unknown): InputFrame | null {
 }
 
 /** Stage a discrete command for the next input frame sent to the authoritative server. */
-export function queueFrameAction(command: GameCommand): void {
+export function queueFrameAction(command: GameCommand, opts?: { replaceByType?: boolean }): void {
+  if (opts?.replaceByType) {
+    const existingIdx = pendingFrameActions.findIndex((entry) => entry.type === command.type);
+    if (existingIdx >= 0) {
+      pendingFrameActions[existingIdx] = command;
+      return;
+    }
+  }
   pendingFrameActions.push(command);
 }
 

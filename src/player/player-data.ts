@@ -20,6 +20,7 @@ import { createTutorialMission } from "../data/missions.js";
 import { TUTORIAL_STEP_COUNT } from "../data/tutorial.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { syncActiveProfile } from "../data/profiles.js";
+import { getHardpointSlotCount, mergeLegacyTurretSlotsIntoHigh, playerHardpointRack } from "../utils/hardpoints.js";
 
 export function defaultFitting(shipId: string): Record<string, (string | null)[]> {
   const s = SHIPS[shipId];
@@ -33,9 +34,41 @@ export function getPilotDisplayName(player: Player): string {
   return name && name.length > 0 ? name : "Pilot";
 }
 
+function copyPaddedArray<T>(prev: T[] | undefined, length: number, fallback: (idx: number) => T): T[] {
+  return Array.from({ length }, (_, idx) => prev?.[idx] ?? fallback(idx));
+}
+
+function normalizeHardpointArrays(p: Player): void {
+  const hardpointCount = p.fitting?.[playerHardpointRack(p)]?.length ?? 0;
+  const highCount = p.fitting?.high?.length ?? 0;
+  p.turretTargets = copyPaddedArray(p.turretTargets, hardpointCount, () => null);
+  p.highTargets = copyPaddedArray(p.highTargets, highCount, () => null);
+  p.turretCds = copyPaddedArray(p.turretCds, hardpointCount, () => 0);
+  p.turretPower = copyPaddedArray(p.turretPower, hardpointCount, () => false);
+  p.turretPowerCd = copyPaddedArray(p.turretPowerCd, hardpointCount, () => 0);
+}
+
+function migrateLegacyHardpointFit(p: Player): void {
+  if (playerHardpointRack(p) !== "high") return;
+  const legacyTurretSlots = Array.isArray(p.fitting?.turret) ? p.fitting.turret : [];
+  if (legacyTurretSlots.length === 0) return;
+  const highCount = SHIPS[p.shipId]?.fitting.high ?? 0;
+  p.fitting.high = mergeLegacyTurretSlotsIntoHigh(p.fitting?.high, legacyTurretSlots, highCount, () => null);
+  p.fitting.turret = [];
+  if (p.moduleHp && typeof p.moduleHp === "object") {
+    p.moduleHp.high = mergeLegacyTurretSlotsIntoHigh(p.moduleHp.high, p.moduleHp.turret, highCount, () => null);
+    p.moduleHp.turret = [];
+  }
+  if (p.slotActive && typeof p.slotActive === "object") {
+    p.slotActive.high = mergeLegacyTurretSlotsIntoHigh(p.slotActive.high, p.slotActive.turret, highCount, () => true);
+    p.slotActive.turret = [];
+  }
+}
+
 function applyStarterTrainingFit(p: Player): void {
   const hasRegressedStarterFit =
     p.fitting?.turret?.includes("start-tu-civ-cannon") ||
+    p.fitting?.high?.includes("start-tu-civ-cannon") ||
     p.fitting?.med?.includes("start-me-ab1") ||
     p.fitting?.low?.includes("start-tu-civ-scanner");
   if (!p.tutorial?.active || p.tutorial.completed || !hasRegressedStarterFit) return;
@@ -43,7 +76,7 @@ function applyStarterTrainingFit(p: Player): void {
   fit.high[0] = "start-tu-civ-miner";
   fit.high[1] = "start-tu-tractor";
   p.fitting = fit;
-  const hardpointCount = fit.high?.length ?? fit.turret.length;
+  const hardpointCount = fit[playerHardpointRack(p)]?.length ?? 0;
   p.turretTargets = Array(hardpointCount).fill(null);
   p.highTargets = Array(fit.high?.length ?? 0).fill(null);
   p.turretCds = Array(hardpointCount).fill(0);
@@ -65,7 +98,7 @@ function applyStarterTrainingFit(p: Player): void {
 
 export function makePlayer(): Player {
   const fit = defaultFitting('scout');
-  const hardpointCount = fit.high?.length ?? fit.turret.length;
+  const hardpointCount = getHardpointSlotCount("scout");
   const startingModules: ModuleInstance[] = [
     { uid: "start-tu-civ-cannon", baseId: "tu-civilian-cannon", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
     { uid: "start-tu-civ-miner", baseId: "tu-civilian-miner", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
@@ -172,11 +205,10 @@ export function loadPlayer(): Player {
     p.structureHitAngle = 0;
     p.targetLock = null;
     if (!p.fitting) p.fitting = defaultFitting(p.shipId);
-    if (!p.turretCds) p.turretCds = Array((p.fitting.turret?.length || 0)).fill(0);
-    if (!p.turretPower) p.turretPower = Array((p.fitting.turret?.length || 0)).fill(false);
-    if (!p.turretPowerCd) p.turretPowerCd = Array((p.fitting.turret?.length || 0)).fill(0);
+    migrateLegacyHardpointFit(p);
     if (!Array.isArray(p.turretTargets)) p.turretTargets = [];
     if (!Array.isArray(p.highTargets)) p.highTargets = [];
+    normalizeHardpointArrays(p);
     if (!p.moduleCargo) p.moduleCargo = [];
     const starter = makePlayer();
     const ownedUids = new Set(p.moduleCargo.map((inst) => inst.uid));

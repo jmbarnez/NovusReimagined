@@ -8,6 +8,7 @@ import { levelForSkillXp, WEAPON_SKILL, type WeaponDelivery } from "../data/skil
 import { getInstance } from "../utils/items.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { C } from "../config/index.js";
+import { playerHardpointRack } from "../utils/hardpoints.js";
 import type { Player } from "../state.js";
 
 export interface ComputedStats {
@@ -76,7 +77,7 @@ export function weaponSkillBonus(delivery: WeaponDelivery, p: Player = getState(
 }
 
 function isModuleActive(m: ModuleDef, rack: "turret" | "high" | "med" | "low", idx: number, p: Player): boolean {
-  return rack === "turret" ? (p.turretPower?.[idx] ?? false) : (p.slotActive?.[rack]?.[idx] ?? true);
+  return rack === playerHardpointRack(p) ? (p.turretPower?.[idx] ?? false) : (p.slotActive?.[rack]?.[idx] ?? true);
 }
 
 function isPlayer(obj: unknown): obj is Player {
@@ -161,7 +162,12 @@ export function computeStats(
   const combatTrainingLvl = Math.max(skLv('ballistics'), skLv('beam_weapons'), skLv('missile_guidance'));
 
   let lockScanMult = 1;
-  const allMods = [...fitting.turret, ...fitting.high, ...fitting.med, ...fitting.low].filter(Boolean) as string[];
+  const allMods = [
+    ...(fitting.turret ?? []),
+    ...(fitting.high ?? []),
+    ...(fitting.med ?? []),
+    ...(fitting.low ?? []),
+  ].filter(Boolean) as string[];
   for (const uid of allMods) {
     const inst = getInstance(uid, p);
     if (!inst) continue;
@@ -244,8 +250,11 @@ export function computeStats(
   const thrustScale = thrustScalar;
   const baseThrustScale = baseThrustScalar;
 
+  const hardpointRack = playerHardpointRack(p);
+  const hardpointSlots = fitting[hardpointRack] ?? [];
+
   let hasMiner = false;
-  for (const uid of fitting.turret) {
+  for (const uid of hardpointSlots) {
     if (!uid) continue;
     const inst = getInstance(uid, p);
     const m = inst ? MODULES[inst.baseId] : null;
@@ -254,8 +263,8 @@ export function computeStats(
 
   let hasSalvager = false;
   let salvageBonus = skLv('salvage') * C.PLAYER.SKILL_POTENCY.salvagePerLevel;
-  for (let i = 0; i < (fitting.high?.length ?? 0); i++) {
-    const uid = fitting.high?.[i];
+  for (let i = 0; i < hardpointSlots.length; i++) {
+    const uid = hardpointSlots[i];
     if (!uid) continue;
     const inst = getInstance(uid, p);
     const m = inst ? MODULES[inst.baseId] : null;
@@ -264,7 +273,7 @@ export function computeStats(
     salvageBonus += (m as { salvageRollBonus?: number }).salvageRollBonus ?? 0;
   }
   const metallurgyLevel = skLv('metallurgy');
-  const weaponTurret = resolveWeaponTurret(fitting);
+  const weaponTurret = resolveWeaponTurret(fitting, p);
   const wProf = computeScaledWeaponProfile(weaponTurret ? weaponTurret.id : "default", weaponTurret, ship);
   const primaryDelivery: WeaponDelivery | null = (weaponTurret?.weaponDelivery as WeaponDelivery | undefined) ?? null;
   const primarySkillBonus = primaryDelivery ? skLv(WEAPON_SKILL[primaryDelivery]) * C.PLAYER.SKILL_POTENCY.weaponMultPerLevel : 0;
@@ -314,7 +323,7 @@ export function computeScaledWeaponProfile(baseId: string, weaponTurret: ModuleD
 
 export function getWeaponProfileForSlot(idx: number, p: Player = getState().player): WeaponProfile | null {
   const ship = SHIPS[p.shipId];
-  const uid = p.fitting.turret[idx];
+  const uid = p.fitting[playerHardpointRack(p)]?.[idx];
   const inst = uid ? getInstance(uid, p) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m) return null;

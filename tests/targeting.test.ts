@@ -19,6 +19,8 @@ import { toggleSlotDefaultAction } from "../src/player/player-fitting.js";
 import { respawnPlayer } from "../src/utils/game.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { getStats } from "../src/player/player-stats.js";
+import { C } from "../src/config/index.js";
+import { executeGameCommand } from "../src/sim/commands.js";
 
 describe("turretModuleAcceptsTarget", () => {
   it("weapon turrets accept enemy locks only", () => {
@@ -170,5 +172,94 @@ describe("target resolution", () => {
     expect(G.P.lockQueue[0]?.id).toBe(asteroid.id);
     const refreshedMap = sys._asteroidMap as Map<string, typeof asteroid> | undefined;
     expect(refreshedMap?.get(asteroid.id)).toBe(asteroid);
+  });
+});
+
+describe("sensor lock range gating", () => {
+  beforeEach(() => {
+    installTestPlayer(makePlayer());
+    G.GALAXY = buildGalaxy();
+    populateSystem(G.GALAXY[0]!);
+    G.P.lockQueue = [];
+  });
+
+  it("rejects lock requests beyond drop range to prevent blink", () => {
+    const sys = G.GALAXY[0]!;
+    const enemy = sys.enemies[0]!;
+    sys._enemyMap = new Map();
+    sys._enemyMap.set(enemy.id, enemy);
+
+    const ship = SHIPS[G.P.shipId];
+    const dropRange = getSensorContactRangePx(ship) * C.TARGETING.SENSOR.dropRangeMultiplier;
+
+    enemy.x = dropRange + 500;
+    enemy.y = 0;
+    G.P.x = 0;
+    G.P.y = 0;
+
+    requestSensorLock(enemy.id, G.P, { suppressFrameAction: true });
+
+    expect(G.P.lockQueue.length).toBe(0);
+  });
+});
+
+describe("sensor lock command path", () => {
+  beforeEach(() => {
+    installTestPlayer(makePlayer());
+    G.GALAXY = buildGalaxy();
+    populateSystem(G.GALAXY[0]!);
+    G.P.lockQueue = [];
+    G.P.targetLock = null;
+    G.P._assignTargetId = null;
+  });
+
+  it("executeGameCommand requestSensorLock adds target to queue", () => {
+    const sys = G.GALAXY[0]!;
+    const enemy = sys.enemies[0]!;
+    sys._enemyMap = new Map();
+    sys._enemyMap.set(enemy.id, enemy);
+
+    G.P.x = enemy.x;
+    G.P.y = enemy.y;
+
+    executeGameCommand({ type: "requestSensorLock", payload: { id: enemy.id } }, G.P);
+
+    expect(G.P.lockQueue.length).toBe(1);
+    expect(G.P.lockQueue[0]?.id).toBe(enemy.id);
+    expect(G.P.lockQueue[0]?.resolving).toBe(true);
+  });
+
+  it("executeGameCommand selectLockTarget sets assignment id", () => {
+    G.P.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
+    executeGameCommand({ type: "selectLockTarget", payload: { id: "rat-1" } }, G.P);
+    expect(G.P._assignTargetId).toBe("rat-1");
+  });
+
+  it("executeGameCommand selectLockTarget toggles assignment off when already assigned", () => {
+    G.P.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
+    G.P._assignTargetId = "rat-1";
+    executeGameCommand({ type: "selectLockTarget", payload: { id: "rat-1" } }, G.P);
+    expect(G.P._assignTargetId).toBeNull();
+  });
+
+  it("executeGameCommand removeSensorLock drops target from queue", () => {
+    G.P.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
+    executeGameCommand({ type: "removeSensorLock", payload: { id: "rat-1" } }, G.P);
+    expect(G.P.lockQueue.length).toBe(0);
+  });
+
+  it("assignModuleSlotToTarget resolves the player's hardpoint rack instead of legacy turret slots", () => {
+    const sys = G.GALAXY[0]!;
+    const enemy = sys.enemies[0]!;
+    sys._enemyMap = new Map();
+    sys._enemyMap.set(enemy.id, enemy);
+
+    G.P.x = enemy.x;
+    G.P.y = enemy.y;
+    G.P.fitting.high[0] = "start-tu-civ-cannon";
+    G.P.lockQueue = [{ id: enemy.id, resolving: false, acc: 1 }];
+
+    expect(assignModuleSlotToTarget(0, enemy.id, G.P, { silent: true })).toBe(true);
+    expect(G.P.turretTargets[0]).toBe(enemy.id);
   });
 });

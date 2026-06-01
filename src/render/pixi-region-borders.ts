@@ -32,13 +32,14 @@ function regionActiveForStep(regId: string, activeStepId: string | undefined): b
   }
 }
 
-function drawDashedCircle(gfx: Graphics, cx: number, cy: number, radius: number, segments: number, dashRatio: number): void {
+function drawDashedCircle(gfx: Graphics, cx: number, cy: number, radius: number, segments: number, dashRatio: number, color: number, alpha: number, width: number): void {
   for (let i = 0; i < segments; i++) {
     if (i % 2 !== 0) continue;
     const a0 = (i / segments) * TAU;
     const a1 = ((i + dashRatio) / segments) * TAU;
     gfx.moveTo(cx + Math.cos(a0) * radius, cy + Math.sin(a0) * radius);
     gfx.arc(cx, cy, radius, a0, a1);
+    gfx.stroke({ color, width, alpha });
   }
 }
 
@@ -67,8 +68,7 @@ export function syncPixiRegionBorders(now: number): void {
     if (!isVisible(reg.x, reg.y, reg.r + 80)) continue;
     const isActive = regionActiveForStep(reg.id, activeStepId);
     const alpha = isActive ? 0.22 + 0.06 * Math.sin(now * 0.003) : 0.14;
-    drawDashedCircle(_regionGfx, reg.x, reg.y, reg.r, 72, 0.55);
-    _regionGfx.stroke({ color: 0x6496c8, width: 1.5, alpha });
+    drawDashedCircle(_regionGfx, reg.x, reg.y, reg.r, 72, 0.55, 0x6496c8, alpha, 1.5);
   }
   _regionGfx.visible = true;
 }

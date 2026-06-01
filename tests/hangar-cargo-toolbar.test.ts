@@ -36,7 +36,7 @@ describe("hangar cargo panel toolbar", () => {
 
     mountInventoryInPane("hangar-pane-cargo");
 
-    const viewBtn = pane.querySelector('.inv-view-btn[data-view="list"]');
+    const viewBtn = pane.querySelector('.inv-view-btn[data-view="list"]') as HTMLButtonElement;
     expect(viewBtn).not.toBeNull();
 
     // Fire the event multiple times
@@ -46,5 +46,46 @@ describe("hangar cargo panel toolbar", () => {
 
     // The view button should still be the exact same DOM node
     expect(pane.querySelector('.inv-view-btn[data-view="list"]')).toBe(viewBtn);
+  });
+
+  it("re-renders when a view button is clicked", () => {
+    const pane = document.createElement("div");
+    pane.id = "hangar-pane-cargo";
+    document.body.appendChild(pane);
+
+    mountInventoryInPane("hangar-pane-cargo");
+
+    const gridBtn = pane.querySelector('.inv-view-btn[data-view="grid"]') as HTMLButtonElement;
+    expect(gridBtn).not.toBeNull();
+    expect(gridBtn.classList.contains("is-active")).toBe(true);
+
+    // Click the list view button
+    const listBtn = pane.querySelector('.inv-view-btn[data-view="list"]') as HTMLButtonElement;
+    expect(listBtn).not.toBeNull();
+    listBtn.click();
+
+    // After clicking list, the list button should be active and grid inactive
+    const newGridBtn = pane.querySelector('.inv-view-btn[data-view="grid"]') as HTMLButtonElement;
+    const newListBtn = pane.querySelector('.inv-view-btn[data-view="list"]') as HTMLButtonElement;
+    expect(newListBtn.classList.contains("is-active")).toBe(true);
+    expect(newGridBtn.classList.contains("is-active")).toBe(false);
+  });
+
+  it("re-renders when sort button is clicked", () => {
+    const pane = document.createElement("div");
+    pane.id = "hangar-pane-cargo";
+    document.body.appendChild(pane);
+
+    mountInventoryInPane("hangar-pane-cargo");
+
+    const sortBtn = pane.querySelector(".inv-sort-btn") as HTMLButtonElement;
+    expect(sortBtn).not.toBeNull();
+    const initialLabel = sortBtn.textContent;
+
+    sortBtn.click();
+
+    // Sort label should have changed
+    const newSortBtn = pane.querySelector(".inv-sort-btn") as HTMLButtonElement;
+    expect(newSortBtn.textContent).not.toBe(initialLabel);
   });
 });

@@ -2,7 +2,7 @@ import { makePlayer, validatePilotName } from "../player/player-data.js";
 import { SHIPS } from "../data/ships.js";
 import { RACK_TYPES } from "../constants.js";
 import { resolvePlayerSpawn } from "../utils/player-spawn.js";
-import { getHardpointRack } from "../utils/hardpoints.js";
+import { getHardpointRack, mergeLegacyTurretSlotsIntoHigh } from "../utils/hardpoints.js";
 import type { Player } from "../state.js";
 import type { System } from "../types/world.js";
 import type { ShipDef } from "../data/ships.js";
@@ -44,10 +44,28 @@ function cloneStringArray(value: string[] | undefined): string[] {
   return Array.isArray(value) ? [...new Set(value.filter((entry) => typeof entry === "string"))] : [];
 }
 
+function legacyHardpointSource<T>(
+  highSource: T[] | undefined,
+  turretSource: T[] | undefined,
+  highCount: number,
+  fallback: (idx: number) => T,
+): T[] {
+  return mergeLegacyTurretSlotsIntoHigh(highSource, turretSource, highCount, fallback);
+}
+
 function cloneFitting(value: Player["fitting"], fallback: Player["fitting"], ship: ShipDef): Player["fitting"] {
   const out: Player["fitting"] = {};
+  const hardpointRack = getHardpointRack(ship);
   for (const rack of RACK_TYPES) {
     const n = ship.fitting[rack] ?? 0;
+    if (rack === "high" && hardpointRack === "high") {
+      const sourceHigh = Array.isArray(value?.high) ? value.high : fallback.high ?? [];
+      const sourceTurret = Array.isArray(value?.turret) ? value.turret : fallback.turret ?? [];
+      out.high = legacyHardpointSource(sourceHigh, sourceTurret, n, () => null).map((uid) =>
+        typeof uid === "string" ? uid : null,
+      );
+      continue;
+    }
     const source = Array.isArray(value?.[rack]) ? value[rack] : fallback[rack] ?? [];
     out[rack] = Array.from({ length: n }, (_, idx) => {
       const uid = source[idx];
@@ -65,20 +83,35 @@ function zeroSlotTimers(fitting: Player["fitting"]): Record<string, number[]> {
   return out;
 }
 
-function offlineSlotActive(value: Player["slotActive"], fitting: Player["fitting"]): Record<string, boolean[]> {
+function offlineSlotActive(value: Player["slotActive"], fitting: Player["fitting"], ship: ShipDef): Record<string, boolean[]> {
   const out: Record<string, boolean[]> = {};
+  const hardpointRack = getHardpointRack(ship);
   for (const rack of RACK_TYPES) {
     const n = fitting[rack]?.length ?? 0;
+    if (rack === "high" && hardpointRack === "high") {
+      const source = legacyHardpointSource(value?.high, value?.turret, n, () => false);
+      out[rack] = Array.from({ length: n }, (_, idx) => source[idx] === true);
+      continue;
+    }
     const source = value?.[rack] ?? [];
     out[rack] = Array.from({ length: n }, (_, idx) => source[idx] === true);
   }
   return out;
 }
 
-function cloneModuleHp(value: Player["moduleHp"], fitting: Player["fitting"]): Record<string, (number | null)[]> {
+function cloneModuleHp(value: Player["moduleHp"], fitting: Player["fitting"], ship: ShipDef): Record<string, (number | null)[]> {
   const out: Record<string, (number | null)[]> = {};
+  const hardpointRack = getHardpointRack(ship);
   for (const rack of RACK_TYPES) {
     const n = fitting[rack]?.length ?? 0;
+    if (rack === "high" && hardpointRack === "high") {
+      const source = legacyHardpointSource(value?.high, value?.turret, n, () => null);
+      out[rack] = Array.from({ length: n }, (_, idx) => {
+        const hp = source[idx];
+        return hp == null ? null : finiteNumber(hp, 100, 0);
+      });
+      continue;
+    }
     const source = value?.[rack] ?? [];
     out[rack] = Array.from({ length: n }, (_, idx) => {
       const hp = source[idx];
@@ -143,8 +176,8 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
 
   p.moduleCargo = Array.isArray(incoming.moduleCargo) ? clone(incoming.moduleCargo) : clone(base.moduleCargo);
   p.fitting = cloneFitting(incoming.fitting, base.fitting, ship);
-  p.moduleHp = cloneModuleHp(incoming.moduleHp, p.fitting);
-  p.slotActive = offlineSlotActive(incoming.slotActive, p.fitting);
+  p.moduleHp = cloneModuleHp(incoming.moduleHp, p.fitting, ship);
+  p.slotActive = offlineSlotActive(incoming.slotActive, p.fitting, ship);
   p.slotPowerCd = zeroSlotTimers(p.fitting);
   const hardpointRack = getHardpointRack(ship);
   const hardpointCount = p.fitting[hardpointRack]?.length ?? p.turretPower.length;

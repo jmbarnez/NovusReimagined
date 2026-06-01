@@ -16,6 +16,8 @@ import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
 import { asteroidDebrisList } from "../utils/mining.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
+import { PixiGeometryBufferPool } from "./pixi-geometry-buffer-pool.js";
+import { entityLayer } from "../pixi.js";
 
 const TAU = Math.PI * 2;
 
@@ -25,7 +27,7 @@ const ROCK_OUTLINE = { color: 0x080604, width: 1.5, alpha: 0.92 } as const;
 // ─── Single-pass Graphics ────────────────────────────────────────────────────
 let _asteroidGfx: Graphics | null = null;
 const _asteroidLockMap = new Map<string, LockSlot>();
-const _flatPts: number[] = [];
+const _polyBuffers = new PixiGeometryBufferPool();
 
 // Helper to convert HSL to hex number for PixiJS
 function hslInt(h: number, s: number, l: number): number {
@@ -46,9 +48,15 @@ export function initPixiAsteroids(parent: Container): void {
 }
 
 export function syncPixiAsteroids(now: number, alpha: number, sys: System): void {
+  if (!_asteroidGfx && entityLayer) {
+    initPixiAsteroids(entityLayer);
+  }
   if (!_asteroidGfx) return;
 
-  _asteroidGfx.clear();
+  const gfx = _asteroidGfx;
+
+  gfx.clear();
+  _polyBuffers.resetFrame();
   _asteroidLockMap.clear();
 
   const primaryId = getState().player.targetLock?.id;
@@ -57,8 +65,9 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
     for (const slot of getState().player.lockQueue) _asteroidLockMap.set(slot.id, slot);
   }
 
-  if (sys?._liveAsteroids) {
-    for (const a of sys._liveAsteroids) {
+  const asteroids = sys?._liveAsteroids ?? sys?.asteroids.filter((a) => !a.depleted && a.hp > 0) ?? [];
+
+  for (const a of asteroids) {
       if (!isVisible(a.x, a.y, a.radius + 10)) continue;
 
       const hp = a.hp / Math.max(1, a.maxHp);
@@ -67,15 +76,8 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
       const cos = Math.cos(iSpin);
       const sin = Math.sin(iSpin);
 
-      // 1. 3D drop shadow on the "ground" plane beneath the asteroid
-      _asteroidGfx.ellipse(a.x + a.radius * 0.1, a.y + a.radius * 0.25, a.radius * 0.8, a.radius * 0.35)
-        .fill({ color: 0x000000, alpha: 0.25 });
-
-      // 2. Build rotated and translated asteroid polygon coordinates
-      _flatPts.length = 0;
-      for (const pt of a.shape) {
-        _flatPts.push((pt[0] * cos - pt[1] * sin) * a.radius + a.x, (pt[0] * sin + pt[1] * cos) * a.radius + a.y);
-      }
+      // Build rotated and translated asteroid polygon coordinates
+      const flatPts = _polyBuffers.writeRotatedScaledWorldPoints(a.shape, a.x, a.y, a.radius, cos, sin);
 
       // Draw the main body disc
       const h = a.tintHue ?? 30;
@@ -83,7 +85,7 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
       const l = 20 + hp * 10;
       const colNum = hslInt(h, s, l);
 
-      _asteroidGfx.poly(_flatPts, true)
+      gfx.poly(flatPts, true)
         .fill({ color: colNum })
         .stroke(ROCK_OUTLINE);
 
@@ -91,21 +93,19 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
       if (hp < 1) {
         const bw = a.radius * 2.2;
         const by = a.y - a.radius - 7;
-        _asteroidGfx.rect(a.x - bw / 2, by, bw, 4).fill({ color: 0x000000, alpha: 0.55 })
+        gfx.rect(a.x - bw / 2, by, bw, 4).fill({ color: 0x000000, alpha: 0.55 })
           .rect(a.x - bw / 2, by, bw * hp, 4).fill({ color: hp > 0.6 ? 0xc8a060 : hp > 0.3 ? 0xcc6622 : 0x882211 });
       }
 
       // 4. Render blue locking brackets
       const slot = _asteroidLockMap.get(a.id);
       if (slot) {
-        drawTargetLockBrackets(_asteroidGfx, a.x, a.y, a.radius, slot, a.id === primaryId, now, "neutral");
+        drawTargetLockBrackets(gfx, a.x, a.y, a.radius, slot, a.id === primaryId, now, "neutral");
         if (a.id === selectedId) {
-          drawSelectedTargetIndicator(_asteroidGfx, a.x, a.y, a.radius, now);
+          drawSelectedTargetIndicator(gfx, a.x, a.y, a.radius, now);
         }
       }
     }
-  }
-
   // ── 6. Asteroid destruction debris chunks ─────────────────────────────────
   for (const d of asteroidDebrisList) {
     if (!isVisible(d.x, d.y, d.radius + 4)) continue;
@@ -113,16 +113,10 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
     const fade = Math.min(1, d.life / (d.maxLife * 0.4));
     const cos = Math.cos(d.angle);
     const sin = Math.sin(d.angle);
-    _flatPts.length = 0;
-    for (const pt of d.pts) {
-      _flatPts.push(
-        (pt[0] * cos - pt[1] * sin) * d.radius + d.x,
-        (pt[0] * sin + pt[1] * cos) * d.radius + d.y,
-      );
-    }
+    const flatPts = _polyBuffers.writeRotatedScaledWorldPoints(d.pts, d.x, d.y, d.radius, cos, sin);
 
     const colNum = hslInt(d.tintHue ?? 32, d.tintSat ?? 34, 22);
-    _asteroidGfx.poly(_flatPts, true)
+    gfx.poly(flatPts, true)
       .fill({ color: colNum, alpha: fade })
       .stroke({ ...ROCK_OUTLINE, alpha: ROCK_OUTLINE.alpha * fade });
   }
@@ -134,3 +128,4 @@ export function destroyPixiAsteroids(): void {
     _asteroidGfx = null;
   }
 }
+

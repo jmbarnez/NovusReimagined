@@ -13,6 +13,7 @@ import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
 import { drawShipHitGlows } from "./pixi-hit-impact-draw.js";
+import { effectLayer } from "../pixi.js";
 
 let _hitGfx: Graphics | null = null;
 const _lockMap = new Map<string, LockSlot>();
@@ -25,6 +26,9 @@ export function initPixiHitEffects(parent: Container): void {
 }
 
 export function syncPixiHitEffects(now: number, alpha: number, sys: System): void {
+  if (!_hitGfx && effectLayer) {
+    initPixiHitEffects(effectLayer);
+  }
   if (!_hitGfx) return;
 
   _hitGfx.clear();

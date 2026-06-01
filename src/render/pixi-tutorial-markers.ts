@@ -1,6 +1,6 @@
 import { Graphics } from "pixi.js";
 import { getState } from "../state-access.js";
-import { effectLayer } from "../pixi.js";
+import { effectLayer, worldContainer } from "../pixi.js";
 import { isVisible } from "../utils/game.js";
 import {
   getCurrentTutorialStep,
@@ -14,6 +14,7 @@ import { isTutorialExitGateRevealed } from "../data/tutorial.js";
 const TAU = Math.PI * 2;
 let _beaconGfx: Graphics | null = null;
 let _lastStep = -1;
+let _gatePulseGfx: Graphics | null = null;
 
 export function initPixiTutorialMarkers() {
   if (_beaconGfx || !effectLayer) return;
@@ -22,7 +23,7 @@ export function initPixiTutorialMarkers() {
   effectLayer.addChild(_beaconGfx);
 }
 
-export function syncPixiTutorialMarkers(now: number) {
+export function syncPixiTutorialMarkers(now: number, sys: import("../types/world.js").System) {
   if (!_beaconGfx) initPixiTutorialMarkers();
   if (!_beaconGfx) return;
 
@@ -64,24 +65,25 @@ export function syncPixiTutorialMarkers(now: number) {
     .lineTo(x + 14, y - colH * 0.55)
     .closePath()
     .fill({ color, alpha: 0.12 + pulse * 0.08 });
-}
 
-export function drawTutorialGatePulse(ctx2d: CanvasRenderingContext2D, now: number, sys: import("../types/world.js").System) {
-  if (!getState().player?.tutorial?.active || tutorialGatePulse <= 0 || !isTutorialExitGateRevealed(getState().player)) return;
-  const step = getCurrentTutorialStep(getState().player);
-  if (step?.id !== "fly-gate" && step?.id !== "graduation") return;
-  const gate = sys.gates.find((g) => g.x === TUTORIAL_GATE.x && g.y === TUTORIAL_GATE.y) ?? sys.gates[0];
-  if (!gate) return;
-
-  const pulse = tutorialGatePulse * (0.7 + 0.3 * Math.sin(now * 0.005));
-  ctx2d.save();
-  ctx2d.globalAlpha = pulse * 0.55;
-  ctx2d.strokeStyle = "#ffffff";
-  ctx2d.lineWidth = 3;
-  ctx2d.beginPath();
-  ctx2d.arc(gate.x, gate.y, gate.radius + 20 + pulse * 15, 0, TAU);
-  ctx2d.stroke();
-  ctx2d.restore();
+  // Gate pulse overlay (Pixi replacement for drawTutorialGatePulse)
+  if (tutorialGatePulse > 0 && isTutorialExitGateRevealed(getState().player)) {
+    const gate = sys?.gates?.find((g) => g.x === TUTORIAL_GATE.x && g.y === TUTORIAL_GATE.y) ?? sys?.gates?.[0];
+    const stepCurrent = getCurrentTutorialStep(getState().player);
+    if (gate && (stepCurrent?.id === "fly-gate" || stepCurrent?.id === "graduation")) {
+      if (!_gatePulseGfx) {
+        _gatePulseGfx = new Graphics();
+        _gatePulseGfx.label = "tutorial-gate-pulse";
+        (effectLayer ?? worldContainer)?.addChild(_gatePulseGfx);
+      }
+      const pulseGate = tutorialGatePulse * (0.7 + 0.3 * Math.sin(now * 0.005));
+      _gatePulseGfx.clear();
+      _gatePulseGfx.circle(gate.x, gate.y, gate.radius + 20 + pulseGate * 15)
+        .stroke({ color: 0xffffff, width: 3, alpha: pulseGate * 0.55 });
+    }
+  } else {
+    _gatePulseGfx?.clear();
+  }
 }
 
 export function getTutorialGuideTarget(): { x: number; y: number } | null {
@@ -111,5 +113,7 @@ export function getTutorialGuideTarget(): { x: number; y: number } | null {
 export function destroyPixiTutorialMarkers() {
   _beaconGfx?.destroy();
   _beaconGfx = null;
+  _gatePulseGfx?.destroy();
+  _gatePulseGfx = null;
   _lastStep = -1;
 }

@@ -1,6 +1,6 @@
 import "./styles/decryption.css";
 
-import { WorldAccess, PlayerAccess, getState } from "../state-access.js";
+import { getState } from "../state-access.js";
 import { queueFrameAction } from "../sim/input.js";
 import { openHudWindow, closeHudWindow, isOpen } from "./hud/windows.js";
 import { curSys } from "../utils/game.js";
@@ -9,7 +9,6 @@ import type { HiddenSite } from "../types/world.js";
 import { getStats } from "../player/player-stats.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../audio/procedural.js";
 import { logEvent } from "../feedback.js";
-import { applyDecryptionReward } from "../sites/decryption-rewards.js";
 import { t } from "../utils/i18n.js";
 
 type NodeType = "entry" | "access" | "cache" | "reveal" | "stabilize" | "corrupt" | "counter" | "dead";
@@ -186,22 +185,6 @@ function applyNode(run: DecryptRun, nodeId: string) {
   renderDecryptionWindow();
 }
 
-function payReward(site: HiddenSite, payload: number, integrity: number, partial = false) {
-  const reward = applyDecryptionReward(site, payload, integrity, partial, getState().player);
-  const details = [
-    `${reward.credits}¢`,
-    reward.chip > 0 ? `${reward.chip} chip` : "",
-    reward.cell > 0 ? `${reward.cell} cell` : "",
-    reward.sensor > 0 ? `${reward.sensor} sensor cluster` : "",
-  ].filter(Boolean);
-  logEvent(`${partial ? "Partial" : "Recovered"} datacore payload from ${site.name}: ${details.join(", ")}`, partial ? "system" : "loot");
-}
-
-function finalizeSite(siteId: string) {
-  PlayerAccess.addCompletedSiteId(siteId);
-  WorldAccess.setHiddenSiteState(getState().player.sysIdx, siteId, "cleared");
-}
-
 function extractRun(run: DecryptRun) {
   if (run.ended) return;
   const site = getSite(run.siteId);
@@ -244,7 +227,6 @@ function collapseRun(run: DecryptRun) {
     );
     return;
   }
-  PlayerAccess.setEnergy(Math.max(0, getState().player.energy - 12));
   sfxError();
   renderDecryptionWindow(true, t("decrypt.collapse"));
 }
@@ -398,7 +380,6 @@ export function openDecryptionWindowForSite(siteId: string) {
     sfxError();
     return;
   }
-  WorldAccess.setHiddenSiteState(getState().player.sysIdx, site.id, "resolved");
   activeRun = buildRun(site);
   sfxConfirm();
   renderDecryptionWindow();

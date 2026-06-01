@@ -1,12 +1,9 @@
 import "../styles/hud-turret-menu.css";
 
-import { PlayerAccess, getState } from "../../state-access.js";
-import { MODULES } from "../../data/modules.js";
-import { TURRET_POWER_CYCLE_S } from "../../constants.js";
-import { sfxPowerCycle } from "../../audio/procedural.js";
-import { floatText } from "../../utils/fx.js";
+import { getState } from "../../state-access.js";
+import { queueFrameAction } from "../../sim/input.js";
 import { hudState } from "./state.js";
-import { getInstance } from "../../utils/items.js";
+import { playerHardpointRack } from "../../utils/hardpoints.js";
 
 /* ── Turret Context Menu ── */
 export function onTurretContextMenu(e: MouseEvent, rack: string, idx: number) {
@@ -57,15 +54,14 @@ export function onCtxItemClick(e: Event) {
   if (action === "toggle-power") {
     const cycling = (getState().player.turretPowerCd?.[idx] || 0) > 0;
     if (cycling) return;
-    PlayerAccess.setTurretPower(idx, !getState().player.turretPower[idx]);
-    PlayerAccess.setTurretPowerCd(idx, TURRET_POWER_CYCLE_S);
-    sfxPowerCycle(getState().player.turretPower[idx]);
-    const uid = getState().player.fitting.turret?.[idx];
-    const inst = uid ? getInstance(uid) : null;
-    const m = inst ? MODULES[inst.baseId] : null;
-    floatText(getState().player.x, getState().player.y - 30, `${m?.short || "Turret"} ${getState().player.turretPower[idx] ? "POWERING UP" : "POWERING DOWN"}`, "#88ccff");
+    queueFrameAction({
+      type: "toggleSlotDefaultAction",
+      payload: { rack: playerHardpointRack(getState().player), idx },
+    });
   } else if (action === "clear-target") {
-    PlayerAccess.setTurretTarget(idx, null);
-    floatText(getState().player.x, getState().player.y - 30, "TURRET UNASSIGNED", "#ffaa44");
+    queueFrameAction({
+      type: "assignModuleSlotToTarget",
+      payload: { slotIdx: idx, targetId: null },
+    });
   }
 }

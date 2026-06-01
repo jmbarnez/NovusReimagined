@@ -1,10 +1,74 @@
+import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
 import type { System } from "../../types/world.js";
 import { shouldShowWarpGate } from "../../data/tutorial.js";
 import { t } from "../../utils/i18n.js";
+import { openHudWindow, isOpen, closeHudWindow, getHudWindow } from "../hud/windows.js";
+import { mapContainer, app, positioningContainer } from "../../render/pixi-maps.js";
 
-export function updateMapOverlayDOM(sys: System) {
-  const overlayEl = document.getElementById("map-overlay");
+export function closeMapWindow() {
+  Client.showMap = false;
+  closeHudWindow("map");
+}
+
+export function toggleMapWindow() {
+  if (isOpen("map")) {
+    closeMapWindow();
+  } else {
+    // Create DOM content for window body
+    const sys = getState().player ? curSys() : null;
+    const contentEl = document.createElement("div");
+    contentEl.id = "map-overlay";
+    contentEl.className = "map-overlay";
+    contentEl.style.position = "relative";
+    contentEl.style.width = "100%";
+    contentEl.style.height = "100%";
+    contentEl.style.overflow = "hidden";
+    
+    if (sys) {
+      updateMapOverlayDOM(sys, contentEl);
+    }
+    
+    Client.showMap = true;
+    openHudWindow("map", "NOVUS", contentEl, () => {
+      // Close callback - reset zoom/pan
+      Client.showMap = false;
+      Client.mapZoom = 1.0;
+      Client.mapPanX = 0;
+      Client.mapPanY = 0;
+      if (positioningContainer) positioningContainer.visible = false;
+    });
+    
+    // Set default window size and center it
+    const win = getHudWindow("map");
+    if (win) {
+      win.style.width = "800px";
+      win.style.height = "600px";
+      const centerX = (window.innerWidth - 800) / 2;
+      const centerY = (window.innerHeight - 600) / 2;
+      win.style.left = `${centerX}px`;
+      win.style.top = `${centerY}px`;
+      win.style.right = "auto";
+    }
+    
+    // Position PixiJS container to match window
+    if (win && positioningContainer && app) {
+      // positioningContainer is already added to app.stage in initPixiMaps
+      positioningContainer.visible = true;
+      // Position will be updated in render loop based on window position
+    }
+  }
+}
+
+function curSys() {
+  const state = getState();
+  const player = state.player;
+  if (!player) return null;
+  return state.GALAXY[player.sysIdx] || null;
+}
+
+export function updateMapOverlayDOM(sys: System, targetEl?: HTMLElement) {
+  const overlayEl = targetEl ?? document.getElementById("map-overlay");
   if (!overlayEl || !sys) return;
 
   const hasStations = sys.stations.length > 0;

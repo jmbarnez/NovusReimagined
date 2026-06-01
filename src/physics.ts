@@ -1,3 +1,4 @@
+import { Client } from "./state.js";
 import { getState, PlayerAccess } from "./state-access.js";
 import { updateShip } from "./physics/ship.js";
 import { updateTutorialTrack } from "./physics/tutorial-track.js";
@@ -11,10 +12,12 @@ import { updateSalvager } from "./salvager.js";
 import { updateTractor } from "./tractor.js";
 import { updateHub, tickHubQueue } from "./hub.js";
 import { updateTrails } from "./utils/entities.js";
-import { updateTurretCooldowns } from "./combat.js";
+import { updateTurretCooldowns } from "./combat/turret-control.js";
 import { tickAbilities } from "./player/abilities.js";
 import { updateAsteroidDebris } from "./utils/mining.js";
 import { updateAmbientDirector } from "./physics/ambient-ships.js";
+import { tickIndustryQueue } from "./state/actions.js";
+import { updateMapScanner, updateScanning } from "./scanning.js";
 
 export function tick(dt: number) {
   rebuildSpatialGrid();
@@ -39,6 +42,11 @@ export function tick(dt: number) {
   updateTractor(dt);
   updateHub(dt);
   tickHubQueue();
+  if (Client.multiplayerRole !== "client") {
+    tickIndustryQueue();
+    updateMapScanner(dt, getState().player);
+    updateScanning(dt, getState().player);
+  }
   updateEnemyRespawns(dt);
   updateStationTurrets(dt);
   updateWarp(dt);

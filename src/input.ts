@@ -1,21 +1,20 @@
 import { Client } from "./state.js";
-import type { Enemy, Station } from "./types/world.js";
+import type { Enemy } from "./types/world.js";
 import { clearNav, getState } from "./state-access.js";
 import { showEnemyCtxMenu } from "./ui/hud/enemy-menu.js";
-import { undockStation, tryWarp } from "./dock.js";
+import { closeStationUi, getDockableStation, getWarpGateInRange, openStationUi } from "./dock.js";
 import { dst } from "./utils/math.js";
+import { closeMapWindow, toggleMapWindow } from "./ui/hud-overlay/map-overlay.js";
 
 import { curSys } from "./utils/game.js";
-import { requestSensorLock } from "./targeting.js";
 import { toggleSettings, closeSettings, listeningFor } from "./ui/settings/index.js";
 import { togglePauseMenu, closePauseMenu } from "./ui/pause-menu.js";
 import { toggleCargoWindow, toggleScannerDock, toggleSkillsWindow, toggleHubWindow, toggleEventLogPanel } from "./ui/hud-overlay.js";
 import { closeTopmostWindow } from "./ui/hud/windows.js";
-import { applyBarHotkey, barHotkeySlotList } from "./player/player-fitting.js";
+import { applyBarHotkey } from "./player/player-fitting.js";
 import { queueFrameAction } from "./sim/input.js";
 import { playBackgroundMusic } from "./audio/music.js";
-import { resumeAudio, sfxTurretAssign } from "./audio/procedural.js";
-import { playerHardpointRack } from "./utils/hardpoints.js";
+import { resumeAudio } from "./audio/procedural.js";
 import { isEventLogToggleHotkey, isOverviewToggleHotkey } from "./input-hotkeys.js";
 
 export function initInput() {
@@ -30,7 +29,6 @@ export function initInput() {
     ".eve-window",
     "#hud-bottom",
     "#hud-minimap",
-    "#map-overlay",
     "[id^='hud-win-']",
   ].join(", ");
 
@@ -68,8 +66,12 @@ export function initInput() {
       if (Client.settingsOpen) { closeSettings(); return; }
       const pauseOverlay = document.getElementById("pause-overlay");
       if (pauseOverlay && pauseOverlay.style.display === "flex") { closePauseMenu(); return; }
-      if (Client.showMap) { Client.showMap = false; return; }
-      if (Client.stationOpen) { undockStation(); return; }
+      if (Client.showMap) { closeMapWindow(); return; }
+      if (Client.stationOpen) {
+        queueFrameAction({ type: "undock" });
+        closeStationUi();
+        return;
+      }
       // Close topmost hud window first, then fall through to pause menu
       if (closeTopmostWindow()) return;
       togglePauseMenu();
@@ -107,8 +109,15 @@ export function initInput() {
     }
 
     if (e.code === keybinds.dock) {
-      if (Client.stationOpen) undockStation();
-      else if (!tryWarp()) {
+      if (Client.stationOpen) {
+        queueFrameAction({ type: "undock" });
+        closeStationUi();
+      } else {
+        const gate = getWarpGateInRange(getState().player);
+        if (gate) {
+          queueFrameAction({ type: "warp", payload: { targetIdx: gate.targetSysIdx } });
+          return;
+        }
         const sys = curSys();
         if (sys && sys._liveEnemies?.some((e: Enemy) => e.hasLockOnPlayer)) return;
         if (sys) {
@@ -124,50 +133,22 @@ export function initInput() {
             }
           }
           if (!handledByHub) {
-            for (const st of sys.stations) {
-              if (st.isProcessingHub) continue;
-              if (dst(getState().player.x, getState().player.y, st.x, st.y) < st.radius * 2) {
-                import("./dock.js").then((m) => m.dockAt(st));
-                break;
-              }
+            const station = getDockableStation(getState().player);
+            if (station) {
+              queueFrameAction({ type: "dock", payload: { stationId: station.id } });
+              void openStationUi(station);
             }
           }
         }
       }
     }
     if (e.code === keybinds.map) {
-      if (!Client.showMap) {
-        // Open in system view first
-        Client.showMap = true;
-        Client.showSystemMap = true;
-      } else if (Client.showSystemMap) {
-        // Switch to galaxy view
-        Client.showSystemMap = false;
-      } else {
-        // Close
-        Client.showMap = false;
-      }
+      toggleMapWindow();
     }
     const rackKeys = ["1","2","3","4","5","6","7","8","9","0"];
     const idx = rackKeys.indexOf(k);
     if (idx !== -1) {
-      const slots = barHotkeySlotList();
-      const hardpointRack = playerHardpointRack(getState().player);
-      if (idx < slots.length && slots[idx].rack === hardpointRack) {
-        const tIdx = slots[idx].idx;
-        if (!(getState().player.turretPower?.[tIdx] ?? false)) {
-          queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack: hardpointRack, idx: tIdx } });
-        }
-        queueFrameAction({ type: "setFireControlSlot", payload: { slot: tIdx } });
-        const assignTargetId = getState().player._assignTargetId;
-        if (assignTargetId != null) {
-          queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: tIdx, targetId: assignTargetId } });
-          queueFrameAction({ type: "selectLockTarget", payload: { id: assignTargetId } });
-          sfxTurretAssign();
-        }
-      } else {
-        applyBarHotkey(idx);
-      }
+      applyBarHotkey(idx);
     }
   });
 
@@ -196,6 +177,17 @@ export function initInput() {
     if (e.button === 0) {
       Client.mouse.lmb = true;
 
+      // Map drag start
+      if (Client.showMap && e.target instanceof Element && isBlockedByUi(e.target)) {
+        const mapOverlay = e.target.closest("#map-overlay, #hud-win-body-map");
+        if (mapOverlay) {
+          Client.mapDragging = true;
+          Client.mapDragLastSx = e.clientX;
+          Client.mapDragLastSy = e.clientY;
+          return;
+        }
+      }
+
       if (isBlockedByUi(e.target)) return;
 
       if (!Client.stationOpen && !Client.bridgeOpen) {
@@ -205,7 +197,7 @@ export function initInput() {
         if (sys) {
           for (const en of sys.enemies) {
             if (en.alive && dst(wx, wy, en.x, en.y) < 30) {
-              requestSensorLock(en.id);
+              queueFrameAction({ type: "requestSensorLock", payload: { id: en.id } });
               locked = true;
               break;
             }
@@ -213,7 +205,7 @@ export function initInput() {
           if (!locked) {
             for (const a of sys.asteroids) {
               if (!a.depleted && a.hp > 0 && dst(wx, wy, a.x, a.y) < a.radius + 12) {
-                requestSensorLock(a.id);
+                queueFrameAction({ type: "requestSensorLock", payload: { id: a.id } });
                 locked = true;
                 break;
               }
@@ -222,7 +214,7 @@ export function initInput() {
           if (!locked) {
             for (const p of getState().wreckPieces) {
               if (p.hp > 0 && dst(wx, wy, p.x, p.y) < 22) {
-                requestSensorLock(p.id);
+                queueFrameAction({ type: "requestSensorLock", payload: { id: p.id } });
                 locked = true;
                 break;
               }
@@ -268,12 +260,27 @@ export function initInput() {
   });
 
   window.addEventListener("mouseup", (e) => {
+    if (e.button === 0) {
+      Client.mouse.lmb = false;
+      Client.mapDragging = false;
+    }
     if (e.button === 2) Client.mouse.rmb = false;
   });
 
   window.addEventListener("mousemove", (e) => {
     Client.mouse.x = e.clientX;
     Client.mouse.y = e.clientY;
+    
+    // Map drag
+    if (Client.mapDragging) {
+      const dx = e.clientX - Client.mapDragLastSx;
+      const dy = e.clientY - Client.mapDragLastSy;
+      Client.mapPanX += dx;
+      Client.mapPanY += dy;
+      Client.mapDragLastSx = e.clientX;
+      Client.mapDragLastSy = e.clientY;
+    }
+    
     if (Client.mouse.rmb) {
       Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
     }
@@ -281,7 +288,18 @@ export function initInput() {
 
   window.addEventListener("wheel", (e) => {
     if (!Client.gameStarted) return;
-    if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, .eve-window")) return;
+    if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, .eve-window")) {
+      if (!(Client.showMap && e.target.closest("#map-overlay"))) return;
+    }
+
+    // Map zoom when map is open
+    if (Client.showMap) {
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      Client.mapZoom = Math.max(0.2, Math.min(3.0, Client.mapZoom * delta));
+      return;
+    }
+    
+    // World zoom
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     Client.zoom = Math.max(0.5, Math.min(2.0, Client.zoom * delta));
   }, { passive: true });

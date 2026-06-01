@@ -1,9 +1,10 @@
 import "../styles/hud-lock-rail.css";
 
-import { PlayerAccess, getState } from "../../state-access.js";
+import { getState } from "../../state-access.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { dst } from "../../utils/math.js";
 import { hudState } from "./state.js";
+import { queueFrameAction } from "../../sim/input.js";
 import type { Enemy, Asteroid, WreckPiece, LockSlot } from "../../types/world.js";
 import type { ComputedStats } from "../../player/player-stats.js";
 
@@ -32,7 +33,6 @@ export interface LockCard {
   assignEl: HTMLElement;
 }
 import {
-  removeSensorLock,
   targetByLockId,
   isAsteroidTarget,
   isWreckPieceTarget,
@@ -365,17 +365,13 @@ export function createLockCard(id: string) {
   close.addEventListener("click", (e) => {
     e.stopPropagation();
     sfxBlip();
-    removeSensorLock(id);
+    queueFrameAction({ type: "removeSensorLock", payload: { id } });
   });
   el.appendChild(close);
 
   el.addEventListener("click", () => {
     sfxBlip();
-    if (getState().player._assignTargetId === id) {
-      PlayerAccess.setAssignTargetId(null);
-    } else {
-      PlayerAccess.setAssignTargetId(id);
-    }
+    queueFrameAction({ type: "selectLockTarget", payload: { id } });
   });
 
   hudState.lockRail!.appendChild(el);

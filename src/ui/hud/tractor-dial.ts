@@ -1,14 +1,18 @@
-import { getState, PlayerAccess } from "../../state-access.js";
+import { getState } from "../../state-access.js";
 import { MODULES, MODULE_FLAGS, type ModuleDef } from "../../data/modules.js";
 import { getInstance } from "../../utils/items.js";
 import { hudState } from "./state.js";
-import { savePlayer } from "../../player/player-data.js";
 import { sfxBlip } from "../../audio/procedural.js";
+import { queueFrameAction } from "../../sim/input.js";
 
 const DIAL_EL_ID = "tractor-dial";
 let _isDragging = false;
 let _startY = 0;
 let _startVal = 0;
+
+function queueTractorTightness(value: number): void {
+  queueFrameAction({ type: "setTractorTightness", payload: { value } }, { replaceByType: true });
+}
 
 function getDialEl(): HTMLElement {
   let el = document.getElementById(DIAL_EL_ID);
@@ -29,9 +33,8 @@ function getDialEl(): HTMLElement {
       const dir = ev.deltaY < 0 ? 1 : -1;
       const next = Math.max(0, Math.min(1, current + dir * 0.05));
       if (next !== current) {
-        PlayerAccess.setTractorTightness(next);
+        queueTractorTightness(next);
         sfxBlip(800 + next * 600, 0.02);
-        savePlayer();
       }
     }, { passive: false });
 
@@ -61,7 +64,7 @@ function onDragMove(ev: MouseEvent) {
     if (oldStep !== newStep) {
       sfxBlip(800 + next * 600, 0.02);
     }
-    PlayerAccess.setTractorTightness(next);
+    queueTractorTightness(next);
   }
 }
 
@@ -70,7 +73,6 @@ function onDragEnd() {
     _isDragging = false;
     document.removeEventListener("mousemove", onDragMove);
     document.removeEventListener("mouseup", onDragEnd);
-    savePlayer();
   }
 }
 

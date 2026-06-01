@@ -1,4 +1,4 @@
-import { Client, type Player } from "../state.js";
+import { type Player } from "../state.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import { MODULES } from "../data/modules.js";
 import { ORE_MARKET_BUY, COMPONENT_MARKET_BUY } from "../data/marketCatalog.js";
@@ -12,6 +12,8 @@ import { ModuleRarity, RARITY_CONFIG } from "../data/moduleRarity.js";
 import { generateModuleInstance } from "../loot/generateModule.js";
 import { getInstance, invalidateInstanceCache } from "../utils/items.js";
 import type { MissionContract } from "../data/missions.js";
+import { getDockableStation } from "../dock.js";
+import { moduleFitsShipRack } from "../utils/hardpoints.js";
 
 export interface ActionResponse {
   success: boolean;
@@ -21,20 +23,31 @@ export interface ActionResponse {
   label?: string;
 }
 
-export function repairShipAction(_p: Player = getState().player): ActionResponse {
-  const st = getStats();
-  const hullRep = Math.max(0, st.maxHp - getState().player.hp);
-  const structRep = Math.max(0, st.maxStructure - getState().player.structure);
-  const shieldRep = Math.max(0, st.maxShield - getState().player.shield);
+function isInstanceFittedElsewhere(instanceId: string, p: Player, except?: { rack: string; slotIdx: number }): boolean {
+  for (const rack of ["turret", "high", "med", "low"] as const) {
+    const slots = p.fitting?.[rack] ?? [];
+    for (let idx = 0; idx < slots.length; idx++) {
+      if (except && rack === except.rack && idx === except.slotIdx) continue;
+      if (slots[idx] === instanceId) return true;
+    }
+  }
+  return false;
+}
+
+export function repairShipAction(p: Player = getState().player): ActionResponse {
+  const st = getStats(p);
+  const hullRep = Math.max(0, st.maxHp - p.hp);
+  const structRep = Math.max(0, st.maxStructure - p.structure);
+  const shieldRep = Math.max(0, st.maxShield - p.shield);
   let moduleDamageTotal = 0;
 
   for (const rack of ["turret", "high", "med", "low"] as const) {
-    const slots = getState().player.fitting?.[rack];
+    const slots = p.fitting?.[rack];
     if (!slots) continue;
     for (let i = 0; i < slots.length; i++) {
       const uid = slots[i];
       if (uid) {
-        const inst = getInstance(uid);
+        const inst = getInstance(uid, p);
         if (inst) {
           moduleDamageTotal += Math.max(0, inst.maxDurability - inst.durability);
         }
@@ -43,55 +56,55 @@ export function repairShipAction(_p: Player = getState().player): ActionResponse
   }
 
   const cost = Math.max(0, Math.ceil((hullRep + structRep * 0.5 + shieldRep * 0.3 + moduleDamageTotal * 0.6) * 0.8));
-  if (getState().player.credits < cost) {
+  if (p.credits < cost) {
     return { success: false, reason: "Insufficient credits" };
   }
 
-  PlayerAccess.modifyCredits(-cost);
-  PlayerAccess.setHp(st.maxHp);
-  PlayerAccess.setStructure(st.maxStructure);
-  PlayerAccess.setShield(st.maxShield);
+  PlayerAccess.modifyCredits(-cost, p);
+  PlayerAccess.setHp(st.maxHp, p);
+  PlayerAccess.setStructure(st.maxStructure, p);
+  PlayerAccess.setShield(st.maxShield, p);
 
-  for (const inst of getState().player.moduleCargo) {
+  for (const inst of p.moduleCargo) {
     inst.durability = inst.maxDurability;
   }
 
   for (const rack of ["turret", "high", "med", "low"] as const) {
-    const slots = getState().player.fitting?.[rack];
+    const slots = p.fitting?.[rack];
     if (!slots) continue;
     for (let i = 0; i < slots.length; i++) {
       const uid = slots[i];
       if (uid) {
-        const inst = getInstance(uid);
+        const inst = getInstance(uid, p);
         if (inst) inst.durability = inst.maxDurability;
       }
     }
   }
 
-  invalidate();
+  invalidate(p);
   return { success: true, creditsSpent: cost };
 }
 
-export function buyModuleAction(moduleId: string, _p: Player = getState().player): ActionResponse {
+export function buyModuleAction(moduleId: string, p: Player = getState().player): ActionResponse {
   const m = MODULES[moduleId];
   if (!m) {
     return { success: false, reason: "Module not found" };
   }
-  if (getState().player.credits < m.price) {
+  if (p.credits < m.price) {
     return { success: false, reason: "Insufficient credits" };
   }
 
-  PlayerAccess.modifyCredits(-m.price);
-  const inst = generateModuleInstance(moduleId, getState().player.level, 0);
+  PlayerAccess.modifyCredits(-m.price, p);
+  const inst = generateModuleInstance(moduleId, p.level, 0);
   inst.rarity = ModuleRarity.Stock;
   inst.affixes = [];
-  PlayerAccess.addModuleCargo(inst);
+  PlayerAccess.addModuleCargo(inst, p);
   invalidateInstanceCache();
 
   return { success: true, creditsSpent: m.price };
 }
 
-export function sellModuleAction(moduleId: string, _p: Player = getState().player): ActionResponse {
+export function sellModuleAction(moduleId: string, p: Player = getState().player): ActionResponse {
   const m = MODULES[moduleId];
   if (!m) {
     return { success: false, reason: "Module not found" };
@@ -99,24 +112,24 @@ export function sellModuleAction(moduleId: string, _p: Player = getState().playe
 
   const fittedIds = new Set<string>();
   for (const r of ["turret", "high", "med", "low"] as const) {
-    for (const uid of getState().player.fitting[r]) {
+    for (const uid of p.fitting[r]) {
       if (uid) fittedIds.add(uid);
     }
   }
 
-  const instIdx = getState().player.moduleCargo.findIndex(inst => inst.baseId === moduleId && !fittedIds.has(inst.uid));
+  const instIdx = p.moduleCargo.findIndex(inst => inst.baseId === moduleId && !fittedIds.has(inst.uid));
   if (instIdx === -1) {
     return { success: false, reason: "No matching unfitted module found in cargo" };
   }
 
-  const inst = getState().player.moduleCargo[instIdx];
+  const inst = p.moduleCargo[instIdx];
   const rarityMult = RARITY_CONFIG[inst.rarity].sellMult;
   const sellPrice = Math.floor(m.price * 0.6 * rarityMult);
 
-  PlayerAccess.removeModuleCargo(instIdx);
-  PlayerAccess.modifyCredits(sellPrice);
+  PlayerAccess.removeModuleCargo(instIdx, p);
+  PlayerAccess.modifyCredits(sellPrice, p);
   invalidateInstanceCache();
-  invalidate();
+  invalidate(p);
 
   return { success: true, creditsEarned: sellPrice };
 }
@@ -167,52 +180,70 @@ export function sellCargoResourceAction(
   }
 }
 
-export function fitModuleAction(rack: "turret" | "high" | "med" | "low", slotIdx: number, instanceId: string, _p: Player = getState().player): ActionResponse {
+export function fitModuleAction(rack: "turret" | "high" | "med" | "low", slotIdx: number, instanceId: string, p: Player = getState().player): ActionResponse {
   if (!instanceId) return { success: false, reason: "No module selected" };
-  const inst = getInstance(instanceId);
+  if (!Array.isArray(p.fitting?.[rack]) || slotIdx < 0 || slotIdx >= p.fitting[rack].length) {
+    return { success: false, reason: "Invalid slot" };
+  }
+  if (p.fitting[rack][slotIdx]) return { success: false, reason: "Slot already occupied" };
+  const inst = getInstance(instanceId, p);
   if (!inst) return { success: false, reason: "Module instance not found" };
   const m = MODULES[inst.baseId];
   if (!m) return { success: false, reason: "Module base definition not found" };
+  if (!moduleFitsShipRack(m.rack, rack)) return { success: false, reason: "Module does not fit this slot" };
+  if (isInstanceFittedElsewhere(instanceId, p)) return { success: false, reason: "Module is already fitted" };
 
-  PlayerAccess.setFittingSlot(rack, slotIdx, instanceId);
-  PlayerAccess.setModuleHp(rack, slotIdx, Math.round((inst.durability / inst.maxDurability) * MODULE_HP_MAX));
-  syncSlotHeat();
-  invalidate();
+  PlayerAccess.setFittingSlot(rack, slotIdx, instanceId, p);
+  PlayerAccess.setModuleHp(rack, slotIdx, Math.round((inst.durability / inst.maxDurability) * MODULE_HP_MAX), p);
+  syncSlotHeat(p);
+  invalidate(p);
 
   return { success: true };
 }
 
-export function unfitModuleAction(rack: "turret" | "high" | "med" | "low", slotIdx: number, _p: Player = getState().player): ActionResponse {
-  const uid = getState().player.fitting[rack][slotIdx];
+export function unfitModuleAction(rack: "turret" | "high" | "med" | "low", slotIdx: number, p: Player = getState().player): ActionResponse {
+  if (!Array.isArray(p.fitting?.[rack]) || slotIdx < 0 || slotIdx >= p.fitting[rack].length) {
+    return { success: false, reason: "Invalid slot" };
+  }
+  const uid = p.fitting[rack][slotIdx];
   if (!uid) return { success: false, reason: "Slot is empty" };
-  const inst = getInstance(uid);
+  const inst = getInstance(uid, p);
   if (!inst) return { success: false, reason: "Module instance not found" };
 
-  const slotHp = getState().player.moduleHp?.[rack]?.[slotIdx] ?? MODULE_HP_MAX;
+  const slotHp = p.moduleHp?.[rack]?.[slotIdx] ?? MODULE_HP_MAX;
   inst.durability = Math.round((slotHp / MODULE_HP_MAX) * inst.maxDurability);
-  PlayerAccess.setFittingSlot(rack, slotIdx, null);
-  syncSlotHeat();
-  invalidate();
+  PlayerAccess.setFittingSlot(rack, slotIdx, null, p);
+  syncSlotHeat(p);
+  invalidate(p);
 
   return { success: true };
 }
 
-export function swapModuleAction(rack: "turret" | "high" | "med" | "low", slotIdx: number, newInstanceId: string, _p: Player = getState().player): ActionResponse {
+export function swapModuleAction(rack: "turret" | "high" | "med" | "low", slotIdx: number, newInstanceId: string, p: Player = getState().player): ActionResponse {
   if (!newInstanceId) return { success: false, reason: "No module selected" };
-  const newInst = getInstance(newInstanceId);
+  if (!Array.isArray(p.fitting?.[rack]) || slotIdx < 0 || slotIdx >= p.fitting[rack].length) {
+    return { success: false, reason: "Invalid slot" };
+  }
+  const newInst = getInstance(newInstanceId, p);
   if (!newInst) return { success: false, reason: "New module instance not found" };
+  const newModule = MODULES[newInst.baseId];
+  if (!newModule) return { success: false, reason: "New module base definition not found" };
+  if (!moduleFitsShipRack(newModule.rack, rack)) return { success: false, reason: "Module does not fit this slot" };
+  if (isInstanceFittedElsewhere(newInstanceId, p, { rack, slotIdx })) {
+    return { success: false, reason: "Module is already fitted" };
+  }
 
-  const oldUid = getState().player.fitting[rack][slotIdx];
+  const oldUid = p.fitting[rack][slotIdx];
   if (!oldUid) return { success: false, reason: "No module to swap from" };
-  const oldInst = getInstance(oldUid);
+  const oldInst = getInstance(oldUid, p);
   if (!oldInst) return { success: false, reason: "Old module instance not found" };
 
-  const slotHp = getState().player.moduleHp?.[rack]?.[slotIdx] ?? MODULE_HP_MAX;
+  const slotHp = p.moduleHp?.[rack]?.[slotIdx] ?? MODULE_HP_MAX;
   oldInst.durability = Math.round((slotHp / MODULE_HP_MAX) * oldInst.maxDurability);
-  PlayerAccess.setFittingSlot(rack, slotIdx, newInstanceId);
-  PlayerAccess.setModuleHp(rack, slotIdx, Math.round((newInst.durability / newInst.maxDurability) * MODULE_HP_MAX));
-  syncSlotHeat();
-  invalidate();
+  PlayerAccess.setFittingSlot(rack, slotIdx, newInstanceId, p);
+  PlayerAccess.setModuleHp(rack, slotIdx, Math.round((newInst.durability / newInst.maxDurability) * MODULE_HP_MAX), p);
+  syncSlotHeat(p);
+  invalidate(p);
 
   return { success: true };
 }
@@ -295,37 +326,37 @@ export function tickIndustryQueue(p: Player = getState().player) {
   }
 }
 
-export function cancelIndustryJobAction(jobId: string, _p: Player = getState().player): ActionResponse {
-  const idx = getState().player.craftQueue.findIndex(j => j.id === jobId);
+export function cancelIndustryJobAction(jobId: string, p: Player = getState().player): ActionResponse {
+  const idx = p.craftQueue.findIndex(j => j.id === jobId);
   if (idx === -1) return { success: false, reason: "Job not found" };
-  const job = getState().player.craftQueue[idx];
+  const job = p.craftQueue[idx];
   const r = getRecipe(job.recipeId);
 
   if (r) {
-    const pool = (p: IndustryPool) =>
-      p === "ore" ? getState().player.ore : p === "refined" ? getState().player.refined : p === "loot" ? getState().player.loot : getState().player.components;
+    const pool = (poolType: IndustryPool) =>
+      poolType === "ore" ? p.ore : poolType === "refined" ? p.refined : poolType === "loot" ? p.loot : p.components;
     for (const inp of r.inputs) {
       const cur = pool(inp.pool)[inp.key] || 0;
       const setter = inp.pool === "ore" ? PlayerAccess.setOre
         : inp.pool === "refined" ? PlayerAccess.setRefined
         : inp.pool === "loot" ? PlayerAccess.setLoot
         : PlayerAccess.setComponents;
-      setter(inp.key, cur + inp.qty * job.qty);
+      setter(inp.key, cur + inp.qty * job.qty, p);
     }
   }
 
-  PlayerAccess.removeCraftJob(idx);
+  PlayerAccess.removeCraftJob(idx, p);
   return { success: true, label: r?.label || "job" };
 }
 
-export function buyBlueprintAction(recipeId: string, _p: Player = getState().player): ActionResponse {
+export function buyBlueprintAction(recipeId: string, p: Player = getState().player): ActionResponse {
   const r = getRecipe(recipeId);
   const cost = r?.blueprintCost ?? 0;
   if (!r || !cost) return { success: false, reason: "Blueprint not purchasable" };
-  if (getState().player.credits < cost) return { success: false, reason: "Insufficient credits" };
+  if (p.credits < cost) return { success: false, reason: "Insufficient credits" };
 
-  PlayerAccess.modifyCredits(-cost);
-  PlayerAccess.setBlueprint(recipeId, true);
+  PlayerAccess.modifyCredits(-cost, p);
+  PlayerAccess.setBlueprint(recipeId, true, p);
   return { success: true, creditsSpent: cost };
 }
 
@@ -334,16 +365,22 @@ export function setHomeSystemAction(p: Player = getState().player): ActionRespon
   return { success: true };
 }
 
-export function acceptContractAction(contractId: string, stationContracts: MissionContract[]): ActionResponse {
+export function acceptContractAction(
+  contractId: string,
+  stationContracts: MissionContract[],
+  p: Player = getState().player,
+): ActionResponse {
   const contract = stationContracts.find(c => c.id === contractId);
   if (!contract) return { success: false, reason: "Contract not found" };
-  if (getState().player.contracts.length >= 3) {
+  if (p.contracts.length >= 3) {
     return { success: false, reason: "Contract limit reached" };
   }
 
   const accepted = { ...contract, status: "active" as const };
-  PlayerAccess.addContract(accepted);
-  emit("mission:accepted", { contract: accepted });
+  PlayerAccess.addContract(accepted, p);
+  if (p === getState().player) {
+    emit("mission:accepted", { contract: accepted });
+  }
 
   return { success: true, label: accepted.title };
 }
@@ -367,31 +404,30 @@ export function acceptContractProposalAction(
   return { success: true, label: accepted.title };
 }
 
-export function turnInContractAction(contractId: string, _p: Player = getState().player): ActionResponse {
-  const idx = getState().player.contracts.findIndex(c => c.id === contractId && c.status === "complete");
+export function turnInContractAction(contractId: string, p: Player = getState().player): ActionResponse {
+  const idx = p.contracts.findIndex(c => c.id === contractId && c.status === "complete");
   if (idx === -1) return { success: false, reason: "Complete contract not found" };
-  const contract = getState().player.contracts[idx];
+  const contract = p.contracts[idx];
 
-  if (contract.stationId !== Client.activeStation?.id) {
+  if (p.stationOfferStationId !== contract.stationId || !getDockableStation(p, contract.stationId)) {
     return { success: false, reason: "Must turn in at correct station" };
   }
 
-  PlayerAccess.modifyCredits(contract.reward);
-  PlayerAccess.removeContract(idx);
+  PlayerAccess.modifyCredits(contract.reward, p);
+  PlayerAccess.removeContract(idx, p);
 
   return { success: true, creditsEarned: contract.reward, label: contract.title };
 }
 
-export function abandonContractAction(contractId: string, _p: Player = getState().player): ActionResponse {
-  const idx = getState().player.contracts.findIndex(c => c.id === contractId);
+export function abandonContractAction(contractId: string, p: Player = getState().player): ActionResponse {
+  const idx = p.contracts.findIndex(c => c.id === contractId);
   if (idx === -1) return { success: false, reason: "Contract not found" };
 
-  PlayerAccess.removeContract(idx);
+  PlayerAccess.removeContract(idx, p);
   return { success: true };
 }
 
-export function jettisonItemAction(itemId: string, qty: number | null = null, _p: Player = getState().player): ActionResponse {
-  const p = getState().player;
+export function jettisonItemAction(itemId: string, qty: number | null = null, p: Player = getState().player): ActionResponse {
   // Parsing standard IDs like: "ore_iron", "ammo_hybrid", "ref_bar", "loot_scrap", "comp_gear", "mod_uid"
   let type = "";
   let key = "";
@@ -421,31 +457,31 @@ export function jettisonItemAction(itemId: string, qty: number | null = null, _p
     const cur = p.ore[key] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    PlayerAccess.setOre(key, Math.max(0, cur - drop));
+    PlayerAccess.setOre(key, Math.max(0, cur - drop), p);
     return { success: true, label: `${drop}× iron` }; // Generic display, or caller handles
   } else if (type === "ammo") {
     const cur = p.ammo[key as keyof typeof p.ammo] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    PlayerAccess.setAmmo(key as "hybrid" | "missile", Math.max(0, cur - drop));
+    PlayerAccess.setAmmo(key as "hybrid" | "missile", Math.max(0, cur - drop), p);
     return { success: true };
   } else if (type === "refined") {
     const cur = p.refined[key] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    PlayerAccess.setRefined(key, Math.max(0, cur - drop));
+    PlayerAccess.setRefined(key, Math.max(0, cur - drop), p);
     return { success: true };
   } else if (type === "loot") {
     const cur = p.loot[key] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    PlayerAccess.setLoot(key, Math.max(0, cur - drop));
+    PlayerAccess.setLoot(key, Math.max(0, cur - drop), p);
     return { success: true };
   } else if (type === "component") {
     const cur = p.components[key] || 0;
     const drop = qty === null ? cur : Math.min(qty, cur);
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    PlayerAccess.setComponents(key, Math.max(0, cur - drop));
+    PlayerAccess.setComponents(key, Math.max(0, cur - drop), p);
     return { success: true };
   } else {
     // Module Jettison
@@ -456,7 +492,7 @@ export function jettisonItemAction(itemId: string, qty: number | null = null, _p
     const instIdx = p.moduleCargo.findIndex(inst => inst.uid === key);
     if (instIdx === -1) return { success: false, reason: "Module instance not found in cargo" };
 
-    PlayerAccess.removeModuleCargo(instIdx);
+    PlayerAccess.removeModuleCargo(instIdx, p);
     invalidateInstanceCache();
     return { success: true };
   }

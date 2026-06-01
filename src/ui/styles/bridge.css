@@ -2,7 +2,7 @@
 .bridge-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.35);}
 .bridge-workspace{position:absolute;inset:0;overflow:hidden;}
 .bridge-toast{position:absolute;top:8px;right:12px;min-height:18px;padding:2px 8px;font-size:10px;color:var(--hud-accent);opacity:0;transition:opacity .2s;background:var(--hud-bg-deep);border:1px solid var(--hud-border);z-index:220;}
-.eve-window{position:absolute;display:flex;flex-direction:column;min-height:100px;min-width:200px;background:var(--hud-bg-window);backdrop-filter:blur(12px);border:1px solid var(--hud-border);box-shadow:0 8px 32px rgba(0,0,0,0.6);resize:both;overflow:hidden;}
+.eve-window{position:absolute;display:flex;flex-direction:column;min-height:100px;min-width:200px;background:var(--hud-bg-panel);border:1px solid var(--hud-border);box-shadow:0 8px 32px rgba(0,0,0,0.6);resize:both;overflow:hidden;}
 .eve-window-overview{left:auto;right:8px;top:30px;width:320px;height:calc(80vh - 60px);min-width:180px;}
 .eve-window-cargo{left:calc(50% - 320px);top:calc(50% - 260px);width:640px;height:520px;min-width:360px;min-height:260px;}
 .eve-window-skills{left:8px;top:30px;width:370px;height:calc(80vh - 60px);min-width:260px;}

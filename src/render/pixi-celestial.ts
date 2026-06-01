@@ -416,126 +416,132 @@ export function syncPixiCelestial(now: number, alpha: number, sys: System): void
 
         // --- 1. CORE VORTEX (HYPERSPACE CORE) ---
         b.core.clear();
-        
-        // A. Deep base glow
+
+        // A. Subtle outer glow behind rings
+        b.core.circle(0, 0, g.radius * 1.15).fill({
+          color: 0x285ac8,
+          alpha: (0.04 + pulse * 0.02)
+        });
+
+        // B. Deep base glow
         b.core.circle(0, 0, g.radius * 0.75).fill({
           color: 0x142b6e,
           alpha: (0.15 + pulse * 0.1)
         });
 
-        // B. Energetic core center
+        // C. Energetic core center
         b.core.circle(0, 0, g.radius * 0.48).fill({
           color: 0x285ac8,
           alpha: (0.35 + corePulse * 0.25)
         });
-        
-        // C. Saturated hyper-core event horizon
+
+        // D. Saturated hyper-core event horizon
         b.core.circle(0, 0, g.radius * 0.22).fill({
           color: 0xe0f0ff,
           alpha: (0.70 + corePulse * 0.25)
         });
 
-        // D. Swirling spiral accretion filaments inside the core
+        // E. Smooth spiral accretion filaments (thinner, cleaner arcs)
         const arms = 3;
-        const armSpin = -now * 0.0016; // Counter-rotates quickly
+        const armSpin = -now * 0.0016;
         for (let aIdx = 0; aIdx < arms; aIdx++) {
           const baseAng = armSpin + (aIdx / arms) * TAU;
-          b.core.moveTo(0, 0);
-          
-          // Draw a curved spiral arm using quadratic curves
-          const midR = g.radius * 0.38;
-          const endR = g.radius * 0.58;
-          const midAng = baseAng + 0.5;
-          const endAng = baseAng + 1.2;
-          
-          const cx1 = Math.cos(midAng) * midR;
-          const cy1 = Math.sin(midAng) * midR;
-          const cx2 = Math.cos(endAng) * endR;
-          const cy2 = Math.sin(endAng) * endR;
-          
-          b.core.quadraticCurveTo(cx1, cy1, cx2, cy2)
-            .stroke({ color: 0x5fa0ff, width: 2.0, alpha: (0.4 + corePulse * 0.3), cap: "round" });
+          const segCount = 24;
+          for (let s = 0; s < segCount; s++) {
+            const t0 = s / segCount;
+            const t1 = (s + 1) / segCount;
+            const r0 = g.radius * 0.12 + t0 * g.radius * 0.42;
+            const r1 = g.radius * 0.12 + t1 * g.radius * 0.42;
+            const a0 = baseAng + t0 * 2.2;
+            const a1 = baseAng + t1 * 2.2;
+            const segAlpha = (0.15 + corePulse * 0.15) * (1.0 - t0 * 0.6);
+            b.core.moveTo(Math.cos(a0) * r0, Math.sin(a0) * r0);
+            b.core.lineTo(Math.cos(a1) * r1, Math.sin(a1) * r1);
+            b.core.stroke({ color: 0x5fa0ff, width: 1.2, alpha: segAlpha });
+          }
         }
 
-        // E. Cascading intake spark particles falling into the vortex
+        // F. Cascading intake spark particles (smooth falloff)
         const numSparks = 8;
         for (let sIdx = 0; sIdx < numSparks; sIdx++) {
           const offsetTime = now * 0.0008 + (sIdx / numSparks) * 5.0;
-          const tFactor = offsetTime % 1.0; // [0, 1] life cycle
+          const tFactor = offsetTime % 1.0;
           const startR = g.radius * 0.95;
           const endR = g.radius * 0.1;
           const sparkR = startR + (endR - startR) * tFactor;
-          
-          // Spiral angle in direction of intake
           const sparkAng = (sIdx / numSparks) * TAU - tFactor * 4.0 - now * 0.001;
           const sx = Math.cos(sparkAng) * sparkR;
           const sy = Math.sin(sparkAng) * sparkR;
-          const sparkAlpha = (1.0 - tFactor) * (0.5 + 0.5 * Math.sin(now * 0.01 + sIdx));
-          
-          b.core.circle(sx, sy, Math.max(0.6, 2.5 * (1.0 - tFactor)))
+          const ease = tFactor * tFactor;
+          const sparkAlpha = (1.0 - ease) * (0.5 + 0.5 * Math.sin(now * 0.01 + sIdx));
+          b.core.circle(sx, sy, Math.max(0.5, 2.0 * (1.0 - ease)))
             .fill({ color: sIdx % 2 === 0 ? 0xffffff : 0x78c0ff, alpha: sparkAlpha });
         }
 
-        // --- 2. CONCENTRIC COUNTER-ROTATING GEAR RINGS ---
+        // --- 2. CONCENTRIC COUNTER-ROTATING RINGS ---
         b.rings.clear();
-        
-        const spin = g.spin ?? 0;
-        
-        // A. OUTER MAIN SHIELD RING (Spins Clockwise)
-        for (let j = 0; j < 16; j++) {
-          const a = spin + (j / 16) * TAU;
-          const ar = a + (1 / 16) * TAU * 0.72;
-          const isMajor = j % 4 === 0;
 
+        const spin = g.spin ?? 0;
+
+        // A. OUTER MAIN RING (Spins Clockwise) — smooth dashed ring
+        const outerTicks = 48;
+        const outerDash = 0.45;
+        for (let j = 0; j < outerTicks; j++) {
+          if (j % 2 !== 0) continue;
+          const a = spin + (j / outerTicks) * TAU;
+          const ar = a + (1 / outerTicks) * TAU * outerDash;
+          const isMajor = j % 8 === 0;
+          b.rings.moveTo(Math.cos(a) * g.radius, Math.sin(a) * g.radius);
           b.rings.arc(0, 0, g.radius, a, ar);
           b.rings.stroke({
             color: isMajor ? 0x78c0ff : 0x3c78c8,
-            width: isMajor ? 3.0 : 1.5,
-            alpha: isMajor ? (0.8 + pulse * 0.2) : 0.45,
+            width: isMajor ? 2.0 : 1.0,
+            alpha: isMajor ? (0.75 + pulse * 0.2) : 0.40,
           });
         }
-        
-        // B. INNER SLOW COUNTER-SPIN GEAR RING (Spins Counter-Clockwise)
+
+        // B. INNER COUNTER-SPIN RING — smooth dashed ring
         const innerRadius = g.radius * 0.78;
         const innerSpin = -spin * 0.75;
-        for (let j = 0; j < 12; j++) {
-          const a = innerSpin + (j / 12) * TAU;
-          const ar = a + (1 / 12) * TAU * 0.65;
-          const isMajor = j % 3 === 0;
-
+        const innerTicks = 36;
+        const innerDash = 0.42;
+        for (let j = 0; j < innerTicks; j++) {
+          if (j % 2 !== 0) continue;
+          const a = innerSpin + (j / innerTicks) * TAU;
+          const ar = a + (1 / innerTicks) * TAU * innerDash;
+          const isMajor = j % 6 === 0;
+          b.rings.moveTo(Math.cos(a) * innerRadius, Math.sin(a) * innerRadius);
           b.rings.arc(0, 0, innerRadius, a, ar);
           b.rings.stroke({
-            color: isMajor ? 0xffdd66 : 0xd2a232, // Gold/Bronze machinery accents
-            width: isMajor ? 2.2 : 1.2,
-            alpha: isMajor ? (0.7 + pulse * 0.25) : 0.4,
+            color: isMajor ? 0xffdd66 : 0xd2a232,
+            width: isMajor ? 1.6 : 0.8,
+            alpha: isMajor ? (0.65 + pulse * 0.25) : 0.35,
           });
         }
 
-        // C. Occasional high-intensity energy arcs/filaments between core and outer ring
-        if (Math.random() < 0.12) {
-          const arcAng = Math.random() * TAU;
-          const rStart = g.radius * 0.25;
-          const rEnd = g.radius * 0.98;
-          
-          const x1 = Math.cos(arcAng) * rStart;
-          const y1 = Math.sin(arcAng) * rStart;
-          const x2 = Math.cos(arcAng) * rEnd;
-          const y2 = Math.sin(arcAng) * rEnd;
-          
-          // Jagged lighting steps
-          const midDist1 = rStart + (rEnd - rStart) * 0.35;
-          const midDist2 = rStart + (rEnd - rStart) * 0.70;
-          
-          const mx1 = Math.cos(arcAng + (Math.random() - 0.5) * 0.18) * midDist1;
-          const my1 = Math.sin(arcAng + (Math.random() - 0.5) * 0.18) * midDist1;
-          const mx2 = Math.cos(arcAng + (Math.random() - 0.5) * 0.18) * midDist2;
-          const my2 = Math.sin(arcAng + (Math.random() - 0.5) * 0.18) * midDist2;
-          
-          b.rings.moveTo(x1, y1)
-            .lineTo(mx1, my1)
-            .lineTo(mx2, my2)
-            .lineTo(x2, y2)
-            .stroke({ color: 0xe0f0ff, width: 1.5, alpha: 0.82 });
+        // C. Deterministic sweeping energy filaments (replaces random arcs)
+        const filamentSweep = now * 0.0004;
+        const filamentCount = 4;
+        for (let f = 0; f < filamentCount; f++) {
+          const arcAng = (f / filamentCount) * TAU + filamentSweep;
+          const rStart = g.radius * 0.28;
+          const rEnd = g.radius * 0.95;
+          const filamentAlpha = 0.4 + 0.35 * Math.sin(now * 0.003 + f * 1.7);
+          if (filamentAlpha < 0.15) continue;
+
+          const steps = 5;
+          for (let s = 0; s < steps; s++) {
+            const t0 = s / steps;
+            const t1 = (s + 1) / steps;
+            const r0 = rStart + (rEnd - rStart) * t0;
+            const r1 = rStart + (rEnd - rStart) * t1;
+            const jitter = 0.06 * Math.sin(now * 0.008 + f * 3.1 + s * 0.9);
+            const a0 = arcAng + t0 * 0.3 + jitter;
+            const a1 = arcAng + t1 * 0.3 + jitter;
+            b.rings.moveTo(Math.cos(a0) * r0, Math.sin(a0) * r0);
+            b.rings.lineTo(Math.cos(a1) * r1, Math.sin(a1) * r1);
+            b.rings.stroke({ color: 0xe0f0ff, width: 1.2, alpha: filamentAlpha * (1.0 - t0 * 0.5) });
+          }
         }
       }
     }

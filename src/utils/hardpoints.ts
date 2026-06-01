@@ -29,6 +29,21 @@ export function moduleFitsShipRack(moduleRack: Rack, shipSlotRack: Rack): boolea
   return false;
 }
 
+export function mergeLegacyTurretSlotsIntoHigh<T>(
+  highSource: readonly T[] | undefined,
+  turretSource: readonly T[] | undefined,
+  highCount: number,
+  fallback: (idx: number) => T,
+): T[] {
+  const combined: T[] = [];
+  if (Array.isArray(highSource)) combined.push(...highSource);
+  if (Array.isArray(turretSource)) combined.push(...turretSource);
+  return Array.from(
+    { length: Math.max(0, highCount | 0) },
+    (_, idx) => combined[idx] !== undefined ? combined[idx]! : fallback(idx),
+  );
+}
+
 export function moduleRackLabel(moduleRack: Rack): string {
   return moduleRack === "turret" ? "high" : moduleRack;
 }

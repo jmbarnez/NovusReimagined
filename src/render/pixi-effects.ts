@@ -1,18 +1,15 @@
 /**
  * PixiJS Effects, Wrecks, and Pickups Renderer.
  * 
- * Migrates dynamic particles, debris, shockwaves, decals, and floating text to PixiJS:
+ * Migrates dynamic particles, debris, pickups, and decals to PixiJS:
  * - Wreck Debris: Dynamic polygons with 3D shadows and hit flashes.
  * - Salvage Pickups: Holographic resource icons, vertical energy pillars, ground glows, and floating name cards.
- * - Shockwaves: Expanding rings with alpha decay.
  * - Impact Decals: Fading high-composite poly impact markings.
- * - Floating Texts: Bouncing XP/damage text tags with translucent cards.
  */
 import { Container, Graphics, Sprite, Texture, Text, TextStyle } from "pixi.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import type { System, LockSlot, SalvagePickup } from "../types/world.js";
-import type { FloatText } from "../utils/entities.js";
 import { effectLayer } from "../pixi.js";
 import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
@@ -23,26 +20,49 @@ import { getModule } from "../data/modules.js";
 import { RARITY_CONFIG } from "../data/moduleRarity.js";
 import { PICKUP_LIFE_S } from "../wreck.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
+import { PixiGeometryBufferPool } from "./pixi-geometry-buffer-pool.js";
 
 const TAU = Math.PI * 2;
 
 // ─── Single-pass Graphics ────────────────────────────────────────────────────
 let _wreckGfx: Graphics | null = null;
 let _pickupGfx: Graphics | null = null;
-let _shockwaveGfx: Graphics | null = null;
 let _decalGfx: Graphics | null = null;
-let _floatGfx: Graphics | null = null;
 
 // Text labeling maps (keyed by item reference)
 const _pickupLabels = new Map<SalvagePickup, Text>();
-const _floatLabels = new Map<FloatText, Text>();
+
+// Object pool for Text objects to avoid GC pressure
+const _textPool: Text[] = [];
+const _textPoolSize = 64;
+
+function getPooledText(): Text {
+  if (_textPool.length > 0) {
+    const t = _textPool.pop()!;
+    t.visible = true;
+    return t;
+  }
+  const t = new Text({ text: "", style: _sharedPickupStyle });
+  t.anchor.set(0.5, 0);
+  effectLayer!.addChild(t);
+  return t;
+}
+
+function returnPooledText(t: Text): void {
+  t.visible = false;
+  t.text = "";
+  if (_textPool.length < _textPoolSize) {
+    _textPool.push(t);
+  } else {
+    effectLayer!.removeChild(t);
+    t.destroy();
+  }
+}
 
 // Reusable Sets/Maps to avoid per-frame GC allocation
 const _activePickupRefs = new Set<SalvagePickup>();
-const _activeFloatRefs = new Set<FloatText>();
 const _lockSlotById = new Map<string, LockSlot>();
-const _wreckFlatPts: number[] = [];
-const _decalFlatPts: number[] = [];
+const _polyBuffers = new PixiGeometryBufferPool();
 
 // Shared pickup label style base — Pixi clones it per Text instance
 const _sharedPickupStyle = new TextStyle({
@@ -149,21 +169,17 @@ export function initPixiEffects(parent: Container): void {
   _pickupGfx = new Graphics();
   parent.addChild(_pickupGfx);
 
-  _shockwaveGfx = new Graphics();
-  parent.addChild(_shockwaveGfx);
-
   _decalGfx = new Graphics();
   parent.addChild(_decalGfx);
-
-  _floatGfx = new Graphics();
-  parent.addChild(_floatGfx);
 }
 
 export function syncPixiEffects(now: number, alpha: number, dt: number, sys: System): void {
-  if (!_wreckGfx || !_pickupGfx || !_shockwaveGfx || !_decalGfx || !_floatGfx) return;
+  if (!_wreckGfx || !_pickupGfx || !_decalGfx) return;
+  _polyBuffers.resetFrame();
 
   // ── 1. Sync Wreck Pieces ───────────────────────────────────────────────────
-  _wreckGfx.clear();
+  const hasWreckPieces = getState().wreckPieces?.length > 0;
+  if (hasWreckPieces) _wreckGfx.clear();
   const primaryId = getState().player.targetLock?.id;
   const selectedId = getState().player._assignTargetId;
   _lockSlotById.clear();
@@ -190,22 +206,19 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       // Flat rotated/translated polygon points in world space
       const cos = Math.cos(p.angle);
       const sin = Math.sin(p.angle);
-      _wreckFlatPts.length = 0;
-      for (const pt of pts) {
-        _wreckFlatPts.push(pt[0] * cos - pt[1] * sin + p.x, pt[0] * sin + pt[1] * cos + p.y);
-      }
+      const wreckFlatPts = _polyBuffers.writeRotatedScaledWorldPoints(pts, p.x, p.y, 1, cos, sin);
 
       // Draw the main body
-      _wreckGfx.poly(_wreckFlatPts, true)
+      _wreckGfx.poly(wreckFlatPts, true)
         .fill({ color: fillCol, alpha: 0.78 * fade })
         .stroke({ color: strokeCol, width: borderWidth, alpha: borderAlpha });
 
       // Explosion/Hit overlays
       if (explosionPhase > 0) {
-        _wreckGfx.poly(_wreckFlatPts, true).fill({ color: 0xffb060, alpha: explosionPhase * 0.55 * fade });
+        _wreckGfx.poly(wreckFlatPts, true).fill({ color: 0xffb060, alpha: explosionPhase * 0.55 * fade });
       }
       if (p.hitFlash > 0) {
-        _wreckGfx.poly(_wreckFlatPts, true).fill({ color: 0x9fffe5, alpha: (p.hitFlash / 0.18) * 0.7 * fade });
+        _wreckGfx.poly(wreckFlatPts, true).fill({ color: 0x9fffe5, alpha: (p.hitFlash / 0.18) * 0.7 * fade });
       }
 
       // Standard HP Bar below wreck
@@ -230,7 +243,8 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
   }
 
   // ── 2. Sync Salvage Pickups ────────────────────────────────────────────────
-  _pickupGfx.clear();
+  const hasPickups = getState().salvagePickups?.length > 0;
+  if (hasPickups) _pickupGfx.clear();
   _activePickupRefs.clear();
 
   if (getState().salvagePickups) {
@@ -323,9 +337,7 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       // Text labeling inside effectLayer
       let textObj = _pickupLabels.get(s);
       if (!textObj) {
-        textObj = new Text({ text: label + qtyStr, style: _sharedPickupStyle });
-        textObj.anchor.set(0.5, 0);
-        effectLayer!.addChild(textObj);
+        textObj = getPooledText();
         _pickupLabels.set(s, textObj);
       }
       textObj.style.fill = colStr;
@@ -341,27 +353,14 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
   // Clean obsolete pickup text objects
   for (const [s, textObj] of _pickupLabels.entries()) {
     if (!_activePickupRefs.has(s)) {
-      effectLayer!.removeChild(textObj);
-      textObj.destroy();
+      returnPooledText(textObj);
       _pickupLabels.delete(s);
     }
   }
 
-  // ── 3. Sync Shockwaves ─────────────────────────────────────────────────────
-  _shockwaveGfx.clear();
-  if (getState().shockwaves) {
-    for (const s of getState().shockwaves) {
-      if (!isVisible(s.x, s.y, s.maxRadius)) continue;
-      const a = s.life / Math.max(0.001, s.maxLife);
-      const colNum = hexStringToNumber(s.color);
-
-      _shockwaveGfx.circle(s.x, s.y, s.radius || 0)
-        .stroke({ color: colNum, width: s.width * a, alpha: a * 0.55 });
-    }
-  }
-
-  // ── 4. Sync Impact Decals ──────────────────────────────────────────────────
-  _decalGfx.clear();
+  // ── 3. Sync Impact Decals ──────────────────────────────────────────────────
+  const hasDecals = getState().impactDecals?.length > 0;
+  if (hasDecals) _decalGfx.clear();
   if (getState().impactDecals) {
     for (const d of getState().impactDecals) {
       if (!isVisible(d.x, d.y, 30)) continue;
@@ -369,63 +368,10 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       const colNum = hexStringToNumber(d.color);
 
       // Decal polygon points (drawn flat in world space coordinates)
-      _decalFlatPts.length = 0;
-      for (const pt of d.poly) {
-        _decalFlatPts.push(pt[0] + d.x, pt[1] + d.y);
-      }
+      const decalFlatPts = _polyBuffers.writeTranslatedWorldPoints(d.poly, d.x, d.y);
 
-      _decalGfx.poly(_decalFlatPts, true)
+      _decalGfx.poly(decalFlatPts, true)
         .fill({ color: colNum, alpha: a });
-    }
-  }
-
-  // ── 5. Sync Floating Text Cards ────────────────────────────────────────────
-  _floatGfx.clear();
-  _activeFloatRefs.clear();
-
-  if (getState().floatTexts) {
-    for (const f of getState().floatTexts) {
-      if (!isVisible(f.x, f.y, 20)) continue;
-      _activeFloatRefs.add(f);
-
-      const alphaVal = f.life ?? 1;
-
-      let textObj = _floatLabels.get(f);
-      if (!textObj) {
-        textObj = new Text({ text: f.text, style: _sharedPickupStyle });
-        textObj.anchor.set(0.5, 0.5);
-        effectLayer!.addChild(textObj);
-        _floatLabels.set(f, textObj);
-      }
-      textObj.style.fill = f.bgColor ? "#000000" : (f.color ?? "#ffffff");
-      if (!f.bgColor) textObj.style.stroke = { color: "#000000", width: 3.5 };
-      textObj.text = f.text;
-
-      textObj.x = f.x;
-      textObj.y = f.y;
-      textObj.alpha = alphaVal;
-
-      // Draw background card roundRect on _floatGfx if card format is active
-      if (f.bgColor) {
-        const padX = 6;
-        const padY = 3.5;
-        const cardW = textObj.width + padX * 2;
-        const cardH = textObj.height + padY * 2;
-        const bgColNum = hexStringToNumber(f.bgColor);
-
-        _floatGfx.roundRect(f.x - cardW / 2, f.y - cardH / 2, cardW, cardH, 3.5)
-          .fill({ color: bgColNum, alpha: alphaVal * 0.9 })
-          .stroke({ color: 0x000000, width: 1.0, alpha: alphaVal * 0.7 });
-      }
-    }
-  }
-
-  // Clean obsolete float texts
-  for (const [f, textObj] of _floatLabels.entries()) {
-    if (!_activeFloatRefs.has(f)) {
-      effectLayer!.removeChild(textObj);
-      textObj.destroy();
-      _floatLabels.delete(f);
     }
   }
 }
@@ -433,9 +379,7 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
 export function destroyPixiEffects(): void {
   if (_wreckGfx) { _wreckGfx.destroy(); _wreckGfx = null; }
   if (_pickupGfx) { _pickupGfx.destroy(); _pickupGfx = null; }
-  if (_shockwaveGfx) { _shockwaveGfx.destroy(); _shockwaveGfx = null; }
   if (_decalGfx) { _decalGfx.destroy(); _decalGfx = null; }
-  if (_floatGfx) { _floatGfx.destroy(); _floatGfx = null; }
 
   // Clean text labels
   for (const textObj of _pickupLabels.values()) {
@@ -443,10 +387,4 @@ export function destroyPixiEffects(): void {
     textObj.destroy();
   }
   _pickupLabels.clear();
-
-  for (const textObj of _floatLabels.values()) {
-    effectLayer!.removeChild(textObj);
-    textObj.destroy();
-  }
-  _floatLabels.clear();
 }

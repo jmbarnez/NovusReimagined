@@ -1,5 +1,5 @@
 import { getState } from "../../state-access.js";
-import { undockStation } from "../../dock.js";
+import { closeStationUi } from "../../dock.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../../audio/procedural.js";
 import { queueFrameAction } from "../../sim/input.js";
 import { stationState } from "./shared.js";
@@ -17,7 +17,8 @@ function getRackAndIndex(btn: HTMLElement): { rack: "turret" | "high" | "med" | 
 export const stationActionHandlers: Record<string, StationActionHandler> = {
   undock: () => {
     sfxBlip();
-    undockStation();
+    queueFrameAction({ type: "undock" });
+    closeStationUi();
   },
   repair: () => {
     queueFrameAction({ type: "repairShip" });

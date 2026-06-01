@@ -15,6 +15,7 @@ import { MODULES } from "./data/modules.js";
 import { isSlotOnline } from "./utils/slot-power.js";
 import { getInstance } from "./utils/items.js";
 import type { HiddenSite, SignatureClassification, SignatureContact, SignatureStrengthLabel } from "./types/world.js";
+import { isHeadlessServer } from "./physics/net-input.js";
 
 const SCAN_PULSE_MS = 3500;
 let surveyBlockedLogged = new Set<string>();
@@ -217,7 +218,10 @@ export function getMapScannerSignatureMult(p: Player): number {
 }
 
 export function isMapScannerEmitting(p: Player): boolean {
-  return !!(Client.showMap && Client.showSystemMap && p.mapScannerActive);
+  if (!p.mapScannerActive) return false;
+  if (isHeadlessServer()) return true;
+  if (p !== getState().player) return true;
+  return !!(Client.showMap && Client.showSystemMap);
 }
 
 export function getEffectiveSignatureRadius(p: Player): number {
@@ -240,7 +244,7 @@ export function setMapScannerStrengthFromStep(step: number, p: Player): void {
 }
 
 export function updateMapScanner(dt: number, p: Player): void {
-  if (p === getState().player && (!Client.showMap || !Client.showSystemMap)) {
+  if (!isHeadlessServer() && p === getState().player && (!Client.showMap || !Client.showSystemMap)) {
     if (p.mapScannerActive) PlayerAccess.setMapScannerActive(false, p);
     return;
   }
@@ -259,8 +263,11 @@ export function updateMapScanner(dt: number, p: Player): void {
   PlayerAccess.setEnergy(p.energy - drain, p);
 }
 
-export function startScanPulse(p: Player): { started: boolean; reason?: string } {
-  if (p === getState().player && (!Client.showMap || !Client.showSystemMap)) {
+export function startScanPulse(
+  p: Player,
+  opts?: { angleDeg?: number; allowWithoutMapOpen?: boolean; silent?: boolean },
+): { started: boolean; reason?: string } {
+  if (!opts?.allowWithoutMapOpen && p === getState().player && !isHeadlessServer() && (!Client.showMap || !Client.showSystemMap)) {
     return { started: false, reason: "Open system map (M) to aim and scan." };
   }
   if (!p.mapScannerActive) {
@@ -280,10 +287,10 @@ export function startScanPulse(p: Player): { started: boolean; reason?: string }
   const pulseRange = getScanRangePx(p);
   const energyCost = getScanEnergyCost(coneDeg);
   if (p.energy < energyCost) {
-    if (p === getState().player) sfxError();
+    if (p === getState().player && !opts?.silent) sfxError();
     return { started: false, reason: "Insufficient capacitor for scan." };
   }
-  const scanAngle = p.scannerAngle;
+  const scanAngle = normalizeAngleDeg(opts?.angleDeg ?? p.scannerAngle);
   incrementPulseSamplesAtPulseStart(pulseRange, scanAngle, coneDeg, p);
   tryDiscoverLocalRegionsFromScan(pulseRange, scanAngle, coneDeg, p);
   PlayerAccess.setEnergy(Math.max(0, p.energy - energyCost), p);
@@ -294,7 +301,7 @@ export function startScanPulse(p: Player): { started: boolean; reason?: string }
     angle: scanAngle,
     coneDeg,
   }, p);
-  if (p === getState().player) {
+  if (p === getState().player && !opts?.silent) {
     surveyBlockedLogged = new Set();
     sfxConfirm();
     logEvent(`Active scan launched.`, "system");

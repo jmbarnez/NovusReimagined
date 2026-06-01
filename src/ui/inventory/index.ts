@@ -228,15 +228,22 @@ on("inventory:changed", () => {
   rerenderInventory();
 });
 
+function syncContentHashAfterMount() {
+  _lastContentHash = computeContentHash();
+  _lastSelectedId = INV_STATE.selectedItemId;
+}
+
 export function mountInventoryInPane(paneId: string): void {
   const pane = document.getElementById(paneId);
   if (!pane) return;
   pane.innerHTML = renderInventoryHTML();
   attachInventoryListenersToPane(pane, getEventHandlers());
+  syncContentHashAfterMount();
 }
 
 export function attachInventoryListeners() {
   attachPaneListeners(getEventHandlers());
+  syncContentHashAfterMount();
 }
 
 export function resetInventoryUI() {

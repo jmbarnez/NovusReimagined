@@ -262,16 +262,24 @@ function spawnAsteroidCluster(
 
 function buildTutorialAsteroids(sys: System, danger: number) {
   // Ensure tutorial zone asteroids only contain iron ore for the mining tutorial
-  spawnAsteroidCluster(
-    sys,
-    TUTORIAL_BELT_CENTER.x,
-    TUTORIAL_BELT_CENTER.y,
-    "belt-a",
-    mkRng(sys.id + "-belt-a"),
-    danger,
-    { min: 4, max: 6 },
-    [1, 0, 0],
-  );
+  const f = mkRng(sys.id + "-tut-belts");
+  const ironOnly = [1, 0, 0];
+  for (let c = 0; c < 3; c++) {
+    const ang = (c / 3) * TAU + rf(f, -0.3, 0.3);
+    const dist = rf(f, 200, 350);
+    const cx = Math.round(TUTORIAL_BELT_CENTER.x + Math.cos(ang) * dist);
+    const cy = Math.round(TUTORIAL_BELT_CENTER.y + Math.sin(ang) * dist);
+    spawnAsteroidCluster(
+      sys,
+      cx,
+      cy,
+      `belt-${c}`,
+      mkRng(sys.id + `-belt-${c}`),
+      danger,
+      { min: 3, max: 4 },
+      ironOnly,
+    );
+  }
 }
 
 export function populateSystem(sys: System) {

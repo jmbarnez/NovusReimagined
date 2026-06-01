@@ -4,6 +4,7 @@ import { validateFitting } from "./player-fitting.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { ModuleRarity } from "../data/moduleRarity.js";
 import { getInstance } from "../utils/items.js";
+import { playerHardpointRack } from "../utils/hardpoints.js";
 import { C } from "../config/index.js";
 
 /**
@@ -49,15 +50,17 @@ function setupPlayerSpawn() {
  */
 function validatePlayerFitting() {
   validateFitting();
-  const hasWeapon = getState().player.fitting.turret.some((uid: string | null) => {
+  const hardpointRack = playerHardpointRack(getState().player);
+  const hardpointSlots = getState().player.fitting[hardpointRack] ?? [];
+  const hasWeapon = hardpointSlots.some((uid: string | null) => {
     if (!uid) return false;
-    const inst = getInstance(uid);
+    const inst = getInstance(uid, getState().player);
     if (!inst) return false;
     const m = MODULES[inst.baseId];
     return m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m);
   });
   if (!hasWeapon) {
-    const firstEmpty = getState().player.fitting.turret.findIndex((id: string | null) => id === null);
+    const firstEmpty = hardpointSlots.findIndex((id: string | null) => id === null);
     if (firstEmpty >= 0) {
       const fallbackUid = `${C.SPAWNING.FALLBACK_WEAPON.uidPrefix}-${Date.now()}`;
       PlayerAccess.addModuleCargo({
@@ -65,7 +68,7 @@ function validatePlayerFitting() {
         rarity: ModuleRarity.Stock, itemLevel: C.SPAWNING.FALLBACK_WEAPON.itemLevel,
         durability: C.SPAWNING.FALLBACK_WEAPON.durability, maxDurability: C.SPAWNING.FALLBACK_WEAPON.maxDurability, affixes: [],
       });
-      PlayerAccess.setFittingSlot("turret", firstEmpty, fallbackUid);
+      PlayerAccess.setFittingSlot(hardpointRack, firstEmpty, fallbackUid);
       validateFitting();
     }
   }

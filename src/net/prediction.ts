@@ -16,6 +16,7 @@ import type { InputFrame } from "../sim/input.js";
 import type { WorldSnapshot } from "../sim/snapshot.js";
 import { TICK_DT } from "../constants.js";
 import { updateCombat } from "../physics/combat-physics.js";
+import { startScanPulse } from "../scanning.js";
 
 // PredictionManager class: Maintains unacknowledged local input frames
 // and replays them on top of incoming server snapshots to reconcile state.
@@ -180,6 +181,25 @@ export class PredictionManager {
           break;
         case "clearSensorLocks":
           clearSensorLocks(p, { suppressFrameAction: true });
+          break;
+        case "setTractorTightness":
+          PlayerAccess.setTractorTightness(action.payload.value, p);
+          break;
+        case "setMapScannerPower":
+          PlayerAccess.setMapScannerActive(action.payload.active, p);
+          break;
+        case "setMapScannerCone":
+          PlayerAccess.setScannerConeDeg(action.payload.coneDeg, p);
+          break;
+        case "setMapScannerStrength":
+          PlayerAccess.setMapScannerStrength(action.payload.strength, p);
+          break;
+        case "startScanPulse":
+          startScanPulse(p, {
+            angleDeg: action.payload.angleDeg,
+            allowWithoutMapOpen: true,
+            silent: true,
+          });
           break;
         case "setHighTarget":
           PlayerAccess.setHighTarget(action.payload.idx, action.payload.targetId, p);

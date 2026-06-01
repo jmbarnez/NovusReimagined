@@ -21,6 +21,7 @@ import { C } from "./config/index.js";
 import type { Enemy, Asteroid, WreckPiece } from "./types/world.js";
 import type { ModuleInstance } from "./types/moduleInstance.js";
 import type { WeaponProfile } from "./data/weaponProfiles.js";
+import { playerHardpointRack } from "./utils/hardpoints.js";
 
 function aimDeviationCone(baseScatter: number, distScatter: number, capRad: number, dist: number, accuracy: number): number {
   const totalScatter = (baseScatter + distScatter) / Math.max(0.1, accuracy);
@@ -87,7 +88,7 @@ function getTurretWorldPos(turretIdx: number): { x: number; y: number } {
 export function fireSelectedTurret(isAutoFire = false) {
   if (Client.stationOpen || Client.showMap || Client.bridgeOpen || Client.settingsOpen) return;
   const slot = getState().player.fireControlSlot ?? 0;
-  const uid = getState().player.fitting?.turret?.[slot];
+  const uid = getState().player.fitting?.[playerHardpointRack(getState().player)]?.[slot];
   const inst = uid ? getState().player.moduleCargo.find(inst => inst.uid === uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m || MODULE_FLAGS.isMiningTurret(m) || !m.weaponDelivery) return;
@@ -106,7 +107,7 @@ export function updateTurretCooldowns(dt: number) {
     if ((getState().player.turretCds[i] || 0) > 0) PlayerAccess.setTurretCd(i, nextCd);
   }
 
-  const turretSlots = getState().player.fitting?.turret || [];
+  const turretSlots = getState().player.fitting?.[playerHardpointRack(getState().player)] || [];
   for (let i = 0; i < turretSlots.length; i++) {
     const uid = turretSlots[i];
     if (!uid) continue;
@@ -138,7 +139,7 @@ function validatePlayerShootRequirements(
   isAutoFire: boolean
 ): { uid: string; inst: ModuleInstance; turretMod: ModuleDef; wProf: WeaponProfile; capNeed: number; ammoKey: string; ammoCost: number } | null {
   const p = getState().player;
-  const uid = p.fitting?.turret?.[slotIdx];
+  const uid = p.fitting?.[playerHardpointRack(p)]?.[slotIdx];
   if (!uid) return null;
   const inst = p.moduleCargo.find(inst => inst.uid === uid);
   if (!inst) return null;
@@ -338,17 +339,6 @@ export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner
   if (e.hp <= 0 && (e.structure ?? 0) <= 0) killEnemy(e);
 }
 
-export function damageAsteroid(a: Asteroid, dmg: number, px: number, py: number) {
-  if (dmg <= 0) return;
-  a.hp -= dmg;
-  floatText(a.x, a.y - a.radius - 8, `-${Math.round(dmg)}`, "#88bbff");
-  spawnParticles(px || a.x, py || a.y, "#4488ff", 1, 50);
-  if (a.hp <= 0) {
-    a.depleted = true;
-    a.respawnTimer = 60 + Math.random() * 60;
-    destroyAsteroid(a, false);
-  }
-}
 
 export function killEnemy(e: Enemy) {
   removeSensorLock(e.id);
@@ -387,3 +377,4 @@ export function killEnemy(e: Enemy) {
 
 export { normalizeProfile, applyResists } from "./combat/resists.js";
 export { computeHitQuality } from "./combat/hit-quality.js";
+export { damageAsteroid } from "./combat/damage-asteroid.js";

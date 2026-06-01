@@ -29,7 +29,7 @@ function clampWindow(win: HTMLElement) {
   win.style.right = "auto";
 }
 
-function bringToFront(win: HTMLElement) {
+export function bringToFront(win: HTMLElement) {
   Client.bridgeWindowZ += 1;
   win.style.zIndex = String(Client.bridgeWindowZ);
 }
@@ -41,6 +41,7 @@ function makeWindowHTML(id: string, title: string): string {
     skills: "eve-window-skills",
   };
   const cls = classes[id] || "";
+  const resetBtn = id === "map" ? `<button type="button" class="eve-win-btn eve-win-reset" title="Reset View">⊕</button>` : "";
   return `
     <div class="eve-window ${cls}" id="hud-win-${id}" style="display:none;position:fixed;">
       <div class="eve-win-head">
@@ -48,6 +49,7 @@ function makeWindowHTML(id: string, title: string): string {
         <span class="eve-win-sub"></span>
         <span style="flex:1"></span>
         <button type="button" class="eve-win-btn eve-win-expand" title="Expand">▢</button>
+        ${resetBtn}
         <button type="button" class="eve-win-btn eve-win-close" title="Close">✕</button>
       </div>
       <div class="eve-win-body" id="hud-win-body-${id}"></div>
@@ -70,6 +72,16 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
     const head = win.querySelector(".eve-win-head") as HTMLElement;
     const closeBtn = win.querySelector(".eve-win-close") as HTMLElement;
     const expandBtn = win.querySelector(".eve-win-expand") as HTMLElement;
+    const resetBtn = win.querySelector(".eve-win-reset") as HTMLElement;
+
+    if (resetBtn) {
+      resetBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        Client.mapZoom = 1.0;
+        Client.mapPanX = 0;
+        Client.mapPanY = 0;
+      });
+    }
 
     head.addEventListener("mousedown", (ev) => {
       if ((ev as MouseEvent).button !== 0) return;
@@ -191,15 +203,16 @@ export function isOpen(id: string): boolean {
 }
 
 export function closeTopmostWindow(): boolean {
+  let topmostId: string | null = null;
   let topmost: HTMLElement | null = null;
   let topZ = -1;
-  for (const win of _windows.values()) {
+  for (const [id, win] of _windows.entries()) {
     if (win.style.display === "none") continue;
     const z = parseInt(win.style.zIndex) || 0;
-    if (z > topZ) { topZ = z; topmost = win; }
+    if (z > topZ) { topZ = z; topmost = win; topmostId = id; }
   }
-  if (topmost) {
-    topmost.style.display = "none";
+  if (topmost && topmostId) {
+    closeHudWindow(topmostId);
     return true;
   }
   return false;

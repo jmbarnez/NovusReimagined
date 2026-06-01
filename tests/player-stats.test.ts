@@ -41,6 +41,16 @@ describe("player-stats computeStats", () => {
     expect(withLink).toBeGreaterThan(baseline);
   });
 
+  it("resolves the primary weapon from the player's hardpoint rack", () => {
+    G.P.fitting.high[0] = "start-tu-civ-cannon";
+    G.P.turretPower[0] = true;
+    G.P.moduleHp.high[0] = MODULE_HP_MAX;
+    invalidate(G.P);
+
+    const st = computeStats(G.P);
+    expect(st.weaponTurret?.id).toBe("tu-civilian-cannon");
+  });
+
   it("afterburner toggle changes thrustScale", () => {
     const inst = makeTestInstance("test-me-ab1", "me-ab1");
     G.P.moduleCargo.push(inst);
@@ -135,6 +145,59 @@ describe("player-data loadPlayer migrations", () => {
     const p = loadPlayer();
     expect(p.moduleHp).toBeDefined();
     expect(Array.isArray(p.moduleHp.turret)).toBe(true);
+  });
+
+  it("normalizes hardpoint arrays from the active hardpoint rack length", () => {
+    const raw = JSON.stringify({
+      shipId: "scout",
+      fitting: { turret: [], high: [null, null], med: [null], low: [null] },
+      turretTargets: [],
+      turretCds: [],
+      turretPower: [],
+      turretPowerCd: [],
+    });
+    localStorage.setItem("ss2-sim-v1", raw);
+    const p = loadPlayer();
+    expect(p.turretTargets).toHaveLength(2);
+    expect(p.turretCds).toHaveLength(2);
+    expect(p.turretPower).toHaveLength(2);
+    expect(p.turretPowerCd).toHaveLength(2);
+  });
+
+  it("migrates legacy turret fits into unified high hardpoints", () => {
+    const raw = JSON.stringify({
+      shipId: "fighter",
+      fitting: {
+        turret: ["legacy-tu-1", "legacy-tu-2"],
+        high: ["legacy-hi-1", "legacy-hi-2"],
+        med: [null, null],
+        low: [null, null, null],
+      },
+      moduleHp: {
+        turret: [35, 45],
+        high: [55, 65],
+        med: [null, null],
+        low: [null, null, null],
+      },
+      slotActive: {
+        turret: [true, false],
+        high: [false, true],
+        med: [true, true],
+        low: [true, true, true],
+      },
+      highTargets: ["wreck-1"],
+      turretTargets: [],
+      turretCds: [],
+      turretPower: [],
+      turretPowerCd: [],
+    });
+    localStorage.setItem("ss2-sim-v1", raw);
+    const p = loadPlayer();
+    expect(p.fitting.turret).toEqual([]);
+    expect(p.fitting.high).toEqual(["legacy-hi-1", "legacy-hi-2", "legacy-tu-1", "legacy-tu-2"]);
+    expect(p.moduleHp.high).toEqual([55, 65, 35, 45]);
+    expect(p.slotActive.high).toEqual([false, true, true, false]);
+    expect(p.highTargets).toEqual(["wreck-1", null, null, null]);
   });
 
   it("falls back to makePlayer on corrupted JSON", () => {

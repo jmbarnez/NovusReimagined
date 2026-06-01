@@ -15,7 +15,7 @@ import {
 import { SHIPS } from "../../data/ships.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
 import { ORE } from "../../data/resources.js";
-import { damagePlayer } from "../../combat/damage-display.js";
+import { damagePlayer, showDamageNumber } from "../../combat/damage-display.js";
 import { getPlayerTurretOrigin } from "../../combat/turret-origin.js";
 import { harvestAsteroid, destroyAsteroid } from "../../utils/mining.js";
 import { sfxBeamImpact, sfxIndustrialBeam } from "../../audio/procedural.js";
@@ -269,6 +269,9 @@ export function updateMining(dt: number, p: Player) {
     }
 
     const result = harvestAsteroid(ast, st.miningMult);
+    if (result.dmg > 0) {
+      showDamageNumber(surface.x, surface.y, Math.round(result.dmg), "mining");
+    }
     if (p === getState().player) sfxBeamImpact("mining", surface.x, surface.y);
     PlayerAccess.setMineCd(0.45, p);
     if (result.oreKey) {

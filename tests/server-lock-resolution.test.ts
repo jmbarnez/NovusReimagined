@@ -21,6 +21,11 @@ describe("GameServer sensor lock resolution", () => {
   beforeEach(() => {
     server = new GameServer(() => {});
     server.start();
+    const internals = server as unknown as { tickInterval: ReturnType<typeof setInterval> | null };
+    if (internals.tickInterval) {
+      clearInterval(internals.tickInterval);
+      internals.tickInterval = null;
+    }
   });
 
   afterEach(() => {

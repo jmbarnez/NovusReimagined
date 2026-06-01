@@ -10,6 +10,7 @@ import { invalidate } from "./player/player-stats.js";
 import { sfxLockAcquired, sfxLockLost, sfxTurretAssign } from "./audio/procedural.js";
 import { WEAPON_PROFILES } from "./data/weaponProfiles.js";
 import { C } from "./config/index.js";
+import { playerHardpointRack } from "./utils/hardpoints.js";
 import type { Enemy, Asteroid, WreckPiece, LockSlot } from "./types/world.js";
 import type { ComputedStats } from "./player/player-stats.js";
 import type { ModuleInstance } from "./types/moduleInstance.js";
@@ -21,18 +22,22 @@ export function isWreckPieceTarget(id: string): boolean {
 
 export function getWeaponTurretAtSlot(idx: number, p: Player | null = getState().player): ModuleDef | null {
   if (!p) return null;
-  const uid = p.fitting?.turret?.[idx];
+  const uid = p.fitting?.[playerHardpointRack(p)]?.[idx];
   if (!uid) return null;
   const inst = p.moduleCargo.find(inst => inst.uid === uid);
   const m = inst ? MODULES[inst.baseId] : null;
   return m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m) ? m : null;
 }
 
-export function resolveWeaponTurret(fitting?: { turret?: (string | null)[] }, p: Player | null = getState().player): ModuleDef | null {
+export function resolveWeaponTurret(
+  fitting?: Partial<Record<"turret" | "high" | "med" | "low", (string | null)[]>>,
+  p: Player | null = getState().player,
+): ModuleDef | null {
   if (!p) return null;
   const f = fitting || p.fitting;
-  if (!f?.turret) return null;
-  for (const uid of f.turret) {
+  const hardpointSlots = f?.[playerHardpointRack(p)] ?? [];
+  if (!hardpointSlots.length) return null;
+  for (const uid of hardpointSlots) {
     if (!uid) continue;
     const inst = p.moduleCargo.find(inst => inst.uid === uid);
     const m = inst ? MODULES[inst.baseId] : null;
@@ -256,7 +261,7 @@ export function removeSensorLock(id: string, p: Player = getState().player, _opt
 // with no target assigned, auto-assign it and play a soft chime.
 function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean, p: Player = getState().player): void {
   if (!isAst && !isPiece) return;
-  const turretSlots = p.fitting?.turret || [];
+  const turretSlots = p.fitting?.[playerHardpointRack(p)] || [];
   const candidates: number[] = [];
   for (let i = 0; i < turretSlots.length; i++) {
     const uid = turretSlots[i];
@@ -284,7 +289,7 @@ function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean
 }
 
 function autoFillUnboundWeaponTurrets(p: Player = getState().player): void {
-  const turretSlots = p.fitting?.turret;
+  const turretSlots = p.fitting?.[playerHardpointRack(p)];
   if (!turretSlots) return;
   let firstEnemyLock: string | null = null;
   for (const slot of p.lockQueue) {
@@ -385,7 +390,7 @@ export function updateSensorLocks(dt: number, st: ComputedStats, p: Player = get
         if (!isAst && !isPiece) {
           // Auto-assign selected turret for enemies
           const turretSlot = p.fireControlSlot ?? 0;
-          const slotUid = p.fitting?.turret?.[turretSlot];
+          const slotUid = p.fitting?.[playerHardpointRack(p)]?.[turretSlot];
           const slotInst = slotUid ? p.moduleCargo.find(inst => inst.uid === slotUid) : null;
           const m = slotInst ? MODULES[slotInst.baseId] : null;
           if (m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m) && !MODULE_FLAGS.isSalvager(m)) {
@@ -414,6 +419,22 @@ export function requestSensorLock(id: string, p: Player = getState().player, opt
     selectLockTarget(id, p, opts);
     return;
   }
+
+  // Guard against instant drop: ignore requests beyond sensor drop range so the
+  // lock card doesn't flash and disappear.
+  const target = targetByLockId(id, p);
+  if (target) {
+    const ship = SHIPS[p.shipId];
+    const sensorRange = getSensorContactRangePx(ship);
+    const dropRange = sensorRange * C.TARGETING.SENSOR.dropRangeMultiplier;
+    if (dst(p.x, p.y, target.x, target.y) > dropRange) {
+      if (!opts?.suppressFrameAction && typeof window !== "undefined" && p === getState().player) {
+        floatText(p.x, p.y - 38, "LOCK FAIL — OUT OF RANGE", "#cc8844");
+      }
+      return;
+    }
+  }
+
   while (p.lockQueue.length >= maxTargetLocks(p)) {
     if (p === getState().player) PlayerAccess.popLockQueue();
     else p.lockQueue.pop();
@@ -522,7 +543,7 @@ export function assignModuleSlotToTarget(
   const target = targetByLockId(targetId, p);
   if (!target) return false;
 
-  const uid = p.fitting?.turret?.[slotIdx];
+  const uid = p.fitting?.[playerHardpointRack(p)]?.[slotIdx];
   if (!uid) return false;
   const inst = p.moduleCargo.find(inst => inst.uid === uid);
   const m = inst ? MODULES[inst.baseId] : null;

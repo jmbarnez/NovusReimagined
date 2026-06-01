@@ -13,7 +13,7 @@
   /* surfaces */
   --hud-bg-deep: rgba(2,5,10,0.88);
   --hud-bg-window: rgba(10,14,20,0.82);
-  --hud-bg-panel: rgba(10,15,25,0.95);
+  --hud-bg-panel: rgba(10,15,25,1.0);
   --hud-bg-elevated: rgba(30,42,58,0.75);
   /* borders */
   --hud-border: rgba(55,85,110,0.65);

@@ -7,7 +7,7 @@ import "../styles/hud-logs.css";
 import "../styles/map-overlay.css";
 import "../styles/bridge.css";
 import { getState } from "../../state-access.js";
-import { requestSensorLock, selectLockTarget } from "../../targeting.js";
+import { queueFrameAction } from "../../sim/input.js";
 import { sfxConfirm } from "../../audio/procedural.js";
 import { initMissionsPanel } from "../hud-missions.js";
 import { t } from "../../utils/i18n.js";
@@ -204,9 +204,9 @@ export function initHudOverlay() {
     if (!id) return;
     const existing = getState().player.lockQueue?.find((s) => s.id === id);
     if (existing) {
-      selectLockTarget(id, getState().player);
+      queueFrameAction({ type: "selectLockTarget", payload: { id } });
     } else {
-      requestSensorLock(id, getState().player);
+      queueFrameAction({ type: "requestSensorLock", payload: { id } });
     }
   });
   hudState.ovPanel!.addEventListener("click", (ev) => {

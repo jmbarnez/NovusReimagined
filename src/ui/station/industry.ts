@@ -1,11 +1,9 @@
 import "../styles/station-industry.css";
-import { Client } from "../../state.js";
-import { PlayerAccess, getState } from "../../state-access.js";
-import { MACHINES, RECIPES, poolItemLabel, type IndustryPool, createCraftJob, tickCraftJobs, CraftJob } from "../../data/industryRecipes.js";
+import { getState } from "../../state-access.js";
+import { MACHINES, RECIPES, poolItemLabel, type IndustryPool, createCraftJob } from "../../data/industryRecipes.js";
 import { escHtml } from "../../utils/format.js";
 import { stationState, iconSvg } from "./shared.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../../audio/procedural.js";
-import { logEvent } from "../hud-overlay.js";
 import { queueFrameAction } from "../../sim/input.js";
 
 let lastContainer: HTMLElement | null = null;
@@ -45,39 +43,7 @@ function formatTime(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
-export function tickCraftQueue() {
-  if (getState().player.craftQueue.length === 0) return;
-
-  const completed: CraftJob[] = [];
-  PlayerAccess.setCraftQueue(tickCraftJobs(getState().player.craftQueue, (job) => {
-    completed.push(job);
-  }));
-
-  for (const job of completed) {
-    const recipe = RECIPES.find(r => r.id === job.recipeId);
-    if (!recipe) continue;
-    const skillMult = recipe.outputSkill ? 1 + (getState().player.skills[recipe.outputSkill] || 0) * 0.05 : 1;
-    for (const out of recipe.outputs) {
-      const totalQty = Math.floor(out.qty * job.qty * skillMult);
-      const cur = playerPool(out.pool)[out.key] || 0;
-      const setter = out.pool === "ore" ? PlayerAccess.setOre
-        : out.pool === "refined" ? PlayerAccess.setRefined
-        : out.pool === "loot" ? PlayerAccess.setLoot
-        : PlayerAccess.setComponents;
-      setter(out.key, cur + totalQty);
-    }
-    const label = recipe.label;
-    logEvent(`Crafting complete: ${label} ×${job.qty}`, "loot");
-  }
-
-  if (completed.length > 0) {
-    const div = document.getElementById("panel-industry");
-    if (div && Client.stationOpen) renderIndustry();
-  }
-}
-
 export function updateIndustryProgress() {
-  tickCraftQueue();
   if (lastContainer) renderIndustry(lastContainer);
 }
 

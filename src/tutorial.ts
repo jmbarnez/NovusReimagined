@@ -318,11 +318,21 @@ export function completeTutorial(fromSkip: boolean) {
 
 export function skipTutorial() {
   const primeIdx = getNovusPrimeIdx();
+  // Mark tutorial as completed/skipped immediately so the state is persisted
+  // even if the player exits before the next server tick processes the warp.
+  finalizeTutorialMission(true);
+  PlayerAccess.setTutorialComplete();
+  PlayerAccess.setTutorialSkipped();
+  if (primeIdx >= 0) PlayerAccess.setHomeSysIdx(primeIdx);
+  setTutorialGatePulse(0);
+  resetTutorialTrackState(getState().player);
+  emit("tutorial:skip", { sysIdx: primeIdx });
+  savePlayer();
+
   if (primeIdx < 0) {
-    completeTutorial(true);
     return;
   }
-  
+
   queueFrameAction({ type: "skipTutorial", payload: { primeIdx } });
   logEvent("Tutorial skip requested. Awaiting server confirmation.", "system");
   floatText(getState().player.x, getState().player.y - 55, "Skip request uplinked", "#66aaff");

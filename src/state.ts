@@ -299,6 +299,7 @@ export interface ClientState {
   mapDragLastSx: number;
   mapDragLastSy: number;
   systemMapTransform?: unknown;
+  mapScannerAngleDeg: number;
 }
 
 export const _G: GameState = {
@@ -347,7 +348,7 @@ export const Client: ClientState = {
   activeStation: null,
   bridgeOpen: false,
   overviewOpen: false,
-  bridgeWindowZ: 12,
+  bridgeWindowZ: 220,
 
   settingsOpen: false,
   skillsOpen: false,
@@ -364,6 +365,7 @@ export const Client: ClientState = {
   mapDragLastSx: 0,
   mapDragLastSy: 0,
   systemMapTransform: null,
+  mapScannerAngleDeg: 0,
 };
 
 export function isPlayerReady(): boolean {

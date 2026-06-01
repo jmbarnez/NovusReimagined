@@ -397,38 +397,6 @@ export function onSlotClick(e: MouseEvent, rack: string, idx: number) {
   const m = inst ? MODULES[inst.baseId] : null;
   const node = hudState.slotNodes.get(`${rack}|${idx}`) as SlotNode | undefined;
 
-  // Shift+click on turret assigns target
-  if (rack === playerHardpointRack(getState().player) && e.shiftKey) {
-    if (!m) return;
-    if (getState().player._assignTargetId != null) {
-      const assignTargetId = getState().player._assignTargetId;
-      if (!assignTargetId) return;
-      queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: idx, targetId: assignTargetId } });
-      const target = targetByLockId(assignTargetId);
-      floatText(getState().player.x, getState().player.y - 30, `TURRET → ${target?.name || t("ship.target")}`, "#44ffaa");
-      queueFrameAction({ type: "selectLockTarget", payload: { id: assignTargetId } });
-    } else {
-      const targetLock = getState().player.targetLock;
-      if (!targetLock) return;
-      queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: idx, targetId: targetLock.id } });
-      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} → ${targetLock.name || t("ship.target")}`, "#44ffaa");
-    }
-    return;
-  }
-
-  // Shift+click on salvager high slot assigns locked wreck
-  if (rack === "high" && e.shiftKey && m?.isSalvager) {
-    const targetLock = getState().player.targetLock;
-    if (targetLock) {
-      queueFrameAction({ type: "setHighTarget", payload: { idx, targetId: targetLock.id } });
-      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} → ${targetLock.name || t("ship.wreck")}`, "#00e8c8");
-    } else {
-      queueFrameAction({ type: "setHighTarget", payload: { idx, targetId: null } });
-      floatText(getState().player.x, getState().player.y - 30, `${m.short || m.name} ${t("ship.unassigned")}`, "#ffaa44");
-    }
-    return;
-  }
-
   // Left click on any slot performs its default action (same as hotkey)
   if (node && node.hkIdx !== undefined) {
     applyBarHotkey(node.hkIdx);

@@ -8,14 +8,13 @@ import { enemyByLockId, targetByLockId } from "../targeting.js";
 import { floatText } from "../utils/fx.js";
 import { MODULE_HP_MAX, TURRET_POWER_CYCLE_S, RACK_TYPES } from "../constants.js";
 import { emit } from "../events.js";
-import { sfxPowerCycle } from "../audio/procedural.js";
+import { sfxPowerCycle, sfxTurretAssign } from "../audio/procedural.js";
 import { getInstance } from "../utils/items.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { tryActivate as tryActivateAbility, ABILITY_BY_ID } from "./abilities.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 
-export function syncSlotHeat() {
-  const p = getState().player;
+export function syncSlotHeat(p: Player = getState().player) {
   const s = SHIPS[p.shipId];
   const hardpointRack = playerHardpointRack(p);
   const hardpointCount = s.fitting[hardpointRack] || 0;
@@ -42,11 +41,11 @@ export function syncSlotHeat() {
     high: pull(s.fitting.high, p.slotHeat?.high),
     med: pull(s.fitting.med, p.slotHeat?.med),
     low: pull(s.fitting.low, p.slotHeat?.low),
-  });
-  PlayerAccess.setTurretTargetsAll(pullNull(hardpointCount, p.turretTargets || []));
-  PlayerAccess.setTurretCdsAll(pull(hardpointCount, p.turretCds || []));
-  PlayerAccess.setTurretPowerAll(pullBool(hardpointCount, p.turretPower || []));
-  PlayerAccess.setTurretPowerCdAll(pull(hardpointCount, p.turretPowerCd || []));
+  }, p);
+  PlayerAccess.setTurretTargetsAll(pullNull(hardpointCount, p.turretTargets || []), p);
+  PlayerAccess.setTurretCdsAll(pull(hardpointCount, p.turretCds || []), p);
+  PlayerAccess.setTurretPowerAll(pullBool(hardpointCount, p.turretPower || []), p);
+  PlayerAccess.setTurretPowerCdAll(pull(hardpointCount, p.turretPowerCd || []), p);
   const moduleHp: Record<string, (number | null)[]> = p.moduleHp ? { ...p.moduleHp } : { turret: [], high: [], med: [], low: [] };
   const slotActive: Record<string, boolean[]> = p.slotActive ? { ...p.slotActive } : { turret: [], high: [], med: [], low: [] };
   for (const rack of RACK_TYPES) {
@@ -63,12 +62,11 @@ export function syncSlotHeat() {
     }
     moduleHp[rack] = a;
   }
-  PlayerAccess.setModuleHpAll(moduleHp);
-  if (!p.slotActive) PlayerAccess.setSlotActiveAll(slotActive);
+  PlayerAccess.setModuleHpAll(moduleHp, p);
+  if (!p.slotActive) PlayerAccess.setSlotActiveAll(slotActive, p);
 }
 
-export function validateFitting() {
-  const p = getState().player;
+export function validateFitting(p: Player = getState().player) {
   const s = SHIPS[p.shipId];
   for (const r of RACK_TYPES) {
     const n = s.fitting[r] || 0;
@@ -86,7 +84,7 @@ export function validateFitting() {
   }
   const nt = s.fitting[playerHardpointRack(p)] || 0;
   if (p.fireControlSlot < 0 || p.fireControlSlot >= nt) p.fireControlSlot = 0;
-  syncSlotHeat();
+  syncSlotHeat(p);
 }
 
 export interface BarSlot {
@@ -109,6 +107,21 @@ export function applyBarHotkey(keyIndex: number) {
   const slots = barHotkeySlotList();
   if (keyIndex < 0 || keyIndex >= slots.length) return;
   const { rack, idx } = slots[keyIndex];
+  const hardpointRack = playerHardpointRack(getState().player);
+  if (rack === hardpointRack) {
+    if (!(getState().player.turretPower?.[idx] ?? false)) {
+      queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack: hardpointRack, idx } });
+    }
+    queueFrameAction({ type: "setFireControlSlot", payload: { slot: idx } });
+    const assignTargetId = getState().player._assignTargetId;
+    if (assignTargetId != null) {
+      queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: idx, targetId: assignTargetId } });
+      queueFrameAction({ type: "selectLockTarget", payload: { id: assignTargetId } });
+      sfxTurretAssign();
+    }
+    return;
+  }
+
   queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack, idx } });
 }
 

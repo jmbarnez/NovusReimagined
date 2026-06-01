@@ -84,4 +84,34 @@ describe("createServerPlayerState", () => {
     expect(sanitized.turretPower[0]).toBe(true);
     expect(sanitized.turretPowerCd[0]).toBeGreaterThan(0);
   });
+
+  it("migrates legacy turret fits into unified high hardpoints during sanitization", () => {
+    const incoming = makePlayer();
+    incoming.shipId = "fighter";
+    incoming.fitting = {
+      turret: ["legacy-tu-1", "legacy-tu-2"],
+      high: ["legacy-hi-1", "legacy-hi-2"],
+      med: [null, null],
+      low: [null, null, null],
+    };
+    incoming.moduleHp = {
+      turret: [25, 40],
+      high: [70, 85],
+      med: [null, null],
+      low: [null, null, null],
+    };
+    incoming.slotActive = {
+      turret: [true, false],
+      high: [false, true],
+      med: [true, true],
+      low: [true, true, true],
+    };
+
+    const sanitized = createServerPlayerState("client_real", "Pilot One", incoming, buildGalaxy());
+
+    expect(sanitized.fitting.turret).toEqual([]);
+    expect(sanitized.fitting.high).toEqual(["legacy-hi-1", "legacy-hi-2", "legacy-tu-1", "legacy-tu-2"]);
+    expect(sanitized.moduleHp.high).toEqual([70, 85, 25, 40]);
+    expect(sanitized.slotActive.high).toEqual([false, true, true, false]);
+  });
 });

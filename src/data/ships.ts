@@ -181,8 +181,8 @@ export const SHIPS: Record<string, ShipDef> = {
     fitting: {
       powergrid: 55,
       cpu: 220,
-      turret: 2,
-      high: 1,
+      turret: 0,
+      high: 3,
       med: 3,
       low: 4,
     },
@@ -233,8 +233,8 @@ export const SHIPS: Record<string, ShipDef> = {
     fitting: {
       powergrid: 50,
       cpu: 190,
-      turret: 2,
-      high: 2,
+      turret: 0,
+      high: 4,
       med: 2,
       low: 3,
     },

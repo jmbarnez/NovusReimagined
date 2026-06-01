@@ -93,6 +93,7 @@ export function syncPixiParticles(): void {
   const particles = getState().particles;
   const half = TEX_SIZE / 2;
 
+  // Single pass through pool - update active particles, hide inactive ones
   for (let i = 0; i < POOL_SIZE; i++) {
     const s = _pool[i];
     const p = particles[i];
@@ -105,6 +106,8 @@ export function syncPixiParticles(): void {
     s.y = p.y;
     s.alpha = Math.min(1, (p.life ?? 0) * 0.75);
     s.scale.set((p.r ?? 1) / half);
-    s.tint = cssToHex(p.color);
+    // Only update tint if color changed (cache hit is fast, but still avoid calls)
+    const hex = cssToHex(p.color);
+    if (s.tint !== hex) s.tint = hex;
   }
 }

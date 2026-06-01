@@ -1,11 +1,10 @@
 import { TAU } from "../constants.js";
 import { Client } from "../state.js";
-import { PlayerAccess, getState } from "../state-access.js";
+import { getState } from "../state-access.js";
 import { ctx } from "../canvas.js";
 import { curSys } from "../utils/game.js";
 import { getUIFont } from "../render/ui-font.js";
 import { radarPingOpacity, radarSweepAngle } from "../utils/radar-sweep.js";
-import { savePlayer } from "../player/player-data.js";
 import { C } from "../config/index.js";
 import {
   computeDiscoveredMapBounds,
@@ -17,16 +16,15 @@ import {
 } from "../map-discovery.js";
 import { sfxBlip } from "../audio/procedural.js";
 import { clearNav } from "../state-access.js";
+import { queueFrameAction } from "../sim/input.js";
 import {
   bearingToPointDeg,
   getScanPulseRemainingMs,
-  startScanPulse,
   getScanRangePx,
   getActiveScannerIndex,
   getMapScannerDrainPerSec,
   getEffectiveSignatureRadius,
   mapScannerStrengthStepIndex,
-  setMapScannerStrengthFromStep,
   isMapScannerEmitting,
   getMapScannerStrength01,
 } from "../scanning.js";
@@ -115,8 +113,7 @@ export function aimScannerAtMapPoint(sx: number, sy: number, Wc: number, Hc: num
   const t = (Client.systemMapTransform as SystemMapTransform | null | undefined) ?? computeSystemMapTransform(Wc, Hc);
   if (!t) return false;
   const { x: wx, y: wy } = mapScreenToWorld(sx, sy, t);
-  const bearing = bearingToPointDeg(getState().player.x, getState().player.y, wx, wy);
-  PlayerAccess.setScannerAngle(bearing);
+  Client.mapScannerAngleDeg = bearingToPointDeg(getState().player.x, getState().player.y, wx, wy);
   return true;
 }
 
@@ -149,10 +146,8 @@ function toggleScannerPower(): void {
     logEvent(t("map.survey.powerOn"), "system");
     return;
   }
-  PlayerAccess.setMapScannerActive(next);
+  queueFrameAction({ type: "setMapScannerPower", payload: { active: next } }, { replaceByType: true });
   sfxBlip(next ? 720 : 480, 0.03);
-  savePlayer();
-  updatePanelControls();
 }
 
 function ensurePanel() {
@@ -188,10 +183,10 @@ function ensurePanel() {
   strengthInput?.addEventListener("input", () => {
     const step = Number(strengthInput!.value);
     const prev = mapScannerStrengthStepIndex(getState().player);
-    setMapScannerStrengthFromStep(step, getState().player);
+    const stepsDenom = Math.max(1, C.SCANNING.MAP_STRENGTH_STEPS - 1);
+    const strength = Math.max(0, Math.min(1, step / stepsDenom));
+    queueFrameAction({ type: "setMapScannerStrength", payload: { strength } }, { replaceByType: true });
     if (step !== prev) sfxBlip(640 + step * 120, 0.02);
-    savePlayer();
-    updatePanelControls();
   });
 
   panelEl.addEventListener("click", (ev) => {
@@ -203,13 +198,17 @@ function ensurePanel() {
     }
     const cone = target.dataset.cone;
     if (cone) {
-      PlayerAccess.setScannerConeDeg(Number(cone) as 180 | 90 | 45 | 15);
-      updatePanelControls();
+      queueFrameAction({
+        type: "setMapScannerCone",
+        payload: { coneDeg: Number(cone) as 180 | 90 | 45 | 15 },
+      }, { replaceByType: true });
       return;
     }
     if (target.dataset.action === "scan") {
-      const result = startScanPulse(getState().player);
-      if (!result.started && result.reason) logEvent(result.reason, "system");
+      queueFrameAction({
+        type: "startScanPulse",
+        payload: { angleDeg: Client.mapScannerAngleDeg },
+      }, { replaceByType: true });
     }
   });
 }
@@ -376,7 +375,7 @@ export function updateMapSurveyUi() {
 
 export function drawMapSurveyOverlay(t: SystemMapTransform, now: number) {
   const pp = worldToMapScreen(getState().player.x, getState().player.y, t);
-  const angleRad = getState().player.scannerAngle * Math.PI / 180;
+  const angleRad = Client.mapScannerAngleDeg * Math.PI / 180;
   const halfCone = (getState().player.scannerConeDeg / 2) * Math.PI / 180;
   const rayLen = getScanRangePx(getState().player) * t.scale;
   const sweep = radarSweepAngle(now);

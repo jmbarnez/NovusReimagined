@@ -168,25 +168,26 @@ export function progressMissions(type: MissionType, amount: number, target?: str
 
 // ── Delivery check on dock ───────────────────────────────────────────────────
 
-function getPlayerStock(target: string): number {
-  const p = getState().player;
+function getPlayerStock(target: string, p: Player): number {
   if (!p) return 0;
   return (p.ore[target] ?? 0) + (p.loot[target] ?? 0) + (p.refined[target] ?? 0);
 }
 
 export function checkDeliveryContracts(station: Station, p: Player = getState().player): void {
-  if (!getState().player?.contracts) return;
-  for (const c of getState().player.contracts) {
+  if (!p?.contracts) return;
+  for (const c of p.contracts) {
     if (isTutorialContract(c)) continue;
     if (c.status !== "active") continue;
     if (c.type !== "delivery") continue;
     if (c.stationId !== station.id) continue;
-    const have = getPlayerStock(c.objective.target);
+    const have = getPlayerStock(c.objective.target, p);
     c.objective.current = Math.min(have, c.objective.required);
     if (c.objective.current >= c.objective.required) {
       c.status = "complete";
-      emit("mission:completed", { contract: c });
-      logEvent(`Contract complete: ${c.title} — dock to claim ${c.reward} CR`, "loot");
+      if (p === getState().player) {
+        emit("mission:completed", { contract: c });
+        logEvent(`Contract complete: ${c.title} — dock to claim ${c.reward} CR`, "loot");
+      }
     }
   }
 }

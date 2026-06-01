@@ -17,6 +17,8 @@ export const DMG_COLORS: Record<string, string> = {
   miss: "#ff8833",
   crit: "#ff2200",
   heal: "#66ff88",
+  asteroid: "#ffaa44",
+  mining: "#ffaa44",
 };
 
 export function showDamageNumber(x: number, y: number, amount: number | string, type = "hit", direction = "playerToEnemy") {
@@ -38,9 +40,17 @@ export function showDamageNumber(x: number, y: number, amount: number | string, 
 
   const jitterX = (Math.random() - 0.5) * 18;
   const jitterY = (Math.random() - 0.5) * 8;
-  
-  // Create color card effect
-  floatText(x + jitterX, y + jitterY - 12, text, textColor, color);
+
+  getState().pendingEffects.push({
+    type: "floatText" as const,
+    payload: {
+      x: x + jitterX,
+      y: y + jitterY - 12,
+      text,
+      color: textColor,
+      bgColor: color,
+    },
+  });
 }
 
 function damageRandomModule(amount: number) {

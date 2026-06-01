@@ -25,6 +25,17 @@ describe("authoritative command validation", () => {
     expect(p.turretPower).toEqual(before);
   });
 
+  it("accepts turret modules in unified high slots but rejects incompatible rack fits", () => {
+    const p = makePlayer();
+    p.fitting.high[0] = null;
+
+    executeGameCommand({ type: "fitModule", payload: { rack: "high", slotIdx: 0, instanceId: "start-tu-civ-cannon" } }, p);
+    expect(p.fitting.high[0]).toBe("start-tu-civ-cannon");
+
+    executeGameCommand({ type: "fitModule", payload: { rack: "med", slotIdx: 0, instanceId: "start-hi-comms" } }, p);
+    expect(p.fitting.med[0]).toBeNull();
+  });
+
   it("does not silently simulate an unregistered local singleton", () => {
     const p = makePlayer();
     p.sysIdx = 2;
@@ -101,5 +112,75 @@ describe("authoritative command validation", () => {
     }, p);
 
     expect(p.contracts.some((c) => c.id === "mc_test_1" && c.status === "active")).toBe(true);
+  });
+
+  it("validates dock commands against nearby station range", () => {
+    G.GALAXY = buildGalaxy();
+    populateSystem(G.GALAXY[0]!);
+    const p = makePlayer();
+    p.sysIdx = 0;
+    const station = G.GALAXY[0]?.stations?.find((s) => !s.isProcessingHub);
+    if (!station) return;
+
+    p.x = station.x + station.radius * 4;
+    p.y = station.y;
+    executeGameCommand({ type: "dock", payload: { stationId: station.id } }, p);
+    expect(p.stationOfferStationId).toBeNull();
+
+    p.x = station.x;
+    p.y = station.y;
+    executeGameCommand({ type: "dock", payload: { stationId: station.id } }, p);
+    expect(p.stationOfferStationId).toBe(station.id);
+    expect(p.invincible).toBeGreaterThan(0);
+  });
+
+  it("turns in complete contracts from authoritative station state", () => {
+    G.GALAXY = buildGalaxy();
+    populateSystem(G.GALAXY[0]!);
+    const p = makePlayer();
+    p.sysIdx = 0;
+    p.credits = 100;
+    const station = G.GALAXY[0]?.stations?.find((s) => !s.isProcessingHub);
+    if (!station) return;
+
+    p.x = station.x;
+    p.y = station.y;
+    p.stationOfferStationId = station.id;
+    p.contracts = [{
+      id: "mc_complete_1",
+      type: "mining",
+      title: "Mine Iron Ore",
+      description: "Collect 10 iron",
+      reward: 500,
+      stationId: station.id,
+      sysIdx: 0,
+      objective: { type: "mining", target: "iron", required: 10, current: 10 },
+      status: "complete",
+    }];
+
+    executeGameCommand({ type: "turnInContract", payload: { contractId: "mc_complete_1" } }, p);
+
+    expect(p.credits).toBe(600);
+    expect(p.contracts).toHaveLength(0);
+  });
+
+  it("skipTutorial does not double-warp when already in target system", () => {
+    G.GALAXY = buildGalaxy();
+    populateSystem(G.GALAXY[0]!);
+    const p = makePlayer();
+    p.sysIdx = 1; // already in Novus Prime
+    p.homeSysIdx = 0;
+    p.tutorial.active = true;
+    p.tutorial.completed = false;
+    p.tutorial.skipped = false;
+
+    executeGameCommand({ type: "skipTutorial", payload: { primeIdx: 1 } }, p);
+
+    expect(p.tutorial.active).toBe(false);
+    expect(p.tutorial.completed).toBe(true);
+    expect(p.tutorial.skipped).toBe(true);
+    expect(p.homeSysIdx).toBe(1);
+    // warpTo sets invincible = 2.0; if it was skipped, invincible stays at 0
+    expect(p.invincible).toBe(0);
   });
 });

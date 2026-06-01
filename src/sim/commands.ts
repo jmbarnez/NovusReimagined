@@ -2,7 +2,7 @@ import { type Player } from "../state.js";
 import { PlayerAccess, WorldAccess, getState } from "../state-access.js";
 import { fireSelectedTurret } from "../combat/turret-control.js";
 import { tryInteractSite } from "../sites/interact.js";
-import { tryWarp, warpTo, clearWarpPresentation } from "../dock.js";
+import { clearWarpPresentation, getDockableStation, tryWarp, warpTo } from "../dock.js";
 import {
   assignModuleSlotToTarget,
   clearSensorLocks,
@@ -20,6 +20,7 @@ import { resetTutorialTrackState } from "../physics/tutorial-track.js";
 import { applyDecryptionReward } from "../sites/decryption-rewards.js";
 import { RACK_TYPES, type RackId } from "../constants.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
+import { startScanPulse } from "../scanning.js";
 import { checkDeliveryContracts, generateContractsForStation, type MissionContract } from "../data/missions.js";
 import { collectHubOutput, processFloatingItem, smeltFromDeposit } from "../hub.js";
 import {
@@ -134,6 +135,31 @@ export interface ClearSensorLocksCommand {
   type: "clearSensorLocks";
 }
 
+export interface SetTractorTightnessCommand {
+  type: "setTractorTightness";
+  payload: { value: number };
+}
+
+export interface SetMapScannerPowerCommand {
+  type: "setMapScannerPower";
+  payload: { active: boolean };
+}
+
+export interface SetMapScannerConeCommand {
+  type: "setMapScannerCone";
+  payload: { coneDeg: 180 | 90 | 45 | 15 };
+}
+
+export interface SetMapScannerStrengthCommand {
+  type: "setMapScannerStrength";
+  payload: { strength: number };
+}
+
+export interface StartScanPulseCommand {
+  type: "startScanPulse";
+  payload: { angleDeg: number };
+}
+
 export interface QueueIndustryJobCommand {
   type: "queueIndustryJob";
   payload: { recipeId: string; qty: number };
@@ -243,6 +269,11 @@ export type GameCommand =
   | RemoveSensorLockCommand
   | SelectLockTargetCommand
   | ClearSensorLocksCommand
+  | SetTractorTightnessCommand
+  | SetMapScannerPowerCommand
+  | SetMapScannerConeCommand
+  | SetMapScannerStrengthCommand
+  | StartScanPulseCommand
   | QueueIndustryJobCommand
   | CancelIndustryJobCommand
   | BuyBlueprintCommand
@@ -307,7 +338,7 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
       tryInteractSite(p);
       break;
     case "warp":
-      tryWarp(p);
+      tryWarp(p, command.payload?.targetIdx);
       break;
     case "setFireControlSlot":
       if (!isValidHardpointIndex(command.payload.slot, p)) break;
@@ -361,6 +392,30 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
     case "clearSensorLocks":
       clearSensorLocks(p, { suppressFrameAction: true });
       break;
+    case "setTractorTightness":
+      if (!Number.isFinite(command.payload.value)) break;
+      PlayerAccess.setTractorTightness(Math.max(0, Math.min(1, command.payload.value)), p);
+      break;
+    case "setMapScannerPower":
+      PlayerAccess.setMapScannerActive(command.payload.active === true, p);
+      break;
+    case "setMapScannerCone":
+      if (
+        command.payload.coneDeg !== 180
+        && command.payload.coneDeg !== 90
+        && command.payload.coneDeg !== 45
+        && command.payload.coneDeg !== 15
+      ) break;
+      PlayerAccess.setScannerConeDeg(command.payload.coneDeg, p);
+      break;
+    case "setMapScannerStrength":
+      if (!Number.isFinite(command.payload.strength)) break;
+      PlayerAccess.setMapScannerStrength(command.payload.strength, p);
+      break;
+    case "startScanPulse":
+      if (!Number.isFinite(command.payload.angleDeg)) break;
+      startScanPulse(p, { angleDeg: command.payload.angleDeg, allowWithoutMapOpen: true });
+      break;
     case "queueIndustryJob":
       if (!command.payload.recipeId) break;
       if (!Number.isFinite(command.payload.qty) || command.payload.qty <= 0 || !Number.isInteger(command.payload.qty)) break;
@@ -392,12 +447,20 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
       repairShipAction(p);
       break;
     case "fitModule":
+      if (!isRackId(command.payload.rack)) break;
+      if (!isValidSlotIndex(command.payload.slotIdx, command.payload.rack, p)) break;
+      if (!command.payload.instanceId) break;
       fitModuleAction(command.payload.rack, command.payload.slotIdx, command.payload.instanceId, p);
       break;
     case "unfitModule":
+      if (!isRackId(command.payload.rack)) break;
+      if (!isValidSlotIndex(command.payload.slotIdx, command.payload.rack, p)) break;
       unfitModuleAction(command.payload.rack, command.payload.slotIdx, p);
       break;
     case "swapModule":
+      if (!isRackId(command.payload.rack)) break;
+      if (!isValidSlotIndex(command.payload.slotIdx, command.payload.rack, p)) break;
+      if (!command.payload.instanceId) break;
       swapModuleAction(command.payload.rack, command.payload.slotIdx, command.payload.instanceId, p);
       break;
     case "turnInContract":
@@ -460,19 +523,16 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
       }
       break;
     }
-    case "dock":
-      if (command.payload?.stationId) {
-        const sys = getState().GALAXY[p.sysIdx];
-        const station = sys?.stations.find((st) => st.id === command.payload?.stationId) ?? null;
-        if (station) {
-          checkDeliveryContracts(station, p);
-        }
-        refreshStationOffers(p, command.payload.stationId);
-      }
+    case "dock": {
+      const station = getDockableStation(p, command.payload?.stationId ?? null);
+      if (!station) break;
+      checkDeliveryContracts(station, p);
+      refreshStationOffers(p, station.id);
       clearSensorLocks(p);
       PlayerAccess.updatePhysics({ vx: 0, vy: 0 }, p);
       PlayerAccess.setInvincible(1.5, p);
       break;
+    }
     case "undock": {
       for (const rack of ["high", "med", "low"] as const) {
         const arr = p.slotActive?.[rack];
@@ -496,7 +556,11 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
       PlayerAccess.setTutorialSkipped(p);
       PlayerAccess.setTutorialComplete(p);
       PlayerAccess.setHomeSysIdx(command.payload.primeIdx, p);
-      warpTo(command.payload.primeIdx, p);
+      // Guard against double-warp when prediction and server both execute
+      // on the same player object in local mode.
+      if (p.sysIdx !== command.payload.primeIdx) {
+        warpTo(command.payload.primeIdx, p);
+      }
       clearWarpPresentation(p);
       resetTutorialTrackState(p);
       if (p.contracts) {

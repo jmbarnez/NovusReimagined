@@ -9,12 +9,18 @@ import { SpatialGrid } from "./utils/spatial.js";
 import { initGameLoop } from "./game-loop.js";
 import { initHudOverlay } from "./ui/hud-overlay.js";
 import { initBackgroundStars } from "./render/background.js";
-import { initPixi, renderPixi, resizePixi } from "./pixi.js";
+import { initPixi, renderPixi, resizePixi, entityLayer, effectLayer } from "./pixi.js";
 import { initPixiBackground, updatePixiBackground } from "./render/pixi-background.js";
 import { initPixiParticles } from "./render/pixi-particles.js";
 import { initPixiEntities } from "./render/pixi-entities.js";
 import { initPixiPlayer } from "./render/pixi-player.js";
+import { initPixiCombat } from "./render/pixi-combat.js";
+import { initPixiEffects } from "./render/pixi-effects.js";
 import { initVignette } from "./render/pixi-vignette.js";
+import { initPixiHUD } from "./render/pixi-hud-core.js";
+import { initPixiTargetArrows } from "./render/pixi-target-arrows.js";
+import { initPixiMaps } from "./render/pixi-maps.js";
+import { initPixiMinimap } from "./render/pixi-minimap.js";
 
 import { bindTitleScreenEvents } from "./ui/title-screen.js";
 import { markBootPhase, registerLoadingConsole, transitionToTitleScreen } from "./ui/loading-screen.js";
@@ -70,6 +76,12 @@ async function boot() {
     initPixiParticles();
     initPixiEntities();
     initPixiPlayer();
+    if (entityLayer) initPixiCombat(entityLayer);
+    if (effectLayer) initPixiEffects(effectLayer);
+    initPixiHUD();
+    initPixiTargetArrows();
+    initPixiMinimap();
+    initPixiMaps();
     window.addEventListener("resize", resizePixi);
 
     // 5. Start unified animation loop (in TITLE mode)

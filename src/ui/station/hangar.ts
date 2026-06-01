@@ -3,6 +3,7 @@ import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
 import { SHIPS } from "../../data/ships.js";
 import { MODULES } from "../../data/modules.js";
+import type { Rack } from "../../data/modules.js";
 import { getStats, computeStats, ComputedStats } from "../../player/player-stats.js";
 import { escHtml } from "../../utils/format.js";
 import { MODULE_HP_MAX } from "../../constants.js";
@@ -10,6 +11,7 @@ import { stationState, CONTRACT_TYPE_ICONS, fmtModBonuses, iconSvg } from "./sha
 import { getInstance } from "../../utils/items.js";
 import { ModuleInstance } from "../../types/moduleInstance.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
+import { moduleFitsShipRack } from "../../utils/hardpoints.js";
 
 export function buildStatHtml(st: ComputedStats, pst: ComputedStats | null): string {
   const getValue = (obj: unknown, k: string): unknown => k.split('.').reduce((o: unknown, i: string) => (o as Record<string, unknown>)?.[i], obj);
@@ -60,7 +62,7 @@ export function updateStatsGrid() {
     `<span>Hover slots to preview changes.</span>`;
 }
 
-export function setPreview(rack: "turret" | "high" | "med" | "low", idx: number, instanceId: string | null) {
+export function setPreview(rack: Rack, idx: number, instanceId: string | null) {
   const temp = {
     turret: [...getState().player.fitting.turret],
     high: [...getState().player.fitting.high],
@@ -80,7 +82,7 @@ function fmtAffixesShort(affixes: ModuleInstance["affixes"]): string {
   }).join(", ");
 }
 
-function renderSlot(rack: string, i: number, instanceId: string | null): string {
+function renderSlot(rack: Rack, i: number, instanceId: string | null): string {
   const instance = instanceId ? getInstance(instanceId) : null;
   const m = instance ? MODULES[instance.baseId] : null;
 
@@ -91,9 +93,10 @@ function renderSlot(rack: string, i: number, instanceId: string | null): string 
       if (uid) fittedUids.add(uid);
     }
   }
-  const availInstances = getState().player.moduleCargo.filter(inst =>
-    MODULES[inst.baseId]?.rack === rack && !fittedUids.has(inst.uid)
-  );
+  const availInstances = getState().player.moduleCargo.filter((inst) => {
+    const mod = MODULES[inst.baseId];
+    return !!mod && moduleFitsShipRack(mod.rack, rack) && !fittedUids.has(inst.uid);
+  });
 
   if (instance && m) {
     const hp = getState().player.moduleHp?.[rack]?.[i] ?? MODULE_HP_MAX;
@@ -173,10 +176,12 @@ export function renderHangar() {
   const needsRepair = hullRep > 0 || structRep > 0 || shieldRep > 0 || moduleDamageTotal > 0;
 
   const pgOv = st.usedPG > st.totalPG, cpuOv = st.usedCPU > st.totalCPU;
-  const RL: Record<string, string> = { turret: "Turret Slots", high: "Utility Slots", med: "Medium Slots", low: "Low Slots" };
+  const RL: Record<Rack, string> = { turret: "Turret Slots", high: "High Slots", med: "Medium Slots", low: "Low Slots" };
 
   const racks = (["turret", "high", "med", "low"] as const).map(rack => {
-    const slots = getState().player.fitting[rack].map((uid: string | null, i: number) => renderSlot(rack, i, uid)).join("");
+    const rackSlots = getState().player.fitting[rack] ?? [];
+    if (rackSlots.length === 0) return "";
+    const slots = rackSlots.map((uid: string | null, i: number) => renderSlot(rack, i, uid)).join("");
     return `<div class="frack"><h4>${RL[rack]}</h4>${slots}</div>`;
   }).join("");
 
@@ -208,7 +213,7 @@ export function renderHangar() {
   <div class="row"><span class="lbl">Home Station</span><span class="val">${getState().GALAXY[getState().player.homeSysIdx ?? 0]?.name || "HOME BASE ALPHA"}${getState().player.homeSysIdx === getState().player.sysIdx ? " (current)" : ""}</span>${getState().player.homeSysIdx !== getState().player.sysIdx ? `<button class="btn" data-action="setHome">Set as Home</button>` : ""}</div>
 
   <div class="st-fitting-container" style="margin-top:16px;">
-    <aside>
+    <aside id="hangar-stats-panel">
       <h3>Ship Statistics</h3>
       <div class="st-stats-grid" id="hangar-stats-grid">${buildStatHtml(st, pst)}</div>
       <div id="hangar-stats-warn" style="margin-top:16px; font-size:10px; color:var(--hud-text-faint); line-height:1.4;">
@@ -219,8 +224,10 @@ export function renderHangar() {
       ${contractBox}
     </aside>
     <main>
-      <h3>Active Fitting</h3>
-      ${racks}
+      <div id="hangar-fitting-panel">
+        <h3>Active Fitting</h3>
+        ${racks}
+      </div>
       <h3>Cargo</h3>
       <div id="hangar-pane-cargo"></div>
     </main>

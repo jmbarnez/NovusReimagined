@@ -87,8 +87,8 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
     if (credEl.textContent !== credText) credEl.textContent = credText;
   }
 
-  // Update visual overlay for System Map (title, dynamic legend)
-  const showMap = Client.showMap && Client.showSystemMap;
+  // Update visual overlay for Map (title, dynamic legend, view toggle buttons)
+  const showMap = Client.showMap;
   const mapOverlayEl = document.getElementById("map-overlay");
   if (mapOverlayEl) {
     const isCurrentlyVisible = mapOverlayEl.style.display !== "none";
