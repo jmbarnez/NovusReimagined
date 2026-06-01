@@ -31,6 +31,7 @@ import { syncPixiStationTurrets } from "../render/pixi-station-turrets.js";
 import { syncPixiWaypoint } from "../render/pixi-waypoint.js";
 import { syncPixiDamageFlash } from "../render/pixi-damage-flash.js";
 import { syncPixiShockwaves, syncPixiFloatTexts, syncPixiWorldBorder } from "../render/pixi-effects-overlay.js";
+import { syncPixiChatBubbles } from "../render/pixi-chat-bubbles.js";
 import { syncPixiHUD } from "../render/pixi-hud-core.js";
 import { syncPixiTargetArrows, syncPixiTutorialGuideArrow } from "../render/pixi-target-arrows.js";
 import { drawPixiSystemMapCanvasOverlays, syncPixiSystemMap } from "../render/pixi-maps.js";
@@ -51,6 +52,37 @@ import { syncPixiCrosshair } from "../render/pixi-crosshair.js";
 let damageFlashWc = 0;
 let damageFlashHc = 0;
 const damageFlashCache = new Map<string, CanvasGradient>();
+
+// ─── Cached DOM refs ─────────────────────────────────────────────────────────
+let _cachedMapWinBody: HTMLElement | null = null;
+let _cachedMapWinRect: DOMRect | null = null;
+let _lastMapOpen = false;
+let _filterLogged = false;
+
+// ─── Frame timing helper ─────────────────────────────────────────────────────
+let _timingLabels: string[] = [];
+let _timingVals: number[] = [];
+
+function timeMark(label: string): void {
+  if (typeof performance !== "undefined") {
+    _timingLabels.push(label);
+    _timingVals.push(performance.now());
+  }
+}
+
+function timeFlush(totalThresholdMs = 16): void {
+  if (_timingVals.length < 2) { _timingLabels = []; _timingVals = []; return; }
+  const total = _timingVals[_timingVals.length - 1] - _timingVals[0];
+  if (total <= totalThresholdMs) { _timingLabels = []; _timingVals = []; return; }
+  const parts: string[] = [];
+  for (let i = 1; i < _timingVals.length; i++) {
+    const dt = _timingVals[i] - _timingVals[i - 1];
+    if (dt > 0.5) parts.push(`${_timingLabels[i]}:${dt.toFixed(1)}ms`);
+  }
+  console.log("[PERF] Slow frame", { total: `${total.toFixed(2)}ms`, parts: parts.join(" | ") });
+  _timingLabels = [];
+  _timingVals = [];
+}
 
 export function drawFrame(now: number, alpha: number, frameDt: number) {
   const width = W();
@@ -93,13 +125,21 @@ function drawStationState(now: number, width: number, height: number) {
 }
 
 function drawSpaceState(now: number, alpha: number, frameDt: number, width: number, height: number, sys: System) {
-  const frameStart = performance.now();
-  // Ensure per-system live caches exist so renderers have data even if a tick missed rebuild
-  const needsEnemyCache = !sys._liveEnemies || (sys._liveEnemies.length === 0 && sys.enemies.some((e) => e.alive));
-  const needsAsteroidCache = !sys._liveAsteroids || (sys._liveAsteroids.length === 0 && sys.asteroids.some((a) => !a.depleted && a.hp > 0));
+  timeMark("start");
+
+  // Hoist state once to avoid repeated object allocations
+  const state = getState();
+  const player = state.player;
+
+  // Ensure per-system live caches exist so renderers have data even if a tick missed rebuild.
+  // Guard: only rebuild when the cache arrays are truly absent, not when they were already
+  // built this tick. The simulation tick itself rebuilds the grid; we only patch here.
+  const needsEnemyCache = !sys._liveEnemies;
+  const needsAsteroidCache = !sys._liveAsteroids;
   if (needsEnemyCache || needsAsteroidCache) {
     rebuildSpatialGrid(sys.idx);
   }
+  timeMark("spatial");
 
   // Camera locks to the interpolated player position — same alpha as the ship
   // sprite, so the player sits at a fixed screen point with zero relative jitter.
@@ -113,6 +153,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
 
   updateViewportBounds(width, height, Client.zoom, camxR, camyR, 240);
   setWorldView(width, height, camxR, camyR, Client.zoom);
+  timeMark("camera");
 
   // Update PixiJS world container camera transform
   if (worldContainer) {
@@ -128,71 +169,126 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   }
 
   updatePixiBackground(now, camxR, camyR);
+  timeMark("bg");
   syncPixiParticles();
+  timeMark("particles");
   syncPixiStations(now, sys);
+  timeMark("stations");
   syncPixiEntities(alpha, now);
+  timeMark("entities");
   syncPixiPlayer(alpha, now);
+  timeMark("player");
   syncPixiTrails();
+  timeMark("trails");
   syncPixiPlanets(now);
+  timeMark("planets");
   syncPixiCelestial(now, alpha, sys);
+  timeMark("celestial");
   syncPixiCombat(now, alpha, sys);
+  timeMark("combat");
   syncPixiEffects(now, alpha, frameDt, sys);
+  timeMark("effects");
   syncPixiAsteroids(now, alpha, sys);
+  timeMark("asteroids");
   syncPixiHitEffects(now, alpha, sys);
+  timeMark("hiteffects");
   syncPixiTutorialMarkers(now, sys);
+  timeMark("tutmarkers");
   syncPixiRegionBorders(now);
+  timeMark("borders");
   syncPixiTutorialTrack(now);
+  timeMark("tuttrack");
   syncPixiTutorialGates(now);
+  timeMark("tutgates");
   syncPixiStationOverlays(now, sys);
+  timeMark("stoverlays");
   syncPixiStationTurrets(now, sys);
+  timeMark("stturrets");
   if (Client.settings?.lensFlare) syncPixiLensFlare(width, height);
+  timeMark("lensflare");
   syncPixiWaypoint(now);
+  timeMark("waypoint");
   syncPixiDamageFlash(width, height);
+  timeMark("dmgflash");
   syncPixiShockwaves();
+  timeMark("shockwaves");
   syncPixiFloatTexts();
+  timeMark("floattexts");
+  syncPixiChatBubbles(now);
+  timeMark("chat");
   syncPixiWorldBorder(now, SECTOR_OUTER_RADIUS);
+  timeMark("worldborder");
   syncPixiCrosshair();
-  const mapWinBody = isOpen("map") ? document.getElementById("hud-win-body-map") : null;
-  const mapWinRect = mapWinBody?.getBoundingClientRect();
-  if (mapWinRect) {
-    syncPixiSystemMap(mapWinRect.width, mapWinRect.height, now);
+  timeMark("crosshair");
+
+  // Cached DOM reads: only look up the element when map window open-state changes
+  const mapOpen = isOpen("map");
+  if (mapOpen !== _lastMapOpen) {
+    _cachedMapWinBody = mapOpen ? document.getElementById("hud-win-body-map") : null;
+    _lastMapOpen = mapOpen;
   }
+  _cachedMapWinRect = _cachedMapWinBody?.getBoundingClientRect() ?? null;
+  if (_cachedMapWinRect) {
+    syncPixiSystemMap(_cachedMapWinRect.width, _cachedMapWinRect.height, now);
+  }
+  timeMark("map");
+
   syncThrust(alpha, now);
+  timeMark("thrust");
   syncPixiHUD(width, height, now);
+  timeMark("hud");
   syncPixiTargetArrows(width, height, camxR, camyR, now);
+  timeMark("tarrows");
   syncPixiTutorialGuideArrow(width, height, camxR, camyR, now);
+  timeMark("guidearrow");
   if (Client.settings?.vignetteEnabled) updateVignette();
+  timeMark("vignette");
   renderPixi();
+  timeMark("renderPixi");
+  // One-time debug: check if the expensive ColorMatrixFilter is active
+  if (worldContainer && (worldContainer.filters?.length ?? 0) > 0 && !_filterLogged) {
+    _filterLogged = true;
+    const names = worldContainer.filters.map((f) => ((f as unknown) as Record<string, unknown>).constructor?.name ?? "unknown");
+    console.log("[PERF] worldContainer.filters active:", names);
+  }
 
   // Clear the front Canvas 2D layer so the Pixi world (behind it) is visible.
   ctx.clearRect(0, 0, width, height);
-  
+
   // Canvas 2D map overlays sit above Pixi and are clipped to the map window body.
-  if (mapWinRect) {
-    drawPixiSystemMapCanvasOverlays(mapWinRect.width, mapWinRect.height, now);
+  if (_cachedMapWinRect) {
+    drawPixiSystemMapCanvasOverlays(_cachedMapWinRect.width, _cachedMapWinRect.height, now);
   }
+  timeMark("mapoverlays");
 
   // Minimap (always visible during gameplay)
   syncPixiMinimap(now);
-  const player = getState().player;
-  if (player && ((player.warpTargetIdx ?? -1) >= 0 || (player.warpCooldown ?? 0) > 2.0)) drawWarpScreen(width, height, now);
+  timeMark("minimap");
+
+  if (player && ((player.warpTargetIdx ?? -1) >= 0 || (player.warpCooldown ?? 0) > 2.0)) {
+    drawWarpScreen(width, height, now);
+  }
+  timeMark("warpscreen");
 
   if (Client.stationOpen && Client.activeStation) {
     const station = Client.activeStation;
-    if (dst(getState().player.x, getState().player.y, station.x, station.y) > station.radius * 4) {
+    if (dst(player.x, player.y, station.x, station.y) > station.radius * 4) {
       closeStationUi();
     }
   }
+  timeMark("stationcheck");
 
   if (!Client.stationOpen) updateHudOverlay(width, height, now);
+  timeMark("hudoverlay");
   updateIndustryProgress();
+  timeMark("industry");
   updateTutorialOverlay(width, height, now);
+  timeMark("tutorial");
   drawPerfOverlay();
+  timeMark("perfoverlay");
+  timeMark("end");
 
-  const frameMs = performance.now() - frameStart;
-  if (frameMs > 16) {
-    console.log("[PERF] Slow frame", { total: frameMs.toFixed(2) + "ms" });
-  }
+  timeFlush(16);
 }
 
 function drawDamageFlash(width: number, height: number) {

@@ -59,13 +59,14 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
   _polyBuffers.resetFrame();
   _asteroidLockMap.clear();
 
-  const primaryId = getState().player.targetLock?.id;
-  const selectedId = getState().player._assignTargetId;
-  if (Array.isArray(getState().player.lockQueue)) {
-    for (const slot of getState().player.lockQueue) _asteroidLockMap.set(slot.id, slot);
+  const player = getState().player;
+  const primaryId = player.targetLock?.id;
+  const selectedId = player._assignTargetId;
+  if (Array.isArray(player.lockQueue)) {
+    for (const slot of player.lockQueue) _asteroidLockMap.set(slot.id, slot);
   }
 
-  const asteroids = sys?._liveAsteroids ?? sys?.asteroids.filter((a) => !a.depleted && a.hp > 0) ?? [];
+  const asteroids = sys?._liveAsteroids ?? [];
 
   for (const a of asteroids) {
       if (!isVisible(a.x, a.y, a.radius + 10)) continue;

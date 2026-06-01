@@ -58,3 +58,11 @@ export function sendChatToWorker(worker: Worker, clientId: string, message: stri
 export function sendChatToSocket(socket: WebSocket, clientId: string, message: string) {
   sendSocketMessage(socket, "chat", { id: clientId, message });
 }
+
+export function sendTypingToWorker(worker: Worker, clientId: string, typing: boolean) {
+  sendWorkerMessage(worker, "typing", { id: clientId, typing });
+}
+
+export function sendTypingToSocket(socket: WebSocket, clientId: string, typing: boolean) {
+  sendSocketMessage(socket, "typing", { id: clientId, typing });
+}

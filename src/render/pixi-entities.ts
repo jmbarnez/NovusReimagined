@@ -496,7 +496,9 @@ export function syncPixiEntities(alpha: number, now: number): void {
         b.nameText.style.fill = textColor;
         b.lastTextColor = textColor;
       }
-      b.levelText.text = lvlStr;
+      if (b.levelText.text !== lvlStr) {
+        b.levelText.text = lvlStr;
+      }
 
       const cardW = b.levelText.width + padX * 2;
       const namePadX = 6;

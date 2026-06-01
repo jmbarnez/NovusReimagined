@@ -289,8 +289,16 @@ export class GameServer {
       type: "chat",
       payload: {
         senderName,
+        senderId: id,
         message,
       }
+    });
+  }
+
+  public handleClientTyping(id: string, typing: boolean) {
+    this.broadcastToOthers(id, {
+      type: "typing",
+      payload: { id, typing },
     });
   }
 

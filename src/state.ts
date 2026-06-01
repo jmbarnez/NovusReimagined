@@ -300,6 +300,8 @@ export interface ClientState {
   mapDragLastSy: number;
   systemMapTransform?: unknown;
   mapScannerAngleDeg: number;
+  typingPlayers: Set<string>;
+  chatBubbles: Map<string, { text: string; expiresAt: number }>;
 }
 
 export const _G: GameState = {
@@ -366,6 +368,8 @@ export const Client: ClientState = {
   mapDragLastSy: 0,
   systemMapTransform: null,
   mapScannerAngleDeg: 0,
+  typingPlayers: new Set(),
+  chatBubbles: new Map(),
 };
 
 export function isPlayerReady(): boolean {

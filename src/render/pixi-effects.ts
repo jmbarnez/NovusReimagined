@@ -175,20 +175,21 @@ export function initPixiEffects(parent: Container): void {
 
 export function syncPixiEffects(now: number, alpha: number, dt: number, sys: System): void {
   if (!_wreckGfx || !_pickupGfx || !_decalGfx) return;
+  const state = getState();
   _polyBuffers.resetFrame();
 
   // ── 1. Sync Wreck Pieces ───────────────────────────────────────────────────
-  const hasWreckPieces = getState().wreckPieces?.length > 0;
+  const hasWreckPieces = state.wreckPieces?.length > 0;
   if (hasWreckPieces) _wreckGfx.clear();
-  const primaryId = getState().player.targetLock?.id;
-  const selectedId = getState().player._assignTargetId;
+  const primaryId = state.player.targetLock?.id;
+  const selectedId = state.player._assignTargetId;
   _lockSlotById.clear();
-  if (Array.isArray(getState().player.lockQueue)) {
-    for (const slot of getState().player.lockQueue) _lockSlotById.set(slot.id, slot);
+  if (Array.isArray(state.player.lockQueue)) {
+    for (const slot of state.player.lockQueue) _lockSlotById.set(slot.id, slot);
   }
 
-  if (getState().wreckPieces) {
-    for (const p of getState().wreckPieces) {
+  if (state.wreckPieces) {
+    for (const p of state.wreckPieces) {
       if (!isVisible(p.x, p.y, 50)) continue;
       const def = ENEMY_DEFS[p.type];
       const fillCol = hexStringToNumber(def?.render?.fill ?? "#332016");
@@ -243,12 +244,12 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
   }
 
   // ── 2. Sync Salvage Pickups ────────────────────────────────────────────────
-  const hasPickups = getState().salvagePickups?.length > 0;
+  const hasPickups = state.salvagePickups?.length > 0;
   if (hasPickups) _pickupGfx.clear();
   _activePickupRefs.clear();
 
-  if (getState().salvagePickups) {
-    for (const s of getState().salvagePickups) {
+  if (state.salvagePickups) {
+    for (const s of state.salvagePickups) {
       if (!isVisible(s.x, s.y, 60)) continue;
       _activePickupRefs.add(s);
 
@@ -359,10 +360,10 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
   }
 
   // ── 3. Sync Impact Decals ──────────────────────────────────────────────────
-  const hasDecals = getState().impactDecals?.length > 0;
+  const hasDecals = state.impactDecals?.length > 0;
   if (hasDecals) _decalGfx.clear();
-  if (getState().impactDecals) {
-    for (const d of getState().impactDecals) {
+  if (state.impactDecals) {
+    for (const d of state.impactDecals) {
       if (!isVisible(d.x, d.y, 30)) continue;
       const a = (d.life / d.maxLife) * 0.6;
       const colNum = hexStringToNumber(d.color);

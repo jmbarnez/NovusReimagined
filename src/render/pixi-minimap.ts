@@ -22,7 +22,6 @@ let mmApp: Application | null = null;
 let mmContainer: Container | null = null;
 let mmCanvas: HTMLCanvasElement | null = null;
 let mmGfx: Graphics | null = null;
-let mmMask: Graphics | null = null;
 let mmSweepGfx: Graphics | null = null;
 let cachedThemeKey = "";
 let cachedHudBorder = 0x37556e;
@@ -90,19 +89,19 @@ export function initPixiMinimap(): void {
     mmSweepGfx = new Graphics();
     mmContainer.addChild(mmSweepGfx);
 
-    mmMask = new Graphics();
-    mmMask.arc(HUD_MINIMAP_SIZE / 2, HUD_MINIMAP_SIZE / 2, HUD_MINIMAP_SIZE / 2 - 1, 0, TAU);
-    mmMask.fill({ color: 0xffffff, alpha: 1 });
-    mmContainer.addChild(mmMask);
-    mmGfx.mask = mmMask;
-    mmSweepGfx.mask = mmMask;
+    // Mask removed: all drawing is already clipped to the circle by range checks
+    // and the background circle bounds, so stencil testing per blip is unnecessary.
   });
 }
+
+const MINIMAP_MAX_FPS = 16; // cap minimap to ~16 FPS to save frame budget
+const MINIMAP_MIN_FRAME_MS = 1000 / MINIMAP_MAX_FPS;
 
 export function syncPixiMinimap(now: number): void {
   if (!mmApp || !mmContainer || !mmCanvas) return;
   const frameMs = getMinimapFrameMs();
-  if (frameMs > 0 && now - lastMinimapRenderMs < frameMs - 0.5) return;
+  const minMs = frameMs > 0 ? Math.max(frameMs, MINIMAP_MIN_FRAME_MS) : MINIMAP_MIN_FRAME_MS;
+  if (now - lastMinimapRenderMs < minMs - 0.5) return;
   lastMinimapRenderMs = now;
 
   const state = getState();
@@ -173,7 +172,7 @@ export function syncPixiMinimap(now: number): void {
   };
 
   // Asteroids
-  for (const a of liveAsteroids()) {
+  for (const a of liveAsteroids(player)) {
     if (dst(player.x, player.y, a.x, a.y) > range) continue;
     const px = mmX + (a.x - player.x) * scale;
     const py = mmY + (a.y - player.y) * scale;
@@ -184,7 +183,7 @@ export function syncPixiMinimap(now: number): void {
   }
 
   // Enemies
-  for (const e of liveEnemies()) {
+  for (const e of liveEnemies(player)) {
     if (dst(player.x, player.y, e.x, e.y) > range) continue;
     const px = mmX + (e.x - player.x) * scale;
     const py = mmY + (e.y - player.y) * scale;
@@ -348,14 +347,17 @@ export function syncPixiMinimap(now: number): void {
         }
       }
       const pulse = 0.65 + 0.35 * Math.abs(Math.sin(now * 0.005));
-      g.arc(gx, gy, 5 + pulse, 0, TAU);
-      g.stroke({ color: 0xffdd44, width: 1.5, alpha: pulse * 0.9 });
-      g.moveTo(gx, gy - 4);
-      g.lineTo(gx + 4, gy);
-      g.lineTo(gx, gy + 4);
-      g.lineTo(gx - 4, gy);
-      g.closePath();
-      g.fill({ color: 0xffdd44, alpha: pulse });
+      const markerR = 5 + pulse;
+      if (Math.hypot(gx - mmX, gy - mmY) + markerR <= maxRadarR) {
+        g.arc(gx, gy, markerR, 0, TAU);
+        g.stroke({ color: 0xffdd44, width: 1.5, alpha: pulse * 0.9 });
+        g.moveTo(gx, gy - 4);
+        g.lineTo(gx + 4, gy);
+        g.lineTo(gx, gy + 4);
+        g.lineTo(gx - 4, gy);
+        g.closePath();
+        g.fill({ color: 0xffdd44, alpha: pulse });
+      }
     }
   }
 

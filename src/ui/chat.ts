@@ -4,15 +4,27 @@ import { getPilotDisplayName } from "../player/player-data.js";
 import { appendLogEntry } from "./hud/logs.js";
 import { showCommsLogPanel } from "./hud-overlay.js";
 import { t } from "../utils/i18n.js";
+import { Client } from "../state.js";
 
 let chatUnsubscribe: (() => void) | null = null;
 let inputKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
 let sendClickHandler: ((e: MouseEvent) => void) | null = null;
+let focusHandler: (() => void) | null = null;
+let blurHandler: (() => void) | null = null;
+
+function addChatBubble(netId: string, text: string): void {
+  Client.chatBubbles.set(netId, { text, expiresAt: performance.now() + 5000 });
+}
 
 function sendChatInput(inputEl: HTMLInputElement): void {
   const text = inputEl.value.trim();
-  if (text) gameClient.sendChatMessage(text);
+  if (text) {
+    gameClient.sendChatMessage(text);
+    const selfId = getState().player?.netId ?? "local";
+    addChatBubble(selfId, text);
+  }
   inputEl.value = "";
+  gameClient.sendTyping(false);
 }
 
 function appendChatMessage(sender: string, text: string, isSystem = false) {
@@ -47,8 +59,9 @@ export function initChat() {
   appendChatMessage("SYSTEM", t("chat.welcome"), true);
   inputRow.style.display = "flex";
 
-  chatUnsubscribe = gameClient.onChatMessage((senderName, message) => {
+  chatUnsubscribe = gameClient.onChatMessage((senderName, message, senderId) => {
     appendChatMessage(senderName, message);
+    if (senderId) addChatBubble(senderId, message);
   });
 
   inputKeydownHandler = (e: KeyboardEvent) => {
@@ -60,11 +73,17 @@ export function initChat() {
       e.preventDefault();
       e.stopPropagation();
       inputEl.value = "";
+      gameClient.sendTyping(false);
       inputEl.blur();
     }
   };
 
   inputEl.addEventListener("keydown", inputKeydownHandler);
+
+  focusHandler = () => gameClient.sendTyping(true);
+  blurHandler = () => gameClient.sendTyping(false);
+  inputEl.addEventListener("focus", focusHandler);
+  inputEl.addEventListener("blur", blurHandler);
 
   sendClickHandler = (e: MouseEvent) => {
     e.preventDefault();
@@ -84,12 +103,20 @@ export function destroyChat() {
   if (inputEl && inputKeydownHandler) {
     inputEl.removeEventListener("keydown", inputKeydownHandler);
   }
+  if (inputEl && focusHandler) {
+    inputEl.removeEventListener("focus", focusHandler);
+  }
+  if (inputEl && blurHandler) {
+    inputEl.removeEventListener("blur", blurHandler);
+  }
   const sendBtn = document.getElementById("hud-log-chat-send");
   if (sendBtn && sendClickHandler) {
     sendBtn.removeEventListener("click", sendClickHandler);
   }
   inputKeydownHandler = null;
   sendClickHandler = null;
+  focusHandler = null;
+  blurHandler = null;
 
   const inputRow = document.getElementById("hud-log-chat-input-row");
   if (inputRow) inputRow.style.display = "none";

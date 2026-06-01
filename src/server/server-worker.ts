@@ -68,6 +68,13 @@ self.onmessage = (e: MessageEvent) => {
       }
       break;
 
+    case "typing":
+      if (server && payload) {
+        const { id, typing } = payload;
+        server.handleClientTyping(id, typing);
+      }
+      break;
+
     case "ack":
       if (server && payload) {
         const { id, tick } = payload;

@@ -39,11 +39,11 @@ function hexStringToNumber(hex: string): number {
 }
 
 /** Re-anchor beam start to the rendered belly turret mount when it originated from a ship. */
-function resolveBeamStart(x1: number, y1: number, alpha: number, sys: System): { x: number; y: number } {
-  if (getState().player) {
-    const playerMount = getPlayerTurretOrigin(getState().player);
-    if (Math.hypot(x1 - getState().player.x, y1 - getState().player.y) < 42 || Math.hypot(x1 - playerMount.x, y1 - playerMount.y) < 18) {
-      return getRenderedPlayerTurretOrigin(alpha, getState().player);
+function resolveBeamStart(x1: number, y1: number, alpha: number, sys: System, player: ReturnType<typeof getState>["player"]): { x: number; y: number } {
+  if (player) {
+    const playerMount = getPlayerTurretOrigin(player);
+    if (Math.hypot(x1 - player.x, y1 - player.y) < 42 || Math.hypot(x1 - playerMount.x, y1 - playerMount.y) < 18) {
+      return getRenderedPlayerTurretOrigin(alpha, player);
     }
   }
   for (const e of sys?._liveEnemies ?? []) {
@@ -74,14 +74,15 @@ export function initPixiCombat(parent: Container): void {
 
 export function syncPixiCombat(now: number, alpha: number, sys: System): void {
   if (!_bulletGfx || !_beamGfx || !_utilityGfx) return;
+  const state = getState();
   const useFixedTickInterpolation = Client.multiplayerRole === "none";
 
   // 1. Sync Bullets (Projectiles and Enemy Projectiles)
   _bulletGfx.clear();
-  
+
   // Standard Player bullets
-  if (getState().bullets) {
-    for (const b of getState().bullets) {
+  if (state.bullets) {
+    for (const b of state.bullets) {
       if (!isVisible(b.x, b.y, 14)) continue;
       const ix = useFixedTickInterpolation ? lerp(b.px, b.x, alpha) : b.x;
       const iy = useFixedTickInterpolation ? lerp(b.py, b.y, alpha) : b.y;
@@ -138,8 +139,8 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
   }
 
   // Enemy bullets
-  if (getState().enemyBullets) {
-    for (const b of getState().enemyBullets) {
+  if (state.enemyBullets) {
+    for (const b of state.enemyBullets) {
       if (!isVisible(b.x, b.y, 14)) continue;
       const ix = useFixedTickInterpolation ? lerp(b.px, b.x, alpha) : b.x;
       const iy = useFixedTickInterpolation ? lerp(b.py, b.y, alpha) : b.y;
@@ -176,10 +177,10 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
 
   // 2. Sync Beams (Standard weapon beams)
   _beamGfx.clear();
-  if (getState().beams) {
-    for (const b of getState().beams) {
+  if (state.beams) {
+    for (const b of state.beams) {
       const colNum = hexStringToNumber(b.color);
-      const start = resolveBeamStart(b.x1, b.y1, alpha, sys);
+      const start = resolveBeamStart(b.x1, b.y1, alpha, sys, state.player);
 
       // Outer soft glow layer
       _beamGfx.moveTo(start.x, start.y).lineTo(b.x2, b.y2)
@@ -199,10 +200,10 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
   _utilityGfx.clear();
   _currentNow = now;
 
-  const beamOrigin = getState().player ? getRenderedPlayerTurretOrigin(alpha, getState().player) : null;
+  const beamOrigin = state.player ? getRenderedPlayerTurretOrigin(alpha, state.player) : null;
 
   // Local player beams
-  const localPlayer = getState().player;
+  const localPlayer = state.player;
   if (localPlayer && beamOrigin) {
     const miningLaser = localPlayer.miningLaser;
     if (miningLaser?.active) {
@@ -237,9 +238,9 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
   }
 
   // Remote player beams
-  if (getState().players) {
-    const localNetId = getState().player?.netId;
-    for (const p of getState().players.values()) {
+  if (state.players) {
+    const localNetId = state.player?.netId;
+    for (const p of state.players.values()) {
       if (p.netId && p.netId === localNetId) continue;
       const pOrigin = getRenderedTurretOrigin(p, alpha);
 

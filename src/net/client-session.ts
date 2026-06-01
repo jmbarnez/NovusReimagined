@@ -24,6 +24,8 @@ import {
   sendAckToSocket,
   sendChatToWorker,
   sendChatToSocket,
+  sendTypingToWorker,
+  sendTypingToSocket,
 } from "./client-transport.js";
 import { floatText, spawnExplosion, spawnShockwave, spawnImpactFlash, spawnBeam } from "../utils/fx.js";
 
@@ -271,7 +273,10 @@ export class GameClient {
 
   private onPlayerLeft(payload: { id?: string; netId?: string }) {
     const netId = payload.netId ?? payload.id;
-    if (netId) removeRemotePlayerPeer(netId);
+    if (!netId) return;
+    removeRemotePlayerPeer(netId);
+    Client.typingPlayers.delete(netId);
+    Client.chatBubbles.delete(netId);
   }
 
   public disconnect() {
@@ -345,12 +350,19 @@ export class GameClient {
       case "sync_character":
         this.onSyncCharacter((msg.payload as { character: Player }).character);
         break;
-      case "chat":
-        this.triggerChatCallbacks(
-          (msg.payload as { senderName: string; message: string }).senderName,
-          (msg.payload as { senderName: string; message: string }).message,
-        );
+      case "chat": {
+        const cp = msg.payload as { senderName: string; message: string; senderId?: string } | undefined;
+        this.triggerChatCallbacks(cp?.senderName ?? "Unknown", cp?.message ?? "", cp?.senderId);
         break;
+      }
+      case "typing": {
+        const tp = msg.payload as { id: string; typing: boolean } | undefined;
+        if (tp?.id) {
+          if (tp.typing) Client.typingPlayers.add(tp.id);
+          else Client.typingPlayers.delete(tp.id);
+        }
+        break;
+      }
       case "player_joined":
         this.onPlayerJoined(msg.payload as RemotePlayerBrief & { id?: string; name?: string });
         break;
@@ -391,12 +403,19 @@ export class GameClient {
       case "sync_character":
         this.onSyncCharacter((msg.payload as { character: Player }).character);
         break;
-      case "chat":
-        this.triggerChatCallbacks(
-          (msg.payload as { senderName: string; message: string }).senderName,
-          (msg.payload as { senderName: string; message: string }).message,
-        );
+      case "chat": {
+        const cp = msg.payload as { senderName: string; message: string; senderId?: string } | undefined;
+        this.triggerChatCallbacks(cp?.senderName ?? "Unknown", cp?.message ?? "", cp?.senderId);
         break;
+      }
+      case "typing": {
+        const tp = msg.payload as { id: string; typing: boolean } | undefined;
+        if (tp?.id) {
+          if (tp.typing) Client.typingPlayers.add(tp.id);
+          else Client.typingPlayers.delete(tp.id);
+        }
+        break;
+      }
       case "player_joined":
         this.onPlayerJoined(msg.payload as RemotePlayerBrief & { id?: string; name?: string });
         break;
@@ -503,17 +522,17 @@ export class GameClient {
     }
   }
 
-  private chatCallbacks = new Set<(senderName: string, message: string) => void>();
+  private chatCallbacks = new Set<(senderName: string, message: string, senderId?: string) => void>();
 
-  public onChatMessage(cb: (senderName: string, message: string) => void) {
+  public onChatMessage(cb: (senderName: string, message: string, senderId?: string) => void) {
     this.chatCallbacks.add(cb);
     return () => this.chatCallbacks.delete(cb);
   }
 
-  private triggerChatCallbacks(senderName: string, message: string) {
+  private triggerChatCallbacks(senderName: string, message: string, senderId?: string) {
     for (const cb of this.chatCallbacks) {
       try {
-        cb(senderName, message);
+        cb(senderName, message, senderId);
       } catch (e) {
         console.error("[GameClient] Error in chat callback:", e);
       }
@@ -526,6 +545,15 @@ export class GameClient {
       sendChatToWorker(this.localWorker, this.clientId, message);
     } else if (this.socket) {
       sendChatToSocket(this.socket, this.clientId, message);
+    }
+  }
+
+  public sendTyping(typing: boolean) {
+    if (this.connectionState !== "connected") return;
+    if (this.localWorker) {
+      sendTypingToWorker(this.localWorker, this.clientId, typing);
+    } else if (this.socket) {
+      sendTypingToSocket(this.socket, this.clientId, typing);
     }
   }
 }
