@@ -4,6 +4,7 @@ import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { normalizeProfile, applyResists, computeHitQuality } from "../src/combat.js";
 import { damageEnemy } from "../src/combat/damage-enemy.js";
+import { killEnemy } from "../src/combat/kill-rewards.js";
 import { fireMissile } from "../src/combat/missile.js";
 import { computeScaledWeaponProfile } from "../src/player/player-stats.js";
 import { MODULES } from "../src/data/modules.js";
@@ -119,5 +120,29 @@ describe("server-side weapon ownership", () => {
     const mod = MODULES["tu-missile"];
     fireMissile(0, 0, 0, WEAPON_PROFILES["tu-missile"], 10, mod, null, 0, remote);
     expect(G.bullets[0]?.owner).toBe(remote);
+  });
+
+  it("drops one credit and one ferro chunk from target dummies", () => {
+    const player = makePlayer();
+    const enemy = {
+      id: "dummy-1",
+      type: "target_dummy",
+      name: "Training Dummy",
+      x: 10,
+      y: 20,
+      vx: 0,
+      vy: 0,
+      alive: true,
+      _lastHitByPlayer: player,
+      _lastPlayerHitAt: performance.now(),
+    } as Enemy;
+    G.salvagePickups = [];
+
+    killEnemy(enemy);
+
+    expect(G.salvagePickups).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "credits", payload: "credits", qty: 1 }),
+      expect.objectContaining({ kind: "ore", payload: "iron", qty: 1 }),
+    ]));
   });
 });

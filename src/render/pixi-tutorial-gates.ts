@@ -52,7 +52,6 @@ function drawOctPlatform(
   y: number,
   rot: number,
   active: boolean,
-  pulse: number,
 ): void {
   // Octagon — inline moveTo/lineTo to avoid per-frame array allocation
   const r = PYLON_R;
@@ -73,10 +72,10 @@ function drawOctPlatform(
     gfx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
   }
   gfx.closePath();
-  gfx.stroke({ color: COL.steelRim, width: 0.7, alpha: active ? 0.45 + pulse * 0.2 : 0.15 });
+  gfx.stroke({ color: COL.steelRim, width: 0.7, alpha: active ? 0.55 : 0.15 });
 
   gfx.circle(x, y, 6.5);
-  gfx.stroke({ color: active ? COL.cyan : COL.cyanMid, width: 0.9, alpha: active ? 0.4 + pulse * 0.35 : 0.18 });
+  gfx.stroke({ color: active ? COL.cyan : COL.cyanMid, width: 0.9, alpha: active ? 0.6 : 0.18 });
 
   gfx.circle(x, y, 2.2);
   gfx.fill({ color: active ? 0x6ef0ff : 0x5080a0, alpha: active ? 0.85 : 0.35 });
@@ -84,7 +83,7 @@ function drawOctPlatform(
   const bx = x + Math.cos(rot) * (PYLON_R * 0.62);
   const by = y + Math.sin(rot) * (PYLON_R * 0.62);
   gfx.circle(bx, by, 1.6);
-  gfx.fill({ color: COL.amber, alpha: active ? 0.45 + pulse * 0.35 : 0.12 });
+  gfx.fill({ color: COL.amber, alpha: active ? 0.6 : 0.12 });
 }
 
 function drawLatticeStub(
@@ -122,9 +121,7 @@ function drawLatticeStub(
 function drawGateStructure(
   gfx: Graphics,
   gate: TutorialBoostGate,
-  now: number,
   active: boolean,
-  pulse: number,
 ): void {
   const { left, right } = gatePillarPositions(gate);
   const ang = gate.angle;
@@ -133,8 +130,8 @@ function drawGateStructure(
   const px = Math.cos(ang + Math.PI / 2);
   const py = Math.sin(ang + Math.PI / 2);
 
-  drawOctPlatform(gfx, left.x, left.y, ang, active, pulse);
-  drawOctPlatform(gfx, right.x, right.y, ang, active, pulse);
+  drawOctPlatform(gfx, left.x, left.y, ang, active);
+  drawOctPlatform(gfx, right.x, right.y, ang, active);
 
   drawLatticeStub(gfx, left.x, left.y, ang, 22, active);
   drawLatticeStub(gfx, right.x, right.y, ang, 22, active);
@@ -168,27 +165,18 @@ function drawGateStructure(
   gfx.lineTo(mx + px * brace, my - py * brace);
   gfx.stroke({ color: COL.hullLite, width: 1.1, alpha: active ? 0.5 : 0.2 });
 
-  const planeAlpha = active ? 0.22 + pulse * 0.38 : 0.07;
+  const planeAlpha = active ? 0.4 : 0.07;
   gfx.moveTo(left.x, left.y);
   gfx.lineTo(right.x, right.y);
   gfx.stroke({ color: COL.cyan, width: 1.8, alpha: planeAlpha });
 
-  const segCount = 6;
+  // Static arch halo (no spin / pulse)
   const arcR = gate.halfWidth * 0.92;
-  const spin = now * 0.00035;
-  for (let j = 0; j < segCount; j++) {
-    const a0 = ang + Math.PI / 2 + spin + (j / segCount) * TAU;
-    const a1 = a0 + (TAU / segCount) * 0.55;
-    gfx.arc(gate.x, gate.y, arcR, a0, a1);
-    gfx.stroke({
-      color: j % 2 === 0 ? COL.cyanGlow : COL.cyanMid,
-      width: j % 2 === 0 ? 1.8 : 1.1,
-      alpha: planeAlpha * (j % 2 === 0 ? 1 : 0.65),
-    });
-  }
+  gfx.arc(gate.x, gate.y, arcR, ang + Math.PI * 0.1, ang + Math.PI * 0.9);
+  gfx.stroke({ color: COL.cyanGlow, width: 1.4, alpha: active ? 0.35 : 0.12 });
 
   gfx.circle(gate.x, gate.y, gate.halfWidth * 0.12);
-  gfx.fill({ color: COL.cyanGlow, alpha: active ? 0.08 + pulse * 0.12 : 0.03 });
+  gfx.fill({ color: COL.cyanGlow, alpha: active ? 0.12 : 0.03 });
 }
 
 function ensureGateBundle(gate: TutorialBoostGate): GateBundle {
@@ -253,10 +241,9 @@ export function syncPixiTutorialGates(now: number): void {
     const bundle = ensureGateBundle(gate);
     const cd = getTutorialGateCooldown(gate.id, getState().player);
     const active = cd <= 0;
-    const pulse = 0.5 + 0.5 * Math.sin(now * 0.004 + gate.x * 0.001);
     bundle.container.visible = true;
     bundle.gfx.clear();
-    drawGateStructure(bundle.gfx, gate, now, active, pulse);
+    drawGateStructure(bundle.gfx, gate, active);
     bundle.hintText.visible = false;
     bundle.hintBg.visible = false;
   }

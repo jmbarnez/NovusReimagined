@@ -64,8 +64,6 @@ function getCardAnchorHighlight(step: ReturnType<typeof getCurrentTutorialStep>)
       "targeting",
       "mining",
       "gunnery",
-      "scan-signature",
-      "breach-signature",
       "graduation",
     ]);
     return hudAnchoredSteps.has(step.id) ? highlighted : null;
@@ -262,20 +260,15 @@ function syncHudHighlights() {
   } else if (step.id === "targeting") {
     const scannerDock = document.getElementById("hud-scanner-dock");
     scannerDock?.classList.add("hud-highlight");
-    document.getElementById("hud-lock-rail")?.classList.add("hud-highlight");
   } else if (step.id === "mining") {
     document.getElementById("hud-slots")?.classList.add("hud-highlight");
-    document.getElementById("hud-lock-rail")?.classList.add("hud-highlight");
   } else if (step.id === "hangar-high" || step.id === "industry" || step.id === "hangar-turrets") {
     if (!Client.stationOpen) {
       document.getElementById("hud-dock-prompt")?.classList.add("hud-highlight");
     }
   } else if (step.id === "gunnery") {
     document.getElementById("hud-slots")?.classList.add("hud-highlight");
-    document.getElementById("hud-lock-rail")?.classList.add("hud-highlight");
-  } else if (step.id === "scan-signature") {
-    document.getElementById("hud-minimap")?.classList.add("hud-highlight");
-  } else if (step.id === "breach-signature" || step.id === "graduation") {
+  } else if (step.id === "graduation") {
     document.getElementById("hud-dock-prompt")?.classList.add("hud-highlight");
   }
 }

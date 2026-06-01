@@ -17,13 +17,12 @@ import { canModifyFitting } from "../src/utils/fitting-gate.js";
 import { detectGateCrossing, getBoostGatesForTrack } from "../src/data/tutorial-layout.js";
 
 describe("tutorial tracks", () => {
-  it("defines approach, return spoke, and four hub spokes", () => {
+  it("defines approach, return spoke, and three hub spokes", () => {
     expect(TUTORIAL_TRACKS.map((t) => t.id)).toEqual([
       "approach",
       "spoke-mining",
       "spoke-mining-return",
       "spoke-gunnery",
-      "spoke-signature",
       "spoke-gate",
     ]);
   });

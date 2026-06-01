@@ -57,7 +57,10 @@
 @keyframes ov-threat-blink{from{opacity:1}to{opacity:0.3}}
 .ov-num{text-align:right;font-variant-numeric:tabular-nums;color:var(--hud-text-dim);}
 .ov-lock{background:color-mix(in srgb, var(--hud-bg-deep) 90%, transparent);color:var(--hud-text-bright);border:1px solid var(--hud-border);padding:2px 8px;cursor:pointer;font-size:9px;font-family:inherit;border-radius:2px;transition:all 0.15s ease-in-out;}
+.ov-lock--locked{color:var(--hud-accent);border-color:color-mix(in srgb,var(--hud-accent) 55%,var(--hud-border));}
+.ov-lock--scanning,.ov-lock:disabled{color:var(--hud-shield);border-color:color-mix(in srgb,var(--hud-shield) 45%,var(--hud-border));cursor:default;opacity:0.85;}
 .ov-lock:hover{background:color-mix(in srgb, var(--hud-accent) 15%, transparent);border-color:var(--hud-accent);}
+.ov-lock:disabled:hover{background:color-mix(in srgb, var(--hud-bg-deep) 90%, transparent);color:var(--hud-shield);border-color:color-mix(in srgb,var(--hud-shield) 45%,var(--hud-border));}
 .br-pane{min-height:0;height:100%;}
 .br-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;}
 .br-h{font-size:9px;color:var(--hud-text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}

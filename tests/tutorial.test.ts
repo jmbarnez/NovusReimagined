@@ -7,8 +7,6 @@ import {
   TUTORIAL_STEP_COUNT,
   buildTutorialCtx,
   hasLockOnAsteroid,
-  isTrainingSiteComplete,
-  isTrainingSiteResolved,
   shouldShowWarpGate,
   canWarpThroughGate,
   isTutorialExitGateRevealed,
@@ -30,6 +28,7 @@ import { TUTORIAL_STEP_REWARDS } from "../src/data/tutorial-mission.js";
 import { skipTutorial } from "../src/tutorial.js";
 import { SAVE_KEY } from "../src/constants.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
+import { ENEMY_SPAWNS } from "../src/data/enemy-spawns.js";
 
 function stepById(id: string) {
   const step = TUTORIAL_STEPS.find((s) => s.id === id);
@@ -65,8 +64,8 @@ function makeSys(enemies: Enemy[]): System {
 }
 
 describe("tutorial step list", () => {
-  it("has sixteen steps with hangar fitting legs before mining and gunnery", () => {
-    expect(TUTORIAL_STEP_COUNT).toBe(16);
+  it("has thirteen steps with hangar fitting legs before mining and gunnery", () => {
+    expect(TUTORIAL_STEP_COUNT).toBe(13);
     expect(TUTORIAL_STEPS.map((s) => s.id)).toEqual([
       "hud-tour",
       "fly-academy",
@@ -79,11 +78,17 @@ describe("tutorial step list", () => {
       "hangar-turrets",
       "fly-gunnery",
       "gunnery",
-      "scan-signature",
-      "fly-signature",
-      "breach-signature",
       "fly-gate",
       "graduation",
+    ]);
+  });
+
+  it("uses only target dummies in the tutorial target range spawn", () => {
+    expect(ENEMY_SPAWNS["sys-0"]).toEqual([
+      expect.objectContaining({
+        name: "Target Range",
+        enemies: [{ type: "target_dummy", count: 3, level: 1 }],
+      }),
     ]);
   });
 });
@@ -289,22 +294,6 @@ describe("tutorial step completion", () => {
     expect(industry.isComplete(ctxAt(300, -300, { craftQueue: 0, refined: 0 }))).toBe(true);
   });
 
-  it("scan-signature completes when training site is resolved", () => {
-    const scan = stepById("scan-signature");
-    expect(scan.isComplete(buildTutorialCtx(0, 0, {}, G.P))).toBe(false);
-    G.P.scannedSiteIds.push("site-sys-0-training");
-    expect(isTrainingSiteResolved(G.P)).toBe(true);
-    expect(scan.isComplete(buildTutorialCtx(0, 0, {}, G.P))).toBe(true);
-  });
-
-  it("breach-signature completes when training datacore is cleared", () => {
-    const breach = stepById("breach-signature");
-    expect(breach.isComplete(buildTutorialCtx(0, 0, {}, G.P))).toBe(false);
-    G.P.completedSiteIds.push("site-sys-0-training");
-    expect(isTrainingSiteComplete(G.P)).toBe(true);
-    expect(breach.isComplete(buildTutorialCtx(0, 0, {}, G.P))).toBe(true);
-  });
-
   it("gunnery requires in-zone dummy kill", () => {
     const gunnery = stepById("gunnery");
     G.GALAXY[0].enemies = [
@@ -329,7 +318,7 @@ describe("tutorial exit gate", () => {
   }
 
   it("stays hidden until the fly-gate approach step", () => {
-    G.P.tutorial.step = stepIndex("breach-signature");
+    G.P.tutorial.step = stepIndex("gunnery");
     expect(isTutorialExitGateRevealed(G.P)).toBe(false);
     G.P.tutorial.step = stepIndex("fly-gate");
     expect(isTutorialExitGateRevealed(G.P)).toBe(true);

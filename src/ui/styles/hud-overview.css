@@ -159,10 +159,29 @@
   transition: all 0.1s ease;
 }
 
+#hud-overview-panel .ov-lock--locked {
+  color: var(--hud-accent);
+  border-color: color-mix(in srgb, var(--hud-accent) 55%, var(--hud-border-soft));
+}
+
+#hud-overview-panel .ov-lock--scanning,
+#hud-overview-panel .ov-lock:disabled {
+  color: var(--hud-shield);
+  border-color: color-mix(in srgb, var(--hud-shield) 45%, var(--hud-border-soft));
+  cursor: default;
+  opacity: 0.85;
+}
+
 #hud-overview-panel .ov-lock:hover {
   background: var(--hud-accent);
   color: #000000;
   border-color: var(--hud-accent);
+}
+
+#hud-overview-panel .ov-lock:disabled:hover {
+  background: var(--hud-bg-elevated);
+  color: var(--hud-shield);
+  border-color: color-mix(in srgb, var(--hud-shield) 45%, var(--hud-border-soft));
 }
 
 #hud-overview-panel .ov-lock:active {

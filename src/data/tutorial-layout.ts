@@ -56,6 +56,8 @@ export function shouldRelocateTutorialStart(x: number, y: number): boolean {
 }
 
 /** Training zones — east of the Academy hub. */
+export const TUTORIAL_FLIGHT_DECK = { x: -1650, y: -140 } as const;
+export const TUTORIAL_FLIGHT_DECK_R = 200;
 export const TUTORIAL_BELT_CENTER = { x: 2800, y: 0 } as const;
 /** Mining belt completion radius — covers full asteroid spawn spread plus margin. */
 export const TUTORIAL_MINING_ZONE_R = Math.max(620, C.WORLD.SECTOR.beltSpread.hi + 80);
@@ -63,7 +65,7 @@ export const TUTORIAL_GUNNERY_CENTER = { x: 2200, y: 1600 } as const;
 export const TUTORIAL_TRAINING_SITE_X = 2000;
 export const TUTORIAL_TRAINING_SITE_Y = 2900;
 /** Stargate — farthest east (Novus Prime link). */
-export const TUTORIAL_GATE = { x: 3600, y: 0 } as const;
+export const TUTORIAL_GATE = { x: 3600, y: -1000 } as const;
 
 export interface TutorialLocalRegion {
   id: string;
@@ -75,11 +77,10 @@ export interface TutorialLocalRegion {
 }
 
 export const TUTORIAL_LOCAL_REGIONS: TutorialLocalRegion[] = [
-  { id: "tut-flight", name: t("world.region.flightDeck"), x: -1650, y: -140, r: 200, stepId: "fly-academy" },
+  { id: "tut-flight", name: t("world.region.flightDeck"), x: TUTORIAL_FLIGHT_DECK.x, y: TUTORIAL_FLIGHT_DECK.y, r: TUTORIAL_FLIGHT_DECK_R, stepId: "fly-academy" },
   { id: "tut-mining", name: t("world.region.miningRange"), x: 2800, y: 0, r: TUTORIAL_MINING_ZONE_R, stepId: "targeting" },
   { id: "tut-industry", name: t("world.region.industryBench"), x: 0, y: 0, r: 280, stepId: "industry" },
   { id: "tut-gunnery", name: t("world.region.gunneryBay"), x: 2200, y: 1600, r: 160, stepId: "gunnery" },
-  { id: "tut-signature", name: t("world.region.signalTrace"), x: 2000, y: 2900, r: 240, stepId: "signature" },
 ];
 
 // ─── Guided track lanes (hub-and-spoke) ───
@@ -176,9 +177,7 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
     id: "approach",
     points: [
       TUTORIAL_SPAWN,
-      { x: -1900, y: -160 },
-      { x: -950, y: -60 },
-      { x: -280, y: 0 },
+      TUTORIAL_FLIGHT_DECK,
       HUB,
     ],
     halfWidth: 120,
@@ -186,13 +185,13 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
   },
   {
     id: "spoke-mining",
-    points: [HUB, { x: 1400, y: 0 }, TUTORIAL_BELT_CENTER],
+    points: [HUB, TUTORIAL_BELT_CENTER],
     halfWidth: 110,
     activeForSteps: ["fly-mining"],
   },
   {
     id: "spoke-mining-return",
-    points: [TUTORIAL_BELT_CENTER, { x: 1400, y: 0 }, HUB],
+    points: [TUTORIAL_BELT_CENTER, HUB],
     halfWidth: 110,
     activeForSteps: ["fly-station"],
   },
@@ -203,14 +202,8 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
     activeForSteps: ["fly-gunnery"],
   },
   {
-    id: "spoke-signature",
-    points: [HUB, { x: 1000, y: 1450 }, { x: TUTORIAL_TRAINING_SITE_X, y: TUTORIAL_TRAINING_SITE_Y }],
-    halfWidth: 110,
-    activeForSteps: ["fly-signature"],
-  },
-  {
     id: "spoke-gate",
-    points: [HUB, { x: 1800, y: 0 }, TUTORIAL_GATE],
+    points: [HUB, TUTORIAL_GATE],
     halfWidth: 110,
     activeForSteps: ["fly-gate"],
   },
@@ -369,11 +362,57 @@ function buildBoostGatesForTrack(
   });
 }
 
+function buildEvenBoostGatesForTrackRange(
+  trackId: string,
+  count: number,
+  strength: number,
+  halfWidth = 108,
+  range?: { startArc?: number; endArc?: number; marginArc?: number },
+): TutorialBoostGate[] {
+  const track = getTutorialTrackById(trackId);
+  if (!track) return [];
+
+  const total = trackTotalArcLength(track);
+  if (total <= 0) return [];
+
+  const startArc = Math.max(0, Math.min(total, range?.startArc ?? 0));
+  const endArc = Math.max(0, Math.min(total, range?.endArc ?? total));
+  const marginArc = Math.max(0, range?.marginArc ?? 80);
+
+  const usableStart = Math.min(endArc, startArc + marginArc);
+  const usableEnd = Math.max(startArc, endArc - marginArc);
+  if (usableEnd <= usableStart + 1) return [];
+
+  const step = (usableEnd - usableStart) / (count + 1);
+  const gates: TutorialBoostGate[] = [];
+  for (let i = 0; i < count; i++) {
+    const arc = usableStart + step * (i + 1);
+    const pt = pointAtArcLength(track, arc);
+    const angle = tangentAtArcLength(track, arc);
+    gates.push({
+      id: `${trackId}-gate-${i}`,
+      x: pt.x,
+      y: pt.y,
+      angle,
+      halfWidth,
+      strength,
+      trackId,
+      cooldownS: 4,
+      pillarHeight: 150,
+    });
+  }
+  return gates;
+}
+
 export const TUTORIAL_BOOST_GATES: TutorialBoostGate[] = [
-  ...buildBoostGatesForTrack("approach", GATE_FRACTIONS, 200),
-  ...buildBoostGatesForTrack("spoke-mining", GATE_FRACTIONS, 180),
+  ...buildEvenBoostGatesForTrackRange("approach", 4, 200, 108, {
+    startArc: segmentLength(TUTORIAL_SPAWN.x, TUTORIAL_SPAWN.y, TUTORIAL_FLIGHT_DECK.x, TUTORIAL_FLIGHT_DECK.y),
+  }),
+  ...buildEvenBoostGatesForTrackRange("spoke-mining", 4, 180, 108, {
+    endArc: segmentLength(HUB.x, HUB.y, TUTORIAL_BELT_CENTER.x, TUTORIAL_BELT_CENTER.y) - 500,
+    marginArc: 80,
+  }),
   ...buildBoostGatesForTrack("spoke-gunnery", GATE_FRACTIONS, 180),
-  ...buildBoostGatesForTrack("spoke-signature", GATE_FRACTIONS, 180),
   ...buildBoostGatesForTrack("spoke-gate", GATE_FRACTIONS, 190),
 ];
 
@@ -382,7 +421,8 @@ export const TUTORIAL_BOOST_PADS = TUTORIAL_BOOST_GATES;
 
 export function getBoostGatesForTrack(trackId: string | undefined): TutorialBoostGate[] {
   if (!trackId) return [];
-  return TUTORIAL_BOOST_GATES.filter((g) => g.trackId === trackId);
+  const resolved = trackId === "spoke-mining-return" ? "spoke-mining" : trackId;
+  return TUTORIAL_BOOST_GATES.filter((g) => g.trackId === resolved);
 }
 
 export function getBoostPadsForTrack(trackId: string | undefined): TutorialBoostGate[] {
@@ -405,7 +445,6 @@ export function snapToTrackCenterline(track: TutorialTrackSegment, px: number, p
 
 const HUB_ZONE = { x: TUTORIAL_HUB.x, y: TUTORIAL_HUB.y, r: 280 } as const;
 const MINING_ZONE = { x: TUTORIAL_BELT_CENTER.x, y: TUTORIAL_BELT_CENTER.y, r: TUTORIAL_MINING_ZONE_R } as const;
-const SIGNATURE_ZONE = { x: TUTORIAL_TRAINING_SITE_X, y: TUTORIAL_TRAINING_SITE_Y, r: 220 } as const;
 const GATE_ZONE = { x: TUTORIAL_GATE.x, y: TUTORIAL_GATE.y, r: 280 } as const;
 
 export function tutorialRegionZone(stepId: string): { x: number; y: number; r: number } {
@@ -427,11 +466,6 @@ export function tutorialRegionZone(stepId: string): { x: number; y: number; r: n
         ? { x: gunnery.x, y: gunnery.y, r: gunnery.r }
         : { x: TUTORIAL_GUNNERY_CENTER.x, y: TUTORIAL_GUNNERY_CENTER.y, r: 160 };
     }
-    case "scan-signature":
-      return HUB_ZONE;
-    case "fly-signature":
-    case "breach-signature":
-      return SIGNATURE_ZONE;
     case "fly-gate":
     case "graduation":
       return GATE_ZONE;
@@ -458,10 +492,6 @@ export function tutorialRegionByStep(stepId: string): TutorialLocalRegion | unde
     case "fly-gunnery":
     case "gunnery":
       return TUTORIAL_LOCAL_REGIONS.find((r) => r.id === "tut-gunnery");
-    case "scan-signature":
-    case "fly-signature":
-    case "breach-signature":
-      return TUTORIAL_LOCAL_REGIONS.find((r) => r.id === "tut-signature");
     default:
       return TUTORIAL_LOCAL_REGIONS.find((r) => r.stepId === stepId);
   }

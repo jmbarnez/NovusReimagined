@@ -52,6 +52,11 @@ export function renderSettings() {
   const uiScaleVal = document.getElementById("ui-scale-val") as HTMLElement | null;
   if (uiScaleVal) uiScaleVal.textContent = (settings.uiScale ?? 1.0).toFixed(2) + "x";
 
+  const fontScaleSlider = document.getElementById("font-scale") as HTMLInputElement | null;
+  if (fontScaleSlider) fontScaleSlider.value = String(settings.fontScale ?? 1.0);
+  const fontScaleVal = document.getElementById("font-scale-val") as HTMLElement | null;
+  if (fontScaleVal) fontScaleVal.textContent = (settings.fontScale ?? 1.0).toFixed(2) + "x";
+
   const langSelect = document.getElementById("settings-language") as HTMLSelectElement | null;
   if (langSelect) langSelect.value = settings.language;
 

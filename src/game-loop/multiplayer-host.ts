@@ -296,9 +296,17 @@ export async function connectToRemote(address: string): Promise<boolean> {
   try {
     const ok = await gameClient.connect(address, "", getState().player);
     netLog(ok ? `[OK] Remote connect to ${address}` : `[ERR] Remote connect failed: ${address}`);
+    if (!ok) {
+      gameClient.disconnect();
+      multiplayerRole = "none";
+      Client.multiplayerRole = "none";
+    }
     return ok;
   } catch (err) {
     netLog(`[ERR] Remote connect exception: ${err}`);
+    gameClient.disconnect();
+    multiplayerRole = "none";
+    Client.multiplayerRole = "none";
     return false;
   }
 }

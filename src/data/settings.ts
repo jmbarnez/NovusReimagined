@@ -86,6 +86,7 @@ export interface Settings {
   theme: string;
   reticleStyle: string;
   fontFamily: string;
+  fontScale: number;
   keybinds: Keybinds;
   sfxVolume: number;
   musicVolume: number;
@@ -382,6 +383,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: "default",
   reticleStyle: "classic",
   fontFamily: "Orbitron",
+  fontScale: 1.0,
   keybinds: { ...DEFAULT_KEYBINDS },
   sfxVolume: 1.0,
   musicVolume: 1.0,
@@ -410,6 +412,7 @@ export function loadSettings(): Settings {
         theme: parsed.theme || "default",
         reticleStyle: parsed.reticleStyle || "classic",
         fontFamily: parsed.fontFamily || "Orbitron",
+        fontScale: parsed.fontScale ?? 1.0,
         keybinds: { ...DEFAULT_KEYBINDS, ...(parsed.keybinds || {}) },
         sfxVolume: parsed.sfxVolume ?? 1.0,
         musicVolume: parsed.musicVolume ?? 1.0,

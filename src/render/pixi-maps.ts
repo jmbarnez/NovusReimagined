@@ -363,7 +363,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
       for (const a of sSys.asteroids) {
         if (a.depleted || a.hp <= 0 || !inPassiveRange(a.x, a.y)) continue;
         const p = toMap(a.x, a.y);
-        const alpha = passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now);
+        const alpha = passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now, a.radius * 2);
         if (alpha < 0.14) continue;
         objectGfx.arc(p.x, p.y, Math.max(1.5, a.radius * scale), 0, TAU);
         objectGfx.fill({ color: rgbaToHex(theme.hull), alpha: Math.max(0.4, alpha) });
@@ -375,7 +375,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
       for (const e of sSys.enemies) {
         if (!e.alive || !inPassiveRange(e.x, e.y)) continue;
         const p = toMap(e.x, e.y);
-        const alpha = passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now);
+        const alpha = passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now, e.sigRadius ?? 30);
         if (alpha < 0.14) continue;
         const size = Math.max(4, (e.radius ?? 3) * scale || 4);
         const angle = e.angle ?? 0;
@@ -394,7 +394,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         if (!shouldShowWarpGate(g, sSys.idx, getState().player)) continue;
         if (!inPassiveRange(g.x, g.y)) continue;
         const p = toMap(g.x, g.y);
-        const alpha = passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now);
+        const alpha = passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now, g.radius * 2);
         if (alpha < 0.14) continue;
         const size = Math.max(5, g.radius * scale || 6);
 
@@ -419,7 +419,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
       for (const s of sSys.stations) {
         const isCurrentSys = sSys.idx === player.sysIdx;
         const inRange = inPassiveRange(s.x, s.y);
-        let alpha = passiveContactOpacity(s.x, s.y, player.x, player.y, now);
+        let alpha = passiveContactOpacity(s.x, s.y, player.x, player.y, now, s.radius * 2);
         if (isCurrentSys) {
           alpha = Math.max(0.82, alpha);
         } else if (!inRange || alpha < 0.14) {

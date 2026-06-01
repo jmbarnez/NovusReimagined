@@ -2,6 +2,7 @@ import { TAU } from "../constants.js";
 
 const PASSIVE_SWEEP_SPEED = 0.0014;
 const PASSIVE_DECAY_EXPONENT = 4.8;
+const BASE_SIGNATURE_RADIUS = 45;
 
 /** Continuous passive radar sweep angle (radians). */
 export function radarSweepAngle(now: number): number {
@@ -10,6 +11,12 @@ export function radarSweepAngle(now: number): number {
 
 export function radarPingDecayExponent(): number {
   return PASSIVE_DECAY_EXPONENT;
+}
+
+export function radarSignatureDecayExponent(signatureRadius = BASE_SIGNATURE_RADIUS): number {
+  const radius = Math.max(8, signatureRadius);
+  const scaled = PASSIVE_DECAY_EXPONENT / Math.pow(radius / BASE_SIGNATURE_RADIUS, 0.65);
+  return Math.max(0.12, Math.min(8, scaled));
 }
 
 /**

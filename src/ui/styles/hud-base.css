@@ -8,6 +8,8 @@
 :root {
   --font-family: 'Orbitron', sans-serif;
   --ui-scale: 1;
+  --font-scale: 1;
+  --effective-font-scale: 1;
   --hud-scanner-w: 360px;
   --hud-minimap-w: 102px;
   /* surfaces */
@@ -43,6 +45,7 @@
 /* Ensure all inputs, buttons, tables, and text elements inherit the theme font family */
 html, body {
   font-family: var(--font-family);
+  font-size: calc(16px * var(--effective-font-scale, 1));
 }
 input, button, select, textarea, table, th, td {
   font-family: inherit;

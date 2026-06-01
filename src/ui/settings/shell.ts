@@ -108,6 +108,13 @@ export function settingsContentHTML(): string {
           <span id="ui-scale-val" class="settings-val">1.00x</span>
           <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="${t("settings.tip.uiScale")}">ⓘ</span>
         </div>
+        <h3 class="accent-theme">${t("settings.fontScale")}</h3>
+        <div class="settings-row">
+          <label>${t("settings.scaleFactor")}</label>
+          <input type="range" id="font-scale" min="0.7" max="1.6" step="0.05" value="1.0">
+          <span id="font-scale-val" class="settings-val">1.00x</span>
+          <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="${t("settings.tip.fontScale")}">ⓘ</span>
+        </div>
         <h3 class="accent-theme">${t("settings.language")}</h3>
         <div class="settings-row">
           <label>${t("settings.language")}</label>

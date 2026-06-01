@@ -11,6 +11,7 @@ import { hudState } from "../hud/state.js";
 let appliedTheme = "";
 let appliedFont = "";
 let appliedUiScale = -1;
+let appliedFontScale = -1;
 
 export function applyTheme(themeId: string, fontId: string) {
   // Layout var on the HUD root.
@@ -18,13 +19,19 @@ export function applyTheme(themeId: string, fontId: string) {
     hudState.root.style.setProperty("--hud-bottom-h", `${HUD_BOTTOM_H}px`);
   }
   const uiScale = Client.settings?.uiScale ?? 1.0;
+  const fontScale = Client.settings?.fontScale ?? 1.0;
   const s = document.documentElement.style;
   s.setProperty("--ui-scale", String(uiScale));
+  s.setProperty("--font-scale", String(fontScale));
+  // UI overlays are scaled via `transform: scale(var(--ui-scale))`. Counteract that
+  // so font size can be controlled independently.
+  s.setProperty("--effective-font-scale", String(fontScale / uiScale));
 
-  if (themeId === appliedTheme && fontId === appliedFont && uiScale === appliedUiScale) return;
+  if (themeId === appliedTheme && fontId === appliedFont && uiScale === appliedUiScale && fontScale === appliedFontScale) return;
   appliedTheme = themeId;
   appliedFont = fontId;
   appliedUiScale = uiScale;
+  appliedFontScale = fontScale;
 
   const t = getTheme(themeId);
   // Font

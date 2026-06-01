@@ -206,7 +206,6 @@ export function initHudOverlay() {
     const prevText = btn.textContent ?? "";
     btn.textContent = "OK";
     setTimeout(() => { btn.textContent = prevText; }, 200);
-    console.log("[ov-lock] click", { id, inDock: !!btn.closest("#hud-overview-panel"), inBridge: !!btn.closest("#bridge-pane-overview") });
     if (!id) return;
     const existing = getState().player.lockQueue?.find((s) => s.id === id);
     if (existing) {
@@ -216,17 +215,6 @@ export function initHudOverlay() {
     }
   };
   document.body.addEventListener("click", ovLockClick);
-
-  document.addEventListener("click", (ev) => {
-    const t = ev.target as Element | null;
-    if (!t) return;
-    if (!t.closest("#hud-overview-panel, .eve-window")) return;
-    const tag = t.tagName;
-    const cls = (typeof t.className === "string") ? t.className.slice(0, 40) : "";
-    const id = t.id ?? "";
-    const path = (ev.composedPath?.() ?? []).slice(0, 5).map((n) => (n as Element).tagName ?? "?").join(">");
-    console.log("[doc-capture] tag=", tag, " id=", id, " cls=", cls, " path=", path);
-  }, true);
   document.body.addEventListener("click", (ev) => {
     const btn = (ev.target as HTMLElement).closest("#hud-overview-panel .ov-decrypt");
     if (!btn) return;

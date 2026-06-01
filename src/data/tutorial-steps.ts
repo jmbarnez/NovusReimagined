@@ -1,10 +1,4 @@
 import { Client } from "../state.js";
-import { resetTutorialTrainingSite } from "../world/hidden-sites.js";
-import {
-  TUTORIAL_TRAINING_SITE_ID,
-  TUTORIAL_TRAINING_SITE_X,
-  TUTORIAL_TRAINING_SITE_Y,
-} from "./tutorial-site.js";
 import {
   tutorialRegionZone,
   getTutorialTrackById,
@@ -23,16 +17,12 @@ import {
   totalOre,
   hasLockOnAsteroid,
   countAliveTargetDummiesInZone,
-  isTrainingSiteResolved,
-  isTrainingSiteComplete,
   isModuleFitted,
   hasCombatLoadout,
   hasBypassedMining,
   hasBypassedIndustry,
   hasBypassedHangarTurrets,
   hasBypassedGunnery,
-  hasBypassedScan,
-  hasBypassedBreach,
 } from "./tutorial-bypass.js";
 
 function findStep(id: string): TutorialStep | undefined {
@@ -259,60 +249,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     isComplete(ctx) {
       const step = findStep("gunnery");
       if (!step) return false;
-      if (ctx.player.kills > 0 || hasBypassedScan(ctx.player)) return true;
+      if (ctx.player.kills > 0 || ctx.player.sysIdx !== 0) return true;
       if (!ctx.inZone(step.zone)) return false;
       const startCount = ctx.snapshot.dummyCount as number ?? 0;
       return (startCount > 0 && countAliveTargetDummiesInZone(step.zone, ctx.player) < startCount);
-    },
-  },
-  {
-    id: "scan-signature",
-    title: t("tutorial.step.scanSignature.title"),
-    objective: () => t("tutorial.step.scanSignature.objective", { mapKey: tutorialKey("map") }),
-    hint: () => t("tutorial.step.scanSignature.hint", { mapKey: tutorialKey("map") }),
-    zone: tutorialRegionZone("scan-signature"),
-    beaconColor: 0x6fd3ff,
-    onEnter() {
-      resetTutorialTrainingSite();
-    },
-    isComplete(ctx) {
-      return isTrainingSiteResolved(ctx.player)
-        || hasBypassedBreach(ctx.player);
-    },
-  },
-  {
-    id: "fly-signature",
-    title: t("tutorial.step.flySignature.title"),
-    objective: t("tutorial.step.flySignature.objective"),
-    hint: t("tutorial.step.flySignature.hint"),
-    zone: tutorialRegionZone("fly-signature"),
-    beaconColor: 0x6fd3ff,
-    nav: {
-      trackId: "spoke-signature",
-      label: t("world.region.signalTrace"),
-      targetX: TUTORIAL_TRAINING_SITE_X,
-      targetY: TUTORIAL_TRAINING_SITE_Y,
-    },
-    onEnter(ctx) {
-      initTrackProgress(ctx, "spoke-signature");
-    },
-    isComplete(ctx) {
-      const step = findStep("fly-signature");
-      if (!step) return false;
-      return isZoneStepComplete(ctx, step.zone)
-        || hasBypassedBreach(ctx.player);
-    },
-  },
-  {
-    id: "breach-signature",
-    title: t("tutorial.step.breachSignature.title"),
-    objective: () => t("tutorial.step.breachSignature.objective", { dockKey: tutorialKey("dock") }),
-    hint: () => t("tutorial.step.breachSignature.hint", { dockKey: tutorialKey("dock") }),
-    zone: tutorialRegionZone("breach-signature"),
-    beaconColor: 0x6fd3ff,
-    isComplete(ctx) {
-      return isTrainingSiteComplete(ctx.player)
-        || ctx.player.sysIdx !== 0;
     },
   },
   {

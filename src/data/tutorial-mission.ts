@@ -33,9 +33,6 @@ export const TUTORIAL_STEP_REWARDS: Record<string, TutorialStepReward> = {
   "hangar-turrets":   { credits: 220, skillId: "engineering", skillXp: 0 },
   "fly-gunnery":      { credits: 180, skillId: "ballistics",  skillXp: 0 },
   "gunnery":          { credits: 300, skillId: "ballistics",  skillXp: 0 },
-  "scan-signature":   { credits: 250, skillId: "surveying",   skillXp: 0 },
-  "fly-signature":    { credits: 180, skillId: "surveying",   skillXp: 0 },
-  "breach-signature": { credits: 280, skillId: "decryption",  skillXp: 0 },
   "fly-gate":         { credits: 200, skillId: "engineering", skillXp: 0 },
   "graduation":       { credits: 400, skillId: "engineering", skillXp: 0 },
 };

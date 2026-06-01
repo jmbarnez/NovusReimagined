@@ -5,10 +5,8 @@ import { isVisible } from "../utils/game.js";
 import {
   getCurrentTutorialStep,
   tutorialGatePulse,
-  isTrainingSiteResolved,
-  getTrainingSite,
 } from "../data/tutorial.js";
-import { TUTORIAL_TRAINING_SITE_X, TUTORIAL_TRAINING_SITE_Y, TUTORIAL_GATE } from "../data/tutorial-layout.js";
+import { TUTORIAL_GATE } from "../data/tutorial-layout.js";
 import { isTutorialExitGateRevealed } from "../data/tutorial.js";
 
 const TAU = Math.PI * 2;
@@ -37,9 +35,6 @@ export function syncPixiTutorialMarkers(now: number, sys: import("../types/world
   if (_lastStep !== getState().player.tutorial.step) {
     _lastStep = getState().player.tutorial.step;
   }
-
-  // Map-only steps — no world beacon column
-  if (step.id === "scan-signature") return;
 
   const guide = getTutorialGuideTarget();
   if (!guide) return;
@@ -93,14 +88,6 @@ export function getTutorialGuideTarget(): { x: number; y: number } | null {
 
   if (step.id === "fly-gate" || step.id === "graduation") {
     return { x: TUTORIAL_GATE.x, y: TUTORIAL_GATE.y };
-  }
-
-  if (step.id === "fly-signature" || step.id === "breach-signature") {
-    if (isTrainingSiteResolved(getState().player)) {
-      const site = getTrainingSite();
-      if (site) return { x: site.x, y: site.y };
-    }
-    return { x: TUTORIAL_TRAINING_SITE_X, y: TUTORIAL_TRAINING_SITE_Y };
   }
 
   if (step.nav) {

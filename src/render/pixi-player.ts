@@ -11,6 +11,9 @@ import { getState } from "../state-access.js";
 import { SHIPS } from "../data/ships.js";
 import { entityLayer, thrustLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
+import { isVisible } from "../utils/game.js";
+import { addTrailSegment } from "../utils/entities.js";
+import { C } from "../config/index.js";
 import { getNebulaDensity } from "./pixi-background.js";
 import { lightenCol, darkenCol } from "../utils/color.js";
 import { tracePath } from "./bake-utils.js";
@@ -256,11 +259,32 @@ let _hullLightSprite: Sprite | null = null;
 let _shipLightTex: Texture[] = [];
 let _currentShipId = "";
 
+interface RemotePlayerSprites {
+  hull: Sprite;
+  light: Sprite;
+  lightTex: Texture[];
+  shipId: string;
+}
+
+const _remotePlayerSprites = new Map<string, RemotePlayerSprites>();
+const _remoteTrailLastEmit = new Map<string, number>();
+
 function destroyPlayerSprites() {
   if (_hullSprite) { entityLayer?.removeChild(_hullSprite); _hullSprite.destroy(); _hullSprite = null; }
   if (_hullLightSprite) { entityLayer?.removeChild(_hullLightSprite); _hullLightSprite.destroy(); _hullLightSprite = null; }
   _shipLightTex = [];
   _currentShipId = "";
+}
+
+function destroyRemotePlayerSprites(): void {
+  for (const bundle of _remotePlayerSprites.values()) {
+    entityLayer?.removeChild(bundle.hull);
+    entityLayer?.removeChild(bundle.light);
+    bundle.hull.destroy();
+    bundle.light.destroy();
+  }
+  _remotePlayerSprites.clear();
+  _remoteTrailLastEmit.clear();
 }
 
 function buildPlayerSprites(shipId: string) {
@@ -284,6 +308,44 @@ function buildPlayerSprites(shipId: string) {
   entityLayer.addChild(_hullLightSprite);
 
   _currentShipId = shipId;
+}
+
+function createRemotePlayerSprites(shipId: string): RemotePlayerSprites | null {
+  if (!entityLayer) return null;
+
+  const hull = new Sprite(getShipTexture(shipId));
+  hull.anchor.set(0.5);
+  hull.scale.set(HULL_SCALE);
+  hull.visible = false;
+  entityLayer.addChild(hull);
+
+  const lightTex = getShipLightTextures(shipId);
+  const light = new Sprite(lightTex[0] ?? Texture.EMPTY);
+  light.anchor.set(0.5);
+  light.scale.set(HULL_SCALE);
+  light.blendMode = "add";
+  light.alpha = 0.7;
+  light.visible = false;
+  entityLayer.addChild(light);
+
+  return { hull, light, lightTex, shipId };
+}
+
+function getRemotePlayerSprites(netId: string, shipId: string): RemotePlayerSprites | null {
+  const existing = _remotePlayerSprites.get(netId);
+  if (existing?.shipId === shipId) return existing;
+
+  if (existing) {
+    entityLayer?.removeChild(existing.hull);
+    entityLayer?.removeChild(existing.light);
+    existing.hull.destroy();
+    existing.light.destroy();
+    _remotePlayerSprites.delete(netId);
+  }
+
+  const created = createRemotePlayerSprites(shipId);
+  if (created) _remotePlayerSprites.set(netId, created);
+  return created;
 }
 
 // ─── Trail sprite pool ────────────────────────────────────────────────────────
@@ -327,12 +389,92 @@ export function clearShipTextureCaches(): void {
 /** Destroy and rebuild the player hull + light sprites with freshly baked textures. */
 export function rebuildPlayerSprites(): void {
   destroyPlayerSprites();
+  destroyRemotePlayerSprites();
   buildPlayerSprites(getState().player?.shipId ?? "scout");
   // Rebuild trail pool with fresh dot texture.
   if (_dotTex) {
     for (const s of _trailPool) {
       s.texture = _dotTex;
     }
+  }
+}
+
+function syncRemotePlayers(alpha: number, now: number): void {
+  const state = getState();
+  const local = state.player;
+  if (!local) {
+    destroyRemotePlayerSprites();
+    return;
+  }
+
+  const activeRemoteIds = new Set<string>();
+  for (const [key, remote] of state.players) {
+    const netId = remote.netId ?? key;
+    if (!netId || remote === local || netId === local.netId || key === "local") continue;
+
+    activeRemoteIds.add(netId);
+    const bundle = getRemotePlayerSprites(netId, remote.shipId || "scout");
+    if (!bundle) continue;
+
+    if (remote.sysIdx !== local.sysIdx || !isVisible(remote.x, remote.y, 80)) {
+      bundle.hull.visible = false;
+      bundle.light.visible = false;
+      continue;
+    }
+
+    const useRenderInterpolation = Client.multiplayerRole === "none";
+    const ix = useRenderInterpolation ? lerp(remote.px, remote.x, alpha) : remote.x;
+    const iy = useRenderInterpolation ? lerp(remote.py, remote.y, alpha) : remote.y;
+    const ia = useRenderInterpolation ? lerp(remote.prevAngle, remote.angle, alpha) : remote.angle;
+    const lodScale = Math.max(Client.zoom, 0.55);
+
+    bundle.hull.visible = true;
+    bundle.hull.scale.set(HULL_SCALE * lodScale / Client.zoom);
+    bundle.hull.x = ix;
+    bundle.hull.y = iy;
+    bundle.hull.rotation = ia;
+
+    bundle.light.scale.set(HULL_SCALE * lodScale / Client.zoom);
+    if (Client.settings?.directionalLighting !== false && bundle.lightTex.length) {
+      const sys = state.GALAXY?.[remote.sysIdx ?? 0];
+      const sunSeed = sys?.sunDir ?? 0;
+      const sunDir = Math.atan2(Math.sin(sunSeed) * 3500 - iy, Math.cos(sunSeed) * 3500 - ix);
+      let lightIdx = Math.round(((sunDir - ia) / TAU) * LIGHT_DIRS) % LIGHT_DIRS;
+      if (lightIdx < 0) lightIdx += LIGHT_DIRS;
+      bundle.light.texture = bundle.lightTex[lightIdx];
+      bundle.light.x = ix;
+      bundle.light.y = iy;
+      bundle.light.rotation = ia;
+      bundle.light.alpha = 0.45 + getNebulaDensity(ix, iy) * 1.8;
+      bundle.light.visible = true;
+    } else {
+      bundle.light.visible = false;
+    }
+
+    const speed = Math.hypot(remote.vx || 0, remote.vy || 0);
+    const lastEmit = _remoteTrailLastEmit.get(netId) ?? 0;
+    if (speed > 8 && now - lastEmit >= 32) {
+      const rearDist = C.PHYSICS.SHIP.thrustTrailRearDist;
+      addTrailSegment({
+        x: ix - Math.cos(ia) * rearDist,
+        y: iy - Math.sin(ia) * rearDist,
+        color: C.PHYSICS.SHIP.thrustTrailNormalColor,
+        width: C.PHYSICS.SHIP.thrustTrailNormalWidth,
+        life: C.PHYSICS.SHIP.thrustTrailLife,
+        angle: ia,
+      });
+      _remoteTrailLastEmit.set(netId, now);
+    }
+  }
+
+  for (const [netId, bundle] of _remotePlayerSprites) {
+    if (activeRemoteIds.has(netId)) continue;
+    entityLayer?.removeChild(bundle.hull);
+    entityLayer?.removeChild(bundle.light);
+    bundle.hull.destroy();
+    bundle.light.destroy();
+    _remotePlayerSprites.delete(netId);
+    _remoteTrailLastEmit.delete(netId);
   }
 }
 
@@ -352,6 +494,7 @@ export function syncPixiPlayer(alpha: number, now: number): void {
   if (getState().player.invincible > 0 && Math.floor(now / 75) % 2 === 0) {
     _hullSprite.visible = false;
     if (_hullLightSprite) _hullLightSprite.visible = false;
+    syncRemotePlayers(alpha, now);
     return;
   }
   _hullSprite.visible = true;
@@ -391,6 +534,8 @@ export function syncPixiPlayer(alpha: number, now: number): void {
       _hullLightSprite.visible = false;
     }
   }
+
+  syncRemotePlayers(alpha, now);
 }
 
 export function syncPixiTrails(): void {

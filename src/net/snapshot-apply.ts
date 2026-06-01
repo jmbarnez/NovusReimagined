@@ -370,11 +370,13 @@ export function applySnapshotToG(snap: WorldSnapshot, isFullSnapshot = false) {
     if (peer === p) continue;
     const snapEnt = snapPlayers.get(id);
     if (snapEnt) {
-      peer.x = snapEnt.x;
-      peer.y = snapEnt.y;
-      peer.vx = snapEnt.vx;
-      peer.vy = snapEnt.vy;
-      peer.angle = snapEnt.angle || 0;
+      if (Client.multiplayerRole === "none") {
+        peer.x = snapEnt.x;
+        peer.y = snapEnt.y;
+        peer.vx = snapEnt.vx;
+        peer.vy = snapEnt.vy;
+        peer.angle = snapEnt.angle || 0;
+      }
       peer.hp = snapEnt.hp || 100;
       peer.maxHp = snapEnt.maxHp || 100;
       peer.sysIdx = snap.player.sysIdx;

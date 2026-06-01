@@ -11,9 +11,35 @@ import { progressMissions } from "../data/missions.js";
 import { sfxShipExplosion } from "../audio/procedural.js";
 import { spawnWreck } from "../wreck.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
+import { addSalvagePickup } from "../utils/entities.js";
 import type { Enemy } from "../types/world.js";
 
 const TUTORIAL_ENEMY_TYPES = new Set(["target_dummy", "training_drone"]);
+
+function dropTargetDummyRewards(e: Enemy): void {
+  addSalvagePickup({
+    x: e.x,
+    y: e.y,
+    vx: (e.vx || 0) + 18,
+    vy: (e.vy || 0) - 10,
+    life: 20,
+    bob: 0,
+    kind: "credits",
+    payload: "credits",
+    qty: 1,
+  });
+  addSalvagePickup({
+    x: e.x,
+    y: e.y,
+    vx: (e.vx || 0) - 18,
+    vy: (e.vy || 0) + 10,
+    life: 20,
+    bob: Math.PI,
+    kind: "ore",
+    payload: "iron",
+    qty: 1,
+  });
+}
 
 export function killEnemy(e: Enemy) {
   e.alive = false;
@@ -32,6 +58,7 @@ export function killEnemy(e: Enemy) {
     if (isTutorialEnemy) {
       PlayerAccess.setKills(killer.kills + 1, killer);
       logEvent(`Destroyed ${e.name}`, "combat");
+      if (e.type === "target_dummy") dropTargetDummyRewards(e);
       if ((ENEMY_DEFS[e.type]?.wreckChance ?? 0) > 0) spawnWreck(e, killer);
     } else if (e.faction !== "neutral") {
       PlayerAccess.setKills(killer.kills + 1, killer);

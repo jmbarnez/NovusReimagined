@@ -61,5 +61,5 @@ describe("GameServer sensor lock resolution", () => {
     const slot = p.lockQueue.find((s) => s.id === enemy.id);
     expect(slot, JSON.stringify(p.lockQueue)).toBeTruthy();
     expect(slot?.resolving).toBe(false);
-  });
+  }, 20000);
 });

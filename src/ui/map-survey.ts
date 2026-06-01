@@ -4,7 +4,7 @@ import { getState } from "../state-access.js";
 import { Graphics } from "pixi.js";
 import { curSys } from "../utils/game.js";
 import { getUIFont } from "../render/ui-font.js";
-import { radarPingOpacity, radarSweepAngle } from "../utils/radar-sweep.js";
+import { radarPingOpacity, radarSignatureDecayExponent, radarSweepAngle } from "../utils/radar-sweep.js";
 import { C } from "../config/index.js";
 import {
   computeDiscoveredMapBounds,
@@ -251,8 +251,16 @@ export function passiveContactOpacity(
   originMapX: number,
   originMapY: number,
   now: number,
+  signatureRadius?: number,
 ): number {
-  return radarPingOpacity(blipMapX, blipMapY, originMapX, originMapY, radarSweepAngle(now));
+  return radarPingOpacity(
+    blipMapX,
+    blipMapY,
+    originMapX,
+    originMapY,
+    radarSweepAngle(now),
+    radarSignatureDecayExponent(signatureRadius),
+  );
 }
 
 /** Draw hull passive radar sweep and range rings on the system map (always while map is open). */
@@ -301,8 +309,9 @@ export function mapSignatureOpacity(
   originMapX: number,
   originMapY: number,
   now: number,
+  signatureRadius?: number,
 ): number {
-  const ping = passiveContactOpacity(blipMapX, blipMapY, originMapX, originMapY, now);
+  const ping = passiveContactOpacity(blipMapX, blipMapY, originMapX, originMapY, now, signatureRadius);
   if (!isMapScannerEmitting(getState().player)) return ping;
   return ping * (0.35 + 0.65 * getMapScannerStrength01(getState().player));
 }

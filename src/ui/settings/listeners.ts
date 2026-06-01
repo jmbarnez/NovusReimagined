@@ -181,6 +181,15 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     window.dispatchEvent(new Event("resize"));
   });
 
+  el.querySelector("#font-scale")!.addEventListener("input", (e) => {
+    const v = parseFloat((e.target as HTMLInputElement).value);
+    Client.settings.fontScale = v;
+    (document.getElementById("font-scale-val") as HTMLElement).textContent = v.toFixed(2) + "x";
+    saveSettings(Client.settings);
+    refreshTheme();
+    window.dispatchEvent(new Event("resize"));
+  });
+
   el.querySelector("#settings-language")!.addEventListener("change", (e) => {
     const v = (e.target as HTMLSelectElement).value as "en" | "es";
     Client.settings.language = v;

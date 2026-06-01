@@ -23,8 +23,6 @@ import {
   type TutorialStep,
   totalOre,
   hasLockOnAsteroid,
-  isTrainingSiteResolved,
-  isTrainingSiteComplete,
   hasCombatLoadout,
 } from "./tutorial-bypass.js";
 import { TUTORIAL_STEPS, isZoneStepComplete } from "./tutorial-steps.js";
@@ -44,10 +42,7 @@ export {
   type TutorialStep,
   totalOre,
   hasLockOnAsteroid,
-  isTrainingSiteResolved,
-  isTrainingSiteComplete,
   hasCombatLoadout as hasTutorialCombatLoadout,
-  getTrainingSite,
 } from "./tutorial-bypass.js";
 export { TUTORIAL_STEPS, isZoneStepComplete } from "./tutorial-steps.js";
 

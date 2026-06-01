@@ -74,6 +74,7 @@ let _playerSprites: Sprite[] = [];
 
 // Map from enemy id → sprite
 const _enemySprites = new Map<string, Sprite>();
+const _remoteSprites = new Map<string, Sprite[]>();
 
 function makeFlameSprite(): Sprite {
   const s = new Sprite(getFlameTex());
@@ -88,6 +89,7 @@ export function initThrust() {
   if (!thrustLayer) return;
   _playerSprites = [];
   _enemySprites.clear();
+  _remoteSprites.clear();
 }
 
 // Player flame width / length in world units
@@ -100,10 +102,14 @@ export function syncThrust(alpha: number, now: number) {
   if (!thrustLayer || Client.mode !== AppMode.SPACE) {
     for (const s of _playerSprites) s.alpha = 0;
     for (const [, s] of _enemySprites) s.alpha = 0;
+    for (const [, sprites] of _remoteSprites) {
+      for (const sprite of sprites) sprite.alpha = 0;
+    }
     return;
   }
 
   _syncPlayerThrust(alpha, now);
+  _syncRemotePlayerThrust(alpha, now);
   _syncEnemyThrust(now);
 }
 
@@ -146,6 +152,74 @@ function _syncPlayerThrust(alpha: number, now: number) {
 
     const flicker = 0.82 + 0.18 * Math.sin(now * 0.024 + i * 1.3);
     sprite.alpha = thrusting ? flicker : 0;
+  }
+}
+
+function _syncRemotePlayerThrust(alpha: number, now: number) {
+  const state = getState();
+  const local = state.player;
+  if (!local) return;
+
+  const liveIds = new Set<string>();
+  for (const [key, p] of state.players) {
+    const netId = p.netId ?? key;
+    if (!netId || p === local || netId === local.netId || key === "local") continue;
+    liveIds.add(netId);
+
+    let sprites = _remoteSprites.get(netId);
+    const ship = SHIPS[p.shipId];
+    const nozzles = ship?.render?.nozzleOffsets ?? [[-20, 0]];
+    if (!sprites) {
+      sprites = [];
+      _remoteSprites.set(netId, sprites);
+    }
+
+    while (sprites.length < nozzles.length) {
+      sprites.push(makeFlameSprite());
+    }
+    while (sprites.length > nozzles.length) {
+      const sprite = sprites.pop()!;
+      thrustLayer?.removeChild(sprite);
+      sprite.destroy();
+    }
+
+    if (p.sysIdx !== local.sysIdx) {
+      for (const sprite of sprites) sprite.alpha = 0;
+      continue;
+    }
+
+    const speed = Math.hypot(p.vx || 0, p.vy || 0);
+    const thrusting = p.thrustFx === true || speed > 8;
+    const useRenderInterpolation = Client.multiplayerRole === "none";
+    const px = useRenderInterpolation ? lerp(p.px, p.x, alpha) : p.x;
+    const py = useRenderInterpolation ? lerp(p.py, p.y, alpha) : p.y;
+    const ang = useRenderInterpolation ? lerp(p.prevAngle ?? p.angle, p.angle, alpha) : p.angle;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+
+    for (let i = 0; i < nozzles.length; i++) {
+      const [nx, ny] = nozzles[i];
+      const wx = px + ca * nx - sa * ny;
+      const wy = py + sa * nx + ca * ny;
+
+      const sprite = sprites[i];
+      sprite.x = wx;
+      sprite.y = wy;
+      sprite.width = PLAYER_FLAME_W;
+      sprite.height = PLAYER_FLAME_L;
+      sprite.rotation = ang + Math.PI / 2;
+
+      const flicker = 0.82 + 0.18 * Math.sin(now * 0.024 + i * 1.3 + netId.length);
+      sprite.alpha = thrusting ? flicker : 0;
+    }
+  }
+
+  for (const [netId, sprites] of _remoteSprites) {
+    if (liveIds.has(netId)) continue;
+    for (const sprite of sprites) {
+      thrustLayer?.removeChild(sprite);
+      sprite.destroy();
+    }
+    _remoteSprites.delete(netId);
   }
 }
 
@@ -209,5 +283,12 @@ export function destroyThrust() {
   _playerSprites = [];
   for (const [, s] of _enemySprites) { thrustLayer?.removeChild(s); s.destroy(); }
   _enemySprites.clear();
+  for (const [, sprites] of _remoteSprites) {
+    for (const sprite of sprites) {
+      thrustLayer?.removeChild(sprite);
+      sprite.destroy();
+    }
+  }
+  _remoteSprites.clear();
   if (_flameTex) { _flameTex.destroy(); _flameTex = null; }
 }

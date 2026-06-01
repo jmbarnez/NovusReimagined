@@ -5,6 +5,8 @@ import { lerp } from "../utils/math.js";
 interface Interpolatable {
   x: number;
   y: number;
+  vx?: number;
+  vy?: number;
   px?: number;
   py?: number;
   angle?: number;
@@ -109,6 +111,8 @@ export class InterpolationManager {
         if (state) {
           p.x = p.px = state.x;
           p.y = p.py = state.y;
+          p.vx = state.vx;
+          p.vy = state.vy;
           p.angle = p.prevAngle = state.angle || 0;
           p.miningLaser = state.miningLaser ? { ...state.miningLaser } : null;
           p.salvager = state.salvager ? { ...state.salvager } : null;
@@ -200,6 +204,8 @@ export class InterpolationManager {
         if (e.py !== undefined) e.py = e.y;
         e.x = lerp(entA.x, entB.x, t);
         e.y = lerp(entA.y, entB.y, t);
+        e.vx = entB.vx;
+        e.vy = entB.vy;
 
         if (hasPrevAngle) {
           e.prevAngle = e.angle;
@@ -217,6 +223,8 @@ export class InterpolationManager {
         if (e.py !== undefined) e.py = entB.y;
         e.x = entB.x;
         e.y = entB.y;
+        e.vx = entB.vx;
+        e.vy = entB.vy;
         if (hasPrevAngle) {
           e.prevAngle = e.angle = entB.angle || 0;
         }
@@ -231,6 +239,8 @@ export class InterpolationManager {
         if (e.py !== undefined) e.py = entA.y;
         e.x = entA.x;
         e.y = entA.y;
+        e.vx = entA.vx;
+        e.vy = entA.vy;
         if (hasPrevAngle) {
           e.prevAngle = e.angle = entA.angle || 0;
         }
@@ -312,6 +322,8 @@ export class InterpolationManager {
         if (e.py !== undefined) e.py = e.y;
         e.x = state.x + state.vx * dt;
         e.y = state.y + state.vy * dt;
+        e.vx = state.vx;
+        e.vy = state.vy;
 
         if (hasPrevAngle) {
           e.prevAngle = e.angle;

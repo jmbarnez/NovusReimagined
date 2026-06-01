@@ -23,10 +23,6 @@ function regionActiveForStep(regId: string, activeStepId: string | undefined): b
     case "fly-gunnery":
     case "gunnery":
       return regId === "tut-gunnery";
-    case "scan-signature":
-    case "fly-signature":
-    case "breach-signature":
-      return regId === "tut-signature";
     default:
       return false;
   }

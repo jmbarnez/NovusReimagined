@@ -65,7 +65,14 @@ export function isAsteroidTarget(id: string): boolean {
 export function targetByLockId(id: string, p: Player = getState().player): Enemy | Asteroid | WreckPiece | null {
   const sys = curSys(p);
   if (!sys) return null;
-  const en = sys._enemyMap?.get(id);
+  let en = sys._enemyMap?.get(id);
+  if (!en) {
+    en = sys.enemies.find((e) => e.id === id);
+    if (en) {
+      if (!sys._enemyMap) sys._enemyMap = new Map();
+      sys._enemyMap.set(id, en);
+    }
+  }
   if (en && en.alive) return en;
   let ast = sys._asteroidMap?.get(id);
   if (!ast && isAsteroidTarget(id)) {

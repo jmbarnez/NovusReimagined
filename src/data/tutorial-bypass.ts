@@ -99,8 +99,6 @@ export function hasBypassedMining(p: Player): boolean {
     || p.craftQueue.length > 0
     || hasCombatLoadout(p)
     || p.kills > 0
-    || isTrainingSiteResolved(p)
-    || isTrainingSiteComplete(p)
     || p.sysIdx !== 0;
 }
 
@@ -112,8 +110,6 @@ export function hasBypassedIndustry(p: Player): boolean {
     || p.craftQueue.length > 0
     || hasCombatLoadout(p)
     || p.kills > 0
-    || isTrainingSiteResolved(p)
-    || isTrainingSiteComplete(p)
     || p.sysIdx !== 0;
 }
 
@@ -123,34 +119,13 @@ export function hasBypassedIndustry(p: Player): boolean {
 export function hasBypassedHangarTurrets(p: Player): boolean {
   return hasCombatLoadout(p)
     || p.kills > 0
-    || isTrainingSiteResolved(p)
-    || isTrainingSiteComplete(p)
     || p.sysIdx !== 0;
 }
 
 /**
- * Checks if the player has progressed past or performed the combat tasks in the gunnery bay.
+ * Checks if the player has progressed past or performed the target range combat task.
  */
 export function hasBypassedGunnery(p: Player): boolean {
   return p.kills > 0
-    || isTrainingSiteResolved(p)
-    || isTrainingSiteComplete(p)
-    || p.sysIdx !== 0;
-}
-
-/**
- * Checks if the player has scanned the signature or progressed past it.
- */
-export function hasBypassedScan(p: Player): boolean {
-  return isTrainingSiteResolved(p)
-    || isTrainingSiteComplete(p)
-    || p.sysIdx !== 0;
-}
-
-/**
- * Checks if the player has breached the signature or graduated.
- */
-export function hasBypassedBreach(p: Player): boolean {
-  return isTrainingSiteComplete(p)
     || p.sysIdx !== 0;
 }

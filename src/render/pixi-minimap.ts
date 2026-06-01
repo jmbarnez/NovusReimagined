@@ -15,7 +15,7 @@ import { getPassiveScanRangePx } from "../targeting.js";
 import { getTutorialGuideTarget } from "./pixi-tutorial-markers.js";
 import { shouldShowWarpGate } from "../data/tutorial.js";
 import { getSunWorldPos, clampMinimapBlip } from "../utils/sun-position.js";
-import { radarPingOpacity, radarSweepAngle } from "../utils/radar-sweep.js";
+import { radarPingOpacity, radarSignatureDecayExponent, radarSweepAngle } from "../utils/radar-sweep.js";
 import { getUIFont } from "./ui-font.js";
 
 let mmApp: Application | null = null;
@@ -157,16 +157,17 @@ export function syncPixiMinimap(now: number): void {
   g.lineTo(mmX + Math.cos(sweepAngle) * maxRadarR, mmY + Math.sin(sweepAngle) * maxRadarR);
   g.stroke({ color: cachedHudBorder, width: 1.2, alpha: 0.45 });
 
-  const pingOpacity = (px: number, py: number): number =>
-    radarPingOpacity(px, py, mmX, mmY, sweepAngle);
+  const pingOpacity = (px: number, py: number, signatureRadius?: number): number =>
+    radarPingOpacity(px, py, mmX, mmY, sweepAngle, radarSignatureDecayExponent(signatureRadius));
 
   const drawPassiveBlip = (
     px: number,
     py: number,
+    signatureRadius: number,
     draw: (opacity: number) => void,
   ) => {
     if (Math.hypot(px - mmX, py - mmY) > maxRadarR + 1) return;
-    const opacity = pingOpacity(px, py);
+    const opacity = pingOpacity(px, py, signatureRadius);
     if (opacity < 0.14) return;
     draw(opacity);
   };
@@ -176,7 +177,7 @@ export function syncPixiMinimap(now: number): void {
     if (dst(player.x, player.y, a.x, a.y) > range) continue;
     const px = mmX + (a.x - player.x) * scale;
     const py = mmY + (a.y - player.y) * scale;
-    drawPassiveBlip(px, py, (opacity) => {
+    drawPassiveBlip(px, py, a.radius * 2, (opacity) => {
       g.arc(px, py, 2, 0, TAU);
       g.fill({ color: 0x775522, alpha: opacity });
     });
@@ -187,7 +188,7 @@ export function syncPixiMinimap(now: number): void {
     if (dst(player.x, player.y, e.x, e.y) > range) continue;
     const px = mmX + (e.x - player.x) * scale;
     const py = mmY + (e.y - player.y) * scale;
-    drawPassiveBlip(px, py, (opacity) => {
+    drawPassiveBlip(px, py, e.sigRadius ?? 30, (opacity) => {
       const angle = e.angle ?? 0;
       const size = 4;
       const tipX = px + Math.cos(angle) * size;
@@ -210,7 +211,7 @@ export function syncPixiMinimap(now: number): void {
       if (dst(player.x, player.y, gate.x, gate.y) > range) continue;
       const px = mmX + (gate.x - player.x) * scale;
       const py = mmY + (gate.y - player.y) * scale;
-      drawPassiveBlip(px, py, (opacity) => {
+      drawPassiveBlip(px, py, gate.radius * 2, (opacity) => {
         g.moveTo(px, py - 5);
         g.lineTo(px + 5, py);
         g.lineTo(px, py + 5);
@@ -240,7 +241,7 @@ export function syncPixiMinimap(now: number): void {
       if (alwaysShow && dist > range) {
         drawStation(0.75);
       } else {
-        drawPassiveBlip(px, py, drawStation);
+        drawPassiveBlip(px, py, s.radius * 2, drawStation);
       }
 
       // Turrets
@@ -250,7 +251,7 @@ export function syncPixiMinimap(now: number): void {
           if (dst(player.x, player.y, t.x, t.y) > range) continue;
           const tx = mmX + (t.x - player.x) * scale;
           const ty = mmY + (t.y - player.y) * scale;
-          drawPassiveBlip(tx, ty, (tOpacity) => {
+          drawPassiveBlip(tx, ty, 80, (tOpacity) => {
             const tSize = 3;
             g.rect(tx - tSize, ty - 1, tSize * 2, 2);
             g.rect(tx - 1, ty - tSize, 2, tSize * 2);
@@ -278,7 +279,7 @@ export function syncPixiMinimap(now: number): void {
         g.fill({ color: 0xffd25a, alpha: opacity * sunAlpha });
       };
       if (alwaysSun && sunDist > range) drawSun(1);
-      else drawPassiveBlip(sx, sy, drawSun);
+      else drawPassiveBlip(sx, sy, 3000, drawSun);
     }
 
     // Detected signatures
@@ -289,7 +290,7 @@ export function syncPixiMinimap(now: number): void {
       const ang = contact.bearingDeg * Math.PI / 180;
       const px = mmX + Math.cos(ang) * r;
       const py = mmY + Math.sin(ang) * r;
-      drawPassiveBlip(px, py, (sweepAlpha) => {
+      drawPassiveBlip(px, py, Math.max(24, contact.signalStrength * 120), (sweepAlpha) => {
         const alpha = Math.min(0.95, (0.22 + contact.confidence * 0.68) * sweepAlpha);
         const dotRadius = contact.state === "resolved" ? 4.2 : 2.4 + contact.confidence * 2.2;
         const scanColor = (() => {

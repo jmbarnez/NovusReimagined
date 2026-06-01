@@ -3,7 +3,7 @@ import { getState } from "../../state-access.js";
 import type { System } from "../../types/world.js";
 import { GATE_RANGE } from "../../constants.js";
 import { dst } from "../../utils/math.js";
-import { buildLocalOverviewRows } from "../bridge.js";
+import { buildLocalOverviewRows, overviewLockActionHTML } from "../bridge.js";
 import { hudState } from "./state.js";
 import { showEnemyCtxMenu } from "./enemy-menu.js";
 import { formatDistance } from "../../utils/format.js";
@@ -54,9 +54,6 @@ export function updateHudOverviewPanel() {
       tr = document.createElement("tr");
       tr.className = `ov-row ov-row-${r.kind}`;
       tr.setAttribute("data-id", r.id);
-      const lockBtn = (r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid")
-        ? `<button type="button" class="ov-lock" data-lock-id="${r.id}">${t("bridge.lockBtn")}</button>`
-        : t("bridge.dash");
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       const sig = String(r.sig);
       const relV = typeof r.relV === "number" ? Math.round(r.relV).toString() : String(r.relV);
@@ -68,7 +65,7 @@ export function updateHudOverviewPanel() {
         <td class="ov-num ov-dist">${dist}</td>
         <td class="ov-num ov-sig">${sig}</td>
         <td class="ov-num ov-relV">${relV}</td>
-        <td>${lockBtn}</td>`;
+        <td class="ov-action">${overviewLockActionHTML(r)}</td>`;
 
       tr.addEventListener("contextmenu", (ev) => {
         if (r.kind === "hostile" || r.kind === "neutral") {
@@ -87,10 +84,12 @@ export function updateHudOverviewPanel() {
       const sigCell = tr.querySelector(".ov-sig");
       const rCell = tr.querySelector(".ov-relV");
       const sCell = tr.querySelector(".ov-st");
+      const actionCell = tr.querySelector(".ov-action");
       if (dCell && dCell.textContent !== dist) dCell.textContent = dist;
       if (sigCell && sigCell.textContent !== sig) sigCell.textContent = sig;
       if (rCell && rCell.textContent !== relV) rCell.textContent = relV;
       if (sCell && sCell.innerHTML !== r.status) sCell.innerHTML = r.status;
+      if (actionCell) actionCell.innerHTML = overviewLockActionHTML(r);
 
       // Only re-append if this row is not already the last child (or not in correct position)
       const lastChild = hudState.ovEntries.lastElementChild;
