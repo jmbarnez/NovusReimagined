@@ -176,7 +176,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     horizonLine.rect(-3 * z, -3 * z, 6 * z, 6 * z);
     horizonLine.stroke({
       width: Math.max(1, 1.2 * z),
-      color: isCritical ? 0xee4444 : 0x9eb6d4,
+      color: isCritical ? 0xee4444 : parseInt(theme.textMain.replace("#", "0x"), 16),
       alpha: isCritical ? 0.45 : 0.35,
     });
   }
@@ -194,9 +194,9 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     speedArcBg.position.set(cx + gx, cy + gy);
     speedArcBg.arc(0, 0, r, Math.PI - span, Math.PI + span);
     speedArcBg.stroke({
-      color: 0x2d3e4e,
+      color: parseInt(theme.textFaint.replace("#", "0x"), 16),
       width: arcLineWidth,
-      alpha: 0.18,
+      alpha: 0.12,
     });
   }
 
@@ -218,9 +218,9 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
       shieldArcBg.position.set(cx + gx, cy + gy);
       shieldArcBg.arc(0, 0, r, -span, span);
       shieldArcBg.stroke({
-        color: 0x2d3e4e,
+        color: parseInt(theme.textFaint.replace("#", "0x"), 16),
         width: arcLineWidth,
-        alpha: 0.18,
+        alpha: 0.12,
       });
     }
 
@@ -288,7 +288,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     driftVectors.moveTo(px, py - mR);
     driftVectors.lineTo(px, py - mR * 2);
     driftVectors.stroke({
-      color: isCritical ? 0xee4444 : 0x64c8ff,
+      color: isCritical ? 0xee4444 : parseInt(theme.shield.replace("#", "0x"), 16),
       width: Math.max(1, 1.2 * z),
       alpha: isCritical ? 0.6 : 0.7,
     });
@@ -303,7 +303,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     driftVectors.moveTo(rx - mR * 0.7, ry + mR * 0.7);
     driftVectors.lineTo(rx + mR * 0.7, ry - mR * 0.7);
     driftVectors.stroke({
-      color: isCritical ? 0xee4444 : 0x96b4d2,
+      color: isCritical ? 0xee4444 : parseInt(theme.textDim.replace("#", "0x"), 16),
       width: Math.max(1, 1.2 * z),
       alpha: isCritical ? 0.4 : 0.45,
     });

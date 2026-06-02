@@ -1,7 +1,8 @@
 import { Graphics } from "pixi.js";
 import { Client } from "../state.js";
+import { getState } from "../state-access.js";
 import { screenContainer, worldContainer } from "../pixi.js";
-import { getDistantSunScreenPos } from "./pixi-background.js";
+import { getSunWorldPos } from "../utils/sun-position.js";
 
 let lensGfx: Graphics | null = null;
 
@@ -24,11 +25,14 @@ export function syncPixiLensFlare(width: number, height: number): void {
   const gfx = ensureLensLayer();
   if (!gfx) return;
 
-  const { x: sx, y: sy } = getDistantSunScreenPos();
-  if (sx === 0 && sy === 0) { gfx.clear(); return; }
-
+  const sys = getState().GALAXY?.[getState().player?.sysIdx ?? 0];
+  const sun = getSunWorldPos(sys);
   const cx = width / 2;
   const cy = height / 2;
+  const sx = cx + (sun.x - Client.camx) * Client.zoom;
+  const sy = cy + (sun.y - Client.camy) * Client.zoom;
+  if (sx === 0 && sy === 0) { gfx.clear(); return; }
+
   const dx = cx - sx;
   const dy = cy - sy;
   const dist = Math.hypot(dx, dy);

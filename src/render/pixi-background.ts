@@ -24,28 +24,10 @@ let currentSysIdx = -1;
 let _lastWc = 0, _lastHc = 0;
 let starTexture: Texture | null = null;
 
-// Screen-space sun position for lens flare (computed from sys.sunDir each frame)
-let _distantSunScreenX   = 0;
-let _distantSunScreenY   = 0;
-
-export function getDistantSunScreenPos() {
-  return { x: _distantSunScreenX, y: _distantSunScreenY };
-}
-
 export let farStarContainer:  Container | null = null;
 export let midStarContainer:  Container | null = null;
 export let nearStarContainer: Container | null = null;
 export let dustContainer:     Container | null = null;
-
-// Compute the sun's screen position for lens flare without rendering a sprite
-function updateSunScreenPos(Wc: number, Hc: number, camX: number, camY: number, sys: System) {
-  if (!sys) return;
-  const sunDir  = sys.sunDir ?? 0;
-  const screenDist = Math.min(Wc, Hc) * 0.38;
-  const SUN_PARALLAX = 0.003;
-  _distantSunScreenX = Wc / 2 + Math.cos(sunDir) * screenDist - camX * SUN_PARALLAX;
-  _distantSunScreenY = Hc / 2 + Math.sin(sunDir) * screenDist - camY * SUN_PARALLAX;
-}
 
 // ── Background star texture ────────────────────────────────────────────────
 function bakeStarTexture(): Texture {
@@ -186,8 +168,6 @@ export function updateBackground(now: number, camX: number, camY: number) {
   if (midStarContainer)  updateStarLayer(midStarContainer,  getState().STARS      ?? [], WRAP_MID,  STAR_MID_PARALLAX,  Wc, Hc, now, 0.08, camX, camY);
   if (nearStarContainer) updateStarLayer(nearStarContainer, getState().STARS_NEAR ?? [], WRAP_NEAR, STAR_NEAR_PARALLAX, Wc, Hc, now, 0.22, camX, camY);
   if (dustContainer)     updateDustLayer(dustContainer, Wc, Hc, now, camX, camY, starHue);
-
-  updateSunScreenPos(Wc, Hc, camX, camY, sys);
 }
 
 export function getNebulaDensity(_camX: number, _camY: number): number {

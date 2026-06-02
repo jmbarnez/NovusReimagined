@@ -17,6 +17,7 @@ import { shouldShowWarpGate } from "../data/tutorial.js";
 import { getSunWorldPos, clampMinimapBlip } from "../utils/sun-position.js";
 import { radarPingOpacity, radarSignatureDecayExponent, radarSweepAngle } from "../utils/radar-sweep.js";
 import { getUIFont } from "./ui-font.js";
+import { getThemeColors } from "../data/settings.js";
 
 let mmApp: Application | null = null;
 let mmContainer: Container | null = null;
@@ -27,6 +28,12 @@ let cachedThemeKey = "";
 let cachedHudBorder = 0x37556e;
 let cachedHudBorderSoft = 0x283746;
 let cachedHudBgDeep = 0x02050a;
+let cachedThemeDanger = 0xee4444;
+let cachedThemeShield = 0x44ccff;
+let cachedThemePositive = 0x66ff88;
+let cachedThemeAccent = 0xffcc44;
+let cachedThemeHull = 0xee9944;
+let cachedThemeTextBright = 0xcfe0f5;
 let lastMinimapRenderMs = 0;
 
 function getMinimapFrameMs(): number {
@@ -58,6 +65,14 @@ function syncThemeColors(): void {
   cachedHudBorder = colorToHex(hudBorderStr);
   cachedHudBorderSoft = colorToHex(hudBorderSoftStr);
   cachedHudBgDeep = colorToHex(hudBgDeepStr);
+
+  const theme = getThemeColors(Client.settings?.theme || "default");
+  cachedThemeDanger = colorToHex(theme.danger);
+  cachedThemeShield = colorToHex(theme.shield);
+  cachedThemePositive = colorToHex(theme.positive);
+  cachedThemeAccent = colorToHex(theme.accent);
+  cachedThemeHull = colorToHex(theme.hull);
+  cachedThemeTextBright = colorToHex(theme.textBright);
 }
 
 export function initPixiMinimap(): void {
@@ -69,7 +84,7 @@ export function initPixiMinimap(): void {
     width: HUD_MINIMAP_SIZE,
     height: HUD_MINIMAP_SIZE,
     background: 0x000000,
-    backgroundAlpha: 0,
+    backgroundAlpha: 1,
     antialias: true,
     autoStart: false,
   }).then(() => {
@@ -179,7 +194,7 @@ export function syncPixiMinimap(now: number): void {
     const py = mmY + (a.y - player.y) * scale;
     drawPassiveBlip(px, py, a.radius * 2, (opacity) => {
       g.arc(px, py, 2, 0, TAU);
-      g.fill({ color: 0x775522, alpha: opacity });
+      g.fill({ color: cachedThemeHull, alpha: opacity });
     });
   }
 
@@ -199,7 +214,7 @@ export function syncPixiMinimap(now: number): void {
       g.lineTo(px + Math.cos(baseAng + 0.5) * half, py + Math.sin(baseAng + 0.5) * half);
       g.lineTo(px + Math.cos(baseAng - 0.5) * half, py + Math.sin(baseAng - 0.5) * half);
       g.closePath();
-      g.fill({ color: 0xcc2222, alpha: opacity });
+      g.fill({ color: cachedThemeDanger, alpha: opacity });
     });
   }
 
@@ -217,7 +232,7 @@ export function syncPixiMinimap(now: number): void {
         g.lineTo(px, py + 5);
         g.lineTo(px - 5, py);
         g.closePath();
-        g.fill({ color: 0x4488ff, alpha: opacity });
+        g.fill({ color: cachedThemeShield, alpha: opacity });
       });
     }
 
@@ -236,7 +251,7 @@ export function syncPixiMinimap(now: number): void {
       const drawStation = (opacity: number) => {
         const sz = alwaysShow && dist > range ? 4 : 5;
         g.rect(px - sz / 2, py - sz / 2, sz, sz);
-        g.fill({ color: 0x44ff88, alpha: opacity });
+        g.fill({ color: cachedThemePositive, alpha: opacity });
       };
       if (alwaysShow && dist > range) {
         drawStation(0.75);
@@ -255,7 +270,7 @@ export function syncPixiMinimap(now: number): void {
             const tSize = 3;
             g.rect(tx - tSize, ty - 1, tSize * 2, 2);
             g.rect(tx - 1, ty - tSize, 2, tSize * 2);
-            g.fill({ color: 0x66ccff, alpha: tOpacity });
+            g.fill({ color: cachedThemeShield, alpha: tOpacity });
           });
         }
       }
@@ -276,7 +291,7 @@ export function syncPixiMinimap(now: number): void {
       const sunAlpha = alwaysSun && sunDist > range ? 0.7 : 0.55;
       const drawSun = (opacity: number) => {
         g.arc(sx, sy, alwaysSun && sunDist > range ? 3.5 : 4.5, 0, TAU);
-        g.fill({ color: 0xffd25a, alpha: opacity * sunAlpha });
+        g.fill({ color: cachedThemeAccent, alpha: opacity * sunAlpha });
       };
       if (alwaysSun && sunDist > range) drawSun(1);
       else drawPassiveBlip(sx, sy, 3000, drawSun);
@@ -324,7 +339,7 @@ export function syncPixiMinimap(now: number): void {
   g.lineTo(mmX + Math.cos(phBase + 0.5) * phHalf, mmY + Math.sin(phBase + 0.5) * phHalf);
   g.lineTo(mmX + Math.cos(phBase - 0.5) * phHalf, mmY + Math.sin(phBase - 0.5) * phHalf);
   g.closePath();
-  g.fill({ color: 0xffffff, alpha: 1 });
+  g.fill({ color: cachedThemeTextBright, alpha: 1 });
 
   // Tutorial guide
   if (player.tutorial?.active) {
@@ -351,13 +366,13 @@ export function syncPixiMinimap(now: number): void {
       const markerR = 5 + pulse;
       if (Math.hypot(gx - mmX, gy - mmY) + markerR <= maxRadarR) {
         g.arc(gx, gy, markerR, 0, TAU);
-        g.stroke({ color: 0xffdd44, width: 1.5, alpha: pulse * 0.9 });
+        g.stroke({ color: cachedThemeAccent, width: 1.5, alpha: pulse * 0.9 });
         g.moveTo(gx, gy - 4);
         g.lineTo(gx + 4, gy);
         g.lineTo(gx, gy + 4);
         g.lineTo(gx - 4, gy);
         g.closePath();
-        g.fill({ color: 0xffdd44, alpha: pulse });
+        g.fill({ color: cachedThemeAccent, alpha: pulse });
       }
     }
   }
@@ -369,7 +384,7 @@ export function syncPixiMinimap(now: number): void {
     const va = Math.atan2(player.vy, player.vx);
     g.moveTo(mmX, mmY);
     g.lineTo(mmX + Math.cos(va) * vLen, mmY + Math.sin(va) * vLen);
-    g.stroke({ color: 0x64c8ff, width: 1.5, alpha: 0.6 });
+    g.stroke({ color: cachedThemeShield, width: 1.5, alpha: 0.6 });
   }
 
   mmApp.render();

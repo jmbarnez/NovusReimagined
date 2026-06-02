@@ -41,8 +41,8 @@
 .hud-slot.target-assigned { border-color: rgba(60,140,90,0.55); }
 
 .hud-slot.inactive-active { opacity: 0.45; filter: grayscale(0.6); }
-.hud-slot.inactive-active .sl-name { color: #4a5868; }
-.hud-slot.inactive-active .sl-sub { color: #334455; }
+.hud-slot.inactive-active .sl-name { color: var(--hud-text-faint); }
+.hud-slot.inactive-active .sl-sub { color: var(--hud-text-faint); }
 
 .hud-slot .sl-badge {
   position: absolute;
@@ -74,7 +74,7 @@
   align-items: center;
   justify-content: center;
   font-size: calc(7px * var(--effective-font-scale, 1));
-  color: #b8c4d4;
+  color: var(--hud-text-dim);
   line-height: 1.15;
   overflow: hidden;
   white-space: normal;
@@ -82,20 +82,20 @@
   text-align: center;
   gap: 1px;
 }
-.hud-slot .sl-name.empty { color: #3a4048; }
+.hud-slot .sl-name.empty { color: var(--hud-text-faint); }
 .hud-slot .sl-sub {
   position: absolute;
   bottom: 4px; left: 3px;
   font-size: calc(6px * var(--effective-font-scale, 1));
-  color: #4a5566;
+  color: var(--hud-text-faint);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   max-width: calc(100% - 6px);
 }
-.hud-slot .sl-sub.assigned { color: #44ffaa; }
-.hud-slot .sl-sub.on { color: #66cc88; }
-.hud-slot .sl-sub.off { color: #cc4444; }
+.hud-slot .sl-sub.assigned { color: var(--hud-positive); }
+.hud-slot .sl-sub.on { color: var(--hud-positive); }
+.hud-slot .sl-sub.off { color: var(--hud-danger); }
 
 /* Heat bar */
 .hud-slot .sl-heat-track {
@@ -319,18 +319,18 @@
 
 /* ── Module Damage States ── */
 .hud-slot.module-damaged { border-color: rgba(220,120,30,0.6) !important; }
-.hud-slot.module-damaged .sl-name { color: #cc8844; }
-.hud-slot.module-damaged .sl-sub.damaged { color: #ff8844; font-weight: 700; }
+.hud-slot.module-damaged .sl-name { color: var(--hud-hull); }
+.hud-slot.module-damaged .sl-sub.damaged { color: var(--hud-hull); font-weight: 700; }
 .hud-slot.module-offline { opacity: 0.45; filter: grayscale(0.75); border-color: rgba(180,40,40,0.55) !important; }
-.hud-slot.module-offline .sl-name { color: #994444; text-decoration: line-through; }
+.hud-slot.module-offline .sl-name { color: var(--hud-danger); text-decoration: line-through; }
 .hud-slot.module-offline .sl-sub.damage-offline { color: var(--hud-danger); font-weight: 700; }
-.hud-slot .sl-heat-fill.damaged { background: #ff8844; }
+.hud-slot .sl-heat-fill.damaged { background: var(--hud-hull); }
 
 /* ── Turret Power States ── */
 .hud-slot.turret-off { opacity: 0.5; filter: grayscale(0.7); }
-.hud-slot.turret-off .sl-name { color: #4a5868; text-decoration: line-through; }
+.hud-slot.turret-off .sl-name { color: var(--hud-text-faint); text-decoration: line-through; }
 .hud-slot.turret-cycling { border-color: rgba(80,120,160,0.5) !important; }
-.hud-slot.turret-cycling .sl-name { color: #6688aa; }
+.hud-slot.turret-cycling .sl-name { color: var(--hud-text-dim); }
 .hud-slot.turret-on { border-color: rgba(80,60,40,0.6); }
 
 /* ── Tractor Beam Strength Toggle Button ── */
