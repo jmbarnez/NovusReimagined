@@ -262,7 +262,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         // Label (add to label container)
         const text = new Text({ text: reg.name.toUpperCase(), style: createSmallStyle() });
         text.anchor.set(0.5, 0.5);
-        text.position.set(p.x, p.y);
+        text.position.set(Math.round(p.x), Math.round(p.y));
         text.style.fill = 0x64a0dc;
         text.alpha = 0.32;
         labelContainer?.addChild(text);
@@ -322,7 +322,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         const label = discovered ? secConfig.name.toUpperCase() : "?";
         const text = new Text({ text: label, style: createBoldStyle() });
         text.anchor.set(0.5, 0.5);
-        text.position.set(sCenter.x, sCenter.y - 12);
+        text.position.set(Math.round(sCenter.x), Math.round(sCenter.y - 12));
         text.alpha = discovered ? 0.65 : 0.28;
         labelContainer?.addChild(text);
       }
@@ -347,7 +347,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     // Label
     const text = new Text({ text: `${sysClass}-CLASS STAR`, style: createBoldStyle() });
     text.anchor.set(0.5, 0.5);
-    text.position.set(sp.x, sp.y + 30);
+    text.position.set(Math.round(sp.x), Math.round(sp.y + 30));
     text.style.fill = rgbaToHex(theme.accent);
     labelContainer?.addChild(text);
   }
@@ -410,7 +410,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
 
         const text = new Text({ text: "JUMP GATE", style: createNameStyle() });
         text.anchor.set(0.5, 0.5);
-        text.position.set(p.x, p.y + size + 8);
+        text.position.set(Math.round(p.x), Math.round(p.y + size + 8));
         text.style.fill = rgbaToHex(theme.shield);
         text.alpha = alpha * 0.9;
         labelContainer?.addChild(text);
@@ -436,7 +436,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
 
         const text = new Text({ text: s.name, style: createBoldStyle() });
         text.anchor.set(0.5, 0.5);
-        text.position.set(p.x, p.y + size + 10);
+        text.position.set(Math.round(p.x), Math.round(p.y + size + 10));
         text.style.fill = rgbaToHex(theme.positive);
         text.alpha = alpha * 0.9;
         labelContainer?.addChild(text);

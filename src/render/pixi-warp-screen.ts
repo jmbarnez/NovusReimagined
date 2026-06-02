@@ -192,22 +192,22 @@ export function syncPixiWarpScreen(now: number): void {
     secText.visible = preWarp && !!destSys;
     if (preWarp) {
       titleText.text = "JUMP DRIVE ENGAGED";
-      titleText.position.set(cx, cy - 32);
+      titleText.position.set(Math.round(cx), Math.round(cy - 32));
       titleText.alpha = textA;
       destText.text = `⟩⟩ ${destName}`;
-      destText.position.set(cx, cy + 6);
+      destText.position.set(Math.round(cx), Math.round(cy + 6));
       destText.alpha = textA;
       if (destSys) {
         const sec = destSys.security?.toFixed(1);
         const secColor = destSys.security >= 0.7 ? 0x44ff88 : destSys.security >= 0.4 ? 0xffcc44 : 0xff5544;
         secText.style.fill = secColor;
         secText.text = `SECURITY ${sec}`;
-        secText.position.set(cx, cy + 28);
+        secText.position.set(Math.round(cx), Math.round(cy + 28));
         secText.alpha = textA * 0.7;
       }
     } else {
       destText.text = destName;
-      destText.position.set(cx, cy);
+      destText.position.set(Math.round(cx), Math.round(cy));
       destText.alpha = textA;
       destText.style.fill = 0xffffff;
     }

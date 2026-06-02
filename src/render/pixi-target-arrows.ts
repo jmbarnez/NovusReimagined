@@ -171,8 +171,8 @@ function drawArrow(
     const dy = py - viewCenterY(screenContainer?.parent?.height || window.innerHeight);
     const dMag = Math.hypot(dx, dy) || 1;
     text.position.set(
-      px - (dx / dMag) * 22,
-      py - (dy / dMag) * 22,
+      Math.round(px - (dx / dMag) * 22),
+      Math.round(py - (dy / dMag) * 22),
     );
   }
 

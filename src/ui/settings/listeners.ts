@@ -16,6 +16,7 @@ import { refreshTargetArrowFonts } from "../../render/pixi-target-arrows.js";
 import { refreshTutorialGateFonts } from "../../render/pixi-tutorial-gates.js";
 import { refreshWarpScreenFonts } from "../../render/pixi-warp-screen.js";
 import { refreshEffectsOverlayFonts } from "../../render/pixi-effects-overlay.js";
+import { refreshWorldLabelTextStyle } from "../../render/world-label-card.js";
 import { savePlayer } from "../../player/player-data.js";
 import { on } from "../../events.js";
 import { bindWindowChromeButton, attachSingleWindowExpand, resetWindowExpand } from "../hud/window-chrome.js";
@@ -187,6 +188,7 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     (document.getElementById("ui-scale-val") as HTMLElement).textContent = v.toFixed(2) + "x";
     saveSettings(Client.settings);
     refreshTheme();
+    refreshWorldLabelTextStyle();
     refreshEntityFonts();
     refreshCelestialFonts();
     refreshHudFonts();
@@ -206,6 +208,7 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     (document.getElementById("font-scale-val") as HTMLElement).textContent = v.toFixed(2) + "x";
     saveSettings(Client.settings);
     refreshTheme();
+    refreshWorldLabelTextStyle();
     refreshEntityFonts();
     refreshCelestialFonts();
     refreshHudFonts();

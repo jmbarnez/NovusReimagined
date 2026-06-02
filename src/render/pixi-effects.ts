@@ -332,8 +332,8 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       textObj.text = label + qtyStr;
 
       // Position text card below pickup
-      textObj.x = px;
-      textObj.y = py + 8 * warpScale;
+      textObj.x = Math.round(px);
+      textObj.y = Math.round(py + 8 * warpScale);
       textObj.alpha = (0.85 + 0.15 * Math.sin(now * 0.002 + s.bob * 2)) * fade * flicker;
     }
   }

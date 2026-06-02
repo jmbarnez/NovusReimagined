@@ -76,7 +76,7 @@ function ensureText(id: string, text: string, x: number, y: number, fill: string
   }
   t.text = text;
   t.style.fill = fill;
-  t.position.set(x, y);
+  t.position.set(Math.round(x), Math.round(y));
   t.alpha = 1;
   return t;
 }
@@ -99,7 +99,7 @@ function ensureGateText(id: string, text: string, x: number, y: number, fill: st
   }
   t.text = text;
   t.style.fill = fill;
-  t.position.set(x, y);
+  t.position.set(Math.round(x), Math.round(y));
   t.alpha = 1;
   return t;
 }

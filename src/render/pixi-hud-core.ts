@@ -245,14 +245,14 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
 
   if (speedLabel) {
     speedLabel.text = `${Math.round(speed)} m/s`;
-    speedLabel.position.set(cx - (r + 7) + gx, cy + gy);
+    speedLabel.position.set(Math.round(cx - (r + 7) + gx), Math.round(cy + gy));
     speedLabel.style.fontSize = fontSize;
     speedLabel.style.fill = labelColor;
   }
 
   if (maxShield > 0 && shieldLabel) {
     shieldLabel.text = `${Math.round(shieldFrac * 100)}% SHD`;
-    shieldLabel.position.set(cx + (r + 7) + gx, cy + gy);
+    shieldLabel.position.set(Math.round(cx + (r + 7) + gx), Math.round(cy + gy));
     shieldLabel.style.fontSize = fontSize;
     shieldLabel.style.fill = (isLowShield || isCritical) ? 0xee4444 : labelColor;
   }
@@ -262,7 +262,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     const alarmBlink = Math.floor(now / 150) % 2 === 0;
     warningBanner.visible = alarmBlink;
     warningBanner.text = "CRITICAL: STRUCTURE COMPROMISED";
-    warningBanner.position.set(cx, cy - (r + 20));
+    warningBanner.position.set(Math.round(cx), Math.round(cy - (r + 20)));
   } else if (warningBanner) {
     warningBanner.visible = false;
   }
@@ -323,7 +323,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
       const targetDist = Math.round(dst(player.x, player.y, target.x, target.y));
       
       targetLabel.text = `[${targetDist}m]`;
-      targetLabel.position.set(targetSx + bracketOffset + 5, targetSy);
+      targetLabel.position.set(Math.round(targetSx + bracketOffset + 5), Math.round(targetSy));
       targetLabel.style.fill = labelColor;
       targetLabel.visible = true;
     } else {
@@ -353,10 +353,3 @@ export function destroyPixiHUD(): void {
   hudContainer = null;
 }
 
-export function refreshHUDFonts(): void {
-  const font = getUIFont();
-  if (speedStyle) speedStyle.fontFamily = font;
-  if (shieldStyle) shieldStyle.fontFamily = font;
-  if (warningStyle) warningStyle.fontFamily = font;
-  if (targetStyle) targetStyle.fontFamily = font;
-}

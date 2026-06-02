@@ -527,13 +527,13 @@ export function syncPixiEntities(alpha: number, now: number): void {
       b.levelBg.alpha = 1;
 
       // Position level text (centered in left card)
-      b.levelText.x = startX + cardW / 2;
-      b.levelText.y = nameY;
+      b.levelText.x = Math.round(startX + cardW / 2);
+      b.levelText.y = Math.round(nameY);
       b.levelText.alpha = 1;
 
       // Position name text (left-aligned, padded inside right box)
-      b.nameText.x = startX + cardW + namePadX;
-      b.nameText.y = nameY;
+      b.nameText.x = Math.round(startX + cardW + namePadX);
+      b.nameText.y = Math.round(nameY);
       b.nameText.alpha = 1;
     } else {
       b.nameText.alpha = 0;
@@ -544,8 +544,8 @@ export function syncPixiEntities(alpha: number, now: number): void {
     // Dialogue/Speech bubble display
     if (e._speech && now < e._speech.until) {
       b.speechText.text = e._speech.text;
-      b.speechText.x = ix;
-      b.speechText.y = iy - 50;
+      b.speechText.x = Math.round(ix);
+      b.speechText.y = Math.round(iy - 50);
       b.speechText.alpha = 1;
       b.speechText.visible = true;
     } else {
