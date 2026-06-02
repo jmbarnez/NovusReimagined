@@ -7,8 +7,9 @@ import { dst } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
 import { getDropZoneCenter } from "../hub.js";
 import { getUIFont } from "./ui-font.js";
-import { shouldShowWarpGate } from "../data/tutorial.js";
+import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { GATE_RANGE } from "../constants.js";
+import { gateDestinationName, gateStableId, isLocalWarpGate } from "../utils/warp-gates.js";
 
 const TAU = Math.PI * 2;
 
@@ -265,7 +266,7 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
   for (const g of sys.gates ?? []) {
     if (!shouldShowWarpGate(g, sys.idx, getState().player)) continue;
     if (!isVisible(g.x, g.y, g.radius * 2.5)) continue;
-    const id = (g as unknown as { id?: string }).id ?? `${g.x}|${g.y}|${g.targetSysIdx}`;
+    const id = gateStableId(g);
     keepGates.add(id);
     let gfx = gateGfx.get(id);
     if (!gfx) {
@@ -279,9 +280,23 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
     const player = getState().player;
     const inRange = dst(player.x, player.y, g.x, g.y) < g.radius + GATE_RANGE;
     if (inRange) {
-      const tgt = getState().GALAXY[g.targetSysIdx];
-      const text = `[F] Jump To ${tgt?.name || "Sector"}`;
-      const label = ensureGateText(id, text, g.x + g.radius + 15, g.y, "#88c8ff");
+      const canWarp = canWarpThroughGate(g, sys.idx, player);
+      const isPrimaryLock = player.targetLock?.id === id;
+      const slot = player.lockQueue.find((entry) => entry.id === id);
+      const text = !isPrimaryLock
+        ? "Lock gate to interact"
+        : slot?.resolving
+          ? "Scanning gate..."
+          : canWarp
+            ? "[F] Interact"
+            : "Locked: Complete Academy clearance";
+      const label = ensureGateText(
+        id,
+        text,
+        g.x + g.radius + 15,
+        g.y,
+        isPrimaryLock && !slot?.resolving && canWarp ? "#88c8ff" : "#8894a8"
+      );
       keepGateLabels.add(id);
       if (!layer.children.includes(label)) layer.addChild(label);
     }

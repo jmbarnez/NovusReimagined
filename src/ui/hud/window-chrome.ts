@@ -12,6 +12,9 @@ export const WIN_CLOSE_ICON =
 export const WIN_POPOUT_ICON =
   '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="5" height="5" rx="0.5"/><path d="M4 3.5V2.5H8.5V7H7.5"/><path d="M6 4L8.5 1.5"/></svg>';
 
+export const WIN_RESET_ICON =
+  '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="5" cy="5" r="3.5"/><line x1="5" y1="2.5" x2="5" y2="5"/><line x1="5" y1="5" x2="7" y2="6.5"/></svg>';
+
 /** Window chrome buttons should not steal keyboard focus or show native title tooltips. */
 export function bindWindowChromeButton(btn: HTMLElement): void {
   btn.addEventListener("mousedown", (ev) => ev.preventDefault());

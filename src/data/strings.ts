@@ -770,6 +770,14 @@ export const STRINGS: Record<Language, Record<string, string>> = {
 
     // ─── perf overlay ────────────────────────────────────────────
     "perf.title": "Performance",
+    "perf.bootTitle": "Live Performance",
+    "perf.standby": "STANDBY",
+    "perf.live": "LIVE",
+    "perf.fps": "FPS",
+    "perf.frame": "Frame Avg / Max",
+    "perf.ticks": "Ticks / Frame",
+    "perf.entities": "Entities",
+    "perf.memory": "Memory",
   },
 
   es: {
@@ -1540,5 +1548,13 @@ export const STRINGS: Record<Language, Record<string, string>> = {
 
     // ─── perf overlay ────────────────────────────────────────────
     "perf.title": "Rendimiento",
+    "perf.bootTitle": "Rendimiento en Vivo",
+    "perf.standby": "EN ESPERA",
+    "perf.live": "EN VIVO",
+    "perf.fps": "FPS",
+    "perf.frame": "Cuadro Prom. / Max",
+    "perf.ticks": "Ticks / Cuadro",
+    "perf.entities": "Entidades",
+    "perf.memory": "Memoria",
   },
 };

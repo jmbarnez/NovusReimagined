@@ -1,4 +1,5 @@
 import { t } from "../../utils/i18n.js";
+import { getPerformanceTelemetrySnapshot } from "../../render/perf-overlay.js";
 import { appendLogEntry, flushPendingLogEntries, registerLogSink } from "../hud/logs.js";
 
 /**
@@ -8,6 +9,8 @@ import { appendLogEntry, flushPendingLogEntries, registerLogSink } from "../hud/
  * Keep this file focused on phase/state mutations only.
  */
 
+let bootPerfTimer: ReturnType<typeof setInterval> | null = null;
+
 /** Apply i18n translations to the static boot screen HTML immediately after settings load. */
 export function localizeBootScreen(): void {
   const q = (sel: string): HTMLElement | null => document.querySelector(sel) as HTMLElement | null;
@@ -16,23 +19,22 @@ export function localizeBootScreen(): void {
   const mon2Tag   = q(".monitor-right .monitor-tag");
   const mon2Title = q(".monitor-right .monitor-title");
   const consoleEl = q(".ld-console-line");
-  const subEl     = document.getElementById("boot-telemetry-subsystem");
-  const statusEl  = document.getElementById("boot-telemetry-status");
-  const rows      = document.querySelectorAll(".telemetry-row .telemetry-lbl");
+  const perfTitle = q(".boot-perf-title");
+  const perfState = document.getElementById("boot-perf-state");
+  const labels    = document.querySelectorAll(".boot-perf-monitor [data-perf-label]");
   if (mon1Tag)   mon1Tag.textContent   = t("boot.monitorTagPrimary");
   if (mon1Title) mon1Title.textContent = t("boot.monitorTitlePrimary");
   if (mon2Tag)   mon2Tag.textContent   = t("boot.monitorTagSecondary");
   if (mon2Title) mon2Title.textContent = t("boot.monitorTitleSecondary");
   if (consoleEl) consoleEl.textContent = t("boot.consoleInit");
-  if (subEl)     subEl.textContent     = t("boot.telemetryIdle");
-  if (statusEl)  statusEl.textContent  = t("boot.telemetryStandby");
-  const labels = [
-    t("boot.telemetrySubsystemLabel"),
-    t("boot.telemetryProgressLabel"),
-    t("boot.telemetryMemoryLabel"),
-    t("boot.telemetryStatusLabel"),
-  ];
-  rows.forEach((el, i) => { if (labels[i]) el.textContent = labels[i]; });
+  if (perfTitle) perfTitle.textContent = t("perf.bootTitle");
+  if (perfState) perfState.textContent = t("perf.standby");
+  labels.forEach((el) => {
+    const key = (el as HTMLElement).dataset.perfLabel;
+    if (!key) return;
+    el.textContent = t(`perf.${key}`);
+  });
+  startBootPerformanceMonitor();
 }
 
 /** Register the right-monitor loading console as a system log sink. */
@@ -59,27 +61,42 @@ export function transitionToTitleScreen(): void {
   loadingEl.classList.add("ld-title-mode");
 }
 
-const telemetryByPhase: Record<string, { subsystem: string; progress: string; status: string }> = {
-  start: { subsystem: t("boot.kernel"), progress: "12%", status: t("boot.init") },
-  ui:    { subsystem: t("boot.hudRenderer"), progress: "38%", status: t("boot.load") },
-  world: { subsystem: t("boot.galaxyGen"), progress: "62%", status: t("boot.build") },
-  pixi:  { subsystem: t("boot.pixelPipe"), progress: "91%", status: t("boot.link") },
-};
+function setText(id: string, text: string): void {
+  const el = document.getElementById(id);
+  if (el && el.textContent !== text) el.textContent = text;
+}
 
-function updateTelemetry(phase: string): void {
-  const data = telemetryByPhase[phase];
-  if (!data) return;
-  const subsystem = document.getElementById("boot-telemetry-subsystem");
-  const progress  = document.getElementById("boot-telemetry-progress");
-  const memory    = document.getElementById("boot-telemetry-memory");
-  const status    = document.getElementById("boot-telemetry-status");
-  if (subsystem) subsystem.textContent = data.subsystem;
-  if (progress)  progress.textContent  = data.progress;
-  if (status)    status.textContent    = data.status;
-  if (memory) {
-    const mem = (performance as unknown as Record<string, unknown>).memory as { usedJSHeapSize?: number } | undefined;
-    memory.textContent = mem ? `${(mem.usedJSHeapSize! / 1048576).toFixed(1)} MB` : t("common.dash");
+function updateBootPerformanceMonitor(): void {
+  const loadingEl = document.getElementById("loading");
+  if (!loadingEl || loadingEl.classList.contains("out")) {
+    if (bootPerfTimer) {
+      clearInterval(bootPerfTimer);
+      bootPerfTimer = null;
+    }
+    return;
   }
+
+  const snapshot = getPerformanceTelemetrySnapshot();
+  const memoryText = snapshot.memory
+    ? `${snapshot.memory.usedMB.toFixed(1)} / ${snapshot.memory.totalMB.toFixed(1)} MB`
+    : t("common.dash");
+  const stateText = snapshot.sampledAtMs > 0 ? t("perf.live") : t("perf.standby");
+
+  setText("boot-perf-state", stateText);
+  setText("boot-perf-fps", String(snapshot.fps));
+  setText("boot-perf-frame", `${snapshot.avgMs.toFixed(1)} / ${snapshot.maxMs.toFixed(1)} MS`);
+  setText("boot-perf-ticks", snapshot.avgTicks.toFixed(1));
+  setText(
+    "boot-perf-entities",
+    `B${snapshot.entities.bullets} E${snapshot.world.enemies} A${snapshot.world.asteroids} P${snapshot.entities.particles}`
+  );
+  setText("boot-perf-memory", memoryText);
+}
+
+function startBootPerformanceMonitor(): void {
+  updateBootPerformanceMonitor();
+  if (bootPerfTimer) return;
+  bootPerfTimer = setInterval(updateBootPerformanceMonitor, 250);
 }
 
 /**
@@ -123,8 +140,6 @@ export function markBootPhase(name: string): void {
       const text = subByPhase[name] ?? subEl.textContent ?? "";
       subEl.textContent = text.replace(/^>\s*/, "");
     }
-
-    updateTelemetry(name);
   } catch {
     // Ignore if performance API / DOM is unavailable.
   }

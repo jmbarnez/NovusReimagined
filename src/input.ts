@@ -17,6 +17,7 @@ import { playBackgroundMusic } from "./audio/music.js";
 import { resumeAudio } from "./audio/procedural.js";
 import { isEventLogToggleHotkey, isOverviewToggleHotkey } from "./input-hotkeys.js";
 import { app } from "./pixi.js";
+import { gateStableId } from "./utils/warp-gates.js";
 
 let inputInitialized = false;
 
@@ -127,7 +128,9 @@ export function initInput() {
       } else {
         const gate = getWarpGateInRange(getState().player);
         if (gate) {
-          queueFrameAction({ type: "warp", payload: { targetIdx: gate.targetSysIdx } });
+          queueFrameAction(gate.targetSysIdx == null
+            ? { type: "warp" }
+            : { type: "warp", payload: { targetIdx: gate.targetSysIdx } });
           return;
         }
         const sys = curSys();
@@ -240,6 +243,15 @@ export function initInput() {
             for (const p of getState().wreckPieces) {
               if (p.hp > 0 && dst(wx, wy, p.x, p.y) < 22) {
                 queueFrameAction({ type: "requestSensorLock", payload: { id: p.id } });
+                locked = true;
+                break;
+              }
+            }
+          }
+          if (!locked) {
+            for (const gate of sys.gates) {
+              if (dst(wx, wy, gate.x, gate.y) < gate.radius * 1.2) {
+                queueFrameAction({ type: "requestSensorLock", payload: { id: gateStableId(gate) } });
                 locked = true;
                 break;
               }

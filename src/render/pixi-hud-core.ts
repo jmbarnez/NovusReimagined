@@ -273,20 +273,33 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     driftVectors.clear();
     const vAngle = Math.atan2(player.vy, player.vx);
     const offsetDist = r + (12 + Math.min(speedMag * 0.04, 10)) * z;
-
-    // Prograde marker
-    const px = Math.cos(vAngle) * offsetDist + gx;
-    const py = Math.sin(vAngle) * offsetDist + gy;
+    const cosA = Math.cos(vAngle);
+    const sinA = Math.sin(vAngle);
     const mR = Math.max(1.8, Math.min(4, 2.5 * z));
 
+    const rot = (cx: number, cy: number, dx: number, dy: number) => ({
+      x: cx + dx * cosA - dy * sinA,
+      y: cy + dx * sinA + dy * cosA,
+    });
+
+    // Prograde marker
+    const px = cosA * offsetDist + gx;
+    const py = sinA * offsetDist + gy;
+
     driftVectors.circle(px, py, mR);
-    // Fins
-    driftVectors.moveTo(px - mR, py);
-    driftVectors.lineTo(px - mR * 2, py);
-    driftVectors.moveTo(px + mR, py);
-    driftVectors.lineTo(px + mR * 2, py);
-    driftVectors.moveTo(px, py - mR);
-    driftVectors.lineTo(px, py - mR * 2);
+    // Fins — rotated by vAngle so they align with velocity
+    const pL1 = rot(px, py, -mR, 0);
+    const pL2 = rot(px, py, -mR * 2, 0);
+    driftVectors.moveTo(pL1.x, pL1.y);
+    driftVectors.lineTo(pL2.x, pL2.y);
+    const pR1 = rot(px, py, mR, 0);
+    const pR2 = rot(px, py, mR * 2, 0);
+    driftVectors.moveTo(pR1.x, pR1.y);
+    driftVectors.lineTo(pR2.x, pR2.y);
+    const pU1 = rot(px, py, 0, -mR);
+    const pU2 = rot(px, py, 0, -mR * 2);
+    driftVectors.moveTo(pU1.x, pU1.y);
+    driftVectors.lineTo(pU2.x, pU2.y);
     driftVectors.stroke({
       color: isCritical ? 0xee4444 : parseInt(theme.shield.replace("#", "0x"), 16),
       width: Math.max(1, 1.2 * z),
@@ -294,14 +307,18 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     });
 
     // Retrograde marker
-    const rx = -Math.cos(vAngle) * offsetDist + gx;
-    const ry = -Math.sin(vAngle) * offsetDist + gy;
+    const rx = -cosA * offsetDist + gx;
+    const ry = -sinA * offsetDist + gy;
     driftVectors.circle(rx, ry, mR);
-    // Cross lines
-    driftVectors.moveTo(rx - mR * 0.7, ry - mR * 0.7);
-    driftVectors.lineTo(rx + mR * 0.7, ry + mR * 0.7);
-    driftVectors.moveTo(rx - mR * 0.7, ry + mR * 0.7);
-    driftVectors.lineTo(rx + mR * 0.7, ry - mR * 0.7);
+    // Cross lines — rotated by vAngle
+    const rA1 = rot(rx, ry, -mR * 0.7, -mR * 0.7);
+    const rA2 = rot(rx, ry, mR * 0.7, mR * 0.7);
+    driftVectors.moveTo(rA1.x, rA1.y);
+    driftVectors.lineTo(rA2.x, rA2.y);
+    const rB1 = rot(rx, ry, -mR * 0.7, mR * 0.7);
+    const rB2 = rot(rx, ry, mR * 0.7, -mR * 0.7);
+    driftVectors.moveTo(rB1.x, rB1.y);
+    driftVectors.lineTo(rB2.x, rB2.y);
     driftVectors.stroke({
       color: isCritical ? 0xee4444 : parseInt(theme.textDim.replace("#", "0x"), 16),
       width: Math.max(1, 1.2 * z),

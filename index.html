@@ -123,22 +123,30 @@
             <div class="ld-console" aria-hidden="true">
               <div class="ld-console-line">&gt; Initializing pilot interface...</div>
             </div>
-            <div class="boot-telemetry">
-              <div class="telemetry-row">
-                <span class="telemetry-lbl">SUBSYSTEM</span>
-                <span class="telemetry-val" id="boot-telemetry-subsystem">IDLE</span>
+            <div class="boot-telemetry boot-perf-monitor" aria-label="Performance monitor">
+              <div class="boot-perf-head">
+                <span class="boot-perf-title">LIVE PERFORMANCE</span>
+                <span class="boot-perf-state" id="boot-perf-state">STANDBY</span>
               </div>
               <div class="telemetry-row">
-                <span class="telemetry-lbl">PROGRESS</span>
-                <span class="telemetry-val" id="boot-telemetry-progress">0%</span>
+                <span class="telemetry-lbl" data-perf-label="fps">FPS</span>
+                <span class="telemetry-val" id="boot-perf-fps">0</span>
               </div>
               <div class="telemetry-row">
-                <span class="telemetry-lbl">MEMORY</span>
-                <span class="telemetry-val" id="boot-telemetry-memory">—</span>
+                <span class="telemetry-lbl" data-perf-label="frame">FRAME AVG / MAX</span>
+                <span class="telemetry-val" id="boot-perf-frame">0.0 / 0.0 MS</span>
               </div>
               <div class="telemetry-row">
-                <span class="telemetry-lbl">STATUS</span>
-                <span class="telemetry-val" id="boot-telemetry-status">STANDBY</span>
+                <span class="telemetry-lbl" data-perf-label="ticks">TICKS / FRAME</span>
+                <span class="telemetry-val" id="boot-perf-ticks">0.0</span>
+              </div>
+              <div class="telemetry-row">
+                <span class="telemetry-lbl" data-perf-label="entities">ENTITIES</span>
+                <span class="telemetry-val" id="boot-perf-entities">B0 E0 A0 P0</span>
+              </div>
+              <div class="telemetry-row telemetry-row-wide">
+                <span class="telemetry-lbl" data-perf-label="memory">MEMORY</span>
+                <span class="telemetry-val" id="boot-perf-memory">—</span>
               </div>
             </div>
           </div>

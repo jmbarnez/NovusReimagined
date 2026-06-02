@@ -21,6 +21,7 @@ import { isVisible } from "../utils/game.js";
 import { shouldShowWarpGate } from "../data/tutorial.js";
 import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
 import { TUTORIAL_SECTOR } from "../data/tutorial-layout.js";
+import { gateStableId, gateWorldLabel } from "../utils/warp-gates.js";
 
 /** Distance from world origin to the system star, in world units. */
 export const SUN_DIST = 3500;
@@ -89,13 +90,13 @@ export function refreshCelestialFonts() {
 }
 
 interface GateBundle {
+  id: string;
   container: Container;
   hull: Graphics;
   rings: Graphics;
   core: Graphics;
   labelBg: Graphics;
   labelText: Text;
-  targetSysIdx: number;
 }
 let _gateBundles: GateBundle[] = [];
 
@@ -338,8 +339,7 @@ export function initPixiCelestial(parent: Container, sys: System): void {
       gateCont.addChild(labelBg);
 
       // Label Text (now centered vertically for premium layout)
-      const targetSys = getState().GALAXY?.[g.targetSysIdx];
-      const targetName = targetSys ? targetSys.name : "Unknown Sector";
+      const targetName = gateWorldLabel(g, getState().GALAXY);
       const labelY = g.radius + 22;
       const labelText = new Text({
         text: formatWorldLabelText(`⟩⟩ ${targetName}`),
@@ -354,13 +354,13 @@ export function initPixiCelestial(parent: Container, sys: System): void {
       layoutWorldLabelCard(labelBg, labelText);
 
       _gateBundles.push({
+        id: gateStableId(g),
         container: gateCont,
         hull,
         rings,
         core,
         labelBg,
         labelText,
-        targetSysIdx: g.targetSysIdx,
       });
     }
   }
@@ -409,6 +409,12 @@ export function syncPixiCelestial(now: number, alpha: number, sys: System): void
   }
 
   // Sync Warp Gates
+  const gateIdsMatch = _gateBundles.length === (sys.gates?.length ?? 0)
+    && (sys.gates ?? []).every((g, i) => _gateBundles[i]?.id === gateStableId(g));
+  if (!gateIdsMatch && stationLayer) {
+    initPixiCelestial(stationLayer, sys);
+    return;
+  }
   if (sys.gates && _gateBundles.length === sys.gates.length) {
     for (let i = 0; i < sys.gates.length; i++) {
       const g = sys.gates[i]!;

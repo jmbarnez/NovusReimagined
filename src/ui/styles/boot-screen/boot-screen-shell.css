@@ -213,18 +213,67 @@
 .boot-telemetry {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 8px 10px;
   margin-top: 12px;
-  padding: 10px 12px;
+  padding: 9px 12px 10px;
   background: color-mix(in srgb, var(--hud-bg-deep) 72%, var(--hud-bg-panel) 28%);
   border: 1px solid var(--hud-border-soft);
   border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.boot-telemetry::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--hud-shield) 58%, transparent),
+    color-mix(in srgb, var(--hud-accent) 42%, transparent),
+    transparent);
+}
+
+.boot-perf-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--hud-border-soft) 65%, transparent);
+}
+
+.boot-perf-title,
+.boot-perf-state {
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.boot-perf-title {
+  color: color-mix(in srgb, var(--hud-text-bright) 86%, var(--hud-shield) 14%);
+}
+
+.boot-perf-state {
+  color: var(--hud-positive);
+  font-variant-numeric: tabular-nums;
 }
 
 .telemetry-row {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
+}
+
+.telemetry-row-wide {
+  grid-column: 1 / -1;
 }
 
 .telemetry-lbl {
@@ -237,8 +286,15 @@
 .telemetry-val {
   color: var(--hud-text-bright);
   font-size: calc(11px * var(--effective-font-scale, 1));
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#boot-perf-fps {
+  color: var(--hud-shield);
 }
 
 @media (max-width: 900px) {

@@ -75,11 +75,18 @@ export interface Station {
 }
 
 export interface Gate {
+  id?: string;
   x: number;
   y: number;
   px: number;
   py: number;
-  targetSysIdx: number;
+  targetSysIdx?: number;
+  target?: {
+    kind: "local";
+    x: number;
+    y: number;
+    label: string;
+  };
   radius: number;
   spin: number;
   _orbitSpeed?: number;

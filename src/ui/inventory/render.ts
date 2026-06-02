@@ -2,7 +2,7 @@ import { getState } from "../../state-access.js";
 import { ORE, REFINED, LOOT, COMPONENTS } from "../../data/resources.js";
 import { MODULES } from "../../data/modules.js";
 import { escHtml } from "../../utils/format.js";
-import { iconSvg } from "../station/shared.js";
+import { itemIconHtml as atlasItemIconHtml } from "../icons/item-icon-bake.js";
 import { t } from "../../utils/i18n.js";
 import { dominantOreKey } from "../../utils/ore-naming.js";
 import { INV_STATE, type InventoryItem, type TreeNode } from "./state.js";
@@ -12,7 +12,7 @@ const ICON_SIZE = 32;
 const ICON_SIZE_SM = 20;
 const ICON_SIZE_GRID = 52;
 
-/** Map an InventoryItem to the key used by iconSvg() in shared.ts. */
+/** Map an InventoryItem to the key used by the icon atlas / baker. */
 function iconKeyForItem(it: InventoryItem): string {
   if (it.type === "ore") return it.key;
   if (it.type === "mixedOre") return dominantOreKey(it.composition ?? { [it.key]: 1 });
@@ -36,11 +36,11 @@ export function colorForItem(it: InventoryItem): string | undefined {
 }
 
 export function itemIconHtml(it: InventoryItem, size: number = ICON_SIZE): string {
-  return iconSvg(iconKeyForItem(it), size);
+  return atlasItemIconHtml(iconKeyForItem(it), size);
 }
 
 export function itemIconSmall(it: InventoryItem): string {
-  return iconSvg(iconKeyForItem(it), ICON_SIZE_SM);
+  return atlasItemIconHtml(iconKeyForItem(it), ICON_SIZE_SM);
 }
 
 export function renderInventoryHTML(): string {

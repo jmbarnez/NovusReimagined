@@ -1,5 +1,6 @@
 import { Client } from "../../state.js";
 import { sfxBlip } from "../../audio/procedural.js";
+import { WIN_EXPAND_ICON, WIN_CLOSE_ICON, WIN_RESET_ICON, setExpandButtonState, collapseWindowExpand } from "./window-chrome.js";
 
 const _windows = new Map<string, HTMLElement>();
 const _closeCallbacks = new Map<string, () => void>();
@@ -41,16 +42,16 @@ function makeWindowHTML(id: string, title: string): string {
     skills: "eve-window-skills",
   };
   const cls = classes[id] || "";
-  const resetBtn = id === "map" ? `<button type="button" class="eve-win-btn eve-win-reset" aria-label="Reset view" tabindex="-1">⊕</button>` : "";
+  const resetBtn = id === "map" ? `<button type="button" class="eve-win-btn eve-win-reset" aria-label="Reset view" tabindex="-1">${WIN_RESET_ICON}</button>` : "";
   return `
     <div class="eve-window ${cls}" id="hud-win-${id}" style="display:none;position:fixed;">
       <div class="eve-win-head">
         <span class="eve-win-title">${title}</span>
         <span class="eve-win-sub"></span>
         <span style="flex:1"></span>
-        <button type="button" class="eve-win-btn eve-win-expand" aria-label="Expand window" tabindex="-1">▢</button>
+        <button type="button" class="eve-win-btn eve-win-expand" aria-label="Expand window" tabindex="-1">${WIN_EXPAND_ICON}</button>
         ${resetBtn}
-        <button type="button" class="eve-win-btn eve-win-close" aria-label="Close window" tabindex="-1">✕</button>
+        <button type="button" class="eve-win-btn eve-win-close" aria-label="Close window" tabindex="-1">${WIN_CLOSE_ICON}</button>
       </div>
       <div class="eve-win-body" id="hud-win-body-${id}"></div>
       <div class="eve-win-foot"></div>
@@ -85,7 +86,15 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
 
     head.addEventListener("mousedown", (ev) => {
       if ((ev as MouseEvent).button !== 0) return;
-      if ((ev.target as HTMLElement).closest("button") || win!.classList.contains("is-expanded")) return;
+      if ((ev.target as HTMLElement).closest("button")) return;
+      if (win!.classList.contains("is-expanded")) {
+        collapseWindowExpand(win!, { capturePosition: true });
+        const wr = win!.getBoundingClientRect();
+        const headH = (win!.querySelector(".eve-win-head") as HTMLElement | null)?.offsetHeight ?? 26;
+        win!.style.left = `${Math.max(0, (ev as MouseEvent).clientX - wr.width / 2)}px`;
+        win!.style.top = `${Math.max(0, (ev as MouseEvent).clientY - headH / 2)}px`;
+        win!.style.right = "auto";
+      }
       ev.preventDefault();
       bringToFront(win!);
       win!.classList.add("is-dragging");
@@ -124,7 +133,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       _windows.forEach((w) => {
         w.classList.remove("is-expanded");
         const btn = w.querySelector(".eve-win-expand");
-        if (btn) btn.textContent = "▢";
+        if (btn) setExpandButtonState(btn as HTMLElement, false);
         if (w.dataset.prevLeft != null) {
           w.style.left = w.dataset.prevLeft;
           w.style.top = w.dataset.prevTop!;
@@ -146,7 +155,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
         win!.dataset.prevWidth = win!.style.width;
         win!.dataset.prevHeight = win!.style.height;
         win!.classList.add("is-expanded");
-        (expandBtn as HTMLElement).textContent = "▣";
+        setExpandButtonState(expandBtn as HTMLElement, true);
       }
     });
 

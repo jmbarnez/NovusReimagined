@@ -1,9 +1,10 @@
 import { getState } from "../state-access.js";
 import { curSys } from "../utils/game.js";
-import type { Asteroid, Enemy, WreckPiece } from "../types/world.js";
+import type { Asteroid, Enemy, WreckPiece, AutoTarget } from "../types/world.js";
 import type { Player } from "../state.js";
 import { sortedCompositionEntries } from "../utils/ore-naming.js";
 import { ORE } from "../data/resources.js";
+import { gateByLockId, gateLockTarget, isGateLockId } from "../utils/warp-gates.js";
 
 export function isWreckPieceTarget(id: string): boolean {
   return typeof id === "string" && id.startsWith("piece-");
@@ -13,7 +14,7 @@ export function isAsteroidTarget(id: string): boolean {
   return typeof id === "string" && id.startsWith("ast-");
 }
 
-export function targetByLockId(id: string, p: Player = getState().player): Enemy | Asteroid | WreckPiece | null {
+export function targetByLockId(id: string, p: Player = getState().player): Enemy | Asteroid | WreckPiece | AutoTarget | null {
   const sys = curSys(p);
   if (!sys) return null;
   let en = sys._enemyMap?.get(id);
@@ -43,6 +44,10 @@ export function targetByLockId(id: string, p: Player = getState().player): Enemy
   if (isWreckPieceTarget(id)) {
     const wreck = getState().wreckPieces.find((w) => w.id === id);
     return wreck && wreck.hp > 0 ? wreck : null;
+  }
+  if (isGateLockId(id)) {
+    const gate = gateByLockId(id);
+    return gate ? gateLockTarget(gate, getState().GALAXY) : null;
   }
   return null;
 }

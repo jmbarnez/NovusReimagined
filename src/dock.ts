@@ -13,6 +13,7 @@ import { app, stationLayer } from "./pixi.js";
 import { initPixiCelestial, destroyPixiCelestial } from "./render/pixi-celestial.js";
 import type { Station, Gate } from "./types/world.js";
 import { canWarpThroughGate } from "./data/tutorial.js";
+import { gateDestinationName, gateStableId, isLocalWarpGate } from "./utils/warp-gates.js";
 
 async function ensureStationInterface(st: Station): Promise<void> {
   const { ensureStationUI, buildStationView, renderStationView } = await import("./ui/station/index.js");
@@ -58,8 +59,10 @@ export function getDockableStation(p: Player = getState().player, stationId?: st
 export function getWarpGateInRange(p: Player = getState().player, targetIdx?: number | null): Gate | null {
   const sys = curSys(p);
   if (!sys || (p.warpCooldown ?? 0) > 0) return null;
+  const lockedGateId = p.targetLock?.id ?? null;
   return sys.gates.find((g) =>
     (targetIdx == null || g.targetSysIdx === targetIdx)
+    && lockedGateId === gateStableId(g)
     && canWarpThroughGate(g, sys.idx, p)
     && dst(p.x, p.y, g.x, g.y) < g.radius + GATE_RANGE
   ) ?? null;
@@ -161,6 +164,29 @@ export function warpTo(targetIdx: number, p: Player = getState().player) {
   }
 }
 
+function warpLocal(gate: Gate, p: Player): boolean {
+  if (gate.target?.kind !== "local") return false;
+  PlayerAccess.setWarpCooldown(2.5, p);
+  PlayerAccess.setWarpTargetIdx(-1, p);
+  PlayerAccess.updatePhysics({
+    x: gate.target.x,
+    y: gate.target.y - 320,
+    px: gate.target.x,
+    py: gate.target.y - 320,
+    vx: 0,
+    vy: 0,
+  }, p);
+  PlayerAccess.setInvincible(1.5, p);
+  clearSensorLocks(p);
+  if (p === getState().player) {
+    floatText(p.x, p.y - 55, `RETURNED TO ${gate.target.label.toUpperCase()}`, "#66aaff");
+    playWarpAudio("jump");
+    logDockEvent(`Returned to ${gate.target.label}`, "system");
+    savePlayer();
+  }
+  return true;
+}
+
 export function updateWarp(dt: number) {
   if (getState().warpCooldown > 0) {
     PlayerAccess.setWarpCooldown(getState().warpCooldown - dt);
@@ -175,10 +201,12 @@ export function updateWarp(dt: number) {
 export function tryWarp(p: Player = getState().player, targetIdx?: number | null): boolean {
   const gate = getWarpGateInRange(p, targetIdx);
   if (!gate) return false;
+  if (isLocalWarpGate(gate)) return warpLocal(gate, p);
+  if (gate.targetSysIdx == null) return false;
   PlayerAccess.setWarpCooldown(WARP_TIME, p);
   PlayerAccess.setWarpTargetIdx(gate.targetSysIdx, p);
   if (p === getState().player) {
-    floatText(p.x, p.y - 45, `WARP to ${getState().GALAXY[gate.targetSysIdx]?.name || "..."}`, "#66aaff");
+    floatText(p.x, p.y - 45, `WARP to ${gateDestinationName(gate, getState().GALAXY)}`, "#66aaff");
     playWarpAudio("charge");
   }
   return true;

@@ -5,6 +5,32 @@ import { curSys } from "../utils/game.js";
 import { sfxBlip } from "../audio/procedural.js";
 import { t } from "../utils/i18n.js";
 
+export interface PerformanceTelemetrySnapshot {
+  fps: number;
+  avgMs: number;
+  minMs: number;
+  maxMs: number;
+  avgTicks: number;
+  sampledAtMs: number;
+  entities: {
+    bullets: number;
+    enemyBullets: number;
+    beams: number;
+    particles: number;
+    floatTexts: number;
+  };
+  world: {
+    enemies: number;
+    asteroids: number;
+    cells: number;
+  };
+  memory: {
+    usedMB: number;
+    totalMB: number;
+    limitMB: number;
+  } | null;
+}
+
 let _lastSampleTime = 0;
 let _frameCount = 0;
 let _frameTimeSum = 0;
@@ -20,6 +46,44 @@ let _avgTicks = 0;
 
 let _perfEl: HTMLDivElement | null = null;
 let _perfBody: HTMLDivElement | null = null;
+
+function readMemoryTelemetry(): PerformanceTelemetrySnapshot["memory"] {
+  const memory = (performance as unknown as {
+    memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number };
+  }).memory;
+  if (!memory) return null;
+  return {
+    usedMB: memory.usedJSHeapSize / 1048576,
+    totalMB: memory.totalJSHeapSize / 1048576,
+    limitMB: memory.jsHeapSizeLimit / 1048576,
+  };
+}
+
+export function getPerformanceTelemetrySnapshot(): PerformanceTelemetrySnapshot {
+  const state = getState();
+  const sys = curSys();
+  return {
+    fps: _fps,
+    avgMs: _avgMs,
+    minMs: _minMs,
+    maxMs: _maxMs,
+    avgTicks: _avgTicks,
+    sampledAtMs: _lastSampleTime,
+    entities: {
+      bullets: state.bullets.length,
+      enemyBullets: state.enemyBullets.length,
+      beams: state.beams.length,
+      particles: state.particles.length,
+      floatTexts: state.floatTexts.length,
+    },
+    world: {
+      enemies: sys?._liveEnemies?.length ?? 0,
+      asteroids: sys?._liveAsteroids?.length ?? 0,
+      cells: state.spatialGrid?.cells?.size ?? 0,
+    },
+    memory: readMemoryTelemetry(),
+  };
+}
 
 function ensurePerfWindow() {
   if (_perfEl) return;
@@ -98,18 +162,17 @@ export function drawPerfOverlay() {
   ensurePerfWindow();
   _perfEl!.style.display = "flex";
 
-  const state = getState();
+  const snapshot = getPerformanceTelemetrySnapshot();
   const lines = [
-    `FPS: ${_fps}  avg: ${_avgMs.toFixed(1)}ms  min: ${_minMs.toFixed(1)}ms  max: ${_maxMs.toFixed(1)}ms`,
-    `Ticks/frame: ${_avgTicks.toFixed(1)}`,
-    `Entities: B=${state.bullets.length} EB=${state.enemyBullets.length} BM=${state.beams.length} PT=${state.particles.length} FT=${state.floatTexts.length}`,
-    `World: EN=${curSys()?._liveEnemies?.length ?? 0} AST=${curSys()?._liveAsteroids?.length ?? 0} Cells=${state.spatialGrid?.cells?.size ?? 0}`,
+    `FPS: ${snapshot.fps}  avg: ${snapshot.avgMs.toFixed(1)}ms  min: ${snapshot.minMs.toFixed(1)}ms  max: ${snapshot.maxMs.toFixed(1)}ms`,
+    `Ticks/frame: ${snapshot.avgTicks.toFixed(1)}`,
+    `Entities: B=${snapshot.entities.bullets} EB=${snapshot.entities.enemyBullets} BM=${snapshot.entities.beams} PT=${snapshot.entities.particles} FT=${snapshot.entities.floatTexts}`,
+    `World: EN=${snapshot.world.enemies} AST=${snapshot.world.asteroids} Cells=${snapshot.world.cells}`,
   ];
 
-  const mem = (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
-  if (mem) {
+  if (snapshot.memory) {
     lines.push(
-      `Memory: ${(mem.usedJSHeapSize / 1048576).toFixed(1)}MB / ${(mem.totalJSHeapSize / 1048576).toFixed(1)}MB  Limit: ${(mem.jsHeapSizeLimit / 1048576).toFixed(0)}MB`
+      `Memory: ${snapshot.memory.usedMB.toFixed(1)}MB / ${snapshot.memory.totalMB.toFixed(1)}MB  Limit: ${snapshot.memory.limitMB.toFixed(0)}MB`
     );
   }
 

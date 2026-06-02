@@ -5,7 +5,8 @@ import { C } from "../config/index.js";
 import type { ModuleDef } from "../data/modules.js";
 import type { WeaponProfile } from "../data/weaponProfiles.js";
 import type { Player } from "../state.js";
-import type { Enemy, Asteroid, WreckPiece } from "../types/world.js";
+import type { Enemy, Asteroid, WreckPiece, AutoTarget } from "../types/world.js";
+import { isGateLockId } from "../utils/warp-gates.js";
 
 /**
  * Pick the enemy a launched missile should home onto: an explicitly passed
@@ -14,14 +15,15 @@ import type { Enemy, Asteroid, WreckPiece } from "../types/world.js";
  * no valid target dumbfires straight ahead.
  */
 function resolveMissileTarget(passed: Enemy | Asteroid | WreckPiece | null, slotIdx: number, p: Player): Enemy | null {
-  let t: Enemy | Asteroid | WreckPiece | null =
+  let t: Enemy | Asteroid | WreckPiece | AutoTarget | null =
     passed && !isAsteroidTarget(passed.id) ? passed : null;
   if (!t) {
     const lockId = p.turretTargets?.[slotIdx] || p.targetLock?.id || null;
     if (lockId) t = targetByLockId(lockId, p);
   }
-  if (!t || isAsteroidTarget(t.id) || isTargetDestroyed(t)) return null;
-  return liveEnemies(p).find((e) => e.id === t!.id) ?? null;
+  if (!t || isAsteroidTarget(t.id) || isGateLockId(t.id)) return null;
+  const enemy = liveEnemies(p).find((e) => e.id === t.id) ?? null;
+  return enemy && !isTargetDestroyed(enemy) ? enemy : null;
 }
 
 export function fireMissile(

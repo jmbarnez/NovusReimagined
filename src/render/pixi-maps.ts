@@ -29,6 +29,7 @@ import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { dst } from "../utils/math.js";
 import { getPassiveScanRangePx } from "../targeting.js";
 import { SHIPS } from "../data/ships.js";
+import { gateMapLabel } from "../utils/warp-gates.js";
 
 let mapContainer: Container | null = null;
 
@@ -395,9 +396,12 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     for (const sSys of activeAndConcentricSystems) {
       for (const g of sSys.gates) {
         if (!shouldShowWarpGate(g, sSys.idx, getState().player)) continue;
-        if (!inPassiveRange(g.x, g.y)) continue;
+        const alwaysShowTutorialGate = sSys.idx === 0 && player.sysIdx === 0;
+        if (!alwaysShowTutorialGate && !inPassiveRange(g.x, g.y)) continue;
         const p = toMap(g.x, g.y);
-        const alpha = passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now, g.radius * 2);
+        const alpha = alwaysShowTutorialGate
+          ? 0.82
+          : passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now, g.radius * 2);
         if (alpha < 0.14) continue;
         const size = Math.max(5, g.radius * scale || 6);
 
@@ -408,7 +412,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         objectGfx.closePath();
         objectGfx.fill({ color: rgbaToHex(theme.shield), alpha: Math.max(0.5, alpha) });
 
-        const text = new Text({ text: "JUMP GATE", style: createNameStyle() });
+        const text = new Text({ text: gateMapLabel(g), style: createNameStyle() });
         text.anchor.set(0.5, 0.5);
         text.position.set(Math.round(p.x), Math.round(p.y + size + 8));
         text.style.fill = rgbaToHex(theme.shield);

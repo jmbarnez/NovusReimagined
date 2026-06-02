@@ -7,19 +7,20 @@ import { isTargetDestroyed } from "../utils/entities.js";
 import { sfxLockAcquired, sfxLockLost, sfxTurretAssign } from "../audio/procedural.js";
 import { C } from "../config/index.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
-import type { Asteroid, Enemy, WreckPiece } from "../types/world.js";
+import type { Asteroid, Enemy, WreckPiece, AutoTarget } from "../types/world.js";
 import type { ComputedStats } from "../player/player-stats.js";
 import type { Player } from "../state.js";
 import { getSensorContactRangePx } from "./ranges.js";
 import { isAsteroidTarget, isWreckPieceTarget, targetByLockId } from "./lookup.js";
 import { acceptsSpecialResourceTarget, getFittedHardpointModule, isWeaponHardpointModule } from "./modules.js";
+import { isGateLockId } from "../utils/warp-gates.js";
 
 /**
  * Distance scaling for sensor scans: close targets resolve quickly, far targets
  * take noticeably longer. Maps dist/sensorRange in [0,1] to multiplier in
  * roughly [0.65, 1.4]. Returns 1 if the target is missing/sensor range is 0.
  */
-function distanceLockFactor(target: Enemy | Asteroid | WreckPiece, p: Player = getState().player): number {
+function distanceLockFactor(target: Enemy | Asteroid | WreckPiece | AutoTarget, p: Player = getState().player): number {
   if (!target) return 1;
   const ship = SHIPS[p.shipId];
   const sensorRange = getSensorContactRangePx(ship) || 1;
@@ -28,8 +29,11 @@ function distanceLockFactor(target: Enemy | Asteroid | WreckPiece, p: Player = g
   return 0.65 + 0.75 * t;
 }
 
-export function computeLockTimeSec(target: Enemy | Asteroid | WreckPiece, st: ComputedStats, p: Player = getState().player): number {
+export function computeLockTimeSec(target: Enemy | Asteroid | WreckPiece | AutoTarget, st: ComputedStats, p: Player = getState().player): number {
   const distFactor = distanceLockFactor(target, p);
+  if (isGateLockId(target.id)) {
+    return Math.max(0.6, C.TARGETING.ASTEROID_LOCK_TIME * 0.9) * distFactor;
+  }
   if (isAsteroidTarget(target.id)) {
     return Math.max(0.6, C.TARGETING.ASTEROID_LOCK_TIME) * distFactor;
   }

@@ -16,7 +16,7 @@ import {
   getTutorialNavRemainingM,
   getCurrentTutorialStep,
 } from "../src/data/tutorial.js";
-import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_GATE } from "../src/data/tutorial-layout.js";
+import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_GATE, TUTORIAL_LOCAL_REGIONS } from "../src/data/tutorial-layout.js";
 import type { System, Enemy, Gate } from "../src/types/world.js";
 import { getNovusPrimeIdx } from "../src/world/galaxy-build.js";
 import {
@@ -32,6 +32,7 @@ import { ENEMY_SPAWNS } from "../src/data/enemy-spawns.js";
 import { executeGameCommand } from "../src/sim/commands.js";
 import { updateWarp } from "../src/dock.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../src/ui/tutorial-hangar-guide.js";
+import { gateStableId, gateLockTarget } from "../src/utils/warp-gates.js";
 
 function stepById(id: string) {
   const step = TUTORIAL_STEPS.find((s) => s.id === id);
@@ -323,7 +324,7 @@ describe("tutorial exit gate", () => {
     return TUTORIAL_STEPS.findIndex((s) => s.id === id);
   }
 
-  it("stays hidden until the fly-gate approach step", () => {
+  it("reveals the exit gate only for tutorial pulse logic", () => {
     G.P.tutorial.step = stepIndex("gunnery");
     expect(isTutorialExitGateRevealed(G.P)).toBe(false);
     G.P.tutorial.step = stepIndex("fly-gate");
@@ -342,6 +343,24 @@ describe("tutorial exit gate", () => {
     expect(canWarpThroughGate(gate, 0, G.P)).toBe(true);
   });
 
+  it("shows the graduation gate before it is warpable", () => {
+    const primeIdx = getNovusPrimeIdx();
+    if (primeIdx < 0) return;
+    const gate = { targetSysIdx: primeIdx } as Gate;
+    G.P.tutorial.step = stepIndex("gunnery");
+    expect(shouldShowWarpGate(gate, 0, G.P)).toBe(true);
+    expect(canWarpThroughGate(gate, 0, G.P)).toBe(false);
+  });
+
+  it("allows local tutorial return gates during tutorial", () => {
+    const localGate = G.GALAXY[0]?.gates.find((gate) => gate.id === "gate-sys-0-return-tut-mining");
+    expect(localGate).toBeTruthy();
+    if (!localGate) return;
+    G.P.tutorial.step = stepIndex("gunnery");
+    expect(shouldShowWarpGate(localGate, 0, G.P)).toBe(true);
+    expect(canWarpThroughGate(localGate, 0, G.P)).toBe(true);
+  });
+
   it("rejects authoritative warp commands before graduation", () => {
     const primeIdx = getNovusPrimeIdx();
     if (primeIdx < 0) return;
@@ -355,12 +374,38 @@ describe("tutorial exit gate", () => {
     expect(G.P.warpTargetIdx).toBe(-1);
   });
 
+  it("requires a resolved gate lock before tutorial graduation warp can arm", () => {
+    const primeIdx = getNovusPrimeIdx();
+    if (primeIdx < 0) return;
+    const gate = G.GALAXY[0]?.gates.find((entry) => entry.targetSysIdx === primeIdx);
+    expect(gate).toBeTruthy();
+    if (!gate) return;
+    G.P.tutorial.step = stepIndex("graduation");
+    G.P.x = gate.x;
+    G.P.y = gate.y;
+
+    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
+    expect(G.P.warpTargetIdx).toBe(-1);
+
+    const gateId = gateStableId(gate);
+    G.P.lockQueue = [{ id: gateId, resolving: false, acc: 1 }];
+    G.P.targetLock = gateLockTarget(gate, G.GALAXY);
+    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
+    expect(G.P.warpTargetIdx).toBe(primeIdx);
+  });
+
   it("graduates after using the final one-way gate to Novus Prime", () => {
     const primeIdx = getNovusPrimeIdx();
     if (primeIdx < 0) return;
+    const gate = G.GALAXY[0]?.gates.find((entry) => entry.targetSysIdx === primeIdx);
+    expect(gate).toBeTruthy();
+    if (!gate) return;
     G.P.tutorial.step = stepIndex("graduation");
-    G.P.x = TUTORIAL_GATE.x;
-    G.P.y = TUTORIAL_GATE.y;
+    G.P.x = gate.x;
+    G.P.y = gate.y;
+    const gateId = gateStableId(gate);
+    G.P.lockQueue = [{ id: gateId, resolving: false, acc: 1 }];
+    G.P.targetLock = gateLockTarget(gate, G.GALAXY);
 
     executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
     expect(G.P.warpTargetIdx).toBe(primeIdx);
@@ -375,6 +420,33 @@ describe("tutorial exit gate", () => {
     expect(Math.hypot(G.P.x, G.P.y)).toBeGreaterThan(100);
   });
 
+  it("uses local return gates without changing systems", () => {
+    const localGate = G.GALAXY[0]?.gates.find((gate) => gate.id === "gate-sys-0-return-tut-mining");
+    expect(localGate).toBeTruthy();
+    if (!localGate) return;
+    G.P.tutorial.step = stepIndex("gunnery");
+    G.P.x = localGate.x;
+    G.P.y = localGate.y;
+    G.P.vx = 12;
+    G.P.vy = 9;
+
+    executeGameCommand({ type: "warp" }, G.P);
+    expect(G.P.x).toBe(localGate.x);
+    expect(G.P.y).toBe(localGate.y);
+
+    const gateId = gateStableId(localGate);
+    G.P.lockQueue = [{ id: gateId, resolving: false, acc: 1 }];
+    G.P.targetLock = gateLockTarget(localGate, G.GALAXY);
+    executeGameCommand({ type: "warp" }, G.P);
+
+    expect(G.P.sysIdx).toBe(0);
+    expect(G.P.warpTargetIdx).toBe(-1);
+    expect(G.P.x).toBe(localGate.target?.x);
+    expect(G.P.y).toBe((localGate.target?.y ?? 0) - 320);
+    expect(G.P.vx).toBe(0);
+    expect(G.P.vy).toBe(0);
+  });
+
   it("shows the exit gate after tutorial ends", () => {
     G.P.tutorial.active = false;
     const primeIdx = getNovusPrimeIdx();
@@ -384,6 +456,22 @@ describe("tutorial exit gate", () => {
 
   it("does not generate a return gate from Novus Prime to the tutorial system", () => {
     expect(G.GALAXY[1]?.gates.some((gate) => gate.targetSysIdx === 0)).toBe(false);
+  });
+
+  it("generates one graduation gate and local return gates for remote tutorial zones", () => {
+    const primeIdx = getNovusPrimeIdx();
+    if (primeIdx < 0) return;
+    const tutorialGates = G.GALAXY[0]?.gates ?? [];
+    const graduationGates = tutorialGates.filter((gate) => gate.targetSysIdx === primeIdx);
+    const localReturnGates = tutorialGates.filter((gate) => gate.target?.kind === "local");
+    const remoteRegionCount = TUTORIAL_LOCAL_REGIONS.filter((reg) => reg.id !== "tut-flight" && Math.hypot(reg.x, reg.y) >= 1).length;
+
+    expect(graduationGates).toHaveLength(1);
+    expect(graduationGates[0]?.x).toBe(TUTORIAL_GATE.x);
+    expect(graduationGates[0]?.y).toBe(TUTORIAL_GATE.y);
+    expect(localReturnGates).toHaveLength(remoteRegionCount);
+    expect(localReturnGates.some((gate) => gate.id === "gate-sys-0-return-tut-flight")).toBe(false);
+    expect(tutorialGates.some((gate) => gate.targetSysIdx === primeIdx && Math.hypot(gate.x + 500, gate.y) < 200)).toBe(false);
   });
 });
 

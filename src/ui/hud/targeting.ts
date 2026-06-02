@@ -5,7 +5,7 @@ import { sfxBlip } from "../../audio/procedural.js";
 import { dst } from "../../utils/math.js";
 import { hudState } from "./state.js";
 import { queueFrameAction } from "../../sim/input.js";
-import type { Enemy, Asteroid, WreckPiece, LockSlot } from "../../types/world.js";
+import type { Enemy, Asteroid, WreckPiece, LockSlot, AutoTarget } from "../../types/world.js";
 import type { ComputedStats } from "../../player/player-stats.js";
 
 export interface LockCard {
@@ -43,6 +43,7 @@ import {
   computeEnemyLevel,
 } from "../../targeting.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
+import { isGateLockId } from "../../utils/warp-gates.js";
 
 /* ── Icon texture cache: type → data URL ── */
 const _iconCache = new Map<string, string>();
@@ -94,7 +95,7 @@ function getIconDataUrl(type: string): string {
   return url;
 }
 
-function drawLiveTargetIcon(canvas: HTMLCanvasElement, t: Enemy | Asteroid | WreckPiece, isAst: boolean, isPiece: boolean) {
+function drawLiveTargetIcon(canvas: HTMLCanvasElement, t: Enemy | Asteroid | WreckPiece | AutoTarget, isAst: boolean, isPiece: boolean, isGate: boolean) {
   const ctx2d = canvas.getContext("2d");
   if (!ctx2d) return;
 
@@ -110,6 +111,8 @@ function drawLiveTargetIcon(canvas: HTMLCanvasElement, t: Enemy | Asteroid | Wre
   } else if (isPiece) {
     pts = (t as WreckPiece).pts || [];
     angle = (t as WreckPiece).angle ?? 0;
+  } else if (isGate) {
+    pts = [[0, -16], [16, 0], [0, 16], [-16, 0]];
   } else {
     const enemy = t as Enemy;
     if (enemy.type) {
@@ -121,7 +124,7 @@ function drawLiveTargetIcon(canvas: HTMLCanvasElement, t: Enemy | Asteroid | Wre
 
   // Query active theme color from the computed styles of the parent lock-card
   const cardEl = canvas.closest(".lock-card");
-  let strokeColor = isAst ? "#00d2ff" : isPiece ? "#94a3b8" : "#ff5522";
+  let strokeColor = isAst ? "#00d2ff" : isPiece ? "#94a3b8" : isGate ? "#66b8ff" : "#ff5522";
   if (cardEl) {
     const computed = getComputedStyle(cardEl);
     const themeColor = computed.getPropertyValue("--lc-theme").trim();
@@ -194,6 +197,13 @@ function colorMixTranslucent(color: string, alpha: number): string {
     }
   }
   return `rgba(0, 210, 255, ${alpha})`;
+}
+
+function targetSignalRadius(t: Enemy | Asteroid | WreckPiece | AutoTarget, enemy: Enemy | null): number {
+  if (enemy) return enemy.sigRadius || 30;
+  if ("sigRadius" in t && typeof t.sigRadius === "number") return t.sigRadius;
+  if ("radius" in t && typeof t.radius === "number") return t.radius;
+  return 30;
 }
 
 /* ── Lock Rail ── */
@@ -401,7 +411,7 @@ export function createLockCard(id: string) {
   };
 }
 
-export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Asteroid | WreckPiece, st: ComputedStats, now: number, primaryId: string | null | undefined) {
+export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Asteroid | WreckPiece | AutoTarget, st: ComputedStats, now: number, primaryId: string | null | undefined) {
   const {
     el, headerEl, iconEl, canvasEl, nameEl, levelEl, targetIndEl,
     barsEl, shieldInner, shieldLabel, hpInner, hpLabel, structInner, structLabel,
@@ -411,9 +421,10 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
 
   const isAst = isAsteroidTarget(t.id);
   const isPiece = isWreckPieceTarget(t.id);
+  const isGate = isGateLockId(t.id);
   const isPrimary = t.id === primaryId;
   const isResolved = !slot.resolving;
-  const isEnemy = !isAst && !isPiece;
+  const isEnemy = !isAst && !isPiece && !isGate;
 
   const enemy = isEnemy ? (t as Enemy) : null;
 
@@ -422,7 +433,7 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
   // Toggle resolved class with advanced retro context classes
   const targetLockClass = enemy && enemy.hasLockOnPlayer ? " target-locked" : enemy && enemy.targetingPlayer ? " target-targeting" : "";
   const enemyClass = isEnemy ? ` enemy${targetLockClass}` : "";
-  const resolvedClass = `lock-card${isPrimary ? " primary" : ""}${isAssigned ? " assigned" : ""}${isAst ? " asteroid" : ""}${isPiece ? " wreck" : ""}${isResolved ? " resolved" : ""}${enemyClass}`;
+  const resolvedClass = `lock-card${isPrimary ? " primary" : ""}${isAssigned ? " assigned" : ""}${isAst ? " asteroid" : ""}${isPiece ? " wreck" : ""}${isGate ? " gate" : ""}${isResolved ? " resolved" : ""}${enemyClass}`;
   if (el.className !== resolvedClass) el.className = resolvedClass;
 
   // Name
@@ -432,7 +443,7 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
   if (isResolved) {
     // ── Resolved: draw live icon ──
     canvasEl.style.display = "";
-    drawLiveTargetIcon(canvasEl, t, isAst, isPiece);
+    drawLiveTargetIcon(canvasEl, t, isAst, isPiece, isGate);
 
     // Level
     if (isEnemy && enemy) {
@@ -466,7 +477,8 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     shieldLabel.textContent = maxSh > 0 ? `${Math.round(shPct * 100)}%` : "0%";
 
     // Hull (HP)
-    const hpFrac = Math.max(0, Math.min(1, t.hp / Math.max(1, t.maxHp)));
+    const maxHp = "maxHp" in t && typeof t.maxHp === "number" ? t.maxHp : Math.max(1, t.hp);
+    const hpFrac = Math.max(0, Math.min(1, t.hp / Math.max(1, maxHp)));
     hpInner.style.width = `${hpFrac * 100}%`;
     hpLabel.textContent = `${Math.round(hpFrac * 100)}%`;
 
@@ -479,9 +491,9 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
 
     // Telemetry Matrix
     const d = Math.round(dst(getState().player.x, getState().player.y, t.x, t.y));
-    const speed = isAst ? 0 : Math.round(Math.hypot(t.vx || 0, t.vy || 0));
+    const speed = (isAst || isGate) ? 0 : Math.round(Math.hypot(t.vx || 0, t.vy || 0));
     const trs = enemy ? Math.round(transversalVs(enemy)) : 0;
-    const sig = Math.round(enemy ? (enemy.sigRadius || 30) : (t.radius || 30));
+    const sig = Math.round(targetSignalRadius(t, enemy));
     const band = d < st.wProf.range ? "OPT" : "OFF";
 
     const spdHtml = `<span class="m-val">${speed}</span> m/s`;

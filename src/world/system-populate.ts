@@ -5,6 +5,7 @@ import {
   TUTORIAL_STATION,
   TUTORIAL_BELT_CENTER,
   TUTORIAL_GATE,
+  TUTORIAL_LOCAL_REGIONS,
 } from "../data/tutorial-layout.js";
 import { TAU } from "../constants.js";
 import { C } from "../config/index.js";
@@ -20,6 +21,7 @@ const SECTOR_BELT_CENTER = C.WORLD.SECTOR.beltCenter;
 const SECTOR_BELT_SPREAD = C.WORLD.SECTOR.beltSpread;
 const SECTOR_GATE_ORBIT = C.WORLD.SECTOR.gateOrbit;
 const SECTOR_PLANET_ORBIT = C.WORLD.SECTOR.planetOrbit;
+const TUTORIAL_RETURN_GATE_OFFSET = 260;
 
 function orbitSpeedFor(x: number, y: number, f: () => number, multiplier = 1): number {
   const r = Math.max(1, Math.hypot(x, y));
@@ -351,6 +353,9 @@ export function populateSystem(sys: System) {
       y = Math.round(Math.sin(gateAngle) * gateDist);
     }
     sys.gates.push({
+      id: isTutorialSys && linkIdx === getNovusPrimeIdx()
+        ? `gate-${sys.id}-graduation`
+        : `gate-${sys.id}-to-${linkIdx}`,
       x,
       y,
       px: 0, py: 0,
@@ -361,19 +366,31 @@ export function populateSystem(sys: System) {
     });
   }
 
-  // Add a second gate near the Academy station in the tutorial system
+  // Local tutorial return gates bring cadets back to the Academy without adding
+  // extra cross-system exits.
   if (isTutorialSys) {
-    const npIdx = getNovusPrimeIdx();
-    const hasStationGate = sys.gates.some((g) => g.targetSysIdx === npIdx && Math.hypot(g.x + 500, g.y) < 200);
-    if (!hasStationGate) {
+    for (const reg of TUTORIAL_LOCAL_REGIONS) {
+      if (reg.id === "tut-flight") continue;
+      if (Math.hypot(reg.x - TUTORIAL_STATION.x, reg.y - TUTORIAL_STATION.y) < 1) continue;
+      const len = Math.hypot(reg.x - TUTORIAL_STATION.x, reg.y - TUTORIAL_STATION.y) || 1;
+      const nx = (reg.x - TUTORIAL_STATION.x) / len;
+      const ny = (reg.y - TUTORIAL_STATION.y) / len;
+      const x = Math.round(reg.x - nx * TUTORIAL_RETURN_GATE_OFFSET);
+      const y = Math.round(reg.y - ny * TUTORIAL_RETURN_GATE_OFFSET);
       sys.gates.push({
-        x: -500,
-        y: 0,
+        id: `gate-${sys.id}-return-${reg.id}`,
+        x,
+        y,
         px: 0, py: 0,
-        targetSysIdx: npIdx,
+        target: {
+          kind: "local",
+          x: TUTORIAL_STATION.x,
+          y: TUTORIAL_STATION.y,
+          label: "Academy",
+        },
         radius: C.WORLD.GATES.radius,
         spin: rf(f, 0.004, 0.012),
-        _orbitSpeed: orbitSpeedFor(-500, 0, f, C.WORLD.ORBITS.gateMultiplier),
+        _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
       });
     }
   }

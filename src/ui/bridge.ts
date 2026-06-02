@@ -12,6 +12,7 @@ import { sfxBlip } from "../audio/procedural.js";
 import { on } from "../events.js";
 import type { Enemy, Asteroid } from "../types/world.js";
 import { t } from "../utils/i18n.js";
+import { gateDestinationName, gateStableId, isLocalWarpGate } from "../utils/warp-gates.js";
 
 export { attachInventoryListeners, resetInventoryUI };
 
@@ -116,18 +117,24 @@ export function buildLocalOverviewRows(): OverviewRow[] {
   for (let gi = 0; gi < sys.gates.length; gi++) {
     const g = sys.gates[gi];
     const d = dst(getState().player.x, getState().player.y, g.x, g.y);
-    if (d > range) continue;
-    const tgt = getState().GALAXY[g.targetSysIdx];
+    const alwaysShowTutorialGate = sys.idx === 0 && getState().player.sysIdx === 0;
+    if (!alwaysShowTutorialGate && d > range) continue;
+    const destination = gateDestinationName(g, getState().GALAXY);
+    const gateId = gateStableId(g);
+    const slot = getState().player.lockQueue.find((s) => s.id === gateId);
+    let status = t("bridge.dash");
+    if (slot?.resolving) status = t("bridge.scan");
+    else if (slot && !slot.resolving) status = getState().player.targetLock?.id === gateId ? t("bridge.lockPrimary") : t("bridge.lock");
     rows.push({
       kind: "gate",
-      id: `gate-${gi}`,
+      id: gateId,
       icon: "◇",
       cls: "GATE",
-      name: tgt ? `→ ${tgt.name}` : t("bridge.gateFallback"),
+      name: isLocalWarpGate(g) ? `↩ ${destination}` : `→ ${destination || t("bridge.gateFallback")}`,
       dist: Math.round(d),
       sig: "—",
       relV: "—",
-      status: "—",
+      status,
     });
   }
   rows.sort((a, b) => {

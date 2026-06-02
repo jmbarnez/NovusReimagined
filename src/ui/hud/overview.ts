@@ -8,6 +8,7 @@ import { hudState } from "./state.js";
 import { showEnemyCtxMenu } from "./enemy-menu.js";
 import { formatDistance } from "../../utils/format.js";
 import { t } from "../../utils/i18n.js";
+import { queueFrameAction } from "../../sim/input.js";
 
 /* ── Overview Panel ── */
 export function updateHudOverviewPanel() {
@@ -71,6 +72,11 @@ export function updateHudOverviewPanel() {
           ev.preventDefault();
           ev.stopPropagation();
           showEnemyCtxMenu(ev.clientX, ev.clientY, r.id);
+        }
+      });
+      tr.addEventListener("click", () => {
+        if (r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid" || r.kind === "gate") {
+          queueFrameAction({ type: "requestSensorLock", payload: { id: r.id } });
         }
       });
 
@@ -205,20 +211,6 @@ export function initOverviewResizers(panelEl: HTMLElement) {
 
 /* ── Dock Prompt ── */
 export function updateDockPrompt(sys: System | null | undefined) {
-  // Gate prompt takes priority
-  if (sys?.gates) {
-    for (const g of sys.gates) {
-      if (dst(getState().player.x, getState().player.y, g.x, g.y) < g.radius + GATE_RANGE) {
-        const tgt = getState().GALAXY[g.targetSysIdx];
-        if (hudState.dockPrompt) {
-          hudState.dockPrompt.textContent = t("hud.jumpTo", { name: tgt?.name || t("bridge.gateFallback") });
-          hudState.dockPrompt.classList.add("visible");
-        }
-        return;
-      }
-    }
-  }
-
   // Processing hub proximity check
   if (sys?.stations) {
     for (const st of sys.stations) {

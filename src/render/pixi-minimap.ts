@@ -223,17 +223,29 @@ export function syncPixiMinimap(now: number): void {
     // Gates
     for (const gate of sys.gates) {
       if (!shouldShowWarpGate(gate, sys.idx, getState().player)) continue;
-      if (dst(player.x, player.y, gate.x, gate.y) > range) continue;
-      const px = mmX + (gate.x - player.x) * scale;
-      const py = mmY + (gate.y - player.y) * scale;
-      drawPassiveBlip(px, py, gate.radius * 2, (opacity) => {
+      const dist = dst(player.x, player.y, gate.x, gate.y);
+      const alwaysShow = sys.idx === 0 && player.sysIdx === 0;
+      if (!alwaysShow && dist > range) continue;
+      let px = mmX + (gate.x - player.x) * scale;
+      let py = mmY + (gate.y - player.y) * scale;
+      if (alwaysShow && dist > range) {
+        const clamped = clampMinimapBlip(px, py, mmX, mmY, maxRadarR - 3);
+        px = clamped.x;
+        py = clamped.y;
+      }
+      const drawGate = (opacity: number) => {
         g.moveTo(px, py - 5);
         g.lineTo(px + 5, py);
         g.lineTo(px, py + 5);
         g.lineTo(px - 5, py);
         g.closePath();
         g.fill({ color: cachedThemeShield, alpha: opacity });
-      });
+      };
+      if (alwaysShow && dist > range) {
+        drawGate(0.72);
+      } else {
+        drawPassiveBlip(px, py, gate.radius * 2, drawGate);
+      }
     }
 
     // Stations

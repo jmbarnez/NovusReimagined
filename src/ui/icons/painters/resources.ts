@@ -2,6 +2,7 @@ import type { IconPaintCtx, IconPainter } from "./shared.js";
 import {
   drawSpecular,
   drawEmissiveGlow,
+  facetPolygon,
   fillPolygon,
   tintGradient,
   hullGradient,
@@ -18,7 +19,7 @@ function paintIron(ctx: IconPaintCtx): void {
     [[half + 4, half + 10], [half + 14, half + 4], [half + 18, half - 4], [half + 10, half - 16], [half + 2, half - 2]],
   ];
   for (const pts of chunks) {
-    fillPolygon(cx, pts, tintGradient(accent, half - 14, half + 10, cx, half), COL.hullEdge, 0.9);
+    facetPolygon(cx, pts, tintGradient(accent, half - 14, half + 10, cx, half), COL.hullEdge, 0.9);
   }
   cx.strokeStyle = "rgba(255,255,255,0.12)";
   cx.lineWidth = 0.8;
@@ -36,7 +37,7 @@ function paintNickel(ctx: IconPaintCtx): void {
     [half + 13, half - 7], [half + 16, half + 8], [half + 4, half + 15],
     [half - 9, half + 13],
   ];
-  fillPolygon(cx, pts, tintGradient(accent, half - 15, half + 15, cx, half), "rgba(225,235,228,0.62)", 1);
+  facetPolygon(cx, pts, tintGradient(accent, half - 15, half + 15, cx, half), "rgba(225,235,228,0.62)", 1);
   cx.strokeStyle = "rgba(255,255,255,0.18)";
   cx.lineWidth = 0.9;
   cx.beginPath();
@@ -56,7 +57,7 @@ function paintSilicate(ctx: IconPaintCtx): void {
   ];
   for (const grain of grains) {
     const pts = grain.map(([x, y]) => [x, y] as [number, number]);
-    fillPolygon(cx, pts, tintGradient(accent, half - 10, half + 12, cx, half), "rgba(70,54,30,0.72)", 0.92);
+    facetPolygon(cx, pts, tintGradient(accent, half - 10, half + 12, cx, half), "rgba(70,54,30,0.72)", 0.92);
   }
   cx.fillStyle = "rgba(255,245,210,0.18)";
   cx.beginPath();
@@ -71,7 +72,7 @@ function paintCarbon(ctx: IconPaintCtx): void {
     [half - 14, half - 8], [half - 4, half - 16], [half + 14, half - 8],
     [half + 12, half + 10], [half + 1, half + 16], [half - 14, half + 8],
   ];
-  fillPolygon(cx, pts, tintGradient(accent, half - 16, half + 16, cx, half), "rgba(170,185,190,0.42)", 1);
+  facetPolygon(cx, pts, tintGradient(accent, half - 16, half + 16, cx, half), "rgba(170,185,190,0.42)", 1);
   cx.strokeStyle = "rgba(210,230,235,0.22)";
   cx.lineWidth = 0.8;
   for (let i = 0; i < 3; i++) {
@@ -90,7 +91,7 @@ function paintCrystal(ctx: IconPaintCtx): void {
     [half, half - 18], [half + 12, half - 2], [half + 9, half + 14],
     [half - 9, half + 14], [half - 12, half - 2],
   ];
-  fillPolygon(cx, pts, tintGradient(accent, half - 18, half + 14, cx, half), "rgba(180,240,255,0.75)", 1);
+  facetPolygon(cx, pts, tintGradient(accent, half - 18, half + 14, cx, half), "rgba(180,240,255,0.75)", 1);
   cx.strokeStyle = "rgba(220,250,255,0.55)";
   cx.lineWidth = 0.9;
   for (const [x, y] of pts) {
@@ -150,7 +151,7 @@ function paintLatticeIngot(ctx: IconPaintCtx): void {
     const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
     pts.push([half + Math.cos(a) * r, half + Math.sin(a) * r * 0.82]);
   }
-  fillPolygon(cx, pts, tintGradient(accent, half - 12, half + 12, cx, half), "rgba(140,230,255,0.65)", 1);
+  facetPolygon(cx, pts, tintGradient(accent, half - 12, half + 12, cx, half), "rgba(140,230,255,0.65)", 1);
   cx.strokeStyle = "rgba(80,200,255,0.45)";
   cx.lineWidth = 0.8;
   for (let i = 0; i < 6; i++) {
@@ -184,7 +185,7 @@ function paintScrap(ctx: IconPaintCtx): void {
     [half - 11, half + 9], [half - 15, half - 3], [half - 5, half - 13],
     [half + 5, half - 11], [half + 15, half - 1], [half + 13, half + 9], [half + 1, half + 13],
   ];
-  fillPolygon(cx, pts, tintGradient(accent, half - 13, half + 13, cx, half), COL.hullEdge, 1);
+  facetPolygon(cx, pts, tintGradient(accent, half - 13, half + 13, cx, half), COL.hullEdge, 1);
   cx.strokeStyle = COL.copperMid;
   cx.lineWidth = 1.2;
   cx.beginPath();
@@ -343,7 +344,7 @@ function paintAmmoMissile(ctx: IconPaintCtx): void {
   const pts: [number, number][] = [
     [half - 5, half + 11], [half - 7, half - 3], [half, half - 17], [half + 7, half - 3], [half + 5, half + 11],
   ];
-  fillPolygon(cx, pts, tintGradient(accent, half - 17, half + 11, cx, half), COL.hullEdge, 1);
+  facetPolygon(cx, pts, tintGradient(accent, half - 17, half + 11, cx, half), COL.hullEdge, 1);
   cx.fillStyle = COL.hullMid;
   for (const sx of [-1, 1]) {
     cx.beginPath();
