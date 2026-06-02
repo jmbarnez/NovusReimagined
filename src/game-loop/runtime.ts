@@ -53,6 +53,7 @@ let lastRenderedFrameTime = performance.now();
 
 export interface EnterSpaceModeOptions {
   reconnectLocal?: boolean;
+  onPhase?: (phase: "connecting" | "entering") => void;
 }
 
 function getFrameLimitMs(): number {
@@ -213,6 +214,7 @@ export async function enterSpaceMode(opts: EnterSpaceModeOptions = {}) {
 
   try {
     if (opts.reconnectLocal || conn !== "connected") {
+      opts.onPhase?.("connecting");
       const connected = await ensureGameplayConnected({ reconnectLocal: opts.reconnectLocal });
       if (!connected) {
         throw new Error("Authoritative gameplay connection failed");
@@ -221,6 +223,7 @@ export async function enterSpaceMode(opts: EnterSpaceModeOptions = {}) {
       netLog("[OK] enterSpaceMode: already connected");
     }
 
+    opts.onPhase?.("entering");
     dismissLoadingScreen();
     document.querySelectorAll(".title-screen").forEach((el) => el.remove());
     document

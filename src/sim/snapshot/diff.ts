@@ -19,6 +19,7 @@ const DEEP_PLAYER_KEYS = new Set<keyof PlayerSnapshot>([
   "moduleHp",
   "fitting",
   "ore",
+  "mixedOreCargo",
   "refined",
   "loot",
   "components",
@@ -35,7 +36,7 @@ const DEEP_PLAYER_KEYS = new Set<keyof PlayerSnapshot>([
   "stationOffers",
 ]);
 
-const DEEP_ENTITY_KEYS = new Set<keyof EntitySnapshot>(["miningLaser", "salvager", "tractor", "dmgProfile", "pts"]);
+const DEEP_ENTITY_KEYS = new Set<keyof EntitySnapshot>(["miningLaser", "salvager", "tractor", "dmgProfile", "pts", "composition"]);
 
 export function diffSnapshots(prev: WorldSnapshot, curr: WorldSnapshot): DeltaSnapshot {
   const delta: DeltaSnapshot = {

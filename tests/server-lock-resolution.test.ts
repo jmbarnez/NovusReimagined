@@ -7,7 +7,7 @@ import type { InputFrame } from "../src/sim/input.js";
 function lockFrame(tick: number, enemyId: string): InputFrame {
   return {
     tick,
-    keys: { space: false },
+    keys: { space: false, w: false, a: false, s: false, d: false },
     mouseWorld: { x: 0, y: 0 },
     waypoint: null,
     navCommand: null,

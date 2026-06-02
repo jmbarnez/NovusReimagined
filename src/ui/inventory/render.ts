@@ -4,6 +4,7 @@ import { MODULES } from "../../data/modules.js";
 import { escHtml } from "../../utils/format.js";
 import { iconSvg } from "../station/shared.js";
 import { t } from "../../utils/i18n.js";
+import { dominantOreKey } from "../../utils/ore-naming.js";
 import { INV_STATE, type InventoryItem, type TreeNode } from "./state.js";
 import { calcVolume, getCapacityFor, getItemsForContainer, normalizeItems } from "./tree.js";
 
@@ -14,6 +15,7 @@ const ICON_SIZE_GRID = 52;
 /** Map an InventoryItem to the key used by iconSvg() in shared.ts. */
 function iconKeyForItem(it: InventoryItem): string {
   if (it.type === "ore") return it.key;
+  if (it.type === "mixedOre") return dominantOreKey(it.composition ?? { [it.key]: 1 });
   if (it.type === "refined") return it.key;
   if (it.type === "loot") return it.key;
   if (it.type === "component") return it.key;
@@ -26,6 +28,7 @@ function iconKeyForItem(it: InventoryItem): string {
 export function colorForItem(it: InventoryItem): string | undefined {
   if (it.rarityColor) return it.rarityColor;
   if (it.type === "ore") return ORE[it.key]?.color;
+  if (it.type === "mixedOre") return ORE[dominantOreKey(it.composition ?? { [it.key]: 1 })]?.color;
   if (it.type === "refined") return REFINED[it.key]?.color;
   if (it.type === "loot") return LOOT[it.key]?.color;
   if (it.type === "component") return COMPONENTS[it.key]?.color;

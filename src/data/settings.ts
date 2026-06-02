@@ -6,6 +6,10 @@ export interface Keybinds {
   map: string;
   dock: string;
   brake: string;
+  forwardThrust: string;
+  reverseThrust: string;
+  turnLeft: string;
+  turnRight: string;
   settings: string;
   skills: string;
   eventLog: string;
@@ -81,6 +85,7 @@ export function getFontStack(id: string): string {
 }
 
 export type VideoPreset = "performance" | "balanced" | "cinematic" | "custom";
+export type MovementControlMode = "waypoint" | "direct";
 
 export interface Settings {
   theme: string;
@@ -94,6 +99,7 @@ export interface Settings {
   fpsLimit: number;
   backgroundDetail: string;
   videoPreset: VideoPreset;
+  movementControlMode: MovementControlMode;
   nebulaDensity: number;
   colorGrading: boolean;
   vignetteEnabled: boolean;
@@ -112,6 +118,10 @@ export const DEFAULT_KEYBINDS: Keybinds = {
   map: "KeyM",
   dock: "KeyF",
   brake: "Space",
+  forwardThrust: "KeyW",
+  reverseThrust: "KeyS",
+  turnLeft: "KeyA",
+  turnRight: "KeyD",
   settings: "Escape",
   skills: "KeyK",
   eventLog: "KeyC",
@@ -124,6 +134,10 @@ export const CONTROL_SECTIONS: ControlSection[] = [
     titleKey: "settings.controls.section.navigation",
     actions: [
       { action: "brake", labelKey: "settings.controls.brake" },
+      { action: "forwardThrust", labelKey: "settings.controls.forwardThrust" },
+      { action: "reverseThrust", labelKey: "settings.controls.reverseThrust" },
+      { action: "turnLeft", labelKey: "settings.controls.turnLeft" },
+      { action: "turnRight", labelKey: "settings.controls.turnRight" },
       { action: "dock", labelKey: "settings.controls.dock" },
       { action: "map", labelKey: "settings.controls.map" },
     ],
@@ -391,6 +405,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fpsLimit: 90,
   backgroundDetail: "high",
   videoPreset: "balanced",
+  movementControlMode: "waypoint",
   nebulaDensity: 1.0,
   colorGrading: true,
   vignetteEnabled: true,
@@ -403,6 +418,20 @@ export const DEFAULT_SETTINGS: Settings = {
   language: "en",
 };
 
+function loadKeybinds(value: unknown): Keybinds {
+  if (!value || typeof value !== "object") return { ...DEFAULT_KEYBINDS };
+  const saved = value as Partial<Record<keyof Keybinds | "thrust", unknown>>;
+  const migrated: Keybinds = { ...DEFAULT_KEYBINDS };
+  for (const key of Object.keys(DEFAULT_KEYBINDS) as (keyof Keybinds)[]) {
+    const savedValue = saved[key];
+    if (typeof savedValue === "string") migrated[key] = savedValue;
+  }
+  if (typeof saved.thrust === "string" && saved.forwardThrust === undefined) {
+    migrated.forwardThrust = saved.thrust;
+  }
+  return migrated;
+}
+
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
@@ -413,13 +442,14 @@ export function loadSettings(): Settings {
         reticleStyle: parsed.reticleStyle || "classic",
         fontFamily: parsed.fontFamily || "Orbitron",
         fontScale: parsed.fontScale ?? 1.0,
-        keybinds: { ...DEFAULT_KEYBINDS, ...(parsed.keybinds || {}) },
+        keybinds: loadKeybinds(parsed.keybinds),
         sfxVolume: parsed.sfxVolume ?? 1.0,
         musicVolume: parsed.musicVolume ?? 1.0,
         renderScale: parsed.renderScale ?? 2.2,
         fpsLimit: Number.isFinite(parsed.fpsLimit) ? parsed.fpsLimit : 90,
         backgroundDetail: parsed.backgroundDetail || "high",
         videoPreset: (parsed.videoPreset as VideoPreset) ?? "balanced",
+        movementControlMode: parsed.movementControlMode === "direct" ? "direct" : "waypoint",
         nebulaDensity: parsed.nebulaDensity ?? 1.0,
         colorGrading: parsed.colorGrading ?? true,
         vignetteEnabled: parsed.vignetteEnabled ?? true,

@@ -1,9 +1,13 @@
-import { describe, it, expect } from "vitest";
-import { CONTROL_SECTIONS, DEFAULT_KEYBINDS, type Keybinds } from "../src/data/settings.js";
+import { beforeEach, describe, it, expect } from "vitest";
+import { CONTROL_SECTIONS, DEFAULT_KEYBINDS, loadSettings, type Keybinds } from "../src/data/settings.js";
 
 const ALL_ACTIONS = Object.keys(DEFAULT_KEYBINDS) as (keyof Keybinds)[];
 
 describe("CONTROL_SECTIONS integrity", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it("lists every keybind exactly once", () => {
     const seen: string[] = [];
 
@@ -26,5 +30,14 @@ describe("CONTROL_SECTIONS integrity", () => {
         expect(action.labelKey.trim().length).toBeGreaterThan(0);
       }
     }
+  });
+
+  it("migrates legacy thrust keybind saves to forward thrust", () => {
+    localStorage.setItem("novus-settings-v1", JSON.stringify({ keybinds: { thrust: "KeyT" } }));
+
+    const settings = loadSettings();
+
+    expect(settings.keybinds.forwardThrust).toBe("KeyT");
+    expect(settings.keybinds.reverseThrust).toBe(DEFAULT_KEYBINDS.reverseThrust);
   });
 });

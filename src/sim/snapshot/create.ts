@@ -80,7 +80,7 @@ function snapshotEntities(state: GameState, subject: Player): EntitySnapshot[] {
         spinAngle: q(ast.spinAngle), spinVel: q(ast.spinVel),
         radius: ast.radius,
         name: ast.name,
-        oreWeights: ast.oreWeights,
+        composition: { ...ast.composition },
         richness: ast.richness,
         tintHue: ast.tintHue,
         tintSat: ast.tintSat,
@@ -122,7 +122,9 @@ function snapshotEntities(state: GameState, subject: Player): EntitySnapshot[] {
       id: sp.id,
       type: "salvagepickup",
       x: q(sp.x), y: q(sp.y), vx: q(sp.vx), vy: q(sp.vy),
-      payload: sp.payload, qty: sp.qty, kind: sp.kind as string
+      payload: sp.payload, qty: sp.qty, kind: sp.kind as string,
+      composition: sp.composition ? { ...sp.composition } : undefined,
+      name: sp.name,
     });
   }
 
@@ -169,6 +171,11 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
       moduleHp: subject.moduleHp ? JSON.parse(JSON.stringify(subject.moduleHp)) : null,
       fitting: subject.fitting ? JSON.parse(JSON.stringify(subject.fitting)) : null,
       ore: subject.ore ? { ...subject.ore } : null,
+      mixedOreCargo: subject.mixedOreCargo ? subject.mixedOreCargo.map((slot) => ({
+        name: slot.name,
+        qty: slot.qty,
+        composition: { ...slot.composition },
+      })) : null,
       refined: subject.refined ? { ...subject.refined } : null,
       loot: subject.loot ? { ...subject.loot } : null,
       components: subject.components ? { ...subject.components } : null,

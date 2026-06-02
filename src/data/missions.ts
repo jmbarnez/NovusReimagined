@@ -42,7 +42,14 @@ function pick<T>(arr: T[]): T {
 
 // ── Contract templates by ring ──────────────────────────────────────────────
 
-const ORE_LABELS: Record<string, string> = { iron: "Iron Ore", crystal: "Crystal Ore", exotic: "Exotic Ore" };
+const ORE_LABELS: Record<string, string> = {
+  iron: "Iron Ore",
+  nickel: "Nickel Ore",
+  silicate: "Silicate Ore",
+  carbon: "Carbonaceous Ore",
+  crystal: "Crystal Ore",
+  exotic: "Exotic Ore",
+};
 const LOOT_LABELS: Record<string, string> = { scrap: "Scrap Metal", chip: "Microchips", cell: "Power Cells" };
 const ENEMY_LABELS: Record<string, string> = {
   rat_drone: "Mite Drones",
@@ -72,8 +79,8 @@ function makeBounty(stationId: string, sysIdx: number, ring: number): MissionCon
 
 function makeMining(stationId: string, sysIdx: number, ring: number): MissionContract {
   const ores = ring <= 1
-    ? (["iron", "iron", "crystal"] as const)
-    : (["crystal", "exotic", "iron"] as const);
+    ? (["iron", "iron", "nickel", "silicate", "crystal"] as const)
+    : (["crystal", "exotic", "carbon", "nickel", "iron"] as const);
   const target = pick([...ores]);
   const count = ring <= 1 ? rng(20, 50) : rng(15, 35);
   const unitReward = target === "exotic" ? rng(30, 55) : target === "crystal" ? rng(18, 28) : rng(10, 16);
@@ -90,8 +97,8 @@ function makeMining(stationId: string, sysIdx: number, ring: number): MissionCon
 
 function makeDelivery(stationId: string, sysIdx: number, ring: number): MissionContract {
   const goods = ring <= 1
-    ? (["iron", "crystal", "scrap"] as const)
-    : (["scrap", "chip", "cell", "crystal"] as const);
+    ? (["iron", "nickel", "silicate", "crystal", "scrap"] as const)
+    : (["scrap", "chip", "cell", "crystal", "carbon"] as const);
   const target = pick([...goods]);
   const count = ring <= 1 ? rng(15, 40) : rng(10, 25);
   const label = ORE_LABELS[target] ?? LOOT_LABELS[target] ?? target;

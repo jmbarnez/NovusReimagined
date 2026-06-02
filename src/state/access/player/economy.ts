@@ -1,4 +1,4 @@
-import { _G, type Player, type HubJob, type HubOutput, type HubDeposit, type HubDepositItem } from "../../../state.js";
+import { _G, type Player, type HubJob, type HubOutput, type HubDeposit, type HubDepositItem, type MixedOreCargo } from "../../../state.js";
 import type { ModuleInstance } from "../../../types/moduleInstance.js";
 import type { CraftJob } from "../../../data/industryRecipes.js";
 import type { MissionContract } from "../../../data/missions.js";
@@ -18,6 +18,49 @@ export const playerEconomyAccess = {
 
   setOreAll(ore: Record<string, number>, p: Player = _G.P) {
     p.ore = ore;
+  },
+
+  addMixedOreCargo(cargo: MixedOreCargo, p: Player = _G.P) {
+    if (!p.mixedOreCargo) p.mixedOreCargo = [];
+    const normalizedKey = JSON.stringify(
+      Object.entries(cargo.composition)
+        .filter(([, value]) => value > 0)
+        .sort(([a], [b]) => a.localeCompare(b)),
+    );
+    const existing = p.mixedOreCargo.find((slot) => {
+      const slotKey = JSON.stringify(
+        Object.entries(slot.composition)
+          .filter(([, value]) => value > 0)
+          .sort(([a], [b]) => a.localeCompare(b)),
+      );
+      return slot.name === cargo.name && slotKey === normalizedKey;
+    });
+    if (existing) {
+      existing.qty += cargo.qty;
+      return;
+    }
+    p.mixedOreCargo.push({
+      name: cargo.name,
+      qty: cargo.qty,
+      composition: { ...cargo.composition },
+    });
+  },
+
+  setMixedOreCargo(cargo: MixedOreCargo[], p: Player = _G.P) {
+    p.mixedOreCargo = cargo.map((slot) => ({
+      name: slot.name,
+      qty: slot.qty,
+      composition: { ...slot.composition },
+    }));
+  },
+
+  removeMixedOreCargo(index: number, qty: number, p: Player = _G.P): boolean {
+    if (!p.mixedOreCargo?.[index] || qty <= 0) return false;
+    const slot = p.mixedOreCargo[index];
+    if (slot.qty < qty) return false;
+    slot.qty -= qty;
+    if (slot.qty <= 0) p.mixedOreCargo.splice(index, 1);
+    return true;
   },
 
   setRefined(type: string, value: number, p: Player = _G.P) {

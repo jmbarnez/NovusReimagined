@@ -151,51 +151,148 @@
 }
 
 /* ── Rack Master Switches ── */
+
+/* Per-rack LED colours */
+.rack-master-switch.rack-turret { --rack-color: #c8a050; }
+.rack-master-switch.rack-high   { --rack-color: #c0b040; }
+.rack-master-switch.rack-med    { --rack-color: #40b0c0; }
+.rack-master-switch.rack-low    { --rack-color: #8090a8; }
+.rack-master-switch.global      { --rack-color: #d0c890; }
+
+/* Housing — frosted glass column */
 .rack-master-switch {
-  width: 22px;
-  background: rgba(6,8,12,0.98);
-  border: 1px solid rgba(28,32,40,0.6);
+  width: 26px;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--hud-bg-window, rgba(10,14,20,0.82)) 65%, transparent) 0%,
+      color-mix(in srgb, var(--hud-bg-deep, rgba(2,5,10,0.88)) 85%, transparent) 100%);
+  border: 1px solid var(--hud-border, rgba(55,85,110,0.65));
+  border-radius: 3px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  overflow: hidden;
-  transition: border-color 0.1s;
   pointer-events: auto;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.04),
+    0 2px 6px rgba(0,0,0,0.45);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
-.rack-master-switch:hover { border-color: rgba(60,80,100,0.75); }
+.rack-master-switch:hover {
+  border-color: color-mix(in srgb, var(--hud-border, rgba(55,85,110,0.65)) 140%, rgba(255,255,255,0.08));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.07),
+    0 2px 8px rgba(0,0,0,0.55);
+}
 
+/* ON state — rack-colour border glow */
+.rack-master-switch.on {
+  border-color: color-mix(in srgb, var(--rack-color) 55%, var(--hud-border, rgba(55,85,110,0.65)));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.06),
+    0 0 8px color-mix(in srgb, var(--rack-color) 30%, transparent),
+    0 2px 6px rgba(0,0,0,0.45);
+}
+/* OFF state — faint red border tint */
+.rack-master-switch.off {
+  border-color: rgba(180,40,40,0.35);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.03),
+    0 2px 6px rgba(0,0,0,0.45);
+}
+/* PARTIAL — dim rack-colour border */
+.rack-master-switch.partial {
+  border-color: color-mix(in srgb, var(--rack-color) 30%, var(--hud-border, rgba(55,85,110,0.65)));
+}
+
+/* Glass cap */
 .rack-master-switch .rms-btn {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(6px * var(--effective-font-scale, 1));
-  font-weight: 900;
-  letter-spacing: 0.07em;
-  transition: background 0.1s, color 0.1s;
+  position: relative;
+  cursor: pointer;
   user-select: none;
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0.07) 0%,
+      rgba(255,255,255,0.02) 35%,
+      rgba(0,0,0,0.04) 65%,
+      rgba(0,0,0,0.12) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    inset 0 -1px 0 rgba(0,0,0,0.15);
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-/* OFF state — ON half dim, OFF half lit red */
-.rack-master-switch .rms-on  { color: rgba(48,68,88,0.65);  background: rgba(8,12,16,0.95); }
-.rack-master-switch .rms-off { color: rgba(210,75,55,0.90);  background: rgba(30,8,6,0.95); }
+/* ON — top cap glows rack colour through the glass */
+.rack-master-switch.on .rms-on {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--rack-color) 22%, rgba(255,255,255,0.10)) 0%,
+      color-mix(in srgb, var(--rack-color) 38%, rgba(0,0,0,0.12)) 50%,
+      color-mix(in srgb, var(--rack-color) 28%, rgba(0,0,0,0.22)) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 -1px 0 rgba(0,0,0,0.18),
+    inset 0 0 14px color-mix(in srgb, var(--rack-color) 35%, transparent),
+    0 0 6px color-mix(in srgb, var(--rack-color) 20%, transparent);
+}
 
-/* ON state — ON half lit with rack color, OFF half dim */
-.rack-master-switch.on .rms-off { color: rgba(38,50,62,0.5); background: rgba(6,8,10,0.95); }
-.rack-master-switch.on.rack-turret .rms-on { color: #c8a050; background: rgba(20,14,6,0.95); }
-.rack-master-switch.on.rack-high   .rms-on { color: #c0b040; background: rgba(18,14,4,0.95); }
-.rack-master-switch.on.rack-med    .rms-on { color: #40b0c0; background: rgba(4,18,20,0.95); }
-.rack-master-switch.on.rack-low    .rms-on { color: #8090a8; background: rgba(8,12,16,0.95); }
-.rack-master-switch.on.global      .rms-on { color: #d0c890; background: rgba(18,16,6,0.95); }
+/* ON — bottom cap is dark glass */
+.rack-master-switch.on .rms-off {
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0.04) 0%,
+      rgba(0,0,0,0.10) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    inset 0 -1px 0 rgba(0,0,0,0.15);
+}
 
-/* PARTIAL state — intermediate lighting for partial rack power */
-.rack-master-switch.partial .rms-off { color: rgba(38,50,62,0.5); background: rgba(6,8,10,0.95); }
-.rack-master-switch.partial.rack-turret .rms-on { color: rgba(200,160,80,0.6); background: rgba(14,10,6,0.95); }
-.rack-master-switch.partial.rack-high   .rms-on { color: rgba(192,176,64,0.6); background: rgba(12,10,4,0.95); }
-.rack-master-switch.partial.rack-med    .rms-on { color: rgba(64,176,192,0.6); background: rgba(4,12,14,0.95); }
-.rack-master-switch.partial.rack-low    .rms-on { color: rgba(128,144,168,0.6); background: rgba(6,8,10,0.95); }
-.rack-master-switch.partial.global      .rms-on { color: rgba(208,200,144,0.6); background: rgba(12,10,6,0.95); }
+/* OFF — bottom cap glows red through the glass */
+.rack-master-switch.off .rms-off {
+  background:
+    linear-gradient(180deg,
+      rgba(255,55,55,0.18) 0%,
+      rgba(255,55,55,0.32) 50%,
+      rgba(200,30,30,0.22) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.18),
+    inset 0 0 12px rgba(255,55,55,0.30),
+    0 0 5px rgba(255,55,55,0.15);
+}
+
+/* OFF — top cap is dark glass */
+.rack-master-switch.off .rms-on {
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0.04) 0%,
+      rgba(0,0,0,0.10) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    inset 0 -1px 0 rgba(0,0,0,0.15);
+}
+
+/* PARTIAL — both caps glow dim rack colour through glass */
+.rack-master-switch.partial .rms-on,
+.rack-master-switch.partial .rms-off {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--rack-color) 10%, rgba(255,255,255,0.05)) 0%,
+      color-mix(in srgb, var(--rack-color) 20%, rgba(0,0,0,0.10)) 50%,
+      color-mix(in srgb, var(--rack-color) 14%, rgba(0,0,0,0.18)) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    inset 0 -1px 0 rgba(0,0,0,0.16),
+    inset 0 0 8px color-mix(in srgb, var(--rack-color) 22%, transparent);
+}
 
 /* Centre label separator */
 .rack-master-switch .rms-label {
@@ -209,7 +306,7 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: rgba(58,78,98,0.55);
-  background: rgba(4,6,9,0.99);
+  background: rgba(4,6,9,0.96);
   border-top: 1px solid rgba(20,28,38,0.7);
   border-bottom: 1px solid rgba(20,28,38,0.7);
   pointer-events: none;
@@ -217,9 +314,8 @@
 .rack-master-switch.on .rms-label { color: rgba(90,110,130,0.65); }
 
 /* Global switch — slightly wider */
-.rack-master-switch.global { width: 26px; }
+.rack-master-switch.global { width: 30px; }
 .rack-master-switch.global .rms-label { height: 10px; font-size: calc(4.5px * var(--effective-font-scale, 1)); }
-.rack-master-switch.global.on { border-color: rgba(150,132,78,0.55); }
 
 /* ── Module Damage States ── */
 .hud-slot.module-damaged { border-color: rgba(220,120,30,0.6) !important; }

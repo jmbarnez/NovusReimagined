@@ -175,6 +175,21 @@
   box-shadow: 0 0 12px color-mix(in srgb, var(--hud-shield) 30%, transparent);
 }
 
+.profile-continue-btn:disabled,
+.profile-delete-btn:disabled,
+.profile-card--new:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none;
+}
+
+.profile-continue-btn:disabled:hover,
+.profile-delete-btn:disabled:hover,
+.profile-card--new:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .profile-delete-btn {
   width: 30px;
   height: 30px;
@@ -303,6 +318,40 @@
   min-height: 16px;
   font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-danger);
+}
+
+.profile-error--banner {
+  min-height: 0;
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--hud-danger) 35%, transparent);
+  background: color-mix(in srgb, var(--hud-danger) 10%, var(--hud-bg-deep));
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* ── Continue Loading ── */
+.profile-continue-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 18px 16px 14px;
+}
+
+#loading.ld-title-mode .profile-continue-loading .ld-sub,
+#loading.ld-title-mode .profile-continue-loading .ld-progress-bar {
+  display: block;
+}
+
+.profile-continue-status {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.profile-continue-loading .ld-progress-bar {
+  margin-top: 12px;
 }
 
 /* ── Scrollbar ── */

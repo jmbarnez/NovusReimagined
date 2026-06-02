@@ -7,6 +7,9 @@ export interface ResourceDef {
 
 export const ORE: Record<string, ResourceDef> = {
   iron:    { label: "Ferro-chunks",      color: "#a0a5aa", abbr: "Fe", icon: "shard" },
+  nickel:  { label: "Nickel-bearing ore", color: "#b9c6bf", abbr: "Ni", icon: "shard" },
+  silicate:{ label: "Silicate rubble",    color: "#c7b58a", abbr: "Si", icon: "shard" },
+  carbon:  { label: "Carbonaceous ore",   color: "#6f7880", abbr: "C", icon: "shard" },
   crystal: { label: "Lattice crystal",   color: "#44ccff", abbr: "Lc", icon: "shard" },
   exotic:  { label: "Exotic particulate", color: "#ff44aa", abbr: "Ex", icon: "shard" },
 };
@@ -32,9 +35,8 @@ export const COMPONENTS: Record<string, ResourceDef> = {
 };
 
 export const VOL = {
-  ore: { iron: 0.15, crystal: 0.12, exotic: 0.08 },
+  ore: { iron: 0.15, nickel: 0.14, silicate: 0.18, carbon: 0.11, crystal: 0.12, exotic: 0.08 },
   refined: { bar: 0.2, lattice: 0.16, condensate: 0.12 },
   loot: { scrap: 0.3, chip: 0.01, cell: 0.05, "intact-part": 0.08 },
   component: { circuit: 0.12, gear: 0.14, harness: 0.13, sensor_cluster: 0.18 },
 } as const;
-

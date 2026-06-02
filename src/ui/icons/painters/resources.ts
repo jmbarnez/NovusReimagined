@@ -29,6 +29,60 @@ function paintIron(ctx: IconPaintCtx): void {
   drawSpecular(ctx, -3, -7, 14);
 }
 
+function paintNickel(ctx: IconPaintCtx): void {
+  const { cx, half, accent } = ctx;
+  const pts: [number, number][] = [
+    [half - 15, half + 5], [half - 12, half - 10], [half - 1, half - 16],
+    [half + 13, half - 7], [half + 16, half + 8], [half + 4, half + 15],
+    [half - 9, half + 13],
+  ];
+  fillPolygon(cx, pts, tintGradient(accent, half - 15, half + 15, cx, half), "rgba(225,235,228,0.62)", 1);
+  cx.strokeStyle = "rgba(255,255,255,0.18)";
+  cx.lineWidth = 0.9;
+  cx.beginPath();
+  cx.moveTo(half - 9, half - 2);
+  cx.lineTo(half + 8, half + 5);
+  cx.moveTo(half - 1, half - 16);
+  cx.lineTo(half + 1, half + 14);
+  cx.stroke();
+  drawSpecular(ctx, 1, -7, 13);
+}
+
+function paintSilicate(ctx: IconPaintCtx): void {
+  const { cx, half, accent } = ctx;
+  const grains: [number, number, number][][] = [
+    [[half - 17, half + 8, 8], [half - 10, half - 3, 7], [half - 1, half + 8, 6]],
+    [[half + 2, half - 9, 8], [half + 13, half - 6, 7], [half + 12, half + 10, 8]],
+  ];
+  for (const grain of grains) {
+    const pts = grain.map(([x, y]) => [x, y] as [number, number]);
+    fillPolygon(cx, pts, tintGradient(accent, half - 10, half + 12, cx, half), "rgba(70,54,30,0.72)", 0.92);
+  }
+  cx.fillStyle = "rgba(255,245,210,0.18)";
+  cx.beginPath();
+  cx.arc(half - 5, half + 3, 2.2, 0, Math.PI * 2);
+  cx.arc(half + 9, half - 3, 1.8, 0, Math.PI * 2);
+  cx.fill();
+}
+
+function paintCarbon(ctx: IconPaintCtx): void {
+  const { cx, half, accent } = ctx;
+  const pts: [number, number][] = [
+    [half - 14, half - 8], [half - 4, half - 16], [half + 14, half - 8],
+    [half + 12, half + 10], [half + 1, half + 16], [half - 14, half + 8],
+  ];
+  fillPolygon(cx, pts, tintGradient(accent, half - 16, half + 16, cx, half), "rgba(170,185,190,0.42)", 1);
+  cx.strokeStyle = "rgba(210,230,235,0.22)";
+  cx.lineWidth = 0.8;
+  for (let i = 0; i < 3; i++) {
+    const y = half - 6 + i * 6;
+    cx.beginPath();
+    cx.moveTo(half - 10, y);
+    cx.lineTo(half + 10, y + 2);
+    cx.stroke();
+  }
+}
+
 function paintCrystal(ctx: IconPaintCtx): void {
   const { cx, half, accent } = ctx;
   drawEmissiveGlow(cx, half, half + 1, 18, "68,204,255", 0.35);
@@ -309,6 +363,9 @@ function paintGenericAmmo(ctx: IconPaintCtx): void { paintAmmoHybrid(ctx); }
 
 export const RESOURCE_PAINTERS: Record<string, IconPainter> = {
   iron: paintIron,
+  nickel: paintNickel,
+  silicate: paintSilicate,
+  carbon: paintCarbon,
   crystal: paintCrystal,
   exotic: paintExotic,
   bar: paintBar,

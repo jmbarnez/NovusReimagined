@@ -7,7 +7,9 @@ export function isHeadlessServer(): boolean {
 
 /** Bind per-player network input directly to the Player state. */
 export function bindPlayerNetInput(p: Player, frame: InputFrame | null | undefined): boolean {
-  p.inputKeys = frame ? { space: !!frame.keys.space } : { space: false };
+  p.inputKeys = frame
+    ? { space: !!frame.keys.space, w: !!frame.keys.w, a: !!frame.keys.a, s: !!frame.keys.s, d: !!frame.keys.d }
+    : { space: false, w: false, a: false, s: false, d: false };
   p.inputMouseWorld = frame
     ? { x: frame.mouseWorld.x, y: frame.mouseWorld.y }
     : { x: p.x + Math.cos(p.angle) * 200, y: p.y + Math.sin(p.angle) * 200 };

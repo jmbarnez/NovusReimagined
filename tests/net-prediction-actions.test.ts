@@ -11,7 +11,7 @@ import type { InputFrame } from "../src/sim/input.js";
 function frameWithAction(actions: InputFrame["actions"]): InputFrame {
   return {
     tick: 1,
-    keys: { space: false },
+    keys: { space: false, w: false, a: false, s: false, d: false },
     mouseWorld: { x: 0, y: 0 },
     waypoint: null,
     navCommand: null,

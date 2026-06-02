@@ -2,7 +2,7 @@ import type { AutoTarget, LockSlot } from "../../types/world.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 import type { MissionContract } from "../../data/missions.js";
 import type { ModuleInstance } from "../../types/moduleInstance.js";
-import type { HubDeposit, HubJob, HubOutput } from "../../state.js";
+import type { HubDeposit, HubJob, HubOutput, MixedOreCargo } from "../../state.js";
 
 export type TargetLockSnapshot = Pick<AutoTarget, "id" | "x" | "y" | "hp"> & {
   name?: string;
@@ -51,6 +51,7 @@ export interface PlayerSnapshot {
   moduleHp?: Record<string, (number | null)[]> | null;
   fitting?: Record<string, (string | null)[]> | null;
   ore?: Record<string, number> | null;
+  mixedOreCargo?: MixedOreCargo[] | null;
   refined?: Record<string, number> | null;
   loot?: Record<string, number> | null;
   components?: Record<string, number> | null;
@@ -119,7 +120,7 @@ export interface EntitySnapshot {
   weaponRange?: number;
   sigRadius?: number;
   speed?: number;
-  oreWeights?: number[];
+  composition?: Record<string, number>;
   richness?: number;
   tintHue?: number;
   tintSat?: number;

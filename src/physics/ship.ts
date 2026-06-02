@@ -29,7 +29,7 @@ export function updateShip(dt: number, _p?: Player) {
   const p = _p ?? getState().player;
   if (!p) return;
   const isLocalPresentation = p === getState().player && !isHeadlessServer();
-  const inputKeys = p.inputKeys ?? (isLocalPresentation ? Client.keys : { space: false });
+  const inputKeys = p.inputKeys ?? (isLocalPresentation ? Client.keys : { space: false, w: false, a: false, s: false, d: false });
   const inputMouseWorld = p.inputMouseWorld ?? (isLocalPresentation ? Client.mouseWorld : null);
   const uiBlocksInput = isLocalPresentation && (Client.stationOpen || Client.bridgeOpen || Client.settingsOpen);
   const st = getStats(p);
@@ -54,9 +54,14 @@ export function updateShip(dt: number, _p?: Player) {
   const speed = Math.hypot(p.vx, p.vy);
   let ax = 0, ay = 0;
   let at = 0;
+  const manualForward = !!inputKeys?.w;
+  const manualReverse = !!inputKeys?.s;
+  const manualLeft = !!inputKeys?.a;
+  const manualRight = !!inputKeys?.d;
+  const manualMove = manualForward || manualReverse || manualLeft || manualRight;
 
   // Autopilot: Strategic maneuvers (Orbit / Keep at Range)
-  if (p.navCommand && !uiBlocksInput) {
+  if (p.navCommand && !uiBlocksInput && !manualMove) {
     const nav = p.navCommand;
     const target = enemyByLockId(nav.targetId);
     if (!target) {
@@ -103,7 +108,7 @@ export function updateShip(dt: number, _p?: Player) {
         }
       }
     }
-  } else if (p.waypoint && !uiBlocksInput) {
+  } else if (p.waypoint && !uiBlocksInput && !manualMove) {
     const wp = p.waypoint;
     const dx = wp.x - p.x;
     const dy = wp.y - p.y;
@@ -119,6 +124,16 @@ export function updateShip(dt: number, _p?: Player) {
       ax = Math.cos(wpAngle);
       ay = Math.sin(wpAngle);
       PlayerAccess.updatePhysics({ thrustFx: true }, p);
+    }
+  } else if (!uiBlocksInput && manualMove) {
+    if (manualForward !== manualReverse) {
+      const thrustDir = manualForward ? 1 : -1;
+      ax = Math.cos(p.angle) * thrustDir;
+      ay = Math.sin(p.angle) * thrustDir;
+      PlayerAccess.updatePhysics({ thrustFx: true }, p);
+    }
+    if (manualLeft !== manualRight) {
+      at = (manualRight ? 1 : -1) * C.PHYSICS.SHIP.turnRateMultiplier;
     }
   } else if (!uiBlocksInput && inputMouseWorld && (!isLocalPresentation || !Client.cursorUnlocked)) {
     const targetAngle = aimAngle(p.x, p.y, inputMouseWorld.x, inputMouseWorld.y);

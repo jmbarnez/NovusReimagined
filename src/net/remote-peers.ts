@@ -51,6 +51,7 @@ export function makeRemotePlayerStub(brief: RemotePlayerBrief): Player {
     sysIdx: brief.sysIdx,
     credits: 0,
     ore: {},
+    mixedOreCargo: [],
     refined: {},
     loot: {},
     components: {},

@@ -2,9 +2,9 @@ import { addXp, addSkillXp } from "../player/player-data.js";
 import { spawnParticles } from "./fx.js";
 import { addSalvagePickup, addShockwave } from "./entities.js";
 import { logEvent } from "../feedback.js";
-import { ORE } from "../data/resources.js";
 import { sfxShipExplosion } from "../audio/procedural.js";
 import type { Asteroid } from "../types/world.js";
+import { generateOreName, normalizeComposition, oreColorForComposition, sortedCompositionEntries } from "./ore-naming.js";
 
 export interface HarvestResult {
   depleted: boolean;
@@ -63,31 +63,15 @@ export function harvestAsteroid(asteroid: Asteroid, miningMult: number): Harvest
   const depleted = asteroid.hp <= 0;
   if (depleted) asteroid.depleted = true;
 
-  // Roll weight to know which ore is targeted.
-  const ores = ["iron", "crystal", "exotic"];
-  const roll = Math.random();
-  let cum = 0;
-  let key = "iron";
-  for (let i = 0; i < 3; i++) {
-    cum += asteroid.oreWeights[i] || 0;
-    if (roll < cum) { key = ores[i]; break; }
-  }
+  const key = rollOreKey(asteroid.composition);
 
   return { depleted, dmg, oreKey: key, amount: 0 };
 }
 
 export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, miningMult = 1.0, _p?: import("../state.js").Player) {
-  // 1. Roll which ore type is main yield
-  const ores = ["iron", "crystal", "exotic"];
-  const roll = Math.random();
-  let cum = 0;
-  let key = "iron";
-  for (let i = 0; i < 3; i++) {
-    cum += asteroid.oreWeights[i] || 0;
-    if (roll < cum) { key = ores[i]; break; }
-  }
-
-  const oreDef = ORE[key] || ORE.iron;
+  const composition = normalizeComposition(asteroid.composition);
+  const chunkName = generateOreName(composition);
+  const color = oreColorForComposition(composition);
 
   // 2. Calculate yield amount based on richness and destruction type
   const baseQty = Math.max(10, Math.floor((14 + Math.random() * 8) * (asteroid.richness || 1.0)));
@@ -110,8 +94,10 @@ export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, mini
       life: 120, // ample time for player to collect
       bob: Math.random() * Math.PI * 2,
       kind: "ore",
-      payload: key,
+      payload: "mixed-ore",
       qty: perPickup + (p < remainder ? 1 : 0),
+      composition: { ...composition },
+      name: chunkName,
     });
   }
 
@@ -154,19 +140,30 @@ export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, mini
     y: asteroid.y,
     maxRadius: asteroid.radius * 2.3,
     life: 0.48,
-    color: oreDef.color,
+    color,
     width: 2.4,
   });
 
-  spawnParticles(asteroid.x, asteroid.y, oreDef.color, 12, 85);
+  spawnParticles(asteroid.x, asteroid.y, color, 12, 85);
   sfxShipExplosion(asteroid.x, asteroid.y, 0.4); // smaller sound for rock explosion
 
   // 6. Rewards and logs
   addXp(10);
   if (isMiningLaser) {
     addSkillXp("mining", 15);
-    logEvent(`Asteroid mined — ${totalQty}× ${key} released · +10 XP · Mining +15`, "loot");
+    logEvent(`Asteroid mined — ${totalQty}× ${chunkName} released · +10 XP · Mining +15`, "loot");
   } else {
-    logEvent(`Asteroid shattered — ${totalQty}× ${key} released (40% yield) · +10 XP`, "loot");
+    logEvent(`Asteroid shattered — ${totalQty}× ${chunkName} released (40% yield) · +10 XP`, "loot");
   }
+}
+
+function rollOreKey(composition: Record<string, number>): string {
+  const sorted = sortedCompositionEntries(composition);
+  const roll = Math.random();
+  let cum = 0;
+  for (const [key, fraction] of sorted) {
+    cum += fraction;
+    if (roll < cum) return key;
+  }
+  return sorted[0]?.[0] ?? "iron";
 }

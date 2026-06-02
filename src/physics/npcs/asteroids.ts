@@ -3,6 +3,7 @@ import { getState } from "../../state-access.js";
 import { spawnParticles } from "../../utils/fx.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
 import { ORE } from "../../data/resources.js";
+import { dominantOreKey } from "../../utils/ore-naming.js";
 import {
   AST_SPIN_RANGE,
   ASTEROID_VEL_DECAY,
@@ -20,8 +21,6 @@ export function updateAsteroids(dt: number, sysIdx: number) {
   if (!sys?.asteroids) return;
 
   const decay = Math.pow(ASTEROID_VEL_DECAY, dt);
-  const oreKeys = ["iron", "crystal", "exotic"] as const;
-
   for (const a of sys.asteroids) {
     // Keep track of spawn coordinates for dynamic respawning
     if (a.spawnX === undefined) {
@@ -46,17 +45,8 @@ export function updateAsteroids(dt: number, sysIdx: number) {
         a.y = spawnY + Math.sin(ang) * dist;
 
         // Mineral dust condensation cloud
-        const roll = random();
-        let cum = 0;
-        let key: (typeof oreKeys)[number] = "iron";
-        for (let i = 0; i < oreKeys.length; i++) {
-          cum += a.oreWeights[i] || 0;
-          if (roll < cum) {
-            key = oreKeys[i];
-            break;
-          }
-        }
-        const color = ORE[key].color;
+        const key = dominantOreKey(a.composition);
+        const color = (ORE[key] ?? ORE.iron).color;
         spawnParticles(a.x, a.y, color, 8, 45);
       }
       continue;

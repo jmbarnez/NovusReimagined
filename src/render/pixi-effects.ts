@@ -19,6 +19,7 @@ import { ORE, REFINED, LOOT, COMPONENTS } from "../data/resources.js";
 import { getModule } from "../data/modules.js";
 import { RARITY_CONFIG } from "../data/moduleRarity.js";
 import { PICKUP_LIFE_S } from "../wreck.js";
+import { oreColorForComposition } from "../utils/ore-naming.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
 import { PixiGeometryBufferPool } from "./pixi-geometry-buffer-pool.js";
 
@@ -286,9 +287,9 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
         iconSize = 4;
       } else if (s.kind === "ore") {
         const def = ORE[s.payload] || REFINED[s.payload];
-        colStr = def?.color ?? "#a0a5aa";
+        colStr = s.composition ? oreColorForComposition(s.composition) : def?.color ?? "#a0a5aa";
         icon = def?.icon ?? "shard";
-        label = def?.label ?? s.payload;
+        label = s.name ?? def?.label ?? s.payload;
       } else if (s.kind === "module") {
         const def = getModule(s.payload);
         const rarityColor = s.instance ? RARITY_CONFIG[s.instance.rarity]?.color : null;

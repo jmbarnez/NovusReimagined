@@ -72,7 +72,7 @@ export interface HubDepositItem {
   kind: "asteroid" | "debris";
   label: string;
   mass: number;
-  oreWeights?: number[];
+  composition?: Record<string, number>;
   salvagePool?: WreckSalvageEntry[];
 }
 
@@ -89,7 +89,7 @@ export interface HubJob {
   startTime: number;
   duration: number;
   mass: number;
-  oreWeights?: number[];
+  composition?: Record<string, number>;
   salvagePool?: WreckSalvageEntry[];
   smeltRecipeId?: string;
   smeltQty?: number;
@@ -100,6 +100,12 @@ export interface HubOutput {
   ore: Record<string, number>;
   refined?: Record<string, number>;
   modules: ModuleInstance[];
+}
+
+export interface MixedOreCargo {
+  composition: Record<string, number>;
+  qty: number;
+  name: string;
 }
 
 export enum AppMode {
@@ -147,6 +153,7 @@ export interface Player {
   sysIdx: number;
   credits: number;
   ore: Record<string, number>;
+  mixedOreCargo: MixedOreCargo[];
   refined: Record<string, number>;
   loot: Record<string, number>;
   components: Record<string, number>;
@@ -174,7 +181,7 @@ export interface Player {
   hubQueue: HubJob[];
   hubOutput: HubOutput;
   hubDeposit: HubDeposit;
-  inputKeys?: { space: boolean } | null;
+  inputKeys?: { space: boolean; w: boolean; a: boolean; s: boolean; d: boolean } | null;
   inputMouseWorld?: { x: number; y: number } | null;
   waypoint?: { x: number; y: number } | null;
   navCommand?: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;

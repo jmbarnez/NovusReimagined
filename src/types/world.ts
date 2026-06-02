@@ -219,7 +219,7 @@ export interface Asteroid {
   shape: number[][];
   hp: number;
   maxHp: number;
-  oreWeights: number[];
+  composition: Record<string, number>;
   richness: number;
   depleted: boolean;
   respawnTimer: number;
@@ -426,6 +426,10 @@ export interface SalvagePickup {
   /** Loot key, module id, ore key, or "credits". */
   payload: string;
   qty: number;
+  /** Mixed ore chunk composition; present for asteroid-derived ore pickups. */
+  composition?: Record<string, number>;
+  /** Generated mixed ore display name. */
+  name?: string;
   instance?: ModuleInstance;
 }
 

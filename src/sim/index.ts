@@ -28,13 +28,17 @@ export class Simulation {
   public applyInput(frame: InputFrame, p: Player) {
     if (!p) return;
     p.netInputFrame = frame;
-    p.inputKeys = { space: frame.keys.space };
+    p.inputKeys = { space: frame.keys.space, w: frame.keys.w, a: frame.keys.a, s: frame.keys.s, d: frame.keys.d };
     p.inputMouseWorld = { x: frame.mouseWorld.x, y: frame.mouseWorld.y };
     p.waypoint = frame.waypoint;
     p.navCommand = frame.navCommand;
 
     if (!isHeadlessServer() && isLocalPlayer(p)) {
       Client.keys[" "] = frame.keys.space;
+      Client.keys["w"] = frame.keys.w;
+      Client.keys["a"] = frame.keys.a;
+      Client.keys["s"] = frame.keys.s;
+      Client.keys["d"] = frame.keys.d;
       Client.mouseWorld.x = frame.mouseWorld.x;
       Client.mouseWorld.y = frame.mouseWorld.y;
       Client.waypoint = frame.waypoint;

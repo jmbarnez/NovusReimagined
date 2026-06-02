@@ -139,6 +139,8 @@ async function ensureTauriWsServer(): Promise<boolean> {
 }
 
 const WORKER_START_TIMEOUT_MS = 25000;
+const LOCAL_CONNECT_RETRY_DELAY_MS = 250;
+const LOCAL_CONNECT_ATTEMPTS = 2;
 
 function startServerWorker(): Promise<Worker> {
   if (serverWorkerReady) return serverWorkerReady;
@@ -220,6 +222,30 @@ async function forwardToServerWorker(type: string, payload: Record<string, unkno
   }
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function connectLocalGameplayOnce(): Promise<boolean> {
+  multiplayerRole = "host";
+  Client.multiplayerRole = "host";
+  netLog("ensureGameplayConnected: starting local server worker…");
+  const worker = await startServerWorker();
+  if (isTauriApp()) {
+    const wsOk = await ensureTauriWsServer();
+    if (!wsOk) {
+      netLog("[ERR] Host relay startup aborted: multiplayer port bind failed");
+      multiplayerRole = "none";
+      Client.multiplayerRole = "none";
+      resetServerWorker();
+      return false;
+    }
+  }
+  const ok = await gameClient.connect("", "", getState().player, worker);
+  netLog(ok ? "[OK] Local server connected" : "[WARN] Local server connect returned false");
+  return ok;
+}
+
 export async function ensureGameplayConnected(opts: EnsureGameplayConnectedOptions = {}): Promise<boolean> {
   if (opts.reconnectLocal) {
     netLog("ensureGameplayConnected: resetting local session for loaded save");
@@ -229,29 +255,24 @@ export async function ensureGameplayConnected(opts: EnsureGameplayConnectedOptio
     netLog("[OK] ensureGameplayConnected: already connected");
     return true;
   }
-  try {
-    multiplayerRole = "host";
-    Client.multiplayerRole = "host";
-    netLog("ensureGameplayConnected: starting local server worker…");
-    const worker = await startServerWorker();
-    if (isTauriApp()) {
-      const wsOk = await ensureTauriWsServer();
-      if (!wsOk) {
-        netLog("[ERR] Host relay startup aborted: multiplayer port bind failed");
-        multiplayerRole = "none";
-        Client.multiplayerRole = "none";
-        resetServerWorker();
-        return false;
-      }
+
+  for (let attempt = 1; attempt <= LOCAL_CONNECT_ATTEMPTS; attempt++) {
+    try {
+      const ok = await connectLocalGameplayOnce();
+      if (ok) return true;
+    } catch (err) {
+      netLog(`[ERR] Local server connect attempt ${attempt} failed: ${err}`);
+      console.error("[GameLoop] Local server connect failed:", err);
     }
-    const ok = await gameClient.connect("", "", getState().player, worker);
-    netLog(ok ? "[OK] Local server connected" : "[WARN] Local server connect returned false");
-    return ok;
-  } catch (err) {
-    netLog(`[ERR] Local server connect failed: ${err}`);
-    console.error("[GameLoop] Local server connect failed:", err);
-    return false;
+
+    if (attempt < LOCAL_CONNECT_ATTEMPTS) {
+      netLog(`[WARN] Retrying local authoritative connect (${attempt + 1}/${LOCAL_CONNECT_ATTEMPTS})`);
+      resetLocalHostStateForReconnect();
+      await delay(LOCAL_CONNECT_RETRY_DELAY_MS);
+    }
   }
+
+  return false;
 }
 
 function parseBridgePayload(input: unknown): { clientId?: string; payload?: string } {

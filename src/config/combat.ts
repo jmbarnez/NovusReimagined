@@ -73,6 +73,9 @@ export const COMBAT = {
     pirate: 0.8,
     default: 0.5,
   },
+  TURRET: {
+    traverseConeRad: 0.8,
+  },
   TURRET_RANGE_OVERSHOOT: 1.1,
   CAP_FIRE_SURCHARGE: 0.38,
   PLAYER_PARTICIPATION_WINDOW_MS: 8000,

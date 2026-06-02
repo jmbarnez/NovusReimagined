@@ -15,9 +15,12 @@ export const WORLD = {
     planetOrbit: { lo: 1800, hi: 2750 },
   },
   ORE: {
-    defaultWeights: [0.94, 0.04, 0.02],
-    crystalWeights: [0.12, 0.85, 0.03],
+    commonWeights: { iron: 0.55, nickel: 0.18, silicate: 0.17, carbon: 0.06, crystal: 0.03, exotic: 0.01 },
+    crystalWeights: { iron: 0.10, nickel: 0.05, silicate: 0.12, carbon: 0.03, crystal: 0.67, exotic: 0.03 },
+    carbonRichWeights: { iron: 0.18, nickel: 0.08, silicate: 0.17, carbon: 0.52, crystal: 0.03, exotic: 0.02 },
+    defaultWeights: { iron: 0.55, nickel: 0.18, silicate: 0.17, carbon: 0.06, crystal: 0.03, exotic: 0.01 },
     crystalChance: 0.22,
+    carbonRichChance: 0.16,
   },
   ASTEROIDS: {
     clustersPerSystem: { min: 3, max: 3 },
@@ -120,10 +123,10 @@ export const WORLD = {
       { id: "deep-void", name: "Deep Void", x: 12000, y: 0, sectorIdx: 4, radius: 1500 },
     ],
     asteroids: [
-      { idx: 1, clusters: 4, lo: 1000, hi: 3000, weights: [0.94, 0.04, 0.02] },
-      { idx: 2, clusters: 6, lo: 3500, hi: 6000, weights: [0.60, 0.35, 0.05] },
-      { idx: 3, clusters: 8, lo: 6500, hi: 9000, weights: [0.30, 0.50, 0.20] },
-      { idx: 4, clusters: 10, lo: 9500, hi: 12000, weights: [0.10, 0.40, 0.50] },
+      { idx: 1, clusters: 4, lo: 1000, hi: 3000, weights: { iron: 0.52, nickel: 0.20, silicate: 0.18, carbon: 0.05, crystal: 0.04, exotic: 0.01 } },
+      { idx: 2, clusters: 6, lo: 3500, hi: 6000, weights: { iron: 0.34, nickel: 0.24, silicate: 0.19, carbon: 0.08, crystal: 0.12, exotic: 0.03 } },
+      { idx: 3, clusters: 8, lo: 6500, hi: 9000, weights: { iron: 0.18, nickel: 0.16, silicate: 0.20, carbon: 0.18, crystal: 0.20, exotic: 0.08 } },
+      { idx: 4, clusters: 10, lo: 9500, hi: 12000, weights: { iron: 0.08, nickel: 0.10, silicate: 0.14, carbon: 0.16, crystal: 0.30, exotic: 0.22 } },
     ],
   },
   MAP: {

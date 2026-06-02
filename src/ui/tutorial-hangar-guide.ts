@@ -65,6 +65,7 @@ function resolveGuideTarget(target: HangarGuideTarget): HTMLElement | null {
     case "hangar-cargo":
       return document.getElementById("hangar-pane-cargo");
     case "hud-missions":
+      if (Client.stationOpen) return document.getElementById("hangar-missions-panel");
       return document.getElementById("hud-missions");
     case "hangar-undock":
       return document.getElementById("st-undock");

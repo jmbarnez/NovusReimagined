@@ -9,7 +9,7 @@ import type { ModuleInstance } from "./types/moduleInstance.js";
 type LogEventHandler = (msg: string, type: string) => void;
 type FlashSlotFireHandler = (slotIdx: number) => void;
 type ShowXpEarnedHandler = (skillId: string, amount: number) => void;
-type ShowPickupToastHandler = (kind: string, payload: string, qty: number, instance?: ModuleInstance) => void;
+type ShowPickupToastHandler = (kind: string, payload: string, qty: number, instance?: ModuleInstance, displayName?: string) => void;
 
 let _logEvent: LogEventHandler | null = null;
 let _flashSlotFire: FlashSlotFireHandler | null = null;
@@ -40,6 +40,6 @@ export function showXpEarned(skillId: string, amount: number) {
   if (_showXpEarned) _showXpEarned(skillId, amount);
 }
 
-export function showPickupToast(kind: string, payload: string, qty: number, instance?: ModuleInstance) {
-  if (_showPickupToast) _showPickupToast(kind, payload, qty, instance);
+export function showPickupToast(kind: string, payload: string, qty: number, instance?: ModuleInstance, displayName?: string) {
+  if (_showPickupToast) _showPickupToast(kind, payload, qty, instance, displayName);
 }

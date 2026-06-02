@@ -6,6 +6,9 @@ import { getModule, ModuleDef } from "./modules.js";
 
 export const ORE_MARKET_BUY: Record<string, number> = {
   iron: 8,
+  nickel: 10,
+  silicate: 7,
+  carbon: 12,
   crystal: 18,
   exotic: 32,
 };
@@ -19,6 +22,9 @@ export const COMPONENT_MARKET_BUY: Record<string, number> = {
 
 export const ORE_MARKET_BLURB: Record<string, string> = {
   iron: "Unrefined ferro ore — fabrication input.",
+  nickel: "Unrefined nickel-bearing ore — alloy feedstock.",
+  silicate: "Raw silicate rubble — ceramic and structural feedstock.",
+  carbon: "Carbonaceous ore — polymer and fuel precursor.",
   crystal: "Lattice-bearing raw crystal.",
   exotic: "Rare exotic particulate feedstock.",
 };

@@ -26,4 +26,14 @@ describe("hangar hardpoint rendering", () => {
     const optionValues = Array.from(select!.options).map((option) => option.value);
     expect(optionValues).toContain("start-tu-civ-cannon");
   });
+
+  it("renders hangar missions outside of ship statistics", () => {
+    renderHangar();
+
+    const statsPanel = document.getElementById("hangar-stats-panel");
+    const missionsPanel = document.getElementById("hangar-missions-panel");
+    expect(statsPanel).not.toBeNull();
+    expect(missionsPanel).not.toBeNull();
+    expect(statsPanel?.contains(missionsPanel)).toBe(false);
+  });
 });

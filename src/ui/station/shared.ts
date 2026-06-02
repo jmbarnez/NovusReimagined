@@ -1,6 +1,7 @@
 import { MODULES, ModuleDef } from "../../data/modules.js";
 import type { MissionContract } from "../../data/missions.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
+import { ORE } from "../../data/resources.js";
 
 export const stationState = {
   previewFitting: null as Record<string, (string | null)[]> | null,
@@ -75,7 +76,7 @@ export function iconSvg(id: string, size = 24): string {
   const mod = MODULES[id];
   let color = "#5a8098";
   if (mod) color = rackColor[mod.rack] || color;
-  else if (["iron","crystal","exotic"].includes(id)) color = catColor.ore;
+  else if (ORE[id]) color = catColor.ore;
   else if (["bar","lattice","condensate"].includes(id)) color = catColor.refined;
   else if (["scrap","chip","cell"].includes(id)) color = catColor.loot;
   else if (["circuit","gear","harness","sensor_cluster"].includes(id)) color = catColor.comp;

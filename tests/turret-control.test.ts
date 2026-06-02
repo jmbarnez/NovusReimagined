@@ -15,7 +15,7 @@ describe("turret control hardpoint rack", () => {
     Client.bridgeOpen = false;
   });
 
-  it("auto-fires assigned weapons from unified high hardpoints", () => {
+  it("does not auto-fire assigned combat weapons (manual fire only)", () => {
     const sys = G.GALAXY[0]!;
     const enemy = sys.enemies[0]!;
     sys._enemyMap = new Map([[enemy.id, enemy]]);
@@ -31,6 +31,6 @@ describe("turret control hardpoint rack", () => {
 
     updateTurretCooldowns(0.016, G.P);
 
-    expect(G.P.turretCds[0]).toBeGreaterThan(0);
+    expect(G.P.turretCds[0]).toBe(0);
   });
 });

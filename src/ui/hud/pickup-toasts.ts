@@ -22,7 +22,7 @@ const ICONS: Record<string, string> = {
   credits:    ICON_SVG('<circle cx="8" cy="8" r="6"/><path d="M8 4v8M5.5 8h5"/>'),
 };
 
-export function showPickupToast(kind: string, payload: string, qty: number, instance?: ModuleInstance) {
+export function showPickupToast(kind: string, payload: string, qty: number, instance?: ModuleInstance, displayName?: string) {
   if (!hudState.pickupContainer) return;
 
   let name = "";
@@ -31,7 +31,7 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
 
   if (kind === "ore") {
     const def = ORE[payload];
-    name = def?.label || (payload.charAt(0).toUpperCase() + payload.slice(1) + " Ore");
+    name = displayName || def?.label || (payload.charAt(0).toUpperCase() + payload.slice(1) + " Ore");
     icon = ICONS.ore;
     color = def?.color || "#ffe066";
   } else if (kind === "loot") {

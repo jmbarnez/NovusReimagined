@@ -15,8 +15,7 @@ import { logEvent } from "./feedback.js";
 import { getRecipe } from "./data/industryRecipes.js";
 import { C } from "./config/index.js";
 import type { Station, WreckSalvageEntry } from "./types/world.js";
-
-export const ORE_KEYS = ["iron", "crystal", "exotic"] as const;
+import { ORE_KEYS, sortedCompositionEntries, type OreComposition } from "./utils/ore-naming.js";
 
 const ORE_TO_SMELT_RECIPE: Record<string, string> = {
   iron: "bar",
@@ -61,15 +60,14 @@ export function getSmeltFee(craftQty: number): number {
   return C.HUB.SMELT_FEE_PER_BATCH * craftQty;
 }
 
-function completeAsteroidProcessing(mass: number, oreWeights: number[], p: Player) {
-  const weights = oreWeights.length ? oreWeights : [1, 0, 0];
-  const total = weights.reduce((a, b) => a + b, 0) || 1;
-  const roll = random() * total;
+function completeAsteroidProcessing(mass: number, composition: OreComposition, p: Player) {
+  const sorted = sortedCompositionEntries(composition);
+  const roll = random();
   let cum = 0;
   let key: string = ORE_KEYS[0];
-  for (let k = 0; k < ORE_KEYS.length; k++) {
-    cum += weights[k] ?? 0;
-    if (roll < cum) { key = ORE_KEYS[k]; break; }
+  for (const [oreKey, fraction] of sorted) {
+    cum += fraction;
+    if (roll < cum) { key = oreKey; break; }
   }
 
   const skillLv = p.skills?.["refining"] ?? 0;
@@ -114,7 +112,7 @@ export interface ScanDepositItem {
   kind: "asteroid" | "debris";
   label: string;
   mass: number;
-  oreWeights?: number[];
+  composition?: OreComposition;
   salvagePool?: WreckSalvageEntry[];
 }
 
@@ -148,7 +146,7 @@ export function getFloatingDeposits(hub: Station, p: Player): ScanDepositItem[] 
           kind: "asteroid",
           label: ast.name || "Asteroid",
           mass,
-          oreWeights: ast.oreWeights ? [...ast.oreWeights] : [1, 0, 0],
+          composition: { ...ast.composition },
         });
       }
     }
@@ -202,7 +200,7 @@ export function processFloatingItem(itemId: string, p: Player): { success: boole
     startTime: now,
     duration,
     mass: item.mass,
-    oreWeights: item.oreWeights ? [...item.oreWeights] : undefined,
+    composition: item.composition ? { ...item.composition } : undefined,
     salvagePool: item.salvagePool ? [...item.salvagePool] : undefined,
   };
 
@@ -239,7 +237,7 @@ export function processDepositItem(itemId: string, p: Player): { success: boolea
     startTime: now,
     duration,
     mass: item.mass,
-    oreWeights: item.oreWeights ? [...item.oreWeights] : undefined,
+    composition: item.composition ? { ...item.composition } : undefined,
     salvagePool: item.salvagePool ? [...item.salvagePool] : undefined,
   };
   PlayerAccess.addHubJob(job, p);
@@ -305,7 +303,7 @@ export function tickHubQueue(p: Player = getState().player) {
     if (job.kind === "debris") {
       completeDebrisProcessing(job.mass, job.salvagePool, p);
     } else if (job.kind === "asteroid") {
-      completeAsteroidProcessing(job.mass, job.oreWeights ?? [1, 0, 0], p);
+      completeAsteroidProcessing(job.mass, job.composition ?? { iron: 1 }, p);
     } else if (job.kind === "smelt" && job.smeltRecipeId) {
       const recipe = getRecipe(job.smeltRecipeId);
       if (!recipe) continue;

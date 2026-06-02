@@ -4,8 +4,9 @@ import { SHIPS } from "../../data/ships.js";
 import { MODULES, MODULE_HOLD_VOLUME_M3 } from "../../data/modules.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { getInstance } from "../../utils/items.js";
-import { ORE, REFINED, LOOT } from "../../data/resources.js";
+import { ORE, REFINED, LOOT, VOL } from "../../data/resources.js";
 import { t } from "../../utils/i18n.js";
+import { dominantOreKey, formatCompositionBreakdown } from "../../utils/ore-naming.js";
 import type { InventoryItem, TreeNode } from "./state.js";
 
 export function getTreeNodes(): TreeNode[] {
@@ -43,9 +44,37 @@ export function normalizeItems(): InventoryItem[] {
   const salvageGroup = t("inventory.resourceSalvage");
   const compGroup = t("inventory.resourceComponent");
 
-  if (p.ore.iron > 0) items.push({ id: "ore_iron", name: "Iron Ore", group: oreGroup, qty: p.ore.iron, vol: 0.3, type: "ore", key: "iron", container: "shipCargo" });
-  if (p.ore.crystal > 0) items.push({ id: "ore_crystal", name: "Crystal Ore", group: oreGroup, qty: p.ore.crystal, vol: 0.3, type: "ore", key: "crystal", container: "shipCargo" });
-  if (p.ore.exotic > 0) items.push({ id: "ore_exotic", name: "Exotic Ore", group: oreGroup, qty: p.ore.exotic, vol: 0.4, type: "ore", key: "exotic", container: "shipCargo" });
+  for (const [key, qty] of Object.entries(p.ore)) {
+    if (qty > 0) {
+      items.push({
+        id: `ore_${key}`,
+        name: ORE[key]?.label ?? `${key} ore`,
+        group: oreGroup,
+        qty,
+        vol: VOL.ore[key as keyof typeof VOL.ore] ?? 0.3,
+        type: "ore",
+        key,
+        container: "shipCargo",
+      });
+    }
+  }
+
+  for (let i = 0; i < (p.mixedOreCargo?.length ?? 0); i++) {
+    const slot = p.mixedOreCargo[i];
+    if (slot.qty <= 0) continue;
+    const dominant = dominantOreKey(slot.composition);
+    items.push({
+      id: `mixed_ore_${i}`,
+      name: slot.name,
+      group: `${oreGroup} · ${formatCompositionBreakdown(slot.composition)}`,
+      qty: slot.qty,
+      vol: VOL.ore[dominant as keyof typeof VOL.ore] ?? 0.3,
+      type: "mixedOre",
+      key: dominant,
+      container: "shipCargo",
+      composition: { ...slot.composition },
+    });
+  }
 
   if (p.ammo.hybrid > 0) items.push({ id: "ammo_hybrid", name: "Hybrid Charges", group: ammoGroup, qty: p.ammo.hybrid, vol: 0.01, type: "ammo", key: "hybrid", container: "shipCargo" });
   if (p.ammo.missile > 0) items.push({ id: "ammo_missile", name: "Missile Rounds", group: ammoGroup, qty: p.ammo.missile, vol: 0.015, type: "ammo", key: "missile", container: "shipCargo" });

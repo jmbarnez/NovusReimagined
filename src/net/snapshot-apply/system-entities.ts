@@ -77,6 +77,7 @@ export function applyAsteroidSnapshots(sys: System, maps: SnapshotEntityMaps): v
         a.maxHp = snapEnt.maxHp || 100;
         a.spinAngle = snapEnt.spinAngle ?? a.spinAngle;
         a.spinVel = snapEnt.spinVel ?? a.spinVel;
+        if (snapEnt.composition) a.composition = { ...snapEnt.composition };
         maps.asteroids.delete(a.id);
       }
     }
@@ -94,7 +95,7 @@ export function applyAsteroidSnapshots(sys: System, maps: SnapshotEntityMaps): v
         shape: [[1, 0], [0.5, 0.87], [-0.5, 0.87], [-1, 0], [-0.5, -0.87], [0.5, -0.87]],
         hp: snapEnt.hp || 0,
         maxHp: snapEnt.maxHp || 100,
-        oreWeights: snapEnt.oreWeights ?? [1, 0, 0],
+        composition: snapEnt.composition ? { ...snapEnt.composition } : { iron: 1 },
         richness: snapEnt.richness ?? 1,
         depleted: !!snapEnt.depleted,
         respawnTimer: 0,

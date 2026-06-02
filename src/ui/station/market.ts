@@ -59,7 +59,7 @@ export function renderMarket() {
   const LOOT_BUY: Record<string, number> = { scrap: 5, chip: 45, cell: 22, "intact-part": 30 };
   type Res = { id: string; label: string; qty: number; rate: number; action: string; attr: string };
   let res: Res[] = [
-    ...(["iron","crystal","exotic"] as const).map(k => ({ id:k, label:ORE[k].label, qty:getState().player.ore[k]||0, rate:ORE_MARKET_BUY[k]||0, action:"sellOre", attr:`data-ore="${k}"` })),
+    ...Object.keys(ORE).map(k => ({ id:k, label:ORE[k].label, qty:getState().player.ore[k]||0, rate:ORE_MARKET_BUY[k]||0, action:"sellOre", attr:`data-ore="${k}"` })),
     ...(["scrap","chip","cell","intact-part"] as const).map(k => ({ id:k, label:LOOT[k].label, qty:getState().player.loot[k]||0, rate:LOOT_BUY[k]||0, action:"sellLoot", attr:`data-loot="${k}"` })),
     ...(["circuit","gear","harness","sensor_cluster"] as const).map(k => ({ id:k, label:k.replace("_"," "), qty:getState().player.components[k]||0, rate:COMPONENT_MARKET_BUY[k]||100, action:"sellComp", attr:`data-comp="${k}"` })),
   ];

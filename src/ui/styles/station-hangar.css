@@ -1,7 +1,18 @@
 .st-hangar-contracts {
-  margin-top: 24px;
-  border-top: 1px solid var(--hud-border-soft);
-  padding-top: 12px;
+  border: 1px solid var(--hud-border-soft);
+  background: rgba(10, 20, 30, 0.32);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.st-hangar-contracts h3 {
+  margin-top: 0;
+}
+
+.st-hangar-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* ── Hangar Inventory ── */

@@ -2,6 +2,8 @@ import { getState } from "../state-access.js";
 import { curSys } from "../utils/game.js";
 import type { Asteroid, Enemy, WreckPiece } from "../types/world.js";
 import type { Player } from "../state.js";
+import { sortedCompositionEntries } from "../utils/ore-naming.js";
+import { ORE } from "../data/resources.js";
 
 export function isWreckPieceTarget(id: string): boolean {
   return typeof id === "string" && id.startsWith("piece-");
@@ -33,16 +35,8 @@ export function targetByLockId(id: string, p: Player = getState().player): Enemy
   }
   if (ast && !ast.depleted && ast.hp > 0) {
     if (!ast.name) {
-      const ores = ["Iron", "Crystal", "Exotic"];
-      let maxWeightIdx = 0;
-      if (Array.isArray(ast.oreWeights)) {
-        for (let w = 1; w < 3; w++) {
-          if ((ast.oreWeights[w] || 0) > (ast.oreWeights[maxWeightIdx] || 0)) {
-            maxWeightIdx = w;
-          }
-        }
-      }
-      ast.name = `${ores[maxWeightIdx]} Asteroid`;
+      const top = sortedCompositionEntries(ast.composition)[0]?.[0] ?? "iron";
+      ast.name = `${ORE[top]?.label.split(" ")[0] ?? top} Asteroid`;
     }
     return ast;
   }

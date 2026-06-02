@@ -59,8 +59,15 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-academy",
     title: t("tutorial.step.flyAcademy.title"),
-    objective: () => t("tutorial.step.flyAcademy.objective", { mapKey: tutorialKey("map") }),
-    hint: () => t("tutorial.step.flyAcademy.hint", { brakeKey: tutorialKey("brake") }),
+    objective: () => t("tutorial.step.flyAcademy.objective"),
+    hint: () => t("tutorial.step.flyAcademy.hint", {
+      mapKey: tutorialKey("map"),
+      forwardKey: tutorialKey("forwardThrust"),
+      reverseKey: tutorialKey("reverseThrust"),
+      leftKey: tutorialKey("turnLeft"),
+      rightKey: tutorialKey("turnRight"),
+      brakeKey: tutorialKey("brake"),
+    }),
     zone: tutorialRegionZone("fly-academy"),
     beaconColor: 0x55aaff,
     nav: { trackId: "approach", label: t("world.location.academy"), targetX: 0, targetY: 0 },

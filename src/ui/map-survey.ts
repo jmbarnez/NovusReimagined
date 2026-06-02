@@ -120,6 +120,10 @@ export function aimScannerAtMapPoint(sx: number, sy: number, Wc: number, Hc: num
 export function setMapWaypointFromScreen(sx: number, sy: number, Wc: number, Hc: number): boolean {
   const xform = (Client.systemMapTransform as SystemMapTransform | null | undefined) ?? computeSystemMapTransform(Wc, Hc);
   if (!xform) return false;
+  if (Client.settings.movementControlMode !== "waypoint") {
+    logEvent(t("map.survey.directMode"), "system");
+    return false;
+  }
   let { x: wx, y: wy } = mapScreenToWorld(sx, sy, xform);
   if (!canSetMapWaypointAt(wx, wy, getState().player)) {
     logEvent(t("map.survey.waypointSector"), "system");

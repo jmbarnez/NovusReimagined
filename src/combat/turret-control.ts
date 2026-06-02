@@ -2,10 +2,7 @@ import { Client, isGameplayPaused, type Player } from "../state.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 import { isSlotOnline } from "../utils/slot-power.js";
 import { PlayerAccess, getState } from "../state-access.js";
-import { dst } from "../utils/math.js";
 import { floatText } from "../utils/fx.js";
-import { targetByLockId } from "../targeting.js";
-import { getWeaponProfileForSlot } from "../player/player-stats.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { C } from "../config/index.js";
 import { playerShoot } from "./player-shoot.js";
@@ -41,30 +38,4 @@ export function updateTurretCooldowns(dt: number, p: Player = getState().player)
     }
   }
 
-  const hpRack = playerHardpointRack(p);
-  const hpSlots = p.fitting?.[hpRack] || [];
-  for (let i = 0; i < hpSlots.length; i++) {
-    const uid = hpSlots[i];
-    if (!uid) continue;
-    const inst = p.moduleCargo.find(item => item.uid === uid);
-    const m = inst ? MODULES[inst.baseId] : null;
-    if (!m?.weaponDelivery || MODULE_FLAGS.isMiningTurret(m)) continue;
-    if (!isTurretReady(i, p)) continue;
-    if ((p.turretCds?.[i] || 0) > 0) continue;
-
-    const assignedId = p.turretTargets?.[i];
-    if (!assignedId) continue;
-
-    const lockSlot = p.lockQueue?.find((s) => s.id === assignedId && !s.resolving);
-    if (!lockSlot) continue;
-
-    const target = targetByLockId(assignedId, p);
-    if (!target) continue;
-
-    const dist = dst(p.x, p.y, target.x, target.y);
-    const wProf = getWeaponProfileForSlot(i, p);
-    if (!wProf || dist > wProf.range * C.COMBAT.TURRET_RANGE_OVERSHOOT) continue;
-
-    playerShoot(i, target, true, p);
-  }
 }

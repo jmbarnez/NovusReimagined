@@ -2,6 +2,7 @@ import { type Player } from "../state.js";
 import { dst } from "../utils/math.js";
 import { TUTORIAL_TRAINING_SITE_ID } from "./tutorial-site.js";
 import { getState } from "../state-access.js";
+import { ORE } from "./resources.js";
 
 export interface TutorialZone {
   x: number;
@@ -39,8 +40,9 @@ export interface TutorialStep {
 }
 
 export function totalOre(p: Player): number {
-  const o = p.ore;
-  return (o.iron || 0) + (o.crystal || 0) + (o.exotic || 0);
+  const pureOre = Object.keys(ORE).reduce((sum, key) => sum + (p.ore[key] || 0), 0);
+  const mixedOre = (p.mixedOreCargo ?? []).reduce((sum, slot) => sum + slot.qty, 0);
+  return pureOre + mixedOre;
 }
 
 export function hasLockOnAsteroid(p: Player): boolean {

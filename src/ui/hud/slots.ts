@@ -110,7 +110,7 @@ export function rebuildSlots(ship: ShipDef) {
   const ft = ship.fitting;
 
   // Global master switch
-  const globalSwitch = createRackSwitch("global", t("ship.allSystems"));
+  const globalSwitch = createRackSwitch("global", "All");
   hudState.slotsContainer.appendChild(globalSwitch);
   hudState.rackSwitchNodes.set("global", globalSwitch);
 
@@ -361,7 +361,6 @@ export function createRackSwitch(rack: string, label: string): HTMLElement {
 
   const onBtn = document.createElement("div");
   onBtn.className = "rms-btn rms-on";
-  onBtn.textContent = t("ship.online");
   el.appendChild(onBtn);
 
   const sep = document.createElement("div");
@@ -371,7 +370,6 @@ export function createRackSwitch(rack: string, label: string): HTMLElement {
 
   const offBtn = document.createElement("div");
   offBtn.className = "rms-btn rms-off";
-  offBtn.textContent = t("ship.offline");
   el.appendChild(offBtn);
 
   el.addEventListener("click", (e) => {

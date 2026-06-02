@@ -8,10 +8,12 @@ import {
 } from "../data/tutorial-layout.js";
 import { TAU } from "../constants.js";
 import { C } from "../config/index.js";
+import { ORE } from "../data/resources.js";
 import { getState } from "../state-access.js";
 import type { System } from "../types/world.js";
 import { getNovusPrimeIdx } from "./galaxy-build.js";
 import { buildTutorialHiddenSite, seedHiddenSites } from "./hidden-sites.js";
+import { normalizeComposition, sortedCompositionEntries, type OreComposition } from "../utils/ore-naming.js";
 
 export const SECTOR_OUTER_RADIUS = C.WORLD.SECTOR.outerRadius;
 const SECTOR_BELT_CENTER = C.WORLD.SECTOR.beltCenter;
@@ -209,9 +211,8 @@ function spawnAsteroidCluster(
   f: () => number,
   danger: number,
   perCluster?: { min: number; max: number },
-  customWeights?: number[],
+  customWeights?: OreComposition,
 ) {
-  const oreNorm = C.WORLD.ORE.defaultWeights;
   const countMin = perCluster?.min ?? C.WORLD.ASTEROIDS.perCluster.min;
   const countMax = perCluster?.max ?? C.WORLD.ASTEROIDS.perCluster.max;
 
@@ -221,17 +222,14 @@ function spawnAsteroidCluster(
     const maxHp = Math.floor(rf(f, C.WORLD.ASTEROIDS.hpMin, C.WORLD.ASTEROIDS.hpMax) * (1 + danger * C.WORLD.ASTEROIDS.hpDangerMultiplier));
     const rad = rf(f, C.WORLD.ASTEROIDS.radiusMin, C.WORLD.ASTEROIDS.radiusMax);
 
-    const isCrystal = f() < C.WORLD.ORE.crystalChance;
-    const myWeights = customWeights ?? (isCrystal ? C.WORLD.ORE.crystalWeights : oreNorm.slice());
-
-    const ores = ["Iron", "Crystal", "Exotic"];
-    let maxWeightIdx = 0;
-    for (let w = 1; w < 3; w++) {
-      if ((myWeights[w] || 0) > (myWeights[maxWeightIdx] || 0)) {
-        maxWeightIdx = w;
-      }
-    }
-    const astName = `${ores[maxWeightIdx]} Asteroid`;
+    const template = customWeights
+      ?? (f() < C.WORLD.ORE.crystalChance
+        ? C.WORLD.ORE.crystalWeights
+        : f() < C.WORLD.ORE.carbonRichChance
+          ? C.WORLD.ORE.carbonRichWeights
+          : C.WORLD.ORE.commonWeights);
+    const composition = randomAsteroidComposition(template, f);
+    const astName = asteroidDisplayName(composition);
 
     const x = Math.round(cx + Math.cos(sAng) * spr);
     const y = Math.round(cy + Math.sin(sAng) * spr);
@@ -246,7 +244,7 @@ function spawnAsteroidCluster(
       radius: rad,
       shape: makeAstShape(mkRng(sys.id + `${clusterKey}${i}`)),
       hp: maxHp, maxHp,
-      oreWeights: myWeights,
+      composition,
       name: astName,
       richness: 1 + danger * C.WORLD.ASTEROIDS.richnessDangerMultiplier,
       depleted: false, respawnTimer: 0,
@@ -263,7 +261,7 @@ function spawnAsteroidCluster(
 function buildTutorialAsteroids(sys: System, danger: number) {
   // Ensure tutorial zone asteroids only contain iron ore for the mining tutorial
   const f = mkRng(sys.id + "-tut-belts");
-  const ironOnly = [1, 0, 0];
+  const ironOnly = { iron: 1 };
   for (let c = 0; c < 3; c++) {
     const ang = (c / 3) * TAU + rf(f, -0.3, 0.3);
     const dist = rf(f, 200, 350);
@@ -280,6 +278,47 @@ function buildTutorialAsteroids(sys: System, danger: number) {
       ironOnly,
     );
   }
+}
+
+function randomAsteroidComposition(template: OreComposition, f: () => number): OreComposition {
+  const entries = Object.entries(normalizeComposition(template))
+    .filter(([, weight]) => weight > 0)
+    .sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return { iron: 1 };
+
+  const selected = new Set<string>();
+  const maxOres = Math.min(5, entries.length);
+  const targetCount = Math.min(maxOres, 1 + Math.floor(Math.pow(f(), 0.72) * maxOres));
+  while (selected.size < targetCount) {
+    const roll = f();
+    let cum = 0;
+    let picked = entries[entries.length - 1][0];
+    for (const [key, weight] of entries) {
+      cum += weight;
+      if (roll <= cum) {
+        picked = key;
+        break;
+      }
+    }
+    selected.add(picked);
+  }
+
+  const composition: OreComposition = {};
+  for (const [key, weight] of entries) {
+    if (!selected.has(key)) continue;
+    composition[key] = weight * (0.75 + f() * 0.7);
+  }
+  return normalizeComposition(composition);
+}
+
+function asteroidDisplayName(composition: OreComposition): string {
+  const sorted = sortedCompositionEntries(composition);
+  const first = sorted[0]?.[0] ?? "iron";
+  const second = sorted[1]?.[0];
+  const firstLabel = ORE[first]?.label.split(" ")[0] ?? first;
+  if (!second || (sorted[1]?.[1] ?? 0) < 0.18) return `${firstLabel} Asteroid`;
+  const secondLabel = ORE[second]?.label.split(" ")[0] ?? second;
+  return `${firstLabel}-${secondLabel} Asteroid`;
 }
 
 export function populateSystem(sys: System) {

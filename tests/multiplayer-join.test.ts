@@ -111,4 +111,37 @@ describe("connectToRemote", () => {
     expect(playerSentToServer.x).toBe(321);
     expect(Client.multiplayerRole).toBe("host");
   });
+
+  it("retries a failed local reconnect with the restored save player", async () => {
+    vi.stubGlobal("Worker", FakeWorker);
+    WorldAccess.setGalaxy(buildGalaxy());
+
+    const restored = makePlayer();
+    restored.pilotName = "Retry Pilot";
+    restored.x = 777;
+    restored.y = 888;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(restored));
+
+    expect(restoreGameFromSave()).toBe(true);
+
+    const connectedPlayers: Player[] = [];
+    const connectSpy = vi.spyOn(gameClient, "connect").mockImplementation((...args: Parameters<typeof gameClient.connect>) => {
+      connectedPlayers.push(args[2]);
+      if (connectSpy.mock.calls.length === 1) {
+        gameClient.connectionState = "disconnected";
+        return Promise.resolve(false);
+      }
+      gameClient.connectionState = "connected";
+      return Promise.resolve(true);
+    });
+
+    const ok = await ensureGameplayConnected({ reconnectLocal: true });
+
+    expect(ok).toBe(true);
+    expect(connectSpy).toHaveBeenCalledTimes(2);
+    expect(connectedPlayers).toHaveLength(2);
+    expect(connectedPlayers[0]).toBe(G.P);
+    expect(connectedPlayers[1]).toBe(G.P);
+    expect(connectedPlayers[1].pilotName).toBe("Retry Pilot");
+  });
 });

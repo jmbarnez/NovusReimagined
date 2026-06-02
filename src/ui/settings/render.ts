@@ -1,5 +1,5 @@
 import { Client } from "../../state.js";
-import { saveSettings, HUD_THEMES, FONT_OPTIONS, CONTROL_SECTIONS, DEFAULT_KEYBINDS, type Keybinds, type VideoPreset } from "../../data/settings.js";
+import { saveSettings, HUD_THEMES, FONT_OPTIONS, CONTROL_SECTIONS, DEFAULT_KEYBINDS, type Keybinds, type MovementControlMode, type VideoPreset } from "../../data/settings.js";
 import { RETICLE_OPTIONS } from "../../data/reticles.js";
 import { refreshTheme } from "../hud-overlay.js";
 import { renderReticleStyle } from "../../render/reticle.js";
@@ -67,6 +67,33 @@ export function renderSettings() {
 
   const langSelect = document.getElementById("settings-language") as HTMLSelectElement | null;
   if (langSelect) langSelect.value = settings.language;
+
+  const movementModeButtons = document.getElementById("movement-mode-buttons") as HTMLElement | null;
+  if (movementModeButtons) {
+    const modes: { id: MovementControlMode; label: string }[] = [
+      { id: "waypoint", label: t("settings.movementMode.waypoint") },
+      { id: "direct", label: t("settings.movementMode.direct") },
+    ];
+    movementModeButtons.innerHTML = modes
+      .map((mode) => `<button class="detail-btn${settings.movementControlMode === mode.id ? " active" : ""}" data-movement-mode="${mode.id}">${mode.label}</button>`)
+      .join("");
+    movementModeButtons.querySelectorAll("[data-movement-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        sfxBlip();
+        const mode = (btn as HTMLElement).dataset.movementMode as MovementControlMode;
+        settings.movementControlMode = mode;
+        Client.waypoint = null;
+        Client.navCommand = null;
+        Client.mouse.rmb = false;
+        Client.keys["w"] = false;
+        Client.keys["a"] = false;
+        Client.keys["s"] = false;
+        Client.keys["d"] = false;
+        saveSettings(settings);
+        renderSettings();
+      });
+    });
+  }
 
   const detailContainer = document.getElementById("detail-buttons") as HTMLElement | null;
   if (detailContainer) {

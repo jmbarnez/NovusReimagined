@@ -8,6 +8,10 @@ export interface InputFrame {
   tick: number;
   keys: {
     space: boolean;
+    w: boolean;
+    a: boolean;
+    s: boolean;
+    d: boolean;
   };
   mouseWorld: { x: number; y: number };
   waypoint: { x: number; y: number } | null;
@@ -257,6 +261,10 @@ export function sanitizeInputFrame(value: unknown): InputFrame | null {
     tick: Number.isInteger(value.tick) ? finiteOrZero(value.tick) : 0,
     keys: {
       space: keys.space === true,
+      w: keys.w === true,
+      a: keys.a === true,
+      s: keys.s === true,
+      d: keys.d === true,
     },
     mouseWorld,
     waypoint,
@@ -278,7 +286,7 @@ export function queueFrameAction(command: GameCommand, opts?: { replaceByType?: 
 }
 
 export function applyInputFrameToPlayer(frame: InputFrame, p: Player): void {
-  p.inputKeys = { space: frame.keys.space };
+  p.inputKeys = { space: frame.keys.space, w: frame.keys.w, a: frame.keys.a, s: frame.keys.s, d: frame.keys.d };
   p.inputMouseWorld = { x: frame.mouseWorld.x, y: frame.mouseWorld.y };
   p.waypoint = frame.waypoint;
   p.navCommand = frame.navCommand;
@@ -287,17 +295,33 @@ export function applyInputFrameToPlayer(frame: InputFrame, p: Player): void {
 export function createLocalInputFrame(tickNum: number): InputFrame {
   const actions = pendingFrameActions.splice(0, pendingFrameActions.length);
 
+  if (
+    Client.mouse.lmb &&
+    !Client.keys["shift"] &&
+    Client.gameStarted &&
+    !Client.stationOpen &&
+    !Client.bridgeOpen &&
+    !Client.showMap &&
+    !Client.settingsOpen
+  ) {
+    actions.push({ type: "fireSelectedTurret", payload: { isAutoFire: false } });
+  }
+
   return {
     tick: tickNum,
     keys: {
       space: !!Client.keys[" "],
+      w: Client.settings.movementControlMode === "direct" && !!Client.keys["w"],
+      a: Client.settings.movementControlMode === "direct" && !!Client.keys["a"],
+      s: Client.settings.movementControlMode === "direct" && !!Client.keys["s"],
+      d: Client.settings.movementControlMode === "direct" && !!Client.keys["d"],
     },
     mouseWorld: {
       x: Client.mouseWorld?.x ?? 0,
       y: Client.mouseWorld?.y ?? 0,
     },
-    waypoint: Client.waypoint ? { ...Client.waypoint } : null,
-    navCommand: Client.navCommand ? { ...Client.navCommand } : null,
+    waypoint: Client.settings.movementControlMode === "waypoint" && Client.waypoint ? { ...Client.waypoint } : null,
+    navCommand: Client.settings.movementControlMode === "waypoint" && Client.navCommand ? { ...Client.navCommand } : null,
     actions,
   };
 }

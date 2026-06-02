@@ -142,7 +142,8 @@ export function makePlayer(): Player {
     energy: 100,
     sysIdx: 0,
     credits: 5000,
-    ore: { iron: 0, crystal: 0, exotic: 0 },
+    ore: { iron: 0, nickel: 0, silicate: 0, carbon: 0, crystal: 0, exotic: 0 },
+    mixedOreCargo: [],
     refined: { bar: 0, lattice: 0, condensate: 0 },
     loot: { scrap: 0, chip: 0, cell: 0 },
     components: { circuit: 0, gear: 0, harness: 0, sensor_cluster: 0 },
@@ -219,6 +220,11 @@ export function loadPlayer(): Player {
     if (!Array.isArray(p.highTargets)) p.highTargets = [];
     normalizeHardpointArrays(p);
     if (!p.moduleCargo) p.moduleCargo = [];
+    if (!Array.isArray(p.mixedOreCargo)) p.mixedOreCargo = [];
+    if (!p.ore || typeof p.ore !== "object") p.ore = {};
+    for (const key of ["iron", "nickel", "silicate", "carbon", "crystal", "exotic"]) {
+      if (typeof p.ore[key] !== "number") p.ore[key] = 0;
+    }
     const starter = makePlayer();
     const ownedUids = new Set(p.moduleCargo.map((inst) => inst.uid));
     for (const inst of starter.moduleCargo) {

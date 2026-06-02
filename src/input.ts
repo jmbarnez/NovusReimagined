@@ -64,6 +64,12 @@ export function initInput() {
 
     // Brake — only space cancels the waypoint.
     if (e.code === keybinds.brake) Client.keys[" "] = true;
+    if (Client.settings.movementControlMode === "direct") {
+      if (e.code === keybinds.forwardThrust) Client.keys["w"] = true;
+      if (e.code === keybinds.reverseThrust) Client.keys["s"] = true;
+      if (e.code === keybinds.turnLeft) Client.keys["a"] = true;
+      if (e.code === keybinds.turnRight) Client.keys["d"] = true;
+    }
     if (e.code === "ShiftLeft" || e.code === "ShiftRight") setCursorLock(false);
 
     if (Client.keys[" "]) Client.waypoint = null;
@@ -163,11 +169,20 @@ export function initInput() {
     const k = e.key.toLowerCase();
     Client.keys[k] = false;
     if (e.code === Client.settings.keybinds.brake) Client.keys[" "] = false;
+    if (e.code === Client.settings.keybinds.forwardThrust) Client.keys["w"] = false;
+    if (e.code === Client.settings.keybinds.reverseThrust) Client.keys["s"] = false;
+    if (e.code === Client.settings.keybinds.turnLeft) Client.keys["a"] = false;
+    if (e.code === Client.settings.keybinds.turnRight) Client.keys["d"] = false;
     if (e.code === "ShiftLeft" || e.code === "ShiftRight") setCursorLock(true);
   });
 
   window.addEventListener("blur", () => {
     Client.keys[" "] = false;
+    Client.keys["w"] = false;
+    Client.keys["a"] = false;
+    Client.keys["s"] = false;
+    Client.keys["d"] = false;
+    Client.keys["shift"] = false;
     Client.mouse.lmb = false;
     Client.mouse.rmb = false;
     setCursorLock(true);
@@ -181,7 +196,10 @@ export function initInput() {
       playBackgroundMusic();
     }
     if (e.button === 0) {
-      Client.mouse.lmb = true;
+      const shiftClick = e.shiftKey || !!Client.keys["shift"];
+      const directShiftLock = Client.settings.movementControlMode === "direct" && shiftClick;
+      Client.mouse.lmb = !directShiftLock;
+      if (directShiftLock) setCursorLock(false);
 
       // Map drag start
       if (Client.showMap && e.target instanceof Element && isBlockedByUi(e.target)) {
@@ -196,7 +214,8 @@ export function initInput() {
 
       if (isBlockedByUi(e.target)) return;
 
-      if (!Client.stationOpen && !Client.bridgeOpen) {
+      const canClickLock = Client.settings.movementControlMode !== "direct" || shiftClick;
+      if (canClickLock && !Client.stationOpen && !Client.bridgeOpen) {
         const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
         const sys = curSys();
         let locked = false;
@@ -258,9 +277,11 @@ export function initInput() {
       if (enemyClicked) {
         showEnemyCtxMenu(e.clientX, e.clientY, enemyClicked.id);
       } else {
-        Client.mouse.rmb = true;
-        Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
-        clearNav();
+        if (Client.settings.movementControlMode === "waypoint") {
+          Client.mouse.rmb = true;
+          Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
+          clearNav();
+        }
       }
     }
   });
@@ -287,7 +308,7 @@ export function initInput() {
       Client.mapDragLastSy = e.clientY;
     }
     
-    if (Client.mouse.rmb) {
+    if (Client.mouse.rmb && Client.settings.movementControlMode === "waypoint") {
       Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
     }
   });

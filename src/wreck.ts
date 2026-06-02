@@ -12,6 +12,7 @@ import type { Enemy, WreckPiece, SalvagePickup, WreckSalvageEntry } from "./type
 import { ENEMY_DEFS } from "./data/enemies.js";
 import { invalidateInstanceCache } from "./utils/items.js";
 import { getStats } from "./player/player-stats.js";
+import { generateOreName, normalizeComposition, oreColorForComposition } from "./utils/ore-naming.js";
 import {
   addWreckPiece,
   addSalvagePickup,
@@ -327,7 +328,7 @@ export function updateSalvagePickups(dt: number) {
         if (s.kind === "loot") sparkColor = "#aaffaa";
         else if (s.kind === "module") sparkColor = "#00e8c8";
         else if (s.kind === "ore") {
-          sparkColor = (ORE[s.payload] ?? ORE.iron).color;
+          sparkColor = s.composition ? oreColorForComposition(s.composition) : (ORE[s.payload] ?? ORE.iron).color;
         }
 
         addParticle({
@@ -358,9 +359,20 @@ export function updateSalvagePickups(dt: number) {
 
 function collectSalvagePickup(s: SalvagePickup) {
   if (s.kind === "ore") {
-    PlayerAccess.setOre(s.payload, (getState().player.ore[s.payload] || 0) + s.qty);
-    progressMissions("mining", s.qty, s.payload);
-    showPickupToast("ore", s.payload, s.qty);
+    if (s.composition) {
+      const composition = normalizeComposition(s.composition);
+      const name = s.name ?? generateOreName(composition);
+      PlayerAccess.addMixedOreCargo({ composition, qty: s.qty, name });
+      for (const [oreKey, fraction] of Object.entries(composition)) {
+        const creditedQty = Math.max(1, Math.floor(s.qty * fraction));
+        progressMissions("mining", creditedQty, oreKey);
+      }
+      showPickupToast("ore", s.payload, s.qty, undefined, name);
+    } else {
+      PlayerAccess.setOre(s.payload, (getState().player.ore[s.payload] || 0) + s.qty);
+      progressMissions("mining", s.qty, s.payload);
+      showPickupToast("ore", s.payload, s.qty);
+    }
   } else if (s.kind === "loot") {
     PlayerAccess.setLoot(s.payload, (getState().player.loot[s.payload] || 0) + s.qty);
     progressMissions("salvage", s.qty, s.payload);

@@ -21,7 +21,10 @@ function ensureWaypoint(): Graphics | null {
 export function syncPixiWaypoint(now: number): void {
   const wp = Client.waypoint;
   const player = getState().player;
-  if (!wp || !player) return;
+  if (!wp || !player || Client.settings.movementControlMode !== "waypoint") {
+    waypointGfx?.clear();
+    return;
+  }
   const g = ensureWaypoint();
   if (!g) return;
 

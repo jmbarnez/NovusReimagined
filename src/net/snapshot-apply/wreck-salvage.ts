@@ -2,6 +2,7 @@ import type { Player } from "../../state.js";
 import { getState } from "../../state-access.js";
 import { addWreckPiece, addSalvagePickup } from "../../utils/entities.js";
 import { showPickupToast } from "../../feedback.js";
+import { sfxItemPickup, sfxCreditPickup } from "../../audio/procedural.js";
 import type { SnapshotEntityMaps } from "./entity-maps.js";
 import { toSalvageKind } from "./converters.js";
 
@@ -57,10 +58,17 @@ export function applySalvageSnapshots(maps: SnapshotEntityMaps, p: Player | null
       sp.vx = snapEnt.vx;
       sp.vy = snapEnt.vy;
       sp.qty = snapEnt.qty || 1;
+      sp.composition = snapEnt.composition ? { ...snapEnt.composition } : undefined;
+      sp.name = snapEnt.name;
       maps.salvages.delete(sp.id);
     } else {
       if (p && Math.hypot(sp.x - p.x, sp.y - p.y) <= 72) {
-        showPickupToast(sp.kind, sp.payload, Math.max(1, sp.qty || 1), sp.instance);
+        showPickupToast(sp.kind, sp.payload, Math.max(1, sp.qty || 1), sp.instance, sp.name);
+        if (sp.kind === "credits") {
+          sfxCreditPickup();
+        } else if (sp.kind === "ore" || sp.kind === "loot" || sp.kind === "module") {
+          sfxItemPickup(sp.kind, sp.x, sp.y);
+        }
       }
       getState().salvagePickups.splice(i, 1);
     }
@@ -78,6 +86,8 @@ export function applySalvageSnapshots(maps: SnapshotEntityMaps, p: Player | null
       kind: toSalvageKind(ent.kind),
       payload: ent.payload || "scrap",
       qty: ent.qty || 1,
+      composition: ent.composition ? { ...ent.composition } : undefined,
+      name: ent.name,
     });
   }
 }

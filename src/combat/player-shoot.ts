@@ -1,7 +1,7 @@
 import type { Player } from "../state.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 import { PlayerAccess, getState } from "../state-access.js";
-import { dst, random } from "../utils/math.js";
+import { dst, random, angleDiff } from "../utils/math.js";
 import { ensureAmmoDefaults } from "../player/player-data.js";
 import { getStats, getWeaponProfileForSlot, weaponSkillBonus } from "../player/player-stats.js";
 import { WEAPON_SKILL, levelForSkillXp, type WeaponDelivery } from "../data/skills.js";
@@ -19,6 +19,9 @@ import { fireMissile } from "./missile.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import type { WeaponProfile } from "../data/weaponProfiles.js";
 import type { Enemy, Asteroid, WreckPiece } from "../types/world.js";
+
+let _lastNotInArcWarn = 0;
+const NOT_INARC_COOLDOWN_MS = 800;
 
 function validatePlayerShootRequirements(
   p: Player,
@@ -106,6 +109,18 @@ export function playerShoot(slotIdx: number, targetEnemy: Enemy | Asteroid | Wre
   if (isMiss) {
     const skew = (random() > 0.5 ? 1 : -1) * (0.12 + random() * 0.13);
     angle += skew;
+  }
+
+  const traverseDiff = Math.abs(angleDiff(p.angle, angle));
+  if (traverseDiff > C.COMBAT.TURRET.traverseConeRad) {
+    if (!isAutoFire && typeof window !== "undefined") {
+      const now = performance.now();
+      if (now - _lastNotInArcWarn > NOT_INARC_COOLDOWN_MS) {
+        _lastNotInArcWarn = now;
+        floatText(p.x, p.y - 22, "NOT IN ARC", "#ff9944");
+      }
+    }
+    return false;
   }
 
   PlayerAccess.setTurretCd(slotIdx, wProf.rate, p);
