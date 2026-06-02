@@ -17,7 +17,7 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "common.dash": "—",
 
     // ─── settings ──────────────────────────────────────────────
-    "settings.title": "SETTINGS",
+    "settings.title": "Configuration",
     "settings.subtitle": "Configuration",
     "settings.tab.audio": "Audio",
     "settings.tab.video": "Video",
@@ -788,7 +788,7 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     "common.dash": "—",
 
     // ─── settings ──────────────────────────────────────────────
-    "settings.title": "CONFIGURACIÓN",
+    "settings.title": "Configuración",
     "settings.subtitle": "Configuración",
     "settings.tab.audio": "Audio",
     "settings.tab.video": "Video",

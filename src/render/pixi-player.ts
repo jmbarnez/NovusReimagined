@@ -1,9 +1,8 @@
 /**
- * PixiJS player renderer — minimal trail dots.
+ * PixiJS player renderer.
  *
- * Replaced the complex multi-layer trail system (exhaust glow sprite,
- * bloom passes, per-nozzle segments, per-frame randomization) with
- * a single minimal trail: small coloured dots that fade out.
+ * Flame thrust is rendered by pixi-thrust.ts. This file owns the shared Trail
+ * sprite pool, including speed-based engine exhaust sheets and blink afterimages.
  */
 import { ImageSource, Sprite, Texture } from "pixi.js";
 import { Client } from "../state.js";
@@ -12,8 +11,7 @@ import { SHIPS } from "../data/ships.js";
 import { entityLayer, thrustLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
-import { addTrailSegment } from "../utils/entities.js";
-import { C } from "../config/index.js";
+import { emitShipExhaustSheets } from "../utils/ship-exhaust.js";
 import { getNebulaDensity } from "./pixi-background.js";
 import { lightenCol, darkenCol } from "../utils/color.js";
 import { tracePath } from "./bake-utils.js";
@@ -22,6 +20,8 @@ const TAU = Math.PI * 2;
 const HULL_SCALE = 1.0;
 const LIGHT_DIRS = 8;
 const LIGHT_RGB = "255,248,230";
+const EXHAUST_MIN_SPEED = 8;
+const EXHAUST_EMIT_MS = 32;
 /** Supersampling multiplier — baked canvas physical pixels per logical texel. */
 const TEX_SCALE = 3;
 
@@ -356,9 +356,8 @@ function getRemotePlayerSprites(netId: string, shipId: string): RemotePlayerSpri
 }
 
 // ─── Trail sprite pool ────────────────────────────────────────────────────────
-// Bumped from 128 → 384 to accommodate longer-lived trails (player + AB +
-// every enemy emitting), and switched to additive blending so the engine
-// exhaust reads as a glowing flame rather than a faint tinted dot.
+// Shared renderer for authored Trail effects. Trails with a length render as
+// thin sheets; plain trails remain soft dots for abilities such as blink.
 const TRAIL_POOL = 384;
 const _trailPool: Sprite[] = [];
 
@@ -460,16 +459,8 @@ function syncRemotePlayers(alpha: number, now: number): void {
 
     const speed = Math.hypot(remote.vx || 0, remote.vy || 0);
     const lastEmit = _remoteTrailLastEmit.get(netId) ?? 0;
-    if (speed > 8 && now - lastEmit >= 32) {
-      const rearDist = C.PHYSICS.SHIP.thrustTrailRearDist;
-      addTrailSegment({
-        x: ix - Math.cos(ia) * rearDist,
-        y: iy - Math.sin(ia) * rearDist,
-        color: C.PHYSICS.SHIP.thrustTrailNormalColor,
-        width: C.PHYSICS.SHIP.thrustTrailNormalWidth,
-        life: C.PHYSICS.SHIP.thrustTrailLife,
-        angle: ia,
-      });
+    if (speed > EXHAUST_MIN_SPEED && now - lastEmit >= EXHAUST_EMIT_MS) {
+      emitShipExhaustSheets(remote, ix, iy, ia, false);
       _remoteTrailLastEmit.set(netId, now);
     }
   }
@@ -559,12 +550,19 @@ export function syncPixiTrails(): void {
     s.visible = true;
     s.x = t.x;
     s.y = t.y;
-    // Particle dot — small round puff that shrinks as it ages. Uniform scale,
-    // no rotation, no elongation — reads as discrete particles in a stream.
-    const base = (t.width * 0.55 * a) / DOT_HALF;
-    s.scale.set(base, base);
-    s.rotation = 0;
-    s.alpha = a * 0.85;
+    if (t.length !== undefined && t.angle !== undefined) {
+      s.blendMode = "normal";
+      s.width = t.length * (0.86 + a * 0.14);
+      s.height = t.width * (0.8 + a * 0.2);
+      s.rotation = t.angle;
+      s.alpha = Math.min(0.88, 0.34 + a * 0.54);
+    } else {
+      s.blendMode = "add";
+      const base = (t.width * 0.55 * a) / DOT_HALF;
+      s.scale.set(base, base);
+      s.rotation = 0;
+      s.alpha = a * 0.85;
+    }
     s.tint = parseInt(t.color.replace("#", ""), 16) || 0xffffff;
   }
 }

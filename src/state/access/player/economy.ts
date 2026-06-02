@@ -27,13 +27,15 @@ export const playerEconomyAccess = {
         .filter(([, value]) => value > 0)
         .sort(([a], [b]) => a.localeCompare(b)),
     );
+    const cargoRichness = cargo.richness ?? 1;
     const existing = p.mixedOreCargo.find((slot) => {
       const slotKey = JSON.stringify(
         Object.entries(slot.composition)
           .filter(([, value]) => value > 0)
           .sort(([a], [b]) => a.localeCompare(b)),
       );
-      return slot.name === cargo.name && slotKey === normalizedKey;
+      const slotRichness = slot.richness ?? 1;
+      return slot.name === cargo.name && slotKey === normalizedKey && slotRichness === cargoRichness;
     });
     if (existing) {
       existing.qty += cargo.qty;
@@ -43,6 +45,7 @@ export const playerEconomyAccess = {
       name: cargo.name,
       qty: cargo.qty,
       composition: { ...cargo.composition },
+      richness: cargoRichness,
     });
   },
 
@@ -51,6 +54,7 @@ export const playerEconomyAccess = {
       name: slot.name,
       qty: slot.qty,
       composition: { ...slot.composition },
+      richness: slot.richness ?? 1,
     }));
   },
 

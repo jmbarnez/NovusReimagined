@@ -430,6 +430,8 @@ export interface SalvagePickup {
   composition?: Record<string, number>;
   /** Generated mixed ore display name. */
   name?: string;
+  /** Asteroid richness that produced this chunk. */
+  richness?: number;
   instance?: ModuleInstance;
 }
 

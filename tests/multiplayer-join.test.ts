@@ -7,6 +7,25 @@ import { WorldAccess } from "../src/state-access.js";
 import { buildGalaxy } from "../src/world-gen.js";
 import { restoreGameFromSave } from "../src/utils/restore-save.js";
 
+const tauriMocks = vi.hoisted(() => ({
+  isTauriApp: vi.fn(() => false),
+  invoke: vi.fn<(command: string, args?: Record<string, unknown>) => Promise<unknown>>(() => Promise.resolve()),
+  netLog: vi.fn(),
+}));
+
+vi.mock("../src/utils/app-exit.js", () => ({
+  isTauriApp: tauriMocks.isTauriApp,
+}));
+
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: tauriMocks.invoke,
+}));
+
+vi.mock("../src/ui/net-console.js", () => ({
+  netLog: tauriMocks.netLog,
+  flushNetLogPending: vi.fn(),
+}));
+
 class FakeWorker {
   public onerror: ((event: ErrorEvent) => void) | null = null;
   public onmessage: ((event: MessageEvent) => void) | null = null;
@@ -48,6 +67,10 @@ describe("connectToRemote", () => {
     G.P = makePlayer();
     Client.multiplayerRole = "none";
     localStorage.clear();
+    tauriMocks.isTauriApp.mockReturnValue(false);
+    tauriMocks.invoke.mockReset();
+    tauriMocks.invoke.mockResolvedValue(undefined);
+    tauriMocks.netLog.mockClear();
   });
 
   afterEach(() => {
@@ -143,5 +166,39 @@ describe("connectToRemote", () => {
     expect(connectedPlayers[0]).toBe(G.P);
     expect(connectedPlayers[1]).toBe(G.P);
     expect(connectedPlayers[1].pilotName).toBe("Retry Pilot");
+  });
+
+  it("retries transient Tauri port bind failures without logging a failed startup", async () => {
+    vi.stubGlobal("Worker", FakeWorker);
+    WorldAccess.setGalaxy(buildGalaxy());
+    WorldAccess.initPlayer(makePlayer());
+    tauriMocks.isTauriApp.mockReturnValue(true);
+
+    let startAttempts = 0;
+    tauriMocks.invoke.mockImplementation((command: string) => {
+      if (command !== "start_server") return Promise.resolve(undefined);
+      startAttempts++;
+      if (startAttempts === 1) {
+        return Promise.reject(new Error("Failed to bind port 4173: os error 10048"));
+      }
+      return Promise.resolve(undefined);
+    });
+
+    vi.spyOn(gameClient, "connect").mockImplementation(() => {
+      gameClient.connectionState = "connected";
+      return Promise.resolve(true);
+    });
+
+    const ok = await ensureGameplayConnected({ reconnectLocal: true });
+
+    expect(ok).toBe(true);
+    expect(startAttempts).toBe(2);
+    expect(tauriMocks.netLog).toHaveBeenCalledWith("[OK] Tauri WS server listening on port 4173");
+    expect(tauriMocks.netLog).not.toHaveBeenCalledWith(
+      expect.stringContaining("Failed to start Tauri WS server"),
+    );
+    expect(tauriMocks.netLog).not.toHaveBeenCalledWith(
+      expect.stringContaining("Host relay startup aborted"),
+    );
   });
 });

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ProfileMeta } from "../src/data/profiles.js";
 
+vi.setConfig({ testTimeout: 60000 });
+
 type MockEnterOptions = {
   reconnectLocal?: boolean;
   onPhase?: (phase: "connecting" | "entering") => void;

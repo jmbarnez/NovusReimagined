@@ -276,16 +276,16 @@ export function drawPassiveRadarOverlay(t: SystemMapTransform, now: number, g: G
 
   // Range rings
   g.stroke({ color: 0x64a0dc, width: 1, alpha: 0.22 });
-  g.arc(pp.x, pp.y, rangeScreen * 0.35, 0, TAU);
+  g.circle(pp.x, pp.y, rangeScreen * 0.35);
   g.stroke();
-  g.arc(pp.x, pp.y, rangeScreen * 0.7, 0, TAU);
+  g.circle(pp.x, pp.y, rangeScreen * 0.7);
   g.stroke();
 
   // Outer ring (dashed) — Pixi v8 doesn't expose setLineDash on Graphics, so draw
   // the ring as a single stroke at low alpha; the dashed look was a subtle hint
   // and is acceptable when solid.
   g.stroke({ color: 0x64a0dc, width: 1, alpha: 0.32 });
-  g.arc(pp.x, pp.y, rangeScreen, 0, TAU);
+  g.circle(pp.x, pp.y, rangeScreen);
   g.stroke();
 
   // Sweep wedge — approximate the radial gradient by overlaying two alpha
@@ -411,7 +411,7 @@ export function drawMapSurveyOverlay(t: SystemMapTransform, now: number, g: Grap
   g.stroke({ color: emitting ? 0x9ee8ff : 0x6a9eb8, width: emitting ? 2 : 1.5, alpha: emitting ? 0.9 : 0.55 });
 
   // Range ring
-  g.arc(pp.x, pp.y, rayLen, 0, TAU);
+  g.circle(pp.x, pp.y, rayLen);
   g.stroke({ color: 0x6fd3ff, width: 1, alpha: 0.22 });
 }
 

@@ -60,6 +60,7 @@ export function applySalvageSnapshots(maps: SnapshotEntityMaps, p: Player | null
       sp.qty = snapEnt.qty || 1;
       sp.composition = snapEnt.composition ? { ...snapEnt.composition } : undefined;
       sp.name = snapEnt.name;
+      sp.richness = snapEnt.richness;
       maps.salvages.delete(sp.id);
     } else {
       if (p && Math.hypot(sp.x - p.x, sp.y - p.y) <= 72) {
@@ -88,6 +89,7 @@ export function applySalvageSnapshots(maps: SnapshotEntityMaps, p: Player | null
       qty: ent.qty || 1,
       composition: ent.composition ? { ...ent.composition } : undefined,
       name: ent.name,
+      richness: ent.richness,
     });
   }
 }

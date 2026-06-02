@@ -17,13 +17,14 @@ import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { SHIPS } from "../data/ships.js";
 import { invalidate } from "../player/player-stats.js";
 import { updateEngineSound } from "../audio/procedural.js";
-import { addTrailSegment } from "../utils/entities.js";
 import { C } from "../config/index.js";
 import { activeMovementMultipliers } from "../player/abilities.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import { isHeadlessServer } from "./net-input.js";
+import { emitShipExhaustSheets } from "../utils/ship-exhaust.js";
 
 let _cargoMap = new Map<string, ModuleInstance>();
+const EXHAUST_MIN_SPEED = 8;
 
 export function updateShip(dt: number, _p?: Player) {
   const p = _p ?? getState().player;
@@ -219,21 +220,8 @@ export function updateShip(dt: number, _p?: Player) {
   PlayerAccess.updatePhysics({ x: p.x + p.vx * dt, y: p.y + p.vy * dt, angle: p.angle + p.va * dt }, p);
 
   const currentSpeed = Math.hypot(p.vx, p.vy);
-  if (isLocalPresentation && currentSpeed > 8) {
-    const cos = Math.cos(p.angle);
-    const sin = Math.sin(p.angle);
-    const rearDist = C.PHYSICS.SHIP.thrustTrailRearDist;
-    const wx = p.x - cos * rearDist;
-    const wy = p.y - sin * rearDist;
-
-    addTrailSegment({
-      x: wx,
-      y: wy,
-      color: abOn ? C.PHYSICS.SHIP.thrustTrailABColor : C.PHYSICS.SHIP.thrustTrailNormalColor,
-      width: abOn ? C.PHYSICS.SHIP.thrustTrailABWidth : C.PHYSICS.SHIP.thrustTrailNormalWidth,
-      life: C.PHYSICS.SHIP.thrustTrailLife,
-      angle: p.angle,
-    });
+  if (isLocalPresentation && currentSpeed > EXHAUST_MIN_SPEED) {
+    emitShipExhaustSheets(p, p.x, p.y, p.angle, abOn);
   }
 
   if ((p._colCooldown ?? 0) > 0) PlayerAccess.setColCooldown((p._colCooldown ?? 0) - dt, p);

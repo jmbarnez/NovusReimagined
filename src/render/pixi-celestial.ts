@@ -90,6 +90,7 @@ export function refreshCelestialFonts() {
 
 interface GateBundle {
   container: Container;
+  hull: Graphics;
   rings: Graphics;
   core: Graphics;
   labelBg: Graphics;
@@ -320,6 +321,10 @@ export function initPixiCelestial(parent: Container, sys: System): void {
       gateCont.y = g.y;
       stationLayer!.addChild(gateCont);
 
+      // Outer segmented hull ring (Expanse-style)
+      const hull = new Graphics();
+      gateCont.addChild(hull);
+
       // Core vortex
       const core = new Graphics();
       gateCont.addChild(core);
@@ -350,6 +355,7 @@ export function initPixiCelestial(parent: Container, sys: System): void {
 
       _gateBundles.push({
         container: gateCont,
+        hull,
         rings,
         core,
         labelBg,
@@ -413,6 +419,32 @@ export function syncPixiCelestial(now: number, alpha: number, sys: System): void
       if (isGateVisible) {
         const pulse = 0.5 + 0.5 * Math.sin(now * 0.0022);
         const corePulse = 0.7 + 0.3 * Math.sin(now * 0.004);
+        const RENDER_SCALE = 3.5;
+        const visR = g.radius * RENDER_SCALE;
+
+        // --- 0. OUTER SEGMENTED HULL RING ---
+        b.hull.clear();
+        const hullSpin = now * 0.0003;
+        const hullSegments = 24;
+        for (let j = 0; j < hullSegments; j++) {
+          const a = hullSpin + (j / hullSegments) * TAU;
+          const ar = a + (1 / hullSegments) * TAU * 0.85;
+          const isMajor = j % 4 === 0;
+          const segR = visR * (isMajor ? 1.0 : 0.96);
+          b.hull.moveTo(Math.cos(a) * segR, Math.sin(a) * segR);
+          b.hull.arc(0, 0, segR, a, ar);
+          b.hull.stroke({
+            color: isMajor ? 0x78c0ff : 0x3c6078,
+            width: isMajor ? 4.5 : 3.0,
+            alpha: isMajor ? (0.55 + pulse * 0.2) : 0.35,
+          });
+        }
+        // Inner rim glow
+        b.hull.circle(0, 0, visR * 0.92).stroke({
+          color: 0xa0d8ff,
+          width: 1.2,
+          alpha: 0.25 + pulse * 0.1,
+        });
 
         // --- 1. CORE VORTEX (HYPERSPACE CORE) ---
         b.core.clear();
@@ -441,40 +473,28 @@ export function syncPixiCelestial(now: number, alpha: number, sys: System): void
           alpha: (0.70 + corePulse * 0.25)
         });
 
-        // E. Smooth spiral accretion filaments (thinner, cleaner arcs)
-        const arms = 3;
-        const armSpin = -now * 0.0016;
-        for (let aIdx = 0; aIdx < arms; aIdx++) {
-          const baseAng = armSpin + (aIdx / arms) * TAU;
-          const segCount = 24;
-          for (let s = 0; s < segCount; s++) {
-            const t0 = s / segCount;
-            const t1 = (s + 1) / segCount;
-            const r0 = g.radius * 0.12 + t0 * g.radius * 0.42;
-            const r1 = g.radius * 0.12 + t1 * g.radius * 0.42;
-            const a0 = baseAng + t0 * 2.2;
-            const a1 = baseAng + t1 * 2.2;
-            const segAlpha = (0.15 + corePulse * 0.15) * (1.0 - t0 * 0.6);
-            b.core.moveTo(Math.cos(a0) * r0, Math.sin(a0) * r0);
-            b.core.lineTo(Math.cos(a1) * r1, Math.sin(a1) * r1);
-            b.core.stroke({ color: 0x5fa0ff, width: 1.2, alpha: segAlpha });
-          }
-        }
+        // E. Flat event horizon disc (shimmering plane inside the ring)
+        const horizonR = g.radius * 0.92;
+        b.core.circle(0, 0, horizonR).fill({
+          color: 0xe0f0ff,
+          alpha: (0.08 + corePulse * 0.06),
+        });
+        // Inner edge bright rim
+        b.core.circle(0, 0, horizonR * 0.85).stroke({
+          color: 0xc0e8ff,
+          width: 1.5,
+          alpha: 0.35 + corePulse * 0.2,
+        });
 
-        // F. Cascading intake spark particles (smooth falloff)
-        const numSparks = 8;
+        // F. Rim-orbiting spark particles
+        const numSparks = 10;
         for (let sIdx = 0; sIdx < numSparks; sIdx++) {
-          const offsetTime = now * 0.0008 + (sIdx / numSparks) * 5.0;
-          const tFactor = offsetTime % 1.0;
-          const startR = g.radius * 0.95;
-          const endR = g.radius * 0.1;
-          const sparkR = startR + (endR - startR) * tFactor;
-          const sparkAng = (sIdx / numSparks) * TAU - tFactor * 4.0 - now * 0.001;
-          const sx = Math.cos(sparkAng) * sparkR;
-          const sy = Math.sin(sparkAng) * sparkR;
-          const ease = tFactor * tFactor;
-          const sparkAlpha = (1.0 - ease) * (0.5 + 0.5 * Math.sin(now * 0.01 + sIdx));
-          b.core.circle(sx, sy, Math.max(0.5, 2.0 * (1.0 - ease)))
+          const sparkAng = (sIdx / numSparks) * TAU + now * 0.0012 + Math.sin(now * 0.0003 + sIdx) * 0.3;
+          const orbitR = visR * (0.94 + 0.06 * Math.sin(now * 0.002 + sIdx * 1.7));
+          const sx = Math.cos(sparkAng) * orbitR;
+          const sy = Math.sin(sparkAng) * orbitR;
+          const sparkAlpha = (0.4 + 0.4 * Math.sin(now * 0.01 + sIdx)) * (0.6 + corePulse * 0.4);
+          b.core.circle(sx, sy, 1.8)
             .fill({ color: sIdx % 2 === 0 ? 0xffffff : 0x78c0ff, alpha: sparkAlpha });
         }
 
@@ -483,66 +503,42 @@ export function syncPixiCelestial(now: number, alpha: number, sys: System): void
 
         const spin = g.spin ?? 0;
 
-        // A. OUTER MAIN RING (Spins Clockwise) — smooth dashed ring
-        const outerTicks = 48;
-        const outerDash = 0.45;
+        // A. OUTER STRUCTURAL RING — thick metallic segments
+        const outerTicks = 16;
+        const outerDash = 0.55;
         for (let j = 0; j < outerTicks; j++) {
           if (j % 2 !== 0) continue;
           const a = spin + (j / outerTicks) * TAU;
           const ar = a + (1 / outerTicks) * TAU * outerDash;
-          const isMajor = j % 8 === 0;
+          const isMajor = j % 4 === 0;
           b.rings.moveTo(Math.cos(a) * g.radius, Math.sin(a) * g.radius);
           b.rings.arc(0, 0, g.radius, a, ar);
           b.rings.stroke({
-            color: isMajor ? 0x78c0ff : 0x3c78c8,
-            width: isMajor ? 2.0 : 1.0,
-            alpha: isMajor ? (0.75 + pulse * 0.2) : 0.40,
+            color: isMajor ? 0x78c0ff : 0x3c6078,
+            width: isMajor ? 3.2 : 2.0,
+            alpha: isMajor ? (0.65 + pulse * 0.2) : 0.35,
           });
         }
 
-        // B. INNER COUNTER-SPIN RING — smooth dashed ring
-        const innerRadius = g.radius * 0.78;
-        const innerSpin = -spin * 0.75;
-        const innerTicks = 36;
-        const innerDash = 0.42;
+        // B. INNER COUNTER-SPIN STRUT RING — fewer, thicker segments
+        const innerRadius = g.radius * 0.72;
+        const innerSpin = -spin * 0.6;
+        const innerTicks = 12;
+        const innerDash = 0.5;
         for (let j = 0; j < innerTicks; j++) {
           if (j % 2 !== 0) continue;
           const a = innerSpin + (j / innerTicks) * TAU;
           const ar = a + (1 / innerTicks) * TAU * innerDash;
-          const isMajor = j % 6 === 0;
+          const isMajor = j % 3 === 0;
           b.rings.moveTo(Math.cos(a) * innerRadius, Math.sin(a) * innerRadius);
           b.rings.arc(0, 0, innerRadius, a, ar);
           b.rings.stroke({
-            color: isMajor ? 0xffdd66 : 0xd2a232,
-            width: isMajor ? 1.6 : 0.8,
-            alpha: isMajor ? (0.65 + pulse * 0.25) : 0.35,
+            color: isMajor ? 0x5fa0d0 : 0x2a4a60,
+            width: isMajor ? 2.4 : 1.4,
+            alpha: isMajor ? (0.55 + pulse * 0.2) : 0.28,
           });
         }
 
-        // C. Deterministic sweeping energy filaments (replaces random arcs)
-        const filamentSweep = now * 0.0004;
-        const filamentCount = 4;
-        for (let f = 0; f < filamentCount; f++) {
-          const arcAng = (f / filamentCount) * TAU + filamentSweep;
-          const rStart = g.radius * 0.28;
-          const rEnd = g.radius * 0.95;
-          const filamentAlpha = 0.4 + 0.35 * Math.sin(now * 0.003 + f * 1.7);
-          if (filamentAlpha < 0.15) continue;
-
-          const steps = 5;
-          for (let s = 0; s < steps; s++) {
-            const t0 = s / steps;
-            const t1 = (s + 1) / steps;
-            const r0 = rStart + (rEnd - rStart) * t0;
-            const r1 = rStart + (rEnd - rStart) * t1;
-            const jitter = 0.06 * Math.sin(now * 0.008 + f * 3.1 + s * 0.9);
-            const a0 = arcAng + t0 * 0.3 + jitter;
-            const a1 = arcAng + t1 * 0.3 + jitter;
-            b.rings.moveTo(Math.cos(a0) * r0, Math.sin(a0) * r0);
-            b.rings.lineTo(Math.cos(a1) * r1, Math.sin(a1) * r1);
-            b.rings.stroke({ color: 0xe0f0ff, width: 1.2, alpha: filamentAlpha * (1.0 - t0 * 0.5) });
-          }
-        }
       }
     }
   }

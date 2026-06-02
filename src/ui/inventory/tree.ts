@@ -63,6 +63,12 @@ export function normalizeItems(): InventoryItem[] {
     const slot = p.mixedOreCargo[i];
     if (slot.qty <= 0) continue;
     const dominant = dominantOreKey(slot.composition);
+    const r = slot.richness ?? 1;
+    let rarityColor: string | undefined;
+    if (r >= 7.0) rarityColor = RARITY_CONFIG.Experimental.color;
+    else if (r >= 4.0) rarityColor = RARITY_CONFIG.Overclocked.color;
+    else if (r >= 2.0) rarityColor = RARITY_CONFIG.Modified.color;
+    else rarityColor = RARITY_CONFIG.Stock.color;
     items.push({
       id: `mixed_ore_${i}`,
       name: slot.name,
@@ -73,6 +79,7 @@ export function normalizeItems(): InventoryItem[] {
       key: dominant,
       container: "shipCargo",
       composition: { ...slot.composition },
+      rarityColor,
     });
   }
 

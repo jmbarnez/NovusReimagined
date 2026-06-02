@@ -14,6 +14,7 @@ import { fmtModBonuses } from "../station/shared.js";
 import { ORE, REFINED, LOOT, COMPONENTS } from "../../data/resources.js";
 import { openHudWindow, closeHudWindow, isOpen as isHudWindowOpen } from "../hud/windows.js";
 import { t } from "../../utils/i18n.js";
+import { formatCompositionBreakdown } from "../../utils/ore-naming.js";
 import { itemIconSmall } from "./render.js";
 import { type InventoryItem, INV_STATE } from "./state.js";
 import { normalizeItems } from "./tree.js";
@@ -99,9 +100,12 @@ export function showInvHoverTip(it: InventoryItem, clientX: number, clientY: num
   const el = ensureInvHoverTip();
   const nameColor = it.rarityColor ?? "var(--hud-text-bright)";
   const volStr = ((it.vol || 0) * it.qty).toFixed(1);
+  const subLine = it.type === "mixedOre" && it.composition
+    ? formatCompositionBreakdown(it.composition)
+    : it.group;
   el.innerHTML = `
     <div class="inv-hover-tip-name" style="color:${nameColor}">${escHtml(it.name)}</div>
-    <div class="inv-hover-tip-sub">${escHtml(it.group)} · ${volStr} m³ · ${it.qty.toLocaleString()}×</div>
+    <div class="inv-hover-tip-sub">${escHtml(subLine)} · ${volStr} m³ · ${it.qty.toLocaleString()}×</div>
   `;
   el.style.display = "block";
   const scale = Client.settings?.uiScale ?? 1.0;
@@ -229,6 +233,9 @@ function buildInfoPanelInnerHTML(it: InventoryItem): string {
   let body = "";
   body += `<div class="inv-info-stats">`;
   body += `<div class="inv-info-stat-row"><span class="inv-info-k">${t("inventory.group")}</span><span class="inv-info-v">${escHtml(it.group)}</span></div>`;
+  if (it.type === "mixedOre" && it.composition) {
+    body += `<div class="inv-info-stat-row"><span class="inv-info-k">Composition</span><span class="inv-info-v">${escHtml(formatCompositionBreakdown(it.composition))}</span></div>`;
+  }
   body += `<div class="inv-info-stat-row"><span class="inv-info-k">${t("inventory.quantity")}</span><span class="inv-info-v">${it.qty.toLocaleString()}</span></div>`;
   body += `<div class="inv-info-stat-row"><span class="inv-info-k">${t("inventory.volume")}</span><span class="inv-info-v">${volTot.toFixed(2)} m³</span></div>`;
   if (val.note) {

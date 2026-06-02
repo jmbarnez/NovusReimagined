@@ -71,6 +71,7 @@ function ensureText(id: string, text: string, x: number, y: number, fill: string
         stroke: { color: "#000000", width: 2.5 },
       }),
     });
+    t.roundPixels = true;
     overlayLayer?.addChild(t);
     stationLabels.set(id, t);
   }
@@ -94,6 +95,7 @@ function ensureGateText(id: string, text: string, x: number, y: number, fill: st
         stroke: { color: "#000000", width: 3 },
       }),
     });
+    t.roundPixels = true;
     overlayLayer?.addChild(t);
     gateLabels.set(id, t);
   }

@@ -361,6 +361,23 @@ export function populateSystem(sys: System) {
     });
   }
 
+  // Add a second gate near the Academy station in the tutorial system
+  if (isTutorialSys) {
+    const npIdx = getNovusPrimeIdx();
+    const hasStationGate = sys.gates.some((g) => g.targetSysIdx === npIdx && Math.hypot(g.x + 500, g.y) < 200);
+    if (!hasStationGate) {
+      sys.gates.push({
+        x: -500,
+        y: 0,
+        px: 0, py: 0,
+        targetSysIdx: npIdx,
+        radius: C.WORLD.GATES.radius,
+        spin: rf(f, 0.004, 0.012),
+        _orbitSpeed: orbitSpeedFor(-500, 0, f, C.WORLD.ORBITS.gateMultiplier),
+      });
+    }
+  }
+
   // ── Station & Planet generation ──
   const isTutorial = sys.idx === 0;
   const isConcentric = sys.idx >= 1;

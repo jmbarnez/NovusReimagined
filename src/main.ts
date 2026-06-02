@@ -9,7 +9,7 @@ import { SpatialGrid } from "./utils/spatial.js";
 import { initGameLoop } from "./game-loop.js";
 import { initHudOverlay } from "./ui/hud-overlay.js";
 import { initBackgroundStars } from "./render/background.js";
-import { initPixi, renderPixi, resizePixi, entityLayer, effectLayer } from "./pixi.js";
+import { initPixi, renderPixi, resizePixi, entityLayer, effectLayer, stationLayer } from "./pixi.js";
 import { initPixiBackground, updatePixiBackground } from "./render/pixi-background.js";
 import { initPixiParticles } from "./render/pixi-particles.js";
 import { initPixiEntities } from "./render/pixi-entities.js";
@@ -21,6 +21,7 @@ import { initPixiHUD } from "./render/pixi-hud-core.js";
 import { initPixiTargetArrows } from "./render/pixi-target-arrows.js";
 import { initPixiMaps } from "./render/pixi-maps.js";
 import { initPixiMinimap } from "./render/pixi-minimap.js";
+import { initPixiCelestial } from "./render/pixi-celestial.js";
 
 import { bindTitleScreenEvents } from "./ui/title-screen.js";
 import { localizeBootScreen, markBootPhase, registerLoadingConsole, transitionToTitleScreen } from "./ui/loading-screen.js";
@@ -65,6 +66,7 @@ async function boot() {
     const sys = getState().GALAXY[0];
     if (sys) {
       updatePixiBackground(performance.now(), 0, 0);
+      if (stationLayer) initPixiCelestial(stationLayer, sys);
       renderPixi();
     }
 

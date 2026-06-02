@@ -98,6 +98,7 @@ export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, mini
       qty: perPickup + (p < remainder ? 1 : 0),
       composition: { ...composition },
       name: chunkName,
+      richness: asteroid.richness,
     });
   }
 

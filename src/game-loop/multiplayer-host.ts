@@ -11,6 +11,7 @@ let serverWorkerReady: Promise<Worker> | null = null;
 let workerGeneration = 0;
 let hostRelayAttached = false;
 let tauriWsStarted = false;
+let tauriWsStartPromise: Promise<boolean> | null = null;
 /** Only the in-space host processes Tauri WS relay and runs the server worker for remotes. */
 let multiplayerRole: "none" | "host" | "client" = "none";
 let unlistenMessage: (() => void) | null = null;
@@ -36,6 +37,7 @@ function resetLocalHostStateForReconnect(): void {
   gameClient.disconnect();
   resetServerWorker();
   tauriWsStarted = false;
+  tauriWsStartPromise = null;
   multiplayerRole = "none";
   Client.multiplayerRole = "none";
   lastHostHeartbeat = 0;
@@ -102,6 +104,20 @@ function attachHostWorkerRelay(worker: Worker) {
 
 async function ensureTauriWsServer(): Promise<boolean> {
   if (!isTauriApp() || tauriWsStarted || multiplayerRole !== "host") return true;
+  if (tauriWsStartPromise) return tauriWsStartPromise;
+
+  tauriWsStartPromise = startTauriWsServer().finally(() => {
+    tauriWsStartPromise = null;
+  });
+  return tauriWsStartPromise;
+}
+
+function isPortBindFailure(err: unknown): boolean {
+  const msg = String(err);
+  return msg.includes("Failed to bind port") || msg.includes("os error 10048") || msg.includes("address already in use");
+}
+
+async function startTauriWsServer(): Promise<boolean> {
   const port = getMultiplayerPort();
   try {
     const { invoke } = await import("@tauri-apps/api/core");
@@ -110,10 +126,20 @@ async function ensureTauriWsServer(): Promise<boolean> {
     } catch {
       /* no prior server in this process */
     }
-    await invoke("start_server", { port });
-    tauriWsStarted = true;
-    netLog(`[OK] Tauri WS server listening on port ${port}`);
-    return true;
+
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await invoke("start_server", { port });
+        tauriWsStarted = true;
+        netLog(`[OK] Tauri WS server listening on port ${port}`);
+        return true;
+      } catch (err) {
+        if (!isPortBindFailure(err) || attempt === maxAttempts) throw err;
+        await invoke("stop_server").catch(() => undefined);
+        await delay(150);
+      }
+    }
   } catch (err) {
     const msg = String(err);
     if (msg.includes("already running")) {
@@ -136,6 +162,8 @@ async function ensureTauriWsServer(): Promise<boolean> {
     }
     return false;
   }
+
+  return false;
 }
 
 const WORKER_START_TIMEOUT_MS = 25000;

@@ -9,7 +9,8 @@ import { GATE_RANGE, WARP_TIME } from "./constants.js";
 import { clearSensorLocks } from "./targeting.js";
 import { floatText } from "./utils/fx.js";
 import { populateSystem } from "./world-gen.js";
-import { app } from "./pixi.js";
+import { app, stationLayer } from "./pixi.js";
+import { initPixiCelestial, destroyPixiCelestial } from "./render/pixi-celestial.js";
 import type { Station, Gate } from "./types/world.js";
 import { canWarpThroughGate } from "./data/tutorial.js";
 
@@ -126,11 +127,14 @@ export function warpTo(targetIdx: number, p: Player = getState().player) {
   if (p === getState().player) {
     clearSimulationEntities();
     emit("simulation:clear");
+    destroyPixiCelestial();
   }
   const fromIdx = p.sysIdx;
   PlayerAccess.setSysIdx(targetIdx, p);
   if (p === getState().player) {
     populateSystem(getState().GALAXY[targetIdx]);
+    const targetSys = getState().GALAXY[targetIdx];
+    if (stationLayer && targetSys) initPixiCelestial(stationLayer, targetSys);
   }
   const gates = getState().GALAXY[targetIdx].gates;
   const back = gates?.find((g: Gate) => g.targetSysIdx === fromIdx);

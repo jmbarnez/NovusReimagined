@@ -146,18 +146,18 @@ export function syncPixiMinimap(now: number): void {
 
   // Background circle + border
   const mmRadius = mmW / 2 - 1;
-  g.arc(mmX, mmY, mmRadius, 0, TAU);
+  g.circle(mmX, mmY, mmRadius);
   g.fill({ color: cachedHudBgDeep, alpha: 0.35 });
   g.stroke({ color: cachedHudBorder, width: 1.5, alpha: 0.65 });
 
   // Radar range rings
   const maxRadarR = mmW / 2 - 2;
-  g.arc(mmX, mmY, maxRadarR * 0.35, 0, TAU);
+  g.circle(mmX, mmY, maxRadarR * 0.35);
   g.stroke({ color: cachedHudBorderSoft, width: 1, alpha: 0.35 });
-  g.arc(mmX, mmY, maxRadarR * 0.70, 0, TAU);
+  g.circle(mmX, mmY, maxRadarR * 0.70);
   g.stroke({ color: cachedHudBorderSoft, width: 1, alpha: 0.35 });
   // Outer dashed ring (approximated with lower alpha since PixiJS has no setLineDash)
-  g.arc(mmX, mmY, maxRadarR, 0, TAU);
+  g.circle(mmX, mmY, maxRadarR);
   g.stroke({ color: cachedHudBorder, width: 1, alpha: 0.28 });
 
   // Radar sweep
@@ -193,7 +193,7 @@ export function syncPixiMinimap(now: number): void {
     const px = mmX + (a.x - player.x) * scale;
     const py = mmY + (a.y - player.y) * scale;
     drawPassiveBlip(px, py, a.radius * 2, (opacity) => {
-      g.arc(px, py, 2, 0, TAU);
+      g.circle(px, py, 2);
       g.fill({ color: cachedThemeHull, alpha: opacity });
     });
   }
@@ -290,7 +290,7 @@ export function syncPixiMinimap(now: number): void {
       }
       const sunAlpha = alwaysSun && sunDist > range ? 0.7 : 0.55;
       const drawSun = (opacity: number) => {
-        g.arc(sx, sy, alwaysSun && sunDist > range ? 3.5 : 4.5, 0, TAU);
+        g.circle(sx, sy, alwaysSun && sunDist > range ? 3.5 : 4.5);
         g.fill({ color: cachedThemeAccent, alpha: opacity * sunAlpha });
       };
       if (alwaysSun && sunDist > range) drawSun(1);
@@ -323,7 +323,7 @@ export function syncPixiMinimap(now: number): void {
           const b = Math.round(neutral[2] + (target[2] - neutral[2]) * mix);
           return (r << 16) | (g_ << 8) | b;
         })();
-        g.arc(px, py, dotRadius, 0, TAU);
+        g.circle(px, py, dotRadius);
         g.fill({ color: scanColor, alpha });
       });
     }
@@ -365,7 +365,7 @@ export function syncPixiMinimap(now: number): void {
       const pulse = 0.65 + 0.35 * Math.abs(Math.sin(now * 0.005));
       const markerR = 5 + pulse;
       if (Math.hypot(gx - mmX, gy - mmY) + markerR <= maxRadarR) {
-        g.arc(gx, gy, markerR, 0, TAU);
+        g.circle(gx, gy, markerR);
         g.stroke({ color: cachedThemeAccent, width: 1.5, alpha: pulse * 0.9 });
         g.moveTo(gx, gy - 4);
         g.lineTo(gx + 4, gy);

@@ -362,11 +362,10 @@ function collectSalvagePickup(s: SalvagePickup) {
     if (s.composition) {
       const composition = normalizeComposition(s.composition);
       const name = s.name ?? generateOreName(composition);
-      const p = getState().player;
+      PlayerAccess.addMixedOreCargo({ composition, qty: s.qty, name, richness: s.richness });
       for (const [oreKey, fraction] of Object.entries(composition)) {
-        const addQty = s.qty * fraction;
-        PlayerAccess.setOre(oreKey, (p.ore[oreKey] || 0) + addQty);
-        progressMissions("mining", Math.max(1, Math.floor(addQty)), oreKey);
+        const creditedQty = Math.max(1, Math.floor(s.qty * fraction));
+        progressMissions("mining", creditedQty, oreKey);
       }
       showPickupToast("ore", s.payload, s.qty, undefined, name);
     } else {

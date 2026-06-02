@@ -106,6 +106,7 @@ export interface MixedOreCargo {
   composition: Record<string, number>;
   qty: number;
   name: string;
+  richness?: number;
 }
 
 export enum AppMode {

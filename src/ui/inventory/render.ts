@@ -135,7 +135,8 @@ function renderItemRow(it: InventoryItem): string {
   const qtyStr = it.qty > 1 ? it.qty.toLocaleString() : "";
   const volStr = ((it.vol || 0) * it.qty).toFixed(1);
   const accentStyle = accentColor ? ` style="color:${accentColor}"` : "";
-  return `<div class="inv-item inv-item-row ${isSel ? "is-selected" : ""}" data-item="${it.id}">
+  const borderStyle = it.rarityColor ? ` style="border-left:2px solid ${it.rarityColor}"` : "";
+  return `<div class="inv-item inv-item-row ${isSel ? "is-selected" : ""}" data-item="${it.id}"${borderStyle}>
     <div class="inv-item-icon"${accentStyle}>${itemIconHtml(it)}</div>
     <div class="inv-item-body">
       <div class="inv-item-name" style="color:${nameColor}">${escHtml(it.name)}</div>
@@ -150,7 +151,8 @@ function renderItemGridCell(it: InventoryItem): string {
   const accentColor = colorForItem(it);
   const qtyStr = it.qty > 1 ? it.qty.toLocaleString() : "";
   const accentStyle = accentColor ? ` style="color:${accentColor}"` : "";
-  return `<div class="inv-item inv-grid-cell ${isSel ? "is-selected" : ""}" data-item="${it.id}">
+  const borderStyle = it.rarityColor ? ` style="border-left:2px solid ${it.rarityColor}"` : "";
+  return `<div class="inv-item inv-grid-cell ${isSel ? "is-selected" : ""}" data-item="${it.id}"${borderStyle}>
     <div class="inv-grid-icon"${accentStyle}>${itemIconHtml(it, ICON_SIZE_GRID)}</div>
     ${qtyStr ? `<span class="inv-grid-qty">${qtyStr}</span>` : ""}
   </div>`;

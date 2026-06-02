@@ -223,7 +223,6 @@ export function renderSettings() {
         settings.videoPreset = preset;
         if (preset === "performance") {
           settings.renderScale = 1.5;
-          settings.fpsLimit = 60;
           settings.backgroundDetail = "low";
           settings.bloomIntensity = 0.5;
           settings.vignetteEnabled = false;
@@ -234,7 +233,6 @@ export function renderSettings() {
           settings.lensFlare = false;
         } else if (preset === "balanced") {
           settings.renderScale = 2.2;
-          settings.fpsLimit = 90;
           settings.backgroundDetail = "high";
           settings.bloomIntensity = 1.0;
           settings.vignetteEnabled = true;
@@ -245,7 +243,6 @@ export function renderSettings() {
           settings.lensFlare = true;
         } else if (preset === "cinematic") {
           settings.renderScale = 2.5;
-          settings.fpsLimit = 0;
           settings.backgroundDetail = "high";
           settings.bloomIntensity = 1.5;
           settings.vignetteEnabled = true;

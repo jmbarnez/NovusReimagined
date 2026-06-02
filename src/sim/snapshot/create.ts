@@ -125,6 +125,7 @@ function snapshotEntities(state: GameState, subject: Player): EntitySnapshot[] {
       payload: sp.payload, qty: sp.qty, kind: sp.kind as string,
       composition: sp.composition ? { ...sp.composition } : undefined,
       name: sp.name,
+      richness: sp.richness,
     });
   }
 
@@ -175,6 +176,7 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
         name: slot.name,
         qty: slot.qty,
         composition: { ...slot.composition },
+        richness: slot.richness ?? 1,
       })) : null,
       refined: subject.refined ? { ...subject.refined } : null,
       loot: subject.loot ? { ...subject.loot } : null,

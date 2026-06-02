@@ -221,6 +221,9 @@ export function loadPlayer(): Player {
     normalizeHardpointArrays(p);
     if (!p.moduleCargo) p.moduleCargo = [];
     if (!Array.isArray(p.mixedOreCargo)) p.mixedOreCargo = [];
+    for (const slot of p.mixedOreCargo) {
+      if (typeof slot.richness !== "number") slot.richness = 1;
+    }
     if (!p.ore || typeof p.ore !== "object") p.ore = {};
     for (const key of ["iron", "nickel", "silicate", "carbon", "crystal", "exotic"]) {
       if (typeof p.ore[key] !== "number") p.ore[key] = 0;

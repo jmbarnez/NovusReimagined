@@ -256,7 +256,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
       for (const reg of TUTORIAL_LOCAL_REGIONS) {
         const p = toMap(reg.x, reg.y);
         const regR = reg.r * scale;
-        sectorGfx.arc(p.x, p.y, regR, 0, TAU);
+        sectorGfx.circle(p.x, p.y, regR);
         sectorGfx.stroke({ color: 0x64a0dc, width: 1.2, alpha: 0.28 });
 
         // Label (add to label container)
@@ -303,7 +303,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
       const sRadius = 20000 * scale;
 
       // Outer boundary
-      sectorGfx.arc(sCenter.x, sCenter.y, sRadius, 0, TAU);
+      sectorGfx.circle(sCenter.x, sCenter.y, sRadius);
       sectorGfx.stroke({ color: 0x64a0dc, width: 2, alpha: 0.65 });
 
       // Voronoi edges
@@ -337,11 +337,11 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     const sysClass = sys.starClass ?? "G";
 
     // Glow
-    starGfx.arc(sp.x, sp.y, 14, 0, TAU);
+    starGfx.circle(sp.x, sp.y, 14);
     starGfx.fill({ color: rgbaToHex(theme.accent), alpha: 0.5 });
 
     // Core
-    starGfx.arc(sp.x, sp.y, 8, 0, TAU);
+    starGfx.circle(sp.x, sp.y, 8);
     starGfx.fill({ color: rgbaToHex(theme.accent), alpha: 1 });
 
     // Label
@@ -368,7 +368,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         const p = toMap(a.x, a.y);
         const alpha = passiveContactOpacity(p.x, p.y, playerMapPos.x, playerMapPos.y, now, a.radius * 2);
         if (alpha < 0.14) continue;
-        objectGfx.arc(p.x, p.y, Math.max(1.5, a.radius * scale), 0, TAU);
+        objectGfx.circle(p.x, p.y, Math.max(1.5, a.radius * scale));
         objectGfx.fill({ color: rgbaToHex(theme.hull), alpha: Math.max(0.4, alpha) });
       }
     }
@@ -468,7 +468,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
   if (playerGfx) {
     playerGfx.clear();
     const pp = toMap(player.x, player.y);
-    playerGfx.arc(pp.x, pp.y, 4, 0, TAU);
+    playerGfx.circle(pp.x, pp.y, 4);
     playerGfx.fill({ color: rgbaToHex(theme.textBright), alpha: 1 });
   }
 }

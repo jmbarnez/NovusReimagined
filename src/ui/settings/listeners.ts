@@ -133,7 +133,6 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
   el.querySelector("#fps-limit")!.addEventListener("change", (e) => {
     const v = parseInt((e.target as HTMLSelectElement).value, 10);
     Client.settings.fpsLimit = Number.isFinite(v) ? v : 0;
-    setCustomPreset();
     saveSettings(Client.settings);
   });
   el.querySelector("#bloom-intensity")!.addEventListener("input", (e) => {

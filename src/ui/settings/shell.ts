@@ -150,7 +150,6 @@ export function ensureSettingsUI() {
     <div id="settings-panel" class="eve-window">
       <div class="eve-win-head">
         <div class="eve-win-title">${t("settings.title")}</div>
-        <div class="eve-win-sub">${t("settings.subtitle")}</div>
         ${windowHeadButtonsHTML()}
       </div>
       ${settingsContentHTML()}
