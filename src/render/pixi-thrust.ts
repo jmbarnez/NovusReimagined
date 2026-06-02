@@ -92,9 +92,12 @@ export function initThrust() {
   _remoteSprites.clear();
 }
 
-// Player flame width / length in world units
-const PLAYER_FLAME_W = 10;
-const PLAYER_FLAME_L = 32;
+// Flame dimensions scale with ship collision radius.
+function playerFlameDims(shipId: string): { w: number; l: number } {
+  const ship = SHIPS[shipId];
+  const r = ship?.colRadius ?? 24;
+  return { w: r * 0.10, l: r * 0.18 };
+}
 // Enemy flame dims — proportional to sigRadius, set per-enemy in sync
 const ENEMY_FLAME_SCALE = 0.55;  // flameLength = sigRadius * this
 
@@ -136,6 +139,7 @@ function _syncPlayerThrust(alpha: number, now: number) {
   const py = lerp(p.py, p.y, alpha);
   const ang = lerp(p.prevAngle ?? p.angle, p.angle, alpha);
   const ca = Math.cos(ang), sa = Math.sin(ang);
+  const flame = playerFlameDims(p.shipId);
 
   for (let i = 0; i < nozzles.length; i++) {
     const [nx, ny] = nozzles[i];
@@ -145,8 +149,8 @@ function _syncPlayerThrust(alpha: number, now: number) {
     const sprite = _playerSprites[i];
     sprite.x = wx;
     sprite.y = wy;
-    sprite.width  = PLAYER_FLAME_W;
-    sprite.height = PLAYER_FLAME_L;
+    sprite.width  = flame.w;
+    sprite.height = flame.l;
     // Rotate so the "body" (below anchor) points backward from the ship
     sprite.rotation = ang + Math.PI / 2;
 
@@ -196,6 +200,7 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
     const ang = useRenderInterpolation ? lerp(p.prevAngle ?? p.angle, p.angle, alpha) : p.angle;
     const ca = Math.cos(ang), sa = Math.sin(ang);
 
+    const flame = playerFlameDims(p.shipId);
     for (let i = 0; i < nozzles.length; i++) {
       const [nx, ny] = nozzles[i];
       const wx = px + ca * nx - sa * ny;
@@ -204,8 +209,8 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
       const sprite = sprites[i];
       sprite.x = wx;
       sprite.y = wy;
-      sprite.width = PLAYER_FLAME_W;
-      sprite.height = PLAYER_FLAME_L;
+      sprite.width = flame.w;
+      sprite.height = flame.l;
       sprite.rotation = ang + Math.PI / 2;
 
       const flicker = 0.82 + 0.18 * Math.sin(now * 0.024 + i * 1.3 + netId.length);

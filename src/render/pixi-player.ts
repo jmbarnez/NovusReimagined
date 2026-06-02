@@ -145,43 +145,7 @@ function bakeShipTexture(shipId: string): Texture {
     cx.fill();
   }
 
-  // 7. Engine pods — station-style energy conduit + metallic rim
-  for (const [nx, ny] of r.nozzleOffsets) {
-    const nx2 = SHIP_HALF + nx, ny2 = SHIP_HALF + ny;
-    const podR = 4.5;
-
-    // Outer shadow ring
-    cx.beginPath(); cx.arc(nx2, ny2, podR + 1.2, 0, TAU);
-    cx.fillStyle = "rgba(0,0,0,0.35)";
-    cx.fill();
-
-    // Pod body — hull gradient
-    const pg = cx.createRadialGradient(nx2 - 1, ny2 - 1, 0, nx2, ny2, podR);
-    pg.addColorStop(0, "rgba(60,70,85,0.55)");
-    pg.addColorStop(1, "rgba(18,28,42,0.85)");
-    cx.fillStyle = pg;
-    cx.beginPath(); cx.arc(nx2, ny2, podR, 0, TAU); cx.fill();
-
-    // Metallic rim
-    cx.beginPath(); cx.arc(nx2, ny2, podR, 0, TAU);
-    cx.strokeStyle = "rgba(100,140,180,0.55)";
-    cx.lineWidth = 0.9;
-    cx.stroke();
-
-    // Inner energy core (cyan)
-    const eg = cx.createRadialGradient(nx2, ny2, 0, nx2, ny2, podR * 0.55);
-    eg.addColorStop(0, "rgba(0,210,255,0.55)");
-    eg.addColorStop(1, "rgba(0,210,255,0)");
-    cx.fillStyle = eg;
-    cx.beginPath(); cx.arc(nx2, ny2, podR * 0.55, 0, TAU); cx.fill();
-
-    // Core bright spot
-    cx.beginPath(); cx.arc(nx2, ny2, 1.6, 0, TAU);
-    cx.fillStyle = "rgba(130,230,255,0.45)";
-    cx.fill();
-  }
-
-  // 8. Cockpit (gradient glass + rim)
+  // 7. Cockpit (gradient glass + rim)
   cx.lineJoin = "miter";
   const cp = r.cockpit ?? { cx: 10, cy: 0, rx: 6, ry: 4 };
   const cpx = SHIP_HALF + cp.cx, cpy = SHIP_HALF + cp.cy;
