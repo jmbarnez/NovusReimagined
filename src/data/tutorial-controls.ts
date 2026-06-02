@@ -3,6 +3,13 @@ import { DEFAULT_KEYBINDS, type Keybinds } from "./settings.js";
 import { fmtKey } from "../utils/format.js";
 import { t } from "../utils/i18n.js";
 
+const RACK_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+
+/** Resolve a bar slot index to its hotkey display label. */
+export function tutorialBarKey(slotIndex: number): string {
+  return RACK_KEYS[slotIndex] ?? String(slotIndex + 1);
+}
+
 /** Resolve a player keybind to a short display label. */
 export function tutorialKey(action: keyof Keybinds): string {
   const binds = Client.settings?.keybinds ?? DEFAULT_KEYBINDS;
@@ -27,9 +34,14 @@ export type TutorialGateHintKey =
 export function resolveTutorialGateHint(key: TutorialGateHintKey): string {
   const brake = tutorialKey("brake");
   const dock = tutorialKey("dock");
+  const forward = tutorialKey("forwardThrust");
   switch (key) {
-    case "move-course":
-      return t("tutorial.gateHint.moveCourse");
+    case "move-course": {
+      const isDirect = Client.settings?.movementControlMode === "direct";
+      return isDirect
+        ? t("tutorial.gateHint.moveCourseDirect", { forwardKey: forward })
+        : t("tutorial.gateHint.moveCourse");
+    }
     case "brake-gate":
       return t("tutorial.gateHint.brakeGate", { brakeKey: brake });
     case "gate-boost":

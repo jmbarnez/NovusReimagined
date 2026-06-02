@@ -91,6 +91,13 @@ function bakeShipTexture(shipId: string): Texture {
   cx.lineJoin = "round";
   cx.stroke();
 
+  // 4a. Metallic rim highlight — upper-left quadrant specular arc
+  shipPath();
+  cx.strokeStyle = "rgba(160,200,230,0.55)";
+  cx.lineWidth = 0.7;
+  cx.lineJoin = "round";
+  cx.stroke();
+
   // 5. Hairline panel lines
   for (const line of r.panelLines ?? []) {
     cx.beginPath();
@@ -103,6 +110,23 @@ function bakeShipTexture(shipId: string): Texture {
     cx.lineJoin = "round";
     cx.lineCap = "round";
     cx.stroke();
+  }
+
+  // 5a. Structural strut bracing — wing roots to hull spine
+  if (r.turretOffsets && r.turretOffsets.length >= 2) {
+    for (const [tx, ty] of r.turretOffsets) {
+      const sx = SHIP_HALF + tx, sy = SHIP_HALF + ty;
+      const hx = SHIP_HALF - 4, hy = SHIP_HALF + ty * 0.15;
+      // Dark strut shadow
+      cx.strokeStyle = "rgba(0,0,0,0.35)";
+      cx.lineWidth = 2.2;
+      cx.lineCap = "round";
+      cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(hx, hy); cx.stroke();
+      // Hull strut
+      cx.strokeStyle = "rgba(80,100,120,0.45)";
+      cx.lineWidth = 1.0;
+      cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(hx, hy); cx.stroke();
+    }
   }
 
   // 6. Nav / hull lights with soft halos
@@ -121,20 +145,39 @@ function bakeShipTexture(shipId: string): Texture {
     cx.fill();
   }
 
-  // 7. Nozzles (gradient + rim)
+  // 7. Engine pods — station-style energy conduit + metallic rim
   for (const [nx, ny] of r.nozzleOffsets) {
-    const nx2 = SHIP_HALF + nx + 2, ny2 = SHIP_HALF + ny;
-    const ng = cx.createRadialGradient(nx2, ny2, 0, nx2, ny2, 5);
-    ng.addColorStop(0, "rgba(60,60,70,0.35)");
-    ng.addColorStop(1, "rgba(60,60,70,0)");
-    cx.fillStyle = ng;
-    cx.beginPath(); cx.arc(nx2, ny2, 5, 0, TAU); cx.fill();
-    cx.beginPath(); cx.arc(nx2, ny2, 3.5, 0, TAU);
-    cx.strokeStyle = "rgba(15,15,20,0.45)";
-    cx.lineWidth = 1.2;
+    const nx2 = SHIP_HALF + nx, ny2 = SHIP_HALF + ny;
+    const podR = 4.5;
+
+    // Outer shadow ring
+    cx.beginPath(); cx.arc(nx2, ny2, podR + 1.2, 0, TAU);
+    cx.fillStyle = "rgba(0,0,0,0.35)";
+    cx.fill();
+
+    // Pod body — hull gradient
+    const pg = cx.createRadialGradient(nx2 - 1, ny2 - 1, 0, nx2, ny2, podR);
+    pg.addColorStop(0, "rgba(60,70,85,0.55)");
+    pg.addColorStop(1, "rgba(18,28,42,0.85)");
+    cx.fillStyle = pg;
+    cx.beginPath(); cx.arc(nx2, ny2, podR, 0, TAU); cx.fill();
+
+    // Metallic rim
+    cx.beginPath(); cx.arc(nx2, ny2, podR, 0, TAU);
+    cx.strokeStyle = "rgba(100,140,180,0.55)";
+    cx.lineWidth = 0.9;
     cx.stroke();
-    cx.beginPath(); cx.arc(nx2, ny2, 2.5, 0, TAU);
-    cx.fillStyle = "rgba(10,10,16,0.6)";
+
+    // Inner energy core (cyan)
+    const eg = cx.createRadialGradient(nx2, ny2, 0, nx2, ny2, podR * 0.55);
+    eg.addColorStop(0, "rgba(0,210,255,0.55)");
+    eg.addColorStop(1, "rgba(0,210,255,0)");
+    cx.fillStyle = eg;
+    cx.beginPath(); cx.arc(nx2, ny2, podR * 0.55, 0, TAU); cx.fill();
+
+    // Core bright spot
+    cx.beginPath(); cx.arc(nx2, ny2, 1.6, 0, TAU);
+    cx.fillStyle = "rgba(130,230,255,0.45)";
     cx.fill();
   }
 

@@ -7,7 +7,7 @@ import {
   TUTORIAL_BELT_CENTER,
   TUTORIAL_GUNNERY_CENTER,
 } from "./tutorial-layout.js";
-import { tutorialKey } from "./tutorial-controls.js";
+import { tutorialKey, tutorialBarKey } from "./tutorial-controls.js";
 import { getHangarGuidePanel } from "./hangar-tutorial-guide.js";
 import { t } from "../utils/i18n.js";
 import {
@@ -113,7 +113,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "fly-mining",
     title: t("tutorial.step.flyMining.title"),
     objective: t("tutorial.step.flyMining.objective"),
-    hint: t("tutorial.step.flyMining.hint"),
+    hint: () => t("tutorial.step.flyMining.hint", { bar1Key: tutorialBarKey(0), bar2Key: tutorialBarKey(1) }),
     zone: tutorialRegionZone("fly-mining"),
     beaconColor: 0x88ccff,
     nav: { trackId: "spoke-mining", label: t("world.region.miningRange"), targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
@@ -143,7 +143,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "mining",
     title: t("tutorial.step.mining.title"),
     objective: t("tutorial.step.mining.objective"),
-    hint: () => t("tutorial.step.mining.hint"),
+    hint: () => t("tutorial.step.mining.hint", { bar1Key: tutorialBarKey(0) }),
     zone: tutorialRegionZone("mining"),
     beaconColor: 0xaa88ff,
     nav: { trackId: "spoke-mining", label: t("world.region.miningRange"), targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
@@ -227,7 +227,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "fly-gunnery",
     title: t("tutorial.step.flyGunnery.title"),
     objective: t("tutorial.step.flyGunnery.objective"),
-    hint: t("tutorial.step.flyGunnery.hint"),
+    hint: () => t("tutorial.step.flyGunnery.hint", { bar1Key: tutorialBarKey(0), bar2Key: tutorialBarKey(1) }),
     zone: tutorialRegionZone("fly-gunnery"),
     beaconColor: 0xff8866,
     nav: { trackId: "spoke-gunnery", label: t("world.region.gunneryBay"), targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
@@ -245,7 +245,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "gunnery",
     title: t("tutorial.step.gunnery.title"),
     objective: t("tutorial.step.gunnery.objective"),
-    hint: () => t("tutorial.step.gunnery.hint"),
+    hint: () => t("tutorial.step.gunnery.hint", { bar1Key: tutorialBarKey(0) }),
     zone: tutorialRegionZone("gunnery"),
     beaconColor: 0xff8866,
     nav: { trackId: "spoke-gunnery", label: t("world.region.gunneryBay"), targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
