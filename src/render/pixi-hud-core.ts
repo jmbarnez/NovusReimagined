@@ -271,20 +271,21 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
   const speedMag = Math.hypot(player.vx, player.vy);
   if (speedMag > 5 && driftVectors) {
     driftVectors.clear();
+    driftVectors.position.set(cx + gx, cy + gy);
     const vAngle = Math.atan2(player.vy, player.vx);
     const offsetDist = r + (12 + Math.min(speedMag * 0.04, 10)) * z;
     const cosA = Math.cos(vAngle);
     const sinA = Math.sin(vAngle);
     const mR = Math.max(1.8, Math.min(4, 2.5 * z));
 
-    const rot = (cx: number, cy: number, dx: number, dy: number) => ({
-      x: cx + dx * cosA - dy * sinA,
-      y: cy + dx * sinA + dy * cosA,
+    const rot = (lcx: number, lcy: number, dx: number, dy: number) => ({
+      x: lcx + dx * cosA - dy * sinA,
+      y: lcy + dx * sinA + dy * cosA,
     });
 
-    // Prograde marker
-    const px = cosA * offsetDist + gx;
-    const py = sinA * offsetDist + gy;
+    // Prograde marker (coordinates local to the ship centre)
+    const px = cosA * offsetDist;
+    const py = sinA * offsetDist;
 
     driftVectors.circle(px, py, mR);
     // Fins — rotated by vAngle so they align with velocity
@@ -307,8 +308,8 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     });
 
     // Retrograde marker
-    const rx = -cosA * offsetDist + gx;
-    const ry = -sinA * offsetDist + gy;
+    const rx = -cosA * offsetDist;
+    const ry = -sinA * offsetDist;
     driftVectors.circle(rx, ry, mR);
     // Cross lines — rotated by vAngle
     const rA1 = rot(rx, ry, -mR * 0.7, -mR * 0.7);
@@ -326,6 +327,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     });
   } else if (driftVectors) {
     driftVectors.clear();
+    driftVectors.position.set(0, 0);
   }
 
   // Update target label

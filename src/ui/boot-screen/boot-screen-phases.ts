@@ -20,7 +20,6 @@ export function localizeBootScreen(): void {
   const mon2Title = q(".monitor-right .monitor-title");
   const consoleEl = q(".ld-console-line");
   const perfTitle = q(".boot-perf-title");
-  const perfState = document.getElementById("boot-perf-state");
   const labels    = document.querySelectorAll(".boot-perf-monitor [data-perf-label]");
   if (mon1Tag)   mon1Tag.textContent   = t("boot.monitorTagPrimary");
   if (mon1Title) mon1Title.textContent = t("boot.monitorTitlePrimary");
@@ -28,7 +27,6 @@ export function localizeBootScreen(): void {
   if (mon2Title) mon2Title.textContent = t("boot.monitorTitleSecondary");
   if (consoleEl) consoleEl.textContent = t("boot.consoleInit");
   if (perfTitle) perfTitle.textContent = t("perf.bootTitle");
-  if (perfState) perfState.textContent = t("perf.standby");
   labels.forEach((el) => {
     const key = (el as HTMLElement).dataset.perfLabel;
     if (!key) return;
@@ -80,9 +78,6 @@ function updateBootPerformanceMonitor(): void {
   const memoryText = snapshot.memory
     ? `${snapshot.memory.usedMB.toFixed(1)} / ${snapshot.memory.totalMB.toFixed(1)} MB`
     : t("common.dash");
-  const stateText = snapshot.sampledAtMs > 0 ? t("perf.live") : t("perf.standby");
-
-  setText("boot-perf-state", stateText);
   setText("boot-perf-fps", String(snapshot.fps));
   setText("boot-perf-frame", `${snapshot.avgMs.toFixed(1)} / ${snapshot.maxMs.toFixed(1)} MS`);
   setText("boot-perf-ticks", snapshot.avgTicks.toFixed(1));

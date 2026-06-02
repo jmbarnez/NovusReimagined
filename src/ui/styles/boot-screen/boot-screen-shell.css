@@ -247,22 +247,13 @@
   border-bottom: 1px solid color-mix(in srgb, var(--hud-border-soft) 65%, transparent);
 }
 
-.boot-perf-title,
-.boot-perf-state {
+.boot-perf-title {
   font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.14em;
   line-height: 1;
   text-transform: uppercase;
-}
-
-.boot-perf-title {
   color: color-mix(in srgb, var(--hud-text-bright) 86%, var(--hud-shield) 14%);
-}
-
-.boot-perf-state {
-  color: var(--hud-positive);
-  font-variant-numeric: tabular-nums;
 }
 
 .telemetry-row {
