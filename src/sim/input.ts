@@ -16,6 +16,7 @@ export interface InputFrame {
   mouseWorld: { x: number; y: number };
   waypoint: { x: number; y: number } | null;
   navCommand: InputNavCommand | null;
+  movementControlMode: "waypoint" | "direct";
   actions: GameCommand[];
 }
 
@@ -269,6 +270,7 @@ export function sanitizeInputFrame(value: unknown): InputFrame | null {
     mouseWorld,
     waypoint,
     navCommand: sanitizeNavCommand(value.navCommand),
+    movementControlMode: value.movementControlMode === "direct" ? "direct" : "waypoint",
     actions: sanitizeActions(value.actions),
   };
 }
@@ -288,6 +290,7 @@ export function queueFrameAction(command: GameCommand, opts?: { replaceByType?: 
 export function applyInputFrameToPlayer(frame: InputFrame, p: Player): void {
   p.inputKeys = { space: frame.keys.space, w: frame.keys.w, a: frame.keys.a, s: frame.keys.s, d: frame.keys.d };
   p.inputMouseWorld = { x: frame.mouseWorld.x, y: frame.mouseWorld.y };
+  p.movementControlMode = frame.movementControlMode;
   p.waypoint = frame.waypoint;
   p.navCommand = frame.navCommand;
 }
@@ -322,6 +325,7 @@ export function createLocalInputFrame(tickNum: number): InputFrame {
     },
     waypoint: Client.settings.movementControlMode === "waypoint" && Client.waypoint ? { ...Client.waypoint } : null,
     navCommand: Client.settings.movementControlMode === "waypoint" && Client.navCommand ? { ...Client.navCommand } : null,
+    movementControlMode: Client.settings.movementControlMode,
     actions,
   };
 }

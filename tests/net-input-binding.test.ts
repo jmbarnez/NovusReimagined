@@ -12,6 +12,7 @@ describe("bindPlayerNetInput", () => {
       mouseWorld: { x: 10, y: 20 },
       waypoint: null,
       navCommand: null,
+      movementControlMode: "waypoint",
       actions: [],
     };
 

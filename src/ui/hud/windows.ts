@@ -41,16 +41,16 @@ function makeWindowHTML(id: string, title: string): string {
     skills: "eve-window-skills",
   };
   const cls = classes[id] || "";
-  const resetBtn = id === "map" ? `<button type="button" class="eve-win-btn eve-win-reset" title="Reset View">⊕</button>` : "";
+  const resetBtn = id === "map" ? `<button type="button" class="eve-win-btn eve-win-reset" aria-label="Reset view" tabindex="-1">⊕</button>` : "";
   return `
     <div class="eve-window ${cls}" id="hud-win-${id}" style="display:none;position:fixed;">
       <div class="eve-win-head">
         <span class="eve-win-title">${title}</span>
         <span class="eve-win-sub"></span>
         <span style="flex:1"></span>
-        <button type="button" class="eve-win-btn eve-win-expand" title="Expand">▢</button>
+        <button type="button" class="eve-win-btn eve-win-expand" aria-label="Expand window" tabindex="-1">▢</button>
         ${resetBtn}
-        <button type="button" class="eve-win-btn eve-win-close" title="Close">✕</button>
+        <button type="button" class="eve-win-btn eve-win-close" aria-label="Close window" tabindex="-1">✕</button>
       </div>
       <div class="eve-win-body" id="hud-win-body-${id}"></div>
       <div class="eve-win-foot"></div>

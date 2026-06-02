@@ -11,6 +11,7 @@ function movementFrame(tick: number, x: number, y: number): InputFrame {
     mouseWorld: { x, y },
     waypoint: { x, y },
     navCommand: null,
+    movementControlMode: "waypoint",
     actions: [],
   };
 }
@@ -22,6 +23,7 @@ function directFrame(tick: number, keys: InputFrame["keys"]): InputFrame {
     mouseWorld: { x: 0, y: 0 },
     waypoint: null,
     navCommand: null,
+    movementControlMode: "direct",
     actions: [],
   };
 }

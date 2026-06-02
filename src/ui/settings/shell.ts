@@ -126,9 +126,9 @@ export function settingsContentHTML(): string {
         </div>
         <div class="settings-tab-panel" data-tab-panel="controls">
         <h3 class="accent-controls">${t("settings.tab.controls")}</h3>
-        <div class="settings-row">
+        <div class="settings-row movement-mode-row">
           <label>${t("settings.movementMode")}</label>
-          <div id="movement-mode-buttons" class="settings-btn-row"></div>
+          <div id="movement-mode-buttons" class="movement-mode-grid"></div>
           <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="${t("settings.tip.movementMode")}">ⓘ</span>
         </div>
         <div id="keybind-list"></div>

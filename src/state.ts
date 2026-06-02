@@ -185,6 +185,7 @@ export interface Player {
   inputMouseWorld?: { x: number; y: number } | null;
   waypoint?: { x: number; y: number } | null;
   navCommand?: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;
+  movementControlMode?: "waypoint" | "direct";
   gateCooldowns?: Record<string, number>;
   gatesCleared?: string[];
   tutorial: { active: boolean; step: number; completed: boolean; skipped: boolean; stepEnteredAt?: number };

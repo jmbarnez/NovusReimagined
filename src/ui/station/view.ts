@@ -12,6 +12,7 @@ import { mountInventoryInPane, resetInventoryUI } from "../inventory/index.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../tutorial-hangar-guide.js";
 import { t } from "../../utils/i18n.js";
 import { getState } from "../../state-access.js";
+import { on } from "../../events.js";
 
 function syncHangarTutorialGuideFromActiveStep(): void {
   const step = getCurrentTutorialStep(getState().player)?.id;
@@ -22,9 +23,38 @@ function syncHangarTutorialGuideFromActiveStep(): void {
   syncHangarTutorialGuide(getTutorialSnapshot());
 }
 
+function activateStationTab(tab: string): void {
+  const el = document.getElementById("station-overlay");
+  if (!el || !Client.stationOpen) return;
+  const btn = el.querySelector(`.st-tab[data-tab="${tab}"]:not([disabled])`) as HTMLButtonElement | null;
+  if (!btn || btn.classList.contains("active")) return;
+  btn.click();
+}
+
+function preferredTutorialStationTab(st: Station): string | null {
+  const step = getCurrentTutorialStep(getState().player)?.id;
+  if (step === "industry" && st.services.includes("industry")) return "industry";
+  if (step === "hangar-high" || step === "hangar-turrets") return "hangar";
+  return null;
+}
+
+let stationTutorialEventsBound = false;
+
+function bindStationTutorialEvents(): void {
+  if (stationTutorialEventsBound) return;
+  stationTutorialEventsBound = true;
+  on("tutorial:step-change", () => {
+    if (!Client.stationOpen || !Client.activeStation) return;
+    const preferredTab = preferredTutorialStationTab(Client.activeStation);
+    if (preferredTab) activateStationTab(preferredTab);
+    syncHangarTutorialGuideFromActiveStep();
+  });
+}
+
 export function buildStationView(st: Station): void {
   const el = document.getElementById("station-overlay");
   if (!el) return;
+  bindStationTutorialEvents();
 
   el.querySelector("#st-name")!.textContent = st.name;
   el.querySelector("#st-meta")!.textContent = `Services: ${st.services.join(" · ")}`;
@@ -41,12 +71,7 @@ export function buildStationView(st: Station): void {
     btn.classList.remove("active");
   });
 
-  const step = getCurrentTutorialStep(getState().player)?.id;
-  const preferredTab = step === "industry" && st.services.includes("industry")
-    ? "industry"
-    : (step === "hangar-high" || step === "hangar-turrets")
-      ? "hangar"
-      : null;
+  const preferredTab = preferredTutorialStationTab(st);
   const first = preferredTab
     ? el.querySelector(`.st-tab[data-tab="${preferredTab}"]:not([disabled])`)
     : el.querySelector(".st-tab:not([disabled])");

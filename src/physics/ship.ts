@@ -135,7 +135,7 @@ export function updateShip(dt: number, _p?: Player) {
     if (manualLeft !== manualRight) {
       at = (manualRight ? 1 : -1) * C.PHYSICS.SHIP.turnRateMultiplier;
     }
-  } else if (!uiBlocksInput && inputMouseWorld && (!isLocalPresentation || !Client.cursorUnlocked)) {
+  } else if (!uiBlocksInput && inputMouseWorld && (!isLocalPresentation || !Client.cursorUnlocked) && p.movementControlMode !== "direct") {
     const targetAngle = aimAngle(p.x, p.y, inputMouseWorld.x, inputMouseWorld.y);
     const diff = angleDiff(p.angle, targetAngle);
     at = diff * C.PHYSICS.SHIP.turnRateMultiplier;

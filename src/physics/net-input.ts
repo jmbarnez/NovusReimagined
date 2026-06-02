@@ -15,5 +15,6 @@ export function bindPlayerNetInput(p: Player, frame: InputFrame | null | undefin
     : { x: p.x + Math.cos(p.angle) * 200, y: p.y + Math.sin(p.angle) * 200 };
   p.waypoint = frame ? (frame.waypoint ? { ...frame.waypoint } : null) : (p.waypoint ?? null);
   p.navCommand = frame ? (frame.navCommand ? { ...frame.navCommand } : null) : (p.navCommand ?? null);
+  p.movementControlMode = frame ? frame.movementControlMode : (p.movementControlMode ?? "waypoint");
   return !!frame;
 }

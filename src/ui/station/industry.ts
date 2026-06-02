@@ -53,7 +53,33 @@ function formatTime(seconds: number): string {
 }
 
 export function updateIndustryProgress() {
-  if (lastContainer?.isConnected) renderIndustry(lastContainer);
+  if (!lastContainer?.isConnected) return;
+  if (!lastContainer.classList.contains("active")) return;
+
+  const queue = getState().player.craftQueue;
+  const now = Date.now();
+
+  // Query existing job DOM elements instead of rebuilding everything.
+  lastContainer.querySelectorAll<HTMLElement>(".ind-queue-job").forEach((jobEl) => {
+    const jobId = jobEl.dataset.jobId;
+    if (!jobId) return;
+    const job = queue.find((j) => j.id === jobId);
+    if (!job) return;
+
+    const elapsed = now - job.startTime;
+    const progress = Math.min(1, elapsed / job.duration);
+    const remainingMs = Math.max(0, job.duration - elapsed);
+    const pct = Math.round(progress * 100);
+
+    const fill = jobEl.querySelector<HTMLElement>(".ind-queue-progress-fill");
+    if (fill) fill.style.width = `${pct}%`;
+
+    const pctEl = jobEl.querySelector<HTMLElement>(".ind-queue-pct");
+    if (pctEl) pctEl.textContent = `${pct}%`;
+
+    const timeEl = jobEl.querySelector<HTMLElement>(".ind-queue-time");
+    if (timeEl) timeEl.textContent = `${formatTime(remainingMs / 1000)} ${t("industry.remaining")}`;
+  });
 }
 
 export function renderIndustry(container?: HTMLElement) {

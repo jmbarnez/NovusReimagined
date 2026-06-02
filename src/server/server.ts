@@ -219,7 +219,7 @@ export class GameServer {
       }
       if (staleActions.length > 0) {
         this.sim.applyActions(
-          { tick: this.currentTick, keys: { space: false, w: false, a: false, s: false, d: false }, mouseWorld: { x: 0, y: 0 }, waypoint: null, navCommand: null, actions: staleActions },
+          { tick: this.currentTick, keys: { space: false, w: false, a: false, s: false, d: false }, mouseWorld: { x: 0, y: 0 }, waypoint: null, navCommand: null, movementControlMode: "waypoint", actions: staleActions },
           session.playerState,
         );
       }

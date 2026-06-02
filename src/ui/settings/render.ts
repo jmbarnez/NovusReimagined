@@ -70,12 +70,20 @@ export function renderSettings() {
 
   const movementModeButtons = document.getElementById("movement-mode-buttons") as HTMLElement | null;
   if (movementModeButtons) {
-    const modes: { id: MovementControlMode; label: string }[] = [
-      { id: "waypoint", label: t("settings.movementMode.waypoint") },
-      { id: "direct", label: t("settings.movementMode.direct") },
+    const modes: { id: MovementControlMode; label: string; desc: string; icon: string }[] = [
+      { id: "waypoint", label: t("settings.movementMode.waypoint"), desc: t("settings.movementMode.waypointDesc"), icon: "MOUSE" },
+      { id: "direct", label: t("settings.movementMode.direct"), desc: t("settings.movementMode.directDesc"), icon: "KEYS" },
     ];
     movementModeButtons.innerHTML = modes
-      .map((mode) => `<button class="detail-btn${settings.movementControlMode === mode.id ? " active" : ""}" data-movement-mode="${mode.id}">${mode.label}</button>`)
+      .map((mode) => `
+        <button class="movement-mode-card${settings.movementControlMode === mode.id ? " active" : ""}" data-movement-mode="${mode.id}">
+          <span class="movement-mode-icon" aria-hidden="true">${mode.icon}</span>
+          <span class="movement-mode-copy">
+            <span class="movement-mode-title">${mode.label}</span>
+            <span class="movement-mode-desc">${mode.desc}</span>
+          </span>
+        </button>
+      `)
       .join("");
     movementModeButtons.querySelectorAll("[data-movement-mode]").forEach((btn) => {
       btn.addEventListener("click", () => {

@@ -30,6 +30,7 @@ export class Simulation {
     p.netInputFrame = frame;
     p.inputKeys = { space: frame.keys.space, w: frame.keys.w, a: frame.keys.a, s: frame.keys.s, d: frame.keys.d };
     p.inputMouseWorld = { x: frame.mouseWorld.x, y: frame.mouseWorld.y };
+    p.movementControlMode = frame.movementControlMode;
     p.waypoint = frame.waypoint;
     p.navCommand = frame.navCommand;
 
@@ -43,6 +44,7 @@ export class Simulation {
       Client.mouseWorld.y = frame.mouseWorld.y;
       Client.waypoint = frame.waypoint;
       Client.navCommand = frame.navCommand;
+      Client.settings.movementControlMode = frame.movementControlMode;
     }
 
     this.applyActions(frame, p);
