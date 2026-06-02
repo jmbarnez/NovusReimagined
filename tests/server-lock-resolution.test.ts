@@ -11,6 +11,7 @@ function lockFrame(tick: number, enemyId: string): InputFrame {
     mouseWorld: { x: 0, y: 0 },
     waypoint: null,
     navCommand: null,
+    movementControlMode: "waypoint",
     actions: [{ type: "requestSensorLock", payload: { id: enemyId } }],
   };
 }

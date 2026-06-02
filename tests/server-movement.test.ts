@@ -106,4 +106,31 @@ describe("GameServer movement input", () => {
     tick(1 / 60);
     expect(p.va).toBeGreaterThan(0);
   });
+
+  it("does not rotate hull toward mouse in direct mode", () => {
+    server.handleClientConnect("direct-mouse-client", "Pilot", makePlayer());
+    const sessions = (server as unknown as { sessions: Map<string, { playerState: Player }> }).sessions;
+    const session = sessions.get("direct-mouse-client");
+    expect(session).toBeTruthy();
+    if (!session) return;
+
+    const p = session.playerState;
+    p.angle = 0;
+    p.va = 0;
+    const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
+
+    server.handleClientInput("direct-mouse-client", {
+      tick: 1,
+      keys: { space: false, w: false, a: false, s: false, d: false },
+      mouseWorld: { x: p.x, y: p.y - 1000 },
+      waypoint: null,
+      navCommand: null,
+      movementControlMode: "direct",
+      actions: [],
+    });
+    tick(1 / 60);
+
+    expect(p.angle).toBe(0);
+    expect(p.va).toBe(0);
+  });
 });

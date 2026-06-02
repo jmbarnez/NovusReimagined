@@ -10,6 +10,7 @@ function makeFrame(tick: number, actions: InputFrame["actions"] = []): InputFram
     mouseWorld: { x: 0, y: 0 },
     waypoint: null,
     navCommand: null,
+    movementControlMode: "waypoint",
     actions,
   };
 }
