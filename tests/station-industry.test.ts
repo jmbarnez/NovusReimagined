@@ -128,14 +128,11 @@ describe("station refining panel", () => {
     renderIndustry();
 
     const panel = document.getElementById("panel-industry");
-    const bandGrid = panel?.querySelector(".ind-storage-zone-grid--bands");
+    const pipeline = panel?.querySelector(".ind-pipeline-bar");
     expect(panel?.textContent).toContain("Intake");
     expect(panel?.textContent).toContain("Processed");
     expect(panel?.textContent).toContain("Separated");
     expect(panel?.textContent).toContain("Alloy");
-    expect(panel?.textContent).toContain("Processed Stock");
-    expect(panel?.textContent).toContain("Separated Streams");
-    expect(panel?.textContent).toContain("Alloy Reservoirs");
     expect(panel?.textContent).toContain("Blend preview");
     expect(panel?.textContent).toContain("Base stock");
     expect(panel?.textContent).toContain("Blend sources");
@@ -143,8 +140,7 @@ describe("station refining panel", () => {
     expect(panel?.textContent).toContain("Best fit window");
     expect(panel?.textContent).toContain("Ferro-nickel stock");
     expect(panel?.textContent).toContain("within family window");
-    expect(panel?.textContent).toContain("Refinery Plant");
-    expect(bandGrid).not.toBeNull();
+    expect(pipeline).not.toBeNull();
   });
 
   it("shows process yield projections for mixed ore batches", () => {

@@ -91,55 +91,31 @@ function renderStorageSchematic(activeKind?: "intake" | "processed" | "separated
     separated: "Separated",
     alloy: "Alloy",
   };
+  const kindColors: Record<"intake" | "processed" | "separated" | "alloy", string> = {
+    intake: "#6d8ea8",
+    processed: "#5f9f7b",
+    separated: "#b08a4e",
+    alloy: "#9a6fbf",
+  };
+  const totalVolume = zones.reduce((sum, z) => sum + z.totalVolumeM3, 0);
+
   return `
-    <section class="ind-storage-schematic">
-      <div class="ind-panel-head">
-        <div class="ind-panel-title">Refinery Plant</div>
-        <div class="ind-panel-subtitle">Plant state stays visible while the active stage routes feed through the same machine.</div>
-      </div>
-      <div class="ind-flow-strip">
-        ${(["intake", "processed", "separated", "alloy"] as const).map((kind, index, array) => `
-          <div class="ind-flow-node${activeRoute.includes(kind) ? " active" : ""}">
-            <span>${routeLabels[kind]}</span>
-            ${index < array.length - 1 ? `<i class="ind-flow-link${activeRoute.includes(kind) && activeRoute.includes(array[index + 1]!) ? " active" : ""}"></i>` : ""}
-          </div>
-        `).join("")}
-      </div>
-      <div class="ind-storage-zone-grid ind-storage-zone-grid--bands">
-        ${zones.map((zone) => {
-          const isActive = activeKind ? zone.kind === activeKind : false;
-          const visibleUnits = zone.units.slice(0, 3);
-          const hiddenUnitCount = Math.max(0, zone.units.length - visibleUnits.length);
+    <section class="ind-pipeline-bar">
+      <div class="ind-pipeline-strip">
+        ${zones.map((zone, index, array) => {
+          const isActive = activeRoute.includes(zone.kind);
+          const isRouteEdge = index < array.length - 1 && activeRoute.includes(zone.kind) && activeRoute.includes(array[index + 1]!.kind);
+          const pct = totalVolume > 0 ? Math.min(100, (zone.totalVolumeM3 / totalVolume) * 100) : 0;
           return `
-            <div class="ind-storage-zone ind-storage-zone--${zone.kind}${isActive ? " active" : ""}">
-              <div class="ind-storage-zone-head">
-                <div>
-                  <strong>${escHtml(zone.label)}</strong>
-                  <small>${zone.entries.length} active stacks · ${zone.units.length} containers</small>
-                </div>
-                <span>${escHtml(zone.kind === "intake" ? "Raw feed" : zone.kind === "processed" ? "Preserved mix" : zone.kind === "separated" ? "Clean streams" : "Resolved output")}</span>
+            <div class="ind-pipeline-node${isActive ? " active" : ""}">
+              <div class="ind-pipeline-node-head">
+                <span class="ind-pipeline-label">${routeLabels[zone.kind]}</span>
+                <strong>${formatVolume(zone.totalVolumeM3)}</strong>
               </div>
-              <div class="ind-storage-zone-stats">
-                <div><span>Volume</span><strong>${formatVolume(zone.totalVolumeM3)}</strong></div>
-                <div><span>Mass</span><strong>${formatMass(zone.totalMassKg)}</strong></div>
-                <div><span>Dominant</span><strong>${escHtml(zone.dominantLabel)}</strong></div>
+              <div class="ind-pipeline-track">
+                <div class="ind-pipeline-fill" style="width:${Math.max(2, pct)}%;background:${kindColors[zone.kind]}"></div>
               </div>
-              <div class="ind-storage-unit-strip">
-                ${visibleUnits.map((unit) => {
-                  const summary = refineryStorageSummary(unit);
-                  return `
-                    <div class="ind-storage-unit-chip" style="${compositionAccentVars(aggregateStorageComposition(unit))}">
-                      <div class="ind-storage-unit-chip-top">
-                        <span>${escHtml(unit.label)}</span>
-                        <b>${formatVolume(summary.usedM3)}</b>
-                      </div>
-                      <div class="ind-storage-track"><div class="ind-storage-fill ind-storage-fill--${unit.kind}" style="width:${Math.max(8, Math.min(100, summary.fillPct * 100))}%"></div></div>
-                    </div>
-                  `;
-                }).join("")}
-                ${hiddenUnitCount > 0 ? `<div class="ind-storage-unit-chip ind-storage-unit-chip--ghost"><span>+${hiddenUnitCount} more</span></div>` : ""}
-              </div>
-              <div class="ind-storage-zone-note">${escHtml(zone.entries.length ? zone.dominantLabel : "No active stock in this zone.")}</div>
+              ${index < array.length - 1 ? `<i class="ind-pipeline-arrow${isRouteEdge ? " active" : ""}"></i>` : ""}
             </div>
           `;
         }).join("")}
