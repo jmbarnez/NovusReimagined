@@ -34,6 +34,10 @@
   --hud-danger: #ee4444;
   --hud-cap: #ffdd66;
   --hud-arcane: #8858a8;
+  /* shared scrollbar */
+  --hud-scrollbar-thumb: color-mix(in srgb, var(--hud-border) 82%, var(--hud-bg-elevated) 18%);
+  --hud-scrollbar-thumb-hover: color-mix(in srgb, var(--hud-accent) 22%, var(--hud-border) 78%);
+  --hud-scrollbar-track: color-mix(in srgb, var(--hud-bg-deep) 48%, transparent);
   /* legacy aliases (top/bottom bars) */
   --hud-top-bar: var(--hud-bg-deep);
   --hud-top-border: var(--hud-border);
@@ -49,6 +53,30 @@ html, body {
 }
 input, button, select, textarea, table, th, td {
   font-family: inherit;
+}
+
+html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--hud-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--hud-scrollbar-thumb);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--hud-border-soft) 55%, transparent);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--hud-scrollbar-thumb-hover);
 }
 
 /* ── HUD Overlay ── */

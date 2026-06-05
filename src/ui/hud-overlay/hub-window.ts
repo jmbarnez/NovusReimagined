@@ -4,9 +4,16 @@ import { dst } from "../../utils/math.js";
 import { curSys } from "../../utils/game.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { closeHudWindow, isOpen, openHudWindow } from "../hud/windows.js";
-import { hasHubOutput, fmtDuration, getSmeltRecipeForOre, getProcessFee, getSmeltFee, getFloatingDeposits } from "../../hub.js";
-import { getRecipe } from "../../data/industryRecipes.js";
-import { ORE } from "../../data/resources.js";
+import {
+  alloyHubMaterial,
+  collectHubOutput,
+  fmtDuration,
+  getAlloyFamilies,
+  getCargoMixedOreInputs,
+  getFloatingDeposits,
+  getProcessFee,
+  hasHubOutput,
+} from "../../hub.js";
 import {
   renderIndustry,
   handleIndustryAction,
@@ -14,11 +21,18 @@ import {
 } from "../station/industry.js";
 import { t } from "../../utils/i18n.js";
 import { queueFrameAction } from "../../sim/input.js";
+import { formatCompositionBreakdown } from "../../utils/ore-naming.js";
 
 let hubRefreshTimer: ReturnType<typeof setInterval> | null = null;
 let hubListenersBound = false;
 let hubActiveTab: "processing" | "industry" = "processing";
 let hubShellReady = false;
+
+const HEAT_OPTIONS = [
+  { id: "cool", label: "Cool" },
+  { id: "stable", label: "Stable" },
+  { id: "hot", label: "Hot" },
+] as const;
 
 function getHubWindowBody(): HTMLElement {
   let body = document.getElementById("hub-window-body");
@@ -54,9 +68,9 @@ function applyHubWindowSize() {
     body.style.maxWidth = "860px";
     win.style.width = "740px";
   } else {
-    body.style.minWidth = "300px";
-    body.style.maxWidth = "380px";
-    win.style.width = "";
+    body.style.minWidth = "420px";
+    body.style.maxWidth = "560px";
+    win.style.width = "520px";
   }
 }
 
@@ -132,17 +146,21 @@ function ensureHubWindowListeners() {
   hubListenersBound = true;
 }
 
+function selectedHeatMode(root: ParentNode, seed: string): "cool" | "stable" | "hot" {
+  const select = root.querySelector(`[data-heat-for="${seed}"]`) as HTMLSelectElement | null;
+  const value = select?.value;
+  return value === "cool" || value === "hot" ? value : "stable";
+}
+
 function onHubWindowClick(e: Event) {
   if (!isOpen("industrial-hub")) return;
   const body = document.getElementById("hub-window-body");
   if (!body) return;
 
   const target = e.target as HTMLElement;
-
   const tabBtn = target.closest(".hub-tab-btn") as HTMLButtonElement | null;
   if (tabBtn) {
     e.preventDefault();
-    e.stopPropagation();
     const tab = tabBtn.getAttribute("data-hub-tab");
     if (tab === "processing" || tab === "industry") {
       sfxBlip(680, 0.04);
@@ -154,17 +172,12 @@ function onHubWindowClick(e: Event) {
   const actionBtn = target.closest("[data-action]") as HTMLElement | null;
   if (actionBtn?.dataset.action && handleIndustryAction(actionBtn.dataset.action, actionBtn)) {
     e.preventDefault();
-    e.stopPropagation();
     return;
   }
-
-  const proc = body.querySelector("#hub-tab-processing") as HTMLElement | null;
-  if (!proc) return;
 
   const processBtn = target.closest(".hub-process-btn") as HTMLButtonElement | null;
   if (processBtn && !processBtn.disabled) {
     e.preventDefault();
-    e.stopPropagation();
     const itemId = processBtn.dataset.itemId;
     if (!itemId) return;
     queueFrameAction({ type: "processHubFloatingItem", payload: { itemId } });
@@ -172,18 +185,52 @@ function onHubWindowClick(e: Event) {
     return;
   }
 
-  const smeltBtn = target.closest(".hub-smelt-btn") as HTMLButtonElement | null;
-  if (smeltBtn && !smeltBtn.disabled) {
+  const cargoBtn = target.closest(".hub-cargo-process-btn") as HTMLButtonElement | null;
+  if (cargoBtn && !cargoBtn.disabled) {
     e.preventDefault();
-    e.stopPropagation();
-    const oreKey = smeltBtn.dataset.ore;
-    if (!oreKey) return;
-    const qtyInput = proc.querySelector(`.hub-smelt-qty[data-ore="${oreKey}"]`) as HTMLInputElement | null;
-    const max = qtyInput ? parseInt(qtyInput.max, 10) || 1 : 1;
+    const cargoIndex = parseInt(cargoBtn.dataset.cargoIndex ?? "", 10);
+    const qtyInput = body.querySelector(`.hub-cargo-qty[data-cargo-index="${cargoIndex}"]`) as HTMLInputElement | null;
     let qty = qtyInput ? parseInt(qtyInput.value, 10) : 1;
     if (!Number.isFinite(qty) || qty < 1) qty = 1;
-    if (qty > max) qty = max;
-    queueFrameAction({ type: "smeltHubOre", payload: { oreKey, qty } });
+    queueFrameAction({
+      type: "processHubMixedOre",
+      payload: {
+        cargoIndex,
+        qty,
+        heatMode: selectedHeatMode(body, `cargo-${cargoIndex}`),
+      },
+    });
+    sfxBlip(680, 0.04);
+    return;
+  }
+
+  const separateBtn = target.closest(".hub-separate-btn") as HTMLButtonElement | null;
+  if (separateBtn && !separateBtn.disabled) {
+    e.preventDefault();
+    const materialId = separateBtn.dataset.materialId;
+    if (!materialId) return;
+    queueFrameAction({
+      type: "separateHubMaterial",
+      payload: { materialId, heatMode: selectedHeatMode(body, materialId) },
+    });
+    sfxBlip(680, 0.04);
+    return;
+  }
+
+  const alloyBtn = target.closest(".hub-alloy-btn") as HTMLButtonElement | null;
+  if (alloyBtn && !alloyBtn.disabled) {
+    e.preventDefault();
+    const materialId = alloyBtn.dataset.materialId;
+    const targetAlloyFamilyId = alloyBtn.dataset.alloyFamilyId || undefined;
+    if (!materialId) return;
+    queueFrameAction({
+      type: "alloyHubMaterial",
+      payload: {
+        materialId,
+        targetAlloyFamilyId,
+        heatMode: selectedHeatMode(body, materialId),
+      },
+    });
     sfxBlip(680, 0.04);
     return;
   }
@@ -191,149 +238,171 @@ function onHubWindowClick(e: Event) {
   const collectBtn = target.closest("#hub-collect-btn");
   if (collectBtn) {
     e.preventDefault();
-    e.stopPropagation();
     queueFrameAction({ type: "collectHubOutput" });
     sfxBlip(680, 0.04);
   }
 }
 
+function renderHeatSelect(seed: string): string {
+  return `
+    <select data-heat-for="${seed}" style="font-size:10px;padding:2px 4px;background:#111a24;border:1px solid #334455;color:#d6e2ef;border-radius:2px;">
+      ${HEAT_OPTIONS.map((option) => `<option value="${option.id}" ${option.id === "stable" ? "selected" : ""}>${option.label}</option>`).join("")}
+    </select>
+  `;
+}
+
 function renderHubProcessingContent(container: HTMLElement) {
   const now = Date.now() / 1000;
-  const queue = getState().player.hubQueue ?? [];
-  const deposit = getState().player.hubDeposit ?? { raw: [], ore: {}, loot: {}, modules: [] };
-  const output = getState().player.hubOutput ?? { loot: {}, ore: {}, refined: {}, modules: [] };
-
+  const player = getState().player;
+  const queue = player.hubQueue ?? [];
+  const deposit = player.hubDeposit ?? { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
+  const output = player.hubOutput ?? { loot: {}, ore: {}, materials: [], modules: [] };
   const hub = curSys()?.stations.find((s: Station) => s.isProcessingHub);
-  const floating = hub ? getFloatingDeposits(hub, getState().player) : [];
+  const floating = hub ? getFloatingDeposits(hub, player) : [];
+  const cargoMixed = getCargoMixedOreInputs(player);
+  const alloys = getAlloyFamilies();
 
   let html = "";
 
-  // Drop bay — unprocessed raw items
-  html += `<div style="margin-bottom:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;font-size:9px;">${t("hud.dropBay")}</div>`;
+  html += `<div style="margin-bottom:8px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Bay Intake</div>`;
   if (floating.length > 0) {
     for (const item of floating) {
       const massTons = Math.round(item.mass / 100) / 10;
       const fee = getProcessFee(item.mass);
-      const canAfford = getState().player.credits >= fee;
+      const canAfford = player.credits >= fee;
       html += `
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:6px 8px;background:#121820;border:1px solid #2a3848;border-radius:3px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;padding:8px;background:#121820;border:1px solid #2a3848;border-radius:4px;">
           <div>
-            <div style="color:#ccddee;">${item.label}</div>
-            <div style="font-size:9px;color:#778899;">${item.kind === "asteroid" ? t("hud.asteroid") : t("hud.debris")} · ${massTons}t</div>
+            <div style="color:#d8e8f8;">${item.label}</div>
+            <div style="font-size:9px;color:#7f91a5;">${item.kind} · ${massTons}t${item.richness ? ` · richness ${(item.richness ?? 1).toFixed(1)}` : ""}</div>
           </div>
           <button type="button" class="hub-process-btn" data-item-id="${item.id}" ${canAfford ? "" : "disabled"}
-            style="padding:3px 8px;background:${canAfford ? "#1a2840" : "#222"};border:1px solid ${canAfford ? "#4488cc" : "#444"};color:${canAfford ? "#88ccff" : "#666"};cursor:${canAfford ? "pointer" : "default"};border-radius:3px;font-size:10px;">
-            ${t("hud.process", { fee })}
+            style="padding:4px 8px;background:${canAfford ? "#1a2840" : "#222"};border:1px solid ${canAfford ? "#4488cc" : "#444"};color:${canAfford ? "#88ccff" : "#666"};cursor:${canAfford ? "pointer" : "default"};border-radius:3px;font-size:10px;">
+            Process (${fee}¢)
           </button>
         </div>`;
     }
   } else {
-    html += `<div style="color:#666;font-style:italic;margin-bottom:8px;">${t("hud.dropEmpty")}</div>`;
+    html += `<div style="color:#667788;font-style:italic;margin-bottom:8px;">${t("hud.dropEmpty")}</div>`;
   }
 
-  // Stockpile — processed materials awaiting smelt/collect
-  const hasDepositOre = Object.values(deposit.ore).some(v => v > 0);
-  const hasDepositLoot = Object.values(deposit.loot).some(v => v > 0) || deposit.modules.length > 0;
-
-  html += `<div style="margin-top:10px;margin-bottom:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;font-size:9px;">${t("hud.stockpile")}</div>`;
-
-  if (hasDepositOre || hasDepositLoot) {
-    if (hasDepositOre) {
-      for (const [k, v] of Object.entries(deposit.ore)) {
-        if (v <= 0) continue;
-        const recipeId = getSmeltRecipeForOre(k);
-        const recipe = recipeId ? getRecipe(recipeId) : null;
-        const orePerBatch = recipe?.inputs.find(i => i.pool === "ore" && i.key === k)?.qty ?? 0;
-        const maxBatches = orePerBatch > 0 ? Math.floor(v / orePerBatch) : 0;
-        const label = ORE[k]?.label ?? k;
-        const smeltFee = getSmeltFee(1);
-        const canAffordSmelt = getState().player.credits >= smeltFee;
-        html += `
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:6px 8px;background:#1a1810;border:1px solid #443820;border-radius:3px;">
-            <span>${label}: <b style="color:#ff9933;">${v}</b></span>
-            ${recipe && maxBatches > 0 ? `
-              <div style="display:flex;align-items:center;gap:4px;">
-                <input type="number" class="hub-smelt-qty" data-ore="${k}" min="1" max="${maxBatches}" value="1"
-                  style="width:42px;font-size:10px;padding:2px 4px;background:#222;border:1px solid #555;color:#ddd;border-radius:2px;">
-                <button type="button" class="hub-smelt-btn" data-ore="${k}" ${canAffordSmelt ? "" : "disabled"}
-                  style="padding:3px 8px;background:${canAffordSmelt ? "#3a2a05" : "#222"};border:1px solid ${canAffordSmelt ? "#ff9922" : "#444"};color:${canAffordSmelt ? "#ffcc44" : "#666"};cursor:${canAffordSmelt ? "pointer" : "default"};border-radius:3px;font-size:10px;">
-                  ${t("hud.smelt", { fee: smeltFee })}
-                </button>
-              </div>
-            ` : `<span style="color:#666;font-size:9px;">${t("hud.smeltDisabled")}</span>`}
-          </div>`;
-      }
-    }
-    if (hasDepositLoot) {
-      html += `<div style="padding:6px 8px;background:#101820;border:1px solid #203040;border-radius:3px;margin-bottom:6px;">`;
-      for (const [k, v] of Object.entries(deposit.loot)) {
-        if (v > 0) html += `<div>${k}: <b style="color:#88ccff;">${v}</b></div>`;
-      }
-      for (const inst of deposit.modules) {
-        html += `<div>Module: <b style="color:#99aaff;">${inst.baseId}</b></div>`;
-      }
-      html += `</div>`;
+  html += `<div style="margin-top:12px;margin-bottom:8px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Cargo Feedstock</div>`;
+  if (cargoMixed.length > 0) {
+    for (const slot of cargoMixed) {
+      const fee = getProcessFee(slot.massKg / 100);
+      const canAfford = player.credits >= fee;
+      html += `
+        <div style="margin-bottom:8px;padding:8px;background:#10171f;border:1px solid #233342;border-radius:4px;">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+            <div>
+              <div style="color:#d8e8f8;">${slot.label}</div>
+              <div style="font-size:9px;color:#7f91a5;">${formatCompositionBreakdown(slot.composition)}</div>
+              <div style="font-size:9px;color:#5f7387;">${slot.qty} chunks · ${slot.massKg.toFixed(0)} kg · richness ${slot.richness.toFixed(1)}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="number" class="hub-cargo-qty" data-cargo-index="${slot.index}" min="1" max="${slot.qty}" value="${Math.min(1, slot.qty)}"
+                style="width:48px;font-size:10px;padding:2px 4px;background:#222;border:1px solid #555;color:#ddd;border-radius:2px;">
+              ${renderHeatSelect(`cargo-${slot.index}`)}
+              <button type="button" class="hub-cargo-process-btn" data-cargo-index="${slot.index}" ${canAfford ? "" : "disabled"}
+                style="padding:4px 8px;background:${canAfford ? "#1f2b12" : "#222"};border:1px solid ${canAfford ? "#7ebc4a" : "#444"};color:${canAfford ? "#bde287" : "#666"};border-radius:3px;font-size:10px;">
+                Refine (${fee}¢)
+              </button>
+            </div>
+          </div>
+        </div>`;
     }
   } else {
-    html += `<div style="color:#666;font-style:italic;margin-bottom:8px;">${t("hud.processedEmpty")}</div>`;
+    html += `<div style="color:#667788;font-style:italic;margin-bottom:8px;">No mixed ore in cargo.</div>`;
   }
 
-  // Processing queue
-  html += `<div style="margin-top:10px;margin-bottom:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;font-size:9px;">${t("hud.processingQueue")}</div>`;
+  html += `<div style="margin-top:12px;margin-bottom:8px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Stockpile</div>`;
+  if ((deposit.materials?.length ?? 0) > 0) {
+    for (const material of deposit.materials) {
+      html += `
+        <div style="margin-bottom:8px;padding:8px;background:#17140f;border:1px solid #3a2c18;border-radius:4px;">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+            <div>
+              <div style="color:#f2e7d8;">${material.label}</div>
+              <div style="font-size:9px;color:#c2a77e;">${formatCompositionBreakdown(material.composition)}</div>
+              <div style="font-size:9px;color:#8f7d65;">${material.volumeM3.toFixed(2)} m³ · ${Math.round(material.massKg).toLocaleString()} kg · ${material.kind}</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:240px;">
+              ${renderHeatSelect(material.id)}
+              <button type="button" class="hub-separate-btn" data-material-id="${material.id}"
+                style="padding:3px 7px;background:#1a2530;border:1px solid #446c99;color:#97c6ff;border-radius:3px;font-size:10px;">
+                Separate
+              </button>
+              ${alloys.map((family) => `
+                <button type="button" class="hub-alloy-btn" data-material-id="${material.id}" data-alloy-family-id="${family.id}"
+                  style="padding:3px 7px;background:#2a1d10;border:1px solid #b8863b;color:#f0cb83;border-radius:3px;font-size:10px;">
+                  ${family.label}
+                </button>`).join("")}
+              <button type="button" class="hub-alloy-btn" data-material-id="${material.id}"
+                style="padding:3px 7px;background:#25182c;border:1px solid #8c64a8;color:#d6b1ef;border-radius:3px;font-size:10px;">
+                Custom Blend
+              </button>
+            </div>
+          </div>
+        </div>`;
+    }
+  } else if (Object.values(deposit.loot ?? {}).some((value) => value > 0) || deposit.modules.length > 0) {
+    html += `<div style="padding:8px;background:#101820;border:1px solid #203040;border-radius:4px;margin-bottom:8px;">`;
+    for (const [key, value] of Object.entries(deposit.loot)) {
+      if (value > 0) html += `<div>${key}: <b style="color:#88ccff;">${value}</b></div>`;
+    }
+    for (const inst of deposit.modules) {
+      html += `<div>Module: <b style="color:#99aaff;">${inst.baseId}</b></div>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<div style="color:#667788;font-style:italic;margin-bottom:8px;">No processed stock ready.</div>`;
+  }
+
+  html += `<div style="margin-top:12px;margin-bottom:8px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Queue</div>`;
   if (queue.length > 0) {
     for (const job of queue) {
       const elapsed = now - job.startTime;
       const pct = Math.min(100, Math.floor((elapsed / job.duration) * 100));
       const remaining = Math.max(0, job.duration - elapsed);
-      let label = t("hud.processingLabel");
-      if (job.kind === "smelt" && job.smeltRecipeId) {
-        label = getRecipe(job.smeltRecipeId)?.label ?? t("hud.smeltFallback");
-        if (job.smeltQty && job.smeltQty > 1) label += ` ×${job.smeltQty}`;
-      } else if (job.kind === "asteroid") {
-        label = t("hud.crushing");
-      } else if (job.kind === "debris") {
-        label = t("hud.salvaging");
-      }
+      const label = job.kind === "debris"
+        ? "Salvaging"
+        : job.kind === "asteroid"
+          ? "Crushing"
+          : job.kind === "processMixed"
+            ? "Feedstock Processing"
+            : job.kind === "separateStock"
+              ? "Separation"
+              : "Alloying";
+      const color = job.kind === "alloyStock" ? "#ffad55" : job.kind === "separateStock" ? "#78b7ff" : "#6dd6a7";
       html += `
         <div style="margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
             <span>${label}</span>
-            <span style="color:#888;">${remaining < 1 ? t("hud.readySoon") : fmtDuration(remaining)}</span>
+            <span style="color:#888;">${remaining < 1 ? "Ready" : fmtDuration(remaining)}</span>
           </div>
           <div style="background:#1a1a1a;border:1px solid #333;height:6px;border-radius:2px;overflow:hidden;">
-            <div style="width:${pct}%;height:100%;background:${job.kind === "smelt" ? "#ff8c20" : job.kind === "asteroid" ? "#ff6620" : "#20aaff"};transition:width 0.5s;"></div>
+            <div style="width:${pct}%;height:100%;background:${color};transition:width 0.5s;"></div>
           </div>
         </div>`;
     }
   } else {
-    html += `<div style="color:#666;font-style:italic;margin-bottom:8px;">${t("hud.noJobs")}</div>`;
+    html += `<div style="color:#667788;font-style:italic;margin-bottom:8px;">No active refinery jobs.</div>`;
   }
 
-  const hasOutput = hasHubOutput(getState().player);
-  if (hasOutput) {
-    html += `<div style="margin-top:8px;margin-bottom:6px;color:#aaa;text-transform:uppercase;letter-spacing:1px;font-size:9px;">${t("hud.readyToCollect")}</div>`;
-    html += `<div style="background:#1e1a10;border:1px solid #4a3800;padding:6px 8px;border-radius:3px;margin-bottom:8px;">`;
-    for (const [k, v] of Object.entries(output.loot)) {
-      if (v > 0) html += `<div>${k}: <b style="color:#ffcc44;">${v}</b></div>`;
+  if (hasHubOutput(player)) {
+    html += `<div style="margin-top:8px;margin-bottom:6px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Ready To Transfer</div>`;
+    html += `<div style="background:#1e1a10;border:1px solid #4a3800;padding:8px;border-radius:4px;margin-bottom:8px;">`;
+    for (const material of [...(deposit.materials ?? []), ...(output.materials ?? [])]) {
+      html += `<div>${material.label}: <b style="color:#ffcc88;">${material.volumeM3.toFixed(2)} m³</b></div>`;
     }
-    for (const [k, v] of Object.entries(deposit.loot)) {
-      if (v > 0) html += `<div>${k}: <b style="color:#ffcc44;">${v}</b></div>`;
-    }
-    for (const [k, v] of Object.entries(output.ore)) {
-      if (v > 0) html += `<div>${k} ore: <b style="color:#ff9933;">${v}</b></div>`;
-    }
-    for (const [k, v] of Object.entries(output.refined ?? {})) {
-      if (v > 0) html += `<div>${k}: <b style="color:#ddeeff;">${v}</b></div>`;
-    }
-    for (const inst of [...output.modules, ...deposit.modules]) {
-      html += `<div>Module: <b style="color:#99aaff;">${inst.baseId}</b></div>`;
+    for (const [key, value] of Object.entries(output.loot)) {
+      if (value > 0) html += `<div>${key}: <b style="color:#ffcc44;">${value}</b></div>`;
     }
     html += `</div>`;
-    html += `<button type="button" id="hub-collect-btn" style="width:100%;padding:6px;background:#3a2a05;border:1px solid #ff9922;color:#ffcc44;cursor:pointer;border-radius:3px;font-size:11px;">${t("hud.collectAll")}</button>`;
+    html += `<button type="button" id="hub-collect-btn" style="width:100%;padding:6px;background:#3a2a05;border:1px solid #ff9922;color:#ffcc44;cursor:pointer;border-radius:3px;font-size:11px;">Transfer To Cargo</button>`;
   }
 
-  html += `<div style="margin-top:8px;font-size:9px;color:#556677;text-align:right;">${t("hud.wallet", { credits: getState().player.credits })}</div>`;
-
+  html += `<div style="margin-top:8px;font-size:9px;color:#556677;text-align:right;">Wallet: ${player.credits.toLocaleString()}¢</div>`;
   container.innerHTML = html;
 }
 

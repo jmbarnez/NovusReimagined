@@ -9,6 +9,7 @@
  *       thrustLayer    — Phase 4+: thrust flame sprites (behind hull)
  *       entityLayer    — Phase 3+: enemies, player hull, asteroids, bullets
  *       effectLayer    — Phase 2+: particles, float texts, impact decals
+ *     hudOverlayLayer  — screen-space Pixi HUD graphics rendered over the world
  *     vignetteSprite   — GPU vignette overlay (last app.stage child, over worldContainer)
  *   main canvas (zIndex 1, alpha:true) — Canvas 2D HUD + transitional world content
  */
@@ -24,6 +25,7 @@ import { playRect, setViewportSize } from "./render/viewport.js";
 let app: Application | null = null;
 let worldContainer: Container | null = null;
 let screenContainer: Container | null = null;
+let hudOverlayLayer: Container | null = null;
 /** Baked planet textures + animated moon Graphics — behind everything else in worldContainer. */
 let planetLayer: Container | null = null;
 /** Phase 3 (background): baked stations — rendered behind thrust and entity layers. */
@@ -40,7 +42,7 @@ let _pixiReady = false;
 /** Physical pixels per CSS pixel — set during initPixi, used by texture bakers. */
 let pixiDpr = 1;
 
-export { app, worldContainer, screenContainer, planetLayer, stationLayer, thrustLayer, entityLayer, effectLayer, worldGradeFilter, _pixiReady, pixiDpr };
+export { app, worldContainer, screenContainer, hudOverlayLayer, planetLayer, stationLayer, thrustLayer, entityLayer, effectLayer, worldGradeFilter, _pixiReady, pixiDpr };
 
 /** Render the PixiJS stage once. Call once per game frame after updating positions. */
 export function renderPixi() {
@@ -95,6 +97,12 @@ export async function initPixi(): Promise<Application> {
   worldContainer = new Container();
   worldContainer.label = "world";
   app.stage.addChild(worldContainer);
+
+  // Front-most Pixi HUD graphics layer. Used for screen-space overlays that
+  // must always sit over world objects but still render in Pixi.
+  hudOverlayLayer = new Container();
+  hudOverlayLayer.label = "hud-overlay";
+  app.stage.addChild(hudOverlayLayer);
 
   // Named sub-layers so phase migrations land in the right draw order.
   planetLayer = new Container();
@@ -179,6 +187,7 @@ export function destroyPixi() {
   app = null;
   worldContainer = null;
   screenContainer = null;
+  hudOverlayLayer = null;
   planetLayer = null;
   stationLayer = null;
   thrustLayer = null;

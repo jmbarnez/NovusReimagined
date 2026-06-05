@@ -52,18 +52,14 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: var(--hud-border) transparent;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
 }
 .inv-list-wrap::-webkit-scrollbar {
   width: 4px;
 }
-.inv-list-wrap::-webkit-scrollbar-track {
-  background: transparent;
-}
-.inv-list-wrap::-webkit-scrollbar-thumb {
-  background: var(--hud-border);
-  border-radius: 2px;
-}
+.inv-list-wrap::-webkit-scrollbar-track { background: var(--hud-scrollbar-track); }
+.inv-list-wrap::-webkit-scrollbar-thumb { background: var(--hud-scrollbar-thumb); border-radius: 999px; }
+.inv-list-wrap::-webkit-scrollbar-thumb:hover { background: var(--hud-scrollbar-thumb-hover); }
 
 .inv-item {
   cursor: pointer;
@@ -140,18 +136,14 @@
   padding: 4px;
   align-content: start;
   scrollbar-width: thin;
-  scrollbar-color: var(--hud-border) transparent;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
 }
 .inv-grid-wrap::-webkit-scrollbar {
   width: 4px;
 }
-.inv-grid-wrap::-webkit-scrollbar-track {
-  background: transparent;
-}
-.inv-grid-wrap::-webkit-scrollbar-thumb {
-  background: var(--hud-border);
-  border-radius: 2px;
-}
+.inv-grid-wrap::-webkit-scrollbar-track { background: var(--hud-scrollbar-track); }
+.inv-grid-wrap::-webkit-scrollbar-thumb { background: var(--hud-scrollbar-thumb); border-radius: 999px; }
+.inv-grid-wrap::-webkit-scrollbar-thumb:hover { background: var(--hud-scrollbar-thumb-hover); }
 
 .inv-grid-cell {
   display: flex;

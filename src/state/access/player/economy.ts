@@ -1,7 +1,60 @@
-import { _G, type Player, type HubJob, type HubOutput, type HubDeposit, type HubDepositItem, type MixedOreCargo } from "../../../state.js";
+import {
+  _G,
+  type Player,
+  type HubJob,
+  type HubOutput,
+  type HubDeposit,
+  type HubDepositItem,
+  type MixedOreCargo,
+  type BulkMaterialStack,
+  type RefineryStorageUnit,
+  type AlloyCodex,
+} from "../../../state.js";
 import type { ModuleInstance } from "../../../types/moduleInstance.js";
 import type { CraftJob } from "../../../data/industryRecipes.js";
 import type { MissionContract } from "../../../data/missions.js";
+import { flattenStorageMaterials, preferredStorageForMaterial, stackSignature, storageUsedVolumeM3 } from "../../../refining.js";
+
+function cloneMaterialStack(stack: BulkMaterialStack): BulkMaterialStack {
+  return {
+    ...stack,
+    composition: { ...stack.composition },
+  };
+}
+
+function cloneStorageUnit(unit: RefineryStorageUnit): RefineryStorageUnit {
+  return {
+    ...unit,
+    entries: (unit.entries ?? []).map(cloneMaterialStack),
+  };
+}
+
+function syncHubDepositMaterials(p: Player): void {
+  if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
+  p.hubDeposit.materials = flattenStorageMaterials(p.refineryStorage).map(cloneMaterialStack);
+}
+
+function fitMaterialIntoStorage(
+  stack: BulkMaterialStack,
+  storage: RefineryStorageUnit,
+): { stored: BulkMaterialStack | null; overflow: BulkMaterialStack | null } {
+  const freeM3 = Math.max(0, storage.capacityM3 - storageUsedVolumeM3(storage));
+  if (freeM3 <= 1e-6) return { stored: null, overflow: cloneMaterialStack(stack) };
+  const storedVolumeM3 = Math.min(stack.volumeM3, freeM3);
+  const ratio = storedVolumeM3 / Math.max(stack.volumeM3, 1e-6);
+  const stored: BulkMaterialStack = {
+    ...cloneMaterialStack(stack),
+    volumeM3: storedVolumeM3,
+    massKg: stack.massKg * ratio,
+  };
+  if (ratio >= 0.999999) return { stored, overflow: null };
+  const overflow: BulkMaterialStack = {
+    ...cloneMaterialStack(stack),
+    volumeM3: Math.max(0, stack.volumeM3 - stored.volumeM3),
+    massKg: Math.max(0, stack.massKg - stored.massKg),
+  };
+  return { stored, overflow };
+}
 
 export const playerEconomyAccess = {
   modifyCredits(amount: number, p: Player = _G.P) {
@@ -58,6 +111,34 @@ export const playerEconomyAccess = {
     }));
   },
 
+  addBulkMaterial(stack: BulkMaterialStack, p: Player = _G.P) {
+    if (!p.bulkMaterialsCargo) p.bulkMaterialsCargo = [];
+    const signature = stackSignature(stack);
+    const existing = p.bulkMaterialsCargo.find((entry) => stackSignature(entry) === signature);
+    if (existing) {
+      existing.volumeM3 += stack.volumeM3;
+      existing.massKg += stack.massKg;
+      return;
+    }
+    p.bulkMaterialsCargo.push({
+      ...stack,
+      composition: { ...stack.composition },
+    });
+  },
+
+  setBulkMaterialsCargo(stacks: BulkMaterialStack[], p: Player = _G.P) {
+    p.bulkMaterialsCargo = stacks.map((stack) => ({
+      ...stack,
+      composition: { ...stack.composition },
+    }));
+  },
+
+  removeBulkMaterial(index: number, p: Player = _G.P): boolean {
+    if (!p.bulkMaterialsCargo?.[index]) return false;
+    p.bulkMaterialsCargo.splice(index, 1);
+    return true;
+  },
+
   removeMixedOreCargo(index: number, qty: number, p: Player = _G.P): boolean {
     if (!p.mixedOreCargo?.[index] || qty <= 0) return false;
     const slot = p.mixedOreCargo[index];
@@ -65,14 +146,6 @@ export const playerEconomyAccess = {
     slot.qty -= qty;
     if (slot.qty <= 0) p.mixedOreCargo.splice(index, 1);
     return true;
-  },
-
-  setRefined(type: string, value: number, p: Player = _G.P) {
-    p.refined[type] = value;
-  },
-
-  setRefinedAll(refined: Record<string, number>, p: Player = _G.P) {
-    p.refined = refined;
   },
 
   setLoot(type: string, value: number, p: Player = _G.P) {
@@ -151,27 +224,107 @@ export const playerEconomyAccess = {
   },
 
   addHubOutputModule(inst: ModuleInstance, p: Player = _G.P) {
-    if (!p.hubOutput) p.hubOutput = { loot: {}, ore: {}, refined: {}, modules: [] };
+    if (!p.hubOutput) p.hubOutput = { loot: {}, ore: {}, materials: [], modules: [] };
     if (!p.hubOutput.modules) p.hubOutput.modules = [];
     p.hubOutput.modules.push(inst);
   },
 
   setHubOutputLoot(type: string, value: number, p: Player = _G.P) {
-    if (!p.hubOutput) p.hubOutput = { loot: {}, ore: {}, refined: {}, modules: [] };
+    if (!p.hubOutput) p.hubOutput = { loot: {}, ore: {}, materials: [], modules: [] };
     if (!p.hubOutput.loot) p.hubOutput.loot = {};
     p.hubOutput.loot[type] = value;
   },
 
   setHubOutputOre(type: string, value: number, p: Player = _G.P) {
-    if (!p.hubOutput) p.hubOutput = { loot: {}, ore: {}, refined: {}, modules: [] };
+    if (!p.hubOutput) p.hubOutput = { loot: {}, ore: {}, materials: [], modules: [] };
     if (!p.hubOutput.ore) p.hubOutput.ore = {};
     p.hubOutput.ore[type] = value;
   },
 
-  setHubOutputRefined(type: string, value: number, p: Player = _G.P) {
-    if (!p.hubOutput) p.hubOutput = { loot: {}, ore: {}, refined: {}, modules: [] };
-    if (!p.hubOutput.refined) p.hubOutput.refined = {};
-    p.hubOutput.refined[type] = value;
+  addHubOutputMaterial(stack: BulkMaterialStack, p: Player = _G.P) {
+    if (!p.hubOutput) p.hubOutput = { loot: {}, ore: {}, materials: [], modules: [] };
+    if (!p.hubOutput.materials) p.hubOutput.materials = [];
+    const signature = stackSignature(stack);
+    const existing = p.hubOutput.materials.find((entry) => stackSignature(entry) === signature);
+    if (existing) {
+      existing.volumeM3 += stack.volumeM3;
+      existing.massKg += stack.massKg;
+      return;
+    }
+    p.hubOutput.materials.push({ ...stack, composition: { ...stack.composition } });
+  },
+
+  setRefineryStorage(storage: RefineryStorageUnit[], p: Player = _G.P) {
+    p.refineryStorage = storage.map(cloneStorageUnit);
+    syncHubDepositMaterials(p);
+  },
+
+  setAlloyCodex(codex: AlloyCodex, p: Player = _G.P) {
+    p.alloyCodex = {
+      knownFamilyIds: [...(codex.knownFamilyIds ?? [])],
+      discoveries: (codex.discoveries ?? []).map((entry) => ({
+        ...entry,
+        composition: { ...entry.composition },
+        compatibleFamilyIds: [...entry.compatibleFamilyIds],
+        tags: [...entry.tags],
+      })),
+    };
+  },
+
+  addRefineryStorageMaterial(
+    stack: BulkMaterialStack,
+    p: Player = _G.P,
+    preferredStorageId?: string | null,
+  ): { stored: BulkMaterialStack | null; overflow: BulkMaterialStack | null; storageId: string | null } {
+    if (!p.refineryStorage) p.refineryStorage = [];
+    const target = preferredStorageForMaterial(stack, p.refineryStorage, preferredStorageId) ?? null;
+    if (!target) return { stored: null, overflow: cloneMaterialStack(stack), storageId: null };
+    const { stored, overflow } = fitMaterialIntoStorage(stack, target);
+    if (stored) {
+      const signature = stackSignature(stored);
+      const existing = target.entries.find((entry) => stackSignature(entry) === signature);
+      if (existing) {
+        existing.volumeM3 += stored.volumeM3;
+        existing.massKg += stored.massKg;
+      } else {
+        target.entries.push(cloneMaterialStack(stored));
+      }
+    }
+    syncHubDepositMaterials(p);
+    return { stored, overflow, storageId: target.id };
+  },
+
+  removeRefineryStorageMaterial(materialId: string, p: Player = _G.P): { material: BulkMaterialStack | null; storageId: string | null } {
+    for (const unit of p.refineryStorage ?? []) {
+      const idx = unit.entries.findIndex((entry) => entry.id === materialId);
+      if (idx === -1) continue;
+      const [removed] = unit.entries.splice(idx, 1);
+      syncHubDepositMaterials(p);
+      return { material: removed ? cloneMaterialStack(removed) : null, storageId: unit.id };
+    }
+    return { material: null, storageId: null };
+  },
+
+  getRefineryStorageMaterial(materialId: string, p: Player = _G.P): { material: BulkMaterialStack | null; storageId: string | null } {
+    for (const unit of p.refineryStorage ?? []) {
+      const found = unit.entries.find((entry) => entry.id === materialId);
+      if (found) return { material: cloneMaterialStack(found), storageId: unit.id };
+    }
+    return { material: null, storageId: null };
+  },
+
+  removeRefineryStorageMaterials(materialIds: string[], p: Player = _G.P): { materials: BulkMaterialStack[]; storageIds: string[] } {
+    const materials: BulkMaterialStack[] = [];
+    const storageIds = new Set<string>();
+    for (const id of materialIds) {
+      const removed = this.removeRefineryStorageMaterial(id, p);
+      if (removed.material) {
+        materials.push(removed.material);
+        if (removed.storageId) storageIds.add(removed.storageId);
+      }
+    }
+    syncHubDepositMaterials(p);
+    return { materials, storageIds: [...storageIds] };
   },
 
   setHubDeposit(deposit: HubDeposit, p: Player = _G.P) {
@@ -179,7 +332,7 @@ export const playerEconomyAccess = {
   },
 
   addHubDepositItem(item: HubDepositItem, p: Player = _G.P) {
-    if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, loot: {}, modules: [] };
+    if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
     if (!p.hubDeposit.raw) p.hubDeposit.raw = [];
     p.hubDeposit.raw.push(item);
   },
@@ -193,19 +346,27 @@ export const playerEconomyAccess = {
   },
 
   setHubDepositOre(type: string, value: number, p: Player = _G.P) {
-    if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, loot: {}, modules: [] };
+    if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
     if (!p.hubDeposit.ore) p.hubDeposit.ore = {};
     p.hubDeposit.ore[type] = value;
   },
 
   setHubDepositLoot(type: string, value: number, p: Player = _G.P) {
-    if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, loot: {}, modules: [] };
+    if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
     if (!p.hubDeposit.loot) p.hubDeposit.loot = {};
     p.hubDeposit.loot[type] = value;
   },
 
+  addHubDepositMaterial(stack: BulkMaterialStack, p: Player = _G.P) {
+    this.addRefineryStorageMaterial(stack, p);
+  },
+
+  removeHubDepositMaterial(id: string, p: Player = _G.P): BulkMaterialStack | null {
+    return this.removeRefineryStorageMaterial(id, p).material;
+  },
+
   addHubDepositModule(inst: ModuleInstance, p: Player = _G.P) {
-    if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, loot: {}, modules: [] };
+    if (!p.hubDeposit) p.hubDeposit = { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
     if (!p.hubDeposit.modules) p.hubDeposit.modules = [];
     p.hubDeposit.modules.push(inst);
   },

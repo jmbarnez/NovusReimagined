@@ -142,13 +142,22 @@ describe("prediction action replay", () => {
     const authoritative = makePlayer();
     authoritative.netId = G.P.netId;
     authoritative.ore = { iron: 4 };
-    authoritative.refined = { bar: 2 };
+    authoritative.bulkMaterialsCargo = [{
+      id: "mat-1",
+      materialId: "ferro_nickel_stock",
+      kind: "alloy",
+      label: "Ferro-nickel stock",
+      volumeM3: 2,
+      massKg: 16300,
+      alloyFamilyId: "ferro_nickel_stock",
+      composition: { iron: 0.64, nickel: 0.24, carbon: 0.08, silicate: 0.04 },
+    }];
     authoritative.loot = { scrap: 7 };
     authoritative.components = { gear: 1 };
     authoritative.blueprints = { sensor_cluster: true };
     authoritative.craftQueue = [{
       id: "job-1",
-      recipeId: "bar",
+      recipeId: "gear",
       startTime: Date.now(),
       duration: 8000,
       qty: 2,
@@ -158,7 +167,8 @@ describe("prediction action replay", () => {
     applySnapshotToG(snap, true);
 
     expect(G.P.ore.iron).toBe(4);
-    expect(G.P.refined.bar).toBe(2);
+    expect(G.P.bulkMaterialsCargo[0]?.materialId).toBe("ferro_nickel_stock");
+    expect(G.P.bulkMaterialsCargo[0]?.volumeM3).toBe(2);
     expect(G.P.loot.scrap).toBe(7);
     expect(G.P.components.gear).toBe(1);
     expect(G.P.blueprints.sensor_cluster).toBe(true);

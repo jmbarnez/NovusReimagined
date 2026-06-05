@@ -20,6 +20,8 @@
   --cockpit-top: 66px;
   --cockpit-bottom: 66px;
   --cockpit-max-width: 1200px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
 }
 
 #loading.out {

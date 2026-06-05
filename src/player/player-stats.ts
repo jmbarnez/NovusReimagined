@@ -10,6 +10,7 @@ import { ModuleInstance } from "../types/moduleInstance.js";
 import { C } from "../config/index.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 import type { Player } from "../state.js";
+import { estimateCargoMaterialMassKg, estimateMixedOreCargoMassKg } from "../refining.js";
 
 export interface ComputedStats {
   ship: ShipDef;
@@ -101,7 +102,12 @@ export function computeStats(
   const skLv = (id: string) => levelForSkillXp(p.skillXp?.[id] || 0);
   let wepB = 0, minB = 0, ehpB = 0, addPG = 0, engineMN = ship?.baseMainEngineMN ?? 7;
   const carryKg = (p.tractorCarryKg ?? 0);
-  let massMult = ((ship?.hullMassKg ?? SHIP_MASS_REF) + carryKg) / SHIP_MASS_REF;
+  const mixedOreCargoKg = (p.mixedOreCargo ?? []).reduce(
+    (sum, slot) => sum + estimateMixedOreCargoMassKg(slot.qty, slot.composition),
+    0,
+  );
+  const bulkMaterialKg = estimateCargoMaterialMassKg(p.bulkMaterialsCargo);
+  let massMult = ((ship?.hullMassKg ?? SHIP_MASS_REF) + carryKg + mixedOreCargoKg + bulkMaterialKg) / SHIP_MASS_REF;
   let usedPG = 0, usedCPU = 0;
   let simThrustPct = 0, simMaxSpeedPct = 0, simTurnPct = 0, simDragAdd = 0;
   let capFlat = 0, capPct = 0, capRechargePct = 0;

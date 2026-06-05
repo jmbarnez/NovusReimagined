@@ -7,9 +7,10 @@ import {
   TUTORIAL_BELT_CENTER,
   TUTORIAL_GUNNERY_CENTER,
 } from "./tutorial-layout.js";
-import { tutorialKey, tutorialBarKey } from "./tutorial-controls.js";
+import { tutorialKeyStyled, tutorialBarKeyStyled } from "./tutorial-controls.js";
 import { getHangarGuidePanel } from "./hangar-tutorial-guide.js";
 import { t } from "../utils/i18n.js";
+import { flattenStorageMaterials } from "../refining.js";
 import {
   type TutorialZone,
   type TutorialCtx,
@@ -31,6 +32,19 @@ function findStep(id: string): TutorialStep | undefined {
 
 export function isZoneStepComplete(ctx: TutorialCtx, zone: TutorialZone): boolean {
   return ctx.snapshot.zoneReached === true || ctx.inZone(zone);
+}
+
+function totalBulkMaterialVolume(player: TutorialCtx["player"]): number {
+  return (player.bulkMaterialsCargo ?? []).reduce((sum, stack) => sum + stack.volumeM3, 0);
+}
+
+function totalRefineryMaterialVolume(player: TutorialCtx["player"]): number {
+  const deposit = [
+    ...flattenStorageMaterials(player.refineryStorage),
+    ...(player.hubDeposit.materials ?? []),
+  ].reduce((sum, stack) => sum + stack.volumeM3, 0);
+  const output = (player.hubOutput.materials ?? []).reduce((sum, stack) => sum + stack.volumeM3, 0);
+  return deposit + output;
 }
 
 function initTrackProgress(ctx: TutorialCtx, trackId: string): void {
@@ -59,14 +73,13 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-academy",
     title: t("tutorial.step.flyAcademy.title"),
-    objective: () => t("tutorial.step.flyAcademy.objective"),
-    hint: () => t("tutorial.step.flyAcademy.hint", {
-      mapKey: tutorialKey("map"),
-      forwardKey: tutorialKey("forwardThrust"),
-      reverseKey: tutorialKey("reverseThrust"),
-      leftKey: tutorialKey("turnLeft"),
-      rightKey: tutorialKey("turnRight"),
-      brakeKey: tutorialKey("brake"),
+    objective: () => t("tutorial.step.flyAcademy.objective", {
+      mapKey: tutorialKeyStyled("map"),
+      forwardKey: tutorialKeyStyled("forwardThrust"),
+      reverseKey: tutorialKeyStyled("reverseThrust"),
+      leftKey: tutorialKeyStyled("turnLeft"),
+      rightKey: tutorialKeyStyled("turnRight"),
+      brakeKey: tutorialKeyStyled("brake"),
     }),
     zone: tutorialRegionZone("fly-academy"),
     beaconColor: 0x55aaff,
@@ -91,7 +104,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
         const panel = getHangarGuidePanel("hangar-high", phase);
         if (panel) return `${panel.label}: ${panel.body}`;
       }
-      return t("tutorial.step.hangarHigh.objective", { dockKey: tutorialKey("dock") });
+      return t("tutorial.step.hangarHigh.objective", { dockKey: tutorialKeyStyled("dock") });
     },
     zone: tutorialRegionZone("hangar-high"),
     beaconColor: 0x88ff88,
@@ -112,8 +125,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-mining",
     title: t("tutorial.step.flyMining.title"),
-    objective: t("tutorial.step.flyMining.objective"),
-    hint: () => t("tutorial.step.flyMining.hint", { bar1Key: tutorialBarKey(0), bar2Key: tutorialBarKey(1) }),
+    objective: () => t("tutorial.step.flyMining.objective", { bar1Key: tutorialBarKeyStyled(0), bar2Key: tutorialBarKeyStyled(1) }),
     zone: tutorialRegionZone("fly-mining"),
     beaconColor: 0x88ccff,
     nav: { trackId: "spoke-mining", label: t("world.region.miningRange"), targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
@@ -130,8 +142,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "targeting",
     title: t("tutorial.step.targeting.title"),
-    objective: t("tutorial.step.targeting.objective"),
-    hint: () => t("tutorial.step.targeting.hint", { overviewKey: tutorialKey("overview"), brakeKey: tutorialKey("brake") }),
+    objective: () => t("tutorial.step.targeting.objective", { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake") }),
     zone: tutorialRegionZone("targeting"),
     beaconColor: 0x88ccff,
     isComplete(ctx) {
@@ -142,8 +153,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "mining",
     title: t("tutorial.step.mining.title"),
-    objective: t("tutorial.step.mining.objective"),
-    hint: () => t("tutorial.step.mining.hint", { bar1Key: tutorialBarKey(0) }),
+    objective: () => t("tutorial.step.mining.objective", { bar1Key: tutorialBarKeyStyled(0) }),
     zone: tutorialRegionZone("mining"),
     beaconColor: 0xaa88ff,
     nav: { trackId: "spoke-mining", label: t("world.region.miningRange"), targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
@@ -159,8 +169,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-station",
     title: t("tutorial.step.flyStation.title"),
-    objective: t("tutorial.step.flyStation.objective"),
-    hint: t("tutorial.step.flyStation.hint"),
+    objective: () => t("tutorial.step.flyStation.objective"),
     zone: tutorialRegionZone("fly-station"),
     beaconColor: 0x88ff88,
     nav: { trackId: "spoke-mining-return", label: t("world.location.academy"), targetX: 0, targetY: 0 },
@@ -178,19 +187,24 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "industry",
     title: t("tutorial.step.industry.title"),
-    objective: () => t("tutorial.step.industry.objective", { dockKey: tutorialKey("dock") }),
-    hint: t("tutorial.step.industry.hint"),
+    objective: () => t("tutorial.step.industry.objective", { dockKey: tutorialKeyStyled("dock") }),
     zone: tutorialRegionZone("industry"),
     beaconColor: 0x88ff88,
     onEnter(ctx) {
       ctx.snapshot.craftQueue = ctx.player.craftQueue.length;
-      ctx.snapshot.refined = ctx.player.refined.bar || 0;
+      ctx.snapshot.hubQueue = ctx.player.hubQueue.length;
+      ctx.snapshot.materialVolume = totalBulkMaterialVolume(ctx.player);
+      ctx.snapshot.refineryMaterialVolume = totalRefineryMaterialVolume(ctx.player);
     },
     isComplete(ctx) {
       return ctx.player.craftQueue.length > (ctx.snapshot.craftQueue as number ?? 0)
-        || (ctx.player.refined.bar || 0) > (ctx.snapshot.refined as number ?? 0)
+        || ctx.player.hubQueue.length > (ctx.snapshot.hubQueue as number ?? 0)
+        || totalBulkMaterialVolume(ctx.player) > (ctx.snapshot.materialVolume as number ?? 0)
+        || totalRefineryMaterialVolume(ctx.player) > (ctx.snapshot.refineryMaterialVolume as number ?? 0)
         || ctx.player.craftQueue.length > 0
-        || (ctx.player.refined.bar || 0) > 0
+        || ctx.player.hubQueue.length > 0
+        || totalBulkMaterialVolume(ctx.player) > 0
+        || totalRefineryMaterialVolume(ctx.player) > 0
         || hasBypassedHangarTurrets(ctx.player);
     },
   },
@@ -203,7 +217,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
         const panel = getHangarGuidePanel("hangar-turrets", phase);
         if (panel) return `${panel.label}: ${panel.body}`;
       }
-      return t("tutorial.step.hangarTurrets.objective", { dockKey: tutorialKey("dock") });
+      return t("tutorial.step.hangarTurrets.objective", { dockKey: tutorialKeyStyled("dock") });
     },
     zone: tutorialRegionZone("hangar-turrets"),
     beaconColor: 0xff8866,
@@ -226,8 +240,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-gunnery",
     title: t("tutorial.step.flyGunnery.title"),
-    objective: t("tutorial.step.flyGunnery.objective"),
-    hint: () => t("tutorial.step.flyGunnery.hint", { bar1Key: tutorialBarKey(0), bar2Key: tutorialBarKey(1) }),
+    objective: () => t("tutorial.step.flyGunnery.objective", { bar1Key: tutorialBarKeyStyled(0), bar2Key: tutorialBarKeyStyled(1) }),
     zone: tutorialRegionZone("fly-gunnery"),
     beaconColor: 0xff8866,
     nav: { trackId: "spoke-gunnery", label: t("world.region.gunneryBay"), targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
@@ -244,8 +257,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "gunnery",
     title: t("tutorial.step.gunnery.title"),
-    objective: t("tutorial.step.gunnery.objective"),
-    hint: () => t("tutorial.step.gunnery.hint", { bar1Key: tutorialBarKey(0) }),
+    objective: () => t("tutorial.step.gunnery.objective", { bar1Key: tutorialBarKeyStyled(0) }),
     zone: tutorialRegionZone("gunnery"),
     beaconColor: 0xff8866,
     nav: { trackId: "spoke-gunnery", label: t("world.region.gunneryBay"), targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
@@ -265,8 +277,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-gate",
     title: t("tutorial.step.flyGate.title"),
-    objective: t("tutorial.step.flyGate.objective"),
-    hint: t("tutorial.step.flyGate.hint"),
+    objective: () => t("tutorial.step.flyGate.objective"),
     zone: tutorialRegionZone("fly-gate"),
     beaconColor: 0xffffff,
     nav: { trackId: "spoke-gate", label: t("world.location.stargate"), targetX: TUTORIAL_GATE.x, targetY: TUTORIAL_GATE.y },
@@ -283,8 +294,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "graduation",
     title: t("tutorial.step.graduation.title"),
-    objective: () => t("tutorial.step.graduation.objective", { dockKey: tutorialKey("dock") }),
-    hint: () => t("tutorial.step.graduation.hint", { dockKey: tutorialKey("dock") }),
+    objective: () => t("tutorial.step.graduation.objective", { dockKey: tutorialKeyStyled("dock") }),
     zone: tutorialRegionZone("graduation"),
     beaconColor: 0xffffff,
     onEnter(ctx) {

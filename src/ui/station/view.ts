@@ -7,7 +7,7 @@ import { stationState } from "./shared.js";
 import { renderHangar } from "./hangar.js";
 import { renderMarket } from "./market.js";
 import { renderContracts } from "./contracts.js";
-import { renderIndustry } from "./industry.js";
+import { renderFabrication, renderIndustry } from "./industry.js";
 import { mountInventoryInPane, resetInventoryUI } from "../inventory/index.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../tutorial-hangar-guide.js";
 import { t } from "../../utils/i18n.js";
@@ -66,7 +66,9 @@ export function buildStationView(st: Station): void {
 
   el.querySelectorAll(".st-tab").forEach((btn) => {
     const tab = (btn as HTMLElement).dataset.tab;
-    const avail = tab === "hangar" || tab === "contracts" || st.services.includes(tab!);
+    const avail = tab === "hangar"
+      || tab === "contracts"
+      || (tab === "fabrication" ? st.services.includes("industry") : st.services.includes(tab!));
     (btn as HTMLButtonElement).disabled = !avail;
     btn.classList.remove("active");
   });
@@ -81,6 +83,12 @@ export function buildStationView(st: Station): void {
     el.querySelector(`#panel-${(first as HTMLElement).dataset.tab}`)!.classList.add("active");
   }
 
+  stationState.indStage = "process";
+  stationState.indHeatOverrides = {};
+  stationState.indProcessQty = {};
+  stationState.indProcessTarget = {};
+  stationState.indAlloyTargetStorage = {};
+  stationState.indAlloySelections = {};
   stationState.selectedRecipeId = null;
   stationState.craftQueue = getState().player.craftQueue;
   stationState._stationContracts = getState().player.stationOfferStationId === st.id
@@ -104,6 +112,10 @@ export function renderStationView(): void {
   const industryPanel = document.getElementById("panel-industry");
   if (industryPanel?.classList.contains("active")) {
     renderIndustry(industryPanel);
+  }
+  const fabricationPanel = document.getElementById("panel-fabrication");
+  if (fabricationPanel?.classList.contains("active")) {
+    renderFabrication(fabricationPanel);
   }
   syncHangarTutorialGuideFromActiveStep();
 }

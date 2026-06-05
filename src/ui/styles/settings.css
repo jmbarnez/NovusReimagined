@@ -138,11 +138,13 @@
   position: relative;
   z-index: 11;
   background: color-mix(in srgb, var(--hud-bg-deep) 50%, transparent);
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
 }
 #settings-body::-webkit-scrollbar{width:5px;}
-#settings-body::-webkit-scrollbar-track{background:transparent;}
-#settings-body::-webkit-scrollbar-thumb{background:var(--hud-border-soft);border-radius:2px;}
-#settings-body::-webkit-scrollbar-thumb:hover{background:var(--hud-border);}
+#settings-body::-webkit-scrollbar-track{background:var(--hud-scrollbar-track);}
+#settings-body::-webkit-scrollbar-thumb{background:var(--hud-scrollbar-thumb);border-radius:999px;}
+#settings-body::-webkit-scrollbar-thumb:hover{background:var(--hud-scrollbar-thumb-hover);}
 #settings-body h3{font-size: calc(11px * var(--effective-font-scale, 1));color:var(--hud-text-bright);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px;padding-bottom:4px;border-bottom:1px solid var(--hud-border-soft);}
 #settings-body h3:not(:first-child){margin-top:20px;}
 #settings-body h3.accent-audio{border-left:3px solid var(--hud-shield);padding-left:8px;}
@@ -387,20 +389,15 @@
   max-height: 220px;
   overflow-y: auto;
   padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
 }
 .settings-swatch-grid::-webkit-scrollbar {
   width: 5px;
 }
-.settings-swatch-grid::-webkit-scrollbar-track {
-  background: transparent;
-}
-.settings-swatch-grid::-webkit-scrollbar-thumb {
-  background: var(--hud-border-soft);
-  border-radius: 2px;
-}
-.settings-swatch-grid::-webkit-scrollbar-thumb:hover {
-  background: var(--hud-border);
-}
+.settings-swatch-grid::-webkit-scrollbar-track { background: var(--hud-scrollbar-track); }
+.settings-swatch-grid::-webkit-scrollbar-thumb { background: var(--hud-scrollbar-thumb); border-radius: 999px; }
+.settings-swatch-grid::-webkit-scrollbar-thumb:hover { background: var(--hud-scrollbar-thumb-hover); }
 
 .theme-swatch{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;background:var(--sw-bg);border:1px solid var(--hud-border-soft);cursor:pointer;font-family:inherit;font-size: calc(10px * var(--effective-font-scale, 1));transition:border-color .15s,box-shadow .15s;}
 .theme-swatch:hover:not(.active){border-color:var(--sw-border);}

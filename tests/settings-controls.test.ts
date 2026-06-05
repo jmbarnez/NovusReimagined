@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect } from "vitest";
-import { CONTROL_SECTIONS, DEFAULT_KEYBINDS, loadSettings, type Keybinds } from "../src/data/settings.js";
+import { CONTROL_SECTIONS, DEFAULT_KEYBINDS, DEFAULT_SETTINGS, loadSettings, type Keybinds } from "../src/data/settings.js";
 
 const ALL_ACTIONS = Object.keys(DEFAULT_KEYBINDS) as (keyof Keybinds)[];
 
@@ -39,5 +39,28 @@ describe("CONTROL_SECTIONS integrity", () => {
 
     expect(settings.keybinds.forwardThrust).toBe("KeyT");
     expect(settings.keybinds.reverseThrust).toBe(DEFAULT_KEYBINDS.reverseThrust);
+  });
+
+  it("defaults new settings to VSync render cadence", () => {
+    const settings = loadSettings();
+
+    expect(DEFAULT_SETTINGS.fpsLimit).toBe(0);
+    expect(settings.fpsLimit).toBe(0);
+  });
+
+  it("falls back invalid saved FPS limits to VSync", () => {
+    localStorage.setItem("novus-settings-v1", JSON.stringify({ fpsLimit: "fast" }));
+
+    const settings = loadSettings();
+
+    expect(settings.fpsLimit).toBe(0);
+  });
+
+  it("preserves finite saved FPS limits", () => {
+    localStorage.setItem("novus-settings-v1", JSON.stringify({ fpsLimit: 240 }));
+
+    const settings = loadSettings();
+
+    expect(settings.fpsLimit).toBe(240);
   });
 });

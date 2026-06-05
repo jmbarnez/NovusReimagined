@@ -11,7 +11,6 @@ const ICON_SVG = (paths: string, vb: string = "0 0 16 16") =>
 const ICONS: Record<string, string> = {
   ore:        ICON_SVG('<path d="M5 13L3 8l4-5 4 5-2 5z"/><path d="M5 8h6"/>'),
   ammo:       ICON_SVG('<rect x="6" y="2" width="4" height="10" rx="2"/><path d="M7 12v2"/>'),
-  refined:    ICON_SVG('<rect x="3" y="6" width="10" height="7" rx="1"/><path d="M5 6V4h6v2"/>'),
   loot:       ICON_SVG('<path d="M4 13l2-9 4 0 2 9z"/><path d="M6 7h4"/>'),
   component:  ICON_SVG('<rect x="3" y="5" width="10" height="8" rx="1"/><path d="M6 5V3h4v2"/><path d="M5 9h6"/><path d="M5 11h4"/>'),
   module:     ICON_SVG('<rect x="3" y="3" width="10" height="10" rx="1"/><circle cx="8" cy="8" r="2"/>'),

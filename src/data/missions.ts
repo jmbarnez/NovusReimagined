@@ -177,7 +177,7 @@ export function progressMissions(type: MissionType, amount: number, target?: str
 
 function getPlayerStock(target: string, p: Player): number {
   if (!p) return 0;
-  return (p.ore[target] ?? 0) + (p.loot[target] ?? 0) + (p.refined[target] ?? 0);
+  return (p.ore[target] ?? 0) + (p.loot[target] ?? 0);
 }
 
 export function checkDeliveryContracts(station: Station, p: Player = getState().player): void {

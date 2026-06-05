@@ -1,4 +1,5 @@
 import type { Player } from "../../state.js";
+import type { RefiningHeatMode } from "../../state.js";
 
 export interface InputNavCommand {
   mode: "orbit" | "keepRange";
@@ -140,7 +141,7 @@ export interface BuyAmmunitionCommand {
 
 export interface SellCargoResourceCommand {
   type: "sellCargoResource";
-  payload: { category: "ore" | "refined" | "loot" | "components"; key: string };
+  payload: { category: "ore" | "loot" | "components"; key: string };
 }
 
 export interface SetHomeSystemCommand {
@@ -201,9 +202,25 @@ export interface ProcessHubFloatingItemCommand {
   payload: { itemId: string };
 }
 
-export interface SmeltHubOreCommand {
-  type: "smeltHubOre";
-  payload: { oreKey: string; qty: number };
+export interface ProcessHubMixedOreCommand {
+  type: "processHubMixedOre";
+  payload: { cargoIndex: number; qty: number; heatMode?: RefiningHeatMode; targetStorageId?: string | null };
+}
+
+export interface SeparateHubMaterialCommand {
+  type: "separateHubMaterial";
+  payload: { materialId: string; heatMode?: RefiningHeatMode };
+}
+
+export interface AlloyHubMaterialCommand {
+  type: "alloyHubMaterial";
+  payload: {
+    materialId: string;
+    sourceMaterialIds?: string[];
+    targetAlloyFamilyId?: string | null;
+    heatMode?: RefiningHeatMode;
+    targetStorageId?: string | null;
+  };
 }
 
 export interface CollectHubOutputCommand {
@@ -249,5 +266,7 @@ export type GameCommand =
   | SellModuleCommand
   | AcceptContractCommand
   | ProcessHubFloatingItemCommand
-  | SmeltHubOreCommand
+  | ProcessHubMixedOreCommand
+  | SeparateHubMaterialCommand
+  | AlloyHubMaterialCommand
   | CollectHubOutputCommand;

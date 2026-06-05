@@ -1,4 +1,4 @@
-import { tutorialKey } from "./tutorial-controls.js";
+import { tutorialKeyStyled } from "./tutorial-controls.js";
 import { t } from "../utils/i18n.js";
 
 export type HangarGuideTarget =
@@ -46,7 +46,7 @@ export const HANGAR_REVIEW_GUIDE: HangarGuidePanel[] = [
     label: t("tutorial.hangar.undock.label"),
     target: "hangar-undock",
     stationTab: "hangar",
-    body: t("tutorial.hangar.undock.body", { dockKey: tutorialKey("dock") }),
+    body: t("tutorial.hangar.undock.body", { dockKey: tutorialKeyStyled("dock") }),
   },
 ];
 
@@ -85,7 +85,7 @@ export const HANGAR_COMBAT_SWAP_GUIDE: HangarGuidePanel[] = [
     label: t("tutorial.hangar.combatUndock.label"),
     target: "hangar-undock",
     stationTab: "hangar",
-    body: t("tutorial.hangar.combatUndock.body", { dockKey: tutorialKey("dock") }),
+    body: t("tutorial.hangar.combatUndock.body", { dockKey: tutorialKeyStyled("dock") }),
   },
 ];
 

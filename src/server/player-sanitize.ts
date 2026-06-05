@@ -166,7 +166,7 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
 
   p.credits = finiteNumber(incoming.credits, base.credits, 0);
   p.ore = cloneNumberRecord(incoming.ore, base.ore);
-  p.refined = cloneNumberRecord(incoming.refined, base.refined);
+  p.bulkMaterialsCargo = Array.isArray(incoming.bulkMaterialsCargo) ? clone(incoming.bulkMaterialsCargo) : [];
   p.loot = cloneNumberRecord(incoming.loot, base.loot);
   p.components = cloneNumberRecord(incoming.components, base.components);
   p.ammo = {

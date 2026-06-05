@@ -4,6 +4,7 @@ import { stationState } from "./shared.js";
 import { setPreview, updateStatsGrid } from "./hangar.js";
 import { renderMarket } from "./market.js";
 import {
+  renderFabrication,
   renderIndustry,
   handleIndustryAction,
   handleIndustryFieldEvent,
@@ -20,6 +21,8 @@ function bindTabClicks(el: HTMLElement): void {
       el.querySelector(`#panel-${(btn as HTMLElement).dataset.tab}`)?.classList.add("active");
       if ((btn as HTMLElement).dataset.tab === "industry") {
         renderIndustry(document.getElementById("panel-industry") ?? undefined);
+      } else if ((btn as HTMLElement).dataset.tab === "fabrication") {
+        renderFabrication(document.getElementById("panel-fabrication") ?? undefined);
       }
     });
   });

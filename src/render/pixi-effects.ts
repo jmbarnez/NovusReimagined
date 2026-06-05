@@ -15,7 +15,7 @@ import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
 import { getUIFont } from "./ui-font.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
-import { ORE, REFINED, LOOT, COMPONENTS } from "../data/resources.js";
+import { ORE, LOOT, COMPONENTS } from "../data/resources.js";
 import { getModule } from "../data/modules.js";
 import { RARITY_CONFIG } from "../data/moduleRarity.js";
 import { PICKUP_LIFE_S } from "../wreck.js";
@@ -286,7 +286,7 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
         icon = "box";
         iconSize = 4;
       } else if (s.kind === "ore") {
-        const def = ORE[s.payload] || REFINED[s.payload];
+        const def = ORE[s.payload];
         colStr = s.composition ? oreColorForComposition(s.composition) : def?.color ?? "#a0a5aa";
         icon = def?.icon ?? "shard";
         label = s.name ?? def?.label ?? s.payload;

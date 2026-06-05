@@ -58,12 +58,22 @@ describe("authoritative command validation", () => {
 
   it("queues industry jobs on the authoritative player only", () => {
     const p = makePlayer();
-    p.ore.iron = 9;
+    p.bulkMaterialsCargo = [{
+      id: "bulk-1",
+      materialId: "ferro_nickel_stock",
+      alloyFamilyId: "ferro_nickel_stock",
+      kind: "alloy",
+      label: "Ferro-nickel stock",
+      volumeM3: 1.2,
+      massKg: 9_780,
+      composition: { iron: 0.66, nickel: 0.24, carbon: 0.1 },
+    }];
+    p.loot.scrap = 4;
 
-    executeGameCommand({ type: "queueIndustryJob", payload: { recipeId: "bar", qty: 2 } }, p);
+    executeGameCommand({ type: "queueIndustryJob", payload: { recipeId: "gear", qty: 2 } }, p);
 
     expect(p.craftQueue).toHaveLength(1);
-    expect(p.ore.iron).toBe(3);
+    expect((p.bulkMaterialsCargo[0]?.volumeM3 ?? 0)).toBeCloseTo(0, 3);
   });
 
   it("executes ammo/resource/home commands against authoritative player state", () => {

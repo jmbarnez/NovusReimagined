@@ -14,6 +14,7 @@ import { getInstance, invalidateInstanceCache } from "../utils/items.js";
 import type { MissionContract } from "../data/missions.js";
 import { getDockableStation } from "../dock.js";
 import { moduleFitsShipRack } from "../utils/hardpoints.js";
+import { ALLOY_FAMILIES, materialMatchesRecipeMaterial } from "../refining.js";
 
 export interface ActionResponse {
   success: boolean;
@@ -21,6 +22,48 @@ export interface ActionResponse {
   creditsSpent?: number;
   creditsEarned?: number;
   label?: string;
+}
+
+function materialStockOf(key: string, p: Player): number {
+  return (p.bulkMaterialsCargo ?? [])
+    .filter((stack) => materialMatchesRecipeMaterial(stack, key, p.alloyCodex))
+    .reduce((sum, stack) => sum + stack.volumeM3, 0);
+}
+
+function consumeMaterialVolume(key: string, volumeM3: number, p: Player): boolean {
+  if (materialStockOf(key, p) + 1e-6 < volumeM3) return false;
+  let remaining = volumeM3;
+  const next = [...(p.bulkMaterialsCargo ?? [])];
+  for (let i = 0; i < next.length && remaining > 1e-6; i++) {
+    const stack = next[i];
+    if (!materialMatchesRecipeMaterial(stack, key, p.alloyCodex)) continue;
+    const take = Math.min(stack.volumeM3, remaining);
+    if (take <= 0) continue;
+    const ratio = take / Math.max(stack.volumeM3, 1e-6);
+    stack.volumeM3 -= take;
+    stack.massKg -= stack.massKg * ratio;
+    remaining -= take;
+  }
+  PlayerAccess.setBulkMaterialsCargo(next.filter((stack) => stack.volumeM3 > 1e-4 && stack.massKg > 1e-2), p);
+  invalidate(p);
+  return true;
+}
+
+function refundMaterialVolume(key: string, volumeM3: number, p: Player): void {
+  const family = ALLOY_FAMILIES.find((entry) => entry.id === key);
+  if (!family || volumeM3 <= 0) return;
+  PlayerAccess.addBulkMaterial({
+    id: `refund-${key}-${Date.now()}`,
+    materialId: family.id,
+    kind: "alloy",
+    label: family.label,
+    alloyFamilyId: family.id,
+    volumeM3,
+    massKg: volumeM3 * family.densityKgPerM3,
+    composition: Object.fromEntries(
+      Object.entries(family.windows).map(([oreKey, range]) => [oreKey, ((range?.min ?? 0) + (range?.max ?? 0)) / 2]),
+    ),
+  }, p);
 }
 
 function isInstanceFittedElsewhere(instanceId: string, p: Player, except?: { rack: string; slotIdx: number }): boolean {
@@ -150,7 +193,7 @@ export function buyAmmunitionAction(type: "hybrid" | "missile", p: Player = getS
 }
 
 export function sellCargoResourceAction(
-  category: "ore" | "refined" | "loot" | "components",
+  category: "ore" | "loot" | "components",
   key: string,
   p: Player = getState().player,
 ): ActionResponse {
@@ -256,25 +299,36 @@ export function queueIndustryJobAction(recipeId: string, craftQty: number, p: Pl
   }
 
   const pool = (poolType: IndustryPool) =>
-    poolType === "ore" ? p.ore : poolType === "refined" ? p.refined : poolType === "loot" ? p.loot : p.components;
+    poolType === "ore" ? p.ore
+      : poolType === "loot" ? p.loot
+      : poolType === "component" ? p.components
+      : null;
 
   for (const inp of r.inputs) {
-    if ((pool(inp.pool)[inp.key] || 0) < inp.qty * craftQty) {
+    const stock = inp.pool === "material"
+      ? materialStockOf(inp.key, p)
+      : ((pool(inp.pool)?.[inp.key] || 0));
+    if (stock < inp.qty * craftQty - 1e-6) {
       return { success: false, reason: `Insufficient ${inp.key}` };
     }
   }
 
   const isLocal = (p === getState().player);
   for (const inp of r.inputs) {
-    const cur = pool(inp.pool)[inp.key] || 0;
-    if (isLocal) {
-      const setter = inp.pool === "ore" ? PlayerAccess.setOre
-        : inp.pool === "refined" ? PlayerAccess.setRefined
-        : inp.pool === "loot" ? PlayerAccess.setLoot
-        : PlayerAccess.setComponents;
-      setter(inp.key, cur - inp.qty * craftQty);
+    if (inp.pool === "material") {
+      if (!consumeMaterialVolume(inp.key, inp.qty * craftQty, p)) {
+        return { success: false, reason: `Insufficient ${inp.key}` };
+      }
     } else {
-      pool(inp.pool)[inp.key] = cur - inp.qty * craftQty;
+      const cur = pool(inp.pool)?.[inp.key] || 0;
+      if (isLocal) {
+        const setter = inp.pool === "ore" ? PlayerAccess.setOre
+          : inp.pool === "loot" ? PlayerAccess.setLoot
+          : PlayerAccess.setComponents;
+        setter(inp.key, cur - inp.qty * craftQty);
+      } else if (pool(inp.pool)) {
+        pool(inp.pool)![inp.key] = cur - inp.qty * craftQty;
+      }
     }
   }
 
@@ -304,7 +358,10 @@ export function tickIndustryQueue(p: Player = getState().player) {
   }
 
   const pool = (poolType: IndustryPool, playerObj: Player) =>
-    poolType === "ore" ? playerObj.ore : poolType === "refined" ? playerObj.refined : poolType === "loot" ? playerObj.loot : playerObj.components;
+    poolType === "ore" ? playerObj.ore
+      : poolType === "loot" ? playerObj.loot
+      : poolType === "component" ? playerObj.components
+      : null;
 
   for (const job of completed) {
     const recipe = RECIPES.find(r => r.id === job.recipeId);
@@ -312,15 +369,18 @@ export function tickIndustryQueue(p: Player = getState().player) {
     const skillMult = recipe.outputSkill ? 1 + (p.skills[recipe.outputSkill] || 0) * 0.05 : 1;
     for (const out of recipe.outputs) {
       const totalQty = Math.floor(out.qty * job.qty * skillMult);
-      const cur = pool(out.pool, p)[out.key] || 0;
-      if (isLocal) {
-        const setter = out.pool === "ore" ? PlayerAccess.setOre
-          : out.pool === "refined" ? PlayerAccess.setRefined
-          : out.pool === "loot" ? PlayerAccess.setLoot
-          : PlayerAccess.setComponents;
-        setter(out.key, cur + totalQty);
+      if (out.pool === "material") {
+        refundMaterialVolume(out.key, totalQty, p);
       } else {
-        pool(out.pool, p)[out.key] = cur + totalQty;
+        const cur = pool(out.pool, p)?.[out.key] || 0;
+        if (isLocal) {
+          const setter = out.pool === "ore" ? PlayerAccess.setOre
+            : out.pool === "loot" ? PlayerAccess.setLoot
+            : PlayerAccess.setComponents;
+          setter(out.key, cur + totalQty);
+        } else if (pool(out.pool, p)) {
+          pool(out.pool, p)![out.key] = cur + totalQty;
+        }
       }
     }
   }
@@ -334,14 +394,20 @@ export function cancelIndustryJobAction(jobId: string, p: Player = getState().pl
 
   if (r) {
     const pool = (poolType: IndustryPool) =>
-      poolType === "ore" ? p.ore : poolType === "refined" ? p.refined : poolType === "loot" ? p.loot : p.components;
+      poolType === "ore" ? p.ore
+        : poolType === "loot" ? p.loot
+        : poolType === "component" ? p.components
+        : null;
     for (const inp of r.inputs) {
-      const cur = pool(inp.pool)[inp.key] || 0;
-      const setter = inp.pool === "ore" ? PlayerAccess.setOre
-        : inp.pool === "refined" ? PlayerAccess.setRefined
-        : inp.pool === "loot" ? PlayerAccess.setLoot
-        : PlayerAccess.setComponents;
-      setter(inp.key, cur + inp.qty * job.qty, p);
+      if (inp.pool === "material") {
+        refundMaterialVolume(inp.key, inp.qty * job.qty, p);
+      } else {
+        const cur = pool(inp.pool)?.[inp.key] || 0;
+        const setter = inp.pool === "ore" ? PlayerAccess.setOre
+          : inp.pool === "loot" ? PlayerAccess.setLoot
+          : PlayerAccess.setComponents;
+        setter(inp.key, cur + inp.qty * job.qty, p);
+      }
     }
   }
 
@@ -428,7 +494,7 @@ export function abandonContractAction(contractId: string, p: Player = getState()
 }
 
 export function jettisonItemAction(itemId: string, qty: number | null = null, p: Player = getState().player): ActionResponse {
-  // Parsing standard IDs like: "ore_iron", "ammo_hybrid", "ref_bar", "loot_scrap", "comp_gear", "mod_uid"
+  // Parsing standard IDs like: "ore_iron", "ammo_hybrid", "loot_scrap", "comp_gear", "mod_uid"
   let type = "";
   let key = "";
   if (itemId.startsWith("ore_")) {
@@ -437,9 +503,6 @@ export function jettisonItemAction(itemId: string, qty: number | null = null, p:
   } else if (itemId.startsWith("ammo_")) {
     type = "ammo";
     key = itemId.replace("ammo_", "");
-  } else if (itemId.startsWith("ref_")) {
-    type = "refined";
-    key = itemId.replace("ref_", "");
   } else if (itemId.startsWith("loot_")) {
     type = "loot";
     key = itemId.replace("loot_", "");
@@ -449,6 +512,9 @@ export function jettisonItemAction(itemId: string, qty: number | null = null, p:
   } else if (itemId.startsWith("mod_")) {
     type = "module";
     key = itemId.replace("mod_", "");
+  } else if (itemId.startsWith("mat_")) {
+    type = "material";
+    key = itemId.replace("mat_", "");
   }
 
   if (!type) return { success: false, reason: "Invalid item ID format" };
@@ -465,11 +531,12 @@ export function jettisonItemAction(itemId: string, qty: number | null = null, p:
     if (drop <= 0) return { success: false, reason: "No items to jettison" };
     PlayerAccess.setAmmo(key as "hybrid" | "missile", Math.max(0, cur - drop), p);
     return { success: true };
-  } else if (type === "refined") {
-    const cur = p.refined[key] || 0;
-    const drop = qty === null ? cur : Math.min(qty, cur);
-    if (drop <= 0) return { success: false, reason: "No items to jettison" };
-    PlayerAccess.setRefined(key, Math.max(0, cur - drop), p);
+  } else if (type === "material") {
+    const idx = parseInt(key, 10);
+    if (!Number.isFinite(idx) || idx < 0) return { success: false, reason: "Material stack not found" };
+    if (!p.bulkMaterialsCargo?.[idx]) return { success: false, reason: "Material stack not found" };
+    PlayerAccess.removeBulkMaterial(idx, p);
+    invalidate(p);
     return { success: true };
   } else if (type === "loot") {
     const cur = p.loot[key] || 0;

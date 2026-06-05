@@ -20,7 +20,7 @@ const DEEP_PLAYER_KEYS = new Set<keyof PlayerSnapshot>([
   "fitting",
   "ore",
   "mixedOreCargo",
-  "refined",
+  "bulkMaterialsCargo",
   "loot",
   "components",
   "ammo",

@@ -354,7 +354,7 @@ function updateMapTutorialStrip() {
   const fillEl = mapTutorialStripEl.querySelector(".tutorial-nav-progress-fill") as HTMLElement | null;
   const labelEl = mapTutorialStripEl.querySelector(".tutorial-nav-progress-label");
   if (titleEl) titleEl.textContent = step.title;
-  if (objEl) objEl.textContent = getTutorialStepObjective(step);
+  if (objEl) objEl.innerHTML = getTutorialStepObjective(step);
   const progress = getTutorialNavProgress(step, getState().player) ?? 0;
   const remaining = getTutorialNavRemainingM(step, getState().player);
   if (fillEl) fillEl.style.width = `${Math.round(progress * 100)}%`;

@@ -15,7 +15,9 @@ import {
   isZoneStepComplete,
   getTutorialNavRemainingM,
   getCurrentTutorialStep,
+  getTutorialStepObjective,
 } from "../src/data/tutorial.js";
+import { tutorialKeyStyled, tutorialBarKeyStyled } from "../src/data/tutorial-controls.js";
 import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_GATE, TUTORIAL_LOCAL_REGIONS } from "../src/data/tutorial-layout.js";
 import type { System, Enemy, Gate } from "../src/types/world.js";
 import { getNovusPrimeIdx } from "../src/world/galaxy-build.js";
@@ -94,6 +96,27 @@ describe("tutorial step list", () => {
         enemies: [{ type: "target_dummy", count: 3, level: 1 }],
       }),
     ]);
+  });
+});
+
+describe("styled keybind helpers", () => {
+  it("tutorialKeyStyled wraps keybind in a span", () => {
+    const result = tutorialKeyStyled("brake");
+    expect(result).toMatch(/<span class="tutorial-keybind">/);
+    expect(result).toMatch(/<\/span>/);
+  });
+
+  it("tutorialBarKeyStyled wraps bar slot in a span", () => {
+    const result = tutorialBarKeyStyled(0);
+    expect(result).toMatch(/<span class="tutorial-keybind">1<\/span>/);
+  });
+
+  it("renders keybinds as styled markup in step objectives", () => {
+    installTestPlayer(makePlayer());
+    G.P.tutorial.active = true;
+    const industry = stepById("industry");
+    const obj = getTutorialStepObjective(industry, {});
+    expect(obj).toContain('<span class="tutorial-keybind">');
   });
 });
 
@@ -289,13 +312,21 @@ describe("tutorial step completion", () => {
     expect(mining.isComplete(ctxAt(1200, -200, { ore: 0 }))).toBe(true);
   });
 
-  it("industry completes on craft queue or bar gain anywhere", () => {
+  it("industry completes on refinery queue or material gain anywhere", () => {
     const industry = stepById("industry");
-    G.P.craftQueue = [{ id: "job-1", recipeId: "bar", startTime: 0, duration: 10, qty: 1 }];
-    expect(industry.isComplete(ctxAt(5000, 5000, { craftQueue: 0, refined: 0 }))).toBe(true);
-    G.P.craftQueue = [];
-    G.P.refined.bar = 1;
-    expect(industry.isComplete(ctxAt(300, -300, { craftQueue: 0, refined: 0 }))).toBe(true);
+    G.P.hubQueue = [{ id: "hub-job-1", kind: "processMixed", startTime: 0, duration: 10, mass: 4000, sourceQty: 1, heatMode: "stable" }];
+    expect(industry.isComplete(ctxAt(5000, 5000, { hubQueue: 0, materialVolume: 0, refineryMaterialVolume: 0 }))).toBe(true);
+    G.P.hubQueue = [];
+    G.P.hubDeposit.materials = [{
+      id: "mat-1",
+      materialId: "processed_stock",
+      kind: "processed",
+      label: "Mixed stock",
+      volumeM3: 1.2,
+      massKg: 4200,
+      composition: { iron: 0.7, nickel: 0.2, carbon: 0.1 },
+    }];
+    expect(industry.isComplete(ctxAt(300, -300, { hubQueue: 0, materialVolume: 0, refineryMaterialVolume: 0 }))).toBe(true);
   });
 
   it("gunnery requires in-zone dummy kill", () => {

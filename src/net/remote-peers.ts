@@ -2,6 +2,7 @@ import { type Player } from "../state.js";
 import { netLog } from "../ui/net-console.js";
 import { LOCAL_PLAYER_ID } from "../player-registry.js";
 import { PlayerAccess, getState } from "../state-access.js";
+import { makeDefaultAlloyCodex, makeDefaultRefineryStorage } from "../refining.js";
 
 export interface RemotePlayerBrief {
   netId: string;
@@ -52,7 +53,7 @@ export function makeRemotePlayerStub(brief: RemotePlayerBrief): Player {
     credits: 0,
     ore: {},
     mixedOreCargo: [],
-    refined: {},
+    bulkMaterialsCargo: [],
     loot: {},
     components: {},
     ammo: { hybrid: 0, missile: 0 },
@@ -76,8 +77,10 @@ export function makeRemotePlayerStub(brief: RemotePlayerBrief): Player {
     stationOfferStationId: null,
     craftQueue: [],
     hubQueue: [],
-    hubOutput: { loot: {}, ore: {}, refined: {}, modules: [] },
-    hubDeposit: { raw: [], ore: {}, loot: {}, modules: [] },
+    hubOutput: { loot: {}, ore: {}, materials: [], modules: [] },
+    hubDeposit: { raw: [], ore: {}, materials: [], loot: {}, modules: [] },
+    refineryStorage: makeDefaultRefineryStorage(),
+    alloyCodex: makeDefaultAlloyCodex(),
     tutorial: { active: false, step: 0, completed: false, skipped: false },
     gateCooldowns: {},
     gatesCleared: [],

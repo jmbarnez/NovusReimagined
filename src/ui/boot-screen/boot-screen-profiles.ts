@@ -25,12 +25,11 @@ let profileContinueInFlight = false;
 /*  Profile Selection Screen                                   */
 /* ──────────────────────────────────────────────────────────── */
 
-export function showProfileSelection(errorMessage = ""): void {
+function buildProfileSelectionHtml(errorMessage = ""): string {
   const profiles = getProfiles();
-
   const cardsHtml = profiles.map((p) => renderProfileCard(p)).join("");
 
-  const menuHtml = `
+  return `
     <div class="profile-screen">
       <div class="profile-header">
         <div class="profile-title">${t("profile.title")}</div>
@@ -50,36 +49,40 @@ export function showProfileSelection(errorMessage = ""): void {
       </div>
     </div>
   `;
+}
 
-  pushMonitorMenu(menuHtml, (monitor) => {
-    // Bind each existing profile card
-    monitor.querySelectorAll("[data-profile-id]").forEach((card) => {
-      const id = (card as HTMLElement).dataset.profileId!;
+function bindProfileSelectionEvents(monitor: HTMLElement): void {
+  monitor.querySelectorAll("[data-profile-id]").forEach((card) => {
+    const id = (card as HTMLElement).dataset.profileId!;
 
-      // Continue button
-      const continueBtn = card.querySelector("[data-profile-continue]") as HTMLButtonElement | null;
-      continueBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        void continueSavedProfile(id, continueBtn, monitor);
-      });
-
-      // Delete button
-      const delBtn = card.querySelector("[data-profile-delete]");
-      delBtn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        sfxBlip();
-        const pilotName = (card.querySelector(".profile-name") as HTMLElement)?.textContent ?? "this profile";
-        if (!confirm(t("profile.confirmDelete", { name: pilotName }))) return;
-        deleteProfile(id);
-        showProfileSelection();
-      });
+    const continueBtn = card.querySelector("[data-profile-continue]") as HTMLButtonElement | null;
+    continueBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void continueSavedProfile(id, continueBtn, monitor);
     });
 
-    // New profile card
-    monitor.querySelector("#profile-new")?.addEventListener("click", () => {
+    const delBtn = card.querySelector("[data-profile-delete]");
+    delBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
       sfxBlip();
-      showProfileCreation();
+      const pilotName = (card.querySelector(".profile-name") as HTMLElement)?.textContent ?? "this profile";
+      if (!confirm(t("profile.confirmDelete", { name: pilotName }))) return;
+      deleteProfile(id);
+      monitor.innerHTML = buildProfileSelectionHtml();
+      bindProfileSelectionEvents(monitor);
     });
+  });
+
+  monitor.querySelector("#profile-new")?.addEventListener("click", () => {
+    sfxBlip();
+    showProfileCreation();
+  });
+}
+
+export function showProfileSelection(errorMessage = ""): void {
+  const menuHtml = buildProfileSelectionHtml(errorMessage);
+  pushMonitorMenu(menuHtml, (monitor) => {
+    bindProfileSelectionEvents(monitor);
   }, bindTitleScreenEvents);
 }
 
@@ -289,7 +292,10 @@ function showProfileCreation(): void {
     });
 
     window.setTimeout(() => input?.focus(), 80);
-  }, bindTitleScreenEvents);
+  }, (monitor) => {
+    monitor.innerHTML = buildProfileSelectionHtml();
+    bindProfileSelectionEvents(monitor);
+  });
 }
 
 /** Minimal HTML escape to prevent XSS from profile names. */

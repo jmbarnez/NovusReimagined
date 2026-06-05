@@ -25,7 +25,8 @@ const MAX_NAV_RANGE = 10_000;
 const MAX_ACTIONS_PER_FRAME = 16;
 const RACK_IDS = new Set(["turret", "high", "med", "low"]);
 const AMMO_TYPES = new Set(["hybrid", "missile"]);
-const RESOURCE_CATEGORIES = new Set(["ore", "refined", "loot", "components"]);
+const RESOURCE_CATEGORIES = new Set(["ore", "loot", "components"]);
+const HEAT_MODES = new Set(["cool", "stable", "hot"]);
 
 function finiteOrZero(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
@@ -163,7 +164,7 @@ function sanitizeAction(action: Record<string, unknown>): GameCommand | null {
       const payload = optionalPayloadRecord(action);
       if (typeof payload.category !== "string" || !RESOURCE_CATEGORIES.has(payload.category)) return null;
       if (typeof payload.key !== "string") return null;
-      return { type: "sellCargoResource", payload: { category: payload.category as "ore" | "refined" | "loot" | "components", key: payload.key } };
+      return { type: "sellCargoResource", payload: { category: payload.category as "ore" | "loot" | "components", key: payload.key } };
     }
     case "jettisonItem": {
       const payload = optionalPayloadRecord(action);
@@ -208,10 +209,45 @@ function sanitizeAction(action: Record<string, unknown>): GameCommand | null {
       const itemId = stringPayload(action, "itemId");
       return itemId == null ? null : { type: "processHubFloatingItem", payload: { itemId } };
     }
-    case "smeltHubOre": {
-      const oreKey = stringPayload(action, "oreKey");
+    case "processHubMixedOre": {
+      const cargoIndex = numberPayload(action, "cargoIndex");
       const qty = numberPayload(action, "qty");
-      return oreKey == null || qty == null ? null : { type: "smeltHubOre", payload: { oreKey, qty } };
+      const payload = optionalPayloadRecord(action);
+      const heatMode = typeof payload.heatMode === "string" && HEAT_MODES.has(payload.heatMode) ? payload.heatMode as "cool" | "stable" | "hot" : undefined;
+      const targetStorageId = payload.targetStorageId == null
+        ? undefined
+        : typeof payload.targetStorageId === "string"
+          ? payload.targetStorageId
+          : null;
+      return cargoIndex == null || qty == null ? null : { type: "processHubMixedOre", payload: { cargoIndex, qty, heatMode, targetStorageId } };
+    }
+    case "separateHubMaterial": {
+      const materialId = stringPayload(action, "materialId");
+      const payload = optionalPayloadRecord(action);
+      const heatMode = typeof payload.heatMode === "string" && HEAT_MODES.has(payload.heatMode) ? payload.heatMode as "cool" | "stable" | "hot" : undefined;
+      return materialId == null ? null : { type: "separateHubMaterial", payload: { materialId, heatMode } };
+    }
+    case "alloyHubMaterial": {
+      const payload = optionalPayloadRecord(action);
+      if (typeof payload.materialId !== "string") return null;
+      const heatMode = typeof payload.heatMode === "string" && HEAT_MODES.has(payload.heatMode) ? payload.heatMode as "cool" | "stable" | "hot" : undefined;
+      const targetAlloyFamilyId = payload.targetAlloyFamilyId == null
+        ? undefined
+        : typeof payload.targetAlloyFamilyId === "string"
+          ? payload.targetAlloyFamilyId
+          : null;
+      const targetStorageId = payload.targetStorageId == null
+        ? undefined
+        : typeof payload.targetStorageId === "string"
+          ? payload.targetStorageId
+          : null;
+      const sourceMaterialIds = Array.isArray(payload.sourceMaterialIds)
+        ? payload.sourceMaterialIds.filter((entry): entry is string => typeof entry === "string" && entry.length > 0)
+        : undefined;
+      return {
+        type: "alloyHubMaterial",
+        payload: { materialId: payload.materialId, sourceMaterialIds, targetAlloyFamilyId, heatMode, targetStorageId },
+      };
     }
     default:
       return null;

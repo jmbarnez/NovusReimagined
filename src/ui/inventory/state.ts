@@ -9,10 +9,11 @@ export interface InventoryItem {
   group: string;
   qty: number;
   vol: number;
-  type: "ore" | "mixedOre" | "ammo" | "refined" | "loot" | "component" | "module" | "fitting";
+  type: "ore" | "mixedOre" | "material" | "ammo" | "loot" | "component" | "module" | "fitting";
   key: string;
   container: string;
   composition?: Record<string, number>;
+  massKg?: number;
   meta?: ModuleDef;
   instance?: ModuleInstance;
   rarityColor?: string;

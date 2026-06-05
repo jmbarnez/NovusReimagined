@@ -7,7 +7,7 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
-import { screenContainer } from "../pixi.js";
+import { hudOverlayLayer } from "../pixi.js";
 import { LOCK_RAIL_H, HUD_BOTTOM_H } from "../constants.js";
 import { viewCenterX, viewCenterY } from "./viewport.js";
 import { dst } from "../utils/math.js";
@@ -31,11 +31,11 @@ let labelStyle: TextStyle | null = null;
 const edgesScratch = new Float64Array(4);
 
 export function initPixiTargetArrows(): void {
-  if (!screenContainer) return;
+  if (!hudOverlayLayer) return;
 
   arrowsContainer = new Container();
   arrowsContainer.label = "target-arrows";
-  screenContainer.addChild(arrowsContainer);
+  hudOverlayLayer.addChild(arrowsContainer);
 
   // Initialize arrow pool
   const font = getUIFont();
@@ -167,8 +167,8 @@ function drawArrow(
     text.style.fill = fill;
     text.alpha = alpha * 0.85;
 
-    const dx = px - viewCenterX(screenContainer?.parent?.width || window.innerWidth);
-    const dy = py - viewCenterY(screenContainer?.parent?.height || window.innerHeight);
+    const dx = px - viewCenterX(hudOverlayLayer?.parent?.width || window.innerWidth);
+    const dy = py - viewCenterY(hudOverlayLayer?.parent?.height || window.innerHeight);
     const dMag = Math.hypot(dx, dy) || 1;
     text.position.set(
       Math.round(px - (dx / dMag) * 22),
@@ -305,7 +305,7 @@ export function destroyPixiTargetArrows(): void {
   }
   textPool = [];
 
-  screenContainer?.removeChild(arrowsContainer);
+  hudOverlayLayer?.removeChild(arrowsContainer);
   arrowsContainer.destroy();
   arrowsContainer = null;
 }

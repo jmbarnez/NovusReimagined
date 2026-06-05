@@ -2,6 +2,8 @@ import { MODULES, ModuleDef } from "../../data/modules.js";
 import type { MissionContract } from "../../data/missions.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 import { ORE } from "../../data/resources.js";
+import { ALLOY_FAMILIES } from "../../refining.js";
+import type { RefiningHeatMode } from "../../state.js";
 
 export const stationState = {
   previewFitting: null as Record<string, (string | null)[]> | null,
@@ -10,9 +12,16 @@ export const stationState = {
   mktRack: "all",
   mktSearch: "",
   mktSort: "name",
-  indTab: "smelter",
+  indStage: "process" as "process" | "separate" | "alloy",
+  indRailTab: "hold" as "hold" | "dossier" | "queue" | "output",
+  indTab: "workbench",
   indSearch: "",
   indSort: "name",
+  indHeatOverrides: {} as Record<string, RefiningHeatMode>,
+  indProcessQty: {} as Record<string, number>,
+  indProcessTarget: {} as Record<string, string>,
+  indAlloyTargetStorage: {} as Record<string, string>,
+  indAlloySelections: {} as Record<string, string[]>,
   selectedRecipeId: null as string | null,
   craftQueue: [] as CraftJob[],
   craftQty: 1 as number,
@@ -71,13 +80,13 @@ export function iconSvg(id: string, size = 24): string {
     turret: "#b07038", high: "#8068b0", med: "#3888a8", low: "#589858",
   };
   const catColor: Record<string, string> = {
-    ore: "#5a8878", loot: "#8a7848", comp: "#508878", ammo: "#a86838", refined: "#5a8898",
+    ore: "#5a8878", loot: "#8a7848", comp: "#508878", ammo: "#a86838", material: "#b48a52",
   };
   const mod = MODULES[id];
   let color = "#5a8098";
   if (mod) color = rackColor[mod.rack] || color;
   else if (ORE[id]) color = catColor.ore;
-  else if (["bar","lattice","condensate"].includes(id)) color = catColor.refined;
+  else if (ALLOY_FAMILIES.some((family) => family.id === id)) color = catColor.material;
   else if (["scrap","chip","cell"].includes(id)) color = catColor.loot;
   else if (["circuit","gear","harness","sensor_cluster"].includes(id)) color = catColor.comp;
   else if (["ammo-hybrid","ammo-missile"].includes(id)) color = catColor.ammo;
@@ -105,9 +114,6 @@ export function iconSvg(id: string, size = 24): string {
     "lo-nano":      `<circle cx="12" cy="12" r="2"/><circle cx="6" cy="8" r="1.5"/><circle cx="18" cy="8" r="1.5"/><circle cx="6" cy="16" r="1.5"/><circle cx="18" cy="16" r="1.5"/><line x1="6" y1="8" x2="12" y2="12"/><line x1="18" y1="8" x2="12" y2="12"/><line x1="6" y1="16" x2="12" y2="12"/><line x1="18" y1="16" x2="12" y2="12"/>`,
     "lo-hull":      `<rect x="3" y="8" width="18" height="8"/><line x1="3" y1="11" x2="21" y2="11"/><line x1="3" y1="13" x2="21" y2="13"/>`,
     "lo-deadspace": `<polygon points="12,3 20,8 20,16 12,21 4,16 4,8"/><line x1="12" y1="3" x2="12" y2="21" stroke-width="0.75"/><line x1="4" y1="8" x2="20" y2="16" stroke-width="0.75"/><line x1="20" y1="8" x2="4" y2="16" stroke-width="0.75"/>`,
-    "bar":        `<rect x="3" y="9" width="18" height="6" rx="1"/><line x1="3" y1="12" x2="21" y2="12" stroke-width="0.75"/>`,
-    "lattice":    `<polygon points="12,3 19,8 19,16 12,21 5,16 5,8"/><line x1="12" y1="3" x2="12" y2="21" stroke-width="0.75"/><line x1="5" y1="8" x2="19" y2="16" stroke-width="0.75"/><line x1="19" y1="8" x2="5" y2="16" stroke-width="0.75"/>`,
-    "condensate": `<path d="M12,4 Q18,10 18,15 A6,6 0 0,1 6,15 Q6,10 12,4 Z"/><circle cx="12" cy="15" r="2" stroke-width="0.75"/>`,
     "iron":         `<polygon points="6,19 3,12 6,5 12,3 18,5 21,12 18,19 12,21"/>`,
     "crystal":      `<polygon points="12,2 19,9 16,22 8,22 5,9"/><line x1="12" y1="2" x2="12" y2="22" stroke-width="0.75"/>`,
     "exotic":       `<circle cx="12" cy="12" r="5"/><circle cx="12" cy="3" r="1.5"/><circle cx="21" cy="12" r="1.5"/><circle cx="12" cy="21" r="1.5"/><circle cx="3" cy="12" r="1.5"/>`,

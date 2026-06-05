@@ -31,6 +31,7 @@ import type { Enemy, LockSlot } from "../types/world.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { entityLayer, effectLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
+import { isVisible } from "../utils/game.js";
 import { getUIFont } from "./ui-font.js";
 import { lightenCol, darkenCol } from "../utils/color.js";
 import { tracePath } from "./bake-utils.js";
@@ -267,6 +268,7 @@ interface EnemyBundle {
 
 const _bundles = new Map<string, EnemyBundle>();
 const _lockMap = new Map<string, LockSlot>();
+const _activeEnemyIds = new Set<string>();
 
 function createBundle(e: { id: string; type: string; name: string; level?: number; hp: number }): EnemyBundle {
   const hull = new Sprite(getEnemyTexture(e.type));
@@ -330,6 +332,19 @@ function destroyBundle(id: string) {
   _bundles.delete(id);
 }
 
+function hideBundleVisuals(b: EnemyBundle): void {
+  b.hull.visible = false;
+  b.hullLight.visible = false;
+  b.hpBar.alpha = 0;
+  b.shieldBar.alpha = 0;
+  b.structureBar.alpha = 0;
+  b.nameText.alpha = 0;
+  b.levelBg.alpha = 0;
+  b.levelText.alpha = 0;
+  b.indicator.alpha = 0;
+  b.speechText.visible = false;
+}
+
 // ─── Health bars ───────────────────────────────────────────────────────────────
 // Unified horizontal bar divided into 3 side-by-side segments (Shield, HP, Structure),
 // positioned statically right below the name text.
@@ -390,24 +405,29 @@ export function syncPixiEntities(alpha: number, now: number): void {
 
   // Build lock lookup (primary + queue)
   _lockMap.clear();
-  const primaryId = getState().player.targetLock?.id;
   if (Array.isArray(getState().player.lockQueue)) {
     for (const slot of getState().player.lockQueue) _lockMap.set(slot.id, slot);
   }
 
-  const activeIds = new Set<string>();
+  _activeEnemyIds.clear();
 
   for (const e of liveEnemies) {
-    activeIds.add(e.id);
+    _activeEnemyIds.add(e.id);
 
     if (!_bundles.has(e.id)) _bundles.set(e.id, createBundle(e));
     const b = _bundles.get(e.id)!;
+    const visRadius = Math.max(28, ENEMY_DEFS[e.type]?.colRadius ?? e.sigRadius ?? 18) + 24;
+    if (!isVisible(e.x, e.y, visRadius)) {
+      hideBundleVisuals(b);
+      continue;
+    }
 
     const ix = useFixedTickInterpolation ? lerp(e.px, e.x, alpha) : e.x;
     const iy = useFixedTickInterpolation ? lerp(e.py, e.y, alpha) : e.y;
     const ia = useFixedTickInterpolation ? lerp(e.prevAngle ?? e.angle, e.angle, alpha) : e.angle;
 
     // Hull
+    b.hull.visible = true;
     b.hull.x = ix;
     b.hull.y = iy;
     b.hull.rotation = ia;
@@ -580,6 +600,6 @@ export function syncPixiEntities(alpha: number, now: number): void {
 
   // Destroy sprites for enemies no longer alive
   for (const id of _bundles.keys()) {
-    if (!activeIds.has(id)) destroyBundle(id);
+    if (!_activeEnemyIds.has(id)) destroyBundle(id);
   }
 }

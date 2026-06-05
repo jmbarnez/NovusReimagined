@@ -5,12 +5,13 @@
  * or add a new entry to MACHINES first.
  *
  * **Adding a new pool output type:** register the key in the appropriate resource
- * dict (COMPONENTS, REFINED, etc.), VOL, and player-data defaults.
+ * dict (COMPONENTS, etc.), VOL, and player-data defaults.
  */
 
-import { ORE, REFINED, LOOT, COMPONENTS } from "./resources.js";
+import { ORE, LOOT, COMPONENTS } from "./resources.js";
+import { ALLOY_FAMILIES } from "../refining.js";
 
-export type IndustryPool = "ore" | "refined" | "loot" | "component";
+export type IndustryPool = "ore" | "loot" | "component" | "material";
 
 export interface RecipeIO {
   pool: IndustryPool;
@@ -40,37 +41,16 @@ export interface Machine {
 }
 
 export const MACHINES: Machine[] = [
-  { id: "smelter",   label: "Smelter"   },
-  { id: "workbench", label: "Workbench" },
-  { id: "processor", label: "Field Processor" },
+  { id: "workbench", label: "Fabrication" },
+  { id: "processor", label: "Recovery" },
 ];
 
 export const RECIPES: Recipe[] = [
-  // ── Smelter ──────────────────────────────────────────────────────────────
-  {
-    id: "bar", machine: "smelter", label: "Ferro bar", duration: 8,
-    batchable: true, outputSkill: "refining",
-    inputs:  [{ pool: "ore",     key: "iron",    qty: 3 }],
-    outputs: [{ pool: "refined", key: "bar",     qty: 1 }],
-  },
-  {
-    id: "lat", machine: "smelter", label: "Lattice ingot", duration: 8,
-    batchable: true, outputSkill: "refining",
-    inputs:  [{ pool: "ore",     key: "crystal", qty: 2 }],
-    outputs: [{ pool: "refined", key: "lattice", qty: 1 }],
-  },
-  {
-    id: "con", machine: "smelter", label: "Exotic condensate", duration: 8,
-    batchable: true, outputSkill: "refining",
-    inputs:  [{ pool: "ore",     key: "exotic",     qty: 2 }],
-    outputs: [{ pool: "refined", key: "condensate", qty: 1 }],
-  },
-
-  // ── Workbench ─────────────────────────────────────────────────────────────
+  // ── Fabrication ───────────────────────────────────────────────────────────
   {
     id: "circuit", machine: "workbench", label: "Circuit board", duration: 12,
     inputs: [
-      { pool: "refined", key: "bar",  qty: 2 },
+      { pool: "material", key: "crystal_matrix",  qty: 0.4 },
       { pool: "loot",    key: "chip", qty: 1 },
     ],
     outputs: [{ pool: "component", key: "circuit", qty: 1 }],
@@ -78,7 +58,7 @@ export const RECIPES: Recipe[] = [
   {
     id: "gear", machine: "workbench", label: "Mechanical gear", duration: 12,
     inputs: [
-      { pool: "refined", key: "lattice", qty: 2 },
+      { pool: "material", key: "ferro_nickel_stock", qty: 0.6 },
       { pool: "loot",    key: "scrap",   qty: 2 },
     ],
     outputs: [{ pool: "component", key: "gear", qty: 1 }],
@@ -86,7 +66,7 @@ export const RECIPES: Recipe[] = [
   {
     id: "harness", machine: "workbench", label: "Wiring harness", duration: 12,
     inputs: [
-      { pool: "refined", key: "condensate", qty: 1 },
+      { pool: "material", key: "exotic_conductive", qty: 0.35 },
       { pool: "loot",    key: "cell",       qty: 1 },
     ],
     outputs: [{ pool: "component", key: "harness", qty: 1 }],
@@ -102,13 +82,7 @@ export const RECIPES: Recipe[] = [
     outputs: [{ pool: "component", key: "sensor_cluster", qty: 1 }],
   },
 
-  // ── Field Processor ───────────────────────────────────────────────────────
-  {
-    id: "proc_bar", machine: "processor", label: "Ferro bar", duration: 10,
-    batchable: true, outputSkill: "metallurgy",
-    inputs:  [{ pool: "loot",    key: "scrap", qty: 4 }],
-    outputs: [{ pool: "refined", key: "bar",   qty: 1 }],
-  },
+  // ── Recovery ──────────────────────────────────────────────────────────────
   {
     id: "proc_gear", machine: "processor", label: "Mechanical gear", duration: 10,
     batchable: true, outputSkill: "metallurgy",
@@ -153,9 +127,9 @@ export function recipesByMachine(machineId: string): Recipe[] {
 /** Resolve a pool key to its display label. */
 export function poolItemLabel(pool: IndustryPool, key: string): string {
   if (pool === "ore")       return ORE[key]?.label       ?? key;
-  if (pool === "refined")   return REFINED[key]?.label   ?? key;
   if (pool === "loot")      return LOOT[key]?.label      ?? key;
   if (pool === "component") return COMPONENTS[key]?.label ?? key;
+  if (pool === "material")  return ALLOY_FAMILIES.find((family) => family.id === key)?.label ?? key;
   return key;
 }
 

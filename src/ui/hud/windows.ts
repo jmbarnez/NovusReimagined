@@ -9,6 +9,10 @@ export function getHudWindow(id: string): HTMLElement | null {
   return _windows.get(id) || null;
 }
 
+function emitWindowLayoutChanged(): void {
+  window.dispatchEvent(new Event("hud:window-layout"));
+}
+
 function clampWindow(win: HTMLElement) {
   if (win.classList.contains("is-expanded")) return;
   const wr = win.getBoundingClientRect();
@@ -111,9 +115,11 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
         win!.style.left = `${baseX + (mv.clientX - sx)}px`;
         win!.style.top = `${baseY + (mv.clientY - sy)}px`;
         clampWindow(win!);
+        emitWindowLayoutChanged();
       };
       const onUp = () => {
         win!.classList.remove("is-dragging");
+        emitWindowLayoutChanged();
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
       };
@@ -141,6 +147,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
           w.style.height = w.dataset.prevHeight!;
         }
       });
+      emitWindowLayoutChanged();
       if (expand) {
         bringToFront(win!);
         if (!win!.style.left || !win!.style.width) {
@@ -157,6 +164,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
         win!.classList.add("is-expanded");
         setExpandButtonState(expandBtn as HTMLElement, true);
       }
+      emitWindowLayoutChanged();
     });
 
     win.addEventListener("mousedown", () => bringToFront(win!));
@@ -176,6 +184,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
   // letting it center/position via bridge.css rules.
   clampWindow(win);
   bringToFront(win);
+  emitWindowLayoutChanged();
 }
 
 // Keep all active dynamic windows inside visible viewport bounds on resize
@@ -183,6 +192,7 @@ window.addEventListener("resize", () => {
   _windows.forEach((win) => {
     if (win.style.display !== "none") {
       clampWindow(win);
+      emitWindowLayoutChanged();
     }
   });
 });
@@ -191,6 +201,7 @@ export function closeHudWindow(id: string) {
   const win = _windows.get(id);
   if (win) {
     win.style.display = "none";
+    emitWindowLayoutChanged();
     const cb = _closeCallbacks.get(id);
     if (cb) {
       cb();

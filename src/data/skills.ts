@@ -103,7 +103,7 @@ export const SKILL_DEF: Record<SkillId, SkillDef> = {
   },
   metallurgy: {
     name: "Metallurgy",
-    desc: "Field processing of salvage into refined components via the station processor.",
+    desc: "Field processing of salvage into reusable components via the station processor.",
     icon: "⚗️",
     category: "industry",
     color: "#00e8c8",

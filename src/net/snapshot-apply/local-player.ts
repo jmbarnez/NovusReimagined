@@ -45,7 +45,12 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
   if (typeof snap.player.homeSysIdx === "number") PlayerAccess.setHomeSysIdx(snap.player.homeSysIdx, p);
   if (snap.player.ore) PlayerAccess.setOreAll({ ...snap.player.ore }, p);
   if (snap.player.mixedOreCargo) PlayerAccess.setMixedOreCargo(snap.player.mixedOreCargo, p);
-  if (snap.player.refined) PlayerAccess.setRefinedAll({ ...snap.player.refined }, p);
+  if (snap.player.bulkMaterialsCargo) {
+    PlayerAccess.setBulkMaterialsCargo(snap.player.bulkMaterialsCargo.map((stack) => ({
+      ...stack,
+      composition: { ...stack.composition },
+    })), p);
+  }
   if (snap.player.loot) PlayerAccess.setLootAll({ ...snap.player.loot }, p);
   if (snap.player.components) PlayerAccess.setComponentsAll({ ...snap.player.components }, p);
   if (snap.player.ammo) PlayerAccess.setAmmoAll({ ...snap.player.ammo }, p);

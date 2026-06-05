@@ -3,6 +3,7 @@ import { dst } from "../utils/math.js";
 import { TUTORIAL_TRAINING_SITE_ID } from "./tutorial-site.js";
 import { getState } from "../state-access.js";
 import { ORE } from "./resources.js";
+import { flattenStorageMaterials } from "../refining.js";
 
 export interface TutorialZone {
   x: number;
@@ -30,7 +31,6 @@ export interface TutorialStep {
   id: string;
   title: string;
   objective: string | ((snapshot?: Record<string, unknown>) => string);
-  hint?: string | ((snapshot?: Record<string, unknown>) => string);
   zone: TutorialZone;
   beaconColor: number;
   nav?: TutorialNavTarget;
@@ -96,8 +96,11 @@ export function hasCombatLoadout(p: Player): boolean {
  * Checks if the player has progressed past or performed the mining/gathering tasks.
  */
 export function hasBypassedMining(p: Player): boolean {
+  const hasBulkMaterial = (p.bulkMaterialsCargo?.length ?? 0) > 0;
+  const hasRefineryProgress = (p.hubQueue?.length ?? 0) > 0 || flattenStorageMaterials(p.refineryStorage).length > 0 || (p.hubOutput.materials?.length ?? 0) > 0;
   return totalOre(p) > 0
-    || (p.refined.bar || 0) > 0
+    || hasBulkMaterial
+    || hasRefineryProgress
     || p.craftQueue.length > 0
     || hasCombatLoadout(p)
     || p.kills > 0
@@ -108,7 +111,10 @@ export function hasBypassedMining(p: Player): boolean {
  * Checks if the player has progressed past or performed the refining/industry tasks.
  */
 export function hasBypassedIndustry(p: Player): boolean {
-  return (p.refined.bar || 0) > 0
+  const hasBulkMaterial = (p.bulkMaterialsCargo?.length ?? 0) > 0;
+  const hasRefineryProgress = (p.hubQueue?.length ?? 0) > 0 || flattenStorageMaterials(p.refineryStorage).length > 0 || (p.hubOutput.materials?.length ?? 0) > 0;
+  return hasBulkMaterial
+    || hasRefineryProgress
     || p.craftQueue.length > 0
     || hasCombatLoadout(p)
     || p.kills > 0

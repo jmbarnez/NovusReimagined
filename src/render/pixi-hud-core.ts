@@ -12,12 +12,13 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
-import { screenContainer } from "../pixi.js";
+import { hudOverlayLayer } from "../pixi.js";
 import { getThemeColors } from "../data/settings.js";
 import { getStats } from "../player/player-stats.js";
 import { targetByLockId } from "../targeting.js";
 import { dst } from "../utils/math.js";
 import { getUIFont } from "./ui-font.js";
+import { displayPlayerAngle } from "./display-orientation.js";
 
 let hudContainer: Container | null = null;
 
@@ -49,11 +50,11 @@ let lastZoom = 1;
 let lastAngle = 0;
 
 export function initPixiHUD(): void {
-  if (!screenContainer) return;
+  if (!hudOverlayLayer) return;
 
   hudContainer = new Container();
   hudContainer.label = "hud-core";
-  screenContainer.addChild(hudContainer);
+  hudOverlayLayer.addChild(hudContainer);
 
   // Initialize graphics objects
   horizonLine = new Graphics();
@@ -162,7 +163,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
   if (horizonLine) {
     horizonLine.clear();
     horizonLine.position.set(cx + gx, cy + gy);
-    horizonLine.rotation = player.angle;
+    horizonLine.rotation = displayPlayerAngle(player);
     
     // Left wing bracket
     horizonLine.moveTo(-25 * z, 0);
@@ -367,8 +368,7 @@ export function destroyPixiHUD(): void {
   if (speedLabel) { speedLabel.destroy(); speedLabel = null; }
   if (shieldLabel) { shieldLabel.destroy(); shieldLabel = null; }
   
-  screenContainer?.removeChild(hudContainer);
+  hudOverlayLayer?.removeChild(hudContainer);
   hudContainer.destroy();
   hudContainer = null;
 }
-

@@ -69,36 +69,88 @@ export interface GameEffect {
 
 export interface HubDepositItem {
   id: string;
-  kind: "asteroid" | "debris";
+  kind: "asteroid" | "debris" | "mixedOreCargo";
   label: string;
   mass: number;
   composition?: Record<string, number>;
+  richness?: number;
+  qty?: number;
   salvagePool?: WreckSalvageEntry[];
+}
+
+export type RefiningHeatMode = "cool" | "stable" | "hot";
+export type BulkMaterialKind = "processed" | "alloy" | "customBlend";
+export type RefineryStorageKind = "intake" | "processed" | "separated" | "alloy";
+
+export interface BulkMaterialStack {
+  id: string;
+  materialId: string;
+  kind: BulkMaterialKind;
+  label: string;
+  volumeM3: number;
+  massKg: number;
+  composition: Record<string, number>;
+  alloyFamilyId?: string;
+}
+
+export interface RefineryStorageUnit {
+  id: string;
+  label: string;
+  kind: RefineryStorageKind;
+  capacityM3: number;
+  entries: BulkMaterialStack[];
+  preferredOreKey?: string;
+  notes?: string;
+}
+
+export interface DiscoveredAlloy {
+  id: string;
+  label: string;
+  signatureKey: string;
+  composition: Record<string, number>;
+  densityKgPerM3: number;
+  purpose: string;
+  tags: string[];
+  compatibleFamilyIds: string[];
+  discoveredAt: number;
+  seenCount: number;
+}
+
+export interface AlloyCodex {
+  knownFamilyIds: string[];
+  discoveries: DiscoveredAlloy[];
 }
 
 export interface HubDeposit {
   raw: HubDepositItem[];
   ore: Record<string, number>;
+  materials: BulkMaterialStack[];
   loot: Record<string, number>;
   modules: ModuleInstance[];
 }
 
 export interface HubJob {
   id: string;
-  kind: "asteroid" | "debris" | "smelt";
+  kind: "asteroid" | "debris" | "processMixed" | "separateStock" | "alloyStock";
   startTime: number;
   duration: number;
   mass: number;
   composition?: Record<string, number>;
+  richness?: number;
   salvagePool?: WreckSalvageEntry[];
-  smeltRecipeId?: string;
-  smeltQty?: number;
+  sourceMaterialId?: string;
+  targetAlloyFamilyId?: string;
+  heatMode?: RefiningHeatMode;
+  sourceQty?: number;
+  sourceStorageId?: string;
+  targetStorageId?: string;
+  sourceMaterialIds?: string[];
 }
 
 export interface HubOutput {
   loot: Record<string, number>;
   ore: Record<string, number>;
-  refined?: Record<string, number>;
+  materials: BulkMaterialStack[];
   modules: ModuleInstance[];
 }
 
@@ -155,7 +207,9 @@ export interface Player {
   credits: number;
   ore: Record<string, number>;
   mixedOreCargo: MixedOreCargo[];
-  refined: Record<string, number>;
+  bulkMaterialsCargo: BulkMaterialStack[];
+  refineryStorage: RefineryStorageUnit[];
+  alloyCodex: AlloyCodex;
   loot: Record<string, number>;
   components: Record<string, number>;
   ammo: { hybrid: number; missile: number };

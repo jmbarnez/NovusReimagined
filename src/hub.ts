@@ -1,4 +1,4 @@
-import { type Player } from "./state.js";
+import { type Player, type BulkMaterialStack, type RefiningHeatMode } from "./state.js";
 import { getState } from "./state-access.js";
 import { PlayerAccess, WorldAccess } from "./state-access.js";
 import type { HubJob } from "./state.js";
@@ -12,74 +12,212 @@ import { rollWreckSalvage } from "./wreck.js";
 import { addSkillXp } from "./player/player-data.js";
 import { getStats } from "./player/player-stats.js";
 import { logEvent } from "./feedback.js";
-import { getRecipe } from "./data/industryRecipes.js";
 import { C } from "./config/index.js";
 import type { Station, WreckSalvageEntry } from "./types/world.js";
-import { ORE_KEYS, sortedCompositionEntries, type OreComposition } from "./utils/ore-naming.js";
+import {
+  ALLOY_FAMILIES,
+  alloyMaterial,
+  flattenStorageMaterials,
+  averageDensityKgPerM3,
+  estimateMixedOreCargoMassKg,
+  materialLabelForComposition,
+  preferredStorageForMaterial,
+  processMixedSource,
+  separateMaterial,
+  upsertDiscoveredAlloy,
+} from "./refining.js";
+import { normalizeComposition, type OreComposition } from "./utils/ore-naming.js";
 
-const ORE_TO_SMELT_RECIPE: Record<string, string> = {
-  iron: "bar",
-  crystal: "lat",
-  exotic: "con",
-};
+const DEFAULT_HEAT_MODE: RefiningHeatMode = "stable";
 
-function getHub(p: Player): Station | null {
-  const sys = curSys(p);
-  if (!sys) return null;
-  return sys.stations.find((st: Station) => st.isProcessingHub) ?? null;
-}
-
-export function getDropZoneCenter(hub: Station): { x: number; y: number; radius: number } {
-  const dx = hub.dropZoneOffset?.dx ?? 180;
-  const dy = hub.dropZoneOffset?.dy ?? 0;
+function createMaterialStack(input: Omit<BulkMaterialStack, "id">): BulkMaterialStack {
   return {
-    x: hub.x + dx,
-    y: hub.y + dy,
-    radius: hub.dropZoneRadius ?? 140,
+    id: `mat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    ...input,
+    composition: { ...normalizeComposition(input.composition) },
   };
 }
 
-export function fmtDuration(seconds: number): string {
-  const rounded = Math.ceil(seconds);
-  if (rounded < 60) {
-    return `${rounded}s`;
+function asteroidMatterMassKg(rawMass: number, composition: OreComposition): number {
+  return Math.max(180, rawMass * 0.05 * averageDensityKgPerM3(composition));
+}
+
+function processJobDuration(massKg: number): number {
+  return C.HUB.ASTEROID_PROCESS_BASE + massKg / Math.max(1, C.HUB.ASTEROID_PROCESS_PER_MASS * 16);
+}
+
+function refinementHeatMode(mode?: RefiningHeatMode): RefiningHeatMode {
+  return mode === "cool" || mode === "hot" ? mode : "stable";
+}
+
+function skillUnlockBonus(skillLevel: number): number {
+  return 1 + Math.min(0.2, skillLevel * 0.03);
+}
+
+function findHubMaterial(p: Player, materialId: string): BulkMaterialStack | null {
+  return PlayerAccess.getRefineryStorageMaterial(materialId, p).material;
+}
+
+function storeRefineryMaterial(
+  material: BulkMaterialStack,
+  p: Player,
+  preferredStorageId?: string | null,
+): { stored: BulkMaterialStack | null; overflow: BulkMaterialStack | null; storageId: string | null } {
+  return PlayerAccess.addRefineryStorageMaterial(material, p, preferredStorageId);
+}
+
+function logStorageOverflow(label: string, overflow: BulkMaterialStack | null, p: Player): void {
+  if (!overflow || overflow.volumeM3 <= 1e-4) return;
+  if (p === getState().player) {
+    logEvent(`${label} overflowed storage — ${overflow.volumeM3.toFixed(1)} m³ lost as slag`, "system");
   }
-  const m = Math.floor(rounded / 60);
-  const s = rounded % 60;
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
-export function getProcessFee(mass: number): number {
-  return Math.max(
-    C.HUB.PROCESS_MIN_FEE,
-    Math.ceil(mass * C.HUB.PROCESS_FEE_PER_MASS),
-  );
-}
-
-export function getSmeltFee(craftQty: number): number {
-  return C.HUB.SMELT_FEE_PER_BATCH * craftQty;
-}
-
-function completeAsteroidProcessing(mass: number, composition: OreComposition, p: Player) {
-  const sorted = sortedCompositionEntries(composition);
-  const roll = random();
-  let cum = 0;
-  let key: string = ORE_KEYS[0];
-  for (const [oreKey, fraction] of sorted) {
-    cum += fraction;
-    if (roll < cum) { key = oreKey; break; }
+function blendMaterials(materials: BulkMaterialStack[]): { composition: OreComposition; massKg: number; volumeM3: number } {
+  const totalMassKg = materials.reduce((sum, material) => sum + material.massKg, 0);
+  const totalVolumeM3 = materials.reduce((sum, material) => sum + material.volumeM3, 0);
+  if (totalMassKg <= 0) return { composition: { iron: 1 }, massKg: 0, volumeM3: totalVolumeM3 };
+  const weighted: Record<string, number> = {};
+  for (const material of materials) {
+    for (const [oreKey, fraction] of Object.entries(material.composition)) {
+      weighted[oreKey] = (weighted[oreKey] ?? 0) + fraction * material.massKg;
+    }
   }
+  return {
+    composition: normalizeComposition(
+      Object.fromEntries(Object.entries(weighted).map(([oreKey, massKg]) => [oreKey, massKg / totalMassKg])),
+    ),
+    massKg: totalMassKg,
+    volumeM3: totalVolumeM3,
+  };
+}
 
-  const skillLv = p.skills?.["refining"] ?? 0;
-  const yieldMult = 0.6 + skillLv * 0.03;
-  const qty = Math.max(1, Math.floor((10 + mass / 80) * yieldMult));
-  const cur = p.hubDeposit?.ore?.[key] ?? 0;
-  PlayerAccess.setHubDepositOre(key, cur + qty, p);
-
-  const xp = Math.max(10, Math.floor(mass * 0.025));
+function completeAsteroidProcessing(job: HubJob, p: Player) {
+  const composition = normalizeComposition(job.composition ?? { iron: 1 });
+  const skillLv = p.skills?.refining ?? 0;
+  const processed = processMixedSource({
+    sourceMassKg: asteroidMatterMassKg(job.mass, composition),
+    composition,
+    richness: job.richness ?? 1,
+    skillLevel: skillLv,
+    heatMode: refinementHeatMode(job.heatMode),
+  });
+  const material = createMaterialStack({
+    materialId: "processed_stock",
+    kind: "processed",
+    label: materialLabelForComposition(composition),
+    volumeM3: processed.volumeM3,
+    massKg: processed.massKg,
+    composition,
+  });
+  const routed = storeRefineryMaterial(material, p, job.targetStorageId);
+  logStorageOverflow(material.label, routed.overflow, p);
+  const xp = Math.max(12, Math.floor(processed.massKg * 0.012 * skillUnlockBonus(skillLv)));
   addSkillXp("refining", xp, p);
   if (p === getState().player) {
-    logEvent(`Processing complete — ${qty}× ${key} ore ready · Refining +${xp} XP`, "loot");
+    logEvent(`Processing complete — ${material.label} ready · ${material.volumeM3.toFixed(1)} m³ · Refining +${xp} XP`, "loot");
+  }
+}
+
+function completeMixedOreProcessing(job: HubJob, p: Player) {
+  const composition = normalizeComposition(job.composition ?? { iron: 1 });
+  const skillLv = p.skills?.refining ?? 0;
+  const processed = processMixedSource({
+    sourceMassKg: job.mass,
+    composition,
+    richness: job.richness ?? 1,
+    skillLevel: skillLv,
+    heatMode: refinementHeatMode(job.heatMode),
+  });
+  const material = createMaterialStack({
+    materialId: "processed_stock",
+    kind: "processed",
+    label: materialLabelForComposition(composition),
+    volumeM3: processed.volumeM3,
+    massKg: processed.massKg,
+    composition,
+  });
+  const routed = storeRefineryMaterial(material, p, job.targetStorageId);
+  logStorageOverflow(material.label, routed.overflow, p);
+  const xp = Math.max(8, Math.floor(processed.massKg * 0.015 * skillUnlockBonus(skillLv)));
+  addSkillXp("refining", xp, p);
+  if (p === getState().player) {
+    logEvent(`Feedstock stabilized — ${material.label} stockpiled · Refining +${xp} XP`, "loot");
+  }
+}
+
+function completeSeparation(job: HubJob, p: Player) {
+  const composition = normalizeComposition(job.composition ?? { iron: 1 });
+  const material: BulkMaterialStack = {
+    id: job.sourceMaterialId ?? `sep-${Date.now()}`,
+    materialId: "processed_stock",
+    kind: "processed",
+    label: materialLabelForComposition(composition),
+    volumeM3: job.sourceQty ?? 0,
+    massKg: job.mass,
+    composition,
+  };
+  const result = separateMaterial({
+    material,
+    skillLevel: p.skills?.refining ?? 0,
+    heatMode: refinementHeatMode(job.heatMode),
+  });
+  for (const output of result.outputs) {
+    const stored = storeRefineryMaterial(createMaterialStack({
+      materialId: "processed_stock",
+      kind: "processed",
+      label: output.label,
+      volumeM3: output.volumeM3,
+      massKg: output.massKg,
+      composition: output.composition,
+    }), p);
+    logStorageOverflow(output.label, stored.overflow, p);
+  }
+  const xp = Math.max(6, Math.floor(result.outputs.reduce((sum, output) => sum + output.massKg, 0) * 0.01));
+  addSkillXp("refining", xp, p);
+  if (p === getState().player) {
+    logEvent(`Separation complete — ${result.outputs.length} stock streams recovered · Refining +${xp} XP`, "loot");
+  }
+}
+
+function completeAlloying(job: HubJob, p: Player) {
+  const composition = normalizeComposition(job.composition ?? { iron: 1 });
+  const material: BulkMaterialStack = {
+    id: job.sourceMaterialId ?? `alloy-${Date.now()}`,
+    materialId: "processed_stock",
+    kind: "processed",
+    label: materialLabelForComposition(composition),
+    volumeM3: job.sourceQty ?? 0,
+    massKg: job.mass,
+    composition,
+  };
+  const output = alloyMaterial({
+    material,
+    skillLevel: p.skills?.refining ?? 0,
+    heatMode: refinementHeatMode(job.heatMode),
+    targetFamilyId: job.targetAlloyFamilyId,
+  });
+  const now = Date.now() / 1000;
+  const discovered = output.kind === "customBlend"
+    ? upsertDiscoveredAlloy(p.alloyCodex, output.composition, now)
+    : null;
+  const routed = storeRefineryMaterial(createMaterialStack({
+    materialId: output.materialId,
+    kind: discovered ? "alloy" : output.kind,
+    label: discovered?.label ?? output.label,
+    volumeM3: output.volumeM3,
+    massKg: output.massKg,
+    composition: output.composition,
+    alloyFamilyId: discovered?.id ?? output.alloyFamilyId,
+  }), p, job.targetStorageId);
+  logStorageOverflow(discovered?.label ?? output.label, routed.overflow, p);
+  PlayerAccess.setAlloyCodex(p.alloyCodex, p);
+  const xp = Math.max(10, Math.floor(output.massKg * ((output.kind === "alloy" || discovered) ? 0.018 : 0.012)));
+  addSkillXp("refining", xp, p);
+  if (p === getState().player) {
+    const label = discovered?.label ?? output.label;
+    const suffix = discovered ? " · Discovery logged" : "";
+    logEvent(`Alloying complete — ${label} produced${suffix} · Refining +${xp} XP`, "loot");
   }
 }
 
@@ -101,26 +239,46 @@ function completeDebrisProcessing(mass: number, salvagePool: WreckSalvageEntry[]
   }
 }
 
-export function updateHub(_dt: number) {
-  // Sandbox physics mode: Automatic background ingestion is disabled.
-  // Asteroids and salvage debris remain fully physical, floating in the docking bay
-  // until the player interacts with the console and manually triggers deconstruction.
+function getHub(p: Player): Station | null {
+  const sys = curSys(p);
+  if (!sys) return null;
+  return sys.stations.find((st: Station) => st.isProcessingHub) ?? null;
 }
 
-export interface ScanDepositItem {
-  id: string;
-  kind: "asteroid" | "debris";
-  label: string;
-  mass: number;
-  composition?: OreComposition;
-  salvagePool?: WreckSalvageEntry[];
+export function getDropZoneCenter(hub: Station): { x: number; y: number; radius: number } {
+  const dx = hub.dropZoneOffset?.dx ?? 180;
+  const dy = hub.dropZoneOffset?.dy ?? 0;
+  return {
+    x: hub.x + dx,
+    y: hub.y + dy,
+    radius: hub.dropZoneRadius ?? 140,
+  };
 }
 
-export function getFloatingDeposits(hub: Station, p: Player): ScanDepositItem[] {
+export function fmtDuration(seconds: number): string {
+  const rounded = Math.ceil(seconds);
+  if (rounded < 60) return `${rounded}s`;
+  const m = Math.floor(rounded / 60);
+  const s = rounded % 60;
+  return `${m}:${s < 10 ? "0" : ""}${s}`;
+}
+
+export function getProcessFee(mass: number): number {
+  return Math.max(C.HUB.PROCESS_MIN_FEE, Math.ceil(mass * C.HUB.PROCESS_FEE_PER_MASS));
+}
+
+export function getFloatingDeposits(hub: Station, p: Player) {
   const dropZone = getDropZoneCenter(hub);
-  const items: ScanDepositItem[] = [];
+  const items: Array<{
+    id: string;
+    kind: "asteroid" | "debris";
+    label: string;
+    mass: number;
+    composition?: OreComposition;
+    richness?: number;
+    salvagePool?: WreckSalvageEntry[];
+  }> = [];
 
-  // 1. Scan floating salvage wreck pieces inside the docking bay
   for (const wp of getState().wreckPieces) {
     if (dst(wp.x, wp.y, dropZone.x, dropZone.y) < dropZone.radius) {
       const mass = wp.radius * wp.radius * 0.8;
@@ -134,163 +292,181 @@ export function getFloatingDeposits(hub: Station, p: Player): ScanDepositItem[] 
     }
   }
 
-  // 2. Scan floating asteroids inside the docking bay
   const sys = curSys(p);
   if (sys) {
     for (const ast of sys.asteroids) {
       if (ast.depleted || ast.hp <= 0) continue;
       if (dst(ast.x, ast.y, dropZone.x, dropZone.y) < dropZone.radius) {
-        const mass = ast.radius * ast.radius * 1.8;
         items.push({
           id: ast.id,
           kind: "asteroid",
           label: ast.name || "Asteroid",
-          mass,
+          mass: ast.radius * ast.radius * 1.8,
           composition: { ...ast.composition },
+          richness: ast.richness,
         });
       }
     }
   }
-
   return items;
+}
+
+export function getCargoMixedOreInputs(p: Player = getState().player) {
+  return (p.mixedOreCargo ?? []).map((slot, index) => ({
+    id: `mixed-${index}`,
+    index,
+    label: slot.name,
+    qty: slot.qty,
+    richness: slot.richness ?? 1,
+    composition: { ...slot.composition },
+    massKg: estimateMixedOreCargoMassKg(slot.qty, slot.composition),
+  }));
+}
+
+export function updateHub(_dt: number) {
+  // Background ingestion remains manual by design.
 }
 
 export function processFloatingItem(itemId: string, p: Player): { success: boolean; reason?: string } {
   const hub = getHub(p);
   if (!hub) return { success: false, reason: "No active reclamation hub detected" };
-
-  const items = getFloatingDeposits(hub, p);
-  const item = items.find(i => i.id === itemId);
-  if (!item) return { success: false, reason: "Target matter is no longer located inside the docking bay" };
+  const item = getFloatingDeposits(hub, p).find((entry) => entry.id === itemId);
+  if (!item) return { success: false, reason: "Target matter is no longer in the bay" };
 
   const fee = getProcessFee(item.mass);
-  if (p.credits < fee) {
-    return { success: false, reason: `Need ${fee}¢ processing fee (have ${p.credits}¢)` };
-  }
-
-  // Deduct credits from account
+  if (p.credits < fee) return { success: false, reason: `Need ${fee}¢ processing fee (have ${p.credits}¢)` };
   PlayerAccess.modifyCredits(-fee, p);
 
-  // Deconstruct and remove the physical entity from the world
   if (item.kind === "debris") {
-    const idx = getState().wreckPieces.findIndex(wp => wp.id === itemId);
+    const idx = getState().wreckPieces.findIndex((wp) => wp.id === itemId);
     if (idx !== -1) {
       removeSensorLock(itemId, p);
       removeWreckPiece(idx);
     }
-  } else if (item.kind === "asteroid") {
+  } else {
     const sys = curSys(p);
-    if (sys) {
-      if (sys.asteroids.some(a => a.id === itemId)) {
-        removeSensorLock(itemId, p);
-        WorldAccess.depleteAsteroid(p.sysIdx, itemId, 90 + random() * 60);
-      }
+    if (sys?.asteroids.some((ast) => ast.id === itemId)) {
+      removeSensorLock(itemId, p);
+      WorldAccess.depleteAsteroid(p.sysIdx, itemId, 90 + random() * 60);
     }
   }
 
-  // Queue deconstruction job in Reclamation Array
   const now = Date.now() / 1000;
-  const duration = item.kind === "asteroid"
-    ? C.HUB.ASTEROID_PROCESS_BASE + item.mass / C.HUB.ASTEROID_PROCESS_PER_MASS
-    : C.HUB.DEBRIS_PROCESS_BASE + item.mass / C.HUB.DEBRIS_PROCESS_PER_MASS;
-
-  const job = {
+  const job: HubJob = {
     id: `hub-${item.kind}-${Date.now()}`,
-    kind: item.kind,
+    kind: item.kind === "asteroid" ? "asteroid" : "debris",
     startTime: now,
-    duration,
+    duration: processJobDuration(item.mass),
     mass: item.mass,
     composition: item.composition ? { ...item.composition } : undefined,
+    richness: item.richness ?? 1,
     salvagePool: item.salvagePool ? [...item.salvagePool] : undefined,
+    heatMode: DEFAULT_HEAT_MODE,
   };
-
   PlayerAccess.addHubJob(job, p);
   if (p === getState().player) {
     const dropZone = getDropZoneCenter(hub);
     floatText(dropZone.x, dropZone.y - 35, "Reclamation Initiated", "#ffaa44");
-    logEvent(`Matter Reclamation Initiated: ${item.label} (${fee}¢ fee)`, "system");
-  }
-
-  return { success: true };
-}
-
-export function processDepositItem(itemId: string, p: Player): { success: boolean; reason?: string } {
-  const item = p.hubDeposit?.raw?.find(i => i.id === itemId);
-  if (!item) return { success: false, reason: "Item not found in drop bay" };
-
-  const fee = getProcessFee(item.mass);
-  if (p.credits < fee) {
-    return { success: false, reason: `Need ${fee}¢ processing fee (have ${p.credits}¢)` };
-  }
-
-  PlayerAccess.modifyCredits(-fee, p);
-  PlayerAccess.removeHubDepositItem(itemId, p);
-
-  const now = Date.now() / 1000;
-  const duration = item.kind === "asteroid"
-    ? C.HUB.ASTEROID_PROCESS_BASE + item.mass / C.HUB.ASTEROID_PROCESS_PER_MASS
-    : C.HUB.DEBRIS_PROCESS_BASE + item.mass / C.HUB.DEBRIS_PROCESS_PER_MASS;
-
-  const job: HubJob = {
-    id: `hub-${item.kind}-${Date.now()}`,
-    kind: item.kind,
-    startTime: now,
-    duration,
-    mass: item.mass,
-    composition: item.composition ? { ...item.composition } : undefined,
-    salvagePool: item.salvagePool ? [...item.salvagePool] : undefined,
-  };
-  PlayerAccess.addHubJob(job, p);
-  if (p === getState().player) {
-    logEvent(`Queued processing: ${item.label} (${fee}¢ fee)`, "system");
+    logEvent(`Matter reclamation initiated: ${item.label} (${fee}¢ fee)`, "system");
   }
   return { success: true };
 }
 
-export function smeltFromDeposit(oreKey: string, craftQty: number, p: Player): { success: boolean; reason?: string } {
-  const recipeId = ORE_TO_SMELT_RECIPE[oreKey];
-  if (!recipeId) return { success: false, reason: "No smelt recipe for this ore" };
-
-  const recipe = getRecipe(recipeId);
-  if (!recipe) return { success: false, reason: "Recipe not found" };
-
-  const oreInput = recipe.inputs.find(i => i.pool === "ore" && i.key === oreKey);
-  if (!oreInput) return { success: false, reason: "Invalid smelt recipe" };
-
-  const oreNeeded = oreInput.qty * craftQty;
-  const available = p.hubDeposit?.ore?.[oreKey] ?? 0;
-  if (available < oreNeeded) {
-    return { success: false, reason: `Need ${oreNeeded}× ${oreKey} ore (have ${available})` };
-  }
-
-  const fee = getSmeltFee(craftQty);
-  if (p.credits < fee) {
-    return { success: false, reason: `Need ${fee}¢ smelting fee (have ${p.credits}¢)` };
-  }
+export function processMixedOreCargo(
+  index: number,
+  qty: number,
+  heatMode: RefiningHeatMode,
+  p: Player,
+  targetStorageId?: string | null,
+): { success: boolean; reason?: string } {
+  const slot = p.mixedOreCargo?.[index];
+  if (!slot || qty <= 0 || qty > slot.qty) return { success: false, reason: "Invalid mixed ore selection" };
+  const sourceMassKg = estimateMixedOreCargoMassKg(qty, slot.composition);
+  const fee = getProcessFee(sourceMassKg / 100);
+  if (p.credits < fee) return { success: false, reason: `Need ${fee}¢ processing fee (have ${p.credits}¢)` };
 
   PlayerAccess.modifyCredits(-fee, p);
-  PlayerAccess.setHubDepositOre(oreKey, available - oreNeeded, p);
+  if (!PlayerAccess.removeMixedOreCargo(index, qty, p)) {
+    return { success: false, reason: "Unable to reserve ore chunk" };
+  }
 
   const now = Date.now() / 1000;
-  const duration = (recipe.duration ?? 10) * craftQty;
-  const job: HubJob = {
-    id: `hub-smelt-${Date.now()}-${random().toString(36).slice(2, 7)}`,
-    kind: "smelt",
+  PlayerAccess.addHubJob({
+    id: `hub-mixed-${Date.now()}-${index}`,
+    kind: "processMixed",
     startTime: now,
-    duration,
-    mass: 0,
-    smeltRecipeId: recipeId,
-    smeltQty: craftQty,
-  };
-  PlayerAccess.addHubJob(job, p);
+    duration: processJobDuration(sourceMassKg),
+    mass: sourceMassKg,
+    composition: { ...slot.composition },
+    richness: slot.richness ?? 1,
+    sourceQty: qty,
+    heatMode: refinementHeatMode(heatMode),
+    targetStorageId: targetStorageId ?? undefined,
+  }, p);
   if (p === getState().player) {
-    logEvent(`Queued smelt: ${recipe.label} ×${craftQty} (${fee}¢ fee)`, "system");
+    logEvent(`Queued feedstock processing: ${slot.name} ×${qty} (${fee}¢ fee)`, "system");
   }
+  return { success: true };
+}
+
+export function separateHubMaterial(materialId: string, heatMode: RefiningHeatMode, p: Player): { success: boolean; reason?: string } {
+  const found = PlayerAccess.getRefineryStorageMaterial(materialId, p);
+  const material = found.material;
+  if (!material) return { success: false, reason: "Material stack not found" };
+  const fee = getProcessFee(material.massKg / 120);
+  if (p.credits < fee) return { success: false, reason: `Need ${fee}¢ separation fee (have ${p.credits}¢)` };
+  const removed = PlayerAccess.removeHubDepositMaterial(materialId, p);
+  if (!removed) return { success: false, reason: "Material stack unavailable" };
+  PlayerAccess.modifyCredits(-fee, p);
+  PlayerAccess.addHubJob({
+    id: `hub-separate-${Date.now()}`,
+    kind: "separateStock",
+    startTime: Date.now() / 1000,
+    duration: 6 + removed.volumeM3 * 10,
+    mass: removed.massKg,
+    sourceQty: removed.volumeM3,
+    composition: { ...removed.composition },
+    sourceMaterialId: removed.id,
+    sourceStorageId: found.storageId ?? undefined,
+    heatMode: refinementHeatMode(heatMode),
+  }, p);
+  return { success: true };
+}
+
+export function alloyHubMaterial(
+  materialId: string,
+  targetAlloyFamilyId: string | null,
+  heatMode: RefiningHeatMode,
+  p: Player,
+  sourceMaterialIds?: string[],
+  targetStorageId?: string | null,
+): { success: boolean; reason?: string } {
+  const requestedIds = Array.from(new Set([materialId, ...(sourceMaterialIds ?? [])].filter((id): id is string => !!id)));
+  const removed = PlayerAccess.removeRefineryStorageMaterials(requestedIds, p);
+  if (removed.materials.length === 0) return { success: false, reason: "Material stack not found" };
+  const blend = blendMaterials(removed.materials);
+  const fee = getProcessFee(blend.massKg / 150);
+  if (p.credits < fee) return { success: false, reason: `Need ${fee}¢ alloying fee (have ${p.credits}¢)` };
+  PlayerAccess.modifyCredits(-fee, p);
+  PlayerAccess.addHubJob({
+    id: `hub-alloy-${Date.now()}`,
+    kind: "alloyStock",
+    startTime: Date.now() / 1000,
+    duration: 8 + blend.volumeM3 * 12,
+    mass: blend.massKg,
+    sourceQty: blend.volumeM3,
+    composition: { ...blend.composition },
+    sourceMaterialId: removed.materials[0]?.id,
+    sourceMaterialIds: requestedIds,
+    sourceStorageId: removed.storageIds[0],
+    targetAlloyFamilyId: targetAlloyFamilyId ?? undefined,
+    heatMode: refinementHeatMode(heatMode),
+    targetStorageId: targetStorageId ?? undefined,
+  }, p);
   return { success: true };
 }
 
 export function tickHubQueue(p: Player = getState().player) {
-  if (!p) return;
   if (!p.hubQueue?.length) return;
   const now = Date.now() / 1000;
   const completed: number[] = [];
@@ -299,33 +475,11 @@ export function tickHubQueue(p: Player = getState().player) {
     const job = p.hubQueue[i];
     if (now - job.startTime < job.duration) continue;
     completed.push(i);
-
-    if (job.kind === "debris") {
-      completeDebrisProcessing(job.mass, job.salvagePool, p);
-    } else if (job.kind === "asteroid") {
-      completeAsteroidProcessing(job.mass, job.composition ?? { iron: 1 }, p);
-    } else if (job.kind === "smelt" && job.smeltRecipeId) {
-      const recipe = getRecipe(job.smeltRecipeId);
-      if (!recipe) continue;
-      const qty = job.smeltQty ?? 1;
-      const skillMult = recipe.outputSkill ? 1 + (p.skills[recipe.outputSkill] || 0) * 0.05 : 1;
-      for (const out of recipe.outputs) {
-        const totalQty = Math.floor(out.qty * qty * skillMult);
-        if (out.pool === "refined") {
-          const cur = p.hubOutput?.refined?.[out.key] ?? 0;
-          PlayerAccess.setHubOutputRefined(out.key, cur + totalQty, p);
-        } else if (out.pool === "ore") {
-          const cur = p.hubOutput?.ore?.[out.key] ?? 0;
-          PlayerAccess.setHubOutputOre(out.key, cur + totalQty, p);
-        } else if (out.pool === "loot") {
-          const cur = p.hubOutput?.loot?.[out.key] ?? 0;
-          PlayerAccess.setHubOutputLoot(out.key, cur + totalQty, p);
-        }
-      }
-      if (p === getState().player) {
-        logEvent(`Smelting complete: ${recipe.label} ×${qty}`, "loot");
-      }
-    }
+    if (job.kind === "debris") completeDebrisProcessing(job.mass, job.salvagePool, p);
+    else if (job.kind === "asteroid") completeAsteroidProcessing(job, p);
+    else if (job.kind === "processMixed") completeMixedOreProcessing(job, p);
+    else if (job.kind === "separateStock") completeSeparation(job, p);
+    else if (job.kind === "alloyStock") completeAlloying(job, p);
   }
 
   for (let i = completed.length - 1; i >= 0; i--) {
@@ -336,42 +490,49 @@ export function tickHubQueue(p: Player = getState().player) {
 export function collectHubOutput(p: Player = getState().player): {
   loot: Record<string, number>;
   ore: Record<string, number>;
-  refined: Record<string, number>;
+  materials: BulkMaterialStack[];
   modules: ModuleInstance[];
 } {
+  const materials = [
+    ...(p.hubOutput.materials ?? []),
+    ...flattenStorageMaterials(p.refineryStorage),
+  ].map((entry) => ({ ...entry, composition: { ...entry.composition } }));
+
   const out = {
     loot: { ...p.hubOutput.loot, ...p.hubDeposit.loot },
     ore: { ...p.hubOutput.ore },
-    refined: { ...(p.hubOutput.refined ?? {}) },
+    materials,
     modules: [...p.hubOutput.modules, ...p.hubDeposit.modules],
   };
 
   for (const [key, qty] of Object.entries(out.loot)) {
-    const cur = p.loot[key] ?? 0;
-    PlayerAccess.setLoot(key, cur + qty, p);
+    PlayerAccess.setLoot(key, (p.loot[key] ?? 0) + qty, p);
   }
-
   for (const [key, qty] of Object.entries(out.ore)) {
-    const cur = p.ore[key] ?? 0;
-    PlayerAccess.setOre(key, cur + qty, p);
+    PlayerAccess.setOre(key, (p.ore[key] ?? 0) + qty, p);
   }
-
-  for (const [key, qty] of Object.entries(out.refined)) {
-    const cur = p.refined[key] ?? 0;
-    PlayerAccess.setRefined(key, cur + qty, p);
+  for (const material of materials) {
+    PlayerAccess.addBulkMaterial(material, p);
   }
-
   for (const inst of out.modules) {
     PlayerAccess.addModuleCargo(inst, p);
   }
 
-  PlayerAccess.setHubOutput({ loot: {}, ore: {}, refined: {}, modules: [] }, p);
+  PlayerAccess.setHubOutput({ loot: {}, ore: {}, materials: [], modules: [] }, p);
   PlayerAccess.setHubDeposit({
     raw: [...p.hubDeposit.raw],
     ore: { ...p.hubDeposit.ore },
+    materials: [],
     loot: {},
     modules: [],
   }, p);
+  PlayerAccess.setRefineryStorage(
+    (p.refineryStorage ?? []).map((unit) => ({
+      ...unit,
+      entries: [],
+    })),
+    p,
+  );
   return out;
 }
 
@@ -380,9 +541,10 @@ export function hasHubDeposit(p: Player): boolean {
   if (!d) return false;
   return (
     (d.raw?.length ?? 0) > 0 ||
-    Object.values(d.ore).some(v => v > 0) ||
-    Object.values(d.loot).some(v => v > 0) ||
-    d.modules.length > 0
+    Object.values(d.ore ?? {}).some((value) => value > 0) ||
+    flattenStorageMaterials(p.refineryStorage).length > 0 ||
+    Object.values(d.loot ?? {}).some((value) => value > 0) ||
+    (d.modules?.length ?? 0) > 0
   );
 }
 
@@ -390,15 +552,16 @@ export function hasHubOutput(p: Player = getState().player): boolean {
   const o = p.hubOutput;
   const d = p.hubDeposit;
   return (
-    Object.values(o.loot).some(v => v > 0) ||
-    Object.values(o.ore).some(v => v > 0) ||
-    Object.values(o.refined ?? {}).some(v => v > 0) ||
-    o.modules.length > 0 ||
-    Object.values(d?.loot ?? {}).some(v => v > 0) ||
-    (d?.modules?.length ?? 0) > 0
+    Object.values(o.loot ?? {}).some((value) => value > 0) ||
+    Object.values(o.ore ?? {}).some((value) => value > 0) ||
+    (o.materials?.length ?? 0) > 0 ||
+    (o.modules?.length ?? 0) > 0 ||
+    Object.values(d?.loot ?? {}).some((value) => value > 0) ||
+    (d?.modules?.length ?? 0) > 0 ||
+    flattenStorageMaterials(p.refineryStorage).length > 0
   );
 }
 
-export function getSmeltRecipeForOre(oreKey: string): string | null {
-  return ORE_TO_SMELT_RECIPE[oreKey] ?? null;
+export function getAlloyFamilies() {
+  return ALLOY_FAMILIES;
 }

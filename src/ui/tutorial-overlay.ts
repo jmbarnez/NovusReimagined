@@ -11,13 +11,11 @@ import {
   getTutorialNavProgress,
   getTutorialNavRemainingM,
   getTutorialStepObjective,
-  getTutorialStepHint,
   getHangarTourPanel,
   getHudTourPanel,
 } from "../data/tutorial.js";
 import {
   skipTutorial,
-  getTutorialHintDelay,
   getTutorialSnapshot,
   isCurrentStepComplete,
   advanceStep,
@@ -35,7 +33,6 @@ let cardEl: HTMLElement | null = null;
 let titleEl: HTMLElement | null = null;
 let objectiveEl: HTMLElement | null = null;
 let tourLabelEl: HTMLElement | null = null;
-let hintEl: HTMLElement | null = null;
 let statusEl: HTMLElement | null = null;
 let counterEl: HTMLElement | null = null;
 let tourNextBtn: HTMLButtonElement | null = null;
@@ -163,6 +160,9 @@ function shouldShowTutorialLayer(): boolean {
   if (showCompleteBannerActive) return true;
   if (!visible || !getState().player?.tutorial?.active) return false;
   if (xpPopupObscuresTutorial()) return false;
+  const stepId = getCurrentTutorialStep(getState().player)?.id;
+  const stationRelevantStep = stepId === "industry" || stepId === "hangar-high" || stepId === "hangar-turrets";
+  if (Client.stationOpen && !stationRelevantStep) return false;
   return true;
 }
 
@@ -331,16 +331,14 @@ function renderStep() {
 
   const snapshot = getTutorialSnapshot();
 
-  // Always refresh copy — step can change while the map or XP toast hides this layer,
-  // and hints still update every frame via updateHintVisibility().
+  // Always refresh copy — step can change while the map or XP toast hides this layer.
   if (cardEl) cardEl.hidden = false;
   if (completeEl) completeEl.hidden = true;
   if (confirmEl) confirmEl.hidden = true;
   if (counterEl) counterEl.textContent = t("tutorial.stepCounter", { n: getState().player.tutorial.step + 1, total: TUTORIAL_STEP_COUNT });
   if (titleEl) titleEl.textContent = step.title;
-  if (objectiveEl) objectiveEl.textContent = getTutorialStepObjective(step, snapshot);
+  if (objectiveEl) objectiveEl.innerHTML = getTutorialStepObjective(step, snapshot);
   syncTourCopy(step);
-  if (hintEl) hintEl.style.opacity = "0";
   lastReady = false;
 
   if (!shouldShowTutorialLayer()) {
@@ -374,25 +372,19 @@ function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep
       tourLabelEl.style.display = "none";
     }
   }
-  if (hintEl) {
-    const hint = getTutorialStepHint(step, snapshot);
-    hintEl.textContent = hint;
-    hintEl.style.display = hint ? "block" : "none";
+}
+
+function updateObjectiveText() {
+  if (!objectiveEl || !shouldShowTutorialLayer()) return;
+  const step = getCurrentTutorialStep(getState().player);
+  if (!step) return;
+  const snapshot = getTutorialSnapshot();
+  const html = getTutorialStepObjective(step, snapshot);
+  if (objectiveEl.innerHTML !== html) {
+    objectiveEl.innerHTML = html;
   }
 }
 
-function updateHintVisibility() {
-  if (!hintEl || !shouldShowTutorialLayer()) return;
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step) return;
-  syncTourCopy(step);
-  const elapsed = Date.now() / 1000 - getTutorialHintDelay();
-  const hangarTour = isHangarGuidedStep(step) && Client.stationOpen;
-  const hudTour = step.id === "hud-tour";
-  hintEl.style.opacity = hangarTour || hudTour || elapsed >= 8 ? "1" : "0";
-  syncHangarGuideVisuals();
-  updateReadyState();
-}
 
 export function initTutorialOverlay(active: boolean) {
   visible = active;
@@ -416,7 +408,6 @@ export function initTutorialOverlay(active: boolean) {
           <span class="tutorial-nav-progress-label"></span>
         </div>
         <div class="tutorial-status" hidden>${t("tutorial.objectiveComplete")}</div>
-        <div class="tutorial-hint"></div>
         <div class="tutorial-nav">
           <button type="button" class="tutorial-tour-next-btn" hidden>${t("tutorial.next")}</button>
           <button type="button" class="tutorial-next-btn" hidden>${t("tutorial.next")}</button>
@@ -449,7 +440,6 @@ export function initTutorialOverlay(active: boolean) {
     navProgressFillEl = root.querySelector(".tutorial-nav-progress-fill");
     navProgressLabelEl = root.querySelector(".tutorial-nav-progress-label");
     statusEl = root.querySelector(".tutorial-status");
-    hintEl = root.querySelector(".tutorial-hint");
     tourNextBtn = root.querySelector(".tutorial-tour-next-btn");
     nextBtn = root.querySelector(".tutorial-next-btn");
     confirmEl = root.querySelector(".tutorial-confirm");
@@ -561,7 +551,7 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
     return;
   }
   if (root) root.style.display = "block";
-  updateHintVisibility();
+  updateObjectiveText();
   syncHudHighlights();
   syncDimmerVisibility();
   updateNavProgress();

@@ -1,11 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { _G as G } from "../src/state.js";;
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { buildEnemyFromSpawn } from "../src/utils/spawn.js";
-import { pickHostileTarget, processNpcBehavior, isPlayerRef } from "../src/physics/npc-ai.js";
+import { clearSimulationEntities } from "../src/utils/entities.js";
+import { computeLinearInterceptAngle, pickHostileTarget, processNpcBehavior, fireTurretsAt, isPlayerRef } from "../src/physics/npc-ai.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import type { Enemy } from "../src/types/world.js";
+import type { Player } from "../src/state.js";
 
 function makeHostileNearPlayer(dist = 150): Enemy {
   const sys = G.GALAXY[0]!;
@@ -46,6 +48,11 @@ describe("processNpcBehavior", () => {
     G.P.x = 0;
     G.P.y = 0;
     G.P.hp = 100;
+    clearSimulationEntities();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("marks a nearby hostile enemy as targeting the player", () => {
@@ -120,5 +127,61 @@ describe("processNpcBehavior", () => {
     e._lastPlayerHitAt = performance.now();
     const target = pickHostileTarget(e, e.aggroRange);
     expect(target).toBe(G.P);
+  });
+
+  it("aims projectile turrets per weapon speed instead of one shared lead", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const enemy = makeHostileNearPlayer(0);
+    enemy.x = 0;
+    enemy.y = 0;
+    enemy.fitting = { turret: ["tu-gauss", "tu-neutron"] } as Enemy["fitting"];
+    enemy.turretCds = [0, 0];
+    enemy.weaponMult = 1;
+
+    const target = {
+      ...G.P,
+      x: 220,
+      y: 0,
+      vx: 0,
+      vy: 160,
+    } as Player;
+
+    fireTurretsAt(enemy, target, 0.016, 1000);
+
+    expect(G.enemyBullets).toHaveLength(2);
+    const [gauss, neutron] = G.enemyBullets;
+    const gaussAngle = Math.atan2(gauss.vy, gauss.vx);
+    const neutronAngle = Math.atan2(neutron.vy, neutron.vx);
+    const expectedGauss = computeLinearInterceptAngle(enemy.x, enemy.y, target.x, target.y, target.vx, target.vy, 150, enemy.accuracy ?? 1);
+    const expectedNeutron = computeLinearInterceptAngle(enemy.x, enemy.y, target.x, target.y, target.vx, target.vy, 480, enemy.accuracy ?? 1);
+    expect(gaussAngle).toBeCloseTo(expectedGauss, 6);
+    expect(neutronAngle).toBeCloseTo(expectedNeutron, 6);
+    expect(expectedGauss).not.toBeCloseTo(expectedNeutron, 6);
+  });
+
+  it("uses direct aim for beam turrets instead of projectile lead", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const enemy = makeHostileNearPlayer(0);
+    enemy.x = 0;
+    enemy.y = 0;
+    enemy.fitting = { turret: ["tu-ion"] } as Enemy["fitting"];
+    enemy.turretCds = [0];
+    enemy.weaponMult = 1;
+
+    const target = {
+      ...G.P,
+      x: 180,
+      y: 40,
+      vx: 0,
+      vy: 220,
+    } as Player;
+
+    fireTurretsAt(enemy, target, 0.016, 1000);
+
+    expect(G.beams).toHaveLength(1);
+    const beam = G.beams[0]!;
+    const beamAngle = Math.atan2(beam.y2 - beam.y1, beam.x2 - beam.x1);
+    const directAngle = Math.atan2(target.y - enemy.y, target.x - enemy.x);
+    expect(beamAngle).toBeCloseTo(directAngle, 6);
   });
 });

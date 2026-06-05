@@ -44,7 +44,7 @@ export function updateHubTooltip(sys: System | null) {
 
   const now = Date.now() / 1000;
   const queue = getState().player.hubQueue ?? [];
-  const output = getState().player.hubOutput ?? { loot: {}, ore: {}, modules: [] };
+  const output = getState().player.hubOutput ?? { loot: {}, ore: {}, materials: [], modules: [] };
 
   let html = `<div class="hub-tooltip-pane">`;
   html += `<div class="hub-tooltip-title">INDUSTRIAL PROCESSING HUB</div>`;
@@ -54,7 +54,15 @@ export function updateHubTooltip(sys: System | null) {
     for (const job of queue) {
       const elapsed = now - job.startTime;
       const pct = Math.min(100, Math.floor((elapsed / job.duration) * 100));
-      const label = job.kind === "asteroid" ? "Asteroid" : "Debris";
+      const label = job.kind === "debris"
+        ? "Debris"
+        : job.kind === "asteroid"
+          ? "Asteroid"
+          : job.kind === "processMixed"
+            ? "Feedstock"
+            : job.kind === "separateStock"
+              ? "Separation"
+              : "Alloying";
       const massTons = Math.round(job.mass / 100) / 10;
       const remaining = Math.max(0, job.duration - elapsed);
       
@@ -65,7 +73,7 @@ export function updateHubTooltip(sys: System | null) {
             <span class="hub-tooltip-eta">${remaining < 1 ? "Ready soon…" : fmtDuration(remaining)}</span>
           </div>
           <div class="hub-tooltip-progress-track">
-            <div class="hub-tooltip-progress-fill ${job.kind}" style="width: ${pct}%;"></div>
+            <div class="hub-tooltip-progress-fill ${job.kind === "debris" ? "debris" : "asteroid"}" style="width: ${pct}%;"></div>
           </div>
         </div>
       `;
@@ -85,6 +93,9 @@ export function updateHubTooltip(sys: System | null) {
       if ((v as number) > 0) {
         html += `<div class="hub-tooltip-output-item ore"><span>${k} Ore</span><b class="ore-accent">${v}</b></div>`;
       }
+    }
+    for (const mat of output.materials ?? []) {
+      html += `<div class="hub-tooltip-output-item ore"><span>${mat.label}</span><b class="ore-accent">${mat.volumeM3.toFixed(1)}m³</b></div>`;
     }
     for (const inst of output.modules) {
       html += `<div class="hub-tooltip-output-item module"><span>Module: ${inst.baseId}</span><b class="mod-accent">1</b></div>`;

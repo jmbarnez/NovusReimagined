@@ -16,12 +16,13 @@
   overflow-x: hidden;
   background: transparent;
   scrollbar-width: thin;
-  scrollbar-color: rgba(40,55,70,0.6) transparent;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
 }
 
 #hud-overview-panel .ov-wrap::-webkit-scrollbar { width: 4px; }
-#hud-overview-panel .ov-wrap::-webkit-scrollbar-track { background: transparent; }
-#hud-overview-panel .ov-wrap::-webkit-scrollbar-thumb { background: rgba(40,55,70,0.6); border-radius: 2px; }
+#hud-overview-panel .ov-wrap::-webkit-scrollbar-track { background: var(--hud-scrollbar-track); }
+#hud-overview-panel .ov-wrap::-webkit-scrollbar-thumb { background: var(--hud-scrollbar-thumb); border-radius: 999px; }
+#hud-overview-panel .ov-wrap::-webkit-scrollbar-thumb:hover { background: var(--hud-scrollbar-thumb-hover); }
 
 #hud-overview-panel .ov-table {
   width: 100%;

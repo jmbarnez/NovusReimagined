@@ -26,11 +26,14 @@
   flex: 1;
   overflow-y: auto;
   padding: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
 }
 
 .sk-scroll::-webkit-scrollbar { width: 5px; }
-.sk-scroll::-webkit-scrollbar-track { background: var(--hud-bg-deep); }
-.sk-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--hud-shield) 40%, transparent); border-radius: 2px; }
+.sk-scroll::-webkit-scrollbar-track { background: var(--hud-scrollbar-track); }
+.sk-scroll::-webkit-scrollbar-thumb { background: var(--hud-scrollbar-thumb); border-radius: 999px; }
+.sk-scroll::-webkit-scrollbar-thumb:hover { background: var(--hud-scrollbar-thumb-hover); }
 
 .sk-category {
   margin-bottom: 14px;

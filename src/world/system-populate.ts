@@ -287,10 +287,12 @@ function randomAsteroidComposition(template: OreComposition, f: () => number): O
     .filter(([, weight]) => weight > 0)
     .sort((a, b) => b[1] - a[1]);
   if (!entries.length) return { iron: 1 };
+  if (entries.length === 1) return { [entries[0][0]]: 1 };
 
   const selected = new Set<string>();
   const maxOres = Math.min(5, entries.length);
-  const targetCount = Math.min(maxOres, 1 + Math.floor(Math.pow(f(), 0.72) * maxOres));
+  const minCount = entries.length > 2 ? 2 : 1;
+  const targetCount = Math.min(maxOres, minCount + Math.floor(Math.pow(f(), 0.72) * Math.max(1, maxOres - minCount + 1)));
   while (selected.size < targetCount) {
     const roll = f();
     let cum = 0;
@@ -307,8 +309,13 @@ function randomAsteroidComposition(template: OreComposition, f: () => number): O
 
   const composition: OreComposition = {};
   for (const [key, weight] of entries) {
-    if (!selected.has(key)) continue;
-    composition[key] = weight * (0.75 + f() * 0.7);
+    if (selected.has(key)) {
+      composition[key] = weight * (0.75 + f() * 0.7);
+      continue;
+    }
+    if (weight >= 0.03 && f() < 0.55) {
+      composition[key] = weight * (0.04 + f() * 0.1);
+    }
   }
   return normalizeComposition(composition);
 }

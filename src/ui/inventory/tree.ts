@@ -4,10 +4,11 @@ import { SHIPS } from "../../data/ships.js";
 import { MODULES, MODULE_HOLD_VOLUME_M3 } from "../../data/modules.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { getInstance } from "../../utils/items.js";
-import { ORE, REFINED, LOOT, VOL } from "../../data/resources.js";
+import { ORE, LOOT, VOL } from "../../data/resources.js";
 import { t } from "../../utils/i18n.js";
 import { dominantOreKey, formatCompositionBreakdown } from "../../utils/ore-naming.js";
 import type { InventoryItem, TreeNode } from "./state.js";
+import { ALLOY_FAMILIES } from "../../refining.js";
 
 export function getTreeNodes(): TreeNode[] {
   const nodes: TreeNode[] = [];
@@ -40,7 +41,7 @@ export function normalizeItems(): InventoryItem[] {
 
   const oreGroup = t("inventory.resourceOre");
   const ammoGroup = t("inventory.resourceAmmo");
-  const refGroup = t("inventory.resourceRefined");
+  const matGroup = "Processed Materials";
   const salvageGroup = t("inventory.resourceSalvage");
   const compGroup = t("inventory.resourceComponent");
 
@@ -83,12 +84,28 @@ export function normalizeItems(): InventoryItem[] {
     });
   }
 
+  for (let i = 0; i < (p.bulkMaterialsCargo?.length ?? 0); i++) {
+    const stack = p.bulkMaterialsCargo[i];
+    if (stack.volumeM3 <= 0) continue;
+    const family = stack.alloyFamilyId
+      ? ALLOY_FAMILIES.find((entry) => entry.id === stack.alloyFamilyId) ?? null
+      : null;
+    items.push({
+      id: `mat_${i}`,
+      name: stack.label,
+      group: family ? `${matGroup} · ${family.purpose}` : `${matGroup} · ${formatCompositionBreakdown(stack.composition)}`,
+      qty: 1,
+      vol: stack.volumeM3,
+      massKg: stack.massKg,
+      type: "material",
+      key: stack.materialId,
+      container: "shipCargo",
+      composition: { ...stack.composition },
+    });
+  }
+
   if (p.ammo.hybrid > 0) items.push({ id: "ammo_hybrid", name: "Hybrid Charges", group: ammoGroup, qty: p.ammo.hybrid, vol: 0.01, type: "ammo", key: "hybrid", container: "shipCargo" });
   if (p.ammo.missile > 0) items.push({ id: "ammo_missile", name: "Missile Rounds", group: ammoGroup, qty: p.ammo.missile, vol: 0.015, type: "ammo", key: "missile", container: "shipCargo" });
-
-  if (p.refined.bar > 0) items.push({ id: "ref_bar", name: "Refined Bar", group: refGroup, qty: p.refined.bar, vol: 0.5, type: "refined", key: "bar", container: "shipCargo" });
-  if (p.refined.lattice > 0) items.push({ id: "ref_lattice", name: "Crystal Lattice", group: refGroup, qty: p.refined.lattice, vol: 0.5, type: "refined", key: "lattice", container: "shipCargo" });
-  if (p.refined.condensate > 0) items.push({ id: "ref_condensate", name: "Condensate", group: refGroup, qty: p.refined.condensate, vol: 0.6, type: "refined", key: "condensate", container: "shipCargo" });
 
   if (p.loot.scrap > 0) items.push({ id: "loot_scrap", name: "Scrap Metal", group: salvageGroup, qty: p.loot.scrap, vol: 0.2, type: "loot", key: "scrap", container: "shipCargo" });
   if (p.loot.chip > 0) items.push({ id: "loot_chip", name: "Circuit Chip", group: salvageGroup, qty: p.loot.chip, vol: 0.05, type: "loot", key: "chip", container: "shipCargo" });

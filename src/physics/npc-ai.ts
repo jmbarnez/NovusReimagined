@@ -105,17 +105,6 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
   const targetVy = target.vy || 0;
   const d = Math.hypot(targetX - e.x, targetY - e.y);
 
-  const predictedTargetAngle = computeLinearInterceptAngle(
-    e.x,
-    e.y,
-    targetX,
-    targetY,
-    targetVx,
-    targetVy,
-    C.ENEMIES.PROJECTILE_SPEED,
-    e.accuracy ?? 1.0,
-  );
-
   for (let i = 0; i < e.fitting.turret.length; i++) {
     const uid = e.fitting.turret[i];
     if (!uid) continue;
@@ -126,6 +115,18 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
     if (e.turretCds[i] <= 0) {
       const wProf = WEAPON_PROFILES[baseId] || WEAPON_PROFILES.default;
       if (d < Math.min(wProf.range, detectionRange)) {
+        const predictedTargetAngle = wProf.type === "beam"
+          ? Math.atan2(targetY - e.y, targetX - e.x)
+          : computeLinearInterceptAngle(
+            e.x,
+            e.y,
+            targetX,
+            targetY,
+            targetVx,
+            targetVy,
+            wProf.spd || C.ENEMIES.PROJECTILE_SPEED,
+            e.accuracy ?? 1.0,
+          );
         const shootAng = predictedTargetAngle + computeEnemyAimDeviation(e, d);
         if (wProf.type === "beam") {
           const beamDist = d;

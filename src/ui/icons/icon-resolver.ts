@@ -1,5 +1,5 @@
 import { MODULES } from "../../data/modules.js";
-import { ORE, REFINED, LOOT, COMPONENTS } from "../../data/resources.js";
+import { ORE, LOOT, COMPONENTS } from "../../data/resources.js";
 import type { IconPainter } from "./painters/shared.js";
 import { RACK_COLORS } from "./painters/shared.js";
 import { RESOURCE_PAINTERS } from "./painters/resources.js";
@@ -30,15 +30,6 @@ function resolveResource(id: string): ResolvedIcon | null {
     return {
       painter: RESOURCE_PAINTERS[id] ?? RESOURCE_PAINTERS.__ore!,
       accent: ORE[id].color,
-      isCivilian: false,
-      family: id,
-      kind: RESOURCE_PAINTERS[id] ? "exact" : "category-fallback",
-    };
-  }
-  if (REFINED[id]) {
-    return {
-      painter: RESOURCE_PAINTERS[id] ?? RESOURCE_PAINTERS.__refined!,
-      accent: REFINED[id].color,
       isCivilian: false,
       family: id,
       kind: RESOURCE_PAINTERS[id] ? "exact" : "category-fallback",
@@ -164,7 +155,6 @@ export const EXPECTED_MODULE_FAMILIES: Record<string, ModuleFamily> = {
 export function allIconCatalogIds(): string[] {
   const ids = [
     ...Object.keys(ORE),
-    ...Object.keys(REFINED),
     ...Object.keys(LOOT),
     ...Object.keys(COMPONENTS),
     "ammo-hybrid",

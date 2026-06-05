@@ -37,6 +37,7 @@ export function ensureStationUI(): void {
           <button class="st-tab" data-tab="hangar">${t("station.hangar")}</button>
           <button class="st-tab" data-tab="market">${t("station.market")}</button>
           <button class="st-tab" data-tab="industry">${t("station.industry")}</button>
+          <button class="st-tab" data-tab="fabrication">${t("station.fabrication")}</button>
           <button class="st-tab" data-tab="contracts">${t("station.contracts")}</button>
         </nav>
         <button id="st-undock" data-action="undock">${t("station.undock")} <kbd class="st-kbd" id="st-undock-key"></kbd></button>
@@ -44,7 +45,8 @@ export function ensureStationUI(): void {
       <main id="st-body">
         <div class="panel" id="panel-hangar"></div>
         <div class="panel" id="panel-market"></div>
-        <div class="panel" id="panel-industry"></div>
+        <div class="panel panel--tool" id="panel-industry"></div>
+        <div class="panel panel--tool" id="panel-fabrication"></div>
         <div class="panel" id="panel-contracts"></div>
       </main>
     </div>`;

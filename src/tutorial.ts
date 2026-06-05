@@ -343,6 +343,3 @@ export function skipTutorial() {
   floatText(getState().player.x, getState().player.y - 55, "Skip request uplinked", "#66aaff");
 }
 
-export function getTutorialHintDelay(): number {
-  return getState().player.tutorial.stepEnteredAt ?? nowSec();
-}

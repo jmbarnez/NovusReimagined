@@ -20,7 +20,7 @@ import { resetTutorialTrackState } from "../../physics/tutorial-track.js";
 import { applyDecryptionReward } from "../../sites/decryption-rewards.js";
 import { startScanPulse } from "../../scanning.js";
 import { checkDeliveryContracts } from "../../data/missions.js";
-import { collectHubOutput, processFloatingItem, smeltFromDeposit } from "../../hub.js";
+import { alloyHubMaterial, collectHubOutput, processFloatingItem, processMixedOreCargo, separateHubMaterial } from "../../hub.js";
 import {
   abandonContractAction,
   acceptContractProposalAction,
@@ -227,10 +227,31 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
       if (!command.payload.itemId) break;
       processFloatingItem(command.payload.itemId, p);
       break;
-    case "smeltHubOre":
-      if (!command.payload.oreKey) break;
+    case "processHubMixedOre":
+      if (!Number.isInteger(command.payload.cargoIndex) || command.payload.cargoIndex < 0) break;
       if (!isPositiveInteger(command.payload.qty)) break;
-      smeltFromDeposit(command.payload.oreKey, command.payload.qty, p);
+      processMixedOreCargo(
+        command.payload.cargoIndex,
+        command.payload.qty,
+        command.payload.heatMode ?? "stable",
+        p,
+        command.payload.targetStorageId ?? null,
+      );
+      break;
+    case "separateHubMaterial":
+      if (!command.payload.materialId) break;
+      separateHubMaterial(command.payload.materialId, command.payload.heatMode ?? "stable", p);
+      break;
+    case "alloyHubMaterial":
+      if (!command.payload.materialId) break;
+      alloyHubMaterial(
+        command.payload.materialId,
+        command.payload.targetAlloyFamilyId ?? null,
+        command.payload.heatMode ?? "stable",
+        p,
+        command.payload.sourceMaterialIds,
+        command.payload.targetStorageId ?? null,
+      );
       break;
     case "collectHubOutput":
       collectHubOutput(p);

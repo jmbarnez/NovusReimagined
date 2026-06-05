@@ -10,10 +10,20 @@ export function tutorialBarKey(slotIndex: number): string {
   return RACK_KEYS[slotIndex] ?? String(slotIndex + 1);
 }
 
+/** Resolve a bar slot index to a styled hotkey label. */
+export function tutorialBarKeyStyled(slotIndex: number): string {
+  return `<span class="tutorial-keybind">${tutorialBarKey(slotIndex)}</span>`;
+}
+
 /** Resolve a player keybind to a short display label. */
 export function tutorialKey(action: keyof Keybinds): string {
   const binds = Client.settings?.keybinds ?? DEFAULT_KEYBINDS;
   return fmtKey(binds[action] ?? DEFAULT_KEYBINDS[action]);
+}
+
+/** Resolve a player keybind to a styled display label. */
+export function tutorialKeyStyled(action: keyof Keybinds): string {
+  return `<span class="tutorial-keybind">${tutorialKey(action)}</span>`;
 }
 
 export type TutorialGateHintKey =

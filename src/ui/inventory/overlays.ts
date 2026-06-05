@@ -11,7 +11,7 @@ import type { ModuleInstance } from "../../types/moduleInstance.js";
 import { RECIPES, type IndustryPool, type Recipe, poolItemLabel } from "../../data/industryRecipes.js";
 import { ORE_MARKET_BUY, COMPONENT_MARKET_BUY } from "../../data/marketCatalog.js";
 import { fmtModBonuses } from "../station/shared.js";
-import { ORE, REFINED, LOOT, COMPONENTS } from "../../data/resources.js";
+import { ORE, LOOT, COMPONENTS } from "../../data/resources.js";
 import { openHudWindow, closeHudWindow, isOpen as isHudWindowOpen } from "../hud/windows.js";
 import { t } from "../../utils/i18n.js";
 import { formatCompositionBreakdown } from "../../utils/ore-naming.js";
@@ -102,6 +102,8 @@ export function showInvHoverTip(it: InventoryItem, clientX: number, clientY: num
   const volStr = ((it.vol || 0) * it.qty).toFixed(1);
   const subLine = it.type === "mixedOre" && it.composition
     ? formatCompositionBreakdown(it.composition)
+    : it.type === "material" && it.composition
+      ? formatCompositionBreakdown(it.composition)
     : it.group;
   el.innerHTML = `
     <div class="inv-hover-tip-name" style="color:${nameColor}">${escHtml(it.name)}</div>
@@ -167,7 +169,7 @@ export function ensureOutsideDismissHandlers(closeContextMenu: () => void) {
 
 function getIndustryPoolInput(it: InventoryItem): { pool: IndustryPool; key: string } | null {
   if (it.type === "ore") return { pool: "ore", key: it.key };
-  if (it.type === "refined") return { pool: "refined", key: it.key };
+  if (it.type === "material") return { pool: "material", key: it.key };
   if (it.type === "loot") return { pool: "loot", key: it.key };
   if (it.type === "component") return { pool: "component", key: it.key };
   return null;
@@ -190,7 +192,6 @@ function estimateUnitMarketValue(it: InventoryItem): number | null {
   if (it.type === "ore") return ORE_MARKET_BUY[it.key] ?? null;
   if (it.type === "component") return COMPONENT_MARKET_BUY[it.key] ?? null;
   if (it.type === "loot") return LOOT_SELL_PER_UNIT[it.key] ?? null;
-  if (it.type === "refined") return null;
   if (it.type === "ammo") {
     if (it.key === "hybrid") return 40 / 500;
     if (it.key === "missile") return 95 / 24;
@@ -208,9 +209,6 @@ function estimateUnitMarketValue(it: InventoryItem): number | null {
 
 function estimateStackValue(it: InventoryItem): { low: number | null; high: number | null; note?: string } {
   const per = estimateUnitMarketValue(it);
-  if (it.type === "refined") {
-    return { low: null, high: null, note: t("inventory.notSold") };
-  }
   if (per == null || !Number.isFinite(per)) return { low: null, high: null };
   const total = per * it.qty;
   return { low: total, high: total };
@@ -236,8 +234,14 @@ function buildInfoPanelInnerHTML(it: InventoryItem): string {
   if (it.type === "mixedOre" && it.composition) {
     body += `<div class="inv-info-stat-row"><span class="inv-info-k">Composition</span><span class="inv-info-v">${escHtml(formatCompositionBreakdown(it.composition))}</span></div>`;
   }
+  if (it.type === "material" && it.composition) {
+    body += `<div class="inv-info-stat-row"><span class="inv-info-k">Composition</span><span class="inv-info-v">${escHtml(formatCompositionBreakdown(it.composition))}</span></div>`;
+  }
   body += `<div class="inv-info-stat-row"><span class="inv-info-k">${t("inventory.quantity")}</span><span class="inv-info-v">${it.qty.toLocaleString()}</span></div>`;
   body += `<div class="inv-info-stat-row"><span class="inv-info-k">${t("inventory.volume")}</span><span class="inv-info-v">${volTot.toFixed(2)} m³</span></div>`;
+  if (typeof it.massKg === "number") {
+    body += `<div class="inv-info-stat-row"><span class="inv-info-k">${t("inventory.mass")}</span><span class="inv-info-v">${Math.round(it.massKg).toLocaleString()} kg</span></div>`;
+  }
   if (val.note) {
     body += `<div class="inv-info-stat-row"><span class="inv-info-k">${t("inventory.market")}</span><span class="inv-info-v inv-info-muted">${escHtml(val.note)}</span></div>`;
   } else if (val.low != null) {

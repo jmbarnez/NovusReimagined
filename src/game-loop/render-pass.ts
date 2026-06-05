@@ -33,7 +33,7 @@ import { syncPixiShockwaves, syncPixiFloatTexts, syncPixiWorldBorder } from "../
 import { syncPixiChatBubbles } from "../render/pixi-chat-bubbles.js";
 import { syncPixiHUD } from "../render/pixi-hud-core.js";
 import { syncPixiTargetArrows, syncPixiTutorialGuideArrow } from "../render/pixi-target-arrows.js";
-import { drawPixiSystemMapCanvasOverlays, syncPixiSystemMap } from "../render/pixi-maps.js";
+import { drawPixiSystemMapCanvasOverlays, getPixiMapViewportBounds, invalidatePixiMapBounds, syncPixiSystemMap } from "../render/pixi-maps.js";
 import { syncPixiMinimap } from "../render/pixi-minimap.js";
 import { isOpen } from "../ui/hud/windows.js";
 import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
@@ -51,7 +51,6 @@ import { syncPixiCrosshair } from "../render/pixi-crosshair.js";
 
 // ─── Cached DOM refs ─────────────────────────────────────────────────────────
 let _cachedMapWinBody: HTMLElement | null = null;
-let _cachedMapWinRect: DOMRect | null = null;
 let _lastMapOpen = false;
 let _filterLogged = false;
 
@@ -60,6 +59,7 @@ let _timingLabels: string[] = [];
 let _timingVals: number[] = [];
 
 function timeMark(label: string): void {
+  if (!Client.showPerf) return;
   if (typeof performance !== "undefined") {
     _timingLabels.push(label);
     _timingVals.push(performance.now());
@@ -67,6 +67,7 @@ function timeMark(label: string): void {
 }
 
 function timeFlush(totalThresholdMs = 16): void {
+  if (!Client.showPerf) return;
   if (_timingVals.length < 2) { _timingLabels = []; _timingVals = []; return; }
   const total = _timingVals[_timingVals.length - 1] - _timingVals[0];
   if (total <= totalThresholdMs) { _timingLabels = []; _timingVals = []; return; }
@@ -219,10 +220,11 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   if (mapOpen !== _lastMapOpen) {
     _cachedMapWinBody = mapOpen ? document.getElementById("hud-win-body-map") : null;
     _lastMapOpen = mapOpen;
+    invalidatePixiMapBounds();
   }
-  _cachedMapWinRect = _cachedMapWinBody?.getBoundingClientRect() ?? null;
-  if (_cachedMapWinRect) {
-    syncPixiSystemMap(_cachedMapWinRect.width, _cachedMapWinRect.height, now);
+  const mapBounds = _cachedMapWinBody ? getPixiMapViewportBounds(width, height) : null;
+  if (mapBounds) {
+    syncPixiSystemMap(mapBounds.width, mapBounds.height, now);
   }
   timeMark("map");
 
@@ -246,8 +248,8 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   }
 
   // Canvas 2D map overlays sit above Pixi and are clipped to the map window body.
-  if (_cachedMapWinRect) {
-    drawPixiSystemMapCanvasOverlays(_cachedMapWinRect.width, _cachedMapWinRect.height, now);
+  if (mapBounds) {
+    drawPixiSystemMapCanvasOverlays(mapBounds.width, mapBounds.height, now);
   }
   timeMark("mapoverlays");
 

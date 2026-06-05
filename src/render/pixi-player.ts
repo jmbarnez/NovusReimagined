@@ -7,23 +7,21 @@
 import { ImageSource, Sprite, Texture } from "pixi.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
-import { SHIPS } from "../data/ships.js";
+import { SHIPS, type ShipDecor } from "../data/ships.js";
 import { entityLayer, thrustLayer, pixiDpr } from "../pixi.js";
 import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
-import { emitShipExhaustSheets } from "../utils/ship-exhaust.js";
 import { getNebulaDensity } from "./pixi-background.js";
 import { lightenCol, darkenCol } from "../utils/color.js";
 import { tracePath } from "./bake-utils.js";
+import { displayShipAngle } from "./display-orientation.js";
 
 const TAU = Math.PI * 2;
 const HULL_SCALE = 1.0;
 const LIGHT_DIRS = 8;
 const LIGHT_RGB = "255,248,230";
-const EXHAUST_MIN_SPEED = 8;
-const EXHAUST_EMIT_MS = 32;
 /** Supersampling multiplier — baked canvas physical pixels per logical texel. */
-const TEX_SCALE = 3;
+const TEX_SCALE = 4;
 
 // ─── DPR-aware texture factory ────────────────────────────────────────────────
 function canvasToTexture(c: HTMLCanvasElement, dpr: number): Texture {
@@ -32,10 +30,63 @@ function canvasToTexture(c: HTMLCanvasElement, dpr: number): Texture {
 }
 
 // ─── Ship hull texture ────────────────────────────────────────────────────────
-const SHIP_TEX = 128;
+const SHIP_TEX = 160;
 const SHIP_HALF = SHIP_TEX / 2;
 
 const _shipTexCache = new Map<string, Texture>();
+
+function traceDecorPath(cx: CanvasRenderingContext2D, points: number[][]): void {
+  cx.beginPath();
+  for (let i = 0; i < points.length; i++) {
+    const [px, py] = points[i];
+    i === 0 ? cx.moveTo(SHIP_HALF + px, SHIP_HALF + py) : cx.lineTo(SHIP_HALF + px, SHIP_HALF + py);
+  }
+}
+
+function drawDecor(cx: CanvasRenderingContext2D, decor: ShipDecor): void {
+  const alpha = decor.alpha ?? 1;
+  cx.save();
+  cx.globalAlpha *= alpha;
+
+  if (decor.kind === "plate") {
+    traceDecorPath(cx, decor.points);
+    cx.closePath();
+    cx.fillStyle = decor.fill;
+    cx.fill();
+    if (decor.stroke) {
+      cx.strokeStyle = decor.stroke;
+      cx.lineWidth = 0.75;
+      cx.lineJoin = "round";
+      cx.stroke();
+    }
+  } else if (decor.kind === "line") {
+    traceDecorPath(cx, decor.points);
+    cx.strokeStyle = decor.color;
+    cx.lineWidth = decor.width;
+    cx.lineJoin = "round";
+    cx.lineCap = "round";
+    cx.stroke();
+  } else if (decor.kind === "vent") {
+    const count = Math.max(1, decor.count ?? 3);
+    const gap = decor.w / (count * 2 - 1);
+    cx.fillStyle = decor.color;
+    for (let i = 0; i < count; i++) {
+      cx.fillRect(SHIP_HALF + decor.x + i * gap * 2, SHIP_HALF + decor.y, gap, decor.h);
+    }
+  } else {
+    cx.beginPath();
+    cx.arc(SHIP_HALF + decor.x, SHIP_HALF + decor.y, decor.r, 0, TAU);
+    cx.fillStyle = decor.fill;
+    cx.fill();
+    if (decor.stroke) {
+      cx.strokeStyle = decor.stroke;
+      cx.lineWidth = 0.7;
+      cx.stroke();
+    }
+  }
+
+  cx.restore();
+}
 
 function bakeShipTexture(shipId: string): Texture {
   const ship = SHIPS[shipId];
@@ -98,21 +149,44 @@ function bakeShipTexture(shipId: string): Texture {
   cx.lineJoin = "round";
   cx.stroke();
 
-  // 5. Hairline panel lines
+  // 5. Role-specific plates, stripes, vents, and small fittings.
+  cx.save();
+  shipPath();
+  cx.clip();
+  for (const decor of r.decor ?? []) {
+    drawDecor(cx, decor);
+  }
+  cx.restore();
+
+  // 5a. Recessed panel lines with a tiny lit edge.
   for (const line of r.panelLines ?? []) {
     cx.beginPath();
     for (let i = 0; i < line.length; i++) {
       const [px, py] = line[i];
       i === 0 ? cx.moveTo(SHIP_HALF + px, SHIP_HALF + py) : cx.lineTo(SHIP_HALF + px, SHIP_HALF + py);
     }
-    cx.strokeStyle = "rgba(0,0,0,0.45)";
-    cx.lineWidth = 1.0;
+    cx.strokeStyle = "rgba(0,0,0,0.58)";
+    cx.lineWidth = 1.2;
     cx.lineJoin = "round";
     cx.lineCap = "round";
     cx.stroke();
+
+    cx.save();
+    cx.translate(0, -0.55);
+    cx.beginPath();
+    for (let i = 0; i < line.length; i++) {
+      const [px, py] = line[i];
+      i === 0 ? cx.moveTo(SHIP_HALF + px, SHIP_HALF + py) : cx.lineTo(SHIP_HALF + px, SHIP_HALF + py);
+    }
+    cx.strokeStyle = "rgba(210,235,245,0.18)";
+    cx.lineWidth = 0.45;
+    cx.lineJoin = "round";
+    cx.lineCap = "round";
+    cx.stroke();
+    cx.restore();
   }
 
-  // 5a. Structural strut bracing — wing roots to hull spine
+  // 5b. Structural strut bracing — wing roots to hull spine
   if (r.turretOffsets && r.turretOffsets.length >= 2) {
     for (const [tx, ty] of r.turretOffsets) {
       const sx = SHIP_HALF + tx, sy = SHIP_HALF + ty;
@@ -127,6 +201,28 @@ function bakeShipTexture(shipId: string): Texture {
       cx.lineWidth = 1.0;
       cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(hx, hy); cx.stroke();
     }
+  }
+
+  // 5c. Recessed hardpoint sockets at authored turret offsets
+  for (const [tx, ty] of r.turretOffsets ?? []) {
+    const x = SHIP_HALF + tx;
+    const y = SHIP_HALF + ty;
+    const socketR = shipId === "fighter" ? 2.4 : 2.0;
+    cx.beginPath();
+    cx.arc(x, y, socketR + 1.1, 0, TAU);
+    cx.fillStyle = "rgba(0,0,0,0.58)";
+    cx.fill();
+    cx.beginPath();
+    cx.arc(x, y, socketR, 0, TAU);
+    cx.fillStyle = "rgba(20,28,34,0.88)";
+    cx.fill();
+    cx.strokeStyle = "rgba(170,205,220,0.36)";
+    cx.lineWidth = 0.8;
+    cx.stroke();
+    cx.beginPath();
+    cx.arc(x + 0.35, y - 0.35, socketR * 0.34, 0, TAU);
+    cx.fillStyle = "rgba(255,255,255,0.22)";
+    cx.fill();
   }
 
   // 6. Nav / hull lights with soft halos
@@ -274,7 +370,6 @@ interface RemotePlayerSprites {
 }
 
 const _remotePlayerSprites = new Map<string, RemotePlayerSprites>();
-const _remoteTrailLastEmit = new Map<string, number>();
 
 function destroyPlayerSprites() {
   if (_hullSprite) { entityLayer?.removeChild(_hullSprite); _hullSprite.destroy(); _hullSprite = null; }
@@ -291,7 +386,6 @@ function destroyRemotePlayerSprites(): void {
     bundle.light.destroy();
   }
   _remotePlayerSprites.clear();
-  _remoteTrailLastEmit.clear();
 }
 
 function buildPlayerSprites(shipId: string) {
@@ -457,12 +551,6 @@ function syncRemotePlayers(alpha: number, now: number): void {
       bundle.light.visible = false;
     }
 
-    const speed = Math.hypot(remote.vx || 0, remote.vy || 0);
-    const lastEmit = _remoteTrailLastEmit.get(netId) ?? 0;
-    if (speed > EXHAUST_MIN_SPEED && now - lastEmit >= EXHAUST_EMIT_MS) {
-      emitShipExhaustSheets(remote, ix, iy, ia, false);
-      _remoteTrailLastEmit.set(netId, now);
-    }
   }
 
   for (const [netId, bundle] of _remotePlayerSprites) {
@@ -472,7 +560,6 @@ function syncRemotePlayers(alpha: number, now: number): void {
     bundle.hull.destroy();
     bundle.light.destroy();
     _remotePlayerSprites.delete(netId);
-    _remoteTrailLastEmit.delete(netId);
   }
 }
 
@@ -502,9 +589,7 @@ export function syncPixiPlayer(alpha: number, now: number): void {
   _hullSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
 
   // Banking tilt
-  const latV = getState().player.vx * Math.sin(ia) - getState().player.vy * Math.cos(ia);
-  const bankTilt = Math.max(-0.13, Math.min(0.13, latV * 0.0045));
-  const angle = ia + (Math.abs(bankTilt) > 0.002 ? bankTilt : 0);
+  const angle = displayShipAngle(ia, getState().player.vx, getState().player.vy);
 
   _hullSprite.x = ix;
   _hullSprite.y = iy;
@@ -551,11 +636,11 @@ export function syncPixiTrails(): void {
     s.x = t.x;
     s.y = t.y;
     if (t.length !== undefined && t.angle !== undefined) {
-      s.blendMode = "normal";
-      s.width = t.length * (0.86 + a * 0.14);
-      s.height = t.width * (0.8 + a * 0.2);
+      s.blendMode = "add";
+      s.width = t.length * (0.70 + a * 0.24);
+      s.height = t.width * (0.48 + a * 0.24);
       s.rotation = t.angle;
-      s.alpha = Math.min(0.88, 0.34 + a * 0.54);
+      s.alpha = Math.min(0.34, a * 0.34);
     } else {
       s.blendMode = "add";
       const base = (t.width * 0.55 * a) / DOT_HALF;

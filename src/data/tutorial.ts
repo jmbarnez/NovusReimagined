@@ -15,7 +15,6 @@ import {
   getHangarReviewHint,
   getHangarCombatSwapHint,
 } from "./hangar-tutorial-guide.js";
-import { tutorialKey } from "./tutorial-controls.js";
 import { t } from "../utils/i18n.js";
 import {
   type TutorialZone,
@@ -96,10 +95,6 @@ export function getHudTourPanel(
   };
 }
 
-export function tutorialHangarHint(task: string): string {
-  return t("tutorial.step.hangarHigh.objective", { dockKey: tutorialKey("dock") });
-}
-
 export function getHangarTourPanel(
   step: TutorialStep | null,
   snapshot: Record<string, unknown> = {},
@@ -114,48 +109,6 @@ export function getHangarTourPanel(
     ? HANGAR_COMBAT_SWAP_PHASE_COUNT
     : HANGAR_REVIEW_PHASE_COUNT;
   return { label: panel.label, body: panel.body, index: phase + 1, total };
-}
-
-export function getTutorialStepHint(
-  step: TutorialStep,
-  snapshot: Record<string, unknown> = {},
-): string {
-  if (step.id === "hud-tour") {
-    const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-    return HUD_TOUR_PANELS[phase]?.body ?? "";
-  }
-  if (step.id === "hangar-high") {
-    if (snapshot.hangarReviewComplete === true) {
-      return t("tutorial.step.hangarHigh.complete");
-    }
-    if (!Client.stationOpen) {
-      return tutorialHangarHint("begin the loadout walkthrough");
-    }
-    if (!isStationHangarTabActive()) {
-      return t("tutorial.step.hangarHigh.hangarTabHint");
-    }
-    const phase = typeof snapshot.hangarReviewPhase === "number"
-      ? snapshot.hangarReviewPhase
-      : 0;
-    return getHangarGuidePanel("hangar-high", phase)?.body ?? "";
-  }
-  if (step.id === "hangar-turrets") {
-    if (snapshot.hangarReviewComplete === true) {
-      return t("tutorial.step.hangarTurrets.complete");
-    }
-    if (!Client.stationOpen) {
-      return tutorialHangarHint("swap in your combat loadout");
-    }
-    if (!isStationHangarTabActive()) {
-      return t("tutorial.step.hangarHigh.hangarTabHint");
-    }
-    const phase = typeof snapshot.hangarCombatPhase === "number"
-      ? snapshot.hangarCombatPhase
-      : 0;
-    return getHangarGuidePanel("hangar-turrets", phase)?.body ?? "";
-  }
-  if (!step.hint) return "";
-  return typeof step.hint === "function" ? step.hint(snapshot) : step.hint;
 }
 
 export function isStationHangarTabActive(): boolean {

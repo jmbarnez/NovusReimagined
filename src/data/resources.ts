@@ -14,12 +14,6 @@ export const ORE: Record<string, ResourceDef> = {
   exotic:  { label: "Exotic particulate", color: "#ff44aa", abbr: "Ex", icon: "shard" },
 };
 
-export const REFINED: Record<string, ResourceDef> = {
-  bar:        { label: "Refined ferro bar", abbr: "Bar", color: "#d0d5da", icon: "plate" },
-  lattice:    { label: "Lattice ingot",     abbr: "Ing", color: "#88eeff", icon: "box" },
-  condensate: { label: "Exotic condensate", abbr: "Con", color: "#ff88dd", icon: "canister" },
-};
-
 export const LOOT: Record<string, ResourceDef> = {
   scrap:         { label: "Alloy scrap",     abbr: "Sc", color: "#8899aa", icon: "bolt" },
   chip:          { label: "Data chip",       abbr: "Dp", color: "#55ffaa", icon: "chip" },
@@ -36,7 +30,6 @@ export const COMPONENTS: Record<string, ResourceDef> = {
 
 export const VOL = {
   ore: { iron: 0.15, nickel: 0.14, silicate: 0.18, carbon: 0.11, crystal: 0.12, exotic: 0.08 },
-  refined: { bar: 0.2, lattice: 0.16, condensate: 0.12 },
   loot: { scrap: 0.3, chip: 0.01, cell: 0.05, "intact-part": 0.08 },
   component: { circuit: 0.12, gear: 0.14, harness: 0.13, sensor_cluster: 0.18 },
 } as const;

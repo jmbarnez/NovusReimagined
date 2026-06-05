@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { MODULES } from "../src/data/modules.js";
-import { ORE, REFINED, LOOT, COMPONENTS } from "../src/data/resources.js";
+import { ORE, LOOT, COMPONENTS } from "../src/data/resources.js";
 import {
   resolveIcon,
   EXPECTED_MODULE_FAMILIES,
@@ -30,7 +30,7 @@ describe("item icon resolver", () => {
   });
 
   it("resolves every resource key with exact painters", () => {
-    for (const id of [...Object.keys(ORE), ...Object.keys(REFINED), ...Object.keys(LOOT), ...Object.keys(COMPONENTS)]) {
+    for (const id of [...Object.keys(ORE), ...Object.keys(LOOT), ...Object.keys(COMPONENTS)]) {
       const resolved = resolveIcon(id);
       expect(resolved.kind).toBe("exact");
     }

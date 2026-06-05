@@ -21,6 +21,7 @@ import { TUTORIAL_STEP_COUNT } from "../data/tutorial.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { syncActiveProfile } from "../data/profiles.js";
 import { getHardpointSlotCount, mergeLegacyTurretSlotsIntoHigh, playerHardpointRack } from "../utils/hardpoints.js";
+import { ALLOY_FAMILIES, flattenStorageMaterials, makeDefaultAlloyCodex, makeDefaultRefineryStorage, preferredStorageForMaterial } from "../refining.js";
 
 export function defaultFitting(shipId: string): Record<string, (string | null)[]> {
   const s = SHIPS[shipId];
@@ -96,6 +97,62 @@ function applyStarterTrainingFit(p: Player): void {
   };
 }
 
+type LegacyRefinedPool = Partial<Record<"bar" | "lattice" | "condensate", number>>;
+
+function migrateLegacyRefinedCargo(refined: LegacyRefinedPool | undefined, p: Player): void {
+  if (!refined) return;
+  const mappings: Array<{ key: keyof LegacyRefinedPool; familyId: string; composition: Record<string, number> }> = [
+    { key: "bar", familyId: "ferro_nickel_stock", composition: { iron: 0.64, nickel: 0.24, carbon: 0.08, silicate: 0.04 } },
+    { key: "lattice", familyId: "crystal_matrix", composition: { crystal: 0.62, silicate: 0.24, nickel: 0.08, iron: 0.06 } },
+    { key: "condensate", familyId: "exotic_conductive", composition: { exotic: 0.3, crystal: 0.3, nickel: 0.2, iron: 0.12, carbon: 0.08 } },
+  ];
+  for (const mapping of mappings) {
+    const qty = refined[mapping.key] ?? 0;
+    if (qty <= 0) continue;
+    const family = ALLOY_FAMILIES.find((entry) => entry.id === mapping.familyId);
+    if (!family) continue;
+    PlayerAccess.addBulkMaterial({
+      id: `legacy-${mapping.key}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      materialId: family.id,
+      kind: "alloy",
+      label: family.label,
+      volumeM3: qty,
+      massKg: qty * family.densityKgPerM3,
+      composition: { ...mapping.composition },
+      alloyFamilyId: family.id,
+    }, p);
+  }
+}
+
+function migrateRefineryStorage(p: Player): void {
+  if (!Array.isArray(p.refineryStorage) || p.refineryStorage.length === 0) {
+    p.refineryStorage = makeDefaultRefineryStorage();
+  } else {
+    p.refineryStorage = p.refineryStorage.map((unit) => ({
+      ...unit,
+      entries: (unit.entries ?? []).map((entry) => ({
+        ...entry,
+        composition: { ...entry.composition },
+      })),
+    }));
+  }
+
+  const legacyMaterials = Array.isArray(p.hubDeposit?.materials) ? [...p.hubDeposit.materials] : [];
+  if (legacyMaterials.length > 0 && flattenStorageMaterials(p.refineryStorage).length === 0) {
+    for (const stack of legacyMaterials) {
+      const target = preferredStorageForMaterial(stack, p.refineryStorage);
+      if (!target) continue;
+      target.entries.push({
+        ...stack,
+        composition: { ...stack.composition },
+      });
+    }
+  }
+
+  if (!p.hubDeposit || typeof p.hubDeposit !== "object") p.hubDeposit = { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
+  p.hubDeposit.materials = flattenStorageMaterials(p.refineryStorage);
+}
+
 export function makePlayer(): Player {
   const fit = defaultFitting('scout');
   const hardpointCount = getHardpointSlotCount("scout");
@@ -144,7 +201,7 @@ export function makePlayer(): Player {
     credits: 5000,
     ore: { iron: 0, nickel: 0, silicate: 0, carbon: 0, crystal: 0, exotic: 0 },
     mixedOreCargo: [],
-    refined: { bar: 0, lattice: 0, condensate: 0 },
+    bulkMaterialsCargo: [],
     loot: { scrap: 0, chip: 0, cell: 0 },
     components: { circuit: 0, gear: 0, harness: 0, sensor_cluster: 0 },
     ammo: { hybrid: AMMO_START_HYBRID, missile: AMMO_START_MISSILE },
@@ -166,8 +223,10 @@ export function makePlayer(): Player {
     tractorCarryKg: 0,
     tractorTightness: 0.5,
     hubQueue: [],
-    hubOutput: { loot: {}, ore: {}, refined: {}, modules: [] },
-    hubDeposit: { raw: [], ore: {}, loot: {}, modules: [] },
+    hubOutput: { loot: {}, ore: {}, materials: [], modules: [] },
+    hubDeposit: { raw: [], ore: {}, materials: [], loot: {}, modules: [] },
+    refineryStorage: makeDefaultRefineryStorage(),
+    alloyCodex: makeDefaultAlloyCodex(),
     tutorial: { active: true, step: 0, completed: false, skipped: false },
     pilotName: "Freelancer",
     scannedSiteIds: [],
@@ -199,7 +258,12 @@ export function loadPlayer(): Player {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return makePlayer();
-    const p = JSON.parse(raw) as Player;
+    const p = JSON.parse(raw) as Player & {
+      refined?: LegacyRefinedPool;
+      hubOutput?: Player["hubOutput"] & { refined?: LegacyRefinedPool };
+      moduleInventory?: Record<string, number>;
+      damagedModuleHp?: unknown;
+    };
     p.vx = p.vy = p.va = 0;
     p.px = p.x; p.py = p.y; p.prevAngle = p.angle;
     p.shootCd = p.mineCd = 0; p.invincible = 1.5;
@@ -221,6 +285,7 @@ export function loadPlayer(): Player {
     normalizeHardpointArrays(p);
     if (!p.moduleCargo) p.moduleCargo = [];
     if (!Array.isArray(p.mixedOreCargo)) p.mixedOreCargo = [];
+    if (!Array.isArray(p.bulkMaterialsCargo)) p.bulkMaterialsCargo = [];
     for (const slot of p.mixedOreCargo) {
       if (typeof slot.richness !== "number") slot.richness = 1;
     }
@@ -233,9 +298,8 @@ export function loadPlayer(): Player {
     for (const inst of starter.moduleCargo) {
       if (!ownedUids.has(inst.uid)) p.moduleCargo.push({ ...inst, affixes: [...inst.affixes] });
     }
-    const oldSave = p as unknown as { moduleInventory?: Record<string, number>; damagedModuleHp?: unknown };
-    if (oldSave.moduleInventory && typeof oldSave.moduleInventory === "object") {
-      for (const [baseId, count] of Object.entries(oldSave.moduleInventory)) {
+    if (p.moduleInventory && typeof p.moduleInventory === "object") {
+      for (const [baseId, count] of Object.entries(p.moduleInventory)) {
         for (let i = 0; i < count; i++) {
           p.moduleCargo.push({
             uid: `migrated-${baseId}-${Date.now()}-${i}`,
@@ -248,18 +312,40 @@ export function loadPlayer(): Player {
           });
         }
       }
-      delete oldSave.moduleInventory;
+      delete p.moduleInventory;
     }
-    if (oldSave.damagedModuleHp) delete oldSave.damagedModuleHp;
+    if (p.damagedModuleHp) delete p.damagedModuleHp;
     if (!p.moduleHp || typeof p.moduleHp !== "object") p.moduleHp = { turret: [], high: [], med: [], low: [] };
     if (!p.slotActive || typeof p.slotActive !== "object") p.slotActive = { turret: [], high: [], med: [], low: [] };
     if (!Array.isArray(p.moduleCargo)) p.moduleCargo = [];
     if (!Array.isArray(p.contracts)) p.contracts = [];
     if (!Array.isArray(p.craftQueue)) p.craftQueue = [];
     if (!Array.isArray(p.hubQueue)) p.hubQueue = [];
-    if (!p.hubOutput || typeof p.hubOutput !== "object") p.hubOutput = { loot: {}, ore: {}, refined: {}, modules: [] };
-    if (!p.hubOutput.refined) p.hubOutput.refined = {};
-    if (!p.hubDeposit || typeof p.hubDeposit !== "object") p.hubDeposit = { raw: [], ore: {}, loot: {}, modules: [] };
+    migrateLegacyRefinedCargo(p.refined, p);
+    migrateLegacyRefinedCargo(p.hubOutput?.refined, p);
+    delete p.refined;
+    if (!p.hubOutput || typeof p.hubOutput !== "object") p.hubOutput = { loot: {}, ore: {}, materials: [], modules: [] };
+    if ("refined" in p.hubOutput) delete (p.hubOutput as Player["hubOutput"] & { refined?: LegacyRefinedPool }).refined;
+    if (!Array.isArray(p.hubOutput.materials)) p.hubOutput.materials = [];
+    if (!p.hubDeposit || typeof p.hubDeposit !== "object") p.hubDeposit = { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
+    if (!Array.isArray(p.hubDeposit.materials)) p.hubDeposit.materials = [];
+    if (!p.alloyCodex || typeof p.alloyCodex !== "object") p.alloyCodex = makeDefaultAlloyCodex();
+    else {
+      p.alloyCodex = {
+        knownFamilyIds: Array.isArray(p.alloyCodex.knownFamilyIds) && p.alloyCodex.knownFamilyIds.length > 0
+          ? [...p.alloyCodex.knownFamilyIds]
+          : ALLOY_FAMILIES.map((family) => family.id),
+        discoveries: Array.isArray(p.alloyCodex.discoveries)
+          ? p.alloyCodex.discoveries.map((entry) => ({
+            ...entry,
+            composition: { ...entry.composition },
+            compatibleFamilyIds: [...entry.compatibleFamilyIds],
+            tags: [...entry.tags],
+          }))
+          : [],
+      };
+    }
+    migrateRefineryStorage(p);
     p.tractorCarryKg = 0;
     if (typeof p.tractorTightness !== "number") p.tractorTightness = 0.5;
     if (!p.tutorial) p.tutorial = { active: false, step: 0, completed: false, skipped: false };

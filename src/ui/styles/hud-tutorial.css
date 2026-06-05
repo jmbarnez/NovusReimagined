@@ -191,13 +191,18 @@
   display: none !important;
 }
 
-#hud-tutorial .tutorial-hint {
-  margin-top: 5px;
-  font-size: calc(10px * var(--effective-font-scale, 1));
-  line-height: 1.35;
-  color: color-mix(in srgb, var(--hud-accent) 85%, var(--hud-positive));
-  opacity: 0;
-  transition: opacity 0.6s ease;
+.tutorial-keybind {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--hud-accent) 20%, var(--hud-bg-deep));
+  border: 1px solid color-mix(in srgb, var(--hud-accent) 40%, var(--hud-border));
+  color: var(--hud-accent);
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 #hud-tutorial .tutorial-nav {

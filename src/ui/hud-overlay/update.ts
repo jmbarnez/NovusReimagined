@@ -7,8 +7,9 @@ import { SHIPS } from "../../data/ships.js";
 import { updateBridgeOverview } from "../bridge.js";
 import { updateMissionsPanel } from "../hud-missions.js";
 import { attachInventoryListeners } from "../inventory/index.js";
+import { hideInvHoverTip } from "../inventory/overlays.js";
 import { renderSkillsContent, initSkillsInteractions } from "../skills.js";
-import { toggleHudWindow, isOpen, getHudWindow } from "../hud/windows.js";
+import { toggleHudWindow, isOpen, getHudWindow, closeHudWindow, openHudWindow } from "../hud/windows.js";
 import { updateMapSurveyUi } from "../map-survey.js";
 import { hudState } from "../hud/state.js";
 import { updateSlots } from "../hud/slots.js";
@@ -106,8 +107,13 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
 
 /* ── Public helpers for window toggling (called from input.ts) ── */
 export function toggleCargoWindow() {
+  if (isOpen("cargo")) {
+    closeHudWindow("cargo");
+    hideInvHoverTip();
+    return;
+  }
   const shell = buildShipPanelShell();
-  toggleHudWindow("cargo", "SHIP", shell);
+  openHudWindow("cargo", "SHIP", shell, hideInvHoverTip);
   attachShipPanelListeners(shell);
   attachInventoryListeners();
 }

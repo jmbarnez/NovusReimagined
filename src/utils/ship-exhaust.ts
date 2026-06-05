@@ -3,14 +3,16 @@ import type { Player } from "../state.js";
 import { C } from "../config/index.js";
 import { addTrailSegment } from "./entities.js";
 
-const EXHAUST_LIFE = 0.38;
+const EXHAUST_LIFE = 0.24;
 
 export function emitShipExhaustSheets(p: Player, x: number, y: number, angle: number, afterburner: boolean): void {
+  if (!afterburner) return;
+
   const ship = SHIPS[p.shipId];
   const nozzles = ship?.render.nozzleOffsets ?? [[-20, 0]];
   const radius = ship?.colRadius ?? 24;
-  const width = Math.max(1.8, Math.min(3.2, radius * 0.12));
-  const length = Math.max(12, Math.min(24, radius * 0.78)) * (afterburner ? 1.25 : 1);
+  const width = Math.max(1.1, Math.min(1.8, radius * 0.06));
+  const length = Math.max(6, Math.min(12, radius * 0.38));
   const ca = Math.cos(angle);
   const sa = Math.sin(angle);
 
@@ -18,9 +20,9 @@ export function emitShipExhaustSheets(p: Player, x: number, y: number, angle: nu
     const nozzleX = x + ca * nx - sa * ny;
     const nozzleY = y + sa * nx + ca * ny;
     addTrailSegment({
-      x: nozzleX - ca * length * 0.5,
-      y: nozzleY - sa * length * 0.5,
-      color: afterburner ? C.PHYSICS.SHIP.thrustTrailABColor : C.PHYSICS.SHIP.thrustTrailNormalColor,
+      x: nozzleX - ca * length * 0.56,
+      y: nozzleY - sa * length * 0.56,
+      color: C.PHYSICS.SHIP.thrustTrailABColor,
       width,
       length,
       life: EXHAUST_LIFE,

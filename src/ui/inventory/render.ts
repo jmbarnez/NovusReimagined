@@ -1,5 +1,5 @@
 import { getState } from "../../state-access.js";
-import { ORE, REFINED, LOOT, COMPONENTS } from "../../data/resources.js";
+import { ORE, LOOT, COMPONENTS } from "../../data/resources.js";
 import { MODULES } from "../../data/modules.js";
 import { escHtml } from "../../utils/format.js";
 import { itemIconHtml as atlasItemIconHtml } from "../icons/item-icon-bake.js";
@@ -16,7 +16,7 @@ const ICON_SIZE_GRID = 52;
 function iconKeyForItem(it: InventoryItem): string {
   if (it.type === "ore") return it.key;
   if (it.type === "mixedOre") return dominantOreKey(it.composition ?? { [it.key]: 1 });
-  if (it.type === "refined") return it.key;
+  if (it.type === "material") return dominantOreKey(it.composition ?? { [it.key]: 1 });
   if (it.type === "loot") return it.key;
   if (it.type === "component") return it.key;
   if (it.type === "ammo") return `ammo-${it.key}`;
@@ -29,7 +29,7 @@ export function colorForItem(it: InventoryItem): string | undefined {
   if (it.rarityColor) return it.rarityColor;
   if (it.type === "ore") return ORE[it.key]?.color;
   if (it.type === "mixedOre") return ORE[dominantOreKey(it.composition ?? { [it.key]: 1 })]?.color;
-  if (it.type === "refined") return REFINED[it.key]?.color;
+  if (it.type === "material") return ORE[dominantOreKey(it.composition ?? { [it.key]: 1 })]?.color;
   if (it.type === "loot") return LOOT[it.key]?.color;
   if (it.type === "component") return COMPONENTS[it.key]?.color;
   return undefined;

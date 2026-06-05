@@ -35,13 +35,14 @@
   color: color-mix(in srgb, var(--hud-text-main) 85%, var(--hud-accent) 15%);
   text-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
   scrollbar-width: thin;
-  scrollbar-color: rgba(40,55,70,0.6) transparent;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
   user-select: text;
   cursor: text;
 }
 #hud-log-entries::-webkit-scrollbar { width: 4px; }
-#hud-log-entries::-webkit-scrollbar-track { background: transparent; }
-#hud-log-entries::-webkit-scrollbar-thumb { background: rgba(40,55,70,0.6); border-radius: 2px; }
+#hud-log-entries::-webkit-scrollbar-track { background: var(--hud-scrollbar-track); }
+#hud-log-entries::-webkit-scrollbar-thumb { background: var(--hud-scrollbar-thumb); border-radius: 999px; }
+#hud-log-entries::-webkit-scrollbar-thumb:hover { background: var(--hud-scrollbar-thumb-hover); }
 
 .log-entry { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
 .log-entry.log-info    { color: #8aa4c0; }

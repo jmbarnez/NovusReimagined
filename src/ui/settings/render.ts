@@ -222,6 +222,7 @@ export function renderSettings() {
         const preset = (btn as HTMLElement).dataset.preset! as VideoPreset;
         settings.videoPreset = preset;
         if (preset === "performance") {
+          settings.fpsLimit = 60;
           settings.renderScale = 1.5;
           settings.backgroundDetail = "low";
           settings.bloomIntensity = 0.5;
@@ -232,6 +233,7 @@ export function renderSettings() {
           settings.mipmapping = true;
           settings.lensFlare = false;
         } else if (preset === "balanced") {
+          settings.fpsLimit = 0;
           settings.renderScale = 2.2;
           settings.backgroundDetail = "high";
           settings.bloomIntensity = 1.0;
@@ -242,6 +244,7 @@ export function renderSettings() {
           settings.mipmapping = true;
           settings.lensFlare = true;
         } else if (preset === "cinematic") {
+          settings.fpsLimit = 0;
           settings.renderScale = 2.5;
           settings.backgroundDetail = "high";
           settings.bloomIntensity = 1.5;

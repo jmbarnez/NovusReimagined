@@ -178,7 +178,10 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
         composition: { ...slot.composition },
         richness: slot.richness ?? 1,
       })) : null,
-      refined: subject.refined ? { ...subject.refined } : null,
+      bulkMaterialsCargo: subject.bulkMaterialsCargo ? subject.bulkMaterialsCargo.map((stack) => ({
+        ...stack,
+        composition: { ...stack.composition },
+      })) : null,
       loot: subject.loot ? { ...subject.loot } : null,
       components: subject.components ? { ...subject.components } : null,
       ammo: subject.ammo ? { ...subject.ammo } : null,

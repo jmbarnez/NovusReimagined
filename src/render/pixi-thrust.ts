@@ -7,58 +7,68 @@ import { ENEMY_DEFS } from "../data/enemies.js";
 import { thrustLayer } from "../pixi.js";
 import { lerp } from "../utils/math.js";
 import { liveEnemies } from "../utils/game.js";
+import { displayShipAngle } from "./display-orientation.js";
 
 const TAU = Math.PI * 2;
 
-// Flame texture: 24×80, nozzle at top-center (12, 0), flame taper to point at bottom.
+// Ion plume texture: nozzle at top-center, soft wake tapering backward.
 // Anchor (0.5, 0) so sprites pivot at the nozzle end.
 let _flameTex: Texture | null = null;
 
 function bakeFlameTexture(): Texture {
-  const W = 24, H = 80;
+  const W = 28, H = 92;
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
   const cx = c.getContext("2d")!;
 
-  // 1. Soft outer corona — wide diffuse glow around the nozzle
-  {
-    const g = cx.createRadialGradient(W / 2, 6, 0, W / 2, 10, 20);
-    g.addColorStop(0,   "rgba(120,190,255,0.45)");
-    g.addColorStop(0.5, "rgba(60,120,255,0.15)");
-    g.addColorStop(1,   "rgba(0,0,0,0)");
-    cx.fillStyle = g;
-    cx.fillRect(0, 0, W, H);
-  }
-
-  // 2. Tapered flame body — wide at nozzle, pointed at tail
+  // 1. Diffuse ion feather, wider near the nozzle and transparent at the tail.
   {
     const g = cx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0.00, "rgba(230,245,255,0.88)");
-    g.addColorStop(0.10, "rgba(160,210,255,0.72)");
-    g.addColorStop(0.30, "rgba(80,150,255,0.42)");
-    g.addColorStop(0.60, "rgba(40,80,255,0.14)");
+    g.addColorStop(0.00, "rgba(150,230,255,0.28)");
+    g.addColorStop(0.28, "rgba(70,180,255,0.18)");
+    g.addColorStop(0.76, "rgba(45,115,255,0.06)");
+    g.addColorStop(1,   "rgba(0,0,0,0)");
+    const hw = W * 0.44;
+    cx.beginPath();
+    cx.moveTo(W / 2 - hw, 0);
+    cx.lineTo(W / 2 + hw, 0);
+    cx.quadraticCurveTo(W / 2 + hw * 0.50, H * 0.48, W / 2 + hw * 0.10, H * 0.9);
+    cx.quadraticCurveTo(W / 2, H, W / 2 - hw * 0.10, H * 0.9);
+    cx.quadraticCurveTo(W / 2 - hw * 0.50, H * 0.48, W / 2 - hw, 0);
+    cx.closePath();
+    cx.fillStyle = g;
+    cx.fill();
+  }
+
+  // 2. Narrow luminous body, compact enough to read as engine thrust.
+  {
+    const g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0.00, "rgba(255,255,255,0.92)");
+    g.addColorStop(0.12, "rgba(185,245,255,0.76)");
+    g.addColorStop(0.30, "rgba(85,205,255,0.40)");
+    g.addColorStop(0.70, "rgba(60,135,255,0.12)");
     g.addColorStop(1.00, "rgba(0,0,0,0)");
-    const hw = W * 0.32;
+    const hw = W * 0.24;
     cx.save();
     cx.beginPath();
     cx.moveTo(W / 2 - hw, 0);
     cx.lineTo(W / 2 + hw, 0);
-    cx.quadraticCurveTo(W / 2 + hw * 0.4, H * 0.55, W / 2, H);
-    cx.quadraticCurveTo(W / 2 - hw * 0.4, H * 0.55, W / 2 - hw, 0);
+    cx.quadraticCurveTo(W / 2 + hw * 0.32, H * 0.52, W / 2, H * 0.92);
+    cx.quadraticCurveTo(W / 2 - hw * 0.32, H * 0.52, W / 2 - hw, 0);
     cx.closePath();
     cx.fillStyle = g;
     cx.fill();
     cx.restore();
   }
 
-  // 3. Hot white core at nozzle opening
+  // 3. Hot white/cyan nozzle core.
   {
-    const g = cx.createRadialGradient(W / 2, 1, 0, W / 2, 1, 7);
+    const g = cx.createRadialGradient(W / 2, 2, 0, W / 2, 2, 9);
     g.addColorStop(0,   "rgba(255,255,255,1.0)");
-    g.addColorStop(0.45,"rgba(200,230,255,0.75)");
-    g.addColorStop(1,   "rgba(80,160,255,0)");
+    g.addColorStop(0.48,"rgba(190,245,255,0.82)");
+    g.addColorStop(1,   "rgba(90,190,255,0)");
     cx.fillStyle = g;
-    cx.fillRect(0, 0, W, 14);
+    cx.fillRect(0, 0, W, 16);
   }
 
   return new Texture({ source: new ImageSource({ resource: c, resolution: 1, scaleMode: "linear" }) });
@@ -96,10 +106,16 @@ export function initThrust() {
 function playerFlameDims(shipId: string): { w: number; l: number } {
   const ship = SHIPS[shipId];
   const r = ship?.colRadius ?? 24;
-  return { w: r * 0.10, l: r * 0.18 };
+  return { w: r * 0.15, l: r * 0.62 };
 }
 // Enemy flame dims — proportional to sigRadius, set per-enemy in sync
-const ENEMY_FLAME_SCALE = 0.55;  // flameLength = sigRadius * this
+const ENEMY_FLAME_SCALE = 0.48;  // flameLength = sigRadius * this
+
+function flameThrottle(speed: number, maxSpeed: number, thrusting: boolean): number {
+  if (!thrusting) return 0;
+  const speedRatio = Math.min(1, speed / Math.max(1, maxSpeed));
+  return 0.42 + speedRatio * 0.58;
+}
 
 export function syncThrust(alpha: number, now: number) {
   if (!thrustLayer || Client.mode !== AppMode.SPACE) {
@@ -123,7 +139,8 @@ function _syncPlayerThrust(alpha: number, now: number) {
   const ship = SHIPS[p.shipId];
   const nozzles = ship?.render?.nozzleOffsets ?? [[-20, 0]];
   const speed = Math.hypot(p.vx || 0, p.vy || 0);
-  const thrusting = p.thrustFx === true || speed > 8;
+  const thrusting = p.thrustFx === true;
+  const throttle = flameThrottle(speed, ship?.simMaxSpeedPx ?? 100, thrusting);
 
   // Ensure we have a sprite per nozzle
   while (_playerSprites.length < nozzles.length) {
@@ -137,7 +154,11 @@ function _syncPlayerThrust(alpha: number, now: number) {
 
   const px = lerp(p.px, p.x, alpha);
   const py = lerp(p.py, p.y, alpha);
-  const ang = lerp(p.prevAngle ?? p.angle, p.angle, alpha);
+  const ang = displayShipAngle(
+    lerp(p.prevAngle ?? p.angle, p.angle, alpha),
+    p.vx || 0,
+    p.vy || 0,
+  );
   const ca = Math.cos(ang), sa = Math.sin(ang);
   const flame = playerFlameDims(p.shipId);
 
@@ -149,13 +170,13 @@ function _syncPlayerThrust(alpha: number, now: number) {
     const sprite = _playerSprites[i];
     sprite.x = wx;
     sprite.y = wy;
-    sprite.width  = flame.w;
-    sprite.height = flame.l;
+    const flicker = 0.88 + 0.12 * Math.sin(now * 0.024 + i * 1.3);
+    const lengthPulse = 0.90 + 0.10 * Math.sin(now * 0.018 + i * 2.1);
+    sprite.width  = flame.w * (0.70 + throttle * 0.22);
+    sprite.height = flame.l * (0.48 + throttle * 0.82) * lengthPulse;
     // Rotate so the "body" (below anchor) points backward from the ship
     sprite.rotation = ang + Math.PI / 2;
-
-    const flicker = 0.82 + 0.18 * Math.sin(now * 0.024 + i * 1.3);
-    sprite.alpha = thrusting ? flicker : 0;
+    sprite.alpha = throttle > 0 ? Math.min(0.86, throttle * flicker) : 0;
   }
 }
 
@@ -193,11 +214,16 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
     }
 
     const speed = Math.hypot(p.vx || 0, p.vy || 0);
-    const thrusting = p.thrustFx === true || speed > 8;
+    const thrusting = p.thrustFx === true;
+    const throttle = flameThrottle(speed, ship?.simMaxSpeedPx ?? 100, thrusting);
     const useRenderInterpolation = Client.multiplayerRole === "none";
     const px = useRenderInterpolation ? lerp(p.px, p.x, alpha) : p.x;
     const py = useRenderInterpolation ? lerp(p.py, p.y, alpha) : p.y;
-    const ang = useRenderInterpolation ? lerp(p.prevAngle ?? p.angle, p.angle, alpha) : p.angle;
+    const ang = displayShipAngle(
+      useRenderInterpolation ? lerp(p.prevAngle ?? p.angle, p.angle, alpha) : p.angle,
+      p.vx || 0,
+      p.vy || 0,
+    );
     const ca = Math.cos(ang), sa = Math.sin(ang);
 
     const flame = playerFlameDims(p.shipId);
@@ -209,12 +235,12 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
       const sprite = sprites[i];
       sprite.x = wx;
       sprite.y = wy;
-      sprite.width = flame.w;
-      sprite.height = flame.l;
+      const flicker = 0.88 + 0.12 * Math.sin(now * 0.024 + i * 1.3 + netId.length);
+      const lengthPulse = 0.90 + 0.10 * Math.sin(now * 0.018 + i * 2.1 + netId.length);
+      sprite.width = flame.w * (0.70 + throttle * 0.22);
+      sprite.height = flame.l * (0.48 + throttle * 0.82) * lengthPulse;
       sprite.rotation = ang + Math.PI / 2;
-
-      const flicker = 0.82 + 0.18 * Math.sin(now * 0.024 + i * 1.3 + netId.length);
-      sprite.alpha = thrusting ? flicker : 0;
+      sprite.alpha = throttle > 0 ? Math.min(0.86, throttle * flicker) : 0;
     }
   }
 
@@ -241,8 +267,8 @@ function _syncEnemyThrust(now: number) {
 
     const maxSpd = def.speed || 80;
     const curSpd = Math.hypot(e.vx || 0, e.vy || 0);
-    const throttle = Math.min(1, curSpd / Math.max(1, maxSpd));
-    if (throttle < 0.05) {
+    const throttle = flameThrottle(curSpd, maxSpd, e.thrustFx === true);
+    if (throttle <= 0) {
       if (_enemySprites.has(e.id)) {
         _enemySprites.get(e.id)!.alpha = 0;
       }
@@ -265,12 +291,12 @@ function _syncEnemyThrust(now: number) {
     const flameLen = sigR * ENEMY_FLAME_SCALE;
     sprite.x = wx;
     sprite.y = wy;
-    sprite.width  = flameLen * 0.38;
-    sprite.height = flameLen;
+    sprite.width  = flameLen * (0.20 + throttle * 0.14);
+    sprite.height = flameLen * (0.52 + throttle * 0.72);
     sprite.rotation = ang + Math.PI / 2;
 
-    const flicker = 0.75 + 0.25 * Math.sin(now * 0.022 + e.id.charCodeAt(0) * 0.7);
-    sprite.alpha = throttle * flicker;
+    const flicker = 0.84 + 0.16 * Math.sin(now * 0.022 + e.id.charCodeAt(0) * 0.7);
+    sprite.alpha = Math.min(0.85, throttle * flicker);
   }
 
   // Remove sprites for despawned enemies

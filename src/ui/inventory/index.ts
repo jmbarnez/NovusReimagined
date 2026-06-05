@@ -203,7 +203,6 @@ function updateSelectionOnly(pane: HTMLElement) {
 }
 
 function rerenderInventory() {
-  hideInvHoverTip();
   const hash = computeContentHash();
   const contentChanged = hash !== _lastContentHash;
   const selectionChanged = INV_STATE.selectedItemId !== _lastSelectedId;
@@ -211,6 +210,7 @@ function rerenderInventory() {
 
   for (const pane of getInventoryPanes()) {
     if (contentChanged) {
+      hideInvHoverTip();
       pane.innerHTML = renderInventoryHTML();
       attachInventoryListenersToPane(pane, handlers);
     } else if (selectionChanged && pane.querySelector(".inv-item")) {

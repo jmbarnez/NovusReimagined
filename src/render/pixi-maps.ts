@@ -46,6 +46,15 @@ let labelContainer: Container | null = null;
 let mapMask: Graphics | null = null;
 let positioningContainer: Container | null = null;
 let overlayGfx: Graphics | null = null;
+interface MapWindowBounds {
+  baseX: number;
+  baseY: number;
+  width: number;
+  height: number;
+}
+
+let cachedMapBounds: MapWindowBounds | null = null;
+let mapBoundsDirty = true;
 
 /** Convert rgba(r,g,b,a) or #rrggbb string to PixiJS hex number. */
 function rgbaToHex(color: string): number {
@@ -84,32 +93,45 @@ let lastMapTransform: ReturnType<typeof computeSystemMapTransform> | null = null
 
 export { mapContainer, app, positioningContainer };
 
-function syncMapWindowBounds(Wc: number, Hc: number): { baseX: number; baseY: number; width: number; height: number } {
+export function invalidatePixiMapBounds(): void {
+  mapBoundsDirty = true;
+}
+
+export function getPixiMapViewportBounds(Wc: number, Hc: number): MapWindowBounds {
+  if (!mapBoundsDirty && cachedMapBounds) return cachedMapBounds;
+
   const winBody = document.getElementById("hud-win-body-map");
   if (!winBody || !app) {
-    positioningContainer?.position.set(0, 0);
-    if (mapMask) {
-      mapMask.clear();
-      mapMask.rect(0, 0, Wc, Hc);
-      mapMask.fill({ color: 0xffffff });
-    }
-    return { baseX: 0, baseY: 0, width: Wc, height: Hc };
+    cachedMapBounds = { baseX: 0, baseY: 0, width: Wc, height: Hc };
+    mapBoundsDirty = false;
+    return cachedMapBounds;
   }
 
   const rect = winBody.getBoundingClientRect();
   const pixiCanvas = app.canvas as HTMLCanvasElement;
   const pixiRect = pixiCanvas.getBoundingClientRect();
-  const baseX = rect.left - pixiRect.left;
-  const baseY = rect.top - pixiRect.top;
+  cachedMapBounds = {
+    baseX: rect.left - pixiRect.left,
+    baseY: rect.top - pixiRect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+  mapBoundsDirty = false;
 
-  positioningContainer?.position.set(baseX, baseY);
+  return cachedMapBounds;
+}
+
+function syncMapWindowBounds(Wc: number, Hc: number): MapWindowBounds {
+  const bounds = getPixiMapViewportBounds(Wc, Hc);
+
+  positioningContainer?.position.set(bounds.baseX, bounds.baseY);
   if (mapMask) {
     mapMask.clear();
-    mapMask.rect(0, 0, rect.width, rect.height);
+    mapMask.rect(0, 0, bounds.width, bounds.height);
     mapMask.fill({ color: 0xffffff });
   }
 
-  return { baseX, baseY, width: rect.width, height: rect.height };
+  return bounds;
 }
 
 export function initPixiMaps(): void {
@@ -171,6 +193,8 @@ export function initPixiMaps(): void {
   overlayGfx = new Graphics();
   mapContainer.addChild(overlayGfx);
 
+  window.addEventListener("resize", invalidatePixiMapBounds);
+  window.addEventListener("hud:window-layout", invalidatePixiMapBounds);
 }
 
 export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
@@ -525,4 +549,8 @@ export function destroyPixiMaps(): void {
   mapMask = null;
   bgGfx = null;
   overlayGfx = null;
+  cachedMapBounds = null;
+  mapBoundsDirty = true;
+  window.removeEventListener("resize", invalidatePixiMapBounds);
+  window.removeEventListener("hud:window-layout", invalidatePixiMapBounds);
 }

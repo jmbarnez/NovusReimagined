@@ -1,287 +1,156 @@
 import "../styles/station-industry.css";
 import { getState } from "../../state-access.js";
-import { MACHINES, RECIPES, poolItemLabel, type IndustryPool } from "../../data/industryRecipes.js";
-import { escHtml } from "../../utils/format.js";
-import { stationState, iconSvg } from "./shared.js";
+import { getCargoMixedOreInputs } from "../../hub.js";
+import { RECIPES } from "../../data/industryRecipes.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../../audio/procedural.js";
 import { queueFrameAction } from "../../sim/input.js";
 import { t } from "../../utils/i18n.js";
+import { stationState } from "./shared.js";
+import {
+  canAffordRecipe,
+  currentStage,
+  formatTime,
+  selectedHeatMode,
+  selectedProcessQty,
+  type RefiningStage,
+} from "./industry-model.js";
+import {
+  renderAlloyStage,
+  renderAssemblyStage,
+  renderFabricationOverview,
+  renderFabricationRail,
+  renderManifestBand,
+  renderOverview,
+  renderProcessStage,
+  renderRightRail,
+  renderSeparateStage,
+  renderStageTabs,
+} from "./industry-renderers.js";
 
-let lastContainer: HTMLElement | null = null;
+let lastIndustryContainer: HTMLElement | null = null;
+let lastFabricationContainer: HTMLElement | null = null;
 
-function resolveIndustryContainer(container?: HTMLElement): HTMLElement | null {
+function resolvePanelContainer(panelId: string, lastContainer: HTMLElement | null, container?: HTMLElement): HTMLElement | null {
   if (container) return container;
-  const stationPanel = document.getElementById("panel-industry");
+  const stationPanel = document.getElementById(panelId);
   if (stationPanel?.classList.contains("active")) return stationPanel;
   if (lastContainer?.isConnected) return lastContainer;
   return stationPanel;
 }
 
-function playerPool(pool: IndustryPool): Record<string, number> {
-  if (pool === "ore")       return getState().player.ore;
-  if (pool === "refined")   return getState().player.refined;
-  if (pool === "loot")      return getState().player.loot;
-  if (pool === "component") return getState().player.components;
-  return {};
-}
-
-function stockOf(pool: IndustryPool, key: string): number {
-  return playerPool(pool)[key] || 0;
-}
-
-function ioPill(pool: IndustryPool, key: string, qty: number, showStock: boolean): string {
-  const label = escHtml(poolItemLabel(pool, key));
-  const stock = stockOf(pool, key);
-  const icon = iconSvg(key, 14);
-  const insufficient = showStock && stock < qty;
-  const stockText = showStock ? ` <em>(${stock})</em>` : "";
-  return `<span class="io-pill io-pill--${pool} ${insufficient ? 'insufficient' : ''}">${icon}${qty}× ${label}${stockText}</span>`;
-}
-
-function canAffordRecipe(recipeId: string, qty: number): boolean {
-  const recipe = RECIPES.find(r => r.id === recipeId);
-  if (!recipe) return false;
-  return recipe.inputs.every(inp => stockOf(inp.pool, inp.key) >= inp.qty * qty);
-}
-
-function formatTime(seconds: number): string {
-  if (seconds < 1) return "<1s";
-  if (seconds < 60) return `${Math.ceil(seconds)}s`;
-  const m = Math.floor(seconds / 60);
-  const s = Math.ceil(seconds % 60);
-  return `${m}m ${s}s`;
+function rerenderStationProduction(panelHint?: HTMLElement | null): void {
+  const panel = panelHint?.closest(".panel") as HTMLElement | null;
+  if (panel?.id === "panel-fabrication") {
+    renderFabrication(panel);
+    return;
+  }
+  if (panel?.id === "panel-industry") {
+    renderIndustry(panel);
+    return;
+  }
+  const activeFab = document.getElementById("panel-fabrication");
+  if (activeFab?.classList.contains("active")) {
+    renderFabrication(activeFab);
+    return;
+  }
+  renderIndustry();
 }
 
 export function updateIndustryProgress() {
-  if (!lastContainer?.isConnected) return;
-  if (!lastContainer.classList.contains("active")) return;
-
+  if (!lastFabricationContainer?.isConnected) return;
+  if (!lastFabricationContainer.classList.contains("active")) return;
   const queue = getState().player.craftQueue;
   const now = Date.now();
-
-  // Query existing job DOM elements instead of rebuilding everything.
-  lastContainer.querySelectorAll<HTMLElement>(".ind-queue-job").forEach((jobEl) => {
+  lastFabricationContainer.querySelectorAll<HTMLElement>(".ind-queue-job[data-job-id]").forEach((jobEl) => {
     const jobId = jobEl.dataset.jobId;
     if (!jobId) return;
-    const job = queue.find((j) => j.id === jobId);
+    const job = queue.find((entry) => entry.id === jobId);
     if (!job) return;
-
     const elapsed = now - job.startTime;
-    const progress = Math.min(1, elapsed / job.duration);
+    const pct = Math.min(100, Math.floor((elapsed / job.duration) * 100));
     const remainingMs = Math.max(0, job.duration - elapsed);
-    const pct = Math.round(progress * 100);
-
     const fill = jobEl.querySelector<HTMLElement>(".ind-queue-progress-fill");
-    if (fill) fill.style.width = `${pct}%`;
-
     const pctEl = jobEl.querySelector<HTMLElement>(".ind-queue-pct");
-    if (pctEl) pctEl.textContent = `${pct}%`;
-
     const timeEl = jobEl.querySelector<HTMLElement>(".ind-queue-time");
+    if (fill) fill.style.width = `${pct}%`;
+    if (pctEl) pctEl.textContent = `${pct}%`;
     if (timeEl) timeEl.textContent = `${formatTime(remainingMs / 1000)} ${t("industry.remaining")}`;
   });
 }
 
 export function renderIndustry(container?: HTMLElement) {
-  const div = resolveIndustryContainer(container);
+  const div = resolvePanelContainer("panel-industry", lastIndustryContainer, container);
   if (!div) return;
-  lastContainer = div;
+  lastIndustryContainer = div;
 
-  const q = stationState.indSearch.trim().toLowerCase();
-  let filtered = RECIPES.filter(r => r.machine === stationState.indTab);
-  if (q) filtered = filtered.filter(r => r.label.toLowerCase().includes(q));
-
-  if (stationState.indSort === "affordable") {
-    filtered = [...filtered].sort((a, b) => {
-      const ca = canAffordRecipe(a.id, stationState.craftQty) ? 0 : 1;
-      const cb = canAffordRecipe(b.id, stationState.craftQty) ? 0 : 1;
-      return ca - cb || a.label.localeCompare(b.label);
-    });
-  } else {
-    filtered = [...filtered].sort((a, b) => a.label.localeCompare(b.label));
-  }
-
-  const tabBtns = MACHINES.map(m =>
-    `<button class="ind-tab-btn${stationState.indTab===m.id?" active":""}" data-action="indTab" data-tab="${m.id}">${escHtml(m.label)}</button>`
-  ).join("");
-
-  const sortOpts = [["name", t("common.name")],["affordable", t("market.affordable")]].map(
-    ([v,l]) => `<option value="${v}"${stationState.indSort===v?" selected":""}>${l}</option>`
-  ).join("");
-
-  const sidebarHeader = `
-    <div class="ind-sidebar-controls">
-      <div class="ind-tab-group">${tabBtns}</div>
-      <div class="ind-controls-row">
-        <input class="ind-search-input" id="ind-search-input" type="text" placeholder="${escHtml(t("common.search"))}" value="${escHtml(stationState.indSearch)}">
-        <select class="ind-sort-sel" id="ind-sort-select">${sortOpts}</select>
-      </div>
-    </div>
-  `;
-
-  const recipeList = filtered.map(r => {
-    const isActive = stationState.selectedRecipeId === r.id;
-    const needsBP = r.requiresBlueprint && !getState().player.blueprints[r.id];
-    return `
-      <div class="ind-item ${isActive ? 'active' : ''} ${needsBP ? 'locked' : ''}" data-action="selectRecipe" data-recipe="${r.id}">
-        <div class="ind-item-icon">${iconSvg(r.outputs[0].key, 12)}</div>
-        <div class="ind-item-label">${escHtml(r.label)}</div>
-      </div>
-    `;
-  }).join("") || `<div class="ind-empty-list">${escHtml(t("industry.noRecipes"))}</div>`;
-
-  let detailsHtml = `
-      <div class="ind-details-empty">
-        <div class="ind-empty-icon">⚒</div>
-        <div>${escHtml(t("industry.selectRecipe"))}</div>
-      </div>
-  `;
-
-  const selected = RECIPES.find(r => r.id === stationState.selectedRecipeId);
-
-  if (selected) {
-    const needsBP = selected.requiresBlueprint && !getState().player.blueprints[selected.id];
-    const affordable = canAffordRecipe(selected.id, stationState.craftQty);
-    const skillMult = selected.outputSkill ? 1 + (getState().player.skills[selected.outputSkill] || 0) * 0.05 : 1;
-    const duration = selected.duration ?? 10;
-    const totalTime = duration * stationState.craftQty;
-    const machine = MACHINES.find(m => m.id === selected.machine);
-
-    const inputPills = selected.inputs.map(i => ioPill(i.pool, i.key, i.qty * stationState.craftQty, true)).join("");
-    const outputPills = selected.outputs.map(o => ioPill(o.pool, o.key, Math.floor(o.qty * skillMult * stationState.craftQty), false)).join("");
-
-    let actionHtml = "";
-    if (needsBP) {
-      actionHtml = `<button class="ind-btn ind-btn-primary" data-action="buyBP" data-recipe="${selected.id}">${escHtml(t("industry.unlock", { cost: selected.blueprintCost ?? 0 }))}</button>`;
-    } else {
-      const qtyOptions = [1, 5, 10, 25, 50].map(n =>
-        `<option value="${n}"${stationState.craftQty===n?" selected":""}>×${n}</option>`
-      ).join("");
-      actionHtml = `
-        <div class="ind-qty-row">
-          <select class="ind-qty-sel" id="ind-qty-sel">${qtyOptions}</select>
-          <button class="ind-btn ind-btn-primary" ${affordable ? "" : "disabled"} data-action="queueJob" data-recipe="${selected.id}">${escHtml(t("industry.queueJob"))}</button>
-        </div>
-        <div class="ind-time-estimate">${stationState.craftQty > 1 ? `${stationState.craftQty}× ` : ""}${formatTime(totalTime)} total</div>
-      `;
-    }
-
-    detailsHtml = `
-      <div class="ind-details-card">
-        <div class="ind-details-header">
-          <div class="ind-details-title">${escHtml(selected.label)}</div>
-          <div class="ind-details-subtitle">${escHtml(machine?.label || selected.machine)} · ${duration}s per unit</div>
-        </div>
-
-        <div class="ind-section">
-          <div class="ind-section-title">${escHtml(t("industry.required"))}</div>
-          <div class="ind-pill-list">${inputPills}</div>
-        </div>
-
-        <div class="ind-section">
-          <div class="ind-section-title">${escHtml(t("industry.output"))}</div>
-          <div class="ind-pill-list">${outputPills}</div>
-          ${selected.outputSkill ? `<div class="ind-skill-bonus">+${((skillMult-1)*100).toFixed(0)}% from ${selected.outputSkill} skill</div>` : ""}
-        </div>
-
-        <div class="ind-actions-group">
-          ${actionHtml}
-        </div>
-      </div>
-    `;
-  }
-
-  const queueHtml = renderQueuePanel();
+  let stageHtml = "";
+  if (currentStage() === "process") stageHtml = renderProcessStage();
+  else if (currentStage() === "separate") stageHtml = renderSeparateStage();
+  else stageHtml = renderAlloyStage();
 
   div.innerHTML = `
-    <div class="ind-container">
-      <div class="ind-sidebar">
-        ${sidebarHeader}
-        <div class="ind-list-scroll">
-          ${recipeList}
-        </div>
-      </div>
-      <div class="ind-main">
-        ${detailsHtml}
-      </div>
-      <div class="ind-queue-panel">
-        ${queueHtml}
+    <div class="ind-shell ind-shell--refinery">
+      ${renderOverview()}
+      ${renderStageTabs()}
+      <div class="ind-workspace">
+        <main class="ind-stage-column">${stageHtml}</main>
+        ${renderRightRail()}
       </div>
     </div>
   `;
 }
 
-function renderQueuePanel(): string {
-  const queue = getState().player.craftQueue;
-  const now = Date.now();
-
-  if (queue.length === 0) {
-    return `
-      <div class="ind-queue-header">${escHtml(t("industry.queue"))}</div>
-      <div class="ind-queue-empty">
-        <div class="ind-queue-empty-icon">◷</div>
-        <div>${escHtml(t("industry.noJobs"))}</div>
+export function renderFabrication(container?: HTMLElement) {
+  const div = resolvePanelContainer("panel-fabrication", lastFabricationContainer, container);
+  if (!div) return;
+  lastFabricationContainer = div;
+  div.innerHTML = `
+    <div class="ind-shell ind-shell--fabrication">
+      ${renderFabricationOverview()}
+      ${renderManifestBand()}
+      <div class="ind-workspace">
+        <main class="ind-stage-column">${renderAssemblyStage()}</main>
+        ${renderFabricationRail()}
       </div>
-    `;
-  }
-
-  const jobsHtml = queue.map(job => {
-    const recipe = RECIPES.find(r => r.id === job.recipeId);
-    if (!recipe) return "";
-    const elapsed = now - job.startTime;
-    const progress = Math.min(1, elapsed / job.duration);
-    const remainingMs = Math.max(0, job.duration - elapsed);
-    const pct = Math.round(progress * 100);
-
-    return `
-      <div class="ind-queue-job" data-job-id="${job.id}">
-        <div class="ind-queue-job-header">
-          <div class="ind-queue-job-icon">${iconSvg(recipe.outputs[0].key, 10)}</div>
-          <div class="ind-queue-job-name">${escHtml(recipe.label)}${job.qty > 1 ? ` ×${job.qty}` : ""}</div>
-          <button class="ind-queue-cancel" data-action="cancelJob" data-job-id="${job.id}" title="${escHtml(t("industry.cancelJob"))}">×</button>
-        </div>
-        <div class="ind-queue-progress-track">
-          <div class="ind-queue-progress-fill" style="width:${pct}%"></div>
-        </div>
-        <div class="ind-queue-job-footer">
-          <span class="ind-queue-pct">${pct}%</span>
-          <span class="ind-queue-time">${formatTime(remainingMs / 1000)} ${escHtml(t("industry.remaining"))}</span>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  return `
-    <div class="ind-queue-header">
-      ${escHtml(t("industry.queue"))}
-      <span class="ind-queue-count">${queue.length} ${escHtml(t(queue.length === 1 ? "industry.job" : "industry.jobs"))}</span>
-    </div>
-    <div class="ind-queue-list">
-      ${jobsHtml}
     </div>
   `;
 }
 
 export function handleIndustryAction(action: string, btn: HTMLElement): boolean {
-  if (action === "indTab") {
-    const tab = btn.dataset.tab || "refinery";
-    stationState.indTab = tab;
+  if (action === "indStage") {
+    const stage = btn.dataset.stage as RefiningStage | undefined;
+    if (!stage) return false;
+    stationState.indStage = stage;
     sfxBlip(640, 0.04);
     renderIndustry();
     return true;
   }
-  if (action === "selectRecipe") {
-    const recipe = btn.dataset.recipe || "";
-    stationState.selectedRecipeId = recipe;
+  if (action === "indRailTab") {
+    const railTab = btn.dataset.railTab as typeof stationState.indRailTab | undefined;
+    if (!railTab) return false;
+    stationState.indRailTab = railTab;
     sfxBlip(640, 0.04);
     renderIndustry();
+    return true;
+  }
+  if (action === "indTab") {
+    stationState.indTab = btn.dataset.tab || "workbench";
+    stationState.selectedRecipeId = null;
+    sfxBlip(640, 0.04);
+    renderFabrication();
+    return true;
+  }
+  if (action === "selectRecipe") {
+    stationState.selectedRecipeId = btn.dataset.recipe || "";
+    sfxBlip(640, 0.04);
+    renderFabrication();
     return true;
   }
   if (action === "buyBP") {
     const recipeId = btn.dataset.recipe || "";
-    const r = RECIPES.find(recipe => recipe.id === recipeId);
-    const cost = r?.blueprintCost ?? 0;
-    if (!r || getState().player.credits < cost) {
+    const recipe = RECIPES.find((entry) => entry.id === recipeId);
+    const cost = recipe?.blueprintCost ?? 0;
+    if (!recipe || getState().player.credits < cost) {
       sfxError();
       return true;
     }
@@ -305,6 +174,53 @@ export function handleIndustryAction(action: string, btn: HTMLElement): boolean 
     sfxBlip();
     return true;
   }
+  if (action === "processMixedCargo") {
+    const cargoIndex = parseInt(btn.dataset.cargoIndex ?? "", 10);
+    const slot = getCargoMixedOreInputs(getState().player).find((entry) => entry.index === cargoIndex);
+    const qty = selectedProcessQty(cargoIndex, slot?.qty ?? 1);
+    queueFrameAction({
+      type: "processHubMixedOre",
+      payload: {
+        cargoIndex,
+        qty,
+        heatMode: selectedHeatMode(`cargo-${cargoIndex}`),
+        targetStorageId: stationState.indProcessTarget[String(cargoIndex)] ?? null,
+      },
+    });
+    sfxConfirm();
+    return true;
+  }
+  if (action === "separateStock") {
+    const materialId = btn.dataset.materialId || "";
+    if (!materialId) return true;
+    queueFrameAction({
+      type: "separateHubMaterial",
+      payload: { materialId, heatMode: selectedHeatMode(materialId) },
+    });
+    sfxConfirm();
+    return true;
+  }
+  if (action === "alloyStock") {
+    const materialId = btn.dataset.materialId || "";
+    if (!materialId) return true;
+    queueFrameAction({
+      type: "alloyHubMaterial",
+      payload: {
+        materialId,
+        sourceMaterialIds: stationState.indAlloySelections[materialId] ?? [],
+        targetAlloyFamilyId: btn.dataset.alloyFamilyId || null,
+        heatMode: selectedHeatMode(materialId),
+        targetStorageId: stationState.indAlloyTargetStorage[materialId] ?? null,
+      },
+    });
+    sfxConfirm();
+    return true;
+  }
+  if (action === "collectRefinedOutput") {
+    queueFrameAction({ type: "collectHubOutput" });
+    sfxConfirm();
+    return true;
+  }
   return false;
 }
 
@@ -313,17 +229,52 @@ export function handleIndustryFieldEvent(target: EventTarget | null): boolean {
   const el = target as HTMLElement;
   if (el.id === "ind-search-input") {
     stationState.indSearch = (el as HTMLInputElement).value;
-    renderIndustry();
+    rerenderStationProduction(el);
     return true;
   }
   if (el.id === "ind-sort-select") {
     stationState.indSort = (el as HTMLSelectElement).value;
-    renderIndustry();
+    rerenderStationProduction(el);
     return true;
   }
   if (el.id === "ind-qty-sel") {
     stationState.craftQty = parseInt((el as HTMLSelectElement).value, 10) || 1;
-    renderIndustry();
+    rerenderStationProduction(el);
+    return true;
+  }
+  if (el.classList.contains("ind-qty-input")) {
+    const input = el as HTMLInputElement;
+    const cargoIndex = input.dataset.cargoIndex ?? "";
+    const qty = parseInt(input.value, 10);
+    stationState.indProcessQty[cargoIndex] = Number.isFinite(qty) ? qty : 1;
+    rerenderStationProduction(el);
+    return true;
+  }
+  if (el.classList.contains("ind-heat-select")) {
+    const select = el as HTMLSelectElement;
+    const seed = select.dataset.heatFor ?? "";
+    const value = select.value;
+    stationState.indHeatOverrides[seed] = value === "cool" || value === "hot" ? value : "stable";
+    rerenderStationProduction(el);
+    return true;
+  }
+  if (el.classList.contains("ind-storage-select")) {
+    const select = el as HTMLSelectElement;
+    const processTarget = select.dataset.processTarget;
+    const alloyTarget = select.dataset.alloyTarget;
+    if (processTarget != null) stationState.indProcessTarget[processTarget] = select.value;
+    if (alloyTarget != null) stationState.indAlloyTargetStorage[alloyTarget] = select.value;
+    rerenderStationProduction(el);
+    return true;
+  }
+  if (el.matches('input[type="checkbox"][data-alloy-source-for]')) {
+    const input = el as HTMLInputElement;
+    const seed = input.dataset.alloySourceFor ?? "";
+    const current = new Set(stationState.indAlloySelections[seed] ?? []);
+    if (input.checked) current.add(input.value);
+    else current.delete(input.value);
+    stationState.indAlloySelections[seed] = [...current];
+    rerenderStationProduction(el);
     return true;
   }
   return false;
