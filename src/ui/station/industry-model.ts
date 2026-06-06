@@ -20,20 +20,20 @@ export const STAGES: StageMeta[] = [
   {
     id: "process",
     label: "Process",
-    kicker: "Mixed ore intake",
-    body: "Convert mined mixed ore cargo into processed stock while preserving composition and feeding the refinery stockpile.",
+    kicker: "Ore in",
+    body: "Turn ore from cargo into stock.",
   },
   {
     id: "separate",
     label: "Separate",
-    kicker: "Stock stream split",
-    body: "Break processed stock into simpler constituent streams when a natural mix is noisy or better used elsewhere.",
+    kicker: "Split stock",
+    body: "Split mixed stock into simple streams.",
   },
   {
     id: "alloy",
     label: "Alloy",
-    kicker: "Targeted material shaping",
-    body: "Push processed stock toward named alloy families or a custom blend, keeping composition as the strategic signal.",
+    kicker: "Blend stock",
+    body: "Blend stock into a known alloy or a new mix.",
   },
 ];
 

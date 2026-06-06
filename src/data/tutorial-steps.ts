@@ -9,6 +9,7 @@ import {
 } from "./tutorial-layout.js";
 import { tutorialKeyStyled, tutorialBarKeyStyled } from "./tutorial-controls.js";
 import { getHangarGuidePanel } from "./hangar-tutorial-guide.js";
+import { getRefineryGuidePanel } from "./refinery-tutorial-guide.js";
 import { t } from "../utils/i18n.js";
 import { flattenStorageMaterials } from "../refining.js";
 import {
@@ -192,7 +193,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "industry",
     title: t("tutorial.step.industry.title"),
-    objective: () => t("tutorial.step.industry.objective", { dockKey: tutorialKeyStyled("dock") }),
+    objective: (snapshot) => {
+      if (Client.stationOpen && snapshot?.refineryGuideComplete !== true) {
+        const phase = typeof snapshot?.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
+        const panel = getRefineryGuidePanel("industry", phase);
+        if (panel) return `${panel.label}: ${panel.body}`;
+      }
+      return t("tutorial.step.industry.objective", { dockKey: tutorialKeyStyled("dock") });
+    },
     zone: tutorialRegionZone("industry"),
     beaconColor: 0x88ff88,
     onEnter(ctx) {
@@ -200,16 +208,22 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       ctx.snapshot.hubQueue = ctx.player.hubQueue.length;
       ctx.snapshot.materialVolume = totalBulkMaterialVolume(ctx.player);
       ctx.snapshot.refineryMaterialVolume = totalRefineryMaterialVolume(ctx.player);
+      ctx.snapshot.refineryGuidePhase = 0;
+      ctx.snapshot.refineryGuideStarted = false;
+      ctx.snapshot.refineryGuideComplete = false;
+      ctx.snapshot.industryTabActive = false;
     },
     isComplete(ctx) {
-      return ctx.player.craftQueue.length > (ctx.snapshot.craftQueue as number ?? 0)
+      const guideReady = (ctx.snapshot.refineryGuidePhase as number ?? 0) >= 4;
+      const didRefineryWork = ctx.player.craftQueue.length > (ctx.snapshot.craftQueue as number ?? 0)
         || ctx.player.hubQueue.length > (ctx.snapshot.hubQueue as number ?? 0)
         || totalBulkMaterialVolume(ctx.player) > (ctx.snapshot.materialVolume as number ?? 0)
         || totalRefineryMaterialVolume(ctx.player) > (ctx.snapshot.refineryMaterialVolume as number ?? 0)
         || ctx.player.craftQueue.length > 0
         || ctx.player.hubQueue.length > 0
         || totalBulkMaterialVolume(ctx.player) > 0
-        || totalRefineryMaterialVolume(ctx.player) > 0
+        || totalRefineryMaterialVolume(ctx.player) > 0;
+      return (guideReady && didRefineryWork)
         || hasBypassedHangarTurrets(ctx.player);
     },
   },

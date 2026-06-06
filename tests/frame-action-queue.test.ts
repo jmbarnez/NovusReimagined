@@ -49,12 +49,12 @@ describe("frame action queue", () => {
 
     const directFrame = createLocalInputFrame(1);
 
-    expect(directFrame.keys).toEqual({ space: false, w: true, a: true, s: true, d: true });
+    expect(directFrame.keys).toEqual({ space: false, w: true, a: true, s: true, d: true, boost: false });
 
     Client.settings.movementControlMode = "waypoint";
     const waypointFrame = createLocalInputFrame(2);
 
-    expect(waypointFrame.keys).toEqual({ space: false, w: false, a: false, s: false, d: false });
+    expect(waypointFrame.keys).toEqual({ space: false, w: false, a: false, s: false, d: false, boost: false });
   });
 
   it("sends waypoints only in waypoint movement mode", () => {
@@ -81,7 +81,15 @@ describe("frame action queue", () => {
       actions: [],
     });
 
-    expect(frame?.keys).toEqual({ space: true, w: true, a: false, s: false, d: false });
+    expect(frame?.keys).toEqual({ space: true, w: true, a: false, s: false, d: false, boost: false });
+  });
+
+  it("includes held engine boost input in local frames", () => {
+    Client.keys["boost"] = true;
+
+    const frame = createLocalInputFrame(1);
+
+    expect(frame.keys.boost).toBe(true);
   });
 
   it("does not queue weapon fire while shift is held for click-to-lock", () => {

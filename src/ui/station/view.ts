@@ -1,4 +1,4 @@
-import { Client } from "../../state.js";
+import { Client, type Player } from "../../state.js";
 import { fmtKey } from "../../utils/format.js";
 import { getCurrentTutorialStep } from "../../data/tutorial.js";
 import { getTutorialSnapshot } from "../../tutorial.js";
@@ -10,6 +10,8 @@ import { renderContracts } from "./contracts.js";
 import { renderFabrication, renderIndustry } from "./industry.js";
 import { mountInventoryInPane, resetInventoryUI } from "../inventory/index.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../tutorial-hangar-guide.js";
+import { syncRefineryTutorialGuide, clearRefineryTutorialGuide } from "../tutorial-refinery-guide.js";
+import { activateStationTab, type StationTabId } from "./tabs.js";
 import { t } from "../../utils/i18n.js";
 import { getState } from "../../state-access.js";
 import { on } from "../../events.js";
@@ -23,15 +25,16 @@ function syncHangarTutorialGuideFromActiveStep(): void {
   syncHangarTutorialGuide(getTutorialSnapshot());
 }
 
-function activateStationTab(tab: string): void {
-  const el = document.getElementById("station-overlay");
-  if (!el || !Client.stationOpen) return;
-  const btn = el.querySelector(`.st-tab[data-tab="${tab}"]:not([disabled])`) as HTMLButtonElement | null;
-  if (!btn || btn.classList.contains("active")) return;
-  btn.click();
+function syncRefineryTutorialGuideFromActiveStep(): void {
+  const step = getCurrentTutorialStep(getState().player)?.id;
+  if (step !== "industry") {
+    clearRefineryTutorialGuide();
+    return;
+  }
+  syncRefineryTutorialGuide(getTutorialSnapshot());
 }
 
-function preferredTutorialStationTab(st: Station): string | null {
+function preferredTutorialStationTab(st: Station): StationTabId | null {
   const step = getCurrentTutorialStep(getState().player)?.id;
   if (step === "industry" && st.services.includes("industry")) return "industry";
   if (step === "hangar-high" || step === "hangar-turrets") return "hangar";
@@ -39,6 +42,77 @@ function preferredTutorialStationTab(st: Station): string | null {
 }
 
 let stationTutorialEventsBound = false;
+let stationRefreshEventsBound = false;
+let lastStationRefreshSignature = "";
+
+function syncStationStateFromActiveStation(): void {
+  const station = Client.activeStation;
+  const player = getState().player;
+  stationState.craftQueue = player.craftQueue;
+  stationState._stationContracts = station && player.stationOfferStationId === station.id
+    ? player.stationOffers
+    : [];
+}
+
+function signatureForPlayerRecord(record: Record<string, unknown> | undefined): string {
+  return JSON.stringify(record ?? {});
+}
+
+function signatureForContracts(contracts: Player["contracts"]): string {
+  return contracts
+    .map((contract) => `${contract.id}:${contract.status}:${contract.objective.current}/${contract.objective.required}`)
+    .join("|");
+}
+
+function signatureForStationOffers(offers: Player["stationOffers"], stationId: string | null): string {
+  return `${stationId ?? ""}:${offers.map((contract) => `${contract.id}:${contract.status}`).join("|")}`;
+}
+
+function signatureForModules(player: Player): string {
+  const cargo = player.moduleCargo
+    .map((inst) => `${inst.uid}:${inst.baseId}:${inst.durability}/${inst.maxDurability}`)
+    .join("|");
+  return `${cargo}::${signatureForPlayerRecord(player.fitting)}::${signatureForPlayerRecord(player.moduleHp)}`;
+}
+
+function signatureForStationView(): string {
+  const player = getState().player;
+  return JSON.stringify({
+    stationId: Client.activeStation?.id ?? null,
+    stationOfferStationId: player.stationOfferStationId,
+    credits: player.credits,
+    hp: Math.round(player.hp),
+    structure: Math.round(player.structure),
+    shield: Math.round(player.shield),
+    homeSysIdx: player.homeSysIdx,
+    ore: player.ore,
+    loot: player.loot,
+    components: player.components,
+    ammo: player.ammo,
+    blueprints: player.blueprints,
+    mixedOreCargo: player.mixedOreCargo,
+    bulkMaterialsCargo: player.bulkMaterialsCargo,
+    refineryStorage: player.refineryStorage,
+    hubOutput: player.hubOutput,
+    craftQueue: player.craftQueue,
+    modules: signatureForModules(player),
+    contracts: signatureForContracts(player.contracts),
+    stationOffers: signatureForStationOffers(player.stationOffers, player.stationOfferStationId),
+  });
+}
+
+function refreshStationViewFromSnapshot(): void {
+  if (!Client.stationOpen || !Client.activeStation) return;
+  const el = document.getElementById("station-overlay");
+  if (!el) return;
+
+  const nextSignature = signatureForStationView();
+  if (nextSignature === lastStationRefreshSignature) return;
+
+  syncStationStateFromActiveStation();
+  renderStationView();
+  lastStationRefreshSignature = nextSignature;
+}
 
 function bindStationTutorialEvents(): void {
   if (stationTutorialEventsBound) return;
@@ -48,13 +122,21 @@ function bindStationTutorialEvents(): void {
     const preferredTab = preferredTutorialStationTab(Client.activeStation);
     if (preferredTab) activateStationTab(preferredTab);
     syncHangarTutorialGuideFromActiveStep();
+    syncRefineryTutorialGuideFromActiveStep();
   });
+}
+
+function bindStationRefreshEvents(): void {
+  if (stationRefreshEventsBound) return;
+  stationRefreshEventsBound = true;
+  on("inventory:changed", refreshStationViewFromSnapshot);
 }
 
 export function buildStationView(st: Station): void {
   const el = document.getElementById("station-overlay");
   if (!el) return;
   bindStationTutorialEvents();
+  bindStationRefreshEvents();
 
   el.querySelector("#st-name")!.textContent = st.name;
   el.querySelector("#st-meta")!.textContent = `Services: ${st.services.join(" · ")}`;
@@ -72,35 +154,41 @@ export function buildStationView(st: Station): void {
     (btn as HTMLButtonElement).disabled = !avail;
     btn.classList.remove("active");
   });
+  el.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
 
   const preferredTab = preferredTutorialStationTab(st);
   const first = preferredTab
     ? el.querySelector(`.st-tab[data-tab="${preferredTab}"]:not([disabled])`)
     : el.querySelector(".st-tab:not([disabled])");
   if (first) {
-    first.classList.add("active");
-    el.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
-    el.querySelector(`#panel-${(first as HTMLElement).dataset.tab}`)!.classList.add("active");
+    stationState.activeTab = (first as HTMLElement).dataset.tab as StationTabId;
+    activateStationTab(stationState.activeTab, el);
   }
 
+  stationState.activeTab = stationState.activeTab || "hangar";
   stationState.indStage = "process";
+  stationState.indRailTab = "hold";
+  stationState.indRailPulseTab = null;
+  stationState.indRailPulseUntil = 0;
   stationState.indHeatOverrides = {};
+  stationState.indProcessSource = null;
   stationState.indProcessQty = {};
   stationState.indProcessTarget = {};
+  stationState.indSeparateSource = null;
   stationState.indAlloyTargetStorage = {};
   stationState.indAlloySelections = {};
+  stationState.indAlloyShowMore = {};
   stationState.selectedRecipeId = null;
-  stationState.craftQueue = getState().player.craftQueue;
-  stationState._stationContracts = getState().player.stationOfferStationId === st.id
-    ? getState().player.stationOffers
-    : [];
+  syncStationStateFromActiveStation();
   resetInventoryUI();
   renderStationView();
+  lastStationRefreshSignature = signatureForStationView();
 }
 
 export function renderStationView(): void {
   const el = document.getElementById("station-overlay");
   if (!el || !Client.stationOpen) return;
+  syncStationStateFromActiveStation();
   el.querySelector("#st-cr")!.textContent = `${getState().player.credits}¢`;
   const undockKey = document.getElementById("st-undock-key");
   if (undockKey) undockKey.textContent = fmtKey(Client.settings.keybinds.dock);
@@ -118,4 +206,5 @@ export function renderStationView(): void {
     renderFabrication(fabricationPanel);
   }
   syncHangarTutorialGuideFromActiveStep();
+  syncRefineryTutorialGuideFromActiveStep();
 }

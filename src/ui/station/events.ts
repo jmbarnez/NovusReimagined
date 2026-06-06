@@ -3,9 +3,8 @@ import { sfxBlip } from "../../audio/procedural.js";
 import { stationState } from "./shared.js";
 import { setPreview, updateStatsGrid } from "./hangar.js";
 import { renderMarket } from "./market.js";
+import { activateStationTab, type StationTabId } from "./tabs.js";
 import {
-  renderFabrication,
-  renderIndustry,
   handleIndustryAction,
   handleIndustryFieldEvent,
 } from "./industry.js";
@@ -15,15 +14,7 @@ function bindTabClicks(el: HTMLElement): void {
     btn.addEventListener("click", () => {
       if ((btn as HTMLButtonElement).disabled) return;
       sfxBlip(720, 0.05);
-      el.querySelectorAll(".st-tab").forEach((entry) => entry.classList.remove("active"));
-      el.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
-      btn.classList.add("active");
-      el.querySelector(`#panel-${(btn as HTMLElement).dataset.tab}`)?.classList.add("active");
-      if ((btn as HTMLElement).dataset.tab === "industry") {
-        renderIndustry(document.getElementById("panel-industry") ?? undefined);
-      } else if ((btn as HTMLElement).dataset.tab === "fabrication") {
-        renderFabrication(document.getElementById("panel-fabrication") ?? undefined);
-      }
+      activateStationTab((btn as HTMLElement).dataset.tab as StationTabId, el);
     });
   });
 }

@@ -1,8 +1,9 @@
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
-import { getCurrentTutorialStep, isStationHangarTabActive } from "../data/tutorial.js";
-import { getHangarGuidePanel, type HangarGuideTarget } from "../data/hangar-tutorial-guide.js";
+import { getCurrentTutorialStep } from "../data/tutorial.js";
+import { getRefineryGuidePanel, type RefineryGuideTarget } from "../data/refinery-tutorial-guide.js";
 import { activateStationTab } from "./station/tabs.js";
+import { stationState } from "./station/shared.js";
 
 const HIGHLIGHT_CLASS = "tutorial-hangar-highlight";
 
@@ -50,30 +51,20 @@ function syncStationDimmerCutout(target: HTMLElement | null): void {
   segments[3].style.cssText = `display:block;left:${right}px;top:${top}px;width:${Math.max(0, stationRect.width - right)}px;height:${Math.max(0, bottom - top)}px;`;
 }
 
-function currentHangarPhase(stepId: string, snapshot: Record<string, unknown>): number {
-  const key = stepId === "hangar-turrets" ? "hangarCombatPhase" : "hangarReviewPhase";
-  return typeof snapshot[key] === "number" ? snapshot[key] as number : 0;
-}
-
-function resolveGuideTarget(target: HangarGuideTarget): HTMLElement | null {
+function resolveGuideTarget(target: RefineryGuideTarget): HTMLElement | null {
   switch (target) {
-    case "station-tab-hangar":
-      return document.querySelector('.st-tab[data-tab="hangar"]');
-    case "hangar-fitting":
-      return document.getElementById("hangar-fitting-panel");
-    case "hangar-stats":
-      return document.getElementById("hangar-stats-panel");
-    case "hangar-cargo":
-      return document.getElementById("hangar-pane-cargo");
-    case "hud-missions":
-      if (Client.stationOpen) return document.getElementById("hangar-missions-panel");
-      return document.getElementById("hud-missions");
-    case "hangar-undock":
-      return document.getElementById("st-undock");
-    case "hangar-slot-high-0":
-      return document.querySelector('[data-tutorial-slot="high-0"]');
-    case "hangar-slot-high-1":
-      return document.querySelector('[data-tutorial-slot="high-1"]');
+    case "station-tab-industry":
+      return document.querySelector('.st-tab[data-tab="industry"]');
+    case "refinery-pipeline":
+      return document.getElementById("refinery-pipeline");
+    case "refinery-process-list":
+      return document.getElementById("refinery-process-list");
+    case "refinery-process-source":
+      return document.getElementById("refinery-process-source");
+    case "refinery-process-controls":
+      return document.getElementById("refinery-process-controls");
+    case "refinery-right-rail":
+      return document.getElementById("refinery-right-rail");
     default:
       return null;
   }
@@ -89,32 +80,28 @@ function clearHighlights(): void {
   resetDimmerSegments(dimmer);
 }
 
-export function clearHangarTutorialGuide(): void {
+export function clearRefineryTutorialGuide(): void {
   clearHighlights();
 }
 
-export function syncHangarTutorialGuide(snapshot: Record<string, unknown> = {}): void {
+export function syncRefineryTutorialGuide(snapshot: Record<string, unknown> = {}): void {
   clearHighlights();
   if (!Client.stationOpen) return;
 
   const step = getCurrentTutorialStep(getState().player);
-  if (!step || (step.id !== "hangar-high" && step.id !== "hangar-turrets")) return;
+  if (!step || step.id !== "industry") return;
+  if (snapshot.refineryGuideComplete === true) return;
 
-  if (snapshot.hangarReviewComplete === true) return;
-
-  const phase = currentHangarPhase(step.id, snapshot);
-  const panel = getHangarGuidePanel(step.id, phase);
+  const phase = typeof snapshot.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
+  const panel = getRefineryGuidePanel(step.id, phase);
   if (!panel) return;
+
+  stationState.indRailTab = phase >= 4 ? "queue" : "hold";
 
   document.getElementById("st-dimmer")?.classList.add("active");
 
-  if (panel.stationTab) activateStationTab(panel.stationTab);
-
-  if (!isStationHangarTabActive()) {
-    const tabEl = resolveGuideTarget("station-tab-hangar");
-    tabEl?.classList.add(HIGHLIGHT_CLASS);
-    syncStationDimmerCutout(tabEl);
-    return;
+  if (panel.stationTab && !document.getElementById(`panel-${panel.stationTab}`)?.classList.contains("active")) {
+    activateStationTab(panel.stationTab);
   }
 
   const el = resolveGuideTarget(panel.target);

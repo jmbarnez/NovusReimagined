@@ -30,6 +30,19 @@ import {
 let lastIndustryContainer: HTMLElement | null = null;
 let lastFabricationContainer: HTMLElement | null = null;
 
+function pulseRefineryRail(tab: typeof stationState.indRailTab): void {
+  stationState.indRailTab = tab;
+  stationState.indRailPulseTab = tab;
+  stationState.indRailPulseUntil = Date.now() + 1200;
+  renderIndustry();
+  setTimeout(() => {
+    if (Date.now() < stationState.indRailPulseUntil) return;
+    stationState.indRailPulseTab = null;
+    stationState.indRailPulseUntil = 0;
+    renderIndustry();
+  }, 1250);
+}
+
 function resolvePanelContainer(panelId: string, lastContainer: HTMLElement | null, container?: HTMLElement): HTMLElement | null {
   if (container) return container;
   const stationPanel = document.getElementById(panelId);
@@ -133,6 +146,22 @@ export function handleIndustryAction(action: string, btn: HTMLElement): boolean 
     renderIndustry();
     return true;
   }
+  if (action === "selectProcessSource") {
+    const cargoIndex = btn.dataset.cargoIndex ?? "";
+    if (!cargoIndex) return false;
+    stationState.indProcessSource = cargoIndex;
+    sfxBlip(640, 0.04);
+    renderIndustry();
+    return true;
+  }
+  if (action === "selectSeparateSource") {
+    const materialId = btn.dataset.materialId ?? "";
+    if (!materialId) return false;
+    stationState.indSeparateSource = materialId;
+    sfxBlip(640, 0.04);
+    renderIndustry();
+    return true;
+  }
   if (action === "indTab") {
     stationState.indTab = btn.dataset.tab || "workbench";
     stationState.selectedRecipeId = null;
@@ -187,17 +216,21 @@ export function handleIndustryAction(action: string, btn: HTMLElement): boolean 
         targetStorageId: stationState.indProcessTarget[String(cargoIndex)] ?? null,
       },
     });
+    stationState.indProcessSource = String(cargoIndex);
     sfxConfirm();
+    pulseRefineryRail("queue");
     return true;
   }
   if (action === "separateStock") {
     const materialId = btn.dataset.materialId || "";
     if (!materialId) return true;
+    stationState.indSeparateSource = materialId;
     queueFrameAction({
       type: "separateHubMaterial",
       payload: { materialId, heatMode: selectedHeatMode(materialId) },
     });
     sfxConfirm();
+    pulseRefineryRail("queue");
     return true;
   }
   if (action === "alloyStock") {
@@ -214,11 +247,21 @@ export function handleIndustryAction(action: string, btn: HTMLElement): boolean 
       },
     });
     sfxConfirm();
+    pulseRefineryRail("queue");
+    return true;
+  }
+  if (action === "toggleAlloyMore") {
+    const materialId = btn.dataset.materialId || "";
+    if (!materialId) return true;
+    stationState.indAlloyShowMore[materialId] = !stationState.indAlloyShowMore[materialId];
+    sfxBlip(640, 0.04);
+    renderIndustry();
     return true;
   }
   if (action === "collectRefinedOutput") {
     queueFrameAction({ type: "collectHubOutput" });
     sfxConfirm();
+    pulseRefineryRail("output");
     return true;
   }
   return false;

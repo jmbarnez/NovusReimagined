@@ -23,6 +23,7 @@ import {
   isStationHangarTabActive,
   HANGAR_REVIEW_PHASE_COUNT,
   HANGAR_COMBAT_SWAP_PHASE_COUNT,
+  REFINERY_GUIDE_PHASE_COUNT,
   hasTutorialCombatLoadout,
 } from "./data/tutorial.js";
 import {
@@ -63,10 +64,14 @@ function bindTutorialEvents(): void {
   tutorialEventsBound = true;
   on("station:open", () => {
     const stepId = getCurrentTutorialStep(getState().player)?.id;
-    if (stepId !== "hangar-high" && stepId !== "hangar-turrets") return;
+    if (stepId !== "hangar-high" && stepId !== "hangar-turrets" && stepId !== "industry") return;
     requestAnimationFrame(() => {
-      if (!Client.stationOpen || !isStationHangarTabActive()) return;
       const now = nowSec();
+      if (stepId === "industry") {
+        snapshot.refineryGuideStarted = true;
+        return;
+      }
+      if (!Client.stationOpen || !isStationHangarTabActive()) return;
       if (stepId === "hangar-turrets") {
         if (!snapshot.hangarTabActive) {
           snapshot.hangarTabActive = true;
@@ -77,11 +82,16 @@ function bindTutorialEvents(): void {
         beginHangarReviewTour(now);
       }
       snapshot.hangarReviewStarted = true;
+      emit("tutorial:hangar-tour-change");
     });
   });
   on("station:close", () => {
     const stepId = getCurrentTutorialStep(getState().player)?.id;
-    if (stepId !== "hangar-high" && stepId !== "hangar-turrets") return;
+    if (stepId !== "hangar-high" && stepId !== "hangar-turrets" && stepId !== "industry") return;
+    if (stepId === "industry") {
+      snapshot.industryTabActive = false;
+      return;
+    }
     snapshot.hangarTabActive = false;
     clearHangarTutorialGuide();
     markHangarStepComplete(stepId === "hangar-turrets");
@@ -182,6 +192,22 @@ export function advanceHudTour(): void {
   emit("tutorial:hud-tour-change");
 }
 
+export function canAdvanceRefineryTour(): boolean {
+  const step = getCurrentTutorialStep(getState().player);
+  if (!step || step.id !== "industry") return false;
+  if (!Client.stationOpen || snapshot.refineryGuideComplete === true) return false;
+  const phase = typeof snapshot.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
+  return phase < REFINERY_GUIDE_PHASE_COUNT - 1;
+}
+
+export function advanceRefineryTutorialPanel(): void {
+  const step = getCurrentTutorialStep(getState().player);
+  if (!step || !canAdvanceRefineryTour()) return;
+  const phase = typeof snapshot.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
+  snapshot.refineryGuidePhase = phase + 1;
+  emit("tutorial:refinery-tour-change");
+}
+
 export function tickTutorial(_dt: number) {
   if (!getState().player?.tutorial?.active) return;
 
@@ -236,6 +262,18 @@ export function tickTutorial(_dt: number) {
         snapshot.hangarCombatPhaseAt = now;
       }
       snapshot.hangarReviewStarted = true;
+    }
+  }
+
+  if (step.id === "industry") {
+    if (!Client.stationOpen) {
+      snapshot.industryTabActive = false;
+    } else {
+      const industryTabActive = document.getElementById("panel-industry")?.classList.contains("active") ?? false;
+      snapshot.industryTabActive = industryTabActive;
+      if (industryTabActive) {
+        snapshot.refineryGuideStarted = true;
+      }
     }
   }
 }

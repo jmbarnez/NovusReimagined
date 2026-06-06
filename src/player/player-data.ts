@@ -215,6 +215,9 @@ export function makePlayer(): Player {
     shootCd: 0, mineCd: 0,
     invincible: 0,
     thrustFx: false,
+    boostFx: false,
+    boostLockout: false,
+    shipHeat: 0,
     fitting: fit,
 
     _assignTargetId: null,
@@ -252,6 +255,8 @@ export function clearTransientPlayerInput(p: Player): void {
   p.waypoint = null;
   p.navCommand = null;
   p.netInputFrame = null;
+  p.boostFx = false;
+  p.boostLockout = false;
 }
 
 export function loadPlayer(): Player {
@@ -268,6 +273,9 @@ export function loadPlayer(): Player {
     p.px = p.x; p.py = p.y; p.prevAngle = p.angle;
     p.shootCd = p.mineCd = 0; p.invincible = 1.5;
     p.thrustFx = false;
+    p.boostFx = false;
+    p.boostLockout = false;
+    p.shipHeat = 0;
     clearTransientPlayerInput(p);
     if (p.shield == null) p.shield = 0;
     p.shieldCd = 0;
@@ -362,6 +370,9 @@ export function loadPlayer(): Player {
     if (p.scannerConeDeg === undefined) p.scannerConeDeg = 180;
     if (p.mapScannerActive === undefined) p.mapScannerActive = false;
     if (p.mapScannerStrength === undefined) p.mapScannerStrength = 0.5;
+    if (typeof p.shipHeat !== "number" || !Number.isFinite(p.shipHeat)) p.shipHeat = 0;
+    p.boostFx = false;
+    p.boostLockout = false;
     if (p.warpCooldown === undefined) p.warpCooldown = 0;
     if (p.warpTargetIdx === undefined) p.warpTargetIdx = -1;
     applyStarterTrainingFit(p);

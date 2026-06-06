@@ -67,10 +67,10 @@ function renderCompactHoldingsSummary(): string {
   return `
     <section class="ind-holdings-band ind-holdings-band--compact">
       <div class="ind-holdings-grid ind-holdings-grid--compact">
-        <div class="ind-holdings-card"><span>Ore</span><strong>${holdings.mixedOreQty}</strong><small>cargo chunks</small></div>
-        <div class="ind-holdings-card ind-holdings-card--processed"><span>Processed</span><strong>${formatVolume(holdings.processedVolumeM3)}</strong><small>mixed stock</small></div>
-        <div class="ind-holdings-card ind-holdings-card--separated"><span>Separated</span><strong>${formatVolume(holdings.separatedVolumeM3)}</strong><small>clean streams</small></div>
-        <div class="ind-holdings-card ind-holdings-card--alloy"><span>Alloy</span><strong>${formatVolume(holdings.alloyVolumeM3)}</strong><small>resolved stock</small></div>
+        <div class="ind-holdings-card"><span>Ore</span><strong>${holdings.mixedOreQty}</strong><small>in cargo</small></div>
+        <div class="ind-holdings-card ind-holdings-card--processed"><span>Stock</span><strong>${formatVolume(holdings.processedVolumeM3)}</strong><small>mixed</small></div>
+        <div class="ind-holdings-card ind-holdings-card--separated"><span>Streams</span><strong>${formatVolume(holdings.separatedVolumeM3)}</strong><small>split</small></div>
+        <div class="ind-holdings-card ind-holdings-card--alloy"><span>Alloy</span><strong>${formatVolume(holdings.alloyVolumeM3)}</strong><small>ready</small></div>
       </div>
     </section>
   `;
@@ -78,6 +78,7 @@ function renderCompactHoldingsSummary(): string {
 
 function renderStorageSchematic(activeKind?: "intake" | "processed" | "separated" | "alloy"): string {
   const zones = refineryZoneSummaries();
+  const focusKind = activeKind;
   const activeRoute = activeKind === "processed"
     ? ["intake", "processed"]
     : activeKind === "separated"
@@ -100,14 +101,15 @@ function renderStorageSchematic(activeKind?: "intake" | "processed" | "separated
   const totalVolume = zones.reduce((sum, z) => sum + z.totalVolumeM3, 0);
 
   return `
-    <section class="ind-pipeline-bar">
+    <section id="refinery-pipeline" class="ind-pipeline-bar ind-pipeline-bar--${activeKind ?? "idle"}">
       <div class="ind-pipeline-strip">
         ${zones.map((zone, index, array) => {
           const isActive = activeRoute.includes(zone.kind);
+          const isFocus = focusKind === zone.kind;
           const isRouteEdge = index < array.length - 1 && activeRoute.includes(zone.kind) && activeRoute.includes(array[index + 1]!.kind);
           const pct = totalVolume > 0 ? Math.min(100, (zone.totalVolumeM3 / totalVolume) * 100) : 0;
           return `
-            <div class="ind-pipeline-node${isActive ? " active" : ""}">
+            <div class="ind-pipeline-node${isActive ? " active" : ""}${isFocus ? " focus" : ""}${activeRoute.length && !isActive ? " muted" : ""}">
               <div class="ind-pipeline-node-head">
                 <span class="ind-pipeline-label">${routeLabels[zone.kind]}</span>
                 <strong>${formatVolume(zone.totalVolumeM3)}</strong>
@@ -131,9 +133,45 @@ function renderStageWorkspace(activeKind: "processed" | "separated" | "alloy", c
       <div class="ind-stage-machine">
         ${renderStorageSchematic(activeKind)}
       </div>
-      <aside class="ind-stage-dock">
+      <aside id="refinery-stage-dock" class="ind-stage-dock">
         ${controlsHtml}
       </aside>
+    </div>
+  `;
+}
+
+function renderDockOperatorStrip(
+  title: string,
+  sourceLabel: string,
+  detail: string,
+  metrics: Array<{ label: string; value: string }>,
+): string {
+  return `
+    <div class="ind-dock-status">
+      <div class="ind-dock-status-main">
+        <span>${escHtml(title)}</span>
+        <strong>${escHtml(sourceLabel)}</strong>
+        <small>${escHtml(detail)}</small>
+      </div>
+      <div class="ind-dock-status-metrics">
+        ${metrics.map((metric) => `
+          <div>
+            <span>${escHtml(metric.label)}</span>
+            <strong>${escHtml(metric.value)}</strong>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderRunRoute(labels: string[]): string {
+  return `
+    <div class="ind-run-route" aria-hidden="true">
+      ${labels.map((label, index) => `
+        <span>${escHtml(label)}</span>
+        ${index < labels.length - 1 ? "<i></i>" : ""}
+      `).join("")}
     </div>
   `;
 }
@@ -185,7 +223,12 @@ export function renderManifestBand(): string {
 export function renderProcessStage(): string {
   const mixed = getCargoMixedOreInputs(getState().player);
   const processedTargets = refineryStorageUnits().filter((unit) => unit.kind === "processed" || unit.kind === "intake");
-  const cards = mixed.map((slot) => {
+  const selectedSourceId = mixed.some((slot) => String(slot.index) === stationState.indProcessSource)
+    ? stationState.indProcessSource
+    : (mixed[0] ? String(mixed[0].index) : null);
+  const selectedSlot = mixed.find((slot) => String(slot.index) === selectedSourceId) ?? null;
+  const cards = mixed.map((slot, idx) => {
+    const isSelected = String(slot.index) === selectedSourceId;
     const qty = selectedProcessQty(slot.index, slot.qty);
     const heatMode = selectedHeatMode(`cargo-${slot.index}`);
     const sourceMassKg = estimateMixedOreCargoMassKg(qty, slot.composition);
@@ -198,52 +241,84 @@ export function renderProcessStage(): string {
     });
     const retainedPct = sourceMassKg > 0 ? Math.round((preview.massKg / sourceMassKg) * 100) : 0;
     const holdings = refineryHoldingsSummary();
+    const compactAfterStock = holdings.processedVolumeM3 + preview.volumeM3;
     return `
-      <div class="ind-feed-card" style="${compositionAccentVars(slot.composition)}">
+      <div class="ind-feed-card ind-feed-card--process${isSelected ? " is-selected" : " is-compact"}" ${isSelected ? `id="refinery-process-source"` : ""} style="${compositionAccentVars(slot.composition)}">
         <div class="ind-feed-head">
           <div>
             <div class="ind-feed-title">${escHtml(slot.label)}</div>
             <div class="ind-feed-subtitle">${escHtml(formatCompositionBreakdown(slot.composition))}</div>
           </div>
-          <div class="ind-feed-badge">richness ${slot.richness.toFixed(1)}</div>
+          <div class="ind-feed-badge">${isSelected ? "active" : `rich ${slot.richness.toFixed(1)}`}</div>
         </div>
         <div class="ind-feed-layout ind-feed-layout--process">
           <div class="ind-feed-stats">
-            <div><span>Chunks</span><strong>${slot.qty}</strong></div>
+            <div><span>Ore</span><strong>${slot.qty}</strong></div>
             <div><span>Mass</span><strong>${formatMass(slot.massKg)}</strong></div>
-            <div><span>Output path</span><strong>Processed stock</strong></div>
+            <div><span>Output</span><strong>Stock</strong></div>
           </div>
-          <div class="ind-process-preview">
-            <div class="ind-process-preview-head">
-              <span>Projected output</span>
-              <span>${retainedPct}% retained</span>
+          ${isSelected ? `
+            <div class="ind-process-preview">
+              <div class="ind-process-preview-head">
+                <span>Result</span>
+                <span>${retainedPct}% kept</span>
+              </div>
+              <div class="ind-process-preview-grid">
+                <div><span>Batch</span><strong>${formatMass(sourceMassKg)}</strong></div>
+                <div><span>Stock</span><strong>${formatVolume(preview.volumeM3)}</strong></div>
+                <div><span>Kept</span><strong>${formatMass(preview.massKg)}</strong></div>
+                <div><span>Waste</span><strong>${formatMass(preview.wasteMassKg)}</strong></div>
+              </div>
+              <div class="ind-stage-outcome">
+                <span>After</span>
+                <strong>${formatVolume(compactAfterStock)} stock</strong>
+              </div>
             </div>
-            <div class="ind-process-preview-grid">
-              <div><span>Batch mass</span><strong>${formatMass(sourceMassKg)}</strong></div>
-              <div><span>Stock volume</span><strong>${formatVolume(preview.volumeM3)}</strong></div>
-              <div><span>Retained mass</span><strong>${formatMass(preview.massKg)}</strong></div>
-              <div><span>Waste</span><strong>${formatMass(preview.wasteMassKg)}</strong></div>
+          ` : `
+            <div class="ind-process-compact-summary">
+              <div><span>Run</span><strong>${formatMass(sourceMassKg)}</strong></div>
+              <div><span>Keep</span><strong>${retainedPct}%</strong></div>
+              <div><span>After</span><strong>${formatVolume(compactAfterStock)}</strong></div>
             </div>
-            <div class="ind-stage-outcome">
-              <span>After queue</span>
-              <strong>${formatVolume(holdings.processedVolumeM3 + preview.volumeM3)} processed stock in refinery</strong>
+          `}
+        </div>
+        ${isSelected ? `
+          <div class="ind-feed-actions ind-feed-actions--sticky tutorial-hangar-highlight-anchor" id="refinery-process-controls">
+            <div class="ind-action-tray ind-action-tray--process">
+              <div class="ind-action-tray-copy">
+                <span>Run</span>
+                <strong>Batch, route, heat, start.</strong>
+              </div>
+              ${renderRunRoute(["Cargo", "Stock", "Queue"])}
+              <div class="ind-action-tray-grid">
+                <div class="ind-action-step" data-step="01">
+                  <label class="ind-qty-wrap">
+                    <span>Batch</span>
+                    <input type="number" class="ind-qty-input" data-cargo-index="${slot.index}" min="1" max="${slot.qty}" value="${qty}">
+                  </label>
+                </div>
+                <div class="ind-action-step" data-step="02">
+                  <label class="ind-heat-control">
+                    <span>To</span>
+                    <select class="ind-storage-select" data-process-target="${slot.index}">
+                      ${processedTargets.map((unit) => `<option value="${unit.id}" ${stationState.indProcessTarget[String(slot.index)] === unit.id ? "selected" : ""}>${escHtml(unit.label)}</option>`).join("")}
+                    </select>
+                  </label>
+                </div>
+                <div class="ind-action-step" data-step="03">
+                  ${renderHeatSelect(`cargo-${slot.index}`)}
+                </div>
+                <div class="ind-action-step ind-action-step--button" data-step="04">
+                  <button class="ind-btn ind-btn--primary" data-action="processMixedCargo" data-cargo-index="${slot.index}">Start</button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="ind-feed-actions ind-feed-actions--sticky">
-          <label class="ind-qty-wrap">
-            <span>Batch</span>
-            <input type="number" class="ind-qty-input" data-cargo-index="${slot.index}" min="1" max="${slot.qty}" value="${qty}">
-          </label>
-          <label class="ind-heat-control">
-            <span>Tank</span>
-            <select class="ind-storage-select" data-process-target="${slot.index}">
-              ${processedTargets.map((unit) => `<option value="${unit.id}" ${stationState.indProcessTarget[String(slot.index)] === unit.id ? "selected" : ""}>${escHtml(unit.label)}</option>`).join("")}
-            </select>
-          </label>
-          ${renderHeatSelect(`cargo-${slot.index}`)}
-          <button class="ind-btn" data-action="processMixedCargo" data-cargo-index="${slot.index}">Queue Process</button>
-        </div>
+        ` : `
+          <div class="ind-feed-actions ind-feed-actions--compact">
+            <button class="ind-btn ind-btn--ghost" data-action="selectProcessSource" data-cargo-index="${slot.index}">Use</button>
+          </div>
+        `}
       </div>
     `;
   }).join("");
@@ -251,17 +326,26 @@ export function renderProcessStage(): string {
   return `
     <section class="ind-stage-panel">
       <div class="ind-panel-head">
-        <div class="ind-panel-title">Mixed Ore Intake</div>
-        <div class="ind-panel-subtitle">Process natural asteroid mixes directly from cargo into refinery stock.</div>
+        <div class="ind-panel-title">Ore In</div>
+        <div class="ind-panel-subtitle">Turn ore into stock.</div>
       </div>
       ${renderStageWorkspace("processed", `
         <div class="ind-stage-dock-head">
           <div>
-            <div class="ind-panel-title">Process Feed</div>
-            <div class="ind-panel-subtitle">Select mixed ore, preview the conversion, and route it into refinery stock.</div>
+            <div class="ind-panel-title">Input</div>
+            <div class="ind-panel-subtitle">Pick ore and start.</div>
           </div>
         </div>
-        <div class="ind-stage-grid ind-stage-grid--dock">
+        ${renderDockOperatorStrip(
+          "Selected ore",
+          selectedSlot?.label ?? "No ore selected",
+          selectedSlot ? `${selectedSlot.qty} batches · ${formatMass(selectedSlot.massKg)}` : "Mine or transfer mixed ore to begin.",
+          [
+            { label: "Route", value: "Cargo -> Stock" },
+            { label: "Sources", value: String(mixed.length) },
+          ],
+        )}
+        <div id="refinery-process-list" class="ind-stage-grid ind-stage-grid--dock">
           ${cards || `<div class="ind-stage-empty">No mixed ore cargo available for processing.</div>`}
         </div>
       `)}
@@ -287,18 +371,18 @@ function renderSeparationPreview(material: {
   return `
     <div class="ind-process-preview">
       <div class="ind-process-preview-head">
-        <span>Projected split</span>
+        <span>Result</span>
         <span>${preview.outputs.length} streams</span>
       </div>
       ${renderCompositionRibbon([
         {
-          label: "Source mix",
+          label: "Source",
           composition: material.composition,
           meta: `${formatVolume(material.volumeM3)} · ${formatMass(material.massKg)}`,
           tone: "source",
         },
         {
-          label: "Recovered streams",
+          label: "Streams",
           composition: preview.outputs.reduce<Record<string, number>>((acc, output) => {
             for (const [oreKey, fraction] of Object.entries(output.composition)) {
               acc[oreKey] = Math.max(acc[oreKey] ?? 0, fraction);
@@ -322,7 +406,7 @@ function renderSeparationPreview(material: {
         `).join("") || `<div class="ind-feed-block-empty">No recoverable streams at this heat setting.</div>`}
       </div>
       <div class="ind-process-preview-grid">
-        <div><span>Recovered mass</span><strong>${formatMass(preview.outputs.reduce((sum, output) => sum + output.massKg, 0))}</strong></div>
+        <div><span>Kept</span><strong>${formatMass(preview.outputs.reduce((sum, output) => sum + output.massKg, 0))}</strong></div>
         <div><span>Waste</span><strong>${formatMass(preview.wasteMassKg)}</strong></div>
       </div>
     </div>
@@ -331,8 +415,28 @@ function renderSeparationPreview(material: {
 
 export function renderSeparateStage(): string {
   const processedOnly = groupRefineryMaterials("processed").filter((entry) => Object.keys(entry.composition).length > 1);
-  const cards = processedOnly.map((material) => `
-    <div class="ind-feed-card" style="${compositionAccentVars(material.composition)}">
+  const selectedSourceId = processedOnly.some((entry) => entry.representativeId === stationState.indSeparateSource)
+    ? stationState.indSeparateSource
+    : (processedOnly[0]?.representativeId ?? null);
+  const selectedMaterial = processedOnly.find((entry) => entry.representativeId === selectedSourceId) ?? null;
+  const cards = processedOnly.map((material) => {
+    const isSelected = material.representativeId === selectedSourceId;
+    const preview = separateMaterial({
+      material: {
+        id: material.representativeId,
+        materialId: "processed_stock",
+        kind: "processed",
+        label: material.label,
+        volumeM3: material.volumeM3,
+        massKg: material.massKg,
+        composition: material.composition,
+      },
+      skillLevel: getState().player.skills.refining ?? 0,
+      heatMode: selectedHeatMode(material.representativeId),
+    });
+    const keptMassKg = preview.outputs.reduce((sum, output) => sum + output.massKg, 0);
+    return `
+    <div class="ind-feed-card ind-feed-card--process${isSelected ? " is-selected" : " is-compact"}" style="${compositionAccentVars(material.composition)}">
       <div class="ind-feed-head">
         <div>
           <div class="ind-feed-title">${escHtml(material.label)}</div>
@@ -345,11 +449,11 @@ export function renderSeparateStage(): string {
           <div class="ind-feed-stats">
             <div><span>Volume</span><strong>${formatVolume(material.volumeM3)}</strong></div>
             <div><span>Mass</span><strong>${formatMass(material.massKg)}</strong></div>
-            <div><span>Mode</span><strong>Constituent split</strong></div>
+            <div><span>Mode</span><strong>Split</strong></div>
           </div>
           ${renderCompositionBars(material.composition)}
         </div>
-        ${renderSeparationPreview({
+        ${isSelected ? renderSeparationPreview({
           id: material.representativeId,
           materialId: "processed_stock",
           kind: "processed",
@@ -357,28 +461,63 @@ export function renderSeparateStage(): string {
           volumeM3: material.volumeM3,
           massKg: material.massKg,
           composition: material.composition,
-        })}
+        }) : `
+          <div class="ind-process-compact-summary">
+            <div><span>Streams</span><strong>${preview.outputs.length}</strong></div>
+            <div><span>Kept</span><strong>${formatMass(keptMassKg)}</strong></div>
+            <div><span>Waste</span><strong>${formatMass(preview.wasteMassKg)}</strong></div>
+          </div>
+        `}
       </div>
-      <div class="ind-feed-actions ind-feed-actions--sticky">
-        ${renderHeatSelect(material.representativeId)}
-        <button class="ind-btn" data-action="separateStock" data-material-id="${material.representativeId}">Queue Separation</button>
-      </div>
+      ${isSelected ? `
+        <div class="ind-feed-actions ind-feed-actions--sticky">
+            <div class="ind-action-tray">
+              <div class="ind-action-tray-copy">
+                <span>Run</span>
+                <strong>Heat, split, start.</strong>
+              </div>
+              ${renderRunRoute(["Stock", "Streams", "Queue"])}
+              <div class="ind-action-tray-grid ind-action-tray-grid--compact">
+                <div class="ind-action-step" data-step="01">
+                  ${renderHeatSelect(material.representativeId)}
+                </div>
+                <div class="ind-action-step ind-action-step--button" data-step="02">
+                  <button class="ind-btn ind-btn--primary" data-action="separateStock" data-material-id="${material.representativeId}">Start</button>
+                </div>
+            </div>
+          </div>
+        </div>
+      ` : `
+        <div class="ind-feed-actions ind-feed-actions--compact">
+          <button class="ind-btn ind-btn--ghost" data-action="selectSeparateSource" data-material-id="${material.representativeId}">Use</button>
+        </div>
+      `}
     </div>
-  `).join("");
+  `;
+  }).join("");
 
   return `
     <section class="ind-stage-panel">
       <div class="ind-panel-head">
-        <div class="ind-panel-title">Refinery Stockpile</div>
-        <div class="ind-panel-subtitle">Separate processed stock when the natural mix is not worth preserving.</div>
+        <div class="ind-panel-title">Split</div>
+        <div class="ind-panel-subtitle">Break stock into simple streams.</div>
       </div>
       ${renderStageWorkspace("separated", `
         <div class="ind-stage-dock-head">
           <div>
-            <div class="ind-panel-title">Separate Streams</div>
-            <div class="ind-panel-subtitle">Break preserved mixes into cleaner outputs without losing the plant overview.</div>
+            <div class="ind-panel-title">Streams</div>
+            <div class="ind-panel-subtitle">Pick stock and split it.</div>
           </div>
         </div>
+        ${renderDockOperatorStrip(
+          "Selected stock",
+          selectedMaterial?.label ?? "No stock selected",
+          selectedMaterial ? `${formatVolume(selectedMaterial.volumeM3)} · ${formatMass(selectedMaterial.massKg)}` : "Process mixed ore before splitting streams.",
+          [
+            { label: "Route", value: "Stock -> Streams" },
+            { label: "Sources", value: String(processedOnly.length) },
+          ],
+        )}
         <div class="ind-stage-grid ind-stage-grid--dock">
           ${cards || renderRefineryStockEmpty("No processed stock is waiting in the refinery. Process mixed ore first.")}
         </div>
@@ -388,7 +527,6 @@ export function renderSeparateStage(): string {
 }
 
 export function renderAlloyStage(): string {
-  const alloys = getAlloyFamilies();
   const codex = getState().player.alloyCodex;
   const candidates = groupRefineryMaterials("processed");
   const cards = candidates.map((material) => {
@@ -397,8 +535,14 @@ export function renderAlloyStage(): string {
     const selectedBlendSources = blendOptions.filter((entry) => selectedSourceIds.has(entry.representativeId));
     const blendPreview = buildBlendPreview([material, ...selectedBlendSources]);
     const targetStorageId = stationState.indAlloyTargetStorage[material.representativeId] ?? "";
+    const showMoreFits = stationState.indAlloyShowMore[material.representativeId] ?? false;
     const compatibleFamilies = blendPreview.familyMatches.filter((entry) => entry.status !== "off").slice(0, 2);
     const bestMatch = blendPreview.familyMatches[0];
+    const primaryButtonMatches = blendPreview.familyMatches
+      .filter((entry) => entry.status !== "off")
+      .slice(0, 2);
+    const fallbackPrimaryMatches = primaryButtonMatches.length ? primaryButtonMatches : blendPreview.familyMatches.slice(0, 2);
+    const secondaryMatches = blendPreview.familyMatches.filter((entry) => !fallbackPrimaryMatches.some((primary) => primary.family.id === entry.family.id));
     const discoveryLabel = blendPreview.discoveryMatch
       ? `${blendPreview.discoveryMatch.label} ${blendPreview.discoveryMatch.fitPct.toFixed(0)}%`
       : "No close codex match";
@@ -421,29 +565,29 @@ export function renderAlloyStage(): string {
             ${renderCompositionBars(material.composition)}
             <div class="ind-alloy-summary-grid">
               <div class="ind-alloy-summary-card">
-                <span>Fabrication</span>
-                <strong>${compatibleFamilies.length ? escHtml(compatibleFamilies.map((entry) => entry.family.label).join(" / ")) : "Experimental output only"}</strong>
+                <span>Use</span>
+                <strong>${compatibleFamilies.length ? escHtml(compatibleFamilies.map((entry) => entry.family.label).join(" / ")) : "Experimental only"}</strong>
               </div>
               <div class="ind-alloy-summary-card">
-                <span>Discovery</span>
+                <span>Codex</span>
                 <strong>${escHtml(discoveryLabel)}</strong>
               </div>
             </div>
           </div>
           <div class="ind-alloy-match-panel">
             <div class="ind-alloy-match-head">
-              <span>Blend preview</span>
-              <span>${selectedBlendSources.length ? `${selectedBlendSources.length + 1} sources active` : "Single-source baseline"}</span>
+              <span>Preview</span>
+              <span>${selectedBlendSources.length ? `${selectedBlendSources.length + 1} sources` : "1 source"}</span>
             </div>
             ${renderCompositionRibbon([
               {
-                label: "Base stock",
+                label: "Base",
                 composition: material.composition,
                 meta: `${formatVolume(material.volumeM3)} · ${formatMass(material.massKg)}`,
                 tone: "source",
               },
               ...(selectedBlendSources.length ? [{
-                label: "Blend sources",
+                label: "Added",
                 composition: buildBlendPreview(selectedBlendSources).composition,
                 meta: `${selectedBlendSources.length} extra feeds`,
                 tone: "blend" as const,
@@ -456,13 +600,13 @@ export function renderAlloyStage(): string {
               },
             ])}
             <div class="ind-process-preview-grid ind-process-preview-grid--blend">
-              <div><span>Blend volume</span><strong>${formatVolume(blendPreview.volumeM3)}</strong></div>
               <div><span>Blend mass</span><strong>${formatMass(blendPreview.massKg)}</strong></div>
+              <div><span>Blend volume</span><strong>${formatVolume(blendPreview.volumeM3)}</strong></div>
             </div>
             ${renderCompositionBars(blendPreview.composition)}
             <div class="ind-alloy-match-head ind-alloy-match-head--secondary">
-              <span>Best fit window</span>
-              <span>${bestMatch ? `${bestMatch.fitPct.toFixed(0)}% lead fit` : "Experimental output"}</span>
+              <span>Best fit</span>
+              <span>${bestMatch ? `${bestMatch.fitPct.toFixed(0)}%` : "None"}</span>
             </div>
             <div class="ind-alloy-match-list">
               ${blendPreview.familyMatches.slice(0, 3).map((assessment) => `
@@ -481,10 +625,16 @@ export function renderAlloyStage(): string {
           </div>
         </div>
         <div class="ind-feed-actions ind-feed-actions--stacked ind-feed-actions--sticky ind-feed-actions--alloy">
+          <div class="ind-action-tray">
+            <div class="ind-action-tray-copy">
+              <span>Run</span>
+              <strong>Choose the target and start the blend.</strong>
+            </div>
+          ${renderRunRoute(["Stock", "Alloy", "Queue"])}
           <div class="ind-alloy-control-grid">
             ${blendOptions.length ? `
               <div class="ind-feed-source-select ind-feed-source-select--alloy">
-              <div class="ind-feed-source-title">Blend bay</div>
+              <div class="ind-feed-source-title">Add stock</div>
               <div class="ind-feed-source-list">
                 ${blendOptions.map((entry) => `
                   <label class="ind-source-check ${selectedSourceIds.has(entry.representativeId) ? "active" : ""}" style="${compositionAccentVars(entry.composition)}">
@@ -498,7 +648,7 @@ export function renderAlloyStage(): string {
             <div class="ind-alloy-action-stack">
               <div class="ind-alloy-action-row">
                 <label class="ind-heat-control">
-                  <span>Output</span>
+                  <span>To</span>
                   <select class="ind-storage-select" data-alloy-target="${material.representativeId}">
                     ${(refineryStorageUnits().filter((unit) => unit.kind === "alloy")).map((unit) => `
                       <option value="${unit.id}" ${targetStorageId === unit.id ? "selected" : ""}>${escHtml(unit.label)}</option>
@@ -508,8 +658,8 @@ export function renderAlloyStage(): string {
                 ${renderHeatSelect(material.representativeId)}
               </div>
               <div class="ind-alloy-grid">
-                ${alloys.map((family) => {
-                  const assessment = blendPreview.familyMatches.find((entry) => entry.family.id === family.id);
+                ${fallbackPrimaryMatches.map((assessment) => {
+                  const family = assessment.family;
                   return `
                     <button class="ind-alloy-btn ${assessment?.status ?? "off"}" data-action="alloyStock" data-material-id="${material.representativeId}" data-alloy-family-id="${family.id}">
                       <div class="ind-alloy-btn-top">
@@ -517,20 +667,45 @@ export function renderAlloyStage(): string {
                         <b>${assessment?.fitPct.toFixed(0) ?? "0"}%</b>
                       </div>
                       <small>${escHtml(assessment?.family.purpose ?? family.purpose)}</small>
-                      <em>${assessment?.status === "match" ? "within family window" : assessment?.status === "near" ? "close with some waste risk" : "poor family fit"}</em>
+                      <em>${assessment?.status === "match" ? "good fit" : assessment?.status === "near" ? "close fit" : "weak fit"}</em>
                     </button>
                   `;
                 }).join("")}
                 <button class="ind-alloy-btn ind-alloy-btn--custom" data-action="alloyStock" data-material-id="${material.representativeId}">
                   <div class="ind-alloy-btn-top">
                     <span>Custom Blend</span>
-                    <b>Fallback</b>
+                    <b>Free mix</b>
                   </div>
-                  <small>${blendPreview.discoveryMatch ? `Near ${escHtml(blendPreview.discoveryMatch.label)}` : "Retains the composition when no named family is worth forcing."}</small>
-                  <em>${blendPreview.discoveryMatch ? escHtml(blendPreview.discoveryMatch.purpose) : "Use when family fit is poor across the board."}</em>
+                  <small>${blendPreview.discoveryMatch ? `Near ${escHtml(blendPreview.discoveryMatch.label)}` : "Keep the mix as-is."}</small>
+                  <em>${blendPreview.discoveryMatch ? escHtml(blendPreview.discoveryMatch.purpose) : "Use this when fits are weak."}</em>
                 </button>
               </div>
+              ${secondaryMatches.length ? `
+                <div class="ind-alloy-more">
+                  <button class="ind-alloy-more-toggle" data-action="toggleAlloyMore" data-material-id="${material.representativeId}">
+                    ${showMoreFits ? "Hide more" : `More fits (${secondaryMatches.length})`}
+                  </button>
+                  ${showMoreFits ? `
+                    <div class="ind-alloy-grid ind-alloy-grid--secondary">
+                      ${secondaryMatches.map((assessment) => {
+                        const family = assessment.family;
+                        return `
+                          <button class="ind-alloy-btn ${assessment.status}" data-action="alloyStock" data-material-id="${material.representativeId}" data-alloy-family-id="${family.id}">
+                            <div class="ind-alloy-btn-top">
+                              <span>${escHtml(family.label)}</span>
+                              <b>${assessment.fitPct.toFixed(0)}%</b>
+                            </div>
+                            <small>${escHtml(family.purpose)}</small>
+                            <em>${assessment.status === "match" ? "good fit" : assessment.status === "near" ? "close fit" : "weak fit"}</em>
+                          </button>
+                        `;
+                      }).join("")}
+                    </div>
+                  ` : ""}
+                </div>
+              ` : ""}
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -540,16 +715,25 @@ export function renderAlloyStage(): string {
   return `
     <section class="ind-stage-panel">
       <div class="ind-panel-head">
-        <div class="ind-panel-title">Alloy Resolution</div>
-        <div class="ind-panel-subtitle">Shape processed stock toward known alloy families or keep it as a custom blend.</div>
+        <div class="ind-panel-title">Alloy</div>
+        <div class="ind-panel-subtitle">Blend stock into an alloy.</div>
       </div>
       ${renderStageWorkspace("alloy", `
         <div class="ind-stage-dock-head">
           <div>
-            <div class="ind-panel-title">Blend Control</div>
-            <div class="ind-panel-subtitle">Build the blend, evaluate fit, and queue the target from one bounded workspace.</div>
+            <div class="ind-panel-title">Blend</div>
+            <div class="ind-panel-subtitle">Build the mix and start it.</div>
           </div>
         </div>
+        ${renderDockOperatorStrip(
+          "Blend bench",
+          candidates.length ? `${candidates.length} stock sources` : "No blend sources",
+          candidates.length ? "Select add-on sources inside each material card." : "Process mixed ore before alloying.",
+          [
+            { label: "Route", value: "Stock -> Alloy" },
+            { label: "Codex", value: String(codex.discoveries.length) },
+          ],
+        )}
         <div class="ind-stage-grid ind-stage-grid--dock">
           ${cards || renderRefineryStockEmpty("No processed stock is waiting for alloying. Process mixed ore first.")}
         </div>
@@ -730,36 +914,47 @@ function renderHubQueueSection(): string {
   if (!queue.length) {
     return `
       <section class="ind-queue-section">
-        <div class="ind-queue-section-title">Refinery Queue</div>
-        <div class="ind-queue-empty">No active refinery jobs.</div>
+        <div class="ind-queue-section-title">Queue</div>
+        <div class="ind-queue-empty">No refinery jobs running.</div>
       </section>
     `;
   }
   const now = Date.now() / 1000;
   return `
     <section class="ind-queue-section">
-      <div class="ind-queue-section-title">Refinery Queue</div>
+      <div class="ind-queue-section-title">Queue</div>
       <div class="ind-queue-list">
         ${queue.map((job) => {
           const elapsed = now - job.startTime;
           const pct = Math.min(100, Math.floor((elapsed / job.duration) * 100));
           const remaining = Math.max(0, job.duration - elapsed);
+          const isReady = remaining < 1;
           const label = job.kind === "processMixed"
-            ? "Feedstock processing"
+            ? "Process"
             : job.kind === "separateStock"
-              ? "Separation"
+              ? "Separate"
               : job.kind === "alloyStock"
-                ? "Alloying"
+                ? "Alloy"
                 : job.kind === "debris"
-                  ? "Salvage recovery"
-                  : "Asteroid processing";
+                  ? "Salvage"
+                  : "Asteroid";
           return `
-            <div class="ind-queue-job">
+            <div class="ind-queue-job ind-queue-job--${job.kind}${isReady ? " ready" : ""}">
               <div class="ind-queue-job-head">
-                <div class="ind-queue-job-name">${label}</div>
-                <div class="ind-queue-time">${remaining < 1 ? "Ready" : fmtDuration(remaining)}</div>
+                <div class="ind-queue-job-main">
+                  <span class="ind-queue-job-kind">${label}</span>
+                  <div class="ind-queue-job-name">${job.kind === "processMixed" ? "Ore to stock" : job.kind === "separateStock" ? "Split stock" : job.kind === "alloyStock" ? "Blend stock" : job.kind === "debris" ? "Recover salvage" : "Process asteroid"}</div>
+                </div>
+                <div class="ind-queue-job-state">
+                  <b class="ind-queue-job-status">${isReady ? "Ready" : "Running"}</b>
+                  <div class="ind-queue-time">${isReady ? "Collect now" : fmtDuration(remaining)}</div>
+                </div>
               </div>
               <div class="ind-queue-progress-track"><div class="ind-queue-progress-fill" style="width:${pct}%"></div></div>
+              <div class="ind-queue-job-footer">
+                <span class="ind-queue-pct">${pct}%</span>
+                <span class="ind-queue-job-meta">${Math.max(1, Math.round(job.duration))}s line</span>
+              </div>
             </div>
           `;
         }).join("")}
@@ -823,17 +1018,19 @@ function renderTransferSection(): string {
     <section class="ind-queue-section">
       <div class="ind-queue-section-title">Ready Output</div>
       <div class="ind-transfer-card">
-        <div class="ind-transfer-summary">
-          <span>Materials</span>
-          <strong>${materialCount}</strong>
-        </div>
-        <div class="ind-transfer-summary">
-          <span>Loot streams</span>
-          <strong>${lootStreamCount}</strong>
-        </div>
-        <div class="ind-transfer-summary">
-          <span>Ready mass</span>
-          <strong>${formatMass(readyMass)}</strong>
+        <div class="ind-transfer-grid">
+          <div class="ind-transfer-summary">
+            <span>Materials</span>
+            <strong>${materialCount}</strong>
+          </div>
+          <div class="ind-transfer-summary">
+            <span>Loot</span>
+            <strong>${lootStreamCount}</strong>
+          </div>
+          <div class="ind-transfer-summary">
+            <span>Mass</span>
+            <strong>${formatMass(readyMass)}</strong>
+          </div>
         </div>
         <button class="ind-btn" data-action="collectRefinedOutput">Transfer All</button>
       </div>
@@ -875,6 +1072,7 @@ function renderMaterialHoldSection(): string {
 }
 
 function renderRightRailTabs(): string {
+  const pulseActive = stationState.indRailPulseUntil > Date.now();
   const tabs: Array<{ id: typeof stationState.indRailTab; label: string }> = [
     { id: "hold", label: "Hold" },
     { id: "dossier", label: "Dossier" },
@@ -884,7 +1082,7 @@ function renderRightRailTabs(): string {
   return `
     <div class="ind-rail-tabs">
       ${tabs.map((tab) => `
-        <button class="ind-rail-tab${stationState.indRailTab === tab.id ? " active" : ""}" data-action="indRailTab" data-rail-tab="${tab.id}">
+        <button class="ind-rail-tab${stationState.indRailTab === tab.id ? " active" : ""}${pulseActive && stationState.indRailPulseTab === tab.id ? " pulse" : ""}" data-action="indRailTab" data-rail-tab="${tab.id}">
           ${escHtml(tab.label)}
         </button>
       `).join("")}
@@ -926,7 +1124,7 @@ function renderMaterialDossierSection(): string {
     }));
   return `
     <section class="ind-queue-section">
-      <div class="ind-queue-section-title">Material Dossier</div>
+      <div class="ind-queue-section-title">Dossier</div>
       <div class="ind-material-hold ind-material-hold--dossier">
         <div class="ind-material-hold-list ind-material-hold-list--dossier">
           ${visibleEntries.length ? visibleEntries.slice(0, 4).map((entry) => `
@@ -938,13 +1136,13 @@ function renderMaterialDossierSection(): string {
                 </div>
                 <div class="ind-codex-chip-meta">
                   <b>${entry.seenCount > 0 ? `${entry.seenCount}x` : "Ready"}</b>
-                  <small>${entry.seenCount > 0 ? "catalogued" : "fabrication"}</small>
+                  <small>${entry.seenCount > 0 ? "known" : "use"}</small>
                 </div>
               </div>
               ${renderCompositionBars(entry.composition)}
               <div class="ind-codex-chip-grid">
                 <div>
-                  <span>Compatibility</span>
+                  <span>Use</span>
                   <strong>${entry.compatibleFamilyIds.length ? escHtml(entry.compatibleFamilyIds.map((familyId) => getAlloyFamilies().find((family) => family.id === familyId)?.label ?? familyId).join(" / ")) : "Experimental only"}</strong>
                 </div>
                 <div>
@@ -962,6 +1160,7 @@ function renderMaterialDossierSection(): string {
 }
 
 export function renderRightRail(): string {
+  const pulseActive = stationState.indRailPulseUntil > Date.now();
   let body = "";
   if (stationState.indRailTab === "hold") body = renderMaterialHoldSection();
   else if (stationState.indRailTab === "dossier") body = renderMaterialDossierSection();
@@ -973,7 +1172,7 @@ export function renderRightRail(): string {
     </section>
   `;
   return `
-    <aside class="ind-queue-panel">
+    <aside id="refinery-right-rail" class="ind-queue-panel${pulseActive && stationState.indRailPulseTab === stationState.indRailTab ? " ind-queue-panel--pulse" : ""}">
       ${renderRightRailTabs()}
       <div class="ind-rail-panel-body">
         ${body}

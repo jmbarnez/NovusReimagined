@@ -22,15 +22,20 @@ import { activeMovementMultipliers } from "../player/abilities.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import { isHeadlessServer } from "./net-input.js";
 import { emitShipExhaustSheets } from "../utils/ship-exhaust.js";
+import { hasOnlineAfterburnerCoupler, thermalAfterburnerBoostBonus } from "../player/thermal-afterburner.js";
 
 let _cargoMap = new Map<string, ModuleInstance>();
 const EXHAUST_MIN_SPEED = 8;
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
 
 export function updateShip(dt: number, _p?: Player) {
   const p = _p ?? getState().player;
   if (!p) return;
   const isLocalPresentation = p === getState().player && !isHeadlessServer();
-  const inputKeys = p.inputKeys ?? (isLocalPresentation ? Client.keys : { space: false, w: false, a: false, s: false, d: false });
+  const inputKeys = p.inputKeys ?? (isLocalPresentation ? Client.keys : { space: false, w: false, a: false, s: false, d: false, boost: false });
   const inputMouseWorld = p.inputMouseWorld ?? (isLocalPresentation ? Client.mouseWorld : null);
   const uiBlocksInput = isLocalPresentation && (Client.stationOpen || Client.bridgeOpen || Client.settingsOpen);
   const st = getStats(p);
@@ -52,6 +57,7 @@ export function updateShip(dt: number, _p?: Player) {
   const cargoMap = _cargoMap;
 
   PlayerAccess.updatePhysics({ thrustFx: false }, p);
+  PlayerAccess.updatePhysics({ boostFx: false }, p);
   const speed = Math.hypot(p.vx, p.vy);
   let ax = 0, ay = 0;
   let at = 0;
@@ -143,6 +149,7 @@ export function updateShip(dt: number, _p?: Player) {
   }
 
   const isThrusting = p.thrustFx && speed > C.PHYSICS.SHIP.minSpeedForThrust;
+  const isApplyingThrust = p.thrustFx === true;
 
   if (inputKeys?.space) {
     PlayerAccess.updatePhysics({ vx: p.vx * C.PHYSICS.SHIP.brakeVelocityRetention, vy: p.vy * C.PHYSICS.SHIP.brakeVelocityRetention, va: p.va * C.PHYSICS.SHIP.brakeAngularRetention }, p);
@@ -150,6 +157,7 @@ export function updateShip(dt: number, _p?: Player) {
 
   let capDrained = false;
   let anyStateChanged = false;
+  let activeSystemLoad = 0;
   for (const rack of RACK_TYPES) {
     const slots = p.fitting?.[rack] || [];
     for (let i = 0; i < slots.length; i++) {
@@ -162,6 +170,7 @@ export function updateShip(dt: number, _p?: Player) {
       if (MODULE_FLAGS.isTractor(m)) continue;
       if (!(p.slotActive?.[rack]?.[i] ?? true)) continue;
       if (inst.baseId === "me-ab1" && !isThrusting) continue;
+      activeSystemLoad++;
       const drain = m.capDrainPerSec * dt;
       if (p.energy >= drain) {
         PlayerAccess.setEnergy(p.energy - drain, p);
@@ -196,12 +205,31 @@ export function updateShip(dt: number, _p?: Player) {
 
   // Active-ability movement boosts (Overdrive, etc.)
   const mult = activeMovementMultipliers();
-  mainThrust *= mult.thrust;
+  let boostThrustMult = 1;
+  let boostSpeedMult = 1;
+  const heat = clamp01(p.shipHeat ?? 0);
+  if (p.boostLockout === true) PlayerAccess.updatePhysics({ boostLockout: false }, p);
+
+  const boostRequested = !!inputKeys?.boost && !uiBlocksInput && isApplyingThrust;
+  const thermalCoupled = hasOnlineAfterburnerCoupler(p, cargoMap);
+  const thermalBoost = thermalAfterburnerBoostBonus(heat, thermalCoupled);
+  const boostDrain = C.PHYSICS.SHIP.boostCapDrainPerSec * dt;
+  const boostActive = boostRequested
+    && p.energy >= Math.max(C.PHYSICS.SHIP.boostMinEnergyToStart, boostDrain);
+  if (boostActive) {
+    PlayerAccess.setEnergy(Math.max(0, p.energy - boostDrain), p);
+    boostThrustMult = C.PHYSICS.SHIP.boostBaseThrustMult + thermalBoost.thrustBonus;
+    boostSpeedMult = C.PHYSICS.SHIP.boostBaseSpeedMult + thermalBoost.speedBonus;
+    PlayerAccess.updatePhysics({ boostFx: true }, p);
+  }
+
+  mainThrust *= mult.thrust * boostThrustMult;
 
   PlayerAccess.updatePhysics({ vx: p.vx + ax * mainThrust * dt, vy: p.vy + ay * mainThrust * dt, va: p.va + at * turnRate * dt }, p);
-  // Cap to ability-boosted max speed when an active speed multiplier is in play.
-  if (mult.speed > 1) {
-    const cap = (st.maxSpeed || 0) * mult.speed;
+  // Cap to boosted max speed when an active speed multiplier is in play.
+  const speedCapMult = Math.max(mult.speed, boostSpeedMult);
+  if (speedCapMult > 1) {
+    const cap = (st.maxSpeed || 0) * speedCapMult;
     if (cap > 0) {
       const sp = Math.hypot(p.vx, p.vy);
       if (sp > cap) { const k = cap / sp; PlayerAccess.updatePhysics({ vx: p.vx * k, vy: p.vy * k }, p); }
@@ -221,7 +249,7 @@ export function updateShip(dt: number, _p?: Player) {
 
   const currentSpeed = Math.hypot(p.vx, p.vy);
   if (isLocalPresentation && currentSpeed > EXHAUST_MIN_SPEED) {
-    emitShipExhaustSheets(p, p.x, p.y, p.angle, abOn);
+    emitShipExhaustSheets(p, p.x, p.y, p.angle, abOn, p.boostFx === true, thermalBoost.ratio);
   }
 
   if ((p._colCooldown ?? 0) > 0) PlayerAccess.setColCooldown((p._colCooldown ?? 0) - dt, p);
@@ -254,10 +282,25 @@ export function updateShip(dt: number, _p?: Player) {
     }
   }
 
+  const slotHeat = p.slotHeat;
+  let moduleHeatLoad = activeSystemLoad * C.PHYSICS.SHIP.heatActiveModuleGainPerSec;
+  if (slotHeat) {
+    for (const rack of Object.keys(slotHeat)) {
+      const heatArr = slotHeat[rack] ?? [];
+      for (let i = 0; i < heatArr.length; i++) {
+        moduleHeatLoad += (heatArr[i] || 0) * 0.004;
+      }
+    }
+  }
+  const thrustHeat = isApplyingThrust ? C.PHYSICS.SHIP.heatThrustGainPerSec : 0;
+  const boostHeat = boostActive ? C.PHYSICS.SHIP.heatBoostGainPerSec : 0;
+  const heatSpent = boostActive && thermalCoupled ? thermalBoost.ratio * C.PHYSICS.SHIP.heatBoostSpendPerSec : 0;
+  const nextHeat = clamp01(heat + (thrustHeat + moduleHeatLoad + boostHeat - heatSpent - C.PHYSICS.SHIP.heatCoolingPerSec) * dt);
+  PlayerAccess.setShipHeat(nextHeat, p);
+
   PlayerAccess.setShield(Math.min(st.maxShield, p.shield + st.shieldRegen * dt), p);
   PlayerAccess.setEnergy(Math.min(st.maxEnergy, p.energy + st.energyRegen * dt), p);
 
-  const slotHeat = p.slotHeat;
   if (slotHeat) {
     for (const rack of Object.keys(slotHeat)) {
       const heat = slotHeat[rack] ?? [];
@@ -268,7 +311,7 @@ export function updateShip(dt: number, _p?: Player) {
   }
 
   const speedRatio = st.maxSpeed > 0 ? Math.min(1, speed / st.maxSpeed) : 0;
-  if (isLocalPresentation) updateEngineSound(isThrusting, speedRatio, abOn);
+  if (isLocalPresentation) updateEngineSound(isThrusting, speedRatio, abOn || p.boostFx === true);
 }
 
 const _colHits: SpatialQueryResult<unknown>[] = [];

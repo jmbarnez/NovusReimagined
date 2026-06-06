@@ -12,6 +12,7 @@ export const hudState = {
   ovSortDir: 1 as 1 | -1,
   dockPrompt: null as HTMLElement | null,
   statusFills: [] as HTMLElement[],
+  boostStatus: null as HTMLElement | null,
   slotsContainer: null as HTMLElement | null,
   slotNodes: new Map<string, SlotNode>(),
   rackSwitchNodes: new Map<string, HTMLElement>(),

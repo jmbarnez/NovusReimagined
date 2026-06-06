@@ -157,6 +157,7 @@ export function initHudOverlay() {
     [t("hud.hull"), "hull"],
     [t("hud.structure"), "struct"],
     [t("hud.capacitor"), "cap"],
+    [t("hud.thermalReserveShort"), "heat"],
   ];
   hudState.statusFills = [];
   for (const [label, cls] of barDefs) {
@@ -169,6 +170,12 @@ export function initHudOverlay() {
     bars.appendChild(g);
     hudState.statusFills.push(g.querySelector(".hud-bar-fill") as HTMLElement);
   }
+  const boostStatus = document.createElement("div");
+  boostStatus.id = "hud-boost-status";
+  boostStatus.className = "hud-boost-status ready";
+  boostStatus.textContent = t("hud.boostReady");
+  bars.appendChild(boostStatus);
+  hudState.boostStatus = boostStatus;
 
   // Overview panel - scanner dock always present
   hudState.ovPanel = overlay.querySelector("#hud-overview-panel");

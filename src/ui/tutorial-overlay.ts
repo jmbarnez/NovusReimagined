@@ -13,6 +13,7 @@ import {
   getTutorialStepObjective,
   getHangarTourPanel,
   getHudTourPanel,
+  getRefineryTourPanel,
 } from "../data/tutorial.js";
 import {
   skipTutorial,
@@ -21,10 +22,13 @@ import {
   advanceStep,
   canAdvanceHangarTour,
   advanceHangarTutorialPanel,
+  canAdvanceRefineryTour,
+  advanceRefineryTutorialPanel,
   canAdvanceHudTour,
   advanceHudTour,
 } from "../tutorial.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "./tutorial-hangar-guide.js";
+import { syncRefineryTutorialGuide, clearRefineryTutorialGuide } from "./tutorial-refinery-guide.js";
 import { t } from "../utils/i18n.js";
 
 let layerEl: HTMLElement | null = null;
@@ -219,6 +223,16 @@ function syncHangarGuideVisuals() {
   }
 }
 
+function syncRefineryGuideVisuals() {
+  const step = getCurrentTutorialStep(getState().player);
+  const snapshot = getTutorialSnapshot();
+  if (step?.id === "industry" && Client.stationOpen) {
+    syncRefineryTutorialGuide(snapshot);
+  } else {
+    clearRefineryTutorialGuide();
+  }
+}
+
 function syncHudHighlights() {
   document.querySelectorAll(".hud-highlight").forEach((el) => {
     el.classList.remove("hud-highlight");
@@ -271,7 +285,7 @@ function updateReadyState() {
   if (!cardEl || !shouldShowTutorialLayer()) return;
   const step = getCurrentTutorialStep(getState().player);
   const ready = isCurrentStepComplete();
-  const tourAdvance = canAdvanceHangarTour() || canAdvanceHudTour();
+  const tourAdvance = canAdvanceHangarTour() || canAdvanceRefineryTour() || canAdvanceHudTour();
   cardEl.classList.toggle("tutorial-card--ready", ready);
   if (tourNextBtn) {
     tourNextBtn.hidden = !tourAdvance;
@@ -319,6 +333,7 @@ function renderStep() {
   if (!step) {
     root.style.display = "none";
     clearHangarTutorialGuide();
+    clearRefineryTutorialGuide();
     syncDimmerVisibility();
     return;
   }
@@ -338,12 +353,14 @@ function renderStep() {
   if (!shouldShowTutorialLayer()) {
     root.style.display = "none";
     clearHangarTutorialGuide();
+    clearRefineryTutorialGuide();
     syncDimmerVisibility();
     return;
   }
 
   root.style.display = "block";
   syncHangarGuideVisuals();
+  syncRefineryGuideVisuals();
   syncHudHighlights();
   syncDimmerVisibility();
   updateReadyState();
@@ -356,6 +373,8 @@ function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep
   let tour = getHangarTourPanel(step, snapshot);
   if (step.id === "hud-tour") {
     tour = getHudTourPanel(step, snapshot);
+  } else if (step.id === "industry") {
+    tour = getRefineryTourPanel(step, snapshot);
   }
   if (tourLabelEl) {
     if (tour) {
@@ -461,6 +480,11 @@ export function initTutorialOverlay(active: boolean) {
         renderStep();
         return;
       }
+      if (step?.id === "industry") {
+        advanceRefineryTutorialPanel();
+        renderStep();
+        return;
+      }
       advanceHangarTutorialPanel();
       renderStep();
     });
@@ -473,6 +497,7 @@ export function initTutorialOverlay(active: boolean) {
     on("tutorial:step-complete", () => renderStep());
     on("ui:close-overlays", () => renderStep());
     on("tutorial:hangar-tour-change", () => renderStep());
+    on("tutorial:refinery-tour-change", () => renderStep());
     on("tutorial:hud-tour-change", () => renderStep());
     on("tutorial:complete", () => showCompleteBanner());
     on("tutorial:skip", () => hideTutorialOverlay());
@@ -491,6 +516,7 @@ function showCompleteBanner() {
   visible = false;
   showCompleteBannerActive = true;
   clearHangarTutorialGuide();
+  clearRefineryTutorialGuide();
   syncTutorialLayerBounds();
   if (root) {
     root.style.display = "block";
@@ -510,6 +536,7 @@ export function hideTutorialOverlay() {
   visible = false;
   showCompleteBannerActive = false;
   clearHangarTutorialGuide();
+  clearRefineryTutorialGuide();
   document.querySelectorAll(".hud-highlight").forEach((el) => {
     el.classList.remove("hud-highlight");
   });
@@ -524,6 +551,7 @@ export function hideTutorialOverlay() {
 
 export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   if (!visible || !getState().player?.tutorial?.active) {
+    clearRefineryTutorialGuide();
     document.querySelectorAll(".hud-highlight").forEach((el) => {
       el.classList.remove("hud-highlight");
     });
@@ -539,12 +567,15 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   const show = shouldShowTutorialLayer();
   if (!show) {
     if (root) root.style.display = "none";
+    clearRefineryTutorialGuide();
     document.querySelectorAll(".hud-highlight").forEach((el) => {
       el.classList.remove("hud-highlight");
     });
     return;
   }
   if (root) root.style.display = "block";
+  syncHangarGuideVisuals();
+  syncRefineryGuideVisuals();
   updateObjectiveText();
   syncHudHighlights();
   syncDimmerVisibility();
@@ -555,6 +586,7 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
 
 export function destroyTutorialOverlay() {
   clearHangarTutorialGuide();
+  clearRefineryTutorialGuide();
   document.getElementById("hud-tour-dimmer")?.remove();
   root?.remove();
   root = null;

@@ -1,6 +1,7 @@
 import { t } from "../../utils/i18n.js";
 import { getPerformanceTelemetrySnapshot } from "../../render/perf-overlay.js";
 import { appendLogEntry, flushPendingLogEntries, registerLogSink } from "../hud/logs.js";
+import { bakeExitIcon } from "../../ui/icons/exit-icon.js";
 
 /**
  * Boot Screen Phase Controller
@@ -41,8 +42,12 @@ export function localizeBootScreen(): void {
   if (titleMp) titleMp.textContent = t("title.multiplayer");
   if (titleSettings) titleSettings.setAttribute("aria-label", t("title.settings"));
   if (titleExit) {
-    titleExit.textContent = t("title.exit");
+    titleExit.textContent = "";
     titleExit.setAttribute("aria-label", t("title.safeExit"));
+    titleExit.style.backgroundImage = `url(${bakeExitIcon()})`;
+    titleExit.style.backgroundSize = "20px";
+    titleExit.style.backgroundPosition = "center";
+    titleExit.style.backgroundRepeat = "no-repeat";
   }
 
   document.querySelectorAll("[data-i18n-aria]").forEach((el) => {

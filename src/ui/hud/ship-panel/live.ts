@@ -9,6 +9,7 @@ import { targetByLockId } from "../../../targeting.js";
 import { getStats, getWeaponProfileForSlot } from "../../../player/player-stats.js";
 import { isOpen } from "../windows.js";
 import { t } from "../../../utils/i18n.js";
+import { hasOnlineAfterburnerCoupler, thermalAfterburnerBoostBonus } from "../../../player/thermal-afterburner.js";
 import {
   activeShipTab,
   lastCurHp,
@@ -78,6 +79,9 @@ export function updateShipPanelLive() {
   const structEl = document.getElementById("sp-cur-struct");
   const shieldEl = document.getElementById("sp-cur-shield");
   const energyEl = document.getElementById("sp-cur-energy");
+  const heatEl = document.getElementById("sp-cur-heat");
+  const afterburnerCouplingEl = document.getElementById("sp-cur-ab-coupling");
+  const thermalBonusEl = document.getElementById("sp-cur-thermal-bonus");
 
   const curHp = Math.floor(p.hp);
   const curStruct = Math.floor(p.structure);
@@ -107,6 +111,23 @@ export function updateShipPanelLive() {
     const bar = document.getElementById("sp-bar-energy");
     if (bar) bar.style.width = `${Math.max(0, Math.min(1, curEnergy / Math.max(1, st.maxEnergy))) * 100}%`;
     setLastCurEnergy(curEnergy);
+  }
+  if (heatEl) {
+    const heatPct = Math.round(Math.max(0, Math.min(1, p.shipHeat ?? 0)) * 100);
+    const heatText = String(heatPct);
+    if (heatEl.textContent !== heatText) heatEl.textContent = heatText;
+    const bar = document.getElementById("sp-bar-heat");
+    if (bar) bar.style.width = `${heatPct}%`;
+  }
+  const afterburnerOnline = hasOnlineAfterburnerCoupler(p);
+  if (afterburnerCouplingEl) {
+    const couplingText = afterburnerOnline ? t("ship.online") : t("ship.offline");
+    if (afterburnerCouplingEl.textContent !== couplingText) afterburnerCouplingEl.textContent = couplingText;
+  }
+  if (thermalBonusEl) {
+    const thermalBoost = thermalAfterburnerBoostBonus(p.shipHeat ?? 0, afterburnerOnline);
+    const bonusText = `+${Math.round((thermalBoost.thrustBonus + thermalBoost.speedBonus) * 100)}%`;
+    if (thermalBonusEl.textContent !== bonusText) thermalBonusEl.textContent = bonusText;
   }
 
   // 2. Turret grids states

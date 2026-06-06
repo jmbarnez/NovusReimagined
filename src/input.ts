@@ -65,6 +65,7 @@ export function initInput() {
 
     // Brake — only space cancels the waypoint.
     if (e.code === keybinds.brake) Client.keys[" "] = true;
+    if (e.code === keybinds.engineBoost || e.code === "ShiftLeft" || e.code === "ShiftRight") Client.keys["boost"] = true;
     if (Client.settings.movementControlMode === "direct") {
       if (e.code === keybinds.forwardThrust) Client.keys["w"] = true;
       if (e.code === keybinds.reverseThrust) Client.keys["s"] = true;
@@ -172,6 +173,7 @@ export function initInput() {
     const k = e.key.toLowerCase();
     Client.keys[k] = false;
     if (e.code === Client.settings.keybinds.brake) Client.keys[" "] = false;
+    if (e.code === Client.settings.keybinds.engineBoost || e.code === "ShiftLeft" || e.code === "ShiftRight") Client.keys["boost"] = false;
     if (e.code === Client.settings.keybinds.forwardThrust) Client.keys["w"] = false;
     if (e.code === Client.settings.keybinds.reverseThrust) Client.keys["s"] = false;
     if (e.code === Client.settings.keybinds.turnLeft) Client.keys["a"] = false;
@@ -186,6 +188,7 @@ export function initInput() {
     Client.keys["s"] = false;
     Client.keys["d"] = false;
     Client.keys["shift"] = false;
+    Client.keys["boost"] = false;
     Client.mouse.lmb = false;
     Client.mouse.rmb = false;
     setCursorLock(true);

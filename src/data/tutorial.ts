@@ -15,6 +15,10 @@ import {
   getHangarReviewHint,
   getHangarCombatSwapHint,
 } from "./hangar-tutorial-guide.js";
+import {
+  getRefineryGuidePanel,
+  REFINERY_GUIDE_PHASE_COUNT,
+} from "./refinery-tutorial-guide.js";
 import { t } from "../utils/i18n.js";
 import {
   type TutorialZone,
@@ -30,9 +34,11 @@ import { TUTORIAL_STEPS, isZoneStepComplete } from "./tutorial-steps.js";
 export {
   HANGAR_REVIEW_PHASE_COUNT,
   HANGAR_COMBAT_SWAP_PHASE_COUNT,
+  REFINERY_GUIDE_PHASE_COUNT,
   getHangarReviewHint,
   getHangarCombatSwapHint,
   getHangarGuidePanel,
+  getRefineryGuidePanel,
 };
 export { TUTORIAL_TRAINING_SITE_ID } from "./tutorial-site.js";
 export {
@@ -109,6 +115,18 @@ export function getHangarTourPanel(
     ? HANGAR_COMBAT_SWAP_PHASE_COUNT
     : HANGAR_REVIEW_PHASE_COUNT;
   return { label: panel.label, body: panel.body, index: phase + 1, total };
+}
+
+export function getRefineryTourPanel(
+  step: TutorialStep | null,
+  snapshot: Record<string, unknown> = {},
+): { label: string; body: string; index: number; total: number } | null {
+  if (!step || step.id !== "industry") return null;
+  if (!Client.stationOpen || snapshot.refineryGuideComplete === true) return null;
+  const phase = typeof snapshot.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
+  const panel = getRefineryGuidePanel(step.id, phase);
+  if (!panel) return null;
+  return { label: panel.label, body: panel.body, index: phase + 1, total: REFINERY_GUIDE_PHASE_COUNT };
 }
 
 export function isStationHangarTabActive(): boolean {

@@ -12,6 +12,7 @@ import {
   isTutorialExitGateRevealed,
   getHangarGuidePanel,
   getHangarTourPanel,
+  getRefineryTourPanel,
   isZoneStepComplete,
   getTutorialNavRemainingM,
   getCurrentTutorialStep,
@@ -19,7 +20,7 @@ import {
 } from "../src/data/tutorial.js";
 import { tutorialKeyStyled, tutorialBarKeyStyled } from "../src/data/tutorial-controls.js";
 import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_GATE, TUTORIAL_LOCAL_REGIONS } from "../src/data/tutorial-layout.js";
-import type { System, Enemy, Gate } from "../src/types/world.js";
+import type { System, Enemy, Gate, Station } from "../src/types/world.js";
 import { getNovusPrimeIdx } from "../src/world/galaxy-build.js";
 import {
   HANGAR_REVIEW_PHASE_COUNT,
@@ -27,13 +28,17 @@ import {
   hasTutorialCombatLoadout,
 } from "../src/data/tutorial.js";
 import { TUTORIAL_STEP_REWARDS } from "../src/data/tutorial-mission.js";
-import { skipTutorial, tickTutorial } from "../src/tutorial.js";
+import { getTutorialSnapshot, initTutorial, skipTutorial, tickTutorial } from "../src/tutorial.js";
 import { SAVE_KEY } from "../src/constants.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { ENEMY_SPAWNS } from "../src/data/enemy-spawns.js";
 import { executeGameCommand } from "../src/sim/commands.js";
 import { updateWarp } from "../src/dock.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../src/ui/tutorial-hangar-guide.js";
+import { syncRefineryTutorialGuide, clearRefineryTutorialGuide } from "../src/ui/tutorial-refinery-guide.js";
+import { stationState } from "../src/ui/station/shared.js";
+import { activateStationTab } from "../src/ui/station/tabs.js";
+import { emit, on } from "../src/events.js";
 import { gateStableId, gateLockTarget } from "../src/utils/warp-gates.js";
 
 function stepById(id: string) {
@@ -67,6 +72,25 @@ function makeSys(enemies: Enemy[]): System {
     starHue: 0,
     _ready: true,
   };
+}
+
+function makeStation(): Station {
+  return {
+    id: "station-tutorial",
+    name: "Tutorial Station",
+    x: 0,
+    y: 0,
+    radius: 100,
+    spin: 0,
+    isHome: true,
+    services: ["market", "industry", "repair"],
+    safeRadius: 180,
+    turrets: [],
+  };
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
 describe("tutorial step list", () => {
@@ -117,6 +141,14 @@ describe("styled keybind helpers", () => {
     const industry = stepById("industry");
     const obj = getTutorialStepObjective(industry, {});
     expect(obj).toContain('<span class="tutorial-keybind">');
+  });
+
+  it("returns a refinery tour panel for the industry step", () => {
+    Client.stationOpen = true;
+    const tour = getRefineryTourPanel(stepById("industry"), { refineryGuidePhase: 0 });
+    expect(tour?.label).toContain("Refining");
+    expect(tour?.index).toBe(1);
+    Client.stationOpen = false;
   });
 });
 
@@ -315,7 +347,7 @@ describe("tutorial step completion", () => {
   it("industry completes on refinery queue or material gain anywhere", () => {
     const industry = stepById("industry");
     G.P.hubQueue = [{ id: "hub-job-1", kind: "processMixed", startTime: 0, duration: 10, mass: 4000, sourceQty: 1, heatMode: "stable" }];
-    expect(industry.isComplete(ctxAt(5000, 5000, { hubQueue: 0, materialVolume: 0, refineryMaterialVolume: 0 }))).toBe(true);
+    expect(industry.isComplete(ctxAt(5000, 5000, { hubQueue: 0, materialVolume: 0, refineryMaterialVolume: 0, refineryGuidePhase: 4 }))).toBe(true);
     G.P.hubQueue = [];
     G.P.hubDeposit.materials = [{
       id: "mat-1",
@@ -326,7 +358,7 @@ describe("tutorial step completion", () => {
       massKg: 4200,
       composition: { iron: 0.7, nickel: 0.2, carbon: 0.1 },
     }];
-    expect(industry.isComplete(ctxAt(300, -300, { hubQueue: 0, materialVolume: 0, refineryMaterialVolume: 0 }))).toBe(true);
+    expect(industry.isComplete(ctxAt(300, -300, { hubQueue: 0, materialVolume: 0, refineryMaterialVolume: 0, refineryGuidePhase: 4 }))).toBe(true);
   });
 
   it("gunnery requires in-zone dummy kill", () => {
@@ -517,8 +549,12 @@ describe("station tutorial spotlight", () => {
         <div id="st-dimmer"></div>
         <div id="st-ui">
           <button class="st-tab active" data-tab="hangar"></button>
+          <button class="st-tab" data-tab="market"></button>
           <div id="panel-hangar" class="panel active"></div>
+          <div id="panel-market" class="panel"></div>
           <div id="hangar-pane-cargo"></div>
+          <div data-tutorial-slot="high-0"></div>
+          <div data-tutorial-slot="high-1"></div>
         </div>
       </div>
     `;
@@ -526,6 +562,7 @@ describe("station tutorial spotlight", () => {
 
   afterEach(() => {
     clearHangarTutorialGuide();
+    clearRefineryTutorialGuide();
     Client.stationOpen = false;
     document.getElementById("station-overlay")?.remove();
     if (!document.getElementById("c")) {
@@ -564,6 +601,123 @@ describe("station tutorial spotlight", () => {
     for (const segment of segments) {
       expect(segment.getAttribute("style")).toBeNull();
     }
+  });
+
+  it("resyncs the hangar highlight after deferred station-open tutorial setup", async () => {
+    const events: string[] = [];
+    const off = on("tutorial:hangar-tour-change", () => {
+      events.push("change");
+      syncHangarTutorialGuide(getTutorialSnapshot());
+    });
+
+    try {
+      initTutorial();
+      emit("station:open", { station: makeStation() });
+
+      await nextAnimationFrame();
+
+      const snapshot = getTutorialSnapshot();
+      const target = document.getElementById("hangar-pane-cargo")!;
+      expect(snapshot.hangarReviewStarted).toBe(true);
+      expect(snapshot.hangarReviewPhase).toBe(0);
+      expect(events.length).toBeGreaterThan(0);
+      expect(target.classList.contains("tutorial-hangar-highlight")).toBe(true);
+    } finally {
+      off();
+    }
+  });
+
+  it("restores the current hangar target highlight after station tab changes", () => {
+    const root = document.getElementById("station-overlay")!;
+    const target = document.getElementById("hangar-pane-cargo")!;
+
+    syncHangarTutorialGuide({ hangarReviewPhase: 0 });
+    expect(target.classList.contains("tutorial-hangar-highlight")).toBe(true);
+
+    activateStationTab("market", root);
+    expect(document.getElementById("panel-market")?.classList.contains("active")).toBe(true);
+
+    syncHangarTutorialGuide({ hangarReviewPhase: 0 });
+
+    expect(document.getElementById("panel-hangar")?.classList.contains("active")).toBe(true);
+    expect(target.classList.contains("tutorial-hangar-highlight")).toBe(true);
+  });
+
+  it("uses the combat hangar phase to highlight high-slot tutorial targets", () => {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-turrets");
+    const firstSlot = document.querySelector<HTMLElement>('[data-tutorial-slot="high-0"]')!;
+    const secondSlot = document.querySelector<HTMLElement>('[data-tutorial-slot="high-1"]')!;
+
+    syncHangarTutorialGuide({ hangarCombatPhase: 1 });
+    expect(firstSlot.classList.contains("tutorial-hangar-highlight")).toBe(true);
+    expect(secondSlot.classList.contains("tutorial-hangar-highlight")).toBe(false);
+
+    syncHangarTutorialGuide({ hangarCombatPhase: 2 });
+    expect(firstSlot.classList.contains("tutorial-hangar-highlight")).toBe(false);
+    expect(secondSlot.classList.contains("tutorial-hangar-highlight")).toBe(true);
+  });
+
+  it("cuts the station dimmer around the highlighted refinery target", () => {
+    Client.stationOpen = true;
+    Client.activeStation = {
+      id: "academy",
+      name: "S.T.A.R.T Academy",
+      x: 0,
+      y: 0,
+      radius: 240,
+      spin: 0,
+      isHome: true,
+      safeRadius: 420,
+      turrets: [],
+      services: ["market", "industry", "repair"],
+    };
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "industry");
+    document.body.innerHTML = `
+      <div id="station-overlay">
+        <div id="st-dimmer"></div>
+        <div id="st-ui">
+          <button class="st-tab active" data-tab="industry"></button>
+          <div id="panel-industry" class="panel active">
+            <div id="refinery-pipeline"></div>
+            <div id="refinery-process-source"></div>
+            <div id="refinery-process-controls"></div>
+            <aside id="refinery-right-rail"></aside>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const dimmer = document.getElementById("st-dimmer")!;
+    const originalTarget = document.getElementById("refinery-process-controls")!;
+    Object.defineProperty(dimmer, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600 }),
+    });
+    Object.defineProperty(originalTarget, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 160, top: 260, right: 420, bottom: 340, width: 260, height: 80 }),
+    });
+
+    syncRefineryTutorialGuide({ refineryGuidePhase: 3 });
+
+    const target = document.getElementById("refinery-process-controls")!;
+    Object.defineProperty(target, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 160, top: 260, right: 420, bottom: 340, width: 260, height: 80 }),
+    });
+    syncRefineryTutorialGuide({ refineryGuidePhase: 3 });
+
+    const segments = Array.from(dimmer.querySelectorAll<HTMLElement>(".tutorial-dimmer-segment"));
+    expect(segments).toHaveLength(4);
+    expect(target.classList.contains("tutorial-hangar-highlight")).toBe(true);
+    expect(segments[0].style.height).toBe("252px");
+    expect(segments[1].style.top).toBe("348px");
+    expect(segments[2].style.width).toBe("152px");
+    expect(segments[3].style.left).toBe("428px");
+    expect(stationState.indRailTab).toBe("hold");
+
+    syncRefineryTutorialGuide({ refineryGuidePhase: 4 });
+    expect(stationState.indRailTab).toBe("queue");
   });
 });
 

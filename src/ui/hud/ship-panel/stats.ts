@@ -7,6 +7,7 @@ import { t } from "../../../utils/i18n.js";
 import { maxTargetLocks } from "../../../targeting.js";
 import { renderTurretCard } from "./turrets.js";
 import { cacheTurretCardRefs } from "./live.js";
+import { hasOnlineAfterburnerCoupler, thermalAfterburnerBoostBonus } from "../../../player/thermal-afterburner.js";
 
 /** Triggers full rebuild of the stats display area */
 export function rebuildStatsTab() {
@@ -67,6 +68,7 @@ export function renderStatsTabHTML(): string {
   const hpPct = Math.max(0, Math.min(1, p.hp / Math.max(1, st.maxHp))) * 100;
   const structPct = Math.max(0, Math.min(1, p.structure / Math.max(1, st.maxStructure))) * 100;
   const energyPct = Math.max(0, Math.min(1, p.energy / Math.max(1, st.maxEnergy))) * 100;
+  const heatPct = Math.max(0, Math.min(1, p.shipHeat ?? 0)) * 100;
 
   const defenseHtml = `
     <div class="sp-sect">
@@ -91,6 +93,20 @@ export function renderStatsTabHTML(): string {
       <div class="sp-stats-grid">
         ${barCard(t("ship.capacitor"), `<span id="sp-cur-energy">${Math.floor(p.energy)}</span> / ${st.maxEnergy} GJ`, "cap", "sp-bar-energy", energyPct)}
         ${card(t("ship.rechargeRate"), `${st.energyRegen.toFixed(1)} GJ/s`)}
+      </div>
+    </div>
+  `;
+
+  const afterburnerOnline = hasOnlineAfterburnerCoupler(p);
+  const thermalBoost = thermalAfterburnerBoostBonus(p.shipHeat ?? 0, afterburnerOnline);
+  const thermalBonusPct = Math.round((thermalBoost.thrustBonus + thermalBoost.speedBonus) * 100);
+  const thermalHtml = `
+    <div class="sp-sect">
+      <div class="sp-sect-h">${t("ship.thermalSystems")}</div>
+      <div class="sp-stats-grid">
+        ${barCard(t("ship.thermalReserve"), `<span id="sp-cur-heat">${Math.round(heatPct)}</span>%`, "heat", "sp-bar-heat", heatPct)}
+        ${card(t("ship.afterburnerCoupling"), `<span id="sp-cur-ab-coupling">${afterburnerOnline ? t("ship.online") : t("ship.offline")}</span>`)}
+        ${card(t("ship.thermalBoostBonus"), `<span id="sp-cur-thermal-bonus">+${thermalBonusPct}%</span>`)}
       </div>
     </div>
   `;
@@ -188,6 +204,7 @@ export function renderStatsTabHTML(): string {
     ${shipHtml}
     ${defenseHtml}
     ${capacitorHtml}
+    ${thermalHtml}
     ${propulsionHtml}
     ${sensorsHtml}
     ${fittingHtml}

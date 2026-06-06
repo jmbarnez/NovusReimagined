@@ -163,6 +163,7 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
   p.maxShield = finiteNumber(incoming.maxShield ?? base.maxShield ?? 0, base.maxShield ?? 0, 0, 10_000);
   p.shield = finiteNumber(incoming.shield, base.shield, 0, p.maxShield ?? 0);
   p.energy = finiteNumber(incoming.energy, base.energy, 0, 10_000);
+  p.shipHeat = finiteNumber(incoming.shipHeat, 0, 0, 1);
 
   p.credits = finiteNumber(incoming.credits, base.credits, 0);
   p.ore = cloneNumberRecord(incoming.ore, base.ore);
@@ -223,6 +224,8 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
   p.mineCd = 0;
   p.invincible = 1.5;
   p.thrustFx = false;
+  p.boostFx = false;
+  p.boostLockout = false;
   p.recoilFrames = 0;
   p.shieldCd = 0;
   p.shieldHitGlow = 0;
@@ -270,6 +273,9 @@ export function createDurableCharacterSync(source: Player): Player {
   p.mineCd = 0;
   p.invincible = 0;
   p.thrustFx = false;
+  p.boostFx = false;
+  p.boostLockout = false;
+  p.shipHeat = Math.max(0, Math.min(1, p.shipHeat || 0));
   p.recoilFrames = 0;
   p.shieldCd = 0;
   p.shieldHitGlow = 0;

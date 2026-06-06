@@ -3,6 +3,7 @@
   display: flex;
   gap: 4px;
   padding: 2px 6px 0;
+  align-items: center;
 }
 .hud-bar-group {
   flex: 1;
@@ -51,6 +52,43 @@
     transparent 20px
   );
   animation: cap-electric-flow 1.5s linear infinite;
+}
+.hud-bar-fill.heat {
+  background: linear-gradient(180deg, #ffd28a, #ff7a3d);
+  box-shadow: 0 0 6px rgba(255, 145, 70, 0.35);
+}
+.hud-boost-status {
+  min-width: 48px;
+  height: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid var(--hud-border-soft);
+  background: rgba(0,0,0,0.45);
+  color: var(--hud-text-dim);
+  font-size: calc(6px * var(--effective-font-scale, 1));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.hud-boost-status.ready {
+  color: var(--hud-text-main);
+  border-color: var(--hud-border-soft);
+}
+.hud-boost-status.cold {
+  color: #8ab7d6;
+  border-color: rgba(138,183,214,0.45);
+}
+.hud-boost-status.thermal {
+  color: #ffcc82;
+  border-color: rgba(255,204,130,0.6);
+  box-shadow: 0 0 6px rgba(255,165,70,0.25);
+}
+.hud-boost-status.dumping {
+  color: #9fffff;
+  border-color: rgba(0,255,255,0.55);
+  box-shadow: 0 0 8px rgba(0,255,255,0.25), 0 0 10px rgba(255,120,45,0.2);
 }
 
 @keyframes cap-electric-flow {

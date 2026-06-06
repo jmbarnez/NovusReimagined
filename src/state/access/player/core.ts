@@ -7,6 +7,8 @@ export const playerCoreAccess = {
     vx?: number; vy?: number; va?: number;
     angle?: number; prevAngle?: number;
     thrustFx?: boolean;
+    boostFx?: boolean;
+    boostLockout?: boolean;
   }, p: Player = _G.P) {
     if (data.x !== undefined) p.x = data.x;
     if (data.y !== undefined) p.y = data.y;
@@ -18,6 +20,8 @@ export const playerCoreAccess = {
     if (data.angle !== undefined) p.angle = data.angle;
     if (data.prevAngle !== undefined) p.prevAngle = data.prevAngle;
     if (data.thrustFx !== undefined) p.thrustFx = data.thrustFx;
+    if (data.boostFx !== undefined) p.boostFx = data.boostFx;
+    if (data.boostLockout !== undefined) p.boostLockout = data.boostLockout;
   },
 
   setShield(value: number, p: Player = _G.P) {
@@ -34,6 +38,10 @@ export const playerCoreAccess = {
 
   setEnergy(value: number, p: Player = _G.P) {
     p.energy = value;
+  },
+
+  setShipHeat(value: number, p: Player = _G.P) {
+    p.shipHeat = Math.max(0, Math.min(1, value));
   },
 
   setInvincible(value: number, p: Player = _G.P) {

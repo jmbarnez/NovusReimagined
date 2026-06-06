@@ -221,6 +221,9 @@ export interface Player {
   shootCd: number; mineCd: number;
   invincible: number;
   thrustFx: boolean;
+  boostFx: boolean;
+  boostLockout: boolean;
+  shipHeat: number;
   recoilFrames?: number;
   fitting: Record<string, (string | null)[]>;
   moduleHp: Record<string, (number | null)[]>;
@@ -236,7 +239,7 @@ export interface Player {
   hubQueue: HubJob[];
   hubOutput: HubOutput;
   hubDeposit: HubDeposit;
-  inputKeys?: { space: boolean; w: boolean; a: boolean; s: boolean; d: boolean } | null;
+  inputKeys?: { space: boolean; w: boolean; a: boolean; s: boolean; d: boolean; boost: boolean } | null;
   inputMouseWorld?: { x: number; y: number } | null;
   waypoint?: { x: number; y: number } | null;
   navCommand?: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;

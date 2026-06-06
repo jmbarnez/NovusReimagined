@@ -14,16 +14,22 @@ import { PlayerAccess } from "../src/state-access.js";
 describe("station refining panel", () => {
   beforeEach(() => {
     _G.P = makePlayer() as typeof _G.P;
+    stationState.activeTab = "hangar";
     stationState.indStage = "process";
     stationState.indRailTab = "hold";
+    stationState.indRailPulseTab = null;
+    stationState.indRailPulseUntil = 0;
     stationState.indTab = "workbench";
     stationState.indSearch = "";
     stationState.indSort = "name";
     stationState.indHeatOverrides = {};
+    stationState.indProcessSource = null;
     stationState.indProcessQty = {};
     stationState.indProcessTarget = {};
+    stationState.indSeparateSource = null;
     stationState.indAlloyTargetStorage = {};
     stationState.indAlloySelections = {};
+    stationState.indAlloyShowMore = {};
     stationState.selectedRecipeId = null;
     stationState.craftQty = 1;
     document.body.innerHTML = "";
@@ -98,7 +104,7 @@ describe("station refining panel", () => {
     const refiningPanel = document.getElementById("panel-industry");
     expect(refiningTab?.classList.contains("active")).toBe(true);
     expect(refiningPanel?.classList.contains("active")).toBe(true);
-    expect(refiningPanel?.textContent).toContain("Mixed Ore Intake");
+    expect(refiningPanel?.textContent).toContain("Ore In");
     expect(refiningPanel?.textContent).toContain("Process");
   });
 
@@ -129,18 +135,21 @@ describe("station refining panel", () => {
 
     const panel = document.getElementById("panel-industry");
     const pipeline = panel?.querySelector(".ind-pipeline-bar");
+    const focusNode = panel?.querySelector(".ind-pipeline-node.focus");
     expect(panel?.textContent).toContain("Intake");
     expect(panel?.textContent).toContain("Processed");
     expect(panel?.textContent).toContain("Separated");
     expect(panel?.textContent).toContain("Alloy");
-    expect(panel?.textContent).toContain("Blend preview");
-    expect(panel?.textContent).toContain("Base stock");
-    expect(panel?.textContent).toContain("Blend sources");
+    expect(panel?.textContent).toContain("Preview");
+    expect(panel?.textContent).toContain("Base");
+    expect(panel?.textContent).toContain("Added");
     expect(panel?.textContent).toContain("Blend mass");
-    expect(panel?.textContent).toContain("Best fit window");
+    expect(panel?.textContent).toContain("Best fit");
     expect(panel?.textContent).toContain("Ferro-nickel stock");
-    expect(panel?.textContent).toContain("within family window");
+    expect(panel?.textContent).toContain("good fit");
+    expect(panel?.textContent).toContain("More fits");
     expect(pipeline).not.toBeNull();
+    expect(focusNode?.textContent).toContain("Alloy");
   });
 
   it("shows process yield projections for mixed ore batches", () => {
@@ -153,10 +162,37 @@ describe("station refining panel", () => {
     renderIndustry();
 
     const panel = document.getElementById("panel-industry");
-    expect(panel?.textContent).toContain("Projected output");
-    expect(panel?.textContent).toContain("After queue");
-    expect(panel?.textContent).toContain("Stock volume");
+    expect(panel?.textContent).toContain("Result");
+    expect(panel?.textContent).toContain("After");
+    expect(panel?.textContent).toContain("Stock");
     expect(panel?.textContent).toContain("Waste");
+  });
+
+  it("defaults one process batch to the active source and compacts the others", () => {
+    stationState.indStage = "process";
+    _G.P.mixedOreCargo = [
+      { name: "Test ore A", qty: 4, richness: 2.1, composition: { iron: 0.7, nickel: 0.2, carbon: 0.1 } },
+      { name: "Test ore B", qty: 3, richness: 1.7, composition: { crystal: 0.6, iron: 0.3, exotic: 0.1 } },
+    ];
+
+    document.body.innerHTML = `<div class="panel active" id="panel-industry"></div>`;
+    renderIndustry();
+
+    const panel = document.getElementById("panel-industry");
+    const selected = panel?.querySelectorAll(".ind-feed-card--process.is-selected");
+    const compact = panel?.querySelectorAll(".ind-feed-card--process.is-compact");
+    const status = panel?.querySelector(".ind-dock-status");
+    const route = panel?.querySelector(".ind-run-route");
+    const steps = panel?.querySelectorAll(".ind-action-step");
+    expect(selected?.length).toBe(1);
+    expect(compact?.length).toBe(1);
+    expect(status?.textContent).toContain("Selected ore");
+    expect(status?.textContent).toContain("Cargo -> Stock");
+    expect(route?.textContent).toContain("Cargo");
+    expect(route?.textContent).toContain("Queue");
+    expect(steps?.length).toBe(4);
+    expect(panel?.textContent).toContain("Use");
+    expect(panel?.textContent).toContain("Start");
   });
 
   it("uses the compact refinery header and rail instead of the old top manifest", () => {
@@ -202,12 +238,51 @@ describe("station refining panel", () => {
     renderIndustry();
 
     const panel = document.getElementById("panel-industry");
-    expect(panel?.textContent).toContain("Projected split");
-    expect(panel?.textContent).toContain("Source mix");
-    expect(panel?.textContent).toContain("Recovered streams");
-    expect(panel?.textContent).toContain("Recovered mass");
+    expect(panel?.textContent).toContain("Result");
+    expect(panel?.textContent).toContain("Source");
+    expect(panel?.textContent).toContain("Streams");
+    expect(panel?.textContent).toContain("Kept");
     expect(panel?.textContent).toContain("Waste");
-    expect(panel?.textContent).toContain("Constituent split");
+    expect(panel?.textContent).toContain("Split");
+  });
+
+  it("defaults one split source to the active stock and compacts the others", () => {
+    stationState.indStage = "separate";
+    PlayerAccess.addRefineryStorageMaterial({
+      id: "mat-separate-a",
+      materialId: "processed_stock",
+      kind: "processed",
+      label: "Mixed stock A",
+      volumeM3: 3.1,
+      massKg: 9100,
+      composition: { iron: 0.62, nickel: 0.24, carbon: 0.14 },
+    }, _G.P);
+    PlayerAccess.addRefineryStorageMaterial({
+      id: "mat-separate-b",
+      materialId: "processed_stock",
+      kind: "processed",
+      label: "Mixed stock B",
+      volumeM3: 2.4,
+      massKg: 6400,
+      composition: { crystal: 0.58, iron: 0.24, exotic: 0.18 },
+    }, _G.P);
+
+    document.body.innerHTML = `<div class="panel active" id="panel-industry"></div>`;
+    renderIndustry();
+
+    const panel = document.getElementById("panel-industry");
+    const selected = panel?.querySelectorAll(".ind-stage-panel .ind-feed-card.is-selected");
+    const compact = panel?.querySelectorAll(".ind-stage-panel .ind-feed-card.is-compact");
+    const status = panel?.querySelector(".ind-dock-status");
+    const route = panel?.querySelector(".ind-run-route");
+    expect(selected?.length).toBe(1);
+    expect(compact?.length).toBeGreaterThanOrEqual(1);
+    expect(status?.textContent).toContain("Selected stock");
+    expect(status?.textContent).toContain("Stock -> Streams");
+    expect(route?.textContent).toContain("Streams");
+    expect(route?.textContent).toContain("Queue");
+    expect(panel?.textContent).toContain("Use");
+    expect(panel?.textContent).toContain("Start");
   });
 
   it("renders discovered alloy codex entries in the alloy stage", () => {
@@ -239,12 +314,40 @@ describe("station refining panel", () => {
     renderIndustry();
 
     const panel = document.getElementById("panel-industry");
-    expect(panel?.textContent).toContain("Material Dossier");
+    const status = panel?.querySelector(".ind-dock-status");
+    const route = panel?.querySelector(".ind-run-route");
+    expect(panel?.textContent).toContain("Dossier");
     expect(panel?.textContent).toContain("Fe-X intermediate");
-    expect(panel?.textContent).toContain("Fabrication");
-    expect(panel?.textContent).toContain("Compatibility");
+    expect(status?.textContent).toContain("Blend bench");
+    expect(status?.textContent).toContain("Stock -> Alloy");
+    expect(route?.textContent).toContain("Alloy");
+    expect(route?.textContent).toContain("Queue");
+    expect(panel?.textContent).toContain("Use");
+    expect(panel?.textContent).toContain("Use");
     expect(panel?.textContent).toContain("Density");
-    expect(panel?.textContent).toContain("catalogued");
+    expect(panel?.textContent).toContain("known");
+  });
+
+  it("renders clearer refinery queue job states", () => {
+    stationState.indRailTab = "queue";
+    _G.P.hubQueue = [{
+      id: "hub-job-1",
+      kind: "processMixed",
+      startTime: Date.now() / 1000 - 1,
+      duration: 10,
+      mass: 4000,
+      sourceQty: 1,
+      heatMode: "stable",
+    }];
+
+    document.body.innerHTML = `<div class="panel active" id="panel-industry"></div>`;
+    renderIndustry();
+
+    const panel = document.getElementById("panel-industry");
+    expect(panel?.textContent).toContain("Queue");
+    expect(panel?.textContent).toContain("Process");
+    expect(panel?.textContent).toContain("Ore to stock");
+    expect(panel?.textContent).toContain("Running");
   });
 
   it("renders fabrication separately from refining", () => {

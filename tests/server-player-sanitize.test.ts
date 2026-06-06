@@ -15,6 +15,9 @@ describe("createServerPlayerState", () => {
     incoming.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
     incoming.turretPower = incoming.turretPower.map(() => true);
     incoming.turretPowerCd = incoming.turretPowerCd.map(() => 99);
+    incoming.shipHeat = 0.42;
+    incoming.boostFx = true;
+    incoming.boostLockout = true;
     incoming.netInputFrame = {
       tick: 7,
       keys: { space: true },
@@ -36,6 +39,9 @@ describe("createServerPlayerState", () => {
     expect(sanitized.turretPower.every((powered) => powered === false)).toBe(true);
     expect(sanitized.turretPowerCd.every((cd) => cd === 0)).toBe(true);
     expect(sanitized.netInputFrame).toBeNull();
+    expect(sanitized.shipHeat).toBe(0.42);
+    expect(sanitized.boostFx).toBe(false);
+    expect(sanitized.boostLockout).toBe(false);
   });
 
   it("clamps invalid vitals and falls back from invalid names", () => {

@@ -20,6 +20,7 @@ export interface EventMap {
   "tutorial:step-change": { step: number };
   "tutorial:step-complete": { step: number; id: string };
   "tutorial:hangar-tour-change": void;
+  "tutorial:refinery-tour-change": void;
   "tutorial:hud-tour-change": void;
   "tutorial:complete": { sysIdx: number };
   "tutorial:skip": { sysIdx: number };
