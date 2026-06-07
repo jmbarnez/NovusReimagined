@@ -56,13 +56,7 @@ function getCardAnchorHighlight(step: ReturnType<typeof getCurrentTutorialStep>)
   if (!highlighted) return null;
   if (highlighted.classList.contains("tutorial-hangar-highlight")) return highlighted;
   if (highlighted.classList.contains("hud-highlight")) {
-    const hudAnchoredSteps = new Set([
-      "hud-tour",
-      "targeting",
-      "mining",
-      "gunnery",
-      "graduation",
-    ]);
+    const hudAnchoredSteps = new Set(["hud-tour"]);
     return hudAnchoredSteps.has(step.id) ? highlighted : null;
   }
   return null;
@@ -555,6 +549,7 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   syncHudHighlights();
   syncDimmerVisibility();
   updateNavProgress();
+  updateReadyState();
   positionCardForStep();
 }
 
