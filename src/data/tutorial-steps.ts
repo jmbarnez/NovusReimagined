@@ -142,7 +142,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "targeting",
     title: t("tutorial.step.targeting.title"),
-    objective: () => t("tutorial.step.targeting.objective", { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake") }),
+    objective() {
+      const key = Client.settings.movementControlMode === "direct"
+        ? "tutorial.step.targeting.objectiveDirect"
+        : "tutorial.step.targeting.objective";
+      return t(key, { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake") });
+    },
     zone: tutorialRegionZone("targeting"),
     beaconColor: 0x88ccff,
     isComplete(ctx) {
