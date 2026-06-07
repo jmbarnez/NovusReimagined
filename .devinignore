@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Platform-specific code
+src-tauri/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# IDE config
+.vscode/*
+!.vscode/extensions.json
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
