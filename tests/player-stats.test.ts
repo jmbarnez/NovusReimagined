@@ -51,7 +51,7 @@ describe("player-stats computeStats", () => {
     expect(st.weaponTurret?.id).toBe("tu-civilian-cannon");
   });
 
-  it("afterburner toggle changes thrustScale", () => {
+  it("ion boost module toggle changes thrustScale", () => {
     const inst = makeTestInstance("test-me-ab1", "me-ab1");
     G.P.moduleCargo.push(inst);
     G.P.fitting.med[0] = inst.uid;

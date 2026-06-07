@@ -163,10 +163,10 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
   p.maxShield = finiteNumber(incoming.maxShield ?? base.maxShield ?? 0, base.maxShield ?? 0, 0, 10_000);
   p.shield = finiteNumber(incoming.shield, base.shield, 0, p.maxShield ?? 0);
   p.energy = finiteNumber(incoming.energy, base.energy, 0, 10_000);
-  p.shipHeat = finiteNumber(incoming.shipHeat, 0, 0, 1);
 
   p.credits = finiteNumber(incoming.credits, base.credits, 0);
   p.ore = cloneNumberRecord(incoming.ore, base.ore);
+  p.mixedOreCargo = Array.isArray(incoming.mixedOreCargo) ? clone(incoming.mixedOreCargo) : [];
   p.bulkMaterialsCargo = Array.isArray(incoming.bulkMaterialsCargo) ? clone(incoming.bulkMaterialsCargo) : [];
   p.loot = cloneNumberRecord(incoming.loot, base.loot);
   p.components = cloneNumberRecord(incoming.components, base.components);
@@ -275,7 +275,6 @@ export function createDurableCharacterSync(source: Player): Player {
   p.thrustFx = false;
   p.boostFx = false;
   p.boostLockout = false;
-  p.shipHeat = Math.max(0, Math.min(1, p.shipHeat || 0));
   p.recoilFrames = 0;
   p.shieldCd = 0;
   p.shieldHitGlow = 0;

@@ -9,7 +9,8 @@ import { targetByLockId } from "../../../targeting.js";
 import { getStats, getWeaponProfileForSlot } from "../../../player/player-stats.js";
 import { isOpen } from "../windows.js";
 import { t } from "../../../utils/i18n.js";
-import { hasOnlineAfterburnerCoupler, thermalAfterburnerBoostBonus } from "../../../player/thermal-afterburner.js";
+import { getIonBoostModuleState } from "../../../player/boost-module.js";
+import { C } from "../../../config/index.js";
 import {
   activeShipTab,
   lastCurHp,
@@ -79,9 +80,9 @@ export function updateShipPanelLive() {
   const structEl = document.getElementById("sp-cur-struct");
   const shieldEl = document.getElementById("sp-cur-shield");
   const energyEl = document.getElementById("sp-cur-energy");
-  const heatEl = document.getElementById("sp-cur-heat");
-  const afterburnerCouplingEl = document.getElementById("sp-cur-ab-coupling");
-  const thermalBonusEl = document.getElementById("sp-cur-thermal-bonus");
+  const boostModuleEl = document.getElementById("sp-cur-boost-module");
+  const boostStatsEl = document.getElementById("sp-cur-boost-stats");
+  const boostCapEl = document.getElementById("sp-cur-boost-cap");
 
   const curHp = Math.floor(p.hp);
   const curStruct = Math.floor(p.structure);
@@ -112,22 +113,24 @@ export function updateShipPanelLive() {
     if (bar) bar.style.width = `${Math.max(0, Math.min(1, curEnergy / Math.max(1, st.maxEnergy))) * 100}%`;
     setLastCurEnergy(curEnergy);
   }
-  if (heatEl) {
-    const heatPct = Math.round(Math.max(0, Math.min(1, p.shipHeat ?? 0)) * 100);
-    const heatText = String(heatPct);
-    if (heatEl.textContent !== heatText) heatEl.textContent = heatText;
-    const bar = document.getElementById("sp-bar-heat");
-    if (bar) bar.style.width = `${heatPct}%`;
-  }
-  const afterburnerOnline = hasOnlineAfterburnerCoupler(p);
-  if (afterburnerCouplingEl) {
-    const couplingText = afterburnerOnline ? t("ship.online") : t("ship.offline");
-    if (afterburnerCouplingEl.textContent !== couplingText) afterburnerCouplingEl.textContent = couplingText;
-  }
-  if (thermalBonusEl) {
-    const thermalBoost = thermalAfterburnerBoostBonus(p.shipHeat ?? 0, afterburnerOnline);
-    const bonusText = `+${Math.round((thermalBoost.thrustBonus + thermalBoost.speedBonus) * 100)}%`;
-    if (thermalBonusEl.textContent !== bonusText) thermalBonusEl.textContent = bonusText;
+  if (boostModuleEl) {
+    const boostModule = getIonBoostModuleState(p);
+    const boostText = boostModule.online ? t("ship.online") : t("ship.offline");
+    if (boostModuleEl.textContent !== boostText) boostModuleEl.textContent = boostText;
+    if (boostStatsEl) {
+      const boostThrust = C.PHYSICS.SHIP.boostBaseThrustMult
+        + (boostModule.online ? C.PHYSICS.SHIP.boostModuleThrustBonus : 0);
+      const boostSpeed = C.PHYSICS.SHIP.boostBaseSpeedMult
+        + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
+      const boostStatsText = `${boostThrust.toFixed(2)}x / ${boostSpeed.toFixed(2)}x`;
+      if (boostStatsEl.textContent !== boostStatsText) boostStatsEl.textContent = boostStatsText;
+    }
+    if (boostCapEl) {
+      const boostCap = C.PHYSICS.SHIP.boostCapDrainPerSec
+        * (boostModule.online ? C.PHYSICS.SHIP.boostModuleCapCostMult : 1);
+      const boostCapText = `${boostCap.toFixed(1)} GJ/s`;
+      if (boostCapEl.textContent !== boostCapText) boostCapEl.textContent = boostCapText;
+    }
   }
 
   // 2. Turret grids states

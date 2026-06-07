@@ -40,10 +40,6 @@ export const playerCoreAccess = {
     p.energy = value;
   },
 
-  setShipHeat(value: number, p: Player = _G.P) {
-    p.shipHeat = Math.max(0, Math.min(1, value));
-  },
-
   setInvincible(value: number, p: Player = _G.P) {
     p.invincible = value;
   },

@@ -23,7 +23,7 @@ import { isPanelPopout, popOutPanel, dockInPanel, togglePanelVisibility } from "
 import { applyTheme } from "./theme.js";
 import { updateMapOverlayDOM } from "./map-overlay.js";
 import { maybeAutoCloseHubWindow } from "./hub-window.js";
-import { hasOnlineAfterburnerCoupler, thermalReserveRatio } from "../../player/thermal-afterburner.js";
+import { C } from "../../config/index.js";
 
 function shouldShowLegacyOnboard(): boolean {
   if (localStorage.getItem("novus-onboarded")) return false;
@@ -68,26 +68,21 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
     [getState().player.hp, st.maxHp],
     [getState().player.structure, getState().player.maxStructure],
     [getState().player.energy, st.maxEnergy],
-    [getState().player.shipHeat ?? 0, 1],
   ];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 4; i++) {
     const [val, max] = barData[i];
     const w = `${Math.max(0, Math.min(1, val / Math.max(1, max))) * 100}%`;
     if (hudState.statusFills[i].style.width !== w) hudState.statusFills[i].style.width = w;
   }
   if (hudState.boostStatus) {
     const p = getState().player;
-    const heat = p.shipHeat ?? 0;
-    const thermalReady = thermalReserveRatio(heat) > 0;
-    const dumping = p.boostFx === true && hasOnlineAfterburnerCoupler(p) && thermalReady;
-    const cls = dumping ? "dumping" : thermalReady ? "thermal" : heat <= 0.05 ? "cold" : "ready";
-    const label = dumping
-      ? t("hud.boostDumping")
-      : thermalReady
-        ? t("hud.boostThermal")
-        : heat <= 0.05
-          ? t("hud.boostCold")
-          : t("hud.boostReady");
+    const lowCap = (p.energy ?? 0) < C.PHYSICS.SHIP.boostMinEnergyToStart;
+    const cls = p.boostFx === true ? "boosting" : lowCap ? "lowcap" : "ready";
+    const label = p.boostFx === true
+      ? t("hud.boostActive")
+      : lowCap
+        ? t("hud.boostLowCap")
+        : t("hud.boostReady");
     const className = `hud-boost-status ${cls}`;
     if (hudState.boostStatus.className !== className) hudState.boostStatus.className = className;
     if (hudState.boostStatus.textContent !== label) hudState.boostStatus.textContent = label;

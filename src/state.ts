@@ -223,7 +223,6 @@ export interface Player {
   thrustFx: boolean;
   boostFx: boolean;
   boostLockout: boolean;
-  shipHeat: number;
   recoilFrames?: number;
   fitting: Record<string, (string | null)[]>;
   moduleHp: Record<string, (number | null)[]>;

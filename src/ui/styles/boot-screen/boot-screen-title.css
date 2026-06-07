@@ -201,6 +201,28 @@
   scrollbar-color: var(--hud-border-soft) transparent;
 }
 
+.multiplayer-back-btn {
+  align-self: flex-start;
+  margin: 2px 4px 8px;
+  padding: 4px 10px;
+  border: 1px solid var(--hud-border-soft);
+  background: transparent;
+  color: var(--hud-text-dim);
+  font-family: inherit;
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.multiplayer-back-btn:hover {
+  border-color: var(--hud-shield);
+  color: var(--hud-text-bright);
+  background: color-mix(in srgb, var(--hud-shield) 8%, transparent);
+}
+
 .multiplayer-menu-title {
   max-width: 100%;
   font-size: clamp(22px, 3.2vw, 40px);

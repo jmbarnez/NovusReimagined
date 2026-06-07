@@ -41,7 +41,6 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
   p.shield = snap.player.shield;
   p.maxShield = snap.player.maxShield;
   p.energy = snap.player.energy;
-  PlayerAccess.setShipHeat(snap.player.shipHeat ?? 0, p);
   PlayerAccess.updatePhysics({ boostFx: snap.player.boostFx === true, boostLockout: false }, p);
   p.credits = snap.player.credits;
   if (typeof snap.player.homeSysIdx === "number") PlayerAccess.setHomeSysIdx(snap.player.homeSysIdx, p);

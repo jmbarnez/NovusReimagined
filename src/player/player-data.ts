@@ -217,7 +217,6 @@ export function makePlayer(): Player {
     thrustFx: false,
     boostFx: false,
     boostLockout: false,
-    shipHeat: 0,
     fitting: fit,
 
     _assignTargetId: null,
@@ -275,7 +274,6 @@ export function loadPlayer(): Player {
     p.thrustFx = false;
     p.boostFx = false;
     p.boostLockout = false;
-    p.shipHeat = 0;
     clearTransientPlayerInput(p);
     if (p.shield == null) p.shield = 0;
     p.shieldCd = 0;
@@ -370,7 +368,6 @@ export function loadPlayer(): Player {
     if (p.scannerConeDeg === undefined) p.scannerConeDeg = 180;
     if (p.mapScannerActive === undefined) p.mapScannerActive = false;
     if (p.mapScannerStrength === undefined) p.mapScannerStrength = 0.5;
-    if (typeof p.shipHeat !== "number" || !Number.isFinite(p.shipHeat)) p.shipHeat = 0;
     p.boostFx = false;
     p.boostLockout = false;
     if (p.warpCooldown === undefined) p.warpCooldown = 0;

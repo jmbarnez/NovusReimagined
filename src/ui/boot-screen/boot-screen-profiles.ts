@@ -8,7 +8,7 @@
 import { sfxBlip, sfxConfirm } from "../../audio/procedural.js";
 import { SHIPS } from "../../data/ships.js";
 import { getState } from "../../state-access.js";
-import { getProfiles, activateProfile, createProfile, deleteProfile, timeAgo, type ProfileMeta } from "../../data/profiles.js";
+import { getProfiles, getActiveProfileId, activateProfile, createProfile, deleteProfile, timeAgo, type ProfileMeta } from "../../data/profiles.js";
 import { pushMonitorMenu } from "../monitor-nav.js";
 import { makePlayer, validatePilotName } from "../../player/player-data.js";
 import { enterSpaceMode } from "../../game-loop.js";
@@ -27,10 +27,12 @@ let profileContinueInFlight = false;
 
 function buildProfileSelectionHtml(errorMessage = ""): string {
   const profiles = getProfiles();
-  const cardsHtml = profiles.map((p) => renderProfileCard(p)).join("");
+  const activeId = getActiveProfileId();
+  const cardsHtml = profiles.map((p) => renderProfileCard(p, p.id === activeId)).join("");
 
   return `
     <div class="profile-screen">
+      <button type="button" class="profile-back-btn" data-menu-back aria-label="${t("profile.back")}">← ${t("profile.back")}</button>
       <div class="profile-header">
         <div class="profile-title">${t("profile.title")}</div>
         <div class="profile-sub">${t("profile.subtitle")}</div>
@@ -43,9 +45,6 @@ function buildProfileSelectionHtml(errorMessage = ""): string {
           <div class="profile-new-label">${t("profile.newLink")}</div>
           <div class="profile-new-hint">${t("profile.newHint")}</div>
         </button>
-      </div>
-      <div class="profile-footer">
-        <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">${t("common.back")}</button>
       </div>
     </div>
   `;
@@ -128,7 +127,7 @@ async function continueSavedProfile(id: string, continueBtn: HTMLButtonElement, 
 
 function setProfileControlsDisabled(monitor: HTMLElement, disabled: boolean): void {
   monitor
-    .querySelectorAll<HTMLButtonElement>("[data-profile-continue], [data-profile-delete], #profile-new, [data-menu-back]")
+    .querySelectorAll<HTMLButtonElement>("[data-profile-continue], [data-profile-delete], #profile-new")
     .forEach((button) => {
       button.disabled = disabled;
     });
@@ -169,14 +168,16 @@ function getContinueLoadingKey(phase: ContinueLoadingPhase): string {
 }
 
 /** Build the HTML for a single profile card. */
-function renderProfileCard(p: ProfileMeta): string {
+function renderProfileCard(p: ProfileMeta, isActive = false): string {
   const shipName = SHIPS[p.shipId]?.name ?? t("profile.unknownVessel");
   const systemName = getState().GALAXY[p.sysIdx]?.name ?? t("profile.unknownSector");
   const creditsFmt = p.credits.toLocaleString();
   const lastPlayed = timeAgo(p.updatedAt);
+  const activeClass = isActive ? "profile-card--active" : "";
 
   return `
-    <div class="profile-card" data-profile-id="${p.id}">
+    <div class="profile-card ${activeClass}" data-profile-id="${p.id}">
+      <span class="profile-card-led" aria-hidden="true"></span>
       <div class="profile-card-top">
         <div class="profile-avatar">${(p.pilotName || "?")[0].toUpperCase()}</div>
         <div class="profile-meta-col">
@@ -219,6 +220,7 @@ function showProfileCreation(): void {
 
   const html = `
     <div class="profile-screen profile-screen--create">
+      <button type="button" class="profile-back-btn" data-menu-back aria-label="${t("profile.back")}">← ${t("profile.back")}</button>
       <div class="profile-header">
         <div class="profile-title">${t("profile.registryTitle")}</div>
         <div class="profile-sub">${t("profile.registrySubtitle")}</div>
@@ -243,7 +245,6 @@ function showProfileCreation(): void {
       </div>
       <div class="profile-footer profile-footer--create">
         <button type="button" id="profile-establish" class="ld-btn-start">${t("profile.establishLink")}</button>
-        <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">${t("common.back")}</button>
       </div>
     </div>
   `;

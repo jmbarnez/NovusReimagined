@@ -15,7 +15,6 @@ describe("createServerPlayerState", () => {
     incoming.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
     incoming.turretPower = incoming.turretPower.map(() => true);
     incoming.turretPowerCd = incoming.turretPowerCd.map(() => 99);
-    incoming.shipHeat = 0.42;
     incoming.boostFx = true;
     incoming.boostLockout = true;
     incoming.netInputFrame = {
@@ -39,7 +38,6 @@ describe("createServerPlayerState", () => {
     expect(sanitized.turretPower.every((powered) => powered === false)).toBe(true);
     expect(sanitized.turretPowerCd.every((cd) => cd === 0)).toBe(true);
     expect(sanitized.netInputFrame).toBeNull();
-    expect(sanitized.shipHeat).toBe(0.42);
     expect(sanitized.boostFx).toBe(false);
     expect(sanitized.boostLockout).toBe(false);
   });
@@ -78,6 +76,21 @@ describe("createServerPlayerState", () => {
     expect(sync.turretPower.every((powered) => powered === false)).toBe(true);
     expect(sync.turretPowerCd.every((cd) => cd === 0)).toBe(true);
     expect(sync.miningLaser).toBeNull();
+  });
+
+  it("preserves mixed ore cargo during sanitization", () => {
+    const incoming = makePlayer();
+    incoming.mixedOreCargo = [
+      { name: "Ferro-nickel Chunk", qty: 6, richness: 2.4, composition: { iron: 0.7, nickel: 0.3 } },
+    ];
+
+    const sanitized = createServerPlayerState("client_real", "Pilot One", incoming, buildGalaxy());
+
+    expect(sanitized.mixedOreCargo).toHaveLength(1);
+    expect(sanitized.mixedOreCargo[0]!.name).toBe("Ferro-nickel Chunk");
+    expect(sanitized.mixedOreCargo[0]!.qty).toBe(6);
+    expect(sanitized.mixedOreCargo[0]!.richness).toBe(2.4);
+    expect(sanitized.mixedOreCargo[0]!.composition).toEqual({ iron: 0.7, nickel: 0.3 });
   });
 
   it("accepts turret power commands after connect sanitization", () => {

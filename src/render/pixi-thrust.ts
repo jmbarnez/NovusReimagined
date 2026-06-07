@@ -146,7 +146,6 @@ function _syncPlayerThrust(alpha: number, now: number) {
   const thrusting = p.thrustFx === true;
   const throttle = flameThrottle(speed, ship?.simMaxSpeedPx ?? 100, thrusting);
   const boosted = p.boostFx === true;
-  const heatAssist = Math.max(0, Math.min(1, ((p.shipHeat ?? 0) - 0.25) / 0.5));
 
   // Ensure we have a sprite per nozzle
   while (_playerSprites.length < nozzles.length) {
@@ -179,8 +178,8 @@ function _syncPlayerThrust(alpha: number, now: number) {
     const flicker = 0.88 + 0.12 * Math.sin(now * 0.024 + i * 1.3);
     const lengthPulse = 0.90 + 0.10 * Math.sin(now * 0.018 + i * 2.1);
     applyBoostTint(sprite, boosted);
-    sprite.width  = flame.w * (0.70 + throttle * 0.22) * (boosted ? 1.35 + heatAssist * 0.15 : 1);
-    sprite.height = flame.l * (0.48 + throttle * 0.82) * lengthPulse * (boosted ? 1.65 + heatAssist * 0.25 : 1);
+    sprite.width  = flame.w * (0.70 + throttle * 0.22) * (boosted ? 1.35 : 1);
+    sprite.height = flame.l * (0.48 + throttle * 0.82) * lengthPulse * (boosted ? 1.65 : 1);
     // Rotate so the "body" (below anchor) points backward from the ship
     sprite.rotation = ang + Math.PI / 2;
     sprite.alpha = throttle > 0 ? Math.min(boosted ? 0.98 : 0.86, throttle * flicker * (boosted ? 1.12 : 1)) : 0;
@@ -224,7 +223,6 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
     const thrusting = p.thrustFx === true;
     const throttle = flameThrottle(speed, ship?.simMaxSpeedPx ?? 100, thrusting);
     const boosted = p.boostFx === true;
-    const heatAssist = Math.max(0, Math.min(1, ((p.shipHeat ?? 0) - 0.25) / 0.5));
     const useRenderInterpolation = Client.multiplayerRole === "none";
     const px = useRenderInterpolation ? lerp(p.px, p.x, alpha) : p.x;
     const py = useRenderInterpolation ? lerp(p.py, p.y, alpha) : p.y;
@@ -247,8 +245,8 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
       const flicker = 0.88 + 0.12 * Math.sin(now * 0.024 + i * 1.3 + netId.length);
       const lengthPulse = 0.90 + 0.10 * Math.sin(now * 0.018 + i * 2.1 + netId.length);
       applyBoostTint(sprite, boosted);
-      sprite.width = flame.w * (0.70 + throttle * 0.22) * (boosted ? 1.35 + heatAssist * 0.15 : 1);
-      sprite.height = flame.l * (0.48 + throttle * 0.82) * lengthPulse * (boosted ? 1.65 + heatAssist * 0.25 : 1);
+      sprite.width = flame.w * (0.70 + throttle * 0.22) * (boosted ? 1.35 : 1);
+      sprite.height = flame.l * (0.48 + throttle * 0.82) * lengthPulse * (boosted ? 1.65 : 1);
       sprite.rotation = ang + Math.PI / 2;
       sprite.alpha = throttle > 0 ? Math.min(boosted ? 0.98 : 0.86, throttle * flicker * (boosted ? 1.12 : 1)) : 0;
     }

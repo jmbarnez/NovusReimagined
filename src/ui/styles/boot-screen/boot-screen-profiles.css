@@ -11,6 +11,28 @@
   scrollbar-color: var(--hud-border-soft) transparent;
 }
 
+.profile-back-btn {
+  align-self: flex-start;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border: 1px solid var(--hud-border-soft);
+  background: transparent;
+  color: var(--hud-text-dim);
+  font-family: inherit;
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.profile-back-btn:hover {
+  border-color: var(--hud-shield);
+  color: var(--hud-text-bright);
+  background: color-mix(in srgb, var(--hud-shield) 8%, transparent);
+}
+
 .profile-header {
   flex-shrink: 0;
   margin-bottom: 14px;
@@ -36,20 +58,21 @@
 /* ── Card Grid ── */
 .profile-grid {
   flex: 1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  align-content: start;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: stretch;
   min-height: 0;
 }
 
 /* ── Profile Card ── */
 .profile-card {
   position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
+  gap: 12px;
+  padding: 18px;
   background: color-mix(in srgb, var(--hud-bg-panel) 65%, var(--hud-bg-deep) 35%);
   border: 1px solid color-mix(in srgb, var(--hud-border) 50%, transparent);
   border-radius: 8px;
@@ -64,6 +87,23 @@
   transform: translateY(-1px);
 }
 
+.profile-card-led {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hud-text-faint) 50%, transparent);
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.profile-card--active .profile-card-led {
+  background: var(--hud-positive);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--hud-positive) 50%, transparent);
+}
+
 .profile-card-top {
   display: flex;
   align-items: center;
@@ -71,15 +111,15 @@
 }
 
 .profile-avatar {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background: color-mix(in srgb, var(--hud-accent) 18%, var(--hud-bg-elevated));
   color: var(--hud-text-bright);
-  font-size: calc(14px * var(--effective-font-scale, 1));
+  font-size: calc(16px * var(--effective-font-scale, 1));
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -93,7 +133,7 @@
 
 .profile-name {
   color: var(--hud-text-bright);
-  font-size: calc(12px * var(--effective-font-scale, 1));
+  font-size: calc(14px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -104,7 +144,7 @@
 
 .profile-ship {
   color: var(--hud-text-dim);
-  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-size: calc(10px * var(--effective-font-scale, 1));
   letter-spacing: 0.06em;
 }
 
@@ -112,7 +152,8 @@
 .profile-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 8px;
+  margin-top: auto;
 }
 
 .profile-stat {
@@ -123,14 +164,14 @@
 
 .profile-stat-lbl {
   color: var(--hud-text-dim);
-  font-size: calc(7px * var(--effective-font-scale, 1));
+  font-size: calc(8px * var(--effective-font-scale, 1));
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .profile-stat-val {
   color: var(--hud-text-main);
-  font-size: calc(10px * var(--effective-font-scale, 1));
+  font-size: calc(11px * var(--effective-font-scale, 1));
   letter-spacing: 0.04em;
   white-space: nowrap;
   overflow: hidden;
@@ -155,12 +196,12 @@
 
 .profile-continue-btn {
   flex: 1;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--hud-shield) 40%, var(--hud-border));
   background: color-mix(in srgb, var(--hud-shield) 8%, var(--hud-bg-elevated));
   color: var(--hud-text-bright);
   font-family: inherit;
-  font-size: calc(10px * var(--effective-font-scale, 1));
+  font-size: calc(11px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -191,8 +232,8 @@
 }
 
 .profile-delete-btn {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -201,7 +242,7 @@
   background: color-mix(in srgb, var(--hud-danger) 8%, var(--hud-bg-elevated));
   color: color-mix(in srgb, var(--hud-danger) 80%, var(--hud-text-dim) 20%);
   font-family: inherit;
-  font-size: calc(16px * var(--effective-font-scale, 1));
+  font-size: calc(18px * var(--effective-font-scale, 1));
   line-height: 1;
   cursor: pointer;
   border-radius: 4px;
@@ -218,11 +259,10 @@
 .profile-card--new {
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   background: color-mix(in srgb, var(--hud-bg-deep) 55%, var(--hud-bg-panel) 45%);
   border: 1px dashed color-mix(in srgb, var(--hud-border) 60%, transparent);
   cursor: pointer;
-  min-height: 160px;
 }
 
 .profile-card--new:hover {
@@ -232,7 +272,7 @@
 }
 
 .profile-new-icon {
-  font-size: calc(28px * var(--effective-font-scale, 1));
+  font-size: calc(32px * var(--effective-font-scale, 1));
   font-weight: 300;
   color: var(--hud-accent);
   line-height: 1;
@@ -240,7 +280,7 @@
 
 .profile-new-label {
   color: var(--hud-text-bright);
-  font-size: calc(11px * var(--effective-font-scale, 1));
+  font-size: calc(12px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -248,19 +288,16 @@
 
 .profile-new-hint {
   color: var(--hud-text-dim);
-  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-size: calc(10px * var(--effective-font-scale, 1));
   letter-spacing: 0.06em;
 }
 
-/* ── Footer / Back ── */
-.profile-footer {
+/* ── Creation Footer ── */
+.profile-footer--create {
   flex-shrink: 0;
   margin-top: 14px;
   display: flex;
   justify-content: center;
-}
-
-.profile-footer--create {
   gap: 10px;
 }
 
@@ -371,6 +408,6 @@
 /* ── Responsive: single column on very narrow monitors ── */
 @media (max-width: 420px) {
   .profile-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 }

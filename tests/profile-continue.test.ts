@@ -38,6 +38,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("../src/data/profiles.js", () => ({
   getProfiles: () => [mocks.profile],
+  getActiveProfileId: () => mocks.profile.id,
   activateProfile: mocks.activateProfile,
   createProfile: vi.fn(),
   deleteProfile: vi.fn(),

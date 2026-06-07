@@ -70,7 +70,6 @@ export function makeRemotePlayerStub(brief: RemotePlayerBrief): Player {
     thrustFx: false,
     boostFx: false,
     boostLockout: false,
-    shipHeat: 0,
     fitting: { turret: [], high: [], med: [], low: [] },
     moduleHp: {},
     slotActive: { turret: [], high: [], med: [], low: [] },

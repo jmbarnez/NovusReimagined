@@ -5,6 +5,7 @@ import { installTestPlayer } from "../src/player-registry.js";
 import { buildEnemyFromSpawn } from "../src/utils/spawn.js";
 import { clearSimulationEntities } from "../src/utils/entities.js";
 import { computeLinearInterceptAngle, pickHostileTarget, processNpcBehavior, fireTurretsAt, isPlayerRef } from "../src/physics/npc-ai.js";
+import { getEnemyTurretOrigin } from "../src/combat/turret-origin.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import type { Enemy } from "../src/types/world.js";
 import type { Player } from "../src/state.js";
@@ -150,10 +151,15 @@ describe("processNpcBehavior", () => {
 
     expect(G.enemyBullets).toHaveLength(2);
     const [gauss, neutron] = G.enemyBullets;
+    const origin = getEnemyTurretOrigin(enemy);
     const gaussAngle = Math.atan2(gauss.vy, gauss.vx);
     const neutronAngle = Math.atan2(neutron.vy, neutron.vx);
-    const expectedGauss = computeLinearInterceptAngle(enemy.x, enemy.y, target.x, target.y, target.vx, target.vy, 150, enemy.accuracy ?? 1);
-    const expectedNeutron = computeLinearInterceptAngle(enemy.x, enemy.y, target.x, target.y, target.vx, target.vy, 480, enemy.accuracy ?? 1);
+    const expectedGauss = computeLinearInterceptAngle(origin.x, origin.y, target.x, target.y, target.vx, target.vy, 150, enemy.accuracy ?? 1);
+    const expectedNeutron = computeLinearInterceptAngle(origin.x, origin.y, target.x, target.y, target.vx, target.vy, 480, enemy.accuracy ?? 1);
+    expect(gauss.x).toBeCloseTo(origin.x, 6);
+    expect(gauss.y).toBeCloseTo(origin.y, 6);
+    expect(neutron.x).toBeCloseTo(origin.x, 6);
+    expect(neutron.y).toBeCloseTo(origin.y, 6);
     expect(gaussAngle).toBeCloseTo(expectedGauss, 6);
     expect(neutronAngle).toBeCloseTo(expectedNeutron, 6);
     expect(expectedGauss).not.toBeCloseTo(expectedNeutron, 6);
@@ -180,8 +186,11 @@ describe("processNpcBehavior", () => {
 
     expect(G.beams).toHaveLength(1);
     const beam = G.beams[0]!;
+    const origin = getEnemyTurretOrigin(enemy);
     const beamAngle = Math.atan2(beam.y2 - beam.y1, beam.x2 - beam.x1);
-    const directAngle = Math.atan2(target.y - enemy.y, target.x - enemy.x);
+    const directAngle = Math.atan2(target.y - origin.y, target.x - origin.x);
+    expect(beam.x1).toBeCloseTo(origin.x, 6);
+    expect(beam.y1).toBeCloseTo(origin.y, 6);
     expect(beamAngle).toBeCloseTo(directAngle, 6);
   });
 });

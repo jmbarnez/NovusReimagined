@@ -7,6 +7,7 @@ import { t } from "../utils/i18n.js";
 export function showMultiplayerMenu(): void {
   const menuHtml = `
     <div class="multiplayer-menu-screen">
+      <button type="button" class="multiplayer-back-btn" data-menu-back aria-label="${t("profile.back")}">← ${t("profile.back")}</button>
       <div class="ld-title multiplayer-menu-title">${t("title.multiplayer")}</div>
       <div class="ld-sep multiplayer-menu-sep"></div>
       <div class="ld-sub multiplayer-menu-sub">${t("multiplayer.subtitle")}</div>
@@ -21,9 +22,6 @@ export function showMultiplayerMenu(): void {
           <span class="multiplayer-menu-card-title">${t("multiplayer.join")}</span>
           <span class="multiplayer-menu-card-body">${t("multiplayer.join.body")}</span>
         </button>
-      </div>
-      <div class="multiplayer-menu-footer">
-        <button type="button" data-menu-back class="ld-btn-start ld-btn-secondary">${t("common.back")}</button>
       </div>
     </div>
   `;

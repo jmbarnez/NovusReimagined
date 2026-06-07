@@ -7,7 +7,8 @@ import { t } from "../../../utils/i18n.js";
 import { maxTargetLocks } from "../../../targeting.js";
 import { renderTurretCard } from "./turrets.js";
 import { cacheTurretCardRefs } from "./live.js";
-import { hasOnlineAfterburnerCoupler, thermalAfterburnerBoostBonus } from "../../../player/thermal-afterburner.js";
+import { getIonBoostModuleState } from "../../../player/boost-module.js";
+import { C } from "../../../config/index.js";
 
 /** Triggers full rebuild of the stats display area */
 export function rebuildStatsTab() {
@@ -68,7 +69,6 @@ export function renderStatsTabHTML(): string {
   const hpPct = Math.max(0, Math.min(1, p.hp / Math.max(1, st.maxHp))) * 100;
   const structPct = Math.max(0, Math.min(1, p.structure / Math.max(1, st.maxStructure))) * 100;
   const energyPct = Math.max(0, Math.min(1, p.energy / Math.max(1, st.maxEnergy))) * 100;
-  const heatPct = Math.max(0, Math.min(1, p.shipHeat ?? 0)) * 100;
 
   const defenseHtml = `
     <div class="sp-sect">
@@ -97,25 +97,21 @@ export function renderStatsTabHTML(): string {
     </div>
   `;
 
-  const afterburnerOnline = hasOnlineAfterburnerCoupler(p);
-  const thermalBoost = thermalAfterburnerBoostBonus(p.shipHeat ?? 0, afterburnerOnline);
-  const thermalBonusPct = Math.round((thermalBoost.thrustBonus + thermalBoost.speedBonus) * 100);
-  const thermalHtml = `
-    <div class="sp-sect">
-      <div class="sp-sect-h">${t("ship.thermalSystems")}</div>
-      <div class="sp-stats-grid">
-        ${barCard(t("ship.thermalReserve"), `<span id="sp-cur-heat">${Math.round(heatPct)}</span>%`, "heat", "sp-bar-heat", heatPct)}
-        ${card(t("ship.afterburnerCoupling"), `<span id="sp-cur-ab-coupling">${afterburnerOnline ? t("ship.online") : t("ship.offline")}</span>`)}
-        ${card(t("ship.thermalBoostBonus"), `<span id="sp-cur-thermal-bonus">+${thermalBonusPct}%</span>`)}
-      </div>
-    </div>
-  `;
-
   // Section 4: Propulsion
+  const boostModule = getIonBoostModuleState(p);
+  const boostThrust = C.PHYSICS.SHIP.boostBaseThrustMult
+    + (boostModule.online ? C.PHYSICS.SHIP.boostModuleThrustBonus : 0);
+  const boostSpeed = C.PHYSICS.SHIP.boostBaseSpeedMult
+    + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
+  const boostCap = C.PHYSICS.SHIP.boostCapDrainPerSec
+    * (boostModule.online ? C.PHYSICS.SHIP.boostModuleCapCostMult : 1);
   const propulsionHtml = `
     <div class="sp-sect">
       <div class="sp-sect-h">${t("ship.propulsion")}</div>
       <div class="sp-stats-grid">
+        ${card(t("ship.ionBoostModule"), `<span id="sp-cur-boost-module">${boostModule.online ? t("ship.online") : t("ship.offline")}</span>`)}
+        ${card(t("ship.builtInBoost"), `<span id="sp-cur-boost-stats">${boostThrust.toFixed(2)}x / ${boostSpeed.toFixed(2)}x</span>`)}
+        ${card(t("ship.boostCapCost"), `<span id="sp-cur-boost-cap">${boostCap.toFixed(1)} GJ/s</span>`)}
         ${card(t("ship.maxSpeed"), `${st.maxSpeed.toFixed(0)} px/s (base ${st.baseMaxSpeed.toFixed(0)})`)}
         ${card(t("ship.mainThrust"), `${st.mainThrust.toFixed(0)}`)}
         ${card(t("ship.retroThrust"), `${st.retroThrust.toFixed(0)}`)}
@@ -204,7 +200,6 @@ export function renderStatsTabHTML(): string {
     ${shipHtml}
     ${defenseHtml}
     ${capacitorHtml}
-    ${thermalHtml}
     ${propulsionHtml}
     ${sensorsHtml}
     ${fittingHtml}

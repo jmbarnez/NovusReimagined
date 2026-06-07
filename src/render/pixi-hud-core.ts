@@ -19,6 +19,8 @@ import { targetByLockId } from "../targeting.js";
 import { dst } from "../utils/math.js";
 import { getUIFont } from "./ui-font.js";
 import { displayPlayerAngle } from "./display-orientation.js";
+import { C } from "../config/index.js";
+import { getIonBoostModuleState } from "../player/boost-module.js";
 
 let hudContainer: Container | null = null;
 
@@ -48,6 +50,8 @@ let lastShieldFrac = -1;
 let lastIsCritical = false;
 let lastZoom = 1;
 let lastAngle = 0;
+let lastBoostFx = false;
+let boostPulseUntil = 0;
 
 export function initPixiHUD(): void {
   if (!hudOverlayLayer) return;
@@ -185,7 +189,16 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
   // Update speed arc
   const speed = Math.hypot(player.vx, player.vy);
   const maxSpeed = st.maxSpeed || 1;
-  const spdPct = Math.max(0, Math.min(1, speed / maxSpeed));
+  const boostModule = getIonBoostModuleState(player);
+  const boostSpeedMult = C.PHYSICS.SHIP.boostBaseSpeedMult
+    + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
+  const boostedMaxSpeed = maxSpeed * boostSpeedMult;
+  const boostFx = player.boostFx === true;
+  if (boostFx && !lastBoostFx) boostPulseUntil = now + 360;
+  lastBoostFx = boostFx;
+  const boostPulse = Math.max(0, Math.min(1, (boostPulseUntil - now) / 360));
+  const speedDisplayMax = boostFx ? boostedMaxSpeed : maxSpeed;
+  const spdPct = Math.max(0, Math.min(1, speed / speedDisplayMax));
   const r = 38 * z;
   const span = 0.28 * Math.PI;
   const arcLineWidth = Math.max(1.5, Math.min(3, 2.0 * z));
@@ -195,9 +208,9 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     speedArcBg.position.set(cx + gx, cy + gy);
     speedArcBg.arc(0, 0, r, Math.PI - span, Math.PI + span);
     speedArcBg.stroke({
-      color: parseInt(theme.textFaint.replace("#", "0x"), 16),
-      width: arcLineWidth,
-      alpha: 0.12,
+      color: boostFx ? 0x54f7ff : parseInt(theme.textFaint.replace("#", "0x"), 16),
+      width: arcLineWidth + boostPulse * 1.4,
+      alpha: boostFx ? Math.min(0.5, 0.22 + boostPulse * 0.28) : 0.12,
     });
   }
 
@@ -206,9 +219,9 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     speedArcFill.position.set(cx + gx, cy + gy);
     speedArcFill.arc(0, 0, r, Math.PI + span, Math.PI + span - spdPct * (span * 2), true);
     speedArcFill.stroke({
-      color: isCritical ? 0xee4444 : parseInt(theme.accent.replace("#", "0x"), 16),
-      width: arcLineWidth,
-      alpha: 0.85,
+      color: isCritical ? 0xee4444 : boostFx ? 0x7fffff : parseInt(theme.accent.replace("#", "0x"), 16),
+      width: arcLineWidth + boostPulse * 1.1,
+      alpha: Math.min(1, 0.85 + boostPulse * 0.15),
     });
   }
 

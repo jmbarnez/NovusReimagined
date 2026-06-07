@@ -28,7 +28,6 @@ export interface PlayerSnapshot {
   maxShield: number;
   energy: number;
   maxEnergy: number;
-  shipHeat: number;
   boostFx: boolean;
   boostLockout: boolean;
   credits: number;
@@ -111,7 +110,6 @@ export interface EntitySnapshot {
   thrustFx?: boolean;
   boostFx?: boolean;
   boostLockout?: boolean;
-  shipHeat?: number;
   miningLaser?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; hitR: number; hitNx: number; hitNy: number } | null;
   salvager?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetPieceId: string | null } | null;
   tractor?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetId: string | null; tooHeavy: boolean } | null;

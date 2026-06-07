@@ -48,17 +48,4 @@ describe("createSnapshot other players", () => {
     expect(remote[0]?.id).toBe("client_joiner");
   });
 
-  it("includes ship heat in local and remote player snapshots", () => {
-    G.P.shipHeat = 0.42;
-    const joiner = G.players.get("client_joiner");
-    expect(joiner).toBeTruthy();
-    if (!joiner) return;
-    joiner.shipHeat = 0.67;
-
-    const snap = createSnapshot(1, G, G.P);
-    const remote = snap.entities.find((e) => e.type === "player" && e.id === "client_joiner");
-
-    expect(snap.player.shipHeat).toBe(0.42);
-    expect(remote?.shipHeat).toBe(0.67);
-  });
 });

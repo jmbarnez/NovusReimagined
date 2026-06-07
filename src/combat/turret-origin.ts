@@ -1,4 +1,6 @@
 import { C } from "../config/index.js";
+import { ENEMY_DEFS } from "../data/enemies.js";
+import { SHIPS } from "../data/ships.js";
 import type { Player } from "../state.js";
 import { lerp } from "../utils/math.js";
 
@@ -21,6 +23,52 @@ export interface ShipPose {
   px?: number;
   py?: number;
   prevAngle?: number;
+}
+
+const PATH_ORIGIN_EPSILON = 0.001;
+const _shipOriginCache = new Map<string, TurretOriginConfig>();
+const _enemyOriginCache = new Map<string, TurretOriginConfig>();
+
+function deriveNoseOriginFromPath(path: number[][] | undefined): TurretOriginConfig | null {
+  if (!path || path.length === 0) return null;
+
+  let forwardPx = -Infinity;
+  let localDownTotal = 0;
+  let matchCount = 0;
+
+  for (const point of path) {
+    const [x, y] = point;
+    if (x > forwardPx + PATH_ORIGIN_EPSILON) {
+      forwardPx = x;
+      localDownTotal = y;
+      matchCount = 1;
+    } else if (Math.abs(x - forwardPx) <= PATH_ORIGIN_EPSILON) {
+      localDownTotal += y;
+      matchCount++;
+    }
+  }
+
+  if (!Number.isFinite(forwardPx) || matchCount === 0) return null;
+  return { forwardPx, localDownPx: localDownTotal / matchCount };
+}
+
+function cachedOrigin(cache: Map<string, TurretOriginConfig>, key: string, path: number[][] | undefined): TurretOriginConfig {
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  const derived = deriveNoseOriginFromPath(path) ?? C.COMBAT.TURRET_ORIGIN;
+  cache.set(key, derived);
+  return derived;
+}
+
+export function getShipNoseTurretOrigin(shipId: string | undefined): TurretOriginConfig {
+  if (!shipId) return C.COMBAT.TURRET_ORIGIN;
+  return cachedOrigin(_shipOriginCache, shipId, SHIPS[shipId]?.render.path);
+}
+
+export function getEnemyNoseTurretOrigin(enemyType: string | undefined): TurretOriginConfig {
+  if (!enemyType) return C.COMBAT.TURRET_ORIGIN;
+  return cachedOrigin(_enemyOriginCache, enemyType, ENEMY_DEFS[enemyType]?.render.path);
 }
 
 /**
@@ -65,18 +113,18 @@ export function getRenderedTurretOrigin(
 
 /** Physics-step turret origin (simulation / hit detection). */
 export function getPlayerTurretOrigin(p: Player): Vec2 {
-  return turretOriginToWorld(p.x, p.y, p.angle);
+  return turretOriginToWorld(p.x, p.y, p.angle, getShipNoseTurretOrigin(p.shipId));
 }
 
 /** Render-step turret origin (interpolated position + heading). */
 export function getRenderedPlayerTurretOrigin(alpha: number, p: Player): Vec2 {
-  return getRenderedTurretOrigin(p, alpha);
+  return getRenderedTurretOrigin(p, alpha, getShipNoseTurretOrigin(p.shipId));
 }
 
-export function getEnemyTurretOrigin(e: ShipPose): Vec2 {
-  return turretOriginToWorld(e.x, e.y, e.angle);
+export function getEnemyTurretOrigin(e: ShipPose & { type?: string }): Vec2 {
+  return turretOriginToWorld(e.x, e.y, e.angle, getEnemyNoseTurretOrigin(e.type));
 }
 
-export function getRenderedEnemyTurretOrigin(e: ShipPose, alpha: number): Vec2 {
-  return getRenderedTurretOrigin(e, alpha);
+export function getRenderedEnemyTurretOrigin(e: ShipPose & { type?: string }, alpha: number): Vec2 {
+  return getRenderedTurretOrigin(e, alpha, getEnemyNoseTurretOrigin(e.type));
 }

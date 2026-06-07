@@ -22,14 +22,10 @@ import { activeMovementMultipliers } from "../player/abilities.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import { isHeadlessServer } from "./net-input.js";
 import { emitShipExhaustSheets } from "../utils/ship-exhaust.js";
-import { hasOnlineAfterburnerCoupler, thermalAfterburnerBoostBonus } from "../player/thermal-afterburner.js";
+import { getIonBoostModuleState, ION_BOOST_MODULE_ID } from "../player/boost-module.js";
 
 let _cargoMap = new Map<string, ModuleInstance>();
 const EXHAUST_MIN_SPEED = 8;
-
-function clamp01(value: number): number {
-  return Math.max(0, Math.min(1, value));
-}
 
 export function updateShip(dt: number, _p?: Player) {
   const p = _p ?? getState().player;
@@ -157,7 +153,6 @@ export function updateShip(dt: number, _p?: Player) {
 
   let capDrained = false;
   let anyStateChanged = false;
-  let activeSystemLoad = 0;
   for (const rack of RACK_TYPES) {
     const slots = p.fitting?.[rack] || [];
     for (let i = 0; i < slots.length; i++) {
@@ -169,8 +164,7 @@ export function updateShip(dt: number, _p?: Player) {
       if (!m?.isActive || !m.capDrainPerSec) continue;
       if (MODULE_FLAGS.isTractor(m)) continue;
       if (!(p.slotActive?.[rack]?.[i] ?? true)) continue;
-      if (inst.baseId === "me-ab1" && !isThrusting) continue;
-      activeSystemLoad++;
+      if (inst.baseId === ION_BOOST_MODULE_ID && !isThrusting) continue;
       const drain = m.capDrainPerSec * dt;
       if (p.energy >= drain) {
         PlayerAccess.setEnergy(p.energy - drain, p);
@@ -187,19 +181,12 @@ export function updateShip(dt: number, _p?: Player) {
   let turnRate = st.turnRate;
   let mainThrust = st.mainThrust;
   let drag = st.dragPerSec;
-  const medSlots = p.fitting?.med || [];
-  const abUid = medSlots.find(uid => {
-    if (!uid) return false;
-    const inst = cargoMap.get(uid);
-    return inst?.baseId === "me-ab1";
-  });
-  const abIdx = abUid ? medSlots.indexOf(abUid) : -1;
-  const abActive = abIdx >= 0 && !!(p.slotActive?.med?.[abIdx] ?? true);
-  const abOn = abIdx >= 0 && abActive;
-  if (abIdx >= 0 && !abActive) {
+  const boostModule = getIonBoostModuleState(p, cargoMap);
+  const abOn = boostModule.online;
+  if (boostModule.fitted && !boostModule.online) {
     thrustScale = st.baseThrustScale ?? st.thrustScale;
     turnRate = st.baseTurnRate ?? st.turnRate;
-    // Derive base main thrust without the afterburner thrustScale multiplier
+    // Derive base main thrust without the ion boost module thrustScale multiplier.
     mainThrust = st.mainThrust * ((st.baseThrustScale || 1) / (st.thrustScale || 1));
   }
 
@@ -207,19 +194,19 @@ export function updateShip(dt: number, _p?: Player) {
   const mult = activeMovementMultipliers();
   let boostThrustMult = 1;
   let boostSpeedMult = 1;
-  const heat = clamp01(p.shipHeat ?? 0);
   if (p.boostLockout === true) PlayerAccess.updatePhysics({ boostLockout: false }, p);
 
   const boostRequested = !!inputKeys?.boost && !uiBlocksInput && isApplyingThrust;
-  const thermalCoupled = hasOnlineAfterburnerCoupler(p, cargoMap);
-  const thermalBoost = thermalAfterburnerBoostBonus(heat, thermalCoupled);
-  const boostDrain = C.PHYSICS.SHIP.boostCapDrainPerSec * dt;
+  const boostCapMult = boostModule.online ? C.PHYSICS.SHIP.boostModuleCapCostMult : 1;
+  const boostDrain = C.PHYSICS.SHIP.boostCapDrainPerSec * boostCapMult * dt;
   const boostActive = boostRequested
     && p.energy >= Math.max(C.PHYSICS.SHIP.boostMinEnergyToStart, boostDrain);
   if (boostActive) {
     PlayerAccess.setEnergy(Math.max(0, p.energy - boostDrain), p);
-    boostThrustMult = C.PHYSICS.SHIP.boostBaseThrustMult + thermalBoost.thrustBonus;
-    boostSpeedMult = C.PHYSICS.SHIP.boostBaseSpeedMult + thermalBoost.speedBonus;
+    boostThrustMult = C.PHYSICS.SHIP.boostBaseThrustMult
+      + (boostModule.online ? C.PHYSICS.SHIP.boostModuleThrustBonus : 0);
+    boostSpeedMult = C.PHYSICS.SHIP.boostBaseSpeedMult
+      + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
     PlayerAccess.updatePhysics({ boostFx: true }, p);
   }
 
@@ -249,7 +236,7 @@ export function updateShip(dt: number, _p?: Player) {
 
   const currentSpeed = Math.hypot(p.vx, p.vy);
   if (isLocalPresentation && currentSpeed > EXHAUST_MIN_SPEED) {
-    emitShipExhaustSheets(p, p.x, p.y, p.angle, abOn, p.boostFx === true, thermalBoost.ratio);
+    emitShipExhaustSheets(p, p.x, p.y, p.angle, abOn, p.boostFx === true, 0);
   }
 
   if ((p._colCooldown ?? 0) > 0) PlayerAccess.setColCooldown((p._colCooldown ?? 0) - dt, p);
@@ -282,25 +269,10 @@ export function updateShip(dt: number, _p?: Player) {
     }
   }
 
-  const slotHeat = p.slotHeat;
-  let moduleHeatLoad = activeSystemLoad * C.PHYSICS.SHIP.heatActiveModuleGainPerSec;
-  if (slotHeat) {
-    for (const rack of Object.keys(slotHeat)) {
-      const heatArr = slotHeat[rack] ?? [];
-      for (let i = 0; i < heatArr.length; i++) {
-        moduleHeatLoad += (heatArr[i] || 0) * 0.004;
-      }
-    }
-  }
-  const thrustHeat = isApplyingThrust ? C.PHYSICS.SHIP.heatThrustGainPerSec : 0;
-  const boostHeat = boostActive ? C.PHYSICS.SHIP.heatBoostGainPerSec : 0;
-  const heatSpent = boostActive && thermalCoupled ? thermalBoost.ratio * C.PHYSICS.SHIP.heatBoostSpendPerSec : 0;
-  const nextHeat = clamp01(heat + (thrustHeat + moduleHeatLoad + boostHeat - heatSpent - C.PHYSICS.SHIP.heatCoolingPerSec) * dt);
-  PlayerAccess.setShipHeat(nextHeat, p);
-
   PlayerAccess.setShield(Math.min(st.maxShield, p.shield + st.shieldRegen * dt), p);
   PlayerAccess.setEnergy(Math.min(st.maxEnergy, p.energy + st.energyRegen * dt), p);
 
+  const slotHeat = p.slotHeat;
   if (slotHeat) {
     for (const rack of Object.keys(slotHeat)) {
       const heat = slotHeat[rack] ?? [];

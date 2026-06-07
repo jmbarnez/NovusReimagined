@@ -1,16 +1,43 @@
-import { describe, it, expect } from "vitest";
-import { shipLocalToWorld, turretOriginToWorld } from "../src/combat/turret-origin.js";
+import { describe, expect, it } from "vitest";
+import { C } from "../src/config/index.js";
+import { makePlayer } from "../src/player/player-data.js";
+import {
+  getEnemyNoseTurretOrigin,
+  getEnemyTurretOrigin,
+  getPlayerTurretOrigin,
+  getShipNoseTurretOrigin,
+  shipLocalToWorld,
+} from "../src/combat/turret-origin.js";
 
-describe("turret origin", () => {
-  it("matches nozzle transform: forward +X, down +Y when nose points right", () => {
-    const p = shipLocalToWorld(0, 0, 0, 9, 11);
-    expect(p.x).toBeCloseTo(9);
-    expect(p.y).toBeCloseTo(11);
+describe("turret origins", () => {
+  it("rotates local ship offsets into world space", () => {
+    const world = shipLocalToWorld(10, 20, Math.PI / 2, 5, -3);
+
+    expect(world.x).toBeCloseTo(13, 6);
+    expect(world.y).toBeCloseTo(25, 6);
   });
 
-  it("places origin on the belly when nose points up", () => {
-    const p = turretOriginToWorld(100, 200, Math.PI / 2, { forwardPx: 9, localDownPx: 11 });
-    expect(p.x).toBeCloseTo(89);
-    expect(p.y).toBeCloseTo(209);
+  it("derives player nose mounts from ship render geometry", () => {
+    const p = makePlayer();
+    p.shipId = "fighter";
+    p.x = 10;
+    p.y = 20;
+    p.angle = 0;
+
+    expect(getShipNoseTurretOrigin(p.shipId)).toEqual({ forwardPx: 28, localDownPx: 0 });
+    expect(getPlayerTurretOrigin(p)).toEqual({ x: 38, y: 20 });
+  });
+
+  it("derives enemy nose mounts from enemy render geometry", () => {
+    const origin = getEnemyTurretOrigin({ x: 5, y: 7, angle: Math.PI / 2, type: "rat" });
+
+    expect(getEnemyNoseTurretOrigin("rat")).toEqual({ forwardPx: 13, localDownPx: 0 });
+    expect(origin.x).toBeCloseTo(5, 6);
+    expect(origin.y).toBeCloseTo(20, 6);
+  });
+
+  it("falls back to the global turret origin for unknown hulls", () => {
+    expect(getShipNoseTurretOrigin("missing-ship")).toEqual(C.COMBAT.TURRET_ORIGIN);
+    expect(getEnemyNoseTurretOrigin("missing-enemy")).toEqual(C.COMBAT.TURRET_ORIGIN);
   });
 });

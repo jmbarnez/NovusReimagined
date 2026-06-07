@@ -157,7 +157,6 @@ export function initHudOverlay() {
     [t("hud.hull"), "hull"],
     [t("hud.structure"), "struct"],
     [t("hud.capacitor"), "cap"],
-    [t("hud.thermalReserveShort"), "heat"],
   ];
   hudState.statusFills = [];
   for (const [label, cls] of barDefs) {

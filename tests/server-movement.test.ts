@@ -138,7 +138,7 @@ describe("GameServer movement input", () => {
     expect(p.va).toBe(0);
   });
 
-  it("boost increases direct thrust, drains capacitor, and generates heat", () => {
+  it("built-in boost works without a propulsion module and drains capacitor", () => {
     server.handleClientConnect("boost-client", "Pilot", makePlayer());
     const sessions = (server as unknown as { sessions: Map<string, { playerState: Player }> }).sessions;
     const session = sessions.get("boost-client");
@@ -157,70 +157,47 @@ describe("GameServer movement input", () => {
     p.vx = 0;
     p.vy = 0;
     p.energy = 100;
-    p.shipHeat = 0.5;
     server.handleClientInput("boost-client", directFrame(2, DIRECT_BOOST_KEYS));
     tick(1 / 60);
 
     expect(p.vx).toBeGreaterThan(normalVx);
     expect(p.energy).toBeLessThan(100);
-    expect(p.shipHeat).toBeGreaterThan(0.5);
     expect(p.boostFx).toBe(true);
   });
 
-  it("afterburner-coupled boost spends heat for stronger output", () => {
-    server.handleClientConnect("assist-client", "Pilot", makePlayer());
+  it("online ion boost module improves boost output and efficiency", () => {
+    server.handleClientConnect("ion-boost-client", "Pilot", makePlayer());
     const sessions = (server as unknown as { sessions: Map<string, { playerState: Player }> }).sessions;
-    const session = sessions.get("assist-client");
+    const session = sessions.get("ion-boost-client");
     expect(session).toBeTruthy();
     if (!session) return;
 
     const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
     const p = session.playerState;
     p.angle = 0;
+    p.energy = 100;
+    server.handleClientInput("ion-boost-client", directFrame(1, DIRECT_BOOST_KEYS));
+    tick(1 / 60);
+    const baseBoostVx = p.vx;
+    const baseBoostDrain = 100 - p.energy;
+
+    p.vx = 0;
+    p.vy = 0;
     p.energy = 100;
     p.fitting.med[0] = "start-me-ab1";
     p.slotActive.med[0] = true;
-    p.shipHeat = 0;
-    server.handleClientInput("assist-client", directFrame(1, DIRECT_BOOST_KEYS));
-    tick(1 / 60);
-    const coldVx = p.vx;
-
-    p.vx = 0;
-    p.vy = 0;
-    p.energy = 100;
-    p.shipHeat = 0.9;
-    server.handleClientInput("assist-client", directFrame(2, DIRECT_BOOST_KEYS));
+    server.handleClientInput("ion-boost-client", directFrame(2, DIRECT_BOOST_KEYS));
     tick(1 / 60);
 
-    expect(p.vx).toBeGreaterThan(coldVx);
-    expect(p.shipHeat).toBeLessThan(0.9);
-  });
-
-  it("full heat does not lock out basic boost and caps at full reserve", () => {
-    server.handleClientConnect("full-heat-client", "Pilot", makePlayer());
-    const sessions = (server as unknown as { sessions: Map<string, { playerState: Player }> }).sessions;
-    const session = sessions.get("full-heat-client");
-    expect(session).toBeTruthy();
-    if (!session) return;
-
-    const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
-    const p = session.playerState;
-    p.angle = 0;
-    p.energy = 100;
-    p.shipHeat = 1;
-    p.boostLockout = true;
-    server.handleClientInput("full-heat-client", directFrame(1, DIRECT_BOOST_KEYS));
-    tick(1 / 60);
-
+    expect(p.vx).toBeGreaterThan(baseBoostVx);
+    expect(100 - p.energy).toBeLessThan(baseBoostDrain);
     expect(p.boostFx).toBe(true);
-    expect(p.boostLockout).toBe(false);
-    expect(p.shipHeat).toBeLessThanOrEqual(1);
   });
 
-  it("stored heat does not improve or spend on boost without an online afterburner", () => {
-    server.handleClientConnect("uncoupled-client", "Pilot", makePlayer());
+  it("offline ion boost module does not provide its boost bonus", () => {
+    server.handleClientConnect("offline-boost-client", "Pilot", makePlayer());
     const sessions = (server as unknown as { sessions: Map<string, { playerState: Player }> }).sessions;
-    const session = sessions.get("uncoupled-client");
+    const session = sessions.get("offline-boost-client");
     expect(session).toBeTruthy();
     if (!session) return;
 
@@ -228,19 +205,38 @@ describe("GameServer movement input", () => {
     const p = session.playerState;
     p.angle = 0;
     p.energy = 100;
-    p.shipHeat = 0;
-    server.handleClientInput("uncoupled-client", directFrame(1, DIRECT_BOOST_KEYS));
+    server.handleClientInput("offline-boost-client", directFrame(1, DIRECT_BOOST_KEYS));
     tick(1 / 60);
-    const coldVx = p.vx;
+    const baseBoostVx = p.vx;
 
     p.vx = 0;
     p.vy = 0;
     p.energy = 100;
-    p.shipHeat = 0.9;
-    server.handleClientInput("uncoupled-client", directFrame(2, DIRECT_BOOST_KEYS));
+    p.fitting.med[0] = "start-me-ab1";
+    p.slotActive.med[0] = false;
+    server.handleClientInput("offline-boost-client", directFrame(2, DIRECT_BOOST_KEYS));
     tick(1 / 60);
 
-    expect(p.vx).toBeCloseTo(coldVx, 5);
-    expect(p.shipHeat).toBeGreaterThan(0.9);
+    expect(p.vx).toBeCloseTo(baseBoostVx, 5);
+    expect(p.boostFx).toBe(true);
+  });
+
+  it("does not boost below the capacitor start threshold", () => {
+    server.handleClientConnect("low-cap-boost-client", "Pilot", makePlayer());
+    const sessions = (server as unknown as { sessions: Map<string, { playerState: Player }> }).sessions;
+    const session = sessions.get("low-cap-boost-client");
+    expect(session).toBeTruthy();
+    if (!session) return;
+
+    const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
+    const p = session.playerState;
+    p.angle = 0;
+    p.energy = 1;
+    p.fitting.med[0] = "start-me-ab1";
+    p.slotActive.med[0] = true;
+    server.handleClientInput("low-cap-boost-client", directFrame(1, DIRECT_BOOST_KEYS));
+    tick(1 / 60);
+
+    expect(p.boostFx).toBe(false);
   });
 });

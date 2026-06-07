@@ -19,7 +19,6 @@ import {
   getRenderedEnemyTurretOrigin,
   getPlayerTurretOrigin,
   getEnemyTurretOrigin,
-  getRenderedTurretOrigin,
 } from "../combat/turret-origin.js";
 import { getSalvagerBeam } from "../salvager.js";
 import { getTractorBeam } from "../tractor.js";
@@ -38,18 +37,17 @@ function hexStringToNumber(hex: string): number {
   return parseInt(clean, 16) || 0xffffff;
 }
 
-/** Re-anchor beam start to the rendered belly turret mount when it originated from a ship. */
+/** Re-anchor beam start to the rendered nose mount when it originated from a ship mount. */
 function resolveBeamStart(x1: number, y1: number, alpha: number, sys: System, player: ReturnType<typeof getState>["player"]): { x: number; y: number } {
   if (player) {
     const playerMount = getPlayerTurretOrigin(player);
-    if (Math.hypot(x1 - player.x, y1 - player.y) < 42 || Math.hypot(x1 - playerMount.x, y1 - playerMount.y) < 18) {
+    if (Math.hypot(x1 - playerMount.x, y1 - playerMount.y) < 18) {
       return getRenderedPlayerTurretOrigin(alpha, player);
     }
   }
   for (const e of sys?._liveEnemies ?? []) {
     const enemyMount = getEnemyTurretOrigin(e);
-    const sigR = e.sigRadius ?? 20;
-    if (Math.hypot(x1 - e.x, y1 - e.y) < sigR * 1.8 || Math.hypot(x1 - enemyMount.x, y1 - enemyMount.y) < 18) {
+    if (Math.hypot(x1 - enemyMount.x, y1 - enemyMount.y) < 18) {
       return getRenderedEnemyTurretOrigin(e, alpha);
     }
   }
@@ -99,8 +97,8 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
         const ndx = -b.vx / spd;
         const ndy = -b.vy / spd;
         for (let t = trailSegs; t >= 1; t--) {
-          const dist = b.sz * (isGauss ? 3.2 : 2.5) * t;
-          const ta = (0.12 + (trailSegs - t) * 0.06) * (isMissile ? 0.85 : 1);
+          const dist = b.sz * (isGauss ? 3.4 : 2.7) * t;
+          const ta = (0.14 + (trailSegs - t) * 0.065) * (isMissile ? 0.85 : 1);
           const tr = b.sz * (0.8 - t * (isGauss ? 0.1 : 0.14));
           
           _bulletGfx.circle(ix + ndx * dist, iy + ndy * dist, Math.max(0.4, tr))
@@ -109,9 +107,9 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
       }
 
       // Outer head glow
-      const glowR = b.sz * (isGauss ? 4 : isMissile ? 3.2 : 2.5);
+      const glowR = b.sz * (isGauss ? 4.3 : isMissile ? 3.4 : 2.8);
       const glowAlpha = isGauss ? 0.65 : 0.5;
-      _bulletGfx.circle(ix, iy, glowR).fill({ color: colNum, alpha: glowAlpha * 0.35 });
+      _bulletGfx.circle(ix, iy, glowR).fill({ color: colNum, alpha: glowAlpha * 0.38 });
 
       // Core bullet / slug
       if (isGauss) {
@@ -155,8 +153,8 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
         const ndx = -b.vx / spd;
         const ndy = -b.vy / spd;
         for (let t = 2; t >= 1; t--) {
-          const dist = sz * 2.5 * t;
-          const ta = (0.12 + (2 - t) * 0.06);
+          const dist = sz * 2.7 * t;
+          const ta = (0.14 + (2 - t) * 0.065);
           const tr = sz * (0.8 - t * 0.14);
           
           _bulletGfx.circle(ix + ndx * dist, iy + ndy * dist, Math.max(0.4, tr))
@@ -166,7 +164,7 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
 
       // Outer head glow
       const glowR = sz * 2.5;
-      _bulletGfx.circle(ix, iy, glowR).fill({ color: colNum, alpha: 0.12 });
+      _bulletGfx.circle(ix, iy, glowR).fill({ color: colNum, alpha: 0.16 });
 
       // Core slug
       _bulletGfx.circle(ix, iy, sz)
@@ -193,6 +191,14 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
       // High intensity white center
       _beamGfx.moveTo(start.x, start.y).lineTo(b.x2, b.y2)
         .stroke({ color: 0xffffff, width: b.width * 0.35, alpha: b.life * 0.85, cap: "round" });
+
+      const startPulse = Math.max(0, Math.min(1, b.life));
+      _beamGfx.circle(start.x, start.y, b.width * 2.2)
+        .fill({ color: colNum, alpha: startPulse * 0.26 })
+        .circle(start.x, start.y, Math.max(1, b.width * 0.7))
+        .fill({ color: 0xffffff, alpha: startPulse * 0.36 });
+      _beamGfx.circle(b.x2, b.y2, b.width * 2.0)
+        .fill({ color: colNum, alpha: startPulse * 0.18 });
     }
   }
 
@@ -242,7 +248,7 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
     const localNetId = state.player?.netId;
     for (const p of state.players.values()) {
       if (p.netId && p.netId === localNetId) continue;
-      const pOrigin = getRenderedTurretOrigin(p, alpha);
+      const pOrigin = getRenderedPlayerTurretOrigin(alpha, p);
 
       if (p.miningLaser && p.miningLaser.active) {
         drawMiningLaser(
