@@ -2,7 +2,7 @@ import { MODULES, ModuleDef } from "../../data/modules.js";
 import type { MissionContract } from "../../data/missions.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 import { ORE } from "../../data/resources.js";
-import { ALLOY_FAMILIES } from "../../refining.js";
+import { ALLOY_FAMILIES } from "../../refinery/index.js";
 import type { RefiningHeatMode } from "../../state.js";
 
 export const stationState = {

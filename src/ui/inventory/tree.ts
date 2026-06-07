@@ -8,7 +8,7 @@ import { ORE, LOOT, VOL } from "../../data/resources.js";
 import { t } from "../../utils/i18n.js";
 import { dominantOreKey, formatCompositionBreakdown } from "../../utils/ore-naming.js";
 import type { InventoryItem, TreeNode } from "./state.js";
-import { ALLOY_FAMILIES } from "../../refining.js";
+import { ALLOY_FAMILIES } from "../../refinery/index.js";
 
 export function getTreeNodes(): TreeNode[] {
   const nodes: TreeNode[] = [];

@@ -108,7 +108,9 @@ export function syncHangarTutorialGuide(snapshot: Record<string, unknown> = {}):
 
   document.getElementById("st-dimmer")?.classList.add("active");
 
-  if (panel.stationTab) activateStationTab(panel.stationTab);
+  if (panel.stationTab && !isStationHangarTabActive()) {
+    activateStationTab(panel.stationTab);
+  }
 
   if (!isStationHangarTabActive()) {
     const tabEl = resolveGuideTarget("station-tab-hangar");

@@ -14,7 +14,7 @@ import { getInstance, invalidateInstanceCache } from "../utils/items.js";
 import type { MissionContract } from "../data/missions.js";
 import { getDockableStation } from "../dock.js";
 import { moduleFitsShipRack } from "../utils/hardpoints.js";
-import { ALLOY_FAMILIES, materialMatchesRecipeMaterial } from "../refining.js";
+import { ALLOY_FAMILIES, materialMatchesRecipeMaterial } from "../refinery/index.js";
 
 export interface ActionResponse {
   success: boolean;

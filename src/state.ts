@@ -246,7 +246,7 @@ export interface Player {
   movementControlMode?: "waypoint" | "direct";
   gateCooldowns?: Record<string, number>;
   gatesCleared?: string[];
-  tutorial: { active: boolean; step: number; completed: boolean; skipped: boolean; stepEnteredAt?: number };
+  tutorial: { active: boolean; step: number; completed: boolean; skipped: boolean; stepEnteredAt?: number; v?: number };
   pilotName: string;
   scannedSiteIds: string[];
   completedSiteIds: string[];

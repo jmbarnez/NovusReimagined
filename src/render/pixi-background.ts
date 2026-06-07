@@ -85,15 +85,35 @@ function spawnStarSprites() {
   spawnFor(nearStarContainer!, getState().STARS_NEAR ?? []);
 }
 
+let _dustTex: Texture | null = null;
+
+function getDustTexture(): Texture {
+  if (!_dustTex) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 16;
+    const cx = c.getContext("2d")!;
+    const r = 8;
+    const grad = cx.createRadialGradient(r, r, 0, r, r, r);
+    grad.addColorStop(0, "rgba(255,255,255,1)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    cx.fillStyle = grad;
+    cx.fillRect(0, 0, 16, 16);
+    _dustTex = new Texture({ source: new ImageSource({ resource: c, resolution: 1, scaleMode: "linear" }) });
+  }
+  return _dustTex;
+}
+
 function spawnDustSprites() {
-  dustContainer!.removeChildren();
+  if (!dustContainer) return;
+  dustContainer.removeChildren();
+  const tex = getDustTexture();
   for (const d of getState().DUST ?? []) {
-    const g = new Graphics() as Graphics & { _dustData?: DustParticle };
+    const s = new Sprite(tex);
+    s.anchor.set(0.5);
     const dotR = 0.6 + d.r * 3;
-    g.circle(0, 0, dotR);
-    g.fill({ color: 0xffffff, alpha: d.a * 3.5 });
-    g._dustData = d;
-    dustContainer!.addChild(g);
+    s.scale.set(dotR / 8);
+    s.alpha = Math.min(1, d.a * 3.5);
+    dustContainer.addChild(s);
   }
 }
 
@@ -218,7 +238,7 @@ function updateDustLayer(
     const offY = camY * d.parallax;
     child.x = ((d.ox - offX + now * d.drift)        % WRAP_DUST + WRAP_DUST) % WRAP_DUST;
     child.y = ((d.oy - offY + now * d.drift * 0.6)  % Hc        + Hc)        % Hc;
-    (child as Graphics).tint = tint;
+    (child as Sprite).tint = tint;
     i++;
   }
 }

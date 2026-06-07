@@ -3,8 +3,8 @@ import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { _G as G } from "../src/state.js";
 import { PlayerAccess } from "../src/state-access.js";
-import { alloyHubMaterial, collectHubOutput, processMixedOreCargo, separateHubMaterial, tickHubQueue } from "../src/hub.js";
-import { flattenStorageMaterials } from "../src/refining.js";
+import { alloyHubMaterial, collectHubOutput, processMixedOreCargo, separateHubMaterial, tickHubQueue } from "../src/refinery/index.js";
+import { flattenStorageMaterials } from "../src/refinery/index.js";
 
 describe("hub refining pipeline", () => {
   beforeEach(() => {

@@ -150,7 +150,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
     worldContainer.x = viewCX - camxR * Client.zoom;
     worldContainer.y = viewCY - camyR * Client.zoom;
     worldContainer.scale.set(Client.zoom);
-    if (worldContainer.filterArea) {
+    if (worldContainer.filterArea && (worldContainer.filters?.length ?? 0) > 0) {
       worldContainer.filterArea.x = camxR - viewCX / Client.zoom;
       worldContainer.filterArea.y = camyR - viewCY / Client.zoom;
       worldContainer.filterArea.width = width / Client.zoom;
@@ -182,13 +182,14 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   timeMark("asteroids");
   syncPixiHitEffects(now, alpha, sys);
   timeMark("hiteffects");
-  syncPixiTutorialMarkers(now, sys);
+  const tutorialActive = player?.tutorial?.active;
+  if (tutorialActive) syncPixiTutorialMarkers(now, sys);
   timeMark("tutmarkers");
   syncPixiRegionBorders(now);
   timeMark("borders");
-  syncPixiTutorialTrack(now);
+  if (tutorialActive) syncPixiTutorialTrack(now);
   timeMark("tuttrack");
-  syncPixiTutorialGates(now);
+  if (tutorialActive) syncPixiTutorialGates(now);
   timeMark("tutgates");
   syncPixiStationOverlays(now, sys);
   timeMark("stoverlays");
@@ -230,7 +231,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   timeMark("hud");
   syncPixiTargetArrows(width, height, camxR, camyR, now);
   timeMark("tarrows");
-  syncPixiTutorialGuideArrow(width, height, camxR, camyR, now);
+  if (tutorialActive) syncPixiTutorialGuideArrow(width, height, camxR, camyR, now);
   timeMark("guidearrow");
   if (Client.settings?.vignetteEnabled) updateVignette();
   timeMark("vignette");

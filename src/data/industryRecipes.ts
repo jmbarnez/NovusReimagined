@@ -9,7 +9,7 @@
  */
 
 import { ORE, LOOT, COMPONENTS } from "./resources.js";
-import { ALLOY_FAMILIES } from "../refining.js";
+import { ALLOY_FAMILIES } from "../refinery/index.js";
 
 export type IndustryPool = "ore" | "loot" | "component" | "material";
 

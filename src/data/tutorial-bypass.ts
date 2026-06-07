@@ -3,7 +3,7 @@ import { dst } from "../utils/math.js";
 import { TUTORIAL_TRAINING_SITE_ID } from "./tutorial-site.js";
 import { getState } from "../state-access.js";
 import { ORE } from "./resources.js";
-import { flattenStorageMaterials } from "../refining.js";
+import { flattenStorageMaterials } from "../refinery/index.js";
 
 export interface TutorialZone {
   x: number;

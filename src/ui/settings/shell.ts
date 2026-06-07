@@ -41,7 +41,7 @@ export function settingsContentHTML(): string {
         <div class="settings-row">
           <label>FPS</label>
           <select id="fps-limit" class="settings-select">
-            <option value="0">VSync</option>
+            <option value="0">Unlimited</option>
             <option value="60">60 FPS</option>
             <option value="90">90 FPS</option>
             <option value="120">120 FPS</option>

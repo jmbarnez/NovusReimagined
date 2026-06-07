@@ -1,7 +1,7 @@
 import { getState } from "../../../state-access.js";
-import { fmtDuration, getAlloyFamilies, getCargoMixedOreInputs, hasHubOutput } from "../../../hub.js";
+import { fmtDuration, getAlloyFamilies, getCargoMixedOreInputs, hasHubOutput } from "../../../refinery/index.js";
 import { MACHINES, RECIPES, poolItemLabel, type Recipe } from "../../../data/industryRecipes.js";
-import { aggregateStorageComposition, estimateMixedOreCargoMassKg, processMixedSource, separateMaterial } from "../../../refining.js";
+import { aggregateStorageComposition, estimateMixedOreCargoMassKg, processMixedSource, separateMaterial } from "../../../refinery/index.js";
 import { formatCompositionBreakdown } from "../../../utils/ore-naming.js";
 import { escHtml } from "../../../utils/format.js";
 import { stationState, iconSvg } from "../shared.js";

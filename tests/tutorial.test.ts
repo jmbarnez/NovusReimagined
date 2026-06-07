@@ -93,10 +93,11 @@ function nextAnimationFrame(): Promise<void> {
 }
 
 describe("tutorial step list", () => {
-  it("has thirteen steps with hangar fitting legs before mining and gunnery", () => {
-    expect(TUTORIAL_STEP_COUNT).toBe(13);
+  it("has fourteen steps with hangar fitting legs before mining and gunnery", () => {
+    expect(TUTORIAL_STEP_COUNT).toBe(14);
     expect(TUTORIAL_STEPS.map((s) => s.id)).toEqual([
       "hud-tour",
+      "boost-try",
       "fly-academy",
       "hangar-high",
       "fly-mining",

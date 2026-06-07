@@ -5,7 +5,7 @@ import { getState } from "../state-access.js";
 import type { System, Station, Gate } from "../types/world.js";
 import { dst } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
-import { getDropZoneCenter } from "../hub.js";
+import { getDropZoneCenter } from "../refinery/index.js";
 import { getUIFont } from "./ui-font.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { GATE_RANGE } from "../constants.js";

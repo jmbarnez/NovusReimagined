@@ -221,6 +221,12 @@ export function tickTutorial(_dt: number) {
     snapshot.zoneReached = true;
   }
 
+  if (step.id === "boost-try") {
+    if (Client.keys["boost"]) {
+      snapshot.boostUsed = true;
+    }
+  }
+
   if (step.id === "fly-academy") {
     const visited = (snapshot.visitedZones as string[] | undefined) ?? [];
     for (const reg of TUTORIAL_LOCAL_REGIONS) {

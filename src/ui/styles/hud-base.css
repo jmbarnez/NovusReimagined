@@ -93,7 +93,7 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
   transform: scale(var(--ui-scale));
   transform-origin: top left;
   --hud-bottom-h: 95px;
-  --hud-mounted-panel-h: calc(var(--hud-bottom-h) * 2);
+  --hud-mounted-panel-h: var(--hud-bottom-h);
 }
 #hud-overlay > * {
   pointer-events: auto;

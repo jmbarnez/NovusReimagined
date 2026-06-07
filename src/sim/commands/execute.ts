@@ -20,7 +20,7 @@ import { resetTutorialTrackState } from "../../physics/tutorial-track.js";
 import { applyDecryptionReward } from "../../sites/decryption-rewards.js";
 import { startScanPulse } from "../../scanning.js";
 import { checkDeliveryContracts } from "../../data/missions.js";
-import { alloyHubMaterial, collectHubOutput, processFloatingItem, processMixedOreCargo, separateHubMaterial } from "../../hub.js";
+import { alloyHubMaterial, collectHubOutput, processFloatingItem, processMixedOreCargo, separateHubMaterial } from "../../refinery/index.js";
 import {
   abandonContractAction,
   acceptContractProposalAction,

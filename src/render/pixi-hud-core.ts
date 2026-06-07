@@ -1,6 +1,6 @@
 /**
  * PixiJS HUD Core Renderer
- * 
+ *
  * Migrates Canvas 2D HUD elements to PixiJS for GPU-accelerated rendering:
  * - Central fighter HUD (horizon pitch line, flight box)
  * - Curved status arcs (speed, shield)
@@ -21,6 +21,10 @@ import { getUIFont } from "./ui-font.js";
 import { displayPlayerAngle } from "./display-orientation.js";
 import { C } from "../config/index.js";
 import { getIonBoostModuleState } from "../player/boost-module.js";
+
+function themeColor(hex: string): number {
+  return parseInt(hex.replace("#", "0x"), 16);
+}
 
 let hudContainer: Container | null = null;
 
@@ -52,6 +56,15 @@ let lastZoom = 1;
 let lastAngle = 0;
 let lastBoostFx = false;
 let boostPulseUntil = 0;
+let lastPlayerAngle = 0;
+let lastSpdPct = -1;
+let lastBoostPulse = -1;
+let lastDriftAngle = 0;
+let lastDriftSpeed = -1;
+let lastDriftVisible = false;
+let lastTargetId: string | null = null;
+let lastTargetDist = -1;
+let lastThemeKey = "";
 
 export function initPixiHUD(): void {
   if (!hudOverlayLayer) return;
@@ -163,12 +176,39 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     gy = (Math.random() - 0.5) * 2.5;
   }
 
-  // Update horizon pitch line
-  if (horizonLine) {
+  const playerAngle = displayPlayerAngle(player);
+  const speed = Math.hypot(player.vx, player.vy);
+  const maxSpeed = st.maxSpeed || 1;
+  const boostModule = getIonBoostModuleState(player);
+  const boostSpeedMult = C.PHYSICS.SHIP.boostBaseSpeedMult
+    + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
+  const boostedMaxSpeed = maxSpeed * boostSpeedMult;
+  const boostFx = player.boostFx === true;
+  if (boostFx && !lastBoostFx) boostPulseUntil = now + 360;
+  const boostPulse = Math.max(0, Math.min(1, (boostPulseUntil - now) / 360));
+  const speedDisplayMax = boostFx ? boostedMaxSpeed : maxSpeed;
+  const spdPct = Math.max(0, Math.min(1, speed / speedDisplayMax));
+  const r = 38 * z;
+  const span = 0.28 * Math.PI;
+  const arcLineWidth = Math.max(1.5, Math.min(3, 2.0 * z));
+
+  // Compute dirty flags once
+  const zoomChanged = z !== lastZoom;
+  const angleChanged = playerAngle !== lastPlayerAngle;
+  const criticalChanged = isCritical !== lastIsCritical;
+  const boostFxChanged = boostFx !== lastBoostFx;
+  const boostPulseChanged = Math.abs(boostPulse - lastBoostPulse) > 0.05;
+  const spdPctRounded = Math.round(spdPct * 100);
+  const lastSpdPctRounded = Math.round(lastSpdPct * 100);
+  const spdPctChanged = spdPctRounded !== lastSpdPctRounded;
+  const shieldFracRounded = Math.round(shieldFrac * 100);
+  const lastShieldFracRounded = Math.round(lastShieldFrac * 100);
+  const shieldFracChanged = shieldFracRounded !== lastShieldFracRounded;
+
+  // Update horizon pitch line — only rebuild when zoom, angle, or critical state changes
+  if (horizonLine && (zoomChanged || angleChanged || criticalChanged)) {
     horizonLine.clear();
-    horizonLine.position.set(cx + gx, cy + gy);
-    horizonLine.rotation = displayPlayerAngle(player);
-    
+    horizonLine.rotation = playerAngle;
     // Left wing bracket
     horizonLine.moveTo(-25 * z, 0);
     horizonLine.lineTo(-15 * z, 0);
@@ -181,94 +221,83 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     horizonLine.rect(-3 * z, -3 * z, 6 * z, 6 * z);
     horizonLine.stroke({
       width: Math.max(1, 1.2 * z),
-      color: isCritical ? 0xee4444 : parseInt(theme.textMain.replace("#", "0x"), 16),
+      color: isCritical ? 0xee4444 : themeColor(theme.textMain),
       alpha: isCritical ? 0.45 : 0.35,
     });
   }
+  if (horizonLine) horizonLine.position.set(cx + gx, cy + gy);
 
-  // Update speed arc
-  const speed = Math.hypot(player.vx, player.vy);
-  const maxSpeed = st.maxSpeed || 1;
-  const boostModule = getIonBoostModuleState(player);
-  const boostSpeedMult = C.PHYSICS.SHIP.boostBaseSpeedMult
-    + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
-  const boostedMaxSpeed = maxSpeed * boostSpeedMult;
-  const boostFx = player.boostFx === true;
-  if (boostFx && !lastBoostFx) boostPulseUntil = now + 360;
-  lastBoostFx = boostFx;
-  const boostPulse = Math.max(0, Math.min(1, (boostPulseUntil - now) / 360));
-  const speedDisplayMax = boostFx ? boostedMaxSpeed : maxSpeed;
-  const spdPct = Math.max(0, Math.min(1, speed / speedDisplayMax));
-  const r = 38 * z;
-  const span = 0.28 * Math.PI;
-  const arcLineWidth = Math.max(1.5, Math.min(3, 2.0 * z));
-
-  if (speedArcBg) {
+  // Speed arc background — only rebuild when zoom, boost state, or pulse changes
+  if (speedArcBg && (zoomChanged || boostFxChanged || boostPulseChanged)) {
     speedArcBg.clear();
-    speedArcBg.position.set(cx + gx, cy + gy);
     speedArcBg.arc(0, 0, r, Math.PI - span, Math.PI + span);
     speedArcBg.stroke({
-      color: boostFx ? 0x54f7ff : parseInt(theme.textFaint.replace("#", "0x"), 16),
+      color: boostFx ? 0x54f7ff : themeColor(theme.textFaint),
       width: arcLineWidth + boostPulse * 1.4,
       alpha: boostFx ? Math.min(0.5, 0.22 + boostPulse * 0.28) : 0.12,
     });
   }
+  if (speedArcBg) speedArcBg.position.set(cx + gx, cy + gy);
 
-  if (speedArcFill) {
+  // Speed arc fill — only rebuild when zoom, speed pct, boost state, or pulse changes
+  if (speedArcFill && (zoomChanged || spdPctChanged || boostFxChanged || boostPulseChanged || criticalChanged)) {
     speedArcFill.clear();
-    speedArcFill.position.set(cx + gx, cy + gy);
     speedArcFill.arc(0, 0, r, Math.PI + span, Math.PI + span - spdPct * (span * 2), true);
     speedArcFill.stroke({
-      color: isCritical ? 0xee4444 : boostFx ? 0x7fffff : parseInt(theme.accent.replace("#", "0x"), 16),
+      color: isCritical ? 0xee4444 : boostFx ? 0x7fffff : themeColor(theme.accent),
       width: arcLineWidth + boostPulse * 1.1,
       alpha: Math.min(1, 0.85 + boostPulse * 0.15),
     });
   }
+  if (speedArcFill) speedArcFill.position.set(cx + gx, cy + gy);
 
   // Update shield arc
   if (maxShield > 0) {
-    if (shieldArcBg) {
+    if (shieldArcBg && (zoomChanged || criticalChanged)) {
       shieldArcBg.clear();
-      shieldArcBg.position.set(cx + gx, cy + gy);
       shieldArcBg.arc(0, 0, r, -span, span);
       shieldArcBg.stroke({
-        color: parseInt(theme.textFaint.replace("#", "0x"), 16),
+        color: themeColor(theme.textFaint),
         width: arcLineWidth,
         alpha: 0.12,
       });
     }
+    if (shieldArcBg) shieldArcBg.position.set(cx + gx, cy + gy);
 
-    if (shieldArcFill) {
+    if (shieldArcFill && (zoomChanged || shieldFracChanged || criticalChanged)) {
       shieldArcFill.clear();
-      shieldArcFill.position.set(cx + gx, cy + gy);
       shieldArcFill.arc(0, 0, r, span, span - shieldFrac * (span * 2), true);
       shieldArcFill.stroke({
-        color: (isLowShield || isCritical) ? 0xee4444 : parseInt(theme.shield.replace("#", "0x"), 16),
+        color: (isLowShield || isCritical) ? 0xee4444 : themeColor(theme.shield),
         width: arcLineWidth,
         alpha: 0.85,
       });
     }
+    if (shieldArcFill) shieldArcFill.position.set(cx + gx, cy + gy);
   } else {
-    if (shieldArcBg) shieldArcBg.clear();
-    if (shieldArcFill) shieldArcFill.clear();
+    if (shieldArcBg) { shieldArcBg.clear(); shieldArcBg.position.set(cx + gx, cy + gy); }
+    if (shieldArcFill) { shieldArcFill.clear(); shieldArcFill.position.set(cx + gx, cy + gy); }
   }
 
   // Update labels
-  const labelColor = isCritical ? 0xee4444 : parseInt(theme.textMain.replace("#", "0x"), 16);
+  const labelColor = isCritical ? 0xee4444 : themeColor(theme.textMain);
   const fontSize = Math.max(7, Math.min(10, 8 * z));
 
   if (speedLabel) {
-    speedLabel.text = `${Math.round(speed)} m/s`;
+    const speedText = `${Math.round(speed)} m/s`;
+    if (speedLabel.text !== speedText) speedLabel.text = speedText;
     speedLabel.position.set(Math.round(cx - (r + 7) + gx), Math.round(cy + gy));
-    speedLabel.style.fontSize = fontSize;
-    speedLabel.style.fill = labelColor;
+    if (speedLabel.style.fontSize !== fontSize) speedLabel.style.fontSize = fontSize;
+    if ((speedLabel.style.fill as string | number) !== labelColor) speedLabel.style.fill = labelColor;
   }
 
   if (maxShield > 0 && shieldLabel) {
-    shieldLabel.text = `${Math.round(shieldFrac * 100)}% SHD`;
+    const shieldText = `${Math.round(shieldFrac * 100)}% SHD`;
+    if (shieldLabel.text !== shieldText) shieldLabel.text = shieldText;
     shieldLabel.position.set(Math.round(cx + (r + 7) + gx), Math.round(cy + gy));
-    shieldLabel.style.fontSize = fontSize;
-    shieldLabel.style.fill = (isLowShield || isCritical) ? 0xee4444 : labelColor;
+    if (shieldLabel.style.fontSize !== fontSize) shieldLabel.style.fontSize = fontSize;
+    const shieldLabelColor = (isLowShield || isCritical) ? 0xee4444 : labelColor;
+    if ((shieldLabel.style.fill as string | number) !== shieldLabelColor) shieldLabel.style.fill = shieldLabelColor;
   }
 
   // Update warning banner
@@ -283,10 +312,15 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
 
   // Update drift vectors
   const speedMag = Math.hypot(player.vx, player.vy);
-  if (speedMag > 5 && driftVectors) {
+  const driftVisible = speedMag > 5;
+  const vAngle = driftVisible ? Math.atan2(player.vy, player.vx) : 0;
+  const driftAngleRounded = Math.round(vAngle * 100);
+  const lastDriftAngleRounded = Math.round(lastDriftAngle * 100);
+  const driftSpeedRounded = Math.round(speedMag);
+  const driftDirty = zoomChanged || criticalChanged || driftVisible !== lastDriftVisible || driftAngleRounded !== lastDriftAngleRounded || driftSpeedRounded !== Math.round(lastDriftSpeed);
+
+  if (driftVisible && driftVectors && driftDirty) {
     driftVectors.clear();
-    driftVectors.position.set(cx + gx, cy + gy);
-    const vAngle = Math.atan2(player.vy, player.vx);
     const offsetDist = r + (12 + Math.min(speedMag * 0.04, 10)) * z;
     const cosA = Math.cos(vAngle);
     const sinA = Math.sin(vAngle);
@@ -297,12 +331,10 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
       y: lcy + dx * sinA + dy * cosA,
     });
 
-    // Prograde marker (coordinates local to the ship centre)
+    // Prograde marker
     const px = cosA * offsetDist;
     const py = sinA * offsetDist;
-
     driftVectors.circle(px, py, mR);
-    // Fins — rotated by vAngle so they align with velocity
     const pL1 = rot(px, py, -mR, 0);
     const pL2 = rot(px, py, -mR * 2, 0);
     driftVectors.moveTo(pL1.x, pL1.y);
@@ -316,7 +348,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     driftVectors.moveTo(pU1.x, pU1.y);
     driftVectors.lineTo(pU2.x, pU2.y);
     driftVectors.stroke({
-      color: isCritical ? 0xee4444 : parseInt(theme.shield.replace("#", "0x"), 16),
+      color: isCritical ? 0xee4444 : themeColor(theme.shield),
       width: Math.max(1, 1.2 * z),
       alpha: isCritical ? 0.6 : 0.7,
     });
@@ -325,7 +357,6 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     const rx = -cosA * offsetDist;
     const ry = -sinA * offsetDist;
     driftVectors.circle(rx, ry, mR);
-    // Cross lines — rotated by vAngle
     const rA1 = rot(rx, ry, -mR * 0.7, -mR * 0.7);
     const rA2 = rot(rx, ry, mR * 0.7, mR * 0.7);
     driftVectors.moveTo(rA1.x, rA1.y);
@@ -335,14 +366,14 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
     driftVectors.moveTo(rB1.x, rB1.y);
     driftVectors.lineTo(rB2.x, rB2.y);
     driftVectors.stroke({
-      color: isCritical ? 0xee4444 : parseInt(theme.textDim.replace("#", "0x"), 16),
+      color: isCritical ? 0xee4444 : themeColor(theme.textDim),
       width: Math.max(1, 1.2 * z),
       alpha: isCritical ? 0.4 : 0.45,
     });
-  } else if (driftVectors) {
-    driftVectors.clear();
-    driftVectors.position.set(0, 0);
+  } else if (!driftVisible && driftVectors) {
+    if (lastDriftVisible) driftVectors.clear();
   }
+  if (driftVectors) driftVectors.position.set(cx + gx, cy + gy);
 
   // Update target label
   const primaryId = player.targetLock?.id;
@@ -354,10 +385,11 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
       const targetRad = target.radius || 18;
       const bracketOffset = (targetRad + 9) * Client.zoom;
       const targetDist = Math.round(dst(player.x, player.y, target.x, target.y));
-      
-      targetLabel.text = `[${targetDist}m]`;
+
+      const distText = `[${targetDist}m]`;
+      if (targetLabel.text !== distText) targetLabel.text = distText;
       targetLabel.position.set(Math.round(targetSx + bracketOffset + 5), Math.round(targetSy));
-      targetLabel.style.fill = labelColor;
+      if ((targetLabel.style.fill as string | number) !== labelColor) targetLabel.style.fill = labelColor;
       targetLabel.visible = true;
     } else {
       targetLabel.visible = false;
@@ -365,11 +397,23 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
   } else if (targetLabel) {
     targetLabel.visible = false;
   }
+
+  // Update all caches at end of frame
+  lastZoom = z;
+  lastPlayerAngle = playerAngle;
+  lastIsCritical = isCritical;
+  lastBoostFx = boostFx;
+  lastBoostPulse = boostPulse;
+  lastSpdPct = spdPct;
+  lastShieldFrac = shieldFrac;
+  lastDriftAngle = vAngle;
+  lastDriftSpeed = speedMag;
+  lastDriftVisible = driftVisible;
 }
 
 export function destroyPixiHUD(): void {
   if (!hudContainer) return;
-  
+
   if (horizonLine) { horizonLine.destroy(); horizonLine = null; }
   if (speedArcBg) { speedArcBg.destroy(); speedArcBg = null; }
   if (speedArcFill) { speedArcFill.destroy(); speedArcFill = null; }
@@ -380,7 +424,7 @@ export function destroyPixiHUD(): void {
   if (targetLabel) { targetLabel.destroy(); targetLabel = null; }
   if (speedLabel) { speedLabel.destroy(); speedLabel = null; }
   if (shieldLabel) { shieldLabel.destroy(); shieldLabel = null; }
-  
+
   hudOverlayLayer?.removeChild(hudContainer);
   hudContainer.destroy();
   hudContainer = null;

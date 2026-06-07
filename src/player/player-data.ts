@@ -21,7 +21,7 @@ import { TUTORIAL_STEP_COUNT } from "../data/tutorial.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { syncActiveProfile } from "../data/profiles.js";
 import { getHardpointSlotCount, mergeLegacyTurretSlotsIntoHigh, playerHardpointRack } from "../utils/hardpoints.js";
-import { ALLOY_FAMILIES, flattenStorageMaterials, makeDefaultAlloyCodex, makeDefaultRefineryStorage, preferredStorageForMaterial } from "../refining.js";
+import { ALLOY_FAMILIES, flattenStorageMaterials, makeDefaultAlloyCodex, makeDefaultRefineryStorage, preferredStorageForMaterial } from "../refinery/index.js";
 
 export function defaultFitting(shipId: string): Record<string, (string | null)[]> {
   const s = SHIPS[shipId];

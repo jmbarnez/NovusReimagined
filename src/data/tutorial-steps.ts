@@ -11,7 +11,7 @@ import { tutorialKeyStyled, tutorialBarKeyStyled } from "./tutorial-controls.js"
 import { getHangarGuidePanel } from "./hangar-tutorial-guide.js";
 import { getRefineryGuidePanel } from "./refinery-tutorial-guide.js";
 import { t } from "../utils/i18n.js";
-import { flattenStorageMaterials } from "../refining.js";
+import { flattenStorageMaterials } from "../refinery/index.js";
 import {
   type TutorialZone,
   type TutorialCtx,

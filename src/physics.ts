@@ -11,7 +11,7 @@ import { allActivePlayers } from "./utils/game.js";
 import { updateWreckPiecesAndPickups } from "./wreck.js";
 import { updateSalvager } from "./salvager.js";
 import { updateTractor } from "./tractor.js";
-import { updateHub, tickHubQueue } from "./hub.js";
+import { updateHub, tickHubQueue } from "./refinery/index.js";
 import { updateTrails } from "./utils/entities.js";
 import { updateTurretCooldowns } from "./combat/turret-control.js";
 import { tickAbilities } from "./player/abilities.js";

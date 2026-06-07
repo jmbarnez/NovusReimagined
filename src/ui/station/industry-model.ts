@@ -1,10 +1,10 @@
 import { getState } from "../../state-access.js";
-import { getAlloyFamilies } from "../../hub.js";
+import { getAlloyFamilies } from "../../refinery/index.js";
 import { MACHINES, RECIPES, poolItemLabel, type IndustryPool, type Recipe } from "../../data/industryRecipes.js";
 import { ORE } from "../../data/resources.js";
 import { escHtml } from "../../utils/format.js";
 import { stationState, iconSvg } from "./shared.js";
-import { aggregateStorageComposition, assessAlloyFamilies, materialMatchesRecipeMaterial, storageFillPct, storageUsedVolumeM3 } from "../../refining.js";
+import { aggregateStorageComposition, assessAlloyFamilies, materialMatchesRecipeMaterial, storageFillPct, storageUsedVolumeM3 } from "../../refinery/index.js";
 import type { RefineryStorageUnit } from "../../state.js";
 
 export type RefiningStage = "process" | "separate" | "alloy";

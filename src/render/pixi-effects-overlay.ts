@@ -65,9 +65,13 @@ export function refreshEffectsOverlayFonts(): void {
   }
 }
 
+const _hexCache = new Map<string, number>();
 function hexStringToNumber(hex: string): number {
-  const clean = hex.replace("#", "");
-  return parseInt(clean, 16) || 0xffffff;
+  const hit = _hexCache.get(hex);
+  if (hit !== undefined) return hit;
+  const val = parseInt(hex.replace("#", ""), 16) || 0xffffff;
+  _hexCache.set(hex, val);
+  return val;
 }
 
 function ensureLayer(): Container | null {

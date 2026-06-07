@@ -1,6 +1,6 @@
 import "../styles/station-industry.css";
 import { getState } from "../../state-access.js";
-import { getCargoMixedOreInputs } from "../../hub.js";
+import { getCargoMixedOreInputs } from "../../refinery/index.js";
 import { RECIPES } from "../../data/industryRecipes.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../../audio/procedural.js";
 import { queueFrameAction } from "../../sim/input.js";

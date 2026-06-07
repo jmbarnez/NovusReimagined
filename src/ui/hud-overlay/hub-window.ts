@@ -10,8 +10,8 @@ import {
   getFloatingDeposits,
   getProcessFee,
   hasHubOutput,
-} from "../../hub.js";
-import { flattenStorageMaterials } from "../../refining.js";
+} from "../../refinery/index.js";
+import { flattenStorageMaterials } from "../../refinery/index.js";
 import {
   renderIndustry,
   handleIndustryAction,

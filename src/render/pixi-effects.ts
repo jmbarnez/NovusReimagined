@@ -94,10 +94,13 @@ export function refreshEffectFonts(): void {
   _sharedPickupStyle.fontSize = 7 * scale;
 }
 
-// Helper to convert hex colors
+const _hexCache = new Map<string, number>();
 function hexStringToNumber(hex: string): number {
-  const clean = hex.replace("#", "");
-  return parseInt(clean, 16) || 0xffffff;
+  const hit = _hexCache.get(hex);
+  if (hit !== undefined) return hit;
+  const val = parseInt(hex.replace("#", ""), 16) || 0xffffff;
+  _hexCache.set(hex, val);
+  return val;
 }
 
 function getPooledSprite(): Sprite {
@@ -400,7 +403,7 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
         textObj = getPooledText();
         _pickupLabels.set(s, textObj);
       }
-      textObj.text = label;
+      if (textObj.text !== label) textObj.text = label;
 
       // Dark plate behind label (drawn into _pickupGfx so it scales with world)
       const platePadX = 3;

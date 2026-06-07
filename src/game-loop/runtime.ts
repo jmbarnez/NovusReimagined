@@ -131,14 +131,11 @@ function loop(now: number) {
   if (!gameStarted) return;
   rafId = requestAnimationFrame(loop);
 
-  const frameLimitMs = getFrameLimitMs();
-  if (frameLimitMs > 0 && now - lastRenderedFrameTime < frameLimitMs - 0.5) return;
-  lastRenderedFrameTime = now;
-
-  updateHostHeartbeat();
-
+  // Always compute frame delta so simulation pacing is independent of render rate
   const frameTime = Math.min((now - lastFrameTime) / 1000, 0.1);
   lastFrameTime = now;
+
+  updateHostHeartbeat();
 
   let ticks = 0;
   if (isPlayerReady() && isSimulationTickMode() && !isGameplayPaused()) {
@@ -173,7 +170,27 @@ function loop(now: number) {
     interpolationManager.update(performance.now());
   }
 
-  drawFrame(now, alpha, frameTime);
+  // Frame limiter: gate rendering only, not simulation
+  const frameLimitMs = getFrameLimitMs();
+  let shouldRender = true;
+  if (frameLimitMs > 0) {
+    const elapsed = now - lastRenderedFrameTime;
+    if (elapsed < frameLimitMs - 0.5) {
+      shouldRender = false;
+    } else {
+      // Advance by exact interval to prevent drift and smooth cadence
+      lastRenderedFrameTime += frameLimitMs;
+      if (now - lastRenderedFrameTime > frameLimitMs) {
+        lastRenderedFrameTime = now;
+      }
+    }
+  } else {
+    lastRenderedFrameTime = now;
+  }
+
+  if (shouldRender) {
+    drawFrame(now, alpha, frameTime);
+  }
 }
 
 function showSpaceHud() {

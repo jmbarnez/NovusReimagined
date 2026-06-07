@@ -10,7 +10,7 @@ import { ModuleInstance } from "../types/moduleInstance.js";
 import { C } from "../config/index.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 import type { Player } from "../state.js";
-import { estimateCargoMaterialMassKg, estimateMixedOreCargoMassKg } from "../refining.js";
+import { estimateCargoMaterialMassKg, estimateMixedOreCargoMassKg } from "../refinery/index.js";
 
 export interface ComputedStats {
   ship: ShipDef;

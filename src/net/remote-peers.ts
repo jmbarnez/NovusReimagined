@@ -2,7 +2,7 @@ import { type Player } from "../state.js";
 import { netLog } from "../ui/net-console.js";
 import { LOCAL_PLAYER_ID } from "../player-registry.js";
 import { PlayerAccess, getState } from "../state-access.js";
-import { makeDefaultAlloyCodex, makeDefaultRefineryStorage } from "../refining.js";
+import { makeDefaultAlloyCodex, makeDefaultRefineryStorage } from "../refinery/index.js";
 
 export interface RemotePlayerBrief {
   netId: string;

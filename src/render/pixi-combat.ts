@@ -31,10 +31,13 @@ let _beamGfx: Graphics | null = null;
 let _utilityGfx: Graphics | null = null;
 let _currentNow = 0;
 
-// Helper to convert hex color strings to hex numbers for PixiJS
+const _hexCache = new Map<string, number>();
 function hexStringToNumber(hex: string): number {
-  const clean = hex.replace("#", "");
-  return parseInt(clean, 16) || 0xffffff;
+  const hit = _hexCache.get(hex);
+  if (hit !== undefined) return hit;
+  const val = parseInt(hex.replace("#", ""), 16) || 0xffffff;
+  _hexCache.set(hex, val);
+  return val;
 }
 
 /** Re-anchor beam start to the rendered nose mount when it originated from a ship mount. */
@@ -91,16 +94,16 @@ export function syncPixiCombat(now: number, alpha: number, sys: System): void {
       const colNum = hexStringToNumber(b.color);
       const trailColNum = hexStringToNumber(b.trail || b.color);
 
-      // Bullet trail
-      const trailSegs = isMissile ? 5 : isGauss ? 4 : 3;
+      // Bullet trail — fewer segments for lighter Graphics load
+      const trailSegs = isMissile ? 3 : 2;
       if (spd > 0) {
         const ndx = -b.vx / spd;
         const ndy = -b.vy / spd;
         for (let t = trailSegs; t >= 1; t--) {
-          const dist = b.sz * (isGauss ? 3.4 : 2.7) * t;
-          const ta = (0.14 + (trailSegs - t) * 0.065) * (isMissile ? 0.85 : 1);
-          const tr = b.sz * (0.8 - t * (isGauss ? 0.1 : 0.14));
-          
+          const dist = b.sz * (isGauss ? 3.0 : 2.4) * t;
+          const ta = (0.18 + (trailSegs - t) * 0.09) * (isMissile ? 0.85 : 1);
+          const tr = b.sz * (0.85 - t * 0.16);
+
           _bulletGfx.circle(ix + ndx * dist, iy + ndy * dist, Math.max(0.4, tr))
             .fill({ color: trailColNum, alpha: ta });
         }

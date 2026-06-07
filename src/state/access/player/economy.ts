@@ -13,7 +13,7 @@ import {
 import type { ModuleInstance } from "../../../types/moduleInstance.js";
 import type { CraftJob } from "../../../data/industryRecipes.js";
 import type { MissionContract } from "../../../data/missions.js";
-import { flattenStorageMaterials, preferredStorageForMaterial, stackSignature, storageUsedVolumeM3 } from "../../../refining.js";
+import { flattenStorageMaterials, preferredStorageForMaterial, stackSignature, storageUsedVolumeM3 } from "../../../refinery/index.js";
 
 function cloneMaterialStack(stack: BulkMaterialStack): BulkMaterialStack {
   return {
