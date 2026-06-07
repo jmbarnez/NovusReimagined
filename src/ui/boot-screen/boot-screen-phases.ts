@@ -32,6 +32,16 @@ export function localizeBootScreen(): void {
     if (!key) return;
     el.textContent = t(`perf.${key}`);
   });
+
+  const titleSp = document.getElementById("title-sp");
+  const titleMp = document.getElementById("title-mp");
+  const titleSettings = document.getElementById("title-settings");
+  const titleExit = document.getElementById("title-exit");
+  if (titleSp) titleSp.textContent = t("title.singleplayer");
+  if (titleMp) titleMp.textContent = t("title.multiplayer");
+  if (titleSettings) titleSettings.setAttribute("aria-label", t("title.settings"));
+  if (titleExit) titleExit.setAttribute("aria-label", t("title.safeExit"));
+
   startBootPerformanceMonitor();
 }
 
