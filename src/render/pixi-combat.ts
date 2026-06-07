@@ -307,10 +307,6 @@ function drawMiningLaser(
     endY += hitNx * osc;
   }
 
-  // Muzzle glow at ship mount
-  _utilityGfx.circle(x1, y1, 7).fill({ color: 0xffdc28, alpha: 0.35 * pulse });
-  _utilityGfx.circle(x1, y1, 3.5).fill({ color: 0xffffb4, alpha: 0.55 * pulse });
-
   // Outer glow
   _utilityGfx.moveTo(x1, y1).lineTo(endX, endY)
     .stroke({ color: 0xffdc28, width: 10, alpha: 0.28 * pulse, cap: "round" });

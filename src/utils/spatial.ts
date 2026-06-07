@@ -3,6 +3,50 @@ import { curSys } from "./game.js";
 import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 
+// ─── Spatial grid performance telemetry ─────────────────────────────────────
+interface SpatialGridPerf {
+  lastSyncMs: number;
+  lastRebuildMs: number;
+  syncHistory: number[];
+  rebuildHistory: number[];
+}
+
+const _perf: SpatialGridPerf = {
+  lastSyncMs: 0,
+  lastRebuildMs: 0,
+  syncHistory: [],
+  rebuildHistory: [],
+};
+
+const MAX_PERF_SAMPLES = 30;
+
+function recordSyncTime(ms: number) {
+  _perf.lastSyncMs = ms;
+  _perf.syncHistory.push(ms);
+  if (_perf.syncHistory.length > MAX_PERF_SAMPLES) _perf.syncHistory.shift();
+}
+
+function recordRebuildTime(ms: number) {
+  _perf.lastRebuildMs = ms;
+  _perf.rebuildHistory.push(ms);
+  if (_perf.rebuildHistory.length > MAX_PERF_SAMPLES) _perf.rebuildHistory.shift();
+}
+
+function avg(arr: number[]): number {
+  return arr.length === 0 ? 0 : arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+export function getSpatialGridPerf() {
+  return {
+    lastSyncMs: _perf.lastSyncMs,
+    lastRebuildMs: _perf.lastRebuildMs,
+    avgSyncMs: avg(_perf.syncHistory),
+    avgRebuildMs: avg(_perf.rebuildHistory),
+    syncSamples: _perf.syncHistory.length,
+    rebuildSamples: _perf.rebuildHistory.length,
+  };
+}
+
 export interface SpatialEntity<T = unknown> {
   id: string;
   x: number;
@@ -103,9 +147,129 @@ export class SpatialGrid {
     }
     return results;
   }
+
+  // Incremental update methods
+  remove(id: string): boolean {
+    const entity = this.entities.get(id);
+    if (!entity) return false;
+
+    // Remove from all cells the entity spans
+    const cs = this.cellSize;
+    const minCX = Math.floor((entity.x - entity.radius) / cs);
+    const maxCX = Math.floor((entity.x + entity.radius) / cs);
+    const minCY = Math.floor((entity.y - entity.radius) / cs);
+    const maxCY = Math.floor((entity.y + entity.radius) / cs);
+
+    for (let cy = minCY; cy <= maxCY; cy++) {
+      for (let cx = minCX; cx <= maxCX; cx++) {
+        const k = this._key(cx, cy);
+        const cell = this.cells.get(k);
+        if (cell) {
+          cell.delete(id);
+          // Clean up empty cells to prevent memory bloat
+          if (cell.size === 0) {
+            this.cells.delete(k);
+          }
+        }
+      }
+    }
+
+    this.entities.delete(id);
+    return true;
+  }
+
+  update(id: string, newX: number, newY: number, newRadius?: number): boolean {
+    const entity = this.entities.get(id);
+    if (!entity) return false;
+
+    const oldRadius = entity.radius;
+    const radiusChanged = newRadius !== undefined && newRadius !== oldRadius;
+    const newRadiusFinal = newRadius ?? oldRadius;
+
+    // Check if entity moved to different cells
+    const cs = this.cellSize;
+    const oldMinCX = Math.floor((entity.x - oldRadius) / cs);
+    const oldMaxCX = Math.floor((entity.x + oldRadius) / cs);
+    const oldMinCY = Math.floor((entity.y - oldRadius) / cs);
+    const oldMaxCY = Math.floor((entity.y + oldRadius) / cs);
+
+    const newMinCX = Math.floor((newX - newRadiusFinal) / cs);
+    const newMaxCX = Math.floor((newX + newRadiusFinal) / cs);
+    const newMinCY = Math.floor((newY - newRadiusFinal) / cs);
+    const newMaxCY = Math.floor((newY + newRadiusFinal) / cs);
+
+    // If position and radius haven't changed cell boundaries, just update entity data
+    if (!radiusChanged &&
+        oldMinCX === newMinCX && oldMaxCX === newMaxCX &&
+        oldMinCY === newMinCY && oldMaxCY === newMaxCY) {
+      entity.x = newX;
+      entity.y = newY;
+      return true;
+    }
+
+    // Remove from old cells
+    for (let cy = oldMinCY; cy <= oldMaxCY; cy++) {
+      for (let cx = oldMinCX; cx <= oldMaxCX; cx++) {
+        const k = this._key(cx, cy);
+        const cell = this.cells.get(k);
+        if (cell) {
+          cell.delete(id);
+          if (cell.size === 0) {
+            this.cells.delete(k);
+          }
+        }
+      }
+    }
+
+    // Update entity data
+    entity.x = newX;
+    entity.y = newY;
+    entity.radius = newRadiusFinal;
+
+    // Add to new cells
+    for (let cy = newMinCY; cy <= newMaxCY; cy++) {
+      for (let cx = newMinCX; cx <= newMaxCX; cx++) {
+        const k = this._key(cx, cy);
+        let cell = this.cells.get(k);
+        if (!cell) {
+          cell = new Set();
+          this.cells.set(k, cell);
+        }
+        cell.add(id);
+      }
+    }
+
+    return true;
+  }
+
+  updateEntityData(id: string, data: unknown): boolean {
+    const entity = this.entities.get(id);
+    if (!entity) return false;
+    entity.data = data;
+    return true;
+  }
+
+  has(id: string): boolean {
+    return this.entities.has(id);
+  }
+
+  get(id: string): SpatialEntity | undefined {
+    return this.entities.get(id);
+  }
+
+  // Performance metrics
+  getStats() {
+    return {
+      entityCount: this.entities.size,
+      cellCount: this.cells.size,
+      averageEntitiesPerCell: this.entities.size / Math.max(1, this.cells.size),
+      memoryUsage: this.cells.size * 8 + this.entities.size * 64 // Rough estimate
+    };
+  }
 }
 
 export function rebuildSpatialGrid(sysIdx?: number) {
+  const t0 = typeof performance !== "undefined" ? performance.now() : 0;
   const grid = getState().spatialGrid;
   if (!grid) return;
   grid.clear();
@@ -144,4 +308,86 @@ export function rebuildSpatialGrid(sysIdx?: number) {
   for (const p of getState().wreckPieces) {
     if (p.hp > 0) grid.insert(p.id, p.x, p.y, p.radius, "wreckpiece", p);
   }
+
+  const t1 = typeof performance !== "undefined" ? performance.now() : 0;
+  recordRebuildTime(t1 - t0);
+}
+
+/**
+ * Incrementally syncs the spatial grid without clearing it.
+ * Removes dead/missing entities, updates positions of existing ones,
+ * and inserts newly spawned entities. Much cheaper than a full rebuild
+ * when the entity set is mostly stable.
+ */
+export function syncSpatialGrid(sysIdx?: number) {
+  const t0 = typeof performance !== "undefined" ? performance.now() : 0;
+  const grid = getState().spatialGrid;
+  if (!grid) return;
+  const sys = sysIdx !== undefined ? getState().GALAXY[sysIdx] : curSys();
+  if (!sys) return;
+
+  const expectedIds = new Set<string>();
+
+  for (const p of getState().players.values()) {
+    if (p.sysIdx !== sys.idx) continue;
+    const id = p.netId ?? "__player";
+    expectedIds.add(id);
+    const playerColRadius = SHIPS[p.shipId]?.colRadius ?? 20;
+    if (grid.has(id)) {
+      grid.update(id, p.x, p.y, playerColRadius);
+    } else {
+      grid.insert(id, p.x, p.y, playerColRadius, "player", p);
+    }
+  }
+
+  for (const e of sys.enemies) {
+    if (!e.alive) continue;
+    expectedIds.add(e.id);
+    const def = ENEMY_DEFS[e.type];
+    const colRadius = def?.colRadius ?? e.sigRadius ?? 18;
+    const effectiveRadius = ((e.shield ?? 0) > 0) ? (e.sigRadius ?? colRadius) : colRadius;
+    if (grid.has(e.id)) {
+      grid.update(e.id, e.x, e.y, effectiveRadius);
+    } else {
+      grid.insert(e.id, e.x, e.y, effectiveRadius, "enemy", e);
+    }
+  }
+
+  for (const a of sys.asteroids) {
+    if (a.depleted || a.hp <= 0) continue;
+    expectedIds.add(a.id);
+    if (grid.has(a.id)) {
+      grid.update(a.id, a.x, a.y, a.radius);
+    } else {
+      grid.insert(a.id, a.x, a.y, a.radius, "asteroid", a);
+    }
+  }
+
+  for (const s of sys.stations) {
+    expectedIds.add(s.id);
+    if (grid.has(s.id)) {
+      grid.update(s.id, s.x, s.y, s.radius);
+    } else {
+      grid.insert(s.id, s.x, s.y, s.radius, "station", s);
+    }
+  }
+
+  for (const p of getState().wreckPieces) {
+    if (p.hp <= 0) continue;
+    expectedIds.add(p.id);
+    if (grid.has(p.id)) {
+      grid.update(p.id, p.x, p.y, p.radius);
+    } else {
+      grid.insert(p.id, p.x, p.y, p.radius, "wreckpiece", p);
+    }
+  }
+
+  for (const id of grid.entities.keys()) {
+    if (!expectedIds.has(id)) {
+      grid.remove(id);
+    }
+  }
+
+  const t1 = typeof performance !== "undefined" ? performance.now() : 0;
+  recordSyncTime(t1 - t0);
 }

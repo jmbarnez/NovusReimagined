@@ -6,7 +6,7 @@ import { updateCombat, updateProjectiles } from "./physics/combat-physics.js";
 import { updateNpcs, updateEnemyBullets, updateAsteroids, updateMining, resolveNpcAsteroidCollisions, updateEnemyRespawns } from "./physics/npcs.js";
 import { updateStationTurrets } from "./physics/station-turrets.js";
 import { updateWarp } from "./dock.js";
-import { rebuildSpatialGrid } from "./utils/spatial.js";
+import { syncSpatialGrid } from "./utils/spatial.js";
 import { allActivePlayers } from "./utils/game.js";
 import { updateWreckPiecesAndPickups } from "./wreck.js";
 import { updateSalvager } from "./salvager.js";
@@ -21,7 +21,7 @@ import { tickIndustryQueue } from "./state/actions.js";
 import { updateMapScanner, updateScanning } from "./scanning.js";
 
 export function tick(dt: number) {
-  rebuildSpatialGrid();
+  syncSpatialGrid();
   tickAbilities(dt);
   for (const p of allActivePlayers()) {
     updateShip(dt, p);

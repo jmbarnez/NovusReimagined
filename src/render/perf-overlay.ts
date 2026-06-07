@@ -7,6 +7,7 @@ import { t } from "../utils/i18n.js";
 import { app, pixiDpr } from "../pixi.js";
 import { viewportH, viewportW } from "./viewport.js";
 import { getPerfTimingSnapshot, type PerfTimingSnapshot } from "./perf-telemetry.js";
+import { getSpatialGridPerf } from "../utils/spatial.js";
 
 export interface PerformanceRenderContext {
   mode: string;
@@ -45,6 +46,7 @@ export interface PerformanceTelemetrySnapshot {
     asteroids: number;
     visibleAsteroids: number;
     cells: number;
+    spatialEntities: number;
   };
   context: PerformanceRenderContext;
   timings: PerfTimingSnapshot;
@@ -122,6 +124,7 @@ export function getPerformanceTelemetrySnapshot(): PerformanceTelemetrySnapshot 
       asteroids: asteroids.length,
       visibleAsteroids,
       cells: state.spatialGrid?.cells?.size ?? 0,
+      spatialEntities: state.spatialGrid?.entities?.size ?? 0,
     },
     context: {
       mode: Client.mode,
@@ -245,6 +248,8 @@ function renderAdvanced(snapshot: PerformanceTelemetrySnapshot): string {
         <div>EN: ${snapshot.world.visibleEnemies}/${snapshot.world.enemies}</div>
         <div>AST: ${snapshot.world.visibleAsteroids}/${snapshot.world.asteroids}</div>
         <div>Cells: ${snapshot.world.cells}</div>
+        <div>Grid: ${snapshot.world.spatialEntities}</div>
+        <div>Sync: ${getSpatialGridPerf().lastSyncMs.toFixed(2)}ms</div>
         <div>B: ${snapshot.entities.bullets}</div>
         <div>EB: ${snapshot.entities.enemyBullets}</div>
         <div>BM: ${snapshot.entities.beams}</div>
@@ -316,7 +321,7 @@ export function drawPerfOverlay() {
     `FPS: ${snapshot.fps}  avg: ${snapshot.avgMs.toFixed(1)}ms  min: ${snapshot.minMs.toFixed(1)}ms  max: ${snapshot.maxMs.toFixed(1)}ms`,
     `Ticks/frame: ${snapshot.avgTicks.toFixed(1)}`,
     `Entities: B=${snapshot.entities.bullets} EB=${snapshot.entities.enemyBullets} BM=${snapshot.entities.beams} PT=${snapshot.entities.particles} FT=${snapshot.entities.floatTexts}`,
-    `World: EN=${snapshot.world.enemies} AST=${snapshot.world.asteroids} Cells=${snapshot.world.cells}`,
+    `World: EN=${snapshot.world.enemies} AST=${snapshot.world.asteroids} Grid=${snapshot.world.spatialEntities} Cells=${snapshot.world.cells}`,
   ];
 
   if (snapshot.memory) {

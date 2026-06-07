@@ -19,7 +19,7 @@ import { interpolationManager } from "../net/interpolation.js";
 import { initChat, destroyChat } from "../ui/chat.js";
 import { netLog, flushNetLogPending } from "../ui/net-console.js";
 import { hudState } from "../ui/hud/state.js";
-import { rebuildSpatialGrid } from "../utils/spatial.js";
+import { syncSpatialGrid } from "../utils/spatial.js";
 import { tickTutorial } from "../tutorial.js";
 import { on } from "../events.js";
 import { transitionTo } from "../ui/transition-manager.js";
@@ -70,7 +70,7 @@ function runGameplayTick() {
   if (gameClient.connectionState !== "connected") return;
 
   if (getState().player) {
-    rebuildSpatialGrid(getState().player.sysIdx);
+    syncSpatialGrid(getState().player.sysIdx);
   }
   const frame = createLocalInputFrame(currentTick);
   gameClient.sendInput(frame);

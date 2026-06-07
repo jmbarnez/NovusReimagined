@@ -24,15 +24,15 @@ describe("turret origins", () => {
     p.y = 20;
     p.angle = 0;
 
-    expect(getShipNoseTurretOrigin(p.shipId)).toEqual({ forwardPx: 27, localDownPx: 2 });
-    expect(getPlayerTurretOrigin(p)).toEqual({ x: 37, y: 22 });
+    expect(getShipNoseTurretOrigin(p.shipId)).toEqual({ forwardPx: 27, localDownPx: 0 });
+    expect(getPlayerTurretOrigin(p)).toEqual({ x: 37, y: 20 });
   });
 
   it("derives enemy nose mounts from enemy render geometry", () => {
     const origin = getEnemyTurretOrigin({ x: 5, y: 7, angle: Math.PI / 2, type: "rat" });
 
-    expect(getEnemyNoseTurretOrigin("rat")).toEqual({ forwardPx: 12, localDownPx: 2 });
-    expect(origin.x).toBeCloseTo(3, 6);
+    expect(getEnemyNoseTurretOrigin("rat")).toEqual({ forwardPx: 12, localDownPx: 0 });
+    expect(origin.x).toBeCloseTo(5, 6);
     expect(origin.y).toBeCloseTo(19, 6);
   });
 

@@ -27,7 +27,7 @@ export interface ShipPose {
 
 const PATH_ORIGIN_EPSILON = 0.001;
 const FORWARD_ORIGIN_OVERHANG_PX = 3;
-const UNDER_HULL_OFFSET_PX = 2;
+const UNDER_HULL_OFFSET_PX = 0;
 const NOSE_ORIGIN_BACKSET_PX = 4;
 const _shipOriginCache = new Map<string, TurretOriginConfig>();
 const _enemyOriginCache = new Map<string, TurretOriginConfig>();
