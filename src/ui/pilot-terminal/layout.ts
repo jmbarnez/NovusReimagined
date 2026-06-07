@@ -2,6 +2,7 @@ import "../styles/hud-base.css";
 import "../styles/pilot-terminal.css";
 import "../styles/hud-logs.css";
 import { buildDockHeaderHTML } from "../hud/panel-popout.js";
+import { t } from "../../utils/i18n.js";
 
 export interface PilotTerminalOverlay {
   root: HTMLElement;
@@ -44,7 +45,7 @@ export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions):
     </header>
     <div class="pilot-terminal-body">
       <section class="pilot-terminal-dashboard" aria-label="Dashboard">
-        <span class="pilot-terminal-dashboard-label">PILOT INTERFACE</span>
+        <span class="pilot-terminal-dashboard-label">${t("pilotTerminal.pilotInterface")}</span>
         <div class="pilot-terminal-status-line" data-pilot-status></div>
         <div class="pilot-terminal-dashboard-main" data-pilot-dashboard>
           ${options.dashboardHtml ?? ""}
@@ -52,15 +53,15 @@ export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions):
         ${
           options.showAbort
             ? `<div class="pilot-terminal-actions">
-                <button type="button" class="btn-pilot-danger" data-pilot-abort>${options.abortLabel ?? "ABORT"}</button>
+                <button type="button" class="btn-pilot-danger" data-pilot-abort>${options.abortLabel ?? t("pilotTerminal.abort")}</button>
               </div>`
             : ""
         }
       </section>
       ${
         showConsole
-          ? `<section class="pilot-terminal-console-wrap" aria-label="System console">
-              <div class="hud-dock-header">${buildDockHeaderHTML("SYSTEM CONSOLE")}</div>
+          ? `<section class="pilot-terminal-console-wrap" aria-label="${t("pilotTerminal.systemConsole")}">
+              <div class="hud-dock-header">${buildDockHeaderHTML(t("pilotTerminal.systemConsole"))}</div>
               <div class="pilot-terminal-console-entries" data-pilot-console></div>
             </section>`
           : ""

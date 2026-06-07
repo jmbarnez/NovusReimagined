@@ -67,7 +67,7 @@ export function showPilotProfileScreen(
     const pilotName = result.name ?? input.value.trim();
     PlayerAccess.setPilotName(pilotName);
     savePlayer();
-    appendLogEntry(`Callsign registered: ${pilotName}`, "net-ok");
+    appendLogEntry(t("profile.callsignRegistered", { name: pilotName }), "net-ok");
     finish();
     onComplete(pilotName);
   };

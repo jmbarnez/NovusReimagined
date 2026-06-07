@@ -65,7 +65,7 @@ function bindProfileSelectionEvents(monitor: HTMLElement): void {
     delBtn?.addEventListener("click", (e) => {
       e.stopPropagation();
       sfxBlip();
-      const pilotName = (card.querySelector(".profile-name") as HTMLElement)?.textContent ?? "this profile";
+      const pilotName = (card.querySelector(".profile-name") as HTMLElement)?.textContent ?? t("pilotTerminal.thisProfile");
       if (!confirm(t("profile.confirmDelete", { name: pilotName }))) return;
       deleteProfile(id);
       monitor.innerHTML = buildProfileSelectionHtml();
@@ -195,7 +195,7 @@ function renderProfileCard(p: ProfileMeta): string {
         </div>
         <div class="profile-stat">
           <span class="profile-stat-lbl">${t("profile.credits")}</span>
-          <span class="profile-stat-val highlight-credits">${creditsFmt} CR</span>
+          <span class="profile-stat-val highlight-credits">${creditsFmt}${t("pilotTerminal.creditsSuffix")}</span>
         </div>
         <div class="profile-stat">
           <span class="profile-stat-lbl">${t("profile.lastPlayed")}</span>

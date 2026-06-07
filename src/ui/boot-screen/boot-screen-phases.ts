@@ -40,7 +40,15 @@ export function localizeBootScreen(): void {
   if (titleSp) titleSp.textContent = t("title.singleplayer");
   if (titleMp) titleMp.textContent = t("title.multiplayer");
   if (titleSettings) titleSettings.setAttribute("aria-label", t("title.settings"));
-  if (titleExit) titleExit.setAttribute("aria-label", t("title.safeExit"));
+  if (titleExit) {
+    titleExit.textContent = t("title.exit");
+    titleExit.setAttribute("aria-label", t("title.safeExit"));
+  }
+
+  document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+    const key = (el as HTMLElement).dataset.i18nAria;
+    if (key) el.setAttribute("aria-label", t(key));
+  });
 
   startBootPerformanceMonitor();
 }

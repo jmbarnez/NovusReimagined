@@ -4,6 +4,7 @@ import { createPilotTerminalOverlay } from "./pilot-terminal/layout.js";
 import { registerLogSink, flushPendingLogEntries, appendLogEntry } from "./hud/logs.js";
 import { flushNetLogPending } from "./net-console.js";
 import { netLog } from "./net-console.js";
+import { t } from "../utils/i18n.js";
 
 export interface RunPilotConnectionOptions {
   label: string;
@@ -31,16 +32,16 @@ export function runPilotConnection(options: RunPilotConnectionOptions): void {
 
   const terminal = createPilotTerminalOverlay({
     id: "pilot-connecting-screen",
-    title: "NEURAL LINK",
-    subtitle: options.subtitle ?? "SYNCHRONIZATION",
+    title: t("pilotTerminal.neuralLink"),
+    subtitle: options.subtitle ?? t("pilotTerminal.synchronization"),
     mount: options.mount,
     embedded: options.embedded,
     showConsole: !options.embedded,
     showAbort: true,
-    abortLabel: "ABORT CONNECTION",
+    abortLabel: t("pilotTerminal.abortConnection"),
     dashboardHtml: options.targetLine
       ? `<div class="pilot-terminal-meta-row">
-          <span class="meta-label">TARGET</span>
+          <span class="meta-label">${t("pilotTerminal.target")}</span>
           <span class="meta-val" data-pilot-target>${options.targetLine}</span>
         </div>`
       : "",
@@ -48,7 +49,7 @@ export function runPilotConnection(options: RunPilotConnectionOptions): void {
       if (finished) return;
       aborted = true;
       sfxBlip();
-      netLog("[WARN] Connection aborted by pilot");
+      netLog(`[WARN] ${t("pilotTerminal.connectionAborted")}`);
       gameClient.disconnect();
       registerLogSink(null);
       terminal.remove();
@@ -63,7 +64,7 @@ export function runPilotConnection(options: RunPilotConnectionOptions): void {
     flushPendingLogEntries();
     flushNetLogPending();
   }
-  appendLogEntry(`Phase: ${options.label}`, "system");
+  appendLogEntry(t("pilotTerminal.phase", { label: options.label }), "system");
 
   activeConnectionAbort = () => {
     if (!aborted && !finished) {
@@ -83,16 +84,16 @@ export function runPilotConnection(options: RunPilotConnectionOptions): void {
       registerLogSink(null);
 
       if (ok) {
-        terminal.setStatus("LINK ESTABLISHED");
-        appendLogEntry("Neural handshake complete.", "net-ok");
+        terminal.setStatus(t("pilotTerminal.linkEstablished"));
+        appendLogEntry(t("pilotTerminal.neuralHandshakeComplete"), "net-ok");
         terminal.root.classList.add("fade-out");
         window.setTimeout(() => {
           terminal.remove();
           void Promise.resolve(options.onSuccess());
         }, 400);
       } else {
-        terminal.setStatus("HANDSHAKE FAILED");
-        appendLogEntry("Could not establish neural link.", "net-err");
+        terminal.setStatus(t("pilotTerminal.handshakeFailed"));
+        appendLogEntry(t("pilotTerminal.couldNotEstablishLink"), "net-err");
         registerLogSink(null);
         terminal.remove();
         options.onFailure(new Error("connect failed"));

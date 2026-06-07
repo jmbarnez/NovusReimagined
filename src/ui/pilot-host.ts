@@ -10,6 +10,7 @@ import { appendLogEntry } from "./hud/logs.js";
 import { runPilotConnection } from "./pilot-connecting.js";
 import { isTauriApp } from "../utils/app-exit.js";
 import { netLog } from "./net-console.js";
+import { t } from "../utils/i18n.js";
 
 interface PilotHostScreenOptions {
   mount?: HTMLElement;
@@ -36,36 +37,36 @@ export function showPilotHostScreen(onClose: () => void, options: PilotHostScree
 
   const terminal = createPilotTerminalOverlay({
     id: "pilot-host-screen",
-    title: "HOST RELAY",
-    subtitle: "PILOT COMPUTER",
+    title: t("pilotTerminal.hostRelay"),
+    subtitle: t("pilotTerminal.pilotComputer"),
     mount: options.mount,
     embedded: options.embedded,
     showConsole: !options.embedded,
     dashboardHtml: `
       <div class="pilot-terminal-meta-row">
-        <span class="meta-label">CALLSIGN</span>
-        <span class="meta-val">${hasPilot ? callsign : "— UNREGISTERED —"}</span>
+        <span class="meta-label">${t("pilotTerminal.callsign")}</span>
+        <span class="meta-val">${hasPilot ? callsign : t("pilotTerminal.unregistered")}</span>
       </div>
       <div class="pilot-terminal-meta-row">
-        <span class="meta-label">LISTEN</span>
+        <span class="meta-label">${t("pilotTerminal.listen")}</span>
         <span class="meta-val" data-host-addr>${listenAddr}</span>
       </div>
       <p class="pilot-terminal-readonly pilot-terminal-hint">${tauriNote}</p>
       <div class="pilot-terminal-actions">
-        <button type="button" class="btn-pilot-primary" data-host-start ${hasPilot ? "" : "disabled"}>START HOST RELAY</button>
-        <button type="button" class="btn-pilot-secondary" data-host-copy ${hasPilot ? "" : "disabled"}>COPY ADDRESS</button>
-        <button type="button" class="btn-pilot-secondary btn-menu-back" data-host-close>BACK</button>
+        <button type="button" class="btn-pilot-primary" data-host-start ${hasPilot ? "" : "disabled"}>${t("pilotTerminal.startHostRelay")}</button>
+        <button type="button" class="btn-pilot-secondary" data-host-copy ${hasPilot ? "" : "disabled"}>${t("pilotTerminal.copyAddress")}</button>
+        <button type="button" class="btn-pilot-secondary btn-menu-back" data-host-close>${t("pilotTerminal.back")}</button>
       </div>
-      ${hasPilot ? "" : `<p class="pilot-terminal-error" style="margin-top:12px;">Create a pilot via Initiate New Link before hosting.</p>`}
+      ${hasPilot ? "" : `<p class="pilot-terminal-error" style="margin-top:12px;">${t("pilotTerminal.createPilotBeforeHosting")}</p>`}
     `,
   });
 
-  terminal.setStatus(hasPilot ? "RELAY STANDBY" : "PILOT REGISTRY REQUIRED");
-  appendLogEntry("Host relay terminal online.", "system");
+  terminal.setStatus(hasPilot ? t("pilotTerminal.relayStandby") : t("pilotTerminal.pilotRegistryRequired"));
+  appendLogEntry(t("pilotTerminal.hostRelayOnline"), "system");
   if (hasPilot) {
-    appendLogEntry(`Broadcast address: ${listenAddr}`, "info");
+    appendLogEntry(t("pilotTerminal.broadcastAddress", { address: listenAddr }), "info");
   } else {
-    appendLogEntry("No registered callsign — hosting locked.", "warn");
+    appendLogEntry(t("pilotTerminal.noCallsignHostingLocked"), "warn");
   }
 
   const startBtn = terminal.dashboardMain.querySelector("[data-host-start]") as HTMLButtonElement;
@@ -86,9 +87,9 @@ export function showPilotHostScreen(onClose: () => void, options: PilotHostScree
     sfxBlip();
     try {
       await navigator.clipboard.writeText(listenAddr);
-      appendLogEntry("Address copied to clipboard.", "net-ok");
+      appendLogEntry(t("pilotTerminal.addressCopied"), "net-ok");
     } catch {
-      appendLogEntry("Clipboard unavailable.", "warn");
+      appendLogEntry(t("pilotTerminal.clipboardUnavailable"), "warn");
     }
   });
 
@@ -103,8 +104,8 @@ export function showPilotHostScreen(onClose: () => void, options: PilotHostScree
     netLog("Host relay requested");
 
     runPilotConnection({
-      label: "INITIALIZING HOST RELAY",
-      subtitle: "SERVER WORKER",
+      label: t("pilotTerminal.initializingHostRelay"),
+      subtitle: t("pilotTerminal.serverWorker"),
       targetLine: listenAddr,
       mount: options.mount,
       embedded: options.embedded,

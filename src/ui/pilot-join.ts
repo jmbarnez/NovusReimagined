@@ -8,6 +8,7 @@ import { createPilotTerminalOverlay } from "./pilot-terminal/layout.js";
 import { appendLogEntry } from "./hud/logs.js";
 import { runPilotConnection } from "./pilot-connecting.js";
 import { showPilotProfileScreen } from "./pilot-profile.js";
+import { t } from "../utils/i18n.js";
 import {
   discoverLanSessions,
   stopSessionDiscovery,
@@ -59,32 +60,32 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
 
   const terminal = createPilotTerminalOverlay({
     id: "pilot-join-screen",
-    title: "JOIN SESSION",
-    subtitle: "SESSION FINDER",
+    title: t("pilotTerminal.joinSession"),
+    subtitle: t("pilotTerminal.sessionFinder"),
     mount: options.mount,
     embedded: options.embedded,
     showConsole: !options.embedded,
     dashboardHtml: `
       <div class="pilot-session-list-wrap">
-        <div class="pilot-terminal-dashboard-label">DISCOVERED RELAYS</div>
+        <div class="pilot-terminal-dashboard-label">${t("pilotTerminal.discoveredRelays")}</div>
         <div class="pilot-session-list" data-session-list>
-          <div class="pilot-session-empty">Scanning neural band…</div>
+          <div class="pilot-session-empty">${t("pilotTerminal.scanningNeuralBand")}</div>
         </div>
       </div>
       <div class="pilot-terminal-field">
-        <label for="join-address-input">MANUAL ADDRESS</label>
+        <label for="join-address-input">${t("pilotTerminal.manualAddress")}</label>
         <input type="text" id="join-address-input" class="pilot-terminal-input" value="${lastAddress}" placeholder="IP:PORT" autocomplete="off" />
       </div>
       <div class="pilot-terminal-actions">
-        <button type="button" class="btn-pilot-secondary" data-join-scan>SCAN LAN</button>
-        <button type="button" class="btn-pilot-primary" data-join-connect>${hasPilot ? "CONNECT" : "CREATE PROFILE"}</button>
-        <button type="button" class="btn-pilot-secondary btn-menu-back" data-join-back>BACK</button>
+        <button type="button" class="btn-pilot-secondary" data-join-scan>${t("pilotTerminal.scanLan")}</button>
+        <button type="button" class="btn-pilot-primary" data-join-connect>${hasPilot ? t("pilotTerminal.connect") : t("pilotTerminal.createProfile")}</button>
+        <button type="button" class="btn-pilot-secondary btn-menu-back" data-join-back>${t("pilotTerminal.back")}</button>
       </div>
-      ${hasPilot ? "" : `<p class="pilot-terminal-error" style="margin-top:12px;">Create a pilot callsign before joining multiplayer.</p>`}
+      ${hasPilot ? "" : `<p class="pilot-terminal-error" style="margin-top:12px;">${t("pilotTerminal.createCallsignBeforeJoin")}</p>`}
     `,
   });
 
-  terminal.setStatus(options.autoScan ? "SCANNING LOCAL NET" : "SELECT OR ENTER HOST");
+  terminal.setStatus(options.autoScan ? t("pilotTerminal.scanningLocalNet") : t("pilotTerminal.selectOrEnterHost"));
 
   const listEl = terminal.dashboardMain.querySelector("[data-session-list]") as HTMLElement;
   const addrInput = terminal.dashboardMain.querySelector("#join-address-input") as HTMLInputElement;
@@ -111,7 +112,7 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
       );
     }
     if (rows.length === 0) {
-      listEl.innerHTML = `<div class="pilot-session-empty">No relays found. Host a session or enter an address.</div>`;
+      listEl.innerHTML = `<div class="pilot-session-empty">${t("pilotTerminal.noRelaysFound")}</div>`;
     } else {
       listEl.innerHTML = rows.join("");
     }
@@ -132,9 +133,9 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
     if (scanning) return;
     scanning = true;
     scanBtn.disabled = true;
-    terminal.setStatus("SCANNING LOCAL NET");
-    appendLogEntry("Scanning subnet for neural relays…", "net");
-    listEl.innerHTML = `<div class="pilot-session-empty">Scanning…</div>`;
+    terminal.setStatus(t("pilotTerminal.scanningLocalNet"));
+    appendLogEntry(t("pilotTerminal.scanningSubnet"), "net");
+    listEl.innerHTML = `<div class="pilot-session-empty">${t("pilotTerminal.scanning")}</div>`;
 
     const discovered: DiscoveredSession[] = [];
     await discoverLanSessions((batch) => {
@@ -143,17 +144,17 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
       }
       renderSessions(discovered, savedServers);
       if (discovered.length > 0) {
-        appendLogEntry(`Found ${discovered.length} relay(s).`, "net-ok");
+        appendLogEntry(t("pilotTerminal.foundRelays", { count: discovered.length }), "net-ok");
       }
     });
 
     if (discovered.length === 0) {
-      appendLogEntry("No relays detected on local network.", "warn");
+      appendLogEntry(t("pilotTerminal.noRelaysDetected"), "warn");
     }
     renderSessions(discovered, savedServers);
     scanning = false;
     scanBtn.disabled = false;
-    terminal.setStatus("SCAN COMPLETE");
+    terminal.setStatus(t("pilotTerminal.scanComplete"));
   };
 
   const close = () => {
@@ -226,6 +227,6 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
   if (options.autoScan) {
     void runScan();
   } else {
-    listEl.innerHTML = `<div class="pilot-session-empty">Press Scan LAN or enter an address below.</div>`;
+    listEl.innerHTML = `<div class="pilot-session-empty">${t("pilotTerminal.pressScanOrEnter")}</div>`;
   }
 }
