@@ -5,6 +5,7 @@ import { _G as G } from "../src/state.js";;
 import { WorldAccess } from "../src/state-access.js";
 import { allActivePlayers, activeSystemIndices } from "../src/utils/game.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
+import { updateWarp } from "../src/dock.js";
 
 describe("authoritative command validation", () => {
   it("rejects invalid hardpoint indexes", () => {
@@ -54,6 +55,32 @@ describe("authoritative command validation", () => {
 
     expect(allActivePlayers()).toEqual([p]);
     expect(activeSystemIndices()).toEqual([2]);
+  });
+
+  it("starts and completes warp from an authoritative gate crossing", () => {
+    G.GALAXY = buildGalaxy();
+    populateSystem(G.GALAXY[0]!);
+    const p = makePlayer();
+    p.tutorial.active = false;
+    p.sysIdx = 0;
+    WorldAccess.initPlayer(p);
+    const gate = G.GALAXY[0]?.gates.find((entry) => entry.targetSysIdx != null);
+    expect(gate).toBeTruthy();
+    if (!gate || gate.targetSysIdx == null) return;
+
+    p.px = gate.x - gate.radius * 2;
+    p.py = gate.y;
+    p.x = gate.x;
+    p.y = gate.y;
+
+    updateWarp(1 / 60);
+    expect(p.warpTargetIdx).toBe(gate.targetSysIdx);
+    expect(p.warpCooldown).toBeGreaterThan(0);
+
+    updateWarp(999);
+    expect(p.sysIdx).toBe(gate.targetSysIdx);
+    expect(p.warpTargetIdx).toBe(-1);
+    expect(p.warpCooldown).toBeGreaterThan(0);
   });
 
   it("queues industry jobs on the authoritative player only", () => {

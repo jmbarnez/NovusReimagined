@@ -13,4 +13,5 @@ import { lerp } from "./math.js";
 export function updateCamera(alpha: number) {
   Client.camx = lerp(getState().player.px, getState().player.x, alpha);
   Client.camy = lerp(getState().player.py, getState().player.y, alpha);
+  Client.zoom = 1.0; // locked to base to prevent subpixel blur at non-integer scales
 }

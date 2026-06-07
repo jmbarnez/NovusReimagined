@@ -102,6 +102,8 @@
   left: 10px;
   top: 22px;
   width: 440px;
+  max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 44px);
   z-index: 90;
   display: none;
   flex-direction: column;
@@ -113,6 +115,9 @@
   font-size: calc(11px * var(--effective-font-scale, 1));
   color: var(--hud-text-dim);
   pointer-events: auto;
+}
+.perf-window.advanced {
+  width: min(760px, calc(100vw - 20px));
 }
 .perf-head {
   flex-shrink: 0;
@@ -133,6 +138,7 @@
   text-transform: uppercase;
   color: var(--hud-text-dim);
 }
+.perf-toggle,
 .perf-close {
   width: 18px;
   height: 18px;
@@ -149,6 +155,14 @@
   box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.05), 0 2px 6px rgba(0, 0, 0, 0.45);
   transition: border-color .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
+.perf-toggle {
+  width: auto;
+  min-width: 74px;
+  padding: 0 7px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  text-transform: uppercase;
+  color: var(--hud-text-dim);
+}
 .perf-close:hover {
   color: var(--hud-danger);
   background: linear-gradient(180deg,
@@ -159,11 +173,59 @@
   box-shadow: 0 0 12px color-mix(in srgb, var(--hud-danger) 35%, transparent);
   transform: translateY(-1px);
 }
+.perf-toggle:hover,
+.perf-toggle.active {
+  color: var(--hud-shield);
+  border-color: color-mix(in srgb, var(--hud-shield) 65%, var(--hud-border) 35%);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--hud-shield) 55%, transparent);
+}
 .perf-body {
   padding: 6px 10px;
   line-height: 15px;
+  overflow: auto;
 }
 .perf-fps { color: var(--hud-shield); }
+.perf-advanced {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid color-mix(in srgb, var(--hud-border-soft) 55%, transparent);
+}
+.perf-section-title {
+  margin: 8px 0 4px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--hud-text-main);
+}
+.perf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px 10px;
+  margin: 4px 0 6px;
+}
+.perf-section-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.perf-section-table th,
+.perf-section-table td {
+  padding: 2px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--hud-border-soft) 35%, transparent);
+  text-align: right;
+  white-space: nowrap;
+}
+.perf-section-table th:first-child,
+.perf-section-table td:first-child {
+  text-align: left;
+  color: var(--hud-text-main);
+}
+.perf-section-table th {
+  color: var(--hud-text-faint);
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  text-transform: uppercase;
+}
 
 /* ── Tractor Dial ── */
 #tractor-dial {

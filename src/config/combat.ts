@@ -25,7 +25,7 @@ export const COMBAT = {
     max: 0.85,
   },
   TURRET_ORIGIN: {
-    forwardPx: 14,
+    forwardPx: 10,
     localDownPx: 0,
   },
   PLAYER_AIM: {

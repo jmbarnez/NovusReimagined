@@ -307,6 +307,10 @@ function drawMiningLaser(
     endY += hitNx * osc;
   }
 
+  // Muzzle glow at ship mount
+  _utilityGfx.circle(x1, y1, 7).fill({ color: 0xffdc28, alpha: 0.35 * pulse });
+  _utilityGfx.circle(x1, y1, 3.5).fill({ color: 0xffffb4, alpha: 0.55 * pulse });
+
   // Outer glow
   _utilityGfx.moveTo(x1, y1).lineTo(endX, endY)
     .stroke({ color: 0xffdc28, width: 10, alpha: 0.28 * pulse, cap: "round" });
@@ -319,25 +323,26 @@ function drawMiningLaser(
   _utilityGfx.moveTo(x1, y1).lineTo(endX, endY)
     .stroke({ color: 0xffffb4, width: 1.8, alpha: 0.95 * pulse, cap: "round" });
 
-  // Contact point — visible weld pool with occasional micro-sparks
+  // Contact point — intensified weld pool + denser micro-sparks
   if (hittingAsteroid) {
     const flicker = 0.72 + 0.28 * (0.5 + 0.5 * Math.sin((phase || 0) * 3.2));
     const backA = Math.atan2(-hitNy, -hitNx);
 
-    _utilityGfx.circle(endX, endY, 9).fill({ color: 0xffa020, alpha: flicker * 0.30 });
-    _utilityGfx.circle(endX, endY, 4.5).fill({ color: 0xffcc44, alpha: flicker * 0.52 });
-    _utilityGfx.circle(endX, endY, 1.8).fill({ color: 0xffffff, alpha: flicker * 0.90 });
-    _utilityGfx.circle(endX, endY, 6.5).stroke({ color: 0xffe090, width: 1.1, alpha: flicker * 0.42 });
+    _utilityGfx.circle(endX, endY, 12).fill({ color: 0xffa020, alpha: flicker * 0.38 });
+    _utilityGfx.circle(endX, endY, 7).fill({ color: 0xffcc44, alpha: flicker * 0.60 });
+    _utilityGfx.circle(endX, endY, 3).fill({ color: 0xffffff, alpha: flicker * 0.95 });
+    _utilityGfx.circle(endX, endY, 15).fill({ color: 0xff8800, alpha: flicker * 0.15 });
+    _utilityGfx.circle(endX, endY, 9).stroke({ color: 0xffe090, width: 1.3, alpha: flicker * 0.50 });
 
-    for (let s = 0; s < 3; s++) {
-      const gate = 0.5 + 0.5 * Math.sin((phase || 0) * (3.5 + s * 1.3) + s * 1.9);
+    for (let s = 0; s < 6; s++) {
+      const gate = 0.5 + 0.5 * Math.sin((phase || 0) * (3.5 + s * 0.9) + s * 1.9);
       if (gate < 0.5) continue;
-      const side = s === 1 ? -1 : 1;
-      const sa = backA + side * (0.3 + gate * 0.45) + Math.sin((phase || 0) * (2 + s)) * 0.22;
-      const len = 4 + gate * 11;
+      const side = s % 2 === 0 ? 1 : -1;
+      const sa = backA + side * (0.4 + gate * 0.6) + Math.sin((phase || 0) * (2 + s)) * 0.35;
+      const len = 5 + gate * 16;
       _utilityGfx.moveTo(endX, endY)
         .lineTo(endX + Math.cos(sa) * len, endY + Math.sin(sa) * len)
-        .stroke({ color: 0xffe8a0, width: 0.85, alpha: gate * 0.75, cap: "round" });
+        .stroke({ color: 0xffe8a0, width: 0.85, alpha: gate * 0.80, cap: "round" });
     }
   } else {
     // Fade point

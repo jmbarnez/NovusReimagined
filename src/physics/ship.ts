@@ -215,12 +215,15 @@ export function updateShip(dt: number, _p?: Player) {
   PlayerAccess.updatePhysics({ vx: p.vx + ax * mainThrust * dt, vy: p.vy + ay * mainThrust * dt, va: p.va + at * turnRate * dt }, p);
   // Cap to boosted max speed when an active speed multiplier is in play.
   const speedCapMult = Math.max(mult.speed, boostSpeedMult);
-  if (speedCapMult > 1) {
+  if (speedCapMult > 1 && (p.gateBoostRemaining ?? 0) <= 0) {
     const cap = (st.maxSpeed || 0) * speedCapMult;
     if (cap > 0) {
       const sp = Math.hypot(p.vx, p.vy);
       if (sp > cap) { const k = cap / sp; PlayerAccess.updatePhysics({ vx: p.vx * k, vy: p.vy * k }, p); }
     }
+  }
+  if ((p.gateBoostRemaining ?? 0) > 0) {
+    PlayerAccess.setGateBoostRemaining(Math.max(0, p.gateBoostRemaining! - dt), p);
   }
 
   PlayerAccess.updatePhysics({ vx: p.vx * drag, vy: p.vy * drag, va: p.va * ANG_FRICTION }, p);

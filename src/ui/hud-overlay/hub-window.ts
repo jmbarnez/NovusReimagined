@@ -5,15 +5,13 @@ import { curSys } from "../../utils/game.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { closeHudWindow, isOpen, openHudWindow } from "../hud/windows.js";
 import {
-  alloyHubMaterial,
-  collectHubOutput,
   fmtDuration,
-  getAlloyFamilies,
   getCargoMixedOreInputs,
   getFloatingDeposits,
   getProcessFee,
   hasHubOutput,
 } from "../../hub.js";
+import { flattenStorageMaterials } from "../../refining.js";
 import {
   renderIndustry,
   handleIndustryAction,
@@ -21,18 +19,11 @@ import {
 } from "../station/industry.js";
 import { t } from "../../utils/i18n.js";
 import { queueFrameAction } from "../../sim/input.js";
-import { formatCompositionBreakdown } from "../../utils/ore-naming.js";
 
 let hubRefreshTimer: ReturnType<typeof setInterval> | null = null;
 let hubListenersBound = false;
 let hubActiveTab: "processing" | "industry" = "processing";
 let hubShellReady = false;
-
-const HEAT_OPTIONS = [
-  { id: "cool", label: "Cool" },
-  { id: "stable", label: "Stable" },
-  { id: "hot", label: "Hot" },
-] as const;
 
 function getHubWindowBody(): HTMLElement {
   let body = document.getElementById("hub-window-body");
@@ -146,12 +137,6 @@ function ensureHubWindowListeners() {
   hubListenersBound = true;
 }
 
-function selectedHeatMode(root: ParentNode, seed: string): "cool" | "stable" | "hot" {
-  const select = root.querySelector(`[data-heat-for="${seed}"]`) as HTMLSelectElement | null;
-  const value = select?.value;
-  return value === "cool" || value === "hot" ? value : "stable";
-}
-
 function onHubWindowClick(e: Event) {
   if (!isOpen("industrial-hub")) return;
   const body = document.getElementById("hub-window-body");
@@ -185,70 +170,13 @@ function onHubWindowClick(e: Event) {
     return;
   }
 
-  const cargoBtn = target.closest(".hub-cargo-process-btn") as HTMLButtonElement | null;
-  if (cargoBtn && !cargoBtn.disabled) {
+  const openRefiningBtn = target.closest(".hub-open-refining-btn") as HTMLButtonElement | null;
+  if (openRefiningBtn) {
     e.preventDefault();
-    const cargoIndex = parseInt(cargoBtn.dataset.cargoIndex ?? "", 10);
-    const qtyInput = body.querySelector(`.hub-cargo-qty[data-cargo-index="${cargoIndex}"]`) as HTMLInputElement | null;
-    let qty = qtyInput ? parseInt(qtyInput.value, 10) : 1;
-    if (!Number.isFinite(qty) || qty < 1) qty = 1;
-    queueFrameAction({
-      type: "processHubMixedOre",
-      payload: {
-        cargoIndex,
-        qty,
-        heatMode: selectedHeatMode(body, `cargo-${cargoIndex}`),
-      },
-    });
     sfxBlip(680, 0.04);
+    setHubTab("industry");
     return;
   }
-
-  const separateBtn = target.closest(".hub-separate-btn") as HTMLButtonElement | null;
-  if (separateBtn && !separateBtn.disabled) {
-    e.preventDefault();
-    const materialId = separateBtn.dataset.materialId;
-    if (!materialId) return;
-    queueFrameAction({
-      type: "separateHubMaterial",
-      payload: { materialId, heatMode: selectedHeatMode(body, materialId) },
-    });
-    sfxBlip(680, 0.04);
-    return;
-  }
-
-  const alloyBtn = target.closest(".hub-alloy-btn") as HTMLButtonElement | null;
-  if (alloyBtn && !alloyBtn.disabled) {
-    e.preventDefault();
-    const materialId = alloyBtn.dataset.materialId;
-    const targetAlloyFamilyId = alloyBtn.dataset.alloyFamilyId || undefined;
-    if (!materialId) return;
-    queueFrameAction({
-      type: "alloyHubMaterial",
-      payload: {
-        materialId,
-        targetAlloyFamilyId,
-        heatMode: selectedHeatMode(body, materialId),
-      },
-    });
-    sfxBlip(680, 0.04);
-    return;
-  }
-
-  const collectBtn = target.closest("#hub-collect-btn");
-  if (collectBtn) {
-    e.preventDefault();
-    queueFrameAction({ type: "collectHubOutput" });
-    sfxBlip(680, 0.04);
-  }
-}
-
-function renderHeatSelect(seed: string): string {
-  return `
-    <select data-heat-for="${seed}" style="font-size:10px;padding:2px 4px;background:#111a24;border:1px solid #334455;color:#d6e2ef;border-radius:2px;">
-      ${HEAT_OPTIONS.map((option) => `<option value="${option.id}" ${option.id === "stable" ? "selected" : ""}>${option.label}</option>`).join("")}
-    </select>
-  `;
 }
 
 function renderHubProcessingContent(container: HTMLElement) {
@@ -260,7 +188,7 @@ function renderHubProcessingContent(container: HTMLElement) {
   const hub = curSys()?.stations.find((s: Station) => s.isProcessingHub);
   const floating = hub ? getFloatingDeposits(hub, player) : [];
   const cargoMixed = getCargoMixedOreInputs(player);
-  const alloys = getAlloyFamilies();
+  const storedMaterials = flattenStorageMaterials(player.refineryStorage);
 
   let html = "";
 
@@ -288,63 +216,44 @@ function renderHubProcessingContent(container: HTMLElement) {
 
   html += `<div style="margin-top:12px;margin-bottom:8px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Cargo Feedstock</div>`;
   if (cargoMixed.length > 0) {
-    for (const slot of cargoMixed) {
-      const fee = getProcessFee(slot.massKg / 100);
-      const canAfford = player.credits >= fee;
-      html += `
-        <div style="margin-bottom:8px;padding:8px;background:#10171f;border:1px solid #233342;border-radius:4px;">
-          <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
-            <div>
-              <div style="color:#d8e8f8;">${slot.label}</div>
-              <div style="font-size:9px;color:#7f91a5;">${formatCompositionBreakdown(slot.composition)}</div>
-              <div style="font-size:9px;color:#5f7387;">${slot.qty} chunks · ${slot.massKg.toFixed(0)} kg · richness ${slot.richness.toFixed(1)}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px;">
-              <input type="number" class="hub-cargo-qty" data-cargo-index="${slot.index}" min="1" max="${slot.qty}" value="${Math.min(1, slot.qty)}"
-                style="width:48px;font-size:10px;padding:2px 4px;background:#222;border:1px solid #555;color:#ddd;border-radius:2px;">
-              ${renderHeatSelect(`cargo-${slot.index}`)}
-              <button type="button" class="hub-cargo-process-btn" data-cargo-index="${slot.index}" ${canAfford ? "" : "disabled"}
-                style="padding:4px 8px;background:${canAfford ? "#1f2b12" : "#222"};border:1px solid ${canAfford ? "#7ebc4a" : "#444"};color:${canAfford ? "#bde287" : "#666"};border-radius:3px;font-size:10px;">
-                Refine (${fee}¢)
-              </button>
-            </div>
+    const totalQty = cargoMixed.reduce((sum, slot) => sum + slot.qty, 0);
+    const totalMassKg = cargoMixed.reduce((sum, slot) => sum + slot.massKg, 0);
+    html += `
+      <div style="margin-bottom:8px;padding:8px;background:#10171f;border:1px solid #233342;border-radius:4px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+          <div>
+            <div style="color:#d8e8f8;">${cargoMixed.length} mixed ore batches</div>
+            <div style="font-size:9px;color:#7f91a5;">${totalQty} chunks · ${totalMassKg.toFixed(0)} kg</div>
+            <div style="font-size:9px;color:#5f7387;">Choose heat, batch size, and destination tank in Station Refining.</div>
           </div>
-        </div>`;
-    }
+          <button type="button" class="hub-open-refining-btn"
+            style="padding:4px 8px;background:#1f2b12;border:1px solid #7ebc4a;color:#bde287;border-radius:3px;font-size:10px;">
+            Open Refining
+          </button>
+        </div>
+      </div>`;
   } else {
     html += `<div style="color:#667788;font-style:italic;margin-bottom:8px;">No mixed ore in cargo.</div>`;
   }
 
-  html += `<div style="margin-top:12px;margin-bottom:8px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Stockpile</div>`;
-  if ((deposit.materials?.length ?? 0) > 0) {
-    for (const material of deposit.materials) {
-      html += `
-        <div style="margin-bottom:8px;padding:8px;background:#17140f;border:1px solid #3a2c18;border-radius:4px;">
-          <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
-            <div>
-              <div style="color:#f2e7d8;">${material.label}</div>
-              <div style="font-size:9px;color:#c2a77e;">${formatCompositionBreakdown(material.composition)}</div>
-              <div style="font-size:9px;color:#8f7d65;">${material.volumeM3.toFixed(2)} m³ · ${Math.round(material.massKg).toLocaleString()} kg · ${material.kind}</div>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:240px;">
-              ${renderHeatSelect(material.id)}
-              <button type="button" class="hub-separate-btn" data-material-id="${material.id}"
-                style="padding:3px 7px;background:#1a2530;border:1px solid #446c99;color:#97c6ff;border-radius:3px;font-size:10px;">
-                Separate
-              </button>
-              ${alloys.map((family) => `
-                <button type="button" class="hub-alloy-btn" data-material-id="${material.id}" data-alloy-family-id="${family.id}"
-                  style="padding:3px 7px;background:#2a1d10;border:1px solid #b8863b;color:#f0cb83;border-radius:3px;font-size:10px;">
-                  ${family.label}
-                </button>`).join("")}
-              <button type="button" class="hub-alloy-btn" data-material-id="${material.id}"
-                style="padding:3px 7px;background:#25182c;border:1px solid #8c64a8;color:#d6b1ef;border-radius:3px;font-size:10px;">
-                Custom Blend
-              </button>
-            </div>
+  html += `<div style="margin-top:12px;margin-bottom:8px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Refinery Reservoirs</div>`;
+  if (storedMaterials.length > 0) {
+    const volumeM3 = storedMaterials.reduce((sum, material) => sum + material.volumeM3, 0);
+    const massKg = storedMaterials.reduce((sum, material) => sum + material.massKg, 0);
+    html += `
+      <div style="margin-bottom:8px;padding:8px;background:#17140f;border:1px solid #3a2c18;border-radius:4px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+          <div>
+            <div style="color:#f2e7d8;">${storedMaterials.length} stored material stacks</div>
+            <div style="font-size:9px;color:#c2a77e;">${volumeM3.toFixed(2)} m³ · ${Math.round(massKg).toLocaleString()} kg</div>
+            <div style="font-size:9px;color:#8f7d65;">Separate, alloy, inspect tanks, or transfer intentionally from Station Refining.</div>
           </div>
-        </div>`;
-    }
+          <button type="button" class="hub-open-refining-btn"
+            style="padding:4px 8px;background:#2a1d10;border:1px solid #b8863b;color:#f0cb83;border-radius:3px;font-size:10px;">
+            Open Refining
+          </button>
+        </div>
+      </div>`;
   } else if (Object.values(deposit.loot ?? {}).some((value) => value > 0) || deposit.modules.length > 0) {
     html += `<div style="padding:8px;background:#101820;border:1px solid #203040;border-radius:4px;margin-bottom:8px;">`;
     for (const [key, value] of Object.entries(deposit.loot)) {
@@ -390,16 +299,16 @@ function renderHubProcessingContent(container: HTMLElement) {
   }
 
   if (hasHubOutput(player)) {
-    html += `<div style="margin-top:8px;margin-bottom:6px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Ready To Transfer</div>`;
+    html += `<div style="margin-top:8px;margin-bottom:6px;color:#9aa7b6;text-transform:uppercase;letter-spacing:1px;font-size:9px;">Stored Output</div>`;
     html += `<div style="background:#1e1a10;border:1px solid #4a3800;padding:8px;border-radius:4px;margin-bottom:8px;">`;
-    for (const material of [...(deposit.materials ?? []), ...(output.materials ?? [])]) {
+    for (const material of [...storedMaterials, ...(output.materials ?? [])]) {
       html += `<div>${material.label}: <b style="color:#ffcc88;">${material.volumeM3.toFixed(2)} m³</b></div>`;
     }
     for (const [key, value] of Object.entries(output.loot)) {
       if (value > 0) html += `<div>${key}: <b style="color:#ffcc44;">${value}</b></div>`;
     }
     html += `</div>`;
-    html += `<button type="button" id="hub-collect-btn" style="width:100%;padding:6px;background:#3a2a05;border:1px solid #ff9922;color:#ffcc44;cursor:pointer;border-radius:3px;font-size:11px;">Transfer To Cargo</button>`;
+    html += `<button type="button" class="hub-open-refining-btn" style="width:100%;padding:6px;background:#3a2a05;border:1px solid #ff9922;color:#ffcc44;cursor:pointer;border-radius:3px;font-size:11px;">Open Refining Output</button>`;
   }
 
   html += `<div style="margin-top:8px;font-size:9px;color:#556677;text-align:right;">Wallet: ${player.credits.toLocaleString()}¢</div>`;

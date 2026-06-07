@@ -242,7 +242,7 @@ function spawnAsteroidCluster(
       id: `ast-${sys.id}-${clusterKey}-${i}`,
       x,
       y,
-      px: 0, py: 0, vx: 0, vy: 0,
+      px: x, py: y, vx: 0, vy: 0,
       radius: rad,
       shape: makeAstShape(mkRng(sys.id + `${clusterKey}${i}`)),
       hp: maxHp, maxHp,
@@ -365,10 +365,11 @@ export function populateSystem(sys: System) {
         : `gate-${sys.id}-to-${linkIdx}`,
       x,
       y,
-      px: 0, py: 0,
+      px: x, py: y,
       targetSysIdx: linkIdx,
       radius: C.WORLD.GATES.radius,
       spin: rf(f, 0.004, 0.012),
+      angle: Math.atan2(y, x) + Math.PI / 2,
       _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
     });
   }
@@ -388,7 +389,7 @@ export function populateSystem(sys: System) {
         id: `gate-${sys.id}-return-${reg.id}`,
         x,
         y,
-        px: 0, py: 0,
+        px: x, py: y,
         target: {
           kind: "local",
           x: TUTORIAL_STATION.x,
@@ -397,6 +398,7 @@ export function populateSystem(sys: System) {
         },
         radius: C.WORLD.GATES.radius,
         spin: rf(f, 0.004, 0.012),
+        angle: Math.atan2(TUTORIAL_STATION.y - y, TUTORIAL_STATION.x - x),
         _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
       });
     }

@@ -78,14 +78,12 @@ export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, mini
   let totalQty = isMiningLaser ? Math.floor(baseQty * miningMult) : Math.floor(baseQty * 0.4);
   totalQty = Math.max(1, totalQty);
 
-  // 3. Drop ores as physical floating items
-  const nPickups = Math.min(6, Math.max(3, Math.ceil(totalQty / 4)));
-  const perPickup = Math.max(1, Math.floor(totalQty / nPickups));
-  const remainder = totalQty - perPickup * nPickups;
+  // 3. Drop ores as physical floating items (single chunks only)
+  const nPickups = Math.min(totalQty, Math.max(2, Math.min(4, Math.ceil(totalQty / 2))));
 
   for (let p = 0; p < nPickups; p++) {
     const ang = Math.random() * Math.PI * 2;
-    const spd = 40 + Math.random() * 70;
+    const spd = 80 + Math.random() * 60;
     addSalvagePickup({
       x: asteroid.x + (Math.random() - 0.5) * asteroid.radius * 0.25,
       y: asteroid.y + (Math.random() - 0.5) * asteroid.radius * 0.25,
@@ -95,7 +93,7 @@ export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, mini
       bob: Math.random() * Math.PI * 2,
       kind: "ore",
       payload: "mixed-ore",
-      qty: perPickup + (p < remainder ? 1 : 0),
+      qty: 1,
       composition: { ...composition },
       name: chunkName,
       richness: asteroid.richness,

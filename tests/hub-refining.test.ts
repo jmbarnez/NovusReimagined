@@ -33,6 +33,24 @@ describe("hub refining pipeline", () => {
     expect(materials[0]?.composition.nickel).toBeCloseTo(0.3, 2);
   });
 
+  it("routes processed mixed ore into the chosen tank", () => {
+    G.P.mixedOreCargo = [
+      { name: "Ferro-nickel Chunk", qty: 2, richness: 2, composition: { iron: 0.7, nickel: 0.3 } },
+    ];
+
+    const result = processMixedOreCargo(0, 1, "stable", G.P, "processed-tank-b");
+    expect(result.success).toBe(true);
+
+    G.P.hubQueue[0] = { ...G.P.hubQueue[0], startTime: 0, duration: 0 };
+    tickHubQueue(G.P);
+
+    const tankA = G.P.refineryStorage.find((unit) => unit.id === "processed-tank-a");
+    const tankB = G.P.refineryStorage.find((unit) => unit.id === "processed-tank-b");
+    expect(tankA?.entries ?? []).toHaveLength(0);
+    expect(tankB?.entries ?? []).toHaveLength(1);
+    expect(tankB?.entries[0]?.composition.iron).toBeCloseTo(0.7, 2);
+  });
+
   it("separates processed stock into simpler streams", () => {
     PlayerAccess.addRefineryStorageMaterial({
       id: "mat-seed",
@@ -55,6 +73,29 @@ describe("hub refining pipeline", () => {
     const materials = flattenStorageMaterials(G.P.refineryStorage);
     expect(materials.length).toBeGreaterThan(1);
     expect(materials.every((entry) => entry.kind === "processed")).toBe(true);
+  });
+
+  it("routes separated stock streams to matching ore bins", () => {
+    PlayerAccess.addRefineryStorageMaterial({
+      id: "mat-bin-route",
+      materialId: "processed_stock",
+      kind: "processed",
+      label: "Mixed stock",
+      volumeM3: 3.2,
+      massKg: 9_000,
+      composition: { iron: 0.62, nickel: 0.24, carbon: 0.14 },
+    }, G.P);
+
+    const queued = separateHubMaterial("mat-bin-route", "stable", G.P);
+    expect(queued.success).toBe(true);
+
+    G.P.hubQueue[0] = { ...G.P.hubQueue[0], startTime: 0, duration: 0 };
+    tickHubQueue(G.P);
+
+    expect(G.P.refineryStorage.find((unit) => unit.id === "separated-iron")?.entries.length).toBeGreaterThan(0);
+    expect(G.P.refineryStorage.find((unit) => unit.id === "separated-nickel")?.entries.length).toBeGreaterThan(0);
+    expect(G.P.refineryStorage.find((unit) => unit.id === "separated-carbon")?.entries.length).toBeGreaterThan(0);
+    expect(G.P.refineryStorage.find((unit) => unit.id === "processed-tank-a")?.entries ?? []).toHaveLength(0);
   });
 
   it("alloys stock and transfers the result into cargo mass-aware storage", () => {
@@ -84,6 +125,52 @@ describe("hub refining pipeline", () => {
     expect(collected.materials).toHaveLength(1);
     expect(G.P.bulkMaterialsCargo).toHaveLength(1);
     expect(G.P.bulkMaterialsCargo[0]?.massKg).toBeGreaterThan(0);
+  });
+
+  it("does not remove refinery materials when alloying credits are insufficient", () => {
+    G.P.credits = 0;
+    PlayerAccess.addRefineryStorageMaterial({
+      id: "mat-no-credit",
+      materialId: "processed_stock",
+      kind: "processed",
+      label: "Ferro stock",
+      volumeM3: 2.8,
+      massKg: 8_600,
+      composition: { iron: 0.66, nickel: 0.24, carbon: 0.1 },
+    }, G.P);
+
+    const queued = alloyHubMaterial("mat-no-credit", "ferro_nickel_stock", "stable", G.P);
+
+    expect(queued.success).toBe(false);
+    expect(queued.reason).toContain("Need");
+    expect(G.P.hubQueue).toHaveLength(0);
+    const materials = flattenStorageMaterials(G.P.refineryStorage);
+    expect(materials).toHaveLength(1);
+    expect(materials[0]?.id).toBe("mat-no-credit");
+  });
+
+  it("routes alloyed stock into the chosen alloy reservoir", () => {
+    PlayerAccess.addRefineryStorageMaterial({
+      id: "mat-alloy-route",
+      materialId: "processed_stock",
+      kind: "processed",
+      label: "Ferro stock",
+      volumeM3: 2.8,
+      massKg: 8_600,
+      composition: { iron: 0.66, nickel: 0.24, carbon: 0.1 },
+    }, G.P);
+
+    const queued = alloyHubMaterial("mat-alloy-route", "ferro_nickel_stock", "stable", G.P, undefined, "alloy-reservoir-b");
+    expect(queued.success).toBe(true);
+
+    G.P.hubQueue[0] = { ...G.P.hubQueue[0], startTime: 0, duration: 0 };
+    tickHubQueue(G.P);
+
+    const reservoirA = G.P.refineryStorage.find((unit) => unit.id === "alloy-reservoir-a");
+    const reservoirB = G.P.refineryStorage.find((unit) => unit.id === "alloy-reservoir-b");
+    expect(reservoirA?.entries ?? []).toHaveLength(0);
+    expect(reservoirB?.entries ?? []).toHaveLength(1);
+    expect(reservoirB?.entries[0]?.kind).toBe("alloy");
   });
 
   it("registers discovered in-between alloys in the player codex", () => {

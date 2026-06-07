@@ -124,6 +124,10 @@ export const playerCoreAccess = {
     p.shieldCd = value;
   },
 
+  setGateBoostRemaining(value: number, p: Player = _G.P) {
+    p.gateBoostRemaining = value;
+  },
+
   setHomeSysIdx(value: number, p: Player = _G.P) {
     p.homeSysIdx = value;
   },

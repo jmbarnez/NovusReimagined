@@ -10,13 +10,14 @@ import { TUTORIAL_STEPS } from "../src/data/tutorial.js";
 import { emit } from "../src/events.js";
 import type { Station } from "../src/types/world.js";
 import { PlayerAccess } from "../src/state-access.js";
+import { closeHubWindow, resetHubWindowState, toggleHubWindow } from "../src/ui/hud-overlay/hub-window.js";
 
 describe("station refining panel", () => {
   beforeEach(() => {
     _G.P = makePlayer() as typeof _G.P;
     stationState.activeTab = "hangar";
     stationState.indStage = "process";
-    stationState.indRailTab = "hold";
+    stationState.indRailTab = "queue";
     stationState.indRailPulseTab = null;
     stationState.indRailPulseUntil = 0;
     stationState.indTab = "workbench";
@@ -35,6 +36,7 @@ describe("station refining panel", () => {
     document.body.innerHTML = "";
     Client.stationOpen = false;
     Client.activeStation = null;
+    resetHubWindowState();
   });
 
   it("renders into the active station panel instead of a stale previous host", () => {
@@ -216,9 +218,7 @@ describe("station refining panel", () => {
     expect(panel?.textContent).toContain("Station Refining");
     expect(panel?.textContent).toContain("Processed");
     expect(panel?.textContent).toContain("Separated");
-    expect(panel?.textContent).toContain("Material Hold");
-    expect(panel?.textContent).toContain("Dossier");
-    expect(panel?.textContent).toContain("Output");
+    expect(panel?.textContent).toContain("Queue");
     expect(panel?.textContent).not.toContain("Cargo Material Manifest");
   });
 
@@ -279,7 +279,7 @@ describe("station refining panel", () => {
     expect(compact?.length).toBeGreaterThanOrEqual(1);
     expect(status?.textContent).toContain("Selected stock");
     expect(status?.textContent).toContain("Stock -> Streams");
-    expect(route?.textContent).toContain("Streams");
+    expect(route?.textContent).toContain("Ore bins");
     expect(route?.textContent).toContain("Queue");
     expect(panel?.textContent).toContain("Use");
     expect(panel?.textContent).toContain("Start");
@@ -348,6 +348,43 @@ describe("station refining panel", () => {
     expect(panel?.textContent).toContain("Process");
     expect(panel?.textContent).toContain("Ore to stock");
     expect(panel?.textContent).toContain("Running");
+  });
+
+  it("frames stored output transfer as intentional cargo transfer", () => {
+    stationState.indRailTab = "output";
+    PlayerAccess.addRefineryStorageMaterial({
+      id: "mat-output",
+      materialId: "processed_stock",
+      kind: "processed",
+      label: "Stored stock",
+      volumeM3: 1.2,
+      massKg: 3600,
+      composition: { iron: 0.7, nickel: 0.3 },
+    }, _G.P, "processed-tank-a");
+
+    document.body.innerHTML = `<div class="panel active" id="panel-industry"></div>`;
+    renderIndustry();
+
+    const panel = document.getElementById("panel-industry");
+    expect(panel?.textContent).toContain("Stored Output");
+    expect(panel?.textContent).toContain("Transfer Stored Materials To Cargo");
+    expect(panel?.textContent).not.toContain("Collect now");
+  });
+
+  it("routes the hub Industry tab to the canonical Station Refining workflow", () => {
+    _G.P.mixedOreCargo = [
+      { name: "Test ore", qty: 2, richness: 1.8, composition: { iron: 0.7, nickel: 0.3 } },
+    ];
+
+    toggleHubWindow();
+    const industryTab = document.querySelector('#hub-window-body .hub-tab-btn[data-hub-tab="industry"]') as HTMLButtonElement | null;
+    industryTab?.click();
+
+    const industryPanel = document.getElementById("hub-tab-industry");
+    expect(industryPanel?.textContent).toContain("Station Refining");
+    expect(industryPanel?.textContent).toContain("Ore In");
+    expect(industryPanel?.textContent).toContain("To");
+    closeHubWindow();
   });
 
   it("renders fabrication separately from refining", () => {

@@ -167,7 +167,7 @@ export function buildStationView(st: Station): void {
 
   stationState.activeTab = stationState.activeTab || "hangar";
   stationState.indStage = "process";
-  stationState.indRailTab = "hold";
+  stationState.indRailTab = "queue";
   stationState.indRailPulseTab = null;
   stationState.indRailPulseUntil = 0;
   stationState.indHeatOverrides = {};

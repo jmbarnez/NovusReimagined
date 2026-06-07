@@ -9,7 +9,8 @@ import { getDropZoneCenter } from "../hub.js";
 import { getUIFont } from "./ui-font.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { GATE_RANGE } from "../constants.js";
-import { gateDestinationName, gateStableId, isLocalWarpGate } from "../utils/warp-gates.js";
+import { gateStableId } from "../utils/warp-gates.js";
+import { t } from "../utils/i18n.js";
 
 const TAU = Math.PI * 2;
 
@@ -200,20 +201,135 @@ function drawStationOverlay(g: Graphics, st: Station, sysSecurity: number, now: 
 
 function drawGateOverlay(g: Graphics, gate: Gate, now: number) {
   g.clear();
-  const col = colorToNumber("#64c8ff");
+
+  const ang = gate.angle ?? 0;
+  const nx = Math.cos(ang);
+  const ny = Math.sin(ang);
+  const px = Math.cos(ang + Math.PI / 2);
+  const py = Math.sin(ang + Math.PI / 2);
+
+  const colCyan = colorToNumber("#64c8ff");
+  const colGlow = colorToNumber("#a6e8ff");
+  const colDark = colorToNumber("#1a2a3a");
+  const colSteel = colorToNumber("#6e8aaa");
   const pulse = 0.5 + 0.5 * Math.sin(now * 0.0022 + gate.radius);
-  g.circle(gate.x, gate.y, gate.radius * 2.2).stroke({ color: col, width: 1.5, alpha: 0.12 * pulse });
-  g.circle(gate.x, gate.y, gate.radius * 1.2).stroke({ color: col, width: 2.5, alpha: 0.22 * pulse });
-  g.circle(gate.x, gate.y, gate.radius).stroke({ color: col, width: 3.0, alpha: 0.35 + pulse * 0.15 });
-  const segments = 16;
+  const gateR = gate.radius;
+
+  // ── Pylons ──
+  const pylonOff = gateR * 1.5;
+  const pylonW = gateR * 0.28;
+  const pylonH = gateR * 0.55;
+
+  for (const side of [-1, 1]) {
+    const cx = gate.x + px * side * pylonOff;
+    const cy = gate.y + py * side * pylonOff;
+
+    // Pylon body (hex)
+    const base = ang + TAU / 12;
+    g.moveTo(cx + Math.cos(base) * pylonW, cy + Math.sin(base) * pylonW);
+    for (let i = 1; i < 6; i++) {
+      const a = base + (i / 6) * TAU;
+      g.lineTo(cx + Math.cos(a) * pylonW, cy + Math.sin(a) * pylonW);
+    }
+    g.closePath();
+    g.fill({ color: colDark, alpha: 0.85 });
+    g.stroke({ color: colSteel, width: 1.4, alpha: 0.55 });
+
+    // Cap rim
+    g.moveTo(cx + Math.cos(base) * pylonW * 0.7, cy + Math.sin(base) * pylonW * 0.7);
+    for (let i = 1; i < 6; i++) {
+      const a = base + (i / 6) * TAU;
+      g.lineTo(cx + Math.cos(a) * pylonW * 0.7, cy + Math.sin(a) * pylonW * 0.7);
+    }
+    g.closePath();
+    g.stroke({ color: colCyan, width: 1, alpha: 0.35 + pulse * 0.15 });
+
+    // Core glow dot
+    g.circle(cx, cy, pylonW * 0.35);
+    g.fill({ color: colCyan, alpha: 0.15 + pulse * 0.1 });
+    g.stroke({ color: colGlow, width: 0.8, alpha: 0.5 + pulse * 0.2 });
+  }
+
+  // ── Grand arch ──
+  const archR = pylonOff * 1.05;
+  const archSweep = Math.PI * 0.85;
+  const archStart = ang - archSweep / 2;
+  const archEnd = ang + archSweep / 2;
+
+  // Outer arch
+  g.arc(gate.x, gate.y, archR, archStart, archEnd);
+  g.stroke({ color: colDark, width: 4, alpha: 0.7 });
+
+  // Inner energy arc
+  g.arc(gate.x, gate.y, archR, archStart, archEnd);
+  g.stroke({ color: colCyan, width: 1.8, alpha: 0.45 + pulse * 0.25 });
+
+  // Rim highlight
+  g.arc(gate.x, gate.y, archR + 2, archStart, archEnd);
+  g.stroke({ color: colGlow, width: 0.8, alpha: 0.25 + pulse * 0.15 });
+
+  // ── Chevron markers on arch ──
+  const chevronCount = 5;
+  for (let i = 0; i < chevronCount; i++) {
+    const t = (i + 1) / (chevronCount + 1);
+    const a = archStart + t * archSweep;
+    const cx = gate.x + Math.cos(a) * archR;
+    const cy = gate.y + Math.sin(a) * archR;
+    const tipR = gateR * 0.14;
+    const tipX = cx + Math.cos(a) * tipR;
+    const tipY = cy + Math.sin(a) * tipR;
+    const perpA = a + Math.PI / 2;
+    g.moveTo(tipX, tipY);
+    g.lineTo(cx + Math.cos(perpA) * tipR * 0.5, cy + Math.sin(perpA) * tipR * 0.5);
+    g.lineTo(cx - Math.cos(perpA) * tipR * 0.5, cy - Math.sin(perpA) * tipR * 0.5);
+    g.closePath();
+    g.fill({ color: i % 2 === 0 ? colCyan : colGlow, alpha: 0.55 + pulse * 0.25 });
+  }
+
+  // ── Inner portal ring ──
+  const portalR = gateR * 0.55;
+  g.circle(gate.x, gate.y, portalR).stroke({ color: colCyan, width: 2.2, alpha: 0.5 + pulse * 0.2 });
+  g.circle(gate.x, gate.y, portalR * 0.7).stroke({ color: colGlow, width: 1, alpha: 0.35 + pulse * 0.15 });
+  g.circle(gate.x, gate.y, portalR * 0.35).fill({ color: colGlow, alpha: 0.08 + pulse * 0.06 });
+
+  // ── Spinning portal segments ──
+  const segments = 12;
   for (let i = 0; i < segments; i++) {
-    const a = gate.spin + (i / segments) * TAU;
-    const ar = a + (1 / segments) * TAU * 0.72;
-    g.arc(gate.x, gate.y, gate.radius, a, ar).stroke({
-      color: i % 4 === 0 ? col : colorToNumber("#3c78c8"),
-      width: i % 4 === 0 ? 3 : 1.5,
-      alpha: i % 4 === 0 ? 0.8 + pulse * 0.2 : 0.45,
+    const a = gate.spin + now * 0.001 + (i / segments) * TAU;
+    const ar = a + (1 / segments) * TAU * 0.6;
+    g.arc(gate.x, gate.y, portalR * 0.85, a, ar).stroke({
+      color: i % 3 === 0 ? colGlow : colCyan,
+      width: i % 3 === 0 ? 2 : 1,
+      alpha: i % 3 === 0 ? 0.65 + pulse * 0.2 : 0.35,
     });
+  }
+
+  // ── Approach lane (when player is near) ──
+  const player = getState().player;
+  const playerDist = Math.hypot(player.x - gate.x, player.y - gate.y);
+  if (playerDist < gateR * 5) {
+    const laneAlpha = Math.max(0, 1 - playerDist / (gateR * 5)) * 0.18;
+    const laneLen = gateR * 3;
+    const dashLen = 12;
+    const dashGap = 18;
+    const totalDash = dashLen + dashGap;
+    const steps = Math.floor(laneLen / totalDash);
+
+    for (const side of [-1, 1]) {
+      const offX = px * side * portalR * 0.6;
+      const offY = py * side * portalR * 0.6;
+      for (let i = 0; i < steps; i++) {
+        const d0 = i * totalDash;
+        const d1 = d0 + dashLen;
+        const x0 = gate.x + nx * d0 + offX;
+        const y0 = gate.y + ny * d0 + offY;
+        const x1 = gate.x + nx * d1 + offX;
+        const y1 = gate.y + ny * d1 + offY;
+        g.moveTo(x0, y0);
+        g.lineTo(x1, y1);
+        g.stroke({ color: colCyan, width: 1, alpha: laneAlpha * (1 - d0 / laneLen) });
+      }
+    }
   }
 }
 
@@ -281,21 +397,13 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
     const inRange = dst(player.x, player.y, g.x, g.y) < g.radius + GATE_RANGE;
     if (inRange) {
       const canWarp = canWarpThroughGate(g, sys.idx, player);
-      const isPrimaryLock = player.targetLock?.id === id;
-      const slot = player.lockQueue.find((entry) => entry.id === id);
-      const text = !isPrimaryLock
-        ? "Lock gate to interact"
-        : slot?.resolving
-          ? "Scanning gate..."
-          : canWarp
-            ? "[F] Interact"
-            : "Locked: Complete Academy clearance";
+      const text = canWarp ? t("world.gate.flyThrough") : t("world.gate.clearanceRequired");
       const label = ensureGateText(
         id,
         text,
         g.x + g.radius + 15,
         g.y,
-        isPrimaryLock && !slot?.resolving && canWarp ? "#88c8ff" : "#8894a8"
+        canWarp ? "#88c8ff" : "#8894a8"
       );
       keepGateLabels.add(id);
       if (!layer.children.includes(label)) layer.addChild(label);

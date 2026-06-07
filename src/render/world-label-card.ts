@@ -22,7 +22,7 @@ export function getWorldLabelTextStyle(): TextStyle {
       fontWeight: "bold",
       fill: WORLD_LABEL_FILL,
       align: "center",
-      stroke: { color: "#000000", width: 3 },
+      stroke: { color: "#000000", width: 2 },
     });
   }
   return _worldLabelStyle;

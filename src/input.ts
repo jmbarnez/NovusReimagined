@@ -2,7 +2,7 @@ import { Client } from "./state.js";
 import type { Enemy } from "./types/world.js";
 import { clearNav, getState } from "./state-access.js";
 import { showEnemyCtxMenu } from "./ui/hud/enemy-menu.js";
-import { closeStationUi, getDockableStation, getWarpGateInRange, openStationUi } from "./dock.js";
+import { closeStationUi, getDockableStation, openStationUi } from "./dock.js";
 import { dst } from "./utils/math.js";
 import { closeMapWindow, toggleMapWindow } from "./ui/hud-overlay/map-overlay.js";
 
@@ -127,13 +127,6 @@ export function initInput() {
         queueFrameAction({ type: "undock" });
         closeStationUi();
       } else {
-        const gate = getWarpGateInRange(getState().player);
-        if (gate) {
-          queueFrameAction(gate.targetSysIdx == null
-            ? { type: "warp" }
-            : { type: "warp", payload: { targetIdx: gate.targetSysIdx } });
-          return;
-        }
         const sys = curSys();
         if (sys && sys._liveEnemies?.some((e: Enemy) => e.hasLockOnPlayer)) return;
         if (sys) {

@@ -34,7 +34,7 @@ const _bubbleStyle = new TextStyle({
   align: "center",
   wordWrap: true,
   wordWrapWidth: 240,
-  stroke: { color: "#000000", width: 3 },
+  stroke: { color: "#000000", width: 2 },
 });
 
 const _typingStyle = new TextStyle({
@@ -43,7 +43,7 @@ const _typingStyle = new TextStyle({
   fontWeight: "bold",
   fill: "#aabbcc",
   align: "center",
-  stroke: { color: "#000000", width: 3 },
+  stroke: { color: "#000000", width: 2 },
 });
 
 export function refreshChatBubbleFonts(): void {

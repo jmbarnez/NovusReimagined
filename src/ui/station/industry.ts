@@ -17,12 +17,12 @@ import {
 import {
   renderAlloyStage,
   renderAssemblyStage,
+  renderBottomBar,
   renderFabricationOverview,
   renderFabricationRail,
   renderManifestBand,
   renderOverview,
   renderProcessStage,
-  renderRightRail,
   renderSeparateStage,
   renderStageTabs,
 } from "./industry-renderers.js";
@@ -107,8 +107,8 @@ export function renderIndustry(container?: HTMLElement) {
       ${renderStageTabs()}
       <div class="ind-workspace">
         <main class="ind-stage-column">${stageHtml}</main>
-        ${renderRightRail()}
       </div>
+      ${renderBottomBar()}
     </div>
   `;
 }

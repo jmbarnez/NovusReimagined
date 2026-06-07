@@ -128,14 +128,14 @@ function renderStorageSchematic(activeKind?: "intake" | "processed" | "separated
 
 function renderStageWorkspace(activeKind: "processed" | "separated" | "alloy", controlsHtml: string): string {
   return `
-    ${renderCompactHoldingsSummary()}
     <div class="ind-stage-surface">
-      <div class="ind-stage-machine">
-        ${renderStorageSchematic(activeKind)}
-      </div>
       <aside id="refinery-stage-dock" class="ind-stage-dock">
         ${controlsHtml}
       </aside>
+      <div class="ind-stage-machine">
+        ${renderCompactHoldingsSummary()}
+        ${renderStorageSchematic(activeKind)}
+      </div>
     </div>
   `;
 }
@@ -474,9 +474,9 @@ export function renderSeparateStage(): string {
             <div class="ind-action-tray">
               <div class="ind-action-tray-copy">
                 <span>Run</span>
-                <strong>Heat, split, start.</strong>
+                <strong>Heat, split, auto-route.</strong>
               </div>
-              ${renderRunRoute(["Stock", "Streams", "Queue"])}
+              ${renderRunRoute(["Stock", "Ore bins", "Queue"])}
               <div class="ind-action-tray-grid ind-action-tray-grid--compact">
                 <div class="ind-action-step" data-step="01">
                   ${renderHeatSelect(material.representativeId)}
@@ -500,13 +500,13 @@ export function renderSeparateStage(): string {
     <section class="ind-stage-panel">
       <div class="ind-panel-head">
         <div class="ind-panel-title">Split</div>
-        <div class="ind-panel-subtitle">Break stock into simple streams.</div>
+        <div class="ind-panel-subtitle">Break stock into simple streams; outputs auto-route to matching ore bins.</div>
       </div>
       ${renderStageWorkspace("separated", `
         <div class="ind-stage-dock-head">
           <div>
             <div class="ind-panel-title">Streams</div>
-            <div class="ind-panel-subtitle">Pick stock and split it.</div>
+            <div class="ind-panel-subtitle">Pick stock and split it into persistent ore bins.</div>
           </div>
         </div>
         ${renderDockOperatorStrip(
@@ -515,6 +515,7 @@ export function renderSeparateStage(): string {
           selectedMaterial ? `${formatVolume(selectedMaterial.volumeM3)} · ${formatMass(selectedMaterial.massKg)}` : "Process mixed ore before splitting streams.",
           [
             { label: "Route", value: "Stock -> Streams" },
+            { label: "Output", value: "Matching ore bins" },
             { label: "Sources", value: String(processedOnly.length) },
           ],
         )}
@@ -947,7 +948,7 @@ function renderHubQueueSection(): string {
                 </div>
                 <div class="ind-queue-job-state">
                   <b class="ind-queue-job-status">${isReady ? "Ready" : "Running"}</b>
-                  <div class="ind-queue-time">${isReady ? "Collect now" : fmtDuration(remaining)}</div>
+                  <div class="ind-queue-time">${isReady ? "Stores next tick" : fmtDuration(remaining)}</div>
                 </div>
               </div>
               <div class="ind-queue-progress-track"><div class="ind-queue-progress-fill" style="width:${pct}%"></div></div>
@@ -1016,7 +1017,7 @@ function renderTransferSection(): string {
   const lootStreamCount = Object.values(output.loot ?? {}).filter((qty) => qty > 0).length + Object.values(deposit.loot ?? {}).filter((qty) => qty > 0).length;
   return `
     <section class="ind-queue-section">
-      <div class="ind-queue-section-title">Ready Output</div>
+      <div class="ind-queue-section-title">Stored Output</div>
       <div class="ind-transfer-card">
         <div class="ind-transfer-grid">
           <div class="ind-transfer-summary">
@@ -1032,7 +1033,7 @@ function renderTransferSection(): string {
             <strong>${formatMass(readyMass)}</strong>
           </div>
         </div>
-        <button class="ind-btn" data-action="collectRefinedOutput">Transfer All</button>
+        <button class="ind-btn" data-action="collectRefinedOutput">Transfer Stored Materials To Cargo</button>
       </div>
     </section>
   `;
@@ -1042,9 +1043,50 @@ function renderMaterialHoldSection(): string {
   const cargoMaterials = aggregateCargoMaterials();
   const totalVolume = cargoMaterials.reduce((sum, entry) => sum + entry.volumeM3, 0);
   const totalMass = cargoMaterials.reduce((sum, entry) => sum + entry.massKg, 0);
+  const storageUnits = refineryStorageUnits();
+  const storedEntries = storageUnits.flatMap((unit) => unit.entries ?? []);
+  const storedVolume = storedEntries.reduce((sum, entry) => sum + entry.volumeM3, 0);
+  const storedMass = storedEntries.reduce((sum, entry) => sum + entry.massKg, 0);
   return `
     <section class="ind-queue-section">
-      <div class="ind-queue-section-title">Material Hold</div>
+      <div class="ind-queue-section-title">Refinery Reservoirs</div>
+      <div class="ind-material-hold">
+        <div class="ind-material-hold-summary">
+          <div class="ind-material-hold-stat"><span>Tanks</span><strong>${storageUnits.length}</strong></div>
+          <div class="ind-material-hold-stat"><span>Stored</span><strong>${formatVolume(storedVolume)}</strong></div>
+          <div class="ind-material-hold-stat"><span>Mass</span><strong>${formatMass(storedMass)}</strong></div>
+        </div>
+        <div class="ind-material-hold-list">
+          ${storageUnits.map((unit) => {
+            const summary = refineryStorageSummary(unit);
+            const entries = unit.entries ?? [];
+            return `
+              <div class="ind-storage-unit" style="${compositionAccentVars(aggregateStorageComposition(unit))}">
+                <div class="ind-material-row-top">
+                  <span>${escHtml(unit.label)}</span>
+                  <span>${formatVolume(summary.usedM3)} / ${formatVolume(unit.capacityM3)}</span>
+                </div>
+                <div class="ind-queue-progress-track"><div class="ind-queue-progress-fill" style="width:${Math.round(summary.fillPct * 100)}%"></div></div>
+                <div class="ind-material-row-bottom">
+                  <span>${escHtml(unit.kind)} · ${entries.length} stacks</span>
+                  <span>${escHtml(summary.dominantLabel)}</span>
+                </div>
+                <div class="ind-material-row-tags">${escHtml(summary.compositionText || "Empty")}</div>
+                ${entries.slice(0, 3).map((entry) => `
+                  <div class="ind-material-row-bottom">
+                    <span>${escHtml(entry.label)}</span>
+                    <span>${formatVolume(entry.volumeM3)} · ${formatMass(entry.massKg)}</span>
+                  </div>
+                `).join("")}
+                ${entries.length > 3 ? `<div class="ind-material-row-tags">+${entries.length - 3} more stacks</div>` : ""}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    </section>
+    <section class="ind-queue-section">
+      <div class="ind-queue-section-title">Cargo Material Hold</div>
       <div class="ind-material-hold">
         <div class="ind-material-hold-summary">
           <div class="ind-material-hold-stat"><span>Stacks</span><strong>${cargoMaterials.length}</strong></div>
@@ -1068,6 +1110,43 @@ function renderMaterialHoldSection(): string {
         </div>
       </div>
     </section>
+  `;
+}
+
+export function renderBottomBar(): string {
+  const pulseActive = stationState.indRailPulseUntil > Date.now();
+  const queue = getState().player.hubQueue ?? [];
+  const output = getState().player.hubOutput;
+  const discoveries = getState().player.alloyCodex?.discoveries ?? [];
+  const readyCount = (output.materials?.length ?? 0)
+    + Object.values(output.loot ?? {}).filter((qty) => qty > 0).length
+    + (output.modules?.length ?? 0);
+
+  const tabs: Array<{ id: typeof stationState.indRailTab; icon: string; count: number }> = [
+    { id: "queue", icon: "⏳", count: queue.length },
+    { id: "output", icon: "📦", count: readyCount },
+    { id: "dossier", icon: "📖", count: discoveries.length },
+  ];
+
+  let panelHtml = "";
+  if (stationState.indRailTab === "queue") panelHtml = renderHubQueueSection();
+  else if (stationState.indRailTab === "output") panelHtml = renderTransferSection() || `<section class="ind-queue-section"><div class="ind-queue-empty">No refinery output is ready.</div></section>`;
+  else if (stationState.indRailTab === "dossier") panelHtml = renderMaterialDossierSection();
+
+  return `
+    <div class="ind-bottom-bar">
+      <div class="ind-bottom-popover${panelHtml ? " is-open" : ""}">
+        ${panelHtml}
+      </div>
+      <div class="ind-bottom-strip">
+        ${tabs.map((tab) => `
+          <button class="ind-bottom-btn${stationState.indRailTab === tab.id ? " active" : ""}${pulseActive && stationState.indRailPulseTab === tab.id ? " pulse" : ""}" data-action="indRailTab" data-rail-tab="${tab.id}" title="${tab.id}">
+            <span class="ind-bottom-icon">${tab.icon}</span>
+            ${tab.count > 0 ? `<span class="ind-bottom-badge">${tab.count}</span>` : ""}
+          </button>
+        `).join("")}
+      </div>
+    </div>
   `;
 }
 

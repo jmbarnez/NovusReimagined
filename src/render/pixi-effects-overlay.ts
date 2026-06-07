@@ -38,6 +38,7 @@ function getPooledFloatText(): Text {
     }),
   });
   t.anchor.set(0.5, 0.5);
+  t.roundPixels = true;
   return t;
 }
 

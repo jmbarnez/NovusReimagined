@@ -89,6 +89,7 @@ export interface Gate {
   };
   radius: number;
   spin: number;
+  angle?: number;
   _orbitSpeed?: number;
 }
 

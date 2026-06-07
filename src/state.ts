@@ -223,6 +223,7 @@ export interface Player {
   thrustFx: boolean;
   boostFx: boolean;
   boostLockout: boolean;
+  gateBoostRemaining?: number;
   recoilFrames?: number;
   fitting: Record<string, (string | null)[]>;
   moduleHp: Record<string, (number | null)[]>;
@@ -357,6 +358,7 @@ export interface ClientState {
   skillsOpen: boolean;
   settings: Settings;
   showPerf: boolean;
+  perfAdvanced: boolean;
   gameStarted: boolean;
   _lastBridgeRender: number;
   mapPanX: number;
@@ -425,6 +427,7 @@ export const Client: ClientState = {
   skillsOpen: false,
   settings: { ...DEFAULT_SETTINGS },
   showPerf: false,
+  perfAdvanced: false,
   gameStarted: false,
   _lastBridgeRender: 0,
   mapPanX: 0,

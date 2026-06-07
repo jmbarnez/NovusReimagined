@@ -273,7 +273,7 @@ export function updateMining(dt: number, p: Player) {
       if (_miningSparkTimer <= 0) {
         _miningSparkTimer = 0.11 + random() * 0.07;
         const sparkColor = p.miningLaser?.oreColor || "#c8a060";
-        spawnMiningSparks(surface.x, surface.y, surface.nx, surface.ny, sparkColor, 0.7);
+        spawnMiningSparks(surface.x, surface.y, surface.nx, surface.ny, sparkColor, 1.0);
       }
     }
 

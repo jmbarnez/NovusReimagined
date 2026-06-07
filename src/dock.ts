@@ -2,9 +2,9 @@ import { Client, type Player } from "./state.js";
 import { PlayerAccess, getState } from "./state-access.js";
 import { emit } from "./events.js";
 import { savePlayer } from "./player/player-data.js";
-import { clearSimulationEntities } from "./utils/entities.js";
-import { dst } from "./utils/math.js";
-import { curSys } from "./utils/game.js";
+import { addParticle, clearSimulationEntities } from "./utils/entities.js";
+import { dst, random } from "./utils/math.js";
+import { allActivePlayers, curSys } from "./utils/game.js";
 import { GATE_RANGE, WARP_TIME } from "./constants.js";
 import { clearSensorLocks } from "./targeting.js";
 import { floatText } from "./utils/fx.js";
@@ -12,8 +12,8 @@ import { populateSystem } from "./world-gen.js";
 import { app, stationLayer } from "./pixi.js";
 import { initPixiCelestial, destroyPixiCelestial } from "./render/pixi-celestial.js";
 import type { Station, Gate } from "./types/world.js";
-import { canWarpThroughGate } from "./data/tutorial.js";
-import { gateDestinationName, gateStableId, isLocalWarpGate } from "./utils/warp-gates.js";
+import { canWarpThroughGate, shouldShowWarpGate } from "./data/tutorial.js";
+import { didCrossGateAperture, gateDestinationName, gateStableId, isLocalWarpGate } from "./utils/warp-gates.js";
 
 async function ensureStationInterface(st: Station): Promise<void> {
   const { ensureStationUI, buildStationView, renderStationView } = await import("./ui/station/index.js");
@@ -41,6 +41,28 @@ function playWarpAudio(kind: "charge" | "jump"): void {
     .catch(() => {
       // Ignore audio init failures in headless runtimes.
     });
+}
+
+function spawnGateWarpBurst(gate: Gate, p: Player): void {
+  if (p !== getState().player) return;
+  const travelAngle = Math.atan2(p.y - p.py, p.x - p.px);
+  const baseAngle = Number.isFinite(travelAngle) ? travelAngle : p.angle;
+  for (let i = 0; i < 18; i++) {
+    const a = baseAngle + (random() - 0.5) * 0.9;
+    const r = gate.radius * (0.25 + random() * 0.7);
+    const theta = random() * Math.PI * 2;
+    const sp = 120 + random() * 260;
+    addParticle({
+      x: gate.x + Math.cos(theta) * r,
+      y: gate.y + Math.sin(theta) * r,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp,
+      life: 0.35 + random() * 0.35,
+      color: random() > 0.35 ? "#a6e8ff" : "#ffffff",
+      r: 2 + random() * 3,
+      drag: 0.12,
+    });
+  }
 }
 
 export async function dockAt(st: Station) {
@@ -187,15 +209,50 @@ function warpLocal(gate: Gate, p: Player): boolean {
   return true;
 }
 
-export function updateWarp(dt: number) {
-  if (getState().warpCooldown > 0) {
-    PlayerAccess.setWarpCooldown(getState().warpCooldown - dt);
-    if (getState().warpCooldown <= 0) {
-      PlayerAccess.setWarpCooldown(0);
-      if (getState().warpTargetIdx >= 0) warpTo(getState().warpTargetIdx);
-      PlayerAccess.setWarpTargetIdx(-1);
-    }
+export function beginWarpThroughGate(gate: Gate, p: Player = getState().player): boolean {
+  const sys = curSys(p);
+  if (!sys) return false;
+  if ((p.warpCooldown ?? 0) > 0) return false;
+  if (!shouldShowWarpGate(gate, sys.idx, p)) return false;
+  if (!canWarpThroughGate(gate, sys.idx, p)) return false;
+  if (isLocalWarpGate(gate)) {
+    spawnGateWarpBurst(gate, p);
+    return warpLocal(gate, p);
   }
+  if (gate.targetSysIdx == null) return false;
+  spawnGateWarpBurst(gate, p);
+  PlayerAccess.setWarpCooldown(WARP_TIME, p);
+  PlayerAccess.setWarpTargetIdx(gate.targetSysIdx, p);
+  if (p === getState().player) {
+    floatText(p.x, p.y - 45, `WARP to ${gateDestinationName(gate, getState().GALAXY)}`, "#66aaff");
+    playWarpAudio("charge");
+  }
+  return true;
+}
+
+function tickPlayerWarp(dt: number, p: Player): void {
+  if ((p.warpCooldown ?? 0) > 0) {
+    PlayerAccess.setWarpCooldown((p.warpCooldown ?? 0) - dt, p);
+    if ((p.warpCooldown ?? 0) <= 0) {
+      const targetIdx = p.warpTargetIdx ?? -1;
+      PlayerAccess.setWarpCooldown(0, p);
+      if (targetIdx >= 0) warpTo(targetIdx, p);
+      PlayerAccess.setWarpTargetIdx(-1, p);
+    }
+    return;
+  }
+
+  if (p === getState().player && Client.stationOpen) return;
+  const sys = curSys(p);
+  if (!sys) return;
+  for (const gate of sys.gates ?? []) {
+    if (!didCrossGateAperture(gate, p)) continue;
+    if (beginWarpThroughGate(gate, p)) return;
+  }
+}
+
+export function updateWarp(dt: number) {
+  for (const p of allActivePlayers()) tickPlayerWarp(dt, p);
 }
 
 export function tryWarp(p: Player = getState().player, targetIdx?: number | null): boolean {

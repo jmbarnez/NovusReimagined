@@ -186,45 +186,6 @@ function bakeShipTexture(shipId: string): Texture {
     cx.restore();
   }
 
-  // 5b. Structural strut bracing — wing roots to hull spine
-  if (r.turretOffsets && r.turretOffsets.length >= 2) {
-    for (const [tx, ty] of r.turretOffsets) {
-      const sx = SHIP_HALF + tx, sy = SHIP_HALF + ty;
-      const hx = SHIP_HALF - 4, hy = SHIP_HALF + ty * 0.15;
-      // Dark strut shadow
-      cx.strokeStyle = "rgba(0,0,0,0.35)";
-      cx.lineWidth = 2.2;
-      cx.lineCap = "round";
-      cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(hx, hy); cx.stroke();
-      // Hull strut
-      cx.strokeStyle = "rgba(80,100,120,0.45)";
-      cx.lineWidth = 1.0;
-      cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(hx, hy); cx.stroke();
-    }
-  }
-
-  // 5c. Recessed hardpoint sockets at authored turret offsets
-  for (const [tx, ty] of r.turretOffsets ?? []) {
-    const x = SHIP_HALF + tx;
-    const y = SHIP_HALF + ty;
-    const socketR = shipId === "fighter" ? 2.4 : 2.0;
-    cx.beginPath();
-    cx.arc(x, y, socketR + 1.1, 0, TAU);
-    cx.fillStyle = "rgba(0,0,0,0.58)";
-    cx.fill();
-    cx.beginPath();
-    cx.arc(x, y, socketR, 0, TAU);
-    cx.fillStyle = "rgba(20,28,34,0.88)";
-    cx.fill();
-    cx.strokeStyle = "rgba(170,205,220,0.36)";
-    cx.lineWidth = 0.8;
-    cx.stroke();
-    cx.beginPath();
-    cx.arc(x + 0.35, y - 0.35, socketR * 0.34, 0, TAU);
-    cx.fillStyle = "rgba(255,255,255,0.22)";
-    cx.fill();
-  }
-
   // 6. Nav / hull lights with soft halos
   for (const lt of r.lights ?? []) {
     const lx = SHIP_HALF + lt.x, ly = SHIP_HALF + lt.y;

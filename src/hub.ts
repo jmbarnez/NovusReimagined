@@ -442,11 +442,19 @@ export function alloyHubMaterial(
   targetStorageId?: string | null,
 ): { success: boolean; reason?: string } {
   const requestedIds = Array.from(new Set([materialId, ...(sourceMaterialIds ?? [])].filter((id): id is string => !!id)));
+  const plannedMaterials: BulkMaterialStack[] = [];
+  for (const id of requestedIds) {
+    const found = PlayerAccess.getRefineryStorageMaterial(id, p);
+    const material = found?.material;
+    if (material) plannedMaterials.push(material);
+  }
+  if (!plannedMaterials.some((material) => material.id === materialId)) return { success: false, reason: "Material stack not found" };
+  const plannedBlend = blendMaterials(plannedMaterials);
+  const fee = getProcessFee(plannedBlend.massKg / 150);
+  if (p.credits < fee) return { success: false, reason: `Need ${fee}¢ alloying fee (have ${p.credits}¢)` };
   const removed = PlayerAccess.removeRefineryStorageMaterials(requestedIds, p);
   if (removed.materials.length === 0) return { success: false, reason: "Material stack not found" };
   const blend = blendMaterials(removed.materials);
-  const fee = getProcessFee(blend.massKg / 150);
-  if (p.credits < fee) return { success: false, reason: `Need ${fee}¢ alloying fee (have ${p.credits}¢)` };
   PlayerAccess.modifyCredits(-fee, p);
   PlayerAccess.addHubJob({
     id: `hub-alloy-${Date.now()}`,

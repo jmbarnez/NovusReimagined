@@ -57,6 +57,7 @@ function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false)
   const vx = p.vx + nx * gate.strength * dir;
   const vy = p.vy + ny * gate.strength * dir;
   PlayerAccess.updatePhysics({ vx, vy }, p);
+  PlayerAccess.setGateBoostRemaining(1.5, p);
 
   if (isReplaying) return;
 

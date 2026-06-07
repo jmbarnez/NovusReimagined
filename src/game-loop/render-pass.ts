@@ -46,6 +46,7 @@ import { setWorldView } from "../render/world-text.js";
 import { viewCenterX, viewCenterY, viewportW, viewportH, viewportLeft, viewportTop } from "../render/viewport.js";
 import { updateIndustryProgress } from "../ui/station/industry.js";
 import { syncPixiCrosshair } from "../render/pixi-crosshair.js";
+import { recordRenderTimings, type PerfTimingMark } from "../render/perf-telemetry.js";
 
 // Cached damage flash gradients (keyed by color, invalidated on viewport resize)
 
@@ -55,30 +56,25 @@ let _lastMapOpen = false;
 let _filterLogged = false;
 
 // ─── Frame timing helper ─────────────────────────────────────────────────────
-let _timingLabels: string[] = [];
-let _timingVals: number[] = [];
+let _timingMarks: PerfTimingMark[] = [];
 
 function timeMark(label: string): void {
   if (!Client.showPerf) return;
   if (typeof performance !== "undefined") {
-    _timingLabels.push(label);
-    _timingVals.push(performance.now());
+    _timingMarks.push({ label, atMs: performance.now() });
   }
 }
 
-function timeFlush(totalThresholdMs = 16): void {
-  if (!Client.showPerf) return;
-  if (_timingVals.length < 2) { _timingLabels = []; _timingVals = []; return; }
-  const total = _timingVals[_timingVals.length - 1] - _timingVals[0];
-  if (total <= totalThresholdMs) { _timingLabels = []; _timingVals = []; return; }
-  const parts: string[] = [];
-  for (let i = 1; i < _timingVals.length; i++) {
-    const dt = _timingVals[i] - _timingVals[i - 1];
-    if (dt > 0.5) parts.push(`${_timingLabels[i]}:${dt.toFixed(1)}ms`);
+function timeFlush(): void {
+  if (!Client.showPerf) {
+    _timingMarks = [];
+    return;
   }
-  console.log("[PERF] Slow frame", { total: `${total.toFixed(2)}ms`, parts: parts.join(" | ") });
-  _timingLabels = [];
-  _timingVals = [];
+  recordRenderTimings(_timingMarks, {
+    logSlowFrame: Client.perfAdvanced,
+    slowFrameThresholdMs: 1000 / 300,
+  });
+  _timingMarks = [];
 }
 
 export function drawFrame(now: number, alpha: number, frameDt: number) {
@@ -280,5 +276,5 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   timeMark("perfoverlay");
   timeMark("end");
 
-  timeFlush(16);
+  timeFlush();
 }

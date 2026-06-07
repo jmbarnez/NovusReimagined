@@ -96,7 +96,7 @@ export function syncRefineryTutorialGuide(snapshot: Record<string, unknown> = {}
   const panel = getRefineryGuidePanel(step.id, phase);
   if (!panel) return;
 
-  stationState.indRailTab = phase >= 4 ? "queue" : "hold";
+  stationState.indRailTab = "queue";
 
   document.getElementById("st-dimmer")?.classList.add("active");
 

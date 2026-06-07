@@ -39,7 +39,6 @@ import { syncRefineryTutorialGuide, clearRefineryTutorialGuide } from "../src/ui
 import { stationState } from "../src/ui/station/shared.js";
 import { activateStationTab } from "../src/ui/station/tabs.js";
 import { emit, on } from "../src/events.js";
-import { gateStableId, gateLockTarget } from "../src/utils/warp-gates.js";
 
 function stepById(id: string) {
   const step = TUTORIAL_STEPS.find((s) => s.id === id);
@@ -437,24 +436,21 @@ describe("tutorial exit gate", () => {
     expect(G.P.warpTargetIdx).toBe(-1);
   });
 
-  it("requires a resolved gate lock before tutorial graduation warp can arm", () => {
+  it("arms graduation warp after flying through the gate", () => {
     const primeIdx = getNovusPrimeIdx();
     if (primeIdx < 0) return;
     const gate = G.GALAXY[0]?.gates.find((entry) => entry.targetSysIdx === primeIdx);
     expect(gate).toBeTruthy();
     if (!gate) return;
     G.P.tutorial.step = stepIndex("graduation");
+    G.P.px = gate.x - gate.radius * 2;
+    G.P.py = gate.y;
     G.P.x = gate.x;
     G.P.y = gate.y;
 
-    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
-    expect(G.P.warpTargetIdx).toBe(-1);
-
-    const gateId = gateStableId(gate);
-    G.P.lockQueue = [{ id: gateId, resolving: false, acc: 1 }];
-    G.P.targetLock = gateLockTarget(gate, G.GALAXY);
-    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
+    updateWarp(1 / 60);
     expect(G.P.warpTargetIdx).toBe(primeIdx);
+    expect(G.P.warpCooldown).toBeGreaterThan(0);
   });
 
   it("graduates after using the final one-way gate to Novus Prime", () => {
@@ -464,13 +460,12 @@ describe("tutorial exit gate", () => {
     expect(gate).toBeTruthy();
     if (!gate) return;
     G.P.tutorial.step = stepIndex("graduation");
+    G.P.px = gate.x - gate.radius * 2;
+    G.P.py = gate.y;
     G.P.x = gate.x;
     G.P.y = gate.y;
-    const gateId = gateStableId(gate);
-    G.P.lockQueue = [{ id: gateId, resolving: false, acc: 1 }];
-    G.P.targetLock = gateLockTarget(gate, G.GALAXY);
 
-    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
+    updateWarp(1 / 60);
     expect(G.P.warpTargetIdx).toBe(primeIdx);
 
     updateWarp(999);
@@ -488,19 +483,14 @@ describe("tutorial exit gate", () => {
     expect(localGate).toBeTruthy();
     if (!localGate) return;
     G.P.tutorial.step = stepIndex("gunnery");
+    G.P.px = localGate.x - localGate.radius * 2;
+    G.P.py = localGate.y;
     G.P.x = localGate.x;
     G.P.y = localGate.y;
     G.P.vx = 12;
     G.P.vy = 9;
 
-    executeGameCommand({ type: "warp" }, G.P);
-    expect(G.P.x).toBe(localGate.x);
-    expect(G.P.y).toBe(localGate.y);
-
-    const gateId = gateStableId(localGate);
-    G.P.lockQueue = [{ id: gateId, resolving: false, acc: 1 }];
-    G.P.targetLock = gateLockTarget(localGate, G.GALAXY);
-    executeGameCommand({ type: "warp" }, G.P);
+    updateWarp(1 / 60);
 
     expect(G.P.sysIdx).toBe(0);
     expect(G.P.warpTargetIdx).toBe(-1);
@@ -714,7 +704,7 @@ describe("station tutorial spotlight", () => {
     expect(segments[1].style.top).toBe("348px");
     expect(segments[2].style.width).toBe("152px");
     expect(segments[3].style.left).toBe("428px");
-    expect(stationState.indRailTab).toBe("hold");
+    expect(stationState.indRailTab).toBe("queue");
 
     syncRefineryTutorialGuide({ refineryGuidePhase: 4 });
     expect(stationState.indRailTab).toBe("queue");

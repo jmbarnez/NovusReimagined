@@ -22,6 +22,8 @@ import { PICKUP_LIFE_S } from "../wreck.js";
 import { oreColorForComposition } from "../utils/ore-naming.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
 import { PixiGeometryBufferPool } from "./pixi-geometry-buffer-pool.js";
+import { paintItemIconSubjectOnly } from "../ui/icons/item-icon-paint.js";
+import { ICON_LOGICAL, ICON_TEX_SCALE } from "../ui/icons/painters/shared.js";
 
 const TAU = Math.PI * 2;
 
@@ -44,7 +46,7 @@ function getPooledText(): Text {
     return t;
   }
   const t = new Text({ text: "", style: _sharedPickupStyle });
-  t.anchor.set(0.5, 0);
+  t.anchor.set(0.5, 0.5);
   effectLayer!.addChild(t);
   return t;
 }
@@ -60,6 +62,16 @@ function returnPooledText(t: Text): void {
   }
 }
 
+// Texture cache for baked pickup icons (keyed by catalog id)
+const _pickupIconTextures = new Map<string, Texture>();
+
+// Sprite tracking for pickups that show an icon image
+const _pickupSprites = new Map<SalvagePickup, Sprite>();
+
+// Object pool for Sprite objects
+const _spritePool: Sprite[] = [];
+const _spritePoolSize = 64;
+
 // Reusable Sets/Maps to avoid per-frame GC allocation
 const _activePickupRefs = new Set<SalvagePickup>();
 const _lockSlotById = new Map<string, LockSlot>();
@@ -72,7 +84,7 @@ const _sharedPickupStyle = new TextStyle({
   fontWeight: "bold",
   align: "center",
   fill: "#ffffff",
-  stroke: { color: "#000000", width: 2.5 },
+  stroke: { color: "#000000", width: 1.5 },
 });
 
 export function refreshEffectFonts(): void {
@@ -86,6 +98,59 @@ export function refreshEffectFonts(): void {
 function hexStringToNumber(hex: string): number {
   const clean = hex.replace("#", "");
   return parseInt(clean, 16) || 0xffffff;
+}
+
+function getPooledSprite(): Sprite {
+  if (_spritePool.length > 0) {
+    const s = _spritePool.pop()!;
+    s.visible = true;
+    return s;
+  }
+  const s = new Sprite();
+  s.anchor.set(0.5, 0.5);
+  effectLayer!.addChild(s);
+  return s;
+}
+
+function returnPooledSprite(s: Sprite): void {
+  s.visible = false;
+  s.texture = Texture.EMPTY;
+  if (_spritePool.length < _spritePoolSize) {
+    _spritePool.push(s);
+  } else {
+    effectLayer!.removeChild(s);
+    s.destroy();
+  }
+}
+
+/** Resolve the catalog icon key for a SalvagePickup. */
+function resolvePickupIconKey(s: SalvagePickup): string | null {
+  if (s.kind === "credits") return null;
+  if (s.kind === "ore") return s.payload;
+  if (s.kind === "module") return s.payload;
+  if (s.kind === "loot") return s.payload;
+  return null;
+}
+
+/** Lazily bake a subject-only icon texture and cache it. */
+function getPickupIconTexture(id: string): Texture | null {
+  const cached = _pickupIconTextures.get(id);
+  if (cached) return cached;
+  if (typeof document === "undefined") return null;
+
+  const canvas = document.createElement("canvas");
+  const physical = ICON_LOGICAL * ICON_TEX_SCALE;
+  canvas.width = physical;
+  canvas.height = physical;
+  const cx = canvas.getContext("2d");
+  if (!cx) return null;
+  cx.scale(ICON_TEX_SCALE, ICON_TEX_SCALE);
+  cx.clearRect(0, 0, ICON_LOGICAL, ICON_LOGICAL);
+  paintItemIconSubjectOnly(cx, id, ICON_LOGICAL);
+
+  const texture = Texture.from(canvas);
+  _pickupIconTextures.set(id, texture);
+  return texture;
 }
 
 // Draw dynamic vector shapes for resources inside PixiJS Graphics in world space coordinates
@@ -262,14 +327,11 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
 
       const fade = s.life < 8 ? s.life / 8 : 1;
       const bobY = Math.sin(s.bob) * 2.5;
-      const pulse = 0.85 + 0.15 * Math.sin(now * 0.003 + s.bob);
-      const globalPulse = fade * pulse;
 
       // Warp-in materialize
       const warpInAge = Math.min(1, Math.max(0, (PICKUP_LIFE_S - s.life) / 0.4));
-      const warpIn = 1 - warpInAge; 
+      const warpIn = 1 - warpInAge;
       const warpScale = 1 + warpIn * 0.4;
-      const warpFlash = 1 + warpIn * 2.0;
 
       // Holographic flicker
       const flicker = 0.92 + 0.08 * Math.sin(now * 0.025 + s.bob * 7);
@@ -305,22 +367,32 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       }
 
       const colorNum = hexStringToNumber(colStr);
-      const qtyStr = s.qty > 1 && s.kind !== "credits" ? ` x${s.qty}` : "";
-      const pillarH = 50;
 
       const px = s.x;
       const py = s.y + bobY;
 
-      // Vertical energy pillar
-      _pickupGfx.poly([
-        px - 2.5 * warpScale, py,
-        px - 1.0 * warpScale, py - pillarH * warpScale,
-        px + 1.0 * warpScale, py - pillarH * warpScale,
-        px + 2.5 * warpScale, py
-      ], true).fill({ color: colorNum, alpha: 0.25 * globalPulse * warpFlash * flicker });
-
-      // Vector Icon shape in world space coordinates
-      drawResourceIconGfx(_pickupGfx, icon, iconSize, colorNum, px, py, warpScale);
+      // Try actual catalog icon sprite; fall back to vector shape
+      const iconKey = resolvePickupIconKey(s);
+      const iconTexture = iconKey ? getPickupIconTexture(iconKey) : null;
+      if (iconTexture) {
+        let sprite = _pickupSprites.get(s);
+        if (!sprite) {
+          sprite = getPooledSprite();
+          _pickupSprites.set(s, sprite);
+        }
+        sprite.texture = iconTexture;
+        sprite.x = px;
+        sprite.y = py;
+        sprite.width = sprite.height = 12 * warpScale;
+        sprite.alpha = fade;
+      } else {
+        const existingSprite = _pickupSprites.get(s);
+        if (existingSprite) {
+          returnPooledSprite(existingSprite);
+          _pickupSprites.delete(s);
+        }
+        drawResourceIconGfx(_pickupGfx, icon, iconSize, colorNum, px, py, warpScale);
+      }
 
       // Text labeling inside effectLayer
       let textObj = _pickupLabels.get(s);
@@ -328,13 +400,22 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
         textObj = getPooledText();
         _pickupLabels.set(s, textObj);
       }
-      textObj.style.fill = colStr;
-      textObj.text = label + qtyStr;
+      textObj.text = label;
 
-      // Position text card below pickup
+      // Dark plate behind label (drawn into _pickupGfx so it scales with world)
+      const platePadX = 3;
+      const platePadY = 1.5;
+      const plateW = textObj.width + platePadX * 2;
+      const plateH = textObj.height + platePadY * 2;
+      _pickupGfx
+        .roundRect(px - plateW / 2, py - 14 * warpScale - plateH / 2, plateW, plateH, 2)
+        .fill({ color: 0x000000, alpha: 0.4 * fade })
+        .stroke({ color: 0x3c78c8, width: 0.8, alpha: 0.3 * fade });
+
+      // Position text card above pickup
       textObj.x = Math.round(px);
-      textObj.y = Math.round(py + 8 * warpScale);
-      textObj.alpha = (0.85 + 0.15 * Math.sin(now * 0.002 + s.bob * 2)) * fade * flicker;
+      textObj.y = Math.round(py - 14 * warpScale);
+      textObj.alpha = fade * flicker;
     }
   }
 
@@ -343,6 +424,14 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
     if (!_activePickupRefs.has(s)) {
       returnPooledText(textObj);
       _pickupLabels.delete(s);
+    }
+  }
+
+  // Clean obsolete pickup sprites
+  for (const [s, sprite] of _pickupSprites.entries()) {
+    if (!_activePickupRefs.has(s)) {
+      returnPooledSprite(sprite);
+      _pickupSprites.delete(s);
     }
   }
 
@@ -375,4 +464,24 @@ export function destroyPixiEffects(): void {
     textObj.destroy();
   }
   _pickupLabels.clear();
+
+  // Clean pickup sprites
+  for (const sprite of _pickupSprites.values()) {
+    effectLayer!.removeChild(sprite);
+    sprite.destroy();
+  }
+  _pickupSprites.clear();
+
+  // Clean sprite pool
+  for (const sprite of _spritePool) {
+    effectLayer!.removeChild(sprite);
+    sprite.destroy();
+  }
+  _spritePool.length = 0;
+
+  // Clean icon textures
+  for (const tex of _pickupIconTextures.values()) {
+    tex.destroy(true);
+  }
+  _pickupIconTextures.clear();
 }

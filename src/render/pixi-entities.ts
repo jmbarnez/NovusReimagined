@@ -222,7 +222,7 @@ const _speechStyle = new TextStyle({
   fontFamily: getUIFont(),
   fontSize: 10,
   fill: "#ffffff",
-  stroke: { color: "#000000", width: 3 },
+  stroke: { color: "#000000", width: 2 },
   align: "center",
   wordWrap: true,
   wordWrapWidth: 180,

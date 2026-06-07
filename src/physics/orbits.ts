@@ -8,6 +8,7 @@ type Orbitable = {
   py?: number;
   vx?: number;
   vy?: number;
+  angle?: number;
   spawnX?: number;
   spawnY?: number;
   _orbitSpeed?: number;
@@ -42,6 +43,8 @@ function rotateOrbitable(body: Orbitable, dt: number, rotateSpawn = false) {
     body.vx = vel.x;
     body.vy = vel.y;
   }
+
+  if (body.angle !== undefined) body.angle += angle;
 
   if (rotateSpawn) {
     if (body.spawnX === undefined) body.spawnX = oldX;

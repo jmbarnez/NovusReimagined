@@ -92,9 +92,11 @@ export function refreshCelestialFonts() {
 interface GateBundle {
   id: string;
   container: Container;
+  foregroundContainer: Container;
   hull: Graphics;
   rings: Graphics;
   core: Graphics;
+  foregroundRim: Graphics;
   labelBg: Graphics;
   labelText: Text;
 }
@@ -334,6 +336,14 @@ export function initPixiCelestial(parent: Container, sys: System): void {
       const rings = new Graphics();
       gateCont.addChild(rings);
 
+      const gateForeCont = new Container();
+      gateForeCont.x = g.x;
+      gateForeCont.y = g.y;
+      (effectLayer ?? stationLayer)!.addChild(gateForeCont);
+
+      const foregroundRim = new Graphics();
+      gateForeCont.addChild(foregroundRim);
+
       // Background card
       const labelBg = new Graphics();
       gateCont.addChild(labelBg);
@@ -356,9 +366,11 @@ export function initPixiCelestial(parent: Container, sys: System): void {
       _gateBundles.push({
         id: gateStableId(g),
         container: gateCont,
+        foregroundContainer: gateForeCont,
         hull,
         rings,
         core,
+        foregroundRim,
         labelBg,
         labelText,
       });
@@ -420,7 +432,12 @@ export function syncPixiCelestial(now: number, alpha: number, sys: System): void
       const g = sys.gates[i]!;
       const b = _gateBundles[i]!;
       const isGateVisible = shouldShowWarpGate(g, sys.idx, getState().player) && isVisible(g.x, g.y, g.radius * 2.5);
+      b.container.x = g.x;
+      b.container.y = g.y;
+      b.foregroundContainer.x = g.x;
+      b.foregroundContainer.y = g.y;
       b.container.visible = isGateVisible;
+      b.foregroundContainer.visible = isGateVisible;
 
       if (isGateVisible) {
         const pulse = 0.5 + 0.5 * Math.sin(now * 0.0022);
@@ -545,6 +562,28 @@ export function syncPixiCelestial(now: number, alpha: number, sys: System): void
           });
         }
 
+        b.foregroundRim.clear();
+        b.foregroundRim.circle(0, 0, visR * 0.98).stroke({
+          color: 0x9ee8ff,
+          width: 2.2,
+          alpha: 0.18 + pulse * 0.18,
+        });
+        b.foregroundRim.circle(0, 0, g.radius * 0.9).stroke({
+          color: 0xe0f6ff,
+          width: 1.4,
+          alpha: 0.18 + corePulse * 0.18,
+        });
+        const glintSpin = -spin * 0.8 + now * 0.0008;
+        for (let j = 0; j < 8; j++) {
+          const a = glintSpin + (j / 8) * TAU;
+          const ar = a + TAU * 0.035;
+          b.foregroundRim.arc(0, 0, visR * 1.02, a, ar).stroke({
+            color: j % 2 === 0 ? 0xffffff : 0x78d8ff,
+            width: j % 2 === 0 ? 4.2 : 2.8,
+            alpha: 0.28 + pulse * 0.32,
+          });
+        }
+
       }
     }
   }
@@ -599,6 +638,7 @@ export function destroyPixiCelestial(): void {
   // Destroy Gates
   for (const b of _gateBundles) {
     b.container.destroy({ children: true });
+    b.foregroundContainer.destroy({ children: true });
   }
   _gateBundles = [];
 
