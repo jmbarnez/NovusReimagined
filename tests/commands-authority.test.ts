@@ -5,7 +5,7 @@ import { _G as G } from "../src/state.js";;
 import { WorldAccess } from "../src/state-access.js";
 import { allActivePlayers, activeSystemIndices } from "../src/utils/game.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
-import { updateWarp } from "../src/dock.js";
+import { updateWarp } from "../src/docking/index.js";
 
 describe("authoritative command validation", () => {
   it("rejects invalid hardpoint indexes", () => {

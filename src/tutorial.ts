@@ -5,7 +5,7 @@ import { PlayerAccess } from "./state-access.js";
 import { queueFrameAction } from "./sim/input.js";
 import { emit, on } from "./events.js";
 import { savePlayer } from "./player/player-data.js";
-import { warpTo, undockStation } from "./dock.js";
+import { warpTo, undockStation } from "./docking/index.js";
 import { getNovusPrimeIdx } from "./world/galaxy-build.js";
 import { ensureTutorialRegionsDiscovered } from "./map-discovery.js";
 import { TUTORIAL_SPAWN, shouldRelocateTutorialStart } from "./data/tutorial-layout.js";

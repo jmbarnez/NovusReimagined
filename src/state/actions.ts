@@ -12,7 +12,7 @@ import { ModuleRarity, RARITY_CONFIG } from "../data/moduleRarity.js";
 import { generateModuleInstance } from "../loot/generateModule.js";
 import { getInstance, invalidateInstanceCache } from "../utils/items.js";
 import type { MissionContract } from "../data/missions.js";
-import { getDockableStation } from "../dock.js";
+import { getDockableStation } from "../docking/index.js";
 import { moduleFitsShipRack } from "../utils/hardpoints.js";
 import { ALLOY_FAMILIES, materialMatchesRecipeMaterial } from "../refinery/index.js";
 

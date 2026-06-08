@@ -33,7 +33,7 @@ import { SAVE_KEY } from "../src/constants.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { ENEMY_SPAWNS } from "../src/data/enemy-spawns.js";
 import { executeGameCommand } from "../src/sim/commands.js";
-import { updateWarp } from "../src/dock.js";
+import { updateWarp } from "../src/docking/index.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../src/ui/tutorial-hangar-guide.js";
 import { syncRefineryTutorialGuide, clearRefineryTutorialGuide } from "../src/ui/tutorial-refinery-guide.js";
 import { stationState } from "../src/ui/station/shared.js";

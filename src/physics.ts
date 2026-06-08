@@ -5,7 +5,7 @@ import { updateTutorialTrack } from "./physics/tutorial-track.js";
 import { updateCombat, updateProjectiles } from "./physics/combat-physics.js";
 import { updateNpcs, updateEnemyBullets, updateAsteroids, updateMining, resolveNpcAsteroidCollisions, updateEnemyRespawns } from "./physics/npcs.js";
 import { updateStationTurrets } from "./physics/station-turrets.js";
-import { updateWarp } from "./dock.js";
+import { updateWarp } from "./docking/index.js";
 import { syncSpatialGrid } from "./utils/spatial.js";
 import { allActivePlayers } from "./utils/game.js";
 import { updateWreckPiecesAndPickups } from "./wreck/index.js";

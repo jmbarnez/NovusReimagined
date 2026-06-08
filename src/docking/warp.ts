@@ -1,30 +1,23 @@
-import { Client, type Player } from "./state.js";
-import { PlayerAccess, getState } from "./state-access.js";
-import { emit } from "./events.js";
-import { savePlayer } from "./player/player-data.js";
-import { addParticle, clearSimulationEntities } from "./utils/entities.js";
-import { dst, random } from "./utils/math.js";
-import { allActivePlayers, curSys } from "./utils/game.js";
-import { GATE_RANGE, WARP_TIME } from "./constants.js";
-import { clearSensorLocks } from "./targeting.js";
-import { floatText } from "./utils/fx.js";
-import { populateSystem } from "./world-gen.js";
-import { app, stationLayer } from "./pixi.js";
-import { initPixiCelestial, destroyPixiCelestial } from "./render/pixi-celestial.js";
-import type { Station, Gate } from "./types/world.js";
-import { canWarpThroughGate, shouldShowWarpGate } from "./data/tutorial.js";
-import { didCrossGateAperture, gateDestinationName, gateStableId, isLocalWarpGate } from "./utils/warp-gates.js";
-
-async function ensureStationInterface(st: Station): Promise<void> {
-  const { ensureStationUI, buildStationView, renderStationView } = await import("./ui/station/index.js");
-  ensureStationUI();
-  buildStationView(st);
-  renderStationView();
-}
+import { Client, type Player } from "../state.js";
+import { PlayerAccess, getState } from "../state-access.js";
+import { emit } from "../events.js";
+import { savePlayer } from "../player/player-data.js";
+import { addParticle, clearSimulationEntities } from "../utils/entities.js";
+import { random } from "../utils/math.js";
+import { allActivePlayers, curSys } from "../utils/game.js";
+import { GATE_RANGE, WARP_TIME } from "../constants.js";
+import { clearSensorLocks } from "../targeting.js";
+import { floatText } from "../utils/fx.js";
+import { populateSystem } from "../world-gen.js";
+import { stationLayer } from "../pixi.js";
+import { initPixiCelestial, destroyPixiCelestial } from "../render/pixi-celestial.js";
+import type { Gate } from "../types/world.js";
+import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
+import { didCrossGateAperture, gateDestinationName, gateStableId, isLocalWarpGate } from "../utils/warp-gates.js";
 
 function logDockEvent(msg: string, type: string = "system"): void {
   if (typeof window === "undefined") return;
-  void import("./ui/hud-overlay.js")
+  void import("../ui/hud-overlay.js")
     .then((m) => m.logEvent(msg, type))
     .catch(() => {
       // Ignore UI logging failures in non-UI runtimes.
@@ -33,7 +26,7 @@ function logDockEvent(msg: string, type: string = "system"): void {
 
 function playWarpAudio(kind: "charge" | "jump"): void {
   if (typeof window === "undefined") return;
-  void import("./audio/procedural.js")
+  void import("../audio/procedural.js")
     .then((m) => {
       if (kind === "charge") m.sfxWarpCharge();
       else m.sfxWarpJump();
@@ -65,19 +58,6 @@ function spawnGateWarpBurst(gate: Gate, p: Player): void {
   }
 }
 
-export async function dockAt(st: Station) {
-  await openStationUi(st);
-}
-
-export function getDockableStation(p: Player = getState().player, stationId?: string | null): Station | null {
-  const sys = curSys(p);
-  if (!sys) return null;
-  const stations = stationId
-    ? sys.stations.filter((st) => st.id === stationId)
-    : sys.stations;
-  return stations.find((st) => !st.isProcessingHub && dst(p.x, p.y, st.x, st.y) < st.radius * 2) ?? null;
-}
-
 export function getWarpGateInRange(p: Player = getState().player, targetIdx?: number | null): Gate | null {
   const sys = curSys(p);
   if (!sys || (p.warpCooldown ?? 0) > 0) return null;
@@ -86,50 +66,8 @@ export function getWarpGateInRange(p: Player = getState().player, targetIdx?: nu
     (targetIdx == null || g.targetSysIdx === targetIdx)
     && lockedGateId === gateStableId(g)
     && canWarpThroughGate(g, sys.idx, p)
-    && dst(p.x, p.y, g.x, g.y) < g.radius + GATE_RANGE
+    && Math.hypot(p.x - g.x, p.y - g.y) < g.radius + GATE_RANGE
   ) ?? null;
-}
-
-export async function openStationUi(st: Station): Promise<void> {
-  Client.stationOpen = true;
-  Client.activeStation = st;
-  Client.mouse.lmb = false;
-  if (typeof document !== "undefined") {
-    await ensureStationInterface(st);
-  }
-  if (typeof document !== "undefined") {
-    const stationOverlay = document.getElementById("station-overlay");
-    if (stationOverlay instanceof HTMLElement) stationOverlay.style.display = "flex";
-    const hud = document.getElementById("hud-overlay");
-    if (hud instanceof HTMLElement) hud.style.display = "none";
-    const canvas = app?.canvas as HTMLCanvasElement | undefined;
-    if (canvas instanceof HTMLElement) canvas.style.cursor = "default";
-  }
-  emit("station:open", { station: st });
-  logDockEvent(`Docked at ${st.name}`, "system");
-}
-
-export function closeStationUi(): void {
-  Client.stationOpen = false;
-  Client.activeStation = null;
-  Client.skillsOpen = false;
-  if (typeof document !== "undefined") {
-    const stationOverlay = document.getElementById("station-overlay");
-    if (stationOverlay instanceof HTMLElement) stationOverlay.style.display = "none";
-    const hud = document.getElementById("hud-overlay");
-    if (hud instanceof HTMLElement) hud.style.display = "block";
-    const canvas = app?.canvas as HTMLCanvasElement | undefined;
-    if (canvas instanceof HTMLElement) canvas.style.cursor = "none";
-  }
-  emit("station:close");
-}
-
-export function closeStation() {
-  closeStationUi();
-}
-
-export function undockStation() {
-  closeStationUi();
 }
 
 function spawnNearStationFallback(targetIdx: number, p: Player): boolean {
@@ -165,7 +103,8 @@ export function warpTo(targetIdx: number, p: Player = getState().player) {
   const back = gates?.find((g: Gate) => g.targetSysIdx === fromIdx);
   if (back) {
     const len = Math.hypot(back.x, back.y) || 1;
-    const nx = back.x / len, ny = back.y / len;
+    const nx = back.x / len;
+    const ny = back.y / len;
     const exit = back.radius + GATE_RANGE + 240;
     PlayerAccess.updatePhysics({
       x: back.x + nx * exit + (Math.random() - 0.5) * 32,
@@ -251,7 +190,7 @@ function tickPlayerWarp(dt: number, p: Player): void {
   }
 }
 
-export function updateWarp(dt: number) {
+export function updateWarp(dt: number): void {
   for (const p of allActivePlayers()) tickPlayerWarp(dt, p);
 }
 
@@ -269,12 +208,7 @@ export function tryWarp(p: Player = getState().player, targetIdx?: number | null
   return true;
 }
 
-export function clearWarpPresentation(p: Player = getState().player) {
+export function clearWarpPresentation(p: Player = getState().player): void {
   PlayerAccess.setWarpCooldown(0, p);
   PlayerAccess.setWarpTargetIdx(-1, p);
-}
-
-export function refreshDockedStation(stationId: string | null, p: Player = getState().player): Station | null {
-  if (!stationId) return null;
-  return getDockableStation(p, stationId);
 }

@@ -47,6 +47,7 @@ let accumulator = 0;
 let lastFrameTime = performance.now();
 let gameStarted = false;
 let rafId = 0;
+let timeoutId: number | null = null;
 let autoSaveTimer = 0;
 let currentTick = 0;
 let lastRenderedFrameTime = performance.now();
@@ -60,6 +61,23 @@ function getFrameLimitMs(): number {
   const fpsLimit = Client.settings?.fpsLimit ?? 0;
   if (!Number.isFinite(fpsLimit) || fpsLimit <= 0) return 0;
   return 1000 / fpsLimit;
+}
+
+function isUnlimitedFps(): boolean {
+  const fpsLimit = Client.settings?.fpsLimit ?? 0;
+  return !Number.isFinite(fpsLimit) || fpsLimit <= 0;
+}
+
+function scheduleNextFrame(): void {
+  if (!gameStarted) return;
+  if (isUnlimitedFps()) {
+    timeoutId = window.setTimeout(() => {
+      timeoutId = null;
+      loop(performance.now());
+    }, 0);
+    return;
+  }
+  rafId = requestAnimationFrame(loop);
 }
 
 function isSimulationTickMode(): boolean {
@@ -129,7 +147,7 @@ document.addEventListener("visibilitychange", onVisibilityChange);
 
 function loop(now: number) {
   if (!gameStarted) return;
-  rafId = requestAnimationFrame(loop);
+  scheduleNextFrame();
 
   // Always compute frame delta so simulation pacing is independent of render rate
   const frameTime = Math.min((now - lastFrameTime) / 1000, 0.1);
@@ -222,7 +240,7 @@ export function initGameLoop() {
   });
 
   initHostBridgeListeners();
-  requestAnimationFrame(loop);
+  scheduleNextFrame();
 }
 
 export async function enterSpaceMode(opts: EnterSpaceModeOptions = {}) {
@@ -279,6 +297,11 @@ export async function enterSpaceMode(opts: EnterSpaceModeOptions = {}) {
 export function stopGameLoop() {
   gameStarted = false;
   cancelAnimationFrame(rafId);
+  rafId = 0;
+  if (timeoutId != null) {
+    window.clearTimeout(timeoutId);
+    timeoutId = null;
+  }
   try {
     ticker.postMessage({ type: "stop" });
   } catch {

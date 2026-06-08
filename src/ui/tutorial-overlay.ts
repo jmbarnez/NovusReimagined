@@ -55,7 +55,11 @@ let _hudDimmerVisible = false;
 let _hudDimmerHideTimer: number | null = null;
 let _lastDimmerCutoutKey = "";
 let _lastTutorialOverlayUpdateMs = 0;
-const TUTORIAL_OVERLAY_MIN_UPDATE_MS = 1000 / 60;
+let _lastCardPositionUpdateMs = 0;
+let _overlayInactiveCleaned = false;
+let _overlayHiddenCleaned = false;
+const TUTORIAL_OVERLAY_MIN_UPDATE_MS = 1000 / 30;
+const TUTORIAL_CARD_POSITION_MIN_UPDATE_MS = 1000 / 20;
 
 function getActiveTutorialHighlight(): HTMLElement | null {
   return document.querySelector(".tutorial-hangar-highlight, .hud-highlight");
@@ -602,12 +606,16 @@ export function hideTutorialOverlay() {
   }
   _hudDimmerVisible = false;
   _lastDimmerCutoutKey = "";
+  _overlayHiddenCleaned = false;
+  _overlayInactiveCleaned = true;
   if (layerEl) layerEl.style.display = "none";
   if (root) root.style.display = "none";
 }
 
 export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   if (!visible || !getState().player?.tutorial?.active) {
+    if (_overlayInactiveCleaned) return;
+    clearHangarTutorialGuide();
     clearRefineryTutorialGuide();
     clearHudHighlight();
     const dimmer = document.getElementById("hud-tour-dimmer");
@@ -618,8 +626,11 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
     _hudDimmerVisible = false;
     _lastDimmerCutoutKey = "";
     if (root) root.style.display = "none";
+    _overlayInactiveCleaned = true;
+    _overlayHiddenCleaned = false;
     return;
   }
+  _overlayInactiveCleaned = false;
   if (_now - _lastTutorialOverlayUpdateMs < TUTORIAL_OVERLAY_MIN_UPDATE_MS - 0.5) {
     return;
   }
@@ -627,11 +638,16 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   syncTutorialLayerBounds();
   const show = shouldShowTutorialLayer();
   if (!show) {
-    if (root) root.style.display = "none";
-    clearRefineryTutorialGuide();
-    clearHudHighlight();
+    if (!_overlayHiddenCleaned) {
+      if (root) root.style.display = "none";
+      clearHangarTutorialGuide();
+      clearRefineryTutorialGuide();
+      clearHudHighlight();
+      _overlayHiddenCleaned = true;
+    }
     return;
   }
+  _overlayHiddenCleaned = false;
   if (root) root.style.display = "block";
   syncHangarGuideVisuals();
   syncRefineryGuideVisuals();
@@ -640,7 +656,10 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   syncDimmerVisibility();
   updateNavProgress();
   updateReadyState();
-  positionCardForStep();
+  if (_now - _lastCardPositionUpdateMs >= TUTORIAL_CARD_POSITION_MIN_UPDATE_MS - 0.5) {
+    _lastCardPositionUpdateMs = _now;
+    positionCardForStep();
+  }
 }
 
 export function destroyTutorialOverlay() {

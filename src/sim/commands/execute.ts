@@ -2,7 +2,7 @@ import { type Player } from "../../state.js";
 import { PlayerAccess, WorldAccess, getState } from "../../state-access.js";
 import { fireSelectedTurret } from "../../combat/turret-control.js";
 import { tryInteractSite } from "../../sites/interact.js";
-import { clearWarpPresentation, getDockableStation, tryWarp, warpTo } from "../../dock.js";
+import { clearWarpPresentation, getDockableStation, tryWarp, warpTo } from "../../docking/index.js";
 import {
   assignModuleSlotToTarget,
   clearSensorLocks,

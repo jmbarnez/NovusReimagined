@@ -12,7 +12,7 @@ import {
   setMapScannerStrengthFromStep,
   mapScannerStrengthStepIndex,
   isMapScannerEmitting,
-} from "../src/scanning.js";
+} from "../src/scanning/index.js";
 import { SHIPS } from "../src/data/ships.js";
 
 describe("map scanner strength", () => {

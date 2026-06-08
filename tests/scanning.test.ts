@@ -7,7 +7,7 @@ import {
   PROGRESS_CAP_UNTIL_TRIANG,
   getConeRangeMult,
   getScanEnergyCost,
-} from "../src/scanning.js";
+} from "../src/scanning/index.js";
 
 describe("isInScanCone", () => {
   it("includes bearings inside half-width", () => {

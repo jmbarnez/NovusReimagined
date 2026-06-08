@@ -40,7 +40,7 @@ import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
 import { curSys, updateViewportBounds } from "../utils/game.js";
 import { rebuildSpatialGrid } from "../utils/spatial.js";
 import { dst } from "../utils/math.js";
-import { closeStationUi } from "../dock.js";
+import { closeStationUi } from "../docking/index.js";
 import { updateCamera } from "../utils/camera.js";
 import { setWorldView } from "../render/world-text.js";
 import { viewCenterX, viewCenterY, viewportW, viewportH, viewportLeft, viewportTop } from "../render/viewport.js";

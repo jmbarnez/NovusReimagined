@@ -2,7 +2,7 @@ import { Client } from "./state.js";
 import type { Enemy } from "./types/world.js";
 import { clearNav, getState } from "./state-access.js";
 import { showEnemyCtxMenu } from "./ui/hud/enemy-menu.js";
-import { closeStationUi, getDockableStation, openStationUi } from "./dock.js";
+import { closeStationUi, getDockableStation, openStationUi } from "./docking/index.js";
 import { dst } from "./utils/math.js";
 import { closeMapWindow, toggleMapWindow } from "./ui/hud-overlay/map-overlay.js";
 
