@@ -156,6 +156,8 @@
   border-radius: 2px;
   background: color-mix(in srgb, var(--hud-bg-deep) 40%, transparent);
   aspect-ratio: 1;
+  touch-action: none;
+  user-select: none;
 }
 .inv-grid-cell:hover {
   border-color: var(--hud-accent);
@@ -198,6 +200,17 @@
 }
 .inv-grid-cell.is-dragging {
   opacity: 0.5;
+}
+
+.inv-drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.85;
+  transform: scale(1.05);
+  border: 1px solid var(--hud-accent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--hud-bg-deep) 40%, transparent);
 }
 
 /* ─── Capacity Bar ─── */
