@@ -366,6 +366,12 @@ export function populateSystem(sys: System) {
       x,
       y,
       px: x, py: y,
+      target: {
+        kind: "local",
+        x: 0,
+        y: 0,
+        label: `sector-${linkIdx}`,
+      },
       targetSysIdx: linkIdx,
       radius: C.WORLD.GATES.radius,
       spin: rf(f, 0.004, 0.012),

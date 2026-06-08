@@ -209,6 +209,7 @@ export interface Trail {
   life: number;
   maxLife: number;
   angle?: number;
+  boost?: boolean;
 }
 
 export interface TrailConfig {
@@ -219,10 +220,11 @@ export interface TrailConfig {
   length?: number;
   life?: number;
   angle?: number;
+  boost?: boolean;
 }
 
-export function addTrailSegment({ x, y, color, width, length, life = 1.0, angle }: TrailConfig) {
-  getState().trails.push({ id: generateId(), x, y, color, width, length, life, maxLife: life, angle });
+export function addTrailSegment({ x, y, color, width, length, life = 1.0, angle, boost }: TrailConfig) {
+  getState().trails.push({ id: generateId(), x, y, color, width, length, life, maxLife: life, angle, boost });
 }
 
 export function removeBullet(index: number) {

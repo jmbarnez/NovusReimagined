@@ -80,13 +80,13 @@ export interface Gate {
   y: number;
   px: number;
   py: number;
-  targetSysIdx?: number;
-  target?: {
+  target: {
     kind: "local";
     x: number;
     y: number;
     label: string;
   };
+  targetSysIdx?: number;
   radius: number;
   spin: number;
   angle?: number;

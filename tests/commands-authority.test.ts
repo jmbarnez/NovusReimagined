@@ -68,12 +68,7 @@ describe("authoritative command validation", () => {
     expect(gate).toBeTruthy();
     if (!gate || gate.targetSysIdx == null) return;
 
-    p.px = gate.x - gate.radius * 2;
-    p.py = gate.y;
-    p.x = gate.x;
-    p.y = gate.y;
-
-    updateWarp(1 / 60);
+    executeGameCommand({ type: "warp", payload: { targetIdx: gate.targetSysIdx } }, p);
     expect(p.warpTargetIdx).toBe(gate.targetSysIdx);
     expect(p.warpCooldown).toBeGreaterThan(0);
 

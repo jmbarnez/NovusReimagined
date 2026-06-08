@@ -399,7 +399,12 @@ describe("tutorial exit gate", () => {
   it("blocks warp until graduation when exiting tutorial", () => {
     const primeIdx = getNovusPrimeIdx();
     if (primeIdx < 0) return;
-    const gate = { targetSysIdx: primeIdx } as Gate;
+    const gate: Gate = {
+      x: 0, y: 0, px: 0, py: 0,
+      target: { kind: "local", x: 0, y: 0, label: `sector-${primeIdx}` },
+      targetSysIdx: primeIdx,
+      radius: 100, spin: 0,
+    };
     G.P.tutorial.step = stepIndex("fly-gate");
     expect(canWarpThroughGate(gate, 0, G.P)).toBe(false);
     G.P.tutorial.step = stepIndex("graduation");
@@ -409,7 +414,12 @@ describe("tutorial exit gate", () => {
   it("shows the graduation gate before it is warpable", () => {
     const primeIdx = getNovusPrimeIdx();
     if (primeIdx < 0) return;
-    const gate = { targetSysIdx: primeIdx } as Gate;
+    const gate: Gate = {
+      x: 0, y: 0, px: 0, py: 0,
+      target: { kind: "local", x: 0, y: 0, label: `sector-${primeIdx}` },
+      targetSysIdx: primeIdx,
+      radius: 100, spin: 0,
+    };
     G.P.tutorial.step = stepIndex("gunnery");
     expect(shouldShowWarpGate(gate, 0, G.P)).toBe(true);
     expect(canWarpThroughGate(gate, 0, G.P)).toBe(false);
@@ -444,12 +454,8 @@ describe("tutorial exit gate", () => {
     expect(gate).toBeTruthy();
     if (!gate) return;
     G.P.tutorial.step = stepIndex("graduation");
-    G.P.px = gate.x - gate.radius * 2;
-    G.P.py = gate.y;
-    G.P.x = gate.x;
-    G.P.y = gate.y;
 
-    updateWarp(1 / 60);
+    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
     expect(G.P.warpTargetIdx).toBe(primeIdx);
     expect(G.P.warpCooldown).toBeGreaterThan(0);
   });
@@ -461,12 +467,8 @@ describe("tutorial exit gate", () => {
     expect(gate).toBeTruthy();
     if (!gate) return;
     G.P.tutorial.step = stepIndex("graduation");
-    G.P.px = gate.x - gate.radius * 2;
-    G.P.py = gate.y;
-    G.P.x = gate.x;
-    G.P.y = gate.y;
 
-    updateWarp(1 / 60);
+    executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
     expect(G.P.warpTargetIdx).toBe(primeIdx);
 
     updateWarp(999);
@@ -490,8 +492,11 @@ describe("tutorial exit gate", () => {
     G.P.y = localGate.y;
     G.P.vx = 12;
     G.P.vy = 9;
+    // Lock the gate and hold warp key so hold-to-charge triggers
+    G.P.targetLock = { id: localGate.id ?? "gate-local", x: localGate.x, y: localGate.y, hp: 1, alive: true, sigRadius: localGate.radius * 3, radius: localGate.radius };
+    Client.keys["warp"] = true;
 
-    updateWarp(1 / 60);
+    updateWarp(10); // enough to charge (2s) and complete warp (4.8s)
 
     expect(G.P.sysIdx).toBe(0);
     expect(G.P.warpTargetIdx).toBe(-1);
@@ -505,7 +510,13 @@ describe("tutorial exit gate", () => {
     G.P.tutorial.active = false;
     const primeIdx = getNovusPrimeIdx();
     if (primeIdx < 0) return;
-    expect(shouldShowWarpGate({ targetSysIdx: primeIdx } as Gate, 0, G.P)).toBe(true);
+    const gate: Gate = {
+      x: 0, y: 0, px: 0, py: 0,
+      target: { kind: "local", x: 0, y: 0, label: `sector-${primeIdx}` },
+      targetSysIdx: primeIdx,
+      radius: 100, spin: 0,
+    };
+    expect(shouldShowWarpGate(gate, 0, G.P)).toBe(true);
   });
 
   it("does not generate a return gate from Novus Prime to the tutorial system", () => {
@@ -517,7 +528,7 @@ describe("tutorial exit gate", () => {
     if (primeIdx < 0) return;
     const tutorialGates = G.GALAXY[0]?.gates ?? [];
     const graduationGates = tutorialGates.filter((gate) => gate.targetSysIdx === primeIdx);
-    const localReturnGates = tutorialGates.filter((gate) => gate.target?.kind === "local");
+    const localReturnGates = tutorialGates.filter((gate) => gate.targetSysIdx === undefined);
     const remoteRegionCount = TUTORIAL_LOCAL_REGIONS.filter((reg) => reg.id !== "tut-flight" && Math.hypot(reg.x, reg.y) >= 1).length;
 
     expect(graduationGates).toHaveLength(1);

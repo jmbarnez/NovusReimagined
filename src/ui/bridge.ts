@@ -12,7 +12,7 @@ import { sfxBlip } from "../audio/procedural.js";
 import { on } from "../events.js";
 import type { Enemy, Asteroid } from "../types/world.js";
 import { t } from "../utils/i18n.js";
-import { gateDestinationName, gateStableId, isLocalWarpGate } from "../utils/warp-gates.js";
+import { gateDestinationName, gateStableId } from "../utils/warp-gates.js";
 
 export { attachInventoryListeners, resetInventoryUI };
 
@@ -130,7 +130,7 @@ export function buildLocalOverviewRows(): OverviewRow[] {
       id: gateId,
       icon: "◇",
       cls: "GATE",
-      name: isLocalWarpGate(g) ? `↩ ${destination}` : `→ ${destination || t("bridge.gateFallback")}`,
+      name: `↩ ${destination}`,
       dist: Math.round(d),
       sig: "—",
       relV: "—",

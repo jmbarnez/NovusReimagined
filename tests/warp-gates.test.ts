@@ -10,6 +10,7 @@ function makeGate(): Gate {
     y: 0,
     px: 0,
     py: 0,
+    target: { kind: "local", x: 0, y: 0, label: "sector-1" },
     targetSysIdx: 1,
     radius: 100,
     spin: 0,
@@ -63,6 +64,7 @@ describe("warp gate aperture crossing", () => {
 
   it("triggers crossing even at very slow speeds (no minimum speed requirement)", () => {
     // Previously this would fail due to WARP_GATE_MIN_CROSS_SPEED check
-    expect(didCrossGateAperture(makeGate(), playerSegment(-160, 0, -158, 0))).toBe(true);
+    // Move from just outside to just inside the ~78 unit activation radius
+    expect(didCrossGateAperture(makeGate(), playerSegment(-80, 0, -76, 0))).toBe(true);
   });
 });

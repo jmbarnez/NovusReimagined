@@ -27,8 +27,8 @@ export interface EventMap {
   "tutorial:skip": { sysIdx: number };
   "inventory:changed": void;
   "warp:request": { gateId: string };
-  "warp:charging": { gateId: string; duration: number; targetSysIdx: number; targetX: number; targetY: number };
-  "warp:complete": { playerId: string; targetSysIdx: number; targetX: number; targetY: number };
+  "warp:charging": { gateId: string; duration: number; targetX: number; targetY: number };
+  "warp:complete": { playerId: string; targetX: number; targetY: number };
   "warp:exit-spawn": { gate: Gate; duration: number };
   "warp:exit-despawn": { gateId: string };
 }

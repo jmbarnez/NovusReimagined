@@ -2,7 +2,7 @@ import { type Player } from "../../state.js";
 import { PlayerAccess, WorldAccess, getState } from "../../state-access.js";
 import { fireSelectedTurret } from "../../combat/turret-control.js";
 import { tryInteractSite } from "../../sites/interact.js";
-import { clearWarpPresentation, getDockableStation, tryWarp, warpTo } from "../../docking/index.js";
+import { getDockableStation, warpTo, beginWarpThroughGate } from "../../docking/index.js";
 import {
   assignModuleSlotToTarget,
   clearSensorLocks,
@@ -72,9 +72,6 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
       break;
     case "interactSite":
       tryInteractSite(p);
-      break;
-    case "warp":
-      tryWarp(p, command.payload?.targetIdx);
       break;
     case "setFireControlSlot":
       if (!isValidHardpointIndex(command.payload.slot, p)) break;
@@ -297,14 +294,21 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
       PlayerAccess.setTutorialState(command.payload, p);
       resetTutorialTrackState(p);
       break;
+    case "warp": {
+      const targetIdx = command.payload?.targetIdx;
+      if (typeof targetIdx !== "number") break;
+      const sys = getState().GALAXY[p.sysIdx];
+      if (!sys) break;
+      const gate = sys.gates?.find((g) => g.targetSysIdx === targetIdx);
+      if (gate) {
+        beginWarpThroughGate(gate, p);
+      }
+      break;
+    }
     case "skipTutorial": {
       PlayerAccess.setTutorialSkipped(p);
       PlayerAccess.setTutorialComplete(p);
       PlayerAccess.setHomeSysIdx(command.payload.primeIdx, p);
-      if (p.sysIdx !== command.payload.primeIdx) {
-        warpTo(command.payload.primeIdx, p);
-      }
-      clearWarpPresentation(p);
       resetTutorialTrackState(p);
       if (p.contracts) {
         const idx = p.contracts.findIndex((contract) => contract.id === "mc_academy_training");

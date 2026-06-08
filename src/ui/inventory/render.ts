@@ -77,16 +77,27 @@ export function renderInventoryHTML(): string {
   if (isGrid) {
     const layout = getLayout(INV_STATE.selectedTreeId);
     const itemMap = new Map(filtered.map(it => [it.id, it]));
-    // Render enough slots to fill a generous viewport; auto-fill handles column count
-    const totalSlots = Math.max(filtered.length + 16, 80);
+
+    // Build slot->item map using actual slotIndex values
+    const slotMap = new Map<number, InventoryItem>();
+    for (const pos of layout.positions) {
+      const item = itemMap.get(pos.itemId);
+      if (item) slotMap.set(pos.slotIndex, item);
+    }
+
+    // Calculate how many slots to render: enough for all positioned items plus padding
+    const maxSlot = layout.positions.length > 0
+      ? Math.max(...layout.positions.map(p => p.slotIndex))
+      : -1;
+    const totalSlots = Math.max(maxSlot + 1 + 16, Math.max(filtered.length + 8, 48));
     const slotHtml: string[] = [];
 
-    for (let i = 0; i < totalSlots; i++) {
-      const pos = layout.positions[i];
-      if (pos && itemMap.has(pos.itemId)) {
-        slotHtml.push(renderItemGridCell(itemMap.get(pos.itemId)!, i));
+    for (let slot = 0; slot < totalSlots; slot++) {
+      const item = slotMap.get(slot);
+      if (item) {
+        slotHtml.push(renderItemGridCell(item, slot));
       } else {
-        slotHtml.push(renderEmptySlot(i));
+        slotHtml.push(renderEmptySlot(slot));
       }
     }
 

@@ -28,6 +28,7 @@ export function emitShipExhaustSheets(p: Player, x: number, y: number, angle: nu
       length,
       life: boost ? EXHAUST_LIFE * (1.2 + assistRatio * 0.4) : EXHAUST_LIFE,
       angle,
+      boost,
     });
   }
 }

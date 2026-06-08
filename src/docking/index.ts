@@ -9,10 +9,7 @@ export {
 } from "./core.js";
 
 export {
-  getWarpGateInRange,
   warpTo,
   beginWarpThroughGate,
   updateWarp,
-  tryWarp,
-  clearWarpPresentation,
 } from "./warp.js";

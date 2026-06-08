@@ -2,7 +2,6 @@ import { Client, type Player } from "../state.js";
 import { dst } from "../utils/math.js";
 import { getNovusPrimeIdx } from "../world/galaxy-build.js";
 import type { Gate } from "../types/world.js";
-import { isLocalWarpGate } from "../utils/warp-gates.js";
 import {
   getTutorialTrackById,
   trackTotalArcLength,
@@ -165,10 +164,8 @@ export function getCurrentTutorialStep(p: Player): TutorialStep | null {
 /** Novus Prime warp gate in sys-0 — visible early, warp-locked until graduation. */
 export function isTutorialExitGate(g: Gate, sysIdx: number): boolean {
   const primeIdx = getNovusPrimeIdx();
-  return sysIdx === 0 && primeIdx >= 0 && g.targetSysIdx === primeIdx;
+  return sysIdx === 0 && primeIdx >= 0 && g.target.label === `sector-${primeIdx}`;
 }
-
-export { isLocalWarpGate };
 
 export function isTutorialExitGateRevealed(p: Player): boolean {
   if (p.sysIdx !== 0) return true;
@@ -192,7 +189,6 @@ export function shouldShowWarpGate(g: Gate, sysIdx: number, p: Player): boolean 
 
 export function canWarpThroughGate(g: Gate, sysIdx: number, p: Player): boolean {
   if (!shouldShowWarpGate(g, sysIdx, p)) return false;
-  if (isLocalWarpGate(g)) return true;
   if (!isTutorialExitGate(g, sysIdx)) return true;
   return canWarpThroughTutorialExitGate(p);
 }

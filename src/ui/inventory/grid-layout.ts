@@ -46,11 +46,6 @@ export function getLayout(containerId: string): ContainerLayout {
   return empty;
 }
 
-function computeNextSlot(layout: ContainerLayout): number {
-  if (layout.positions.length === 0) return 0;
-  return Math.max(...layout.positions.map(p => p.slotIndex)) + 1;
-}
-
 export function setLayout(containerId: string, layout: ContainerLayout): void {
   _layouts.set(containerId, layout);
   saveLayoutToStorage(containerId, layout);
@@ -62,89 +57,70 @@ export function getPosition(containerId: string, itemId: string): number | null 
   return pos ? pos.slotIndex : null;
 }
 
-export function setPosition(containerId: string, itemId: string, slotIndex: number): void {
-  const layout = getLayout(containerId);
-  const existingIndex = layout.positions.findIndex(p => p.itemId === itemId);
-
-  let newPositions: GridPosition[];
-  if (existingIndex >= 0) {
-    newPositions = layout.positions.map((p, i) =>
-      i === existingIndex ? { ...p, slotIndex } : p
-    );
-  } else {
-    newPositions = [...layout.positions, { itemId, slotIndex }];
-  }
-
-  const newLayout: ContainerLayout = {
-    ...layout,
-    positions: newPositions,
-    nextSlot: computeNextSlot({ ...layout, positions: newPositions }),
-  };
-
-  setLayout(containerId, newLayout);
-}
-
 export function removePosition(containerId: string, itemId: string): void {
   const layout = getLayout(containerId);
   const newPositions = layout.positions.filter(p => p.itemId !== itemId);
   if (newPositions.length === layout.positions.length) return;
 
-  const newLayout: ContainerLayout = {
-    ...layout,
-    positions: newPositions,
-  };
-
-  setLayout(containerId, newLayout);
+  setLayout(containerId, { ...layout, positions: newPositions });
 }
 
-export function assignNextSlot(containerId: string, itemId: string): number {
-  const layout = getLayout(containerId);
-  const usedSlots = new Set(layout.positions.map(p => p.slotIndex));
-  let slotIndex = 0;
-  while (usedSlots.has(slotIndex)) slotIndex++;
-  setPosition(containerId, itemId, slotIndex);
-  return slotIndex;
-}
-
-function lowestEmptySlot(positions: GridPosition[]): number {
+function nextAvailableSlot(positions: GridPosition[]): number {
   const used = new Set(positions.map(p => p.slotIndex));
   let slot = 0;
   while (used.has(slot)) slot++;
   return slot;
 }
 
-function compactPositions(positions: GridPosition[]): GridPosition[] {
-  const sorted = [...positions].sort((a, b) => a.slotIndex - b.slotIndex);
-  return sorted.map((p, i) => ({ ...p, slotIndex: i }));
-}
-
 export function mergeLayoutWithItems(containerId: string, itemIds: string[]): void {
   const layout = getLayout(containerId);
   const itemIdSet = new Set(itemIds);
 
-  const filteredPositions = layout.positions.filter(p => itemIdSet.has(p.itemId));
-  const positionedIds = new Set(filteredPositions.map(p => p.itemId));
+  // Keep positions for items that still exist
+  const existingPositions = layout.positions.filter(p => itemIdSet.has(p.itemId));
+  const existingIds = new Set(existingPositions.map(p => p.itemId));
 
-  let newPositions: GridPosition[] = [...filteredPositions];
-
+  // Add new items at the next available slot
+  let newPositions = [...existingPositions];
   for (const itemId of itemIds) {
-    if (!positionedIds.has(itemId)) {
-      newPositions.push({ itemId, slotIndex: newPositions.length });
+    if (!existingIds.has(itemId)) {
+      const slot = nextAvailableSlot(newPositions);
+      newPositions.push({ itemId, slotIndex: slot });
     }
   }
 
-  newPositions = compactPositions(newPositions);
-
-  const positionsChanged = newPositions.length !== layout.positions.length ||
-    newPositions.some((p, i) => p.itemId !== layout.positions[i]?.itemId || p.slotIndex !== layout.positions[i]?.slotIndex);
-
-  if (positionsChanged) {
-    const newLayout: ContainerLayout = {
-      positions: newPositions,
-      nextSlot: newPositions.length,
-    };
-    setLayout(containerId, newLayout);
+  // Only persist if something changed
+  if (newPositions.length !== layout.positions.length ||
+      newPositions.some((p, i) => p.itemId !== layout.positions[i]?.itemId || p.slotIndex !== layout.positions[i]?.slotIndex)) {
+    const maxSlot = newPositions.length > 0 ? Math.max(...newPositions.map(p => p.slotIndex)) : 0;
+    setLayout(containerId, { positions: newPositions, nextSlot: maxSlot + 1 });
   }
+}
+
+export function moveItemInGrid(containerId: string, fromSlot: number, toSlot: number): void {
+  if (fromSlot === toSlot) return;
+
+  const layout = getLayout(containerId);
+  const fromIdx = layout.positions.findIndex(p => p.slotIndex === fromSlot);
+  if (fromIdx < 0) return;
+
+  const toIdx = layout.positions.findIndex(p => p.slotIndex === toSlot);
+
+  const newPositions = [...layout.positions];
+
+  if (toIdx >= 0) {
+    // Swap two items
+    const fromItem = { ...newPositions[fromIdx], slotIndex: toSlot };
+    const toItem = { ...newPositions[toIdx], slotIndex: fromSlot };
+    newPositions[fromIdx] = fromItem;
+    newPositions[toIdx] = toItem;
+  } else {
+    // Move to empty slot
+    newPositions[fromIdx] = { ...newPositions[fromIdx], slotIndex: toSlot };
+  }
+
+  const maxSlot = newPositions.length > 0 ? Math.max(...newPositions.map(p => p.slotIndex)) : 0;
+  setLayout(containerId, { positions: newPositions, nextSlot: maxSlot + 1 });
 }
 
 export function clearLayout(containerId: string): void {

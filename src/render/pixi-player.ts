@@ -5,6 +5,28 @@
  * sprite pool, including speed-based engine exhaust sheets and blink afterimages.
  */
 import { getState } from "../state-access.js";
+import {
+  bakeShipTexture,
+  getShipTexture,
+  bakeShipLightTextures,
+  getShipLightTextures,
+  bakeDotTexture,
+  getDotTexture,
+  clearShipTextureCaches,
+} from "./player/bake.js";
+import {
+  destroyPlayerSprites,
+  destroyRemotePlayerSprites,
+  buildPlayerSprites,
+  syncPixiPlayer,
+  rebuildPlayerSprites,
+} from "./player/ship.js";
+import {
+  buildTrailPool,
+  syncPixiTrails,
+  destroyTrailPool,
+  refreshTrailTexture,
+} from "./player/trails.js";
 
 export {
   bakeShipTexture,
@@ -14,7 +36,7 @@ export {
   bakeDotTexture,
   getDotTexture,
   clearShipTextureCaches,
-} from "./player/bake.js";
+};
 
 export {
   destroyPlayerSprites,
@@ -22,17 +44,18 @@ export {
   buildPlayerSprites,
   syncPixiPlayer,
   rebuildPlayerSprites,
-} from "./player/ship.js";
+};
 
 export {
   buildTrailPool,
   syncPixiTrails,
   destroyTrailPool,
   refreshTrailTexture,
-} from "./player/trails.js";
+};
 
 export function initPixiPlayer(): void {
   const dotTex = getDotTexture();
+  void dotTex;
   buildPlayerSprites(getState().player?.shipId ?? "scout");
   buildTrailPool();
 }

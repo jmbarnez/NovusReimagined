@@ -6,34 +6,25 @@ import { curSys } from "./game.js";
 
 const WARP_GATE_APERTURE_FRACTION = 0.78;
 
-export function isLocalWarpGate(gate: Gate): boolean {
-  return gate.target?.kind === "local";
-}
-
 export function isGateLockId(id: string): boolean {
-  return id.startsWith("gate-") || id.startsWith("local|") || id.startsWith("system|");
+  return id.startsWith("gate-") || id.startsWith("local|");
 }
 
 export function gateStableId(gate: Gate): string {
   if (gate.id) return gate.id;
-  if (gate.target?.kind === "local") {
-    return `local|${gate.x}|${gate.y}|${gate.target.x}|${gate.target.y}`;
-  }
-  return `system|${gate.x}|${gate.y}|${gate.targetSysIdx ?? -1}`;
+  return `local|${gate.x}|${gate.y}|${gate.target.x}|${gate.target.y}`;
 }
 
 export function gateDestinationName(gate: Gate, galaxy: System[]): string {
-  if (gate.target?.kind === "local") return gate.target.label;
-  return galaxy[gate.targetSysIdx ?? -1]?.name ?? "Sector";
+  return gate.target.label;
 }
 
 export function gateWorldLabel(gate: Gate, galaxy: System[]): string {
-  if (gate.target?.kind === "local") return `RETURN TO ${gate.target.label.toUpperCase()}`;
-  return galaxy[gate.targetSysIdx ?? -1]?.name ?? "Unknown Sector";
+  return `RETURN TO ${gate.target.label.toUpperCase()}`;
 }
 
 export function gateMapLabel(gate: Gate): string {
-  return gate.target?.kind === "local" ? "RETURN GATE" : "JUMP GATE";
+  return "RETURN GATE";
 }
 
 export function gateActivationRadius(gate: Gate): number {
