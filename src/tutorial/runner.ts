@@ -7,7 +7,7 @@ import { emit } from "../events.js";
 import { savePlayer } from "../player/player-data.js";
 import { warpTo, undockStation } from "../docking/index.js";
 import { getNovusPrimeIdx } from "../world/galaxy-build.js";
-import { ensureTutorialRegionsDiscovered } from "../map-discovery.js";
+import { ensureTutorialRegionsDiscovered } from "../world/map-discovery.js";
 import { TUTORIAL_SPAWN, shouldRelocateTutorialStart } from "../data/tutorial-layout.js";
 import { floatText } from "../utils/fx.js";
 import { clearHangarTutorialGuide } from "../ui/tutorial-hangar-guide.js";

@@ -118,13 +118,49 @@ export function syncGateSprites(now: number, sys: System): void {
     if (isGateVisible) {
       const pulse = 0.5 + 0.5 * Math.sin(now * 0.0022);
       const corePulse = 0.7 + 0.3 * Math.sin(now * 0.004);
-      const RENDER_SCALE = 2.8;
+      
+      // State-based rendering
+      const state = g.gateState ?? "dormant";
+      const charge = g.chargeProgress ?? 0;
+      const isTemp = g.isTemporary ?? false;
+      
+      let renderScale = 2.0;
+      let renderAlpha = 0.2;
+      let spinSpeed = 0.0001;
+      let showParticles = false;
+      
+      if (state === "dormant") {
+        renderScale = 2.0;
+        renderAlpha = 0.2;
+        spinSpeed = 0.0001;
+      } else if (state === "charging") {
+        renderScale = 2.0 + charge * 0.8;
+        renderAlpha = 0.2 + charge * 0.8;
+        spinSpeed = 0.0001 + charge * 0.0005;
+      } else if (state === "active") {
+        renderScale = 2.8;
+        renderAlpha = 1.0;
+        spinSpeed = 0.0006;
+        showParticles = true;
+      } else if (state === "warping") {
+        renderScale = 2.8;
+        renderAlpha = 1.0;
+        spinSpeed = 0.002;
+      }
+      
+      // Handle dispense fade out
+      if (isTemp && g.dispenseTimer !== undefined && g.dispenseTimer !== null) {
+        const fadeProgress = Math.min(1, g.dispenseTimer / 3.0);
+        renderAlpha *= fadeProgress;
+      }
+      
+      const RENDER_SCALE = renderScale;
       const visR = g.radius * RENDER_SCALE;
 
       // --- 0. OUTER SEGMENTED HULL RING ---
       b.hull.clear();
-      const hullSpin = now * 0.0003;
-      const hullSegments = 12;
+      const hullSpin = now * spinSpeed;
+      const hullSegments = state === "dormant" ? 6 : 12;
       for (let j = 0; j < hullSegments; j++) {
         const a = hullSpin + (j / hullSegments) * TAU;
         const ar = a + (1 / hullSegments) * TAU * 0.85;
@@ -135,7 +171,7 @@ export function syncGateSprites(now: number, sys: System): void {
         b.hull.stroke({
           color: isMajor ? 0x78c0ff : 0x3c6078,
           width: isMajor ? 3.5 : 2.5,
-          alpha: isMajor ? (0.55 + pulse * 0.2) : 0.35,
+          alpha: isMajor ? (0.55 + pulse * 0.2) * renderAlpha : 0.35 * renderAlpha,
         });
       }
 
@@ -145,19 +181,19 @@ export function syncGateSprites(now: number, sys: System): void {
       // Outer glow
       b.core.circle(0, 0, g.radius * 0.75).fill({
         color: 0x285ac8,
-        alpha: (0.15 + pulse * 0.1)
+        alpha: (0.15 + pulse * 0.1) * renderAlpha
       });
 
       // Mid glow
       b.core.circle(0, 0, g.radius * 0.48).fill({
         color: 0x5fa0d0,
-        alpha: (0.35 + corePulse * 0.25)
+        alpha: (0.35 + corePulse * 0.25) * renderAlpha
       });
 
       // Bright center
       b.core.circle(0, 0, g.radius * 0.22).fill({
         color: 0xe0f0ff,
-        alpha: (0.70 + corePulse * 0.25)
+        alpha: (0.70 + corePulse * 0.25) * renderAlpha
       });
 
       // --- 2. CONCENTRIC COUNTER-ROTATING RINGS ---
@@ -166,7 +202,7 @@ export function syncGateSprites(now: number, sys: System): void {
       const spin = g.spin ?? 0;
 
       // Outer ring
-      const outerTicks = 8;
+      const outerTicks = state === "dormant" ? 4 : 8;
       const outerDash = 0.6;
       for (let j = 0; j < outerTicks; j++) {
         const a = spin + (j / outerTicks) * TAU;
@@ -176,14 +212,14 @@ export function syncGateSprites(now: number, sys: System): void {
         b.rings.stroke({
           color: 0x78c0ff,
           width: 2.5,
-          alpha: (0.55 + pulse * 0.2),
+          alpha: (0.55 + pulse * 0.2) * renderAlpha,
         });
       }
 
       // Inner counter-spin ring
       const innerRadius = g.radius * 0.72;
       const innerSpin = -spin * 0.6;
-      const innerTicks = 6;
+      const innerTicks = state === "dormant" ? 3 : 6;
       const innerDash = 0.5;
       for (let j = 0; j < innerTicks; j++) {
         const a = innerSpin + (j / innerTicks) * TAU;
@@ -193,7 +229,7 @@ export function syncGateSprites(now: number, sys: System): void {
         b.rings.stroke({
           color: 0x5fa0d0,
           width: 2.0,
-          alpha: (0.45 + pulse * 0.15),
+          alpha: (0.45 + pulse * 0.15) * renderAlpha,
         });
       }
 
@@ -202,8 +238,22 @@ export function syncGateSprites(now: number, sys: System): void {
       b.foregroundRim.circle(0, 0, visR * 0.98).stroke({
         color: 0x9ee8ff,
         width: 1.5,
-        alpha: 0.15 + pulse * 0.1,
+        alpha: (0.15 + pulse * 0.1) * renderAlpha,
       });
+      
+      // Spark particles for active state
+      if (showParticles) {
+        const numSparks = 8;
+        for (let sIdx = 0; sIdx < numSparks; sIdx++) {
+          const sparkAng = (sIdx / numSparks) * TAU + now * 0.0012;
+          const orbitR = visR * 0.94;
+          const sx = Math.cos(sparkAng) * orbitR;
+          const sy = Math.sin(sparkAng) * orbitR;
+          const sparkAlpha = (0.4 + 0.4 * Math.sin(now * 0.01 + sIdx)) * renderAlpha;
+          b.core.circle(sx, sy, 1.5)
+            .fill({ color: sIdx % 2 === 0 ? 0xffffff : 0x78c0ff, alpha: sparkAlpha });
+        }
+      }
     }
   }
 }

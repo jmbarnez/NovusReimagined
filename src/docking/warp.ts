@@ -11,6 +11,7 @@ import { floatText } from "../utils/fx.js";
 import { populateSystem } from "../world-gen.js";
 import { stationLayer } from "../pixi.js";
 import { initPixiCelestial, destroyPixiCelestial } from "../render/celestial/index.js";
+import { initGateSprites } from "../render/celestial/gates.js";
 import type { Gate } from "../types/world.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { didCrossGateAperture, gateDestinationName, gateStableId, isLocalWarpGate } from "../utils/warp-gates.js";
@@ -110,9 +111,20 @@ export function warpTo(targetIdx: number, p: Player = getState().player) {
       x: back.x + nx * exit + (Math.random() - 0.5) * 32,
       y: back.y + ny * exit + (Math.random() - 0.5) * 32,
     }, p);
-  } else if (!spawnNearStationFallback(targetIdx, p)) {
-    console.warn(`[warp] system ${targetIdx} has no reciprocal gate or station; spawning at origin`);
-    PlayerAccess.updatePhysics({ x: 0, y: 0 }, p);
+  } else {
+    // Create temporary dispense gate if no reciprocal gate exists
+    const dispenseX = -1000 + Math.random() * 2000;
+    const dispenseY = -1000 + Math.random() * 2000;
+    createTemporaryGate(targetIdx, dispenseX, dispenseY, fromIdx);
+    
+    const len = Math.hypot(dispenseX, dispenseY) || 1;
+    const nx = len > 0.5 ? dispenseX / len : 1;
+    const ny = len > 0.5 ? dispenseY / len : 0;
+    const exit = 60 + GATE_RANGE + 240;
+    PlayerAccess.updatePhysics({
+      x: dispenseX + nx * exit + (Math.random() - 0.5) * 32,
+      y: dispenseY + ny * exit + (Math.random() - 0.5) * 32,
+    }, p);
   }
   PlayerAccess.updatePhysics({ px: p.x, py: p.y, vx: 0, vy: 0 }, p);
   PlayerAccess.setInvincible(2.0, p);
@@ -169,7 +181,118 @@ export function beginWarpThroughGate(gate: Gate, p: Player = getState().player):
   return true;
 }
 
+const ACTIVATION_RADIUS_MULT = 1.5;
+const CHARGE_TIME = 2.0;
+const DISPENSE_LIFETIME = 3.0;
+
+function createTemporaryGate(sysIdx: number, x: number, y: number, fromIdx: number): void {
+  const sys = getState().GALAXY[sysIdx];
+  if (!sys) return;
+  
+  // Check if gate already exists at this location
+  const existingGate = sys.gates?.find(g => 
+    Math.hypot(g.x - x, g.y - y) < 10 && g.targetSysIdx === fromIdx
+  );
+  if (existingGate) return;
+  
+  // Create temporary gate
+  const tempGate: Gate = {
+    x,
+    y,
+    px: x,
+    py: y,
+    radius: 60,
+    spin: 0,
+    targetSysIdx: fromIdx,
+    gateState: "active",
+    chargeProgress: 1,
+    dispenseTimer: DISPENSE_LIFETIME,
+    isTemporary: true,
+  };
+  
+  if (!sys.gates) sys.gates = [];
+  sys.gates.push(tempGate);
+  
+  // Particle burst on dispense gate spawn
+  if (getState().player.sysIdx === sysIdx) {
+    for (let i = 0; i < 24; i++) {
+      const a = random() * Math.PI * 2;
+      const r = 30 + random() * 40;
+      const sp = 150 + random() * 100;
+      addParticle({
+        x: x + Math.cos(a) * r,
+        y: y + Math.sin(a) * r,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 0.6 + random() * 0.4,
+        color: "#aaddff",
+        r: 1 + random() * 1.5,
+        drag: 0.1,
+      });
+    }
+  }
+  
+  // Reinitialize gate sprites if this is the current system
+  if (getState().player.sysIdx === sysIdx && getState().player === getState().player) {
+    initGateSprites(sys);
+  }
+}
+
+function updateGateActivation(dt: number, p: Player): void {
+  const sys = curSys(p);
+  if (!sys) return;
+  
+  for (const gate of sys.gates ?? []) {
+    if (gate.isTemporary) {
+      // Update dispense timer
+      if (gate.dispenseTimer !== undefined && gate.dispenseTimer !== null) {
+        gate.dispenseTimer -= dt;
+        if (gate.dispenseTimer <= 0) {
+          // Remove temporary gate (handled by system repopulation)
+          gate.dispenseTimer = null;
+        }
+      }
+      continue;
+    }
+    
+    const dist = Math.hypot(p.x - gate.x, p.y - gate.y);
+    const activationRadius = gate.radius * ACTIVATION_RADIUS_MULT;
+    
+    // Initialize state if not set
+    if (!gate.gateState) gate.gateState = "dormant";
+    if (gate.chargeProgress === undefined) gate.chargeProgress = 0;
+    
+    if (dist < activationRadius && (p.warpCooldown ?? 0) <= 0) {
+      // Player in range - start charging
+      if (gate.gateState === "dormant") {
+        gate.gateState = "charging";
+      }
+      
+      if (gate.gateState === "charging") {
+        gate.chargeProgress += dt / CHARGE_TIME;
+        if (gate.chargeProgress >= 1) {
+          gate.chargeProgress = 1;
+          gate.gateState = "active";
+          // Auto-warp when fully charged
+          if (didCrossGateAperture(gate, p)) {
+            beginWarpThroughGate(gate, p);
+          }
+        }
+      }
+    } else {
+      // Player out of range - reset
+      if (gate.gateState !== "dormant") {
+        gate.gateState = "dormant";
+        gate.chargeProgress = 0;
+      }
+    }
+  }
+}
+
 function tickPlayerWarp(dt: number, p: Player): void {
+  // Update gate activation states
+  updateGateActivation(dt, p);
+  
   if ((p.warpCooldown ?? 0) > 0) {
     PlayerAccess.setWarpCooldown((p.warpCooldown ?? 0) - dt, p);
     if ((p.warpCooldown ?? 0) <= 0) {

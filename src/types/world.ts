@@ -91,6 +91,10 @@ export interface Gate {
   spin: number;
   angle?: number;
   _orbitSpeed?: number;
+  gateState?: "dormant" | "charging" | "active" | "warping";
+  chargeProgress?: number;
+  dispenseTimer?: number | null;
+  isTemporary?: boolean;
 }
 
 export interface Planet {

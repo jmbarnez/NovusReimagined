@@ -13,7 +13,7 @@ import {
   systemsVisibleOnMap,
   canSetMapWaypointAt,
   type LocalRegionDef,
-} from "../map-discovery.js";
+} from "../world/map-discovery.js";
 import { sfxBlip } from "../audio/procedural.js";
 import { clearNav } from "../state-access.js";
 import { queueFrameAction } from "../sim/input.js";

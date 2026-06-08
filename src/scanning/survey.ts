@@ -4,7 +4,7 @@ import { getStats } from "../player/player-stats.js";
 import { curSys } from "../utils/game.js";
 import { dst, lerp } from "../utils/math.js";
 import { C } from "../config/index.js";
-import { tryDiscoverLocalRegionsFromScan } from "../map-discovery.js";
+import { tryDiscoverLocalRegionsFromScan } from "../world/map-discovery.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../audio/procedural.js";
 import { logEvent } from "../feedback.js";
 import { addSkillXp } from "../player/player-data.js";
