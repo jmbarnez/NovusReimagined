@@ -1,5 +1,5 @@
 import { Client } from "../state.js";
-import { STRINGS } from "../data/strings.js";
+import { STRINGS } from "../data/strings/index.js";
 
 export function t(key: string, vars?: Record<string, string | number>): string {
   const lang = Client.settings?.language ?? "en";

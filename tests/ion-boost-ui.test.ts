@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { _G as G } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { renderStatsTabHTML } from "../src/ui/hud/ship-panel/stats.js";
-import { STRINGS } from "../src/data/strings.js";
+import { STRINGS } from "../src/data/strings/index.js";
 
 describe("ion boost UI", () => {
   beforeEach(() => {

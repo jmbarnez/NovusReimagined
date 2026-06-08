@@ -1,0 +1,38 @@
+import type { Language } from "./index.js";
+
+export const tooltipStrings: Record<Language, Record<string, string>> = {
+  en: {
+    "tooltip.highSlot": "High Slot",
+    "tooltip.mediumSlot": "Medium Slot",
+    "tooltip.lowSlot": "Low Slot",
+    "tooltip.weaponSystem": "Weapon System",
+    "tooltip.miningSystem": "Mining System",
+    "tooltip.salvageSystem": "Salvage System",
+    "tooltip.moduleBonuses": "Module Bonuses",
+    "tooltip.installedMods": "Installed Modifications",
+    "tooltip.activeModule": "Active Module",
+    "tooltip.passiveModule": "Passive Module",
+    "tooltip.capDrain": "Capacitor Drain",
+    "tooltip.activationCost": "Activation Cost",
+    "tooltip.moduleSpecs": "Module Specifications",
+    "tooltip.condition": "Condition",
+    "tooltip.durability": "Durability",
+  },
+  es: {
+    "tooltip.highSlot": "Ranura Alta",
+    "tooltip.mediumSlot": "Ranura Media",
+    "tooltip.lowSlot": "Ranura Baja",
+    "tooltip.weaponSystem": "Sistema de Armas",
+    "tooltip.miningSystem": "Sistema de Minería",
+    "tooltip.salvageSystem": "Sistema de Recuperación",
+    "tooltip.moduleBonuses": "Bonificaciones del Módulo",
+    "tooltip.installedMods": "Modificaciones Instaladas",
+    "tooltip.activeModule": "Módulo Activo",
+    "tooltip.passiveModule": "Módulo Pasivo",
+    "tooltip.capDrain": "Drenaje del Condensador",
+    "tooltip.activationCost": "Costo de Activación",
+    "tooltip.moduleSpecs": "Especificaciones del Módulo",
+    "tooltip.condition": "Estado",
+    "tooltip.durability": "Durabilidad",
+  },
+};

@@ -25,7 +25,7 @@ import {
   renderProcessStage,
   renderSeparateStage,
   renderStageTabs,
-} from "./industry-renderers.js";
+} from "./industry-renderers/index.js";
 
 let lastIndustryContainer: HTMLElement | null = null;
 let lastFabricationContainer: HTMLElement | null = null;

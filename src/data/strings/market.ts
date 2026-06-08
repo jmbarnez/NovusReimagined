@@ -1,0 +1,36 @@
+import type { Language } from "./index.js";
+
+export const marketStrings: Record<Language, Record<string, string>> = {
+  en: {
+    "market.all": "All",
+    "market.high": "High",
+    "market.med": "Med",
+    "market.low": "Low",
+    "market.noMatch": "No modules match.",
+    "market.noResources": "No resources match.",
+    "market.modules": "Modules",
+    "market.ammo": "Ammo",
+    "market.resources": "Resources",
+    "market.priceAsc": "Price ↑",
+    "market.priceDesc": "Price ↓",
+    "market.owned": "Owned",
+    "market.affordable": "Affordable",
+    "market.search": "search…",
+  },
+  es: {
+    "market.all": "Todo",
+    "market.high": "Alto",
+    "market.med": "Med",
+    "market.low": "Bajo",
+    "market.noMatch": "No hay módulos que coincidan.",
+    "market.noResources": "No hay recursos que coincidan.",
+    "market.modules": "Módulos",
+    "market.ammo": "Munición",
+    "market.resources": "Recursos",
+    "market.priceAsc": "Precio ↑",
+    "market.priceDesc": "Precio ↓",
+    "market.owned": "En Posesión",
+    "market.affordable": "Asequible",
+    "market.search": "buscar…",
+  },
+};

@@ -91,7 +91,7 @@ export function getPerformanceTelemetrySnapshot(): PerformanceTelemetrySnapshot 
   const sys = curSys();
   const width = viewportW();
   const height = viewportH();
-  const pixiResolution = app?.renderer.resolution ?? pixiDpr;
+  const pixiResolution = app?.renderer?.resolution ?? pixiDpr;
   const enemies = sys?._liveEnemies ?? [];
   const asteroids = sys?._liveAsteroids ?? [];
   const visibleEnemies = Client.perfAdvanced

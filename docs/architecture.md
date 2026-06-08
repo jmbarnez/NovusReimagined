@@ -119,7 +119,7 @@ el.textContent = t("hud.jumpTo", { name: sys.name });
 
 ### Translation Dictionary
 
-All strings live in `src/data/strings.ts` inside the `STRINGS` record:
+All strings live in `src/data/strings/` as namespace files inside the `STRINGS` record:
 ```ts
 export const STRINGS: Record<Language, Record<string, string>> = {
   en: { "hud.shield": "Shield", ... },
@@ -131,7 +131,8 @@ Rules when adding or editing strings:
 - **Always add both `en` and `es` entries.** Keep the two blocks in sync (same keys, same order).
 - Use descriptive, namespaced keys: `profile.title`, `ship.offline`, `enemyMenu.orbit`.
 - For UI labels that appear together, keep them under the same namespace (e.g. `profile.*` for the profile screen).
-- Run `npm run typecheck` after editing `strings.ts` to catch syntax issues.
+- Add new keys to the matching namespace file under `src/data/strings/` (e.g. `settings.*` goes in `src/data/strings/settings.ts`).
+- Run `npm run typecheck` after editing to catch syntax issues.
 
 ### Current Language
 
@@ -141,7 +142,7 @@ Rules when adding or editing strings:
 
 When adding new UI features:
 1. Search the file for raw English text in `innerHTML`, `textContent`, `confirm()`, `alert()`, `prompt()`, and `logEvent()` calls.
-2. Add the required keys to `src/data/strings.ts` (both languages).
+2. Add the required keys to the matching namespace file under `src/data/strings/` (both languages).
 3. Replace the hardcoded text with `t("key")` or `t("key", { var: value })`.
 
 ## Adding New Content
