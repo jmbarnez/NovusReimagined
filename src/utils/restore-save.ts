@@ -11,7 +11,7 @@ import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { ModuleRarity } from "../data/moduleRarity.js";
 import { getInstance } from "./items.js";
 import { clearSimulationEntities } from "./entities.js";
-import { initTutorial } from "../tutorial.js";
+import { initTutorial } from "../tutorial/index.js";
 import { initTutorialOverlay } from "../ui/tutorial-overlay.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 import { spawnNearFirstStation, setupPlayerSpawn } from "./player-spawn.js";

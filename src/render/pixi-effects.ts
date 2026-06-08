@@ -32,8 +32,8 @@ let _wreckGfx: Graphics | null = null;
 let _pickupGfx: Graphics | null = null;
 let _decalGfx: Graphics | null = null;
 
-// Text labeling maps (keyed by item reference)
-const _pickupLabels = new Map<SalvagePickup, Text>();
+// Text labeling maps (keyed by stable pickup id)
+const _pickupLabels = new Map<string, Text>();
 
 // Object pool for Text objects to avoid GC pressure
 const _textPool: Text[] = [];
@@ -65,15 +65,15 @@ function returnPooledText(t: Text): void {
 // Texture cache for baked pickup icons (keyed by catalog id)
 const _pickupIconTextures = new Map<string, Texture>();
 
-// Sprite tracking for pickups that show an icon image
-const _pickupSprites = new Map<SalvagePickup, Sprite>();
+// Sprite tracking for pickups that show an icon image (keyed by stable pickup id)
+const _pickupSprites = new Map<string, Sprite>();
 
 // Object pool for Sprite objects
 const _spritePool: Sprite[] = [];
 const _spritePoolSize = 64;
 
 // Reusable Sets/Maps to avoid per-frame GC allocation
-const _activePickupRefs = new Set<SalvagePickup>();
+const _activePickupIds = new Set<string>();
 const _lockSlotById = new Map<string, LockSlot>();
 const _polyBuffers = new PixiGeometryBufferPool();
 
@@ -321,12 +321,13 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
 
   // ── 2. Sync Salvage Pickups ────────────────────────────────────────────────
   _pickupGfx.clear();
-  _activePickupRefs.clear();
+  _activePickupIds.clear();
 
   if (state.salvagePickups) {
     for (const s of state.salvagePickups) {
       if (!isVisible(s.x, s.y, 60)) continue;
-      _activePickupRefs.add(s);
+      const pickupId = s.id;
+      _activePickupIds.add(pickupId);
 
       const fade = s.life < 8 ? s.life / 8 : 1;
       const bobY = Math.sin(s.bob) * 2.5;
@@ -378,10 +379,10 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
       const iconKey = resolvePickupIconKey(s);
       const iconTexture = iconKey ? getPickupIconTexture(iconKey) : null;
       if (iconTexture) {
-        let sprite = _pickupSprites.get(s);
+        let sprite = _pickupSprites.get(pickupId);
         if (!sprite) {
           sprite = getPooledSprite();
-          _pickupSprites.set(s, sprite);
+          _pickupSprites.set(pickupId, sprite);
         }
         sprite.texture = iconTexture;
         sprite.x = px;
@@ -389,19 +390,19 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
         sprite.width = sprite.height = 12 * warpScale;
         sprite.alpha = fade;
       } else {
-        const existingSprite = _pickupSprites.get(s);
+        const existingSprite = _pickupSprites.get(pickupId);
         if (existingSprite) {
           returnPooledSprite(existingSprite);
-          _pickupSprites.delete(s);
+          _pickupSprites.delete(pickupId);
         }
         drawResourceIconGfx(_pickupGfx, icon, iconSize, colorNum, px, py, warpScale);
       }
 
       // Text labeling inside effectLayer
-      let textObj = _pickupLabels.get(s);
+      let textObj = _pickupLabels.get(pickupId);
       if (!textObj) {
         textObj = getPooledText();
-        _pickupLabels.set(s, textObj);
+        _pickupLabels.set(pickupId, textObj);
       }
       if (textObj.text !== label) textObj.text = label;
 
@@ -423,18 +424,18 @@ export function syncPixiEffects(now: number, alpha: number, dt: number, sys: Sys
   }
 
   // Clean obsolete pickup text objects
-  for (const [s, textObj] of _pickupLabels.entries()) {
-    if (!_activePickupRefs.has(s)) {
+  for (const [pickupId, textObj] of _pickupLabels.entries()) {
+    if (!_activePickupIds.has(pickupId)) {
       returnPooledText(textObj);
-      _pickupLabels.delete(s);
+      _pickupLabels.delete(pickupId);
     }
   }
 
   // Clean obsolete pickup sprites
-  for (const [s, sprite] of _pickupSprites.entries()) {
-    if (!_activePickupRefs.has(s)) {
+  for (const [pickupId, sprite] of _pickupSprites.entries()) {
+    if (!_activePickupIds.has(pickupId)) {
       returnPooledSprite(sprite);
-      _pickupSprites.delete(s);
+      _pickupSprites.delete(pickupId);
     }
   }
 

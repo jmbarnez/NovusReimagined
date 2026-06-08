@@ -28,7 +28,7 @@ import {
   hasTutorialCombatLoadout,
 } from "../src/data/tutorial.js";
 import { TUTORIAL_STEP_REWARDS } from "../src/data/tutorial-mission.js";
-import { getTutorialSnapshot, initTutorial, skipTutorial, tickTutorial } from "../src/tutorial.js";
+import { getTutorialSnapshot, initTutorial, skipTutorial, tickTutorial } from "../src/tutorial/index.js";
 import { SAVE_KEY } from "../src/constants.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { ENEMY_SPAWNS } from "../src/data/enemy-spawns.js";

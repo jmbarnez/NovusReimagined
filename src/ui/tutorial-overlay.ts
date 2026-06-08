@@ -26,7 +26,7 @@ import {
   advanceRefineryTutorialPanel,
   canAdvanceHudTour,
   advanceHudTour,
-} from "../tutorial.js";
+} from "../tutorial/index.js";
 import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "./tutorial-hangar-guide.js";
 import { syncRefineryTutorialGuide, clearRefineryTutorialGuide } from "./tutorial-refinery-guide.js";
 import { t } from "../utils/i18n.js";

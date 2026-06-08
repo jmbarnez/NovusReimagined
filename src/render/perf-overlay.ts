@@ -73,6 +73,40 @@ let _avgTicks = 0;
 let _perfEl: HTMLDivElement | null = null;
 let _perfBody: HTMLDivElement | null = null;
 let _advancedBtn: HTMLButtonElement | null = null;
+let _miniPerfEl: HTMLDivElement | null = null;
+let _miniPerfText = "";
+
+function ensureMiniPerfBadge(): void {
+  if (_miniPerfEl) return;
+  const el = document.createElement("div");
+  el.className = "perf-mini-badge";
+  el.style.position = "fixed";
+  el.style.left = "8px";
+  el.style.top = "8px";
+  el.style.zIndex = "2000";
+  el.style.pointerEvents = "none";
+  el.style.padding = "4px 7px";
+  el.style.borderRadius = "4px";
+  el.style.background = "rgba(2, 6, 12, 0.72)";
+  el.style.border = "1px solid rgba(115, 180, 220, 0.35)";
+  el.style.color = "#cfe8ff";
+  el.style.fontFamily = "monospace";
+  el.style.fontSize = "11px";
+  el.style.fontWeight = "700";
+  el.style.letterSpacing = "0.2px";
+  el.textContent = `${t("perf.title")}: -- FPS`;
+  document.body.appendChild(el);
+  _miniPerfEl = el;
+}
+
+function updateMiniPerfBadge(): void {
+  ensureMiniPerfBadge();
+  if (!_miniPerfEl) return;
+  const text = `${t("perf.title")}: ${_fps} FPS`;
+  if (_miniPerfText === text) return;
+  _miniPerfText = text;
+  _miniPerfEl.textContent = text;
+}
 
 function readMemoryTelemetry(): PerformanceTelemetrySnapshot["memory"] {
   const memory = (performance as unknown as {
@@ -286,6 +320,7 @@ export function updatePerfOverlay(frameTimeSec: number, ticksThisFrame: number) 
   _ticksPerFrameSum += ticksThisFrame;
 
   const now = performance.now();
+  if (!_miniPerfEl) ensureMiniPerfBadge();
   if (now - _lastSampleTime >= 1000) {
     _fps = _frameCount;
     _avgMs = _frameCount > 0 ? (_frameTimeSum / _frameCount) * 1000 : 0;
@@ -299,6 +334,7 @@ export function updatePerfOverlay(frameTimeSec: number, ticksThisFrame: number) 
     _frameTimeMax = 0;
     _ticksPerFrameSum = 0;
     _lastSampleTime = now;
+    updateMiniPerfBadge();
   }
 }
 

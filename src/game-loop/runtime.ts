@@ -20,7 +20,7 @@ import { initChat, destroyChat } from "../ui/chat.js";
 import { netLog, flushNetLogPending } from "../ui/net-console.js";
 import { hudState } from "../ui/hud/state.js";
 import { syncSpatialGrid } from "../utils/spatial.js";
-import { tickTutorial } from "../tutorial.js";
+import { tickTutorial } from "../tutorial/index.js";
 import { on } from "../events.js";
 import { transitionTo } from "../ui/transition-manager.js";
 import { drawFrame } from "./render-pass.js";

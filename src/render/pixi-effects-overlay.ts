@@ -13,6 +13,12 @@ let borderGfx: Graphics | null = null;
 let floatCardGfx: Graphics | null = null;
 let floatLayer: Container | null = null;
 const floatTextLabels = new Map<number, Text>();
+interface FloatTextCacheEntry {
+  text: string;
+  fill: string;
+  strokeWidth: number;
+}
+const floatTextCache = new Map<number, FloatTextCacheEntry>();
 
 // Reusable Set to avoid per-frame GC allocation
 const _floatTextKeepSet = new Set<number>();
@@ -20,6 +26,10 @@ const _floatTextKeepSet = new Set<number>();
 // Object pool for float text Text objects to avoid GC pressure
 const _floatTextPool: Text[] = [];
 const _floatTextPoolSize = 128;
+const SHOCKWAVE_MIN_FRAME_MS = 1000 / 45;
+const WORLD_BORDER_MIN_FRAME_MS = 1000 / 30;
+let _lastShockwaveRenderMs = 0;
+let _lastWorldBorderRenderMs = 0;
 
 function getPooledFloatText(): Text {
   if (_floatTextPool.length > 0) {
@@ -136,6 +146,9 @@ function ensureFloatLayer(): Container | null {
 export function syncPixiShockwaves(): void {
   const g = ensureShockwaves();
   if (!g) return;
+  const now = performance.now();
+  if (now - _lastShockwaveRenderMs < SHOCKWAVE_MIN_FRAME_MS - 0.5) return;
+  _lastShockwaveRenderMs = now;
   const state = getState();
   if (!state.shockwaves?.length) { g.clear(); return; }
   g.clear();
@@ -169,15 +182,26 @@ export function syncPixiFloatTexts(): void {
       t = getPooledFloatText();
       layer.addChild(t);
       floatTextLabels.set(f.id, t);
+      floatTextCache.set(f.id, { text: "", fill: "", strokeWidth: -1 });
     } else if (t.parent !== layer) {
       t.parent?.removeChild(t);
       layer.addChild(t);
     }
-    t.text = f.text;
-    t.style.fill = f.bgColor ? "#000000" : (f.color ?? "#ffffff");
-    t.style.stroke = f.bgColor
-      ? { color: "#000000", width: 0 }
-      : { color: "#000000", width: 3.5 };
+    const fill = f.bgColor ? "#000000" : (f.color ?? "#ffffff");
+    const strokeWidth = f.bgColor ? 0 : 3.5;
+    const cache = floatTextCache.get(f.id);
+    if (!cache || cache.text !== f.text) {
+      t.text = f.text;
+      if (cache) cache.text = f.text;
+    }
+    if (!cache || cache.fill !== fill) {
+      t.style.fill = fill;
+      if (cache) cache.fill = fill;
+    }
+    if (!cache || cache.strokeWidth !== strokeWidth) {
+      t.style.stroke = { color: "#000000", width: strokeWidth };
+      if (cache) cache.strokeWidth = strokeWidth;
+    }
     t.position.set(Math.round(sx), Math.round(sy));
     t.alpha = alpha;
     t.visible = true;
@@ -197,6 +221,7 @@ export function syncPixiFloatTexts(): void {
       t.parent?.removeChild(t);
       returnPooledFloatText(t);
       floatTextLabels.delete(k);
+      floatTextCache.delete(k);
     }
   }
 }
@@ -204,6 +229,8 @@ export function syncPixiFloatTexts(): void {
 export function syncPixiWorldBorder(now: number, sectorOuterRadius: number = SECTOR_OUTER_RADIUS): void {
   const g = ensureBorder();
   if (!g) return;
+  if (now - _lastWorldBorderRenderMs < WORLD_BORDER_MIN_FRAME_MS - 0.5) return;
+  _lastWorldBorderRenderMs = now;
   const state = getState();
   const player = state.player;
   const pr = Math.hypot(player.x, player.y);
@@ -235,6 +262,7 @@ export function destroyPixiEffectsOverlay(): void {
   borderGfx = null;
   floatCardGfx = null;
   floatTextLabels.clear();
+  floatTextCache.clear();
   floatLayer?.destroy({ children: false });
   floatLayer = null;
   overlayLayer?.destroy({ children: false });

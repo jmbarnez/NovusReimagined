@@ -1,113 +1,50 @@
-import { Client } from "./state.js";
-import { getState } from "./state-access.js";
+import { Client } from "../state.js";
+import { getState } from "../state-access.js";
 
-import { PlayerAccess } from "./state-access.js";
-import { queueFrameAction } from "./sim/input.js";
-import { emit, on } from "./events.js";
-import { savePlayer } from "./player/player-data.js";
-import { warpTo, undockStation } from "./docking/index.js";
-import { getNovusPrimeIdx } from "./world/galaxy-build.js";
-import { ensureTutorialRegionsDiscovered } from "./map-discovery.js";
-import { TUTORIAL_SPAWN, shouldRelocateTutorialStart } from "./data/tutorial-layout.js";
-import { floatText } from "./utils/fx.js";
-import { clearHangarTutorialGuide } from "./ui/tutorial-hangar-guide.js";
-import { logEvent } from "./feedback.js";
-import { TUTORIAL_LOCAL_REGIONS } from "./data/tutorial-layout.js";
-import { resetTutorialTrackState } from "./physics/tutorial-track.js";
+import { PlayerAccess } from "../state-access.js";
+import { queueFrameAction } from "../sim/input.js";
+import { emit } from "../events.js";
+import { savePlayer } from "../player/player-data.js";
+import { warpTo, undockStation } from "../docking/index.js";
+import { getNovusPrimeIdx } from "../world/galaxy-build.js";
+import { ensureTutorialRegionsDiscovered } from "../map-discovery.js";
+import { TUTORIAL_SPAWN, shouldRelocateTutorialStart } from "../data/tutorial-layout.js";
+import { floatText } from "../utils/fx.js";
+import { clearHangarTutorialGuide } from "../ui/tutorial-hangar-guide.js";
+import { logEvent } from "../feedback.js";
+import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
+import { resetTutorialTrackState } from "../physics/tutorial-track.js";
 import {
   TUTORIAL_STEPS,
   TUTORIAL_STEP_COUNT,
-  buildTutorialCtx,
   getCurrentTutorialStep,
   setTutorialGatePulse,
   isStationHangarTabActive,
-  HANGAR_REVIEW_PHASE_COUNT,
-  HANGAR_COMBAT_SWAP_PHASE_COUNT,
   REFINERY_GUIDE_PHASE_COUNT,
-  hasTutorialCombatLoadout,
-} from "./data/tutorial.js";
+} from "../data/tutorial.js";
 import {
   ensureTutorialMission,
   grantTutorialStepReward,
   finalizeTutorialMission,
-} from "./data/tutorial-mission.js";
-import { syncTutorialMissionProgress } from "./data/missions.js";
+} from "../data/tutorial-mission.js";
+import { syncTutorialMissionProgress } from "../data/missions.js";
 
-let snapshot: Record<string, unknown> = {};
-let tutorialEventsBound = false;
+import { bindTutorialEvents } from "./events.js";
+import {
+  advanceHangarTutorialPanel,
+  beginHangarReviewTour,
+  canAdvanceHangarTour,
+  markHangarReviewComplete,
+  markHangarStepComplete,
+} from "./hangar-tour.js";
+import {
+  buildCtx,
+  nowSec,
+  setSnapshot,
+  snapshot,
+  syncTutorialStateToServer,
+} from "./shared.js";
 
-function nowSec(): number {
-  return Date.now() / 1000;
-}
-
-function beginHangarReviewTour(now: number): void {
-  if (!snapshot.hangarTabActive) {
-    snapshot.hangarTabActive = true;
-    snapshot.hangarReviewPhase = 0;
-    snapshot.hangarReviewPhaseAt = now;
-  }
-  snapshot.hangarReviewStarted = true;
-}
-
-function markHangarReviewComplete(): void {
-  markHangarStepComplete(false);
-}
-
-function markHangarStepComplete(requireCombatLoadout: boolean): void {
-  if (!snapshot.hangarReviewStarted) return;
-  if (requireCombatLoadout && !hasTutorialCombatLoadout(getState().player)) return;
-  snapshot.hangarReviewComplete = true;
-}
-
-function bindTutorialEvents(): void {
-  if (tutorialEventsBound) return;
-  tutorialEventsBound = true;
-  on("station:open", () => {
-    const stepId = getCurrentTutorialStep(getState().player)?.id;
-    if (stepId !== "hangar-high" && stepId !== "hangar-turrets" && stepId !== "industry") return;
-    requestAnimationFrame(() => {
-      const now = nowSec();
-      if (stepId === "industry") {
-        snapshot.refineryGuideStarted = true;
-        return;
-      }
-      if (!Client.stationOpen || !isStationHangarTabActive()) return;
-      if (stepId === "hangar-turrets") {
-        if (!snapshot.hangarTabActive) {
-          snapshot.hangarTabActive = true;
-          snapshot.hangarCombatPhase = 0;
-          snapshot.hangarCombatPhaseAt = now;
-        }
-      } else {
-        beginHangarReviewTour(now);
-      }
-      snapshot.hangarReviewStarted = true;
-      emit("tutorial:hangar-tour-change");
-    });
-  });
-  on("station:close", () => {
-    const stepId = getCurrentTutorialStep(getState().player)?.id;
-    if (stepId !== "hangar-high" && stepId !== "hangar-turrets" && stepId !== "industry") return;
-    if (stepId === "industry") {
-      snapshot.industryTabActive = false;
-      return;
-    }
-    snapshot.hangarTabActive = false;
-    clearHangarTutorialGuide();
-    markHangarStepComplete(stepId === "hangar-turrets");
-  });
-}
-
-function buildCtx() {
-  return buildTutorialCtx(nowSec(), getState().player.tutorial.stepEnteredAt ?? nowSec(), snapshot, getState().player);
-}
-
-function syncTutorialStateToServer() {
-  queueFrameAction({
-    type: "syncTutorialStep",
-    payload: { ...getState().player.tutorial },
-  });
-}
 
 export function initTutorial() {
   if (!getState().player.tutorial.active) return;
@@ -122,7 +59,7 @@ export function initTutorial() {
       py: TUTORIAL_SPAWN.y,
     });
   }
-  snapshot = {};
+  setSnapshot({});
   if (!getState().player.tutorial.stepEnteredAt) {
     PlayerAccess.setTutorialStepEnteredAt(nowSec());
   }
@@ -144,34 +81,6 @@ export function isCurrentStepComplete(): boolean {
 
 export function getTutorialSnapshot(): Record<string, unknown> {
   return snapshot;
-}
-
-function hangarTourPhaseKey(stepId: string): string {
-  return stepId === "hangar-turrets" ? "hangarCombatPhase" : "hangarReviewPhase";
-}
-
-function hangarTourMaxPhase(stepId: string): number {
-  return stepId === "hangar-turrets"
-    ? HANGAR_COMBAT_SWAP_PHASE_COUNT - 1
-    : HANGAR_REVIEW_PHASE_COUNT - 1;
-}
-
-export function canAdvanceHangarTour(): boolean {
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step || (step.id !== "hangar-high" && step.id !== "hangar-turrets")) return false;
-  if (!Client.stationOpen || snapshot.hangarReviewComplete === true) return false;
-  const phaseKey = hangarTourPhaseKey(step.id);
-  const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
-  return phase < hangarTourMaxPhase(step.id);
-}
-
-export function advanceHangarTutorialPanel(): void {
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step || !canAdvanceHangarTour()) return;
-  const phaseKey = hangarTourPhaseKey(step.id);
-  const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
-  snapshot[phaseKey] = phase + 1;
-  emit("tutorial:hangar-tour-change");
 }
 
 export function canAdvanceHudTour(): boolean {
@@ -294,7 +203,7 @@ export function goBackStep() {
 
   PlayerAccess.setTutorialStep(prevIdx);
   PlayerAccess.setTutorialStepEnteredAt(nowSec());
-  snapshot = {};
+  setSnapshot({});
   resetTutorialTrackState(getState().player);
   const prev = TUTORIAL_STEPS[prevIdx];
   prev.onEnter?.(buildCtx());
@@ -337,7 +246,7 @@ export function advanceStep() {
 
   PlayerAccess.setTutorialStep(nextIdx);
   PlayerAccess.setTutorialStepEnteredAt(nowSec());
-  snapshot = {};
+  setSnapshot({});
   resetTutorialTrackState(getState().player);
   const next = TUTORIAL_STEPS[nextIdx];
   next.onEnter?.(buildCtx());

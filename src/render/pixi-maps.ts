@@ -46,6 +46,7 @@ let labelContainer: Container | null = null;
 let mapMask: Graphics | null = null;
 let positioningContainer: Container | null = null;
 let overlayGfx: Graphics | null = null;
+type LabelStyleKind = "name" | "small" | "bold";
 interface MapWindowBounds {
   baseX: number;
   baseY: number;
@@ -55,6 +56,13 @@ interface MapWindowBounds {
 
 let cachedMapBounds: MapWindowBounds | null = null;
 let mapBoundsDirty = true;
+let _lastLabelFontKey = "";
+let _nameStyle: TextStyle | null = null;
+let _smallStyle: TextStyle | null = null;
+let _boldStyle: TextStyle | null = null;
+const _labelStyleVariantCache = new Map<string, TextStyle>();
+const _mapLabelPool = new Map<string, Text>();
+const _activeMapLabelKeys = new Set<string>();
 
 /** Convert rgba(r,g,b,a) or #rrggbb string to PixiJS hex number. */
 function rgbaToHex(color: string): number {
@@ -86,6 +94,86 @@ function createSmallStyle(): TextStyle {
 function createBoldStyle(): TextStyle {
   const scale = Client.settings?.fontScale ?? 1.0;
   return new TextStyle({ fontFamily: getUIFont(), fontSize: 10 * scale, fontWeight: "bold", fill: "#ffffff", align: "center" });
+}
+
+function getLabelStyle(kind: LabelStyleKind): TextStyle {
+  const scale = Client.settings?.fontScale ?? 1.0;
+  const font = getUIFont();
+  const key = `${font}|${scale.toFixed(3)}`;
+  if (_lastLabelFontKey !== key) {
+    _lastLabelFontKey = key;
+    _nameStyle = null;
+    _smallStyle = null;
+    _boldStyle = null;
+    _labelStyleVariantCache.clear();
+  }
+
+  if (kind === "name") {
+    if (!_nameStyle) _nameStyle = createNameStyle();
+    return _nameStyle;
+  }
+  if (kind === "small") {
+    if (!_smallStyle) _smallStyle = createSmallStyle();
+    return _smallStyle;
+  }
+  if (!_boldStyle) _boldStyle = createBoldStyle();
+  return _boldStyle;
+}
+
+function getLabelStyleWithFill(kind: LabelStyleKind, fill: number): TextStyle {
+  const key = `${kind}|${fill}`;
+  const hit = _labelStyleVariantCache.get(key);
+  if (hit) return hit;
+  const base = getLabelStyle(kind);
+  const style = new TextStyle({
+    fontFamily: base.fontFamily,
+    fontSize: base.fontSize,
+    fontWeight: base.fontWeight,
+    align: base.align,
+    fill,
+  });
+  _labelStyleVariantCache.set(key, style);
+  return style;
+}
+
+function beginLabelFrame(): void {
+  _activeMapLabelKeys.clear();
+}
+
+function setMapLabel(
+  key: string,
+  value: string,
+  styleKind: LabelStyleKind,
+  x: number,
+  y: number,
+  alpha: number,
+  fill?: number,
+): void {
+  if (!labelContainer) return;
+  _activeMapLabelKeys.add(key);
+
+  let label = _mapLabelPool.get(key);
+  if (!label) {
+    const style = fill !== undefined ? getLabelStyleWithFill(styleKind, fill) : getLabelStyle(styleKind);
+    label = new Text({ text: value, style });
+    label.anchor.set(0.5, 0.5);
+    labelContainer.addChild(label);
+    _mapLabelPool.set(key, label);
+  }
+
+  if (label.text !== value) label.text = value;
+  const style = fill !== undefined ? getLabelStyleWithFill(styleKind, fill) : getLabelStyle(styleKind);
+  if (label.style !== style) label.style = style;
+  label.position.set(Math.round(x), Math.round(y));
+  label.alpha = alpha;
+  label.visible = true;
+}
+
+function endLabelFrame(): void {
+  for (const [key, label] of _mapLabelPool) {
+    if (_activeMapLabelKeys.has(key)) continue;
+    label.visible = false;
+  }
 }
 
 // Cached state
@@ -208,7 +296,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     return;
   }
   positioningContainer.visible = true;
-  labelContainer?.removeChildren();
+  beginLabelFrame();
 
   // Compute zoom/pan (shared for window and fallback paths)
   const zoom = Client.mapZoom || 1.0;
@@ -285,12 +373,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         sectorGfx.stroke({ color: 0x64a0dc, width: 1.2, alpha: 0.28 });
 
         // Label (add to label container)
-        const text = new Text({ text: reg.name.toUpperCase(), style: createSmallStyle() });
-        text.anchor.set(0.5, 0.5);
-        text.position.set(Math.round(p.x), Math.round(p.y));
-        text.style.fill = 0x64a0dc;
-        text.alpha = 0.32;
-        labelContainer?.addChild(text);
+        setMapLabel(`region:${reg.name}`, reg.name.toUpperCase(), "small", p.x, p.y, 0.32, 0x64a0dc);
       }
     }
 
@@ -345,11 +428,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         const sCenter = toMap(secConfig.x, secConfig.y);
         const discovered = isSectorDiscovered(secConfig.idx, player);
         const label = discovered ? secConfig.name.toUpperCase() : "?";
-        const text = new Text({ text: label, style: createBoldStyle() });
-        text.anchor.set(0.5, 0.5);
-        text.position.set(Math.round(sCenter.x), Math.round(sCenter.y - 12));
-        text.alpha = discovered ? 0.65 : 0.28;
-        labelContainer?.addChild(text);
+        setMapLabel(`sector:${secConfig.idx}`, label, "bold", sCenter.x, sCenter.y - 12, discovered ? 0.65 : 0.28);
       }
     }
   }
@@ -370,11 +449,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     starGfx.fill({ color: rgbaToHex(theme.accent), alpha: 1 });
 
     // Label
-    const text = new Text({ text: `${sysClass}-CLASS STAR`, style: createBoldStyle() });
-    text.anchor.set(0.5, 0.5);
-    text.position.set(Math.round(sp.x), Math.round(sp.y + 30));
-    text.style.fill = rgbaToHex(theme.accent);
-    labelContainer?.addChild(text);
+    setMapLabel("star:class", `${sysClass}-CLASS STAR`, "bold", sp.x, sp.y + 30, 1.0, rgbaToHex(theme.accent));
   }
 
   // Objects (asteroids, enemies, gates, stations)
@@ -436,12 +511,9 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         objectGfx.closePath();
         objectGfx.fill({ color: rgbaToHex(theme.shield), alpha: Math.max(0.5, alpha) });
 
-        const text = new Text({ text: gateMapLabel(g), style: createNameStyle() });
-        text.anchor.set(0.5, 0.5);
-        text.position.set(Math.round(p.x), Math.round(p.y + size + 8));
-        text.style.fill = rgbaToHex(theme.shield);
-        text.alpha = alpha * 0.9;
-        labelContainer?.addChild(text);
+        const gateLabel = gateMapLabel(g);
+        const gateKey = `gate:${sSys.idx}:${g.targetSysIdx ?? -1}:${Math.round(g.x)}:${Math.round(g.y)}`;
+        setMapLabel(gateKey, gateLabel, "name", p.x, p.y + size + 8, alpha * 0.9, rgbaToHex(theme.shield));
       }
     }
 
@@ -462,12 +534,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         objectGfx.rect(p.x - size / 2, p.y - size / 2, size, size);
         objectGfx.fill({ color: rgbaToHex(theme.positive), alpha: Math.max(0.5, alpha) });
 
-        const text = new Text({ text: s.name, style: createBoldStyle() });
-        text.anchor.set(0.5, 0.5);
-        text.position.set(Math.round(p.x), Math.round(p.y + size + 10));
-        text.style.fill = rgbaToHex(theme.positive);
-        text.alpha = alpha * 0.9;
-        labelContainer?.addChild(text);
+        setMapLabel(`station:${sSys.idx}:${s.id}`, s.name, "bold", p.x, p.y + size + 10, alpha * 0.9, rgbaToHex(theme.positive));
       }
     }
   }
@@ -499,6 +566,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
     playerGfx.circle(pp.x, pp.y, 4);
     playerGfx.fill({ color: rgbaToHex(theme.textBright), alpha: 1 });
   }
+  endLabelFrame();
 }
 
 export function drawPixiSystemMapCanvasOverlays(Wc: number, Hc: number, now: number): void {
@@ -537,6 +605,12 @@ export function destroyPixiMaps(): void {
   waypointGfx?.destroy();
   playerGfx?.destroy();
   vignetteGfx?.destroy();
+  for (const label of _mapLabelPool.values()) {
+    label.destroy();
+  }
+  _mapLabelPool.clear();
+  _activeMapLabelKeys.clear();
+  _labelStyleVariantCache.clear();
   labelContainer?.destroy();
   overlayGfx?.destroy();
 
