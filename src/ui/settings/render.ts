@@ -54,6 +54,8 @@ export function renderSettings() {
   if (mipmappingToggle) mipmappingToggle.checked = settings.mipmapping ?? true;
   const lensFlareToggle = document.getElementById("lens-flare-toggle") as HTMLInputElement | null;
   if (lensFlareToggle) lensFlareToggle.checked = settings.lensFlare ?? true;
+  const antialiasToggle = document.getElementById("antialias-toggle") as HTMLInputElement | null;
+  if (antialiasToggle) antialiasToggle.checked = settings.antialias ?? false;
 
   const uiScaleSlider = document.getElementById("ui-scale") as HTMLInputElement | null;
   if (uiScaleSlider) uiScaleSlider.value = String(settings.uiScale ?? 1.0);
@@ -241,6 +243,7 @@ export function renderSettings() {
           settings.colorGrading = true;
           settings.mipmapping = true;
           settings.lensFlare = true;
+          settings.antialias = false;
         } else if (preset === "cinematic") {
           settings.renderScale = 2.5;
           settings.backgroundDetail = "high";
@@ -251,6 +254,7 @@ export function renderSettings() {
           settings.colorGrading = true;
           settings.mipmapping = true;
           settings.lensFlare = true;
+          settings.antialias = true;
         }
         saveSettings(settings);
         renderSettings();

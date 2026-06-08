@@ -10,6 +10,7 @@ let _monitorRestore: (() => void) | null = null;
 export function openSettingsOnBootMonitor(restoreFn: () => void): void {
   const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
   if (!monitor) return;
+  if (monitor.classList.contains("monitor-settings-open")) return;
 
   _monitorRestore = restoreFn;
   _savedMonitorContent = monitor.innerHTML;

@@ -108,7 +108,7 @@ export function syncPixiWarpScreen(now: number): void {
     return;
   }
 
-  const preWarp = state.warpTargetIdx >= 0;
+  const preWarp = state.warpTargetIdx >= 0 || (state.warpCooldown > 2.0 && state.warpCooldown <= PRE_WARP_DURATION);
   const cx = Wc / 2;
   const cy = Hc / 2;
   const halfDiag = Math.hypot(Wc, Hc) * 0.5;
@@ -181,7 +181,8 @@ export function syncPixiWarpScreen(now: number): void {
   }
 
   // Text overlays
-  const destIdx = preWarp ? state.warpTargetIdx : player.sysIdx;
+  const hasDestinationIdx = state.warpTargetIdx >= 0;
+  const destIdx = hasDestinationIdx ? state.warpTargetIdx : player.sysIdx;
   const destSys = state.GALAXY[destIdx];
   const destName = (destSys?.name || "").toUpperCase();
   const textA = preWarp ? Math.min(1, (progress - 0.12) / 0.18) : arrFade;
@@ -189,15 +190,15 @@ export function syncPixiWarpScreen(now: number): void {
   if (!titleText || !destText || !secText) return;
   if (textA > 0.01 && destName) {
     titleText.visible = preWarp;
-    secText.visible = preWarp && !!destSys;
+    secText.visible = preWarp && hasDestinationIdx && !!destSys;
     if (preWarp) {
-      titleText.text = "JUMP DRIVE ENGAGED";
+      titleText.text = hasDestinationIdx ? "JUMP DRIVE ENGAGED" : "WARP DRIVE ENGAGED";
       titleText.position.set(Math.round(cx), Math.round(cy - 32));
       titleText.alpha = textA;
       destText.text = `⟩⟩ ${destName}`;
       destText.position.set(Math.round(cx), Math.round(cy + 6));
       destText.alpha = textA;
-      if (destSys) {
+      if (hasDestinationIdx && destSys) {
         const sec = destSys.security?.toFixed(1);
         const secColor = destSys.security >= 0.7 ? 0x44ff88 : destSys.security >= 0.4 ? 0xffcc44 : 0xff5544;
         secText.style.fill = secColor;

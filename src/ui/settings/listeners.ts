@@ -179,6 +179,11 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     setCustomPreset();
     saveSettings(Client.settings);
   });
+  el.querySelector("#antialias-toggle")!.addEventListener("change", (e) => {
+    Client.settings.antialias = (e.target as HTMLInputElement).checked;
+    setCustomPreset();
+    saveSettings(Client.settings);
+  });
 
 
   el.querySelector("#ui-scale")!.addEventListener("input", (e) => {

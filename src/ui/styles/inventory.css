@@ -187,13 +187,6 @@
   border-radius: 2px;
 }
 
-.inv-grid-slot.is-empty {
-  border: 1px dashed var(--hud-border);
-  border-radius: 2px;
-  min-height: 64px;
-  background: transparent;
-}
-.inv-grid-slot.is-drag-over,
 .inv-grid-cell.is-drag-over {
   border-color: var(--hud-accent);
   background: color-mix(in srgb, var(--hud-accent) 15%, transparent);
@@ -218,6 +211,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* ─── Info Panel (HUD Window) ─── */

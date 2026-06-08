@@ -29,7 +29,6 @@ function drawSubject(cx: CanvasRenderingContext2D, id: string, half: number): vo
 export function paintItemIcon(cx: CanvasRenderingContext2D, id: string, logicalSize: number): void {
   const half = logicalSize / 2;
   const paintCtx = buildPaintCtx(cx, id, half);
-  drawIconBackdrop(paintCtx);
   drawCastShadow(paintCtx);
   drawSubject(cx, id, half);
 }

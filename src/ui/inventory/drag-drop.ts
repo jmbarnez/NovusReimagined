@@ -1,18 +1,15 @@
 import { INV_STATE } from "./state.js";
-import { moveItemInGrid } from "./grid-layout.js";
-
-export interface DragDropHandlers {
-  onRerender: () => void;
-}
+import { emit } from "../../events.js";
 
 interface DragState {
+  pane: HTMLElement;
   sourceSlot: number;
   itemId: string;
   ghost: HTMLElement;
+  containerId: string;
 }
 
 let activeDrag: DragState | null = null;
-let _handlers: DragDropHandlers | null = null;
 let _dragAutoCleanup: ReturnType<typeof setTimeout> | null = null;
 
 function removeAllGhosts() {
@@ -41,7 +38,31 @@ function getCellUnderPointer(clientX: number, clientY: number): HTMLElement | nu
   if (ghost) ghost.style.display = "none";
   const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
   if (ghost) ghost.style.display = "";
-  return el?.closest(".inv-grid-cell, .inv-grid-slot") as HTMLElement | null;
+  return el?.closest(".inv-grid-cell") as HTMLElement | null;
+}
+
+function computeVisualIndex(pane: HTMLElement, clientX: number, clientY: number): number {
+  const cells = Array.from(pane.querySelectorAll(".inv-grid-cell"));
+  if (cells.length === 0) return 0;
+
+  const firstCell = cells[0] as HTMLElement;
+  const cellW = firstCell.offsetWidth;
+  const cellH = firstCell.offsetHeight;
+  const gridWrap = pane.querySelector(".inv-grid-wrap") as HTMLElement;
+  const gridRect = gridWrap.getBoundingClientRect();
+  const gap = 4;
+  const padding = 4;
+
+  const relX = clientX - gridRect.left - padding;
+  const relY = clientY - gridRect.top - padding;
+
+  const firstTop = firstCell.offsetTop;
+  const cols = cells.findIndex(c => (c as HTMLElement).offsetTop !== firstTop);
+  const actualCols = cols === -1 ? cells.length : cols;
+
+  const col = Math.max(0, Math.floor(relX / (cellW + gap)));
+  const row = Math.max(0, Math.floor(relY / (cellH + gap)));
+  return Math.max(0, Math.min(row * actualCols + col, cells.length));
 }
 
 function clearDragOver() {
@@ -50,7 +71,7 @@ function clearDragOver() {
   }
 }
 
-function endDrag() {
+export function endDrag(): void {
   if (_dragAutoCleanup) {
     clearTimeout(_dragAutoCleanup);
     _dragAutoCleanup = null;
@@ -63,36 +84,32 @@ function endDrag() {
   clearDragOver();
 }
 
-export function attachDragDropHandlers(pane: HTMLElement, handlers: DragDropHandlers): void {
-  _handlers = handlers;
+export function attachDragDropHandlers(pane: HTMLElement): void {
+  pane.addEventListener("pointerdown", (e: Event) => {
+    const ptr = e as PointerEvent;
+    if (ptr.button !== 0) return;
 
-  for (const cell of pane.querySelectorAll(".inv-grid-cell")) {
-    const htmlCell = cell as HTMLElement;
-    if (!htmlCell.draggable) continue;
+    const htmlCell = (ptr.target as HTMLElement).closest(".inv-grid-cell") as HTMLElement | null;
+    if (!htmlCell || !htmlCell.draggable) return;
 
-    htmlCell.addEventListener("pointerdown", (e: Event) => {
-      const ptr = e as PointerEvent;
-      if (ptr.button !== 0) return;
+    const itemId = htmlCell.dataset.item;
+    const slotStr = htmlCell.dataset.slot;
+    if (!itemId || slotStr === undefined) return;
 
-      const itemId = htmlCell.dataset.item;
-      const slotStr = htmlCell.dataset.slot;
-      if (!itemId || slotStr === undefined) return;
+    const sourceSlot = parseInt(slotStr, 10);
+    if (Number.isNaN(sourceSlot)) return;
 
-      const sourceSlot = parseInt(slotStr, 10);
-      if (Number.isNaN(sourceSlot)) return;
+    ptr.preventDefault();
 
-      ptr.preventDefault();
+    const ghost = createGhost(htmlCell);
+    activeDrag = { pane, sourceSlot, itemId, ghost, containerId: INV_STATE.selectedTreeId };
+    htmlCell.classList.add("is-dragging");
 
-      const ghost = createGhost(htmlCell);
-      activeDrag = { sourceSlot, itemId, ghost };
-      htmlCell.classList.add("is-dragging");
+    ghost.style.left = `${ptr.clientX - htmlCell.offsetWidth / 2}px`;
+    ghost.style.top = `${ptr.clientY - htmlCell.offsetHeight / 2}px`;
 
-      ghost.style.left = `${ptr.clientX - htmlCell.offsetWidth / 2}px`;
-      ghost.style.top = `${ptr.clientY - htmlCell.offsetHeight / 2}px`;
-
-      _dragAutoCleanup = setTimeout(() => endDrag(), 5000);
-    });
-  }
+    _dragAutoCleanup = setTimeout(() => endDrag(), 5000);
+  });
 }
 
 window.addEventListener("pointermove", (e: PointerEvent) => {
@@ -114,10 +131,20 @@ window.addEventListener("pointerup", (e: PointerEvent) => {
     if (targetSlotStr !== undefined) {
       const targetSlot = parseInt(targetSlotStr, 10);
       if (!Number.isNaN(targetSlot) && targetSlot !== activeDrag.sourceSlot) {
-        moveItemInGrid(INV_STATE.selectedTreeId, activeDrag.sourceSlot, targetSlot);
-        _handlers?.onRerender();
+        emit("inventory:grid-swap", {
+          containerId: activeDrag.containerId,
+          fromSlot: activeDrag.sourceSlot,
+          toSlot: targetSlot,
+        });
       }
     }
+  } else {
+    const visualIdx = computeVisualIndex(activeDrag.pane, e.clientX, e.clientY);
+    emit("inventory:grid-insert", {
+      containerId: activeDrag.containerId,
+      fromSlot: activeDrag.sourceSlot,
+      toVisualIndex: visualIdx,
+    });
   }
   endDrag();
 });

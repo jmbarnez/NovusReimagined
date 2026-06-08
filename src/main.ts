@@ -96,7 +96,6 @@ async function boot() {
     Client.camy = 0;
     initGameLoop();
     markBootPhase("pixi");
-    bindTitleScreenEvents();
 
   } catch (err) {
     console.error("FATAL BOOT ERROR:", err);

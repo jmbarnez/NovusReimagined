@@ -11,27 +11,35 @@ import { formatBuildLabel } from "../../data/version.js";
  * Owns left-monitor title rendering + event binding.
  */
 
-/** Bind title events in the left monitor. */
+/** Bind title events in the left monitor. Idempotent: clones each button before attaching listeners. */
 export function bindTitleScreenEvents(): void {
   const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
   if (!monitor) return;
 
-  monitor.querySelector("#title-sp")?.addEventListener("click", () => {
+  const bind = (id: string, handler: () => void) => {
+    const el = monitor.querySelector(id) as HTMLElement | null;
+    if (!el) return;
+    const clone = el.cloneNode(true) as HTMLElement;
+    el.replaceWith(clone);
+    clone.addEventListener("click", handler);
+  };
+
+  bind("#title-sp", () => {
     sfxBlip();
     showSinglePlayerMenu();
   });
 
-  monitor.querySelector("#title-mp")?.addEventListener("click", () => {
+  bind("#title-mp", () => {
     sfxBlip();
     showMultiplayerMenu();
   });
 
-  monitor.querySelector("#title-settings")?.addEventListener("click", () => {
+  bind("#title-settings", () => {
     sfxBlip();
     openSettingsOnBootMonitor(bindTitleScreenEvents);
   });
 
-  monitor.querySelector("#title-exit")?.addEventListener("click", () => {
+  bind("#title-exit", () => {
     sfxBlip();
     if (!confirm(t("title.exitConfirm"))) return;
     window.open("about:blank", "_self");

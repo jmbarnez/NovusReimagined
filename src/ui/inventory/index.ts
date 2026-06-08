@@ -12,7 +12,8 @@ import {
 } from "./state.js";
 import { getItemsForContainer, normalizeItems } from "./tree.js";
 import { renderInventoryHTML } from "./render.js";
-import { getLayout } from "./grid-layout.js";
+import { getLayout, moveItemInGrid, swapItems, insertItem } from "./grid-layout.js";
+import { endDrag } from "./drag-drop.js";
 import {
   attachInventoryListeners as attachPaneListeners,
   attachInventoryListenersToPane,
@@ -214,6 +215,7 @@ function rerenderInventory() {
   for (const pane of getInventoryPanes()) {
     if (contentChanged) {
       hideInvHoverTip();
+      endDrag();
       pane.innerHTML = renderInventoryHTML();
       attachInventoryListenersToPane(pane, handlers);
     } else if (selectionChanged && pane.querySelector(".inv-item")) {
@@ -228,6 +230,18 @@ function rerenderInventory() {
 
 // Re-render inventory when server snapshot updates cargo / fitting state.
 on("inventory:changed", () => {
+  rerenderInventory();
+});
+
+// Handle grid drag-and-drop swap via event bus.
+on("inventory:grid-swap", ({ containerId, fromSlot, toSlot }) => {
+  swapItems(containerId, fromSlot, toSlot);
+  rerenderInventory();
+});
+
+// Handle grid drag-and-drop insert via event bus.
+on("inventory:grid-insert", ({ containerId, fromSlot, toVisualIndex }) => {
+  insertItem(containerId, fromSlot, toVisualIndex);
   rerenderInventory();
 });
 

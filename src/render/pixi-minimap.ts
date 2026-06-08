@@ -85,7 +85,7 @@ export function initPixiMinimap(): void {
     height: HUD_MINIMAP_SIZE,
     background: 0x000000,
     backgroundAlpha: 1,
-    antialias: false,
+    antialias: Client.settings?.antialias ?? false,
     autoStart: false,
   }).then(() => {
     if (!mmApp) return;

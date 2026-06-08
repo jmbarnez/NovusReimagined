@@ -46,6 +46,19 @@ Clients (SP via local worker, MP host/client): send input frames, prediction, an
 - UI state (`Client.stationOpen`, `Client.settingsOpen`, etc.) should only be set from the
   module that owns that UI, not from physics or combat code.
 
+## Architecture Fitness Functions
+
+High-value architecture rules must be machine-enforced, not doc-only.
+The baseline enforcement runs in `npm run lint` via `scripts/check-gp-boundaries.ts`.
+
+Current enforced checks:
+- `simulation-authority` / `server-authority`: `src/sim/**` and `src/server/**` cannot use `G.P`.
+- `ui-sim-command-boundary`: `src/ui/**` cannot import directly from `sim/commands`.
+- `entity-lifecycle-boundary`: simulation entity arrays (`G.bullets`, `G.beams`, etc.) cannot be mutated outside `src/utils/entities.ts`.
+- `state-write-boundary` / `state-array-mutation-boundary`: direct `G.*` / `G.P.*` writes and array mutations are blocked outside state-access modules (with documented exceptions).
+
+When introducing a new architecture rule, add a fitness check when practical, or document why it cannot be statically/runtime enforced yet.
+
 ## Event Bus
 
 `src/events.ts` provides a typed event bus (`on` / `off` / `emit` / `offAll`).

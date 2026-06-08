@@ -133,7 +133,7 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
   }
 
   if (INV_STATE.viewMode === "grid") {
-    attachDragDropHandlers(pane, { onRerender: handlers.rerenderInventory });
+    attachDragDropHandlers(pane);
   }
 }
 

@@ -14,7 +14,7 @@ import { initPixiCelestial, destroyPixiCelestial } from "../render/celestial/ind
 import { initGateSprites } from "../render/celestial/gates.js";
 import type { Gate } from "../types/world.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
-import { didCrossGateAperture, gateDestinationName, gateStableId } from "../utils/warp-gates.js";
+import { didCrossGateAperture, gateDestinationName } from "../utils/warp-gates.js";
 
 function logDockEvent(msg: string, type: string = "system"): void {
   if (typeof window === "undefined") return;
@@ -114,7 +114,7 @@ export function beginWarpThroughGate(gate: Gate, p: Player = getState().player):
   return true;
 }
 
-const ACTIVATION_RADIUS_MULT = 1.5;
+const ACTIVATION_RADIUS_MULT = 2.0;
 const CHARGE_TIME = 2.0;
 const DISPENSE_LIFETIME = 3.0;
 
@@ -176,7 +176,7 @@ function createTemporaryGate(sysIdx: number, x: number, y: number, fromIdx: numb
   }
 }
 
-function updateGateActivation(dt: number, p: Player): void {
+export function updateGateActivation(dt: number, p: Player): void {
   const sys = curSys(p);
   if (!sys) return;
 
@@ -200,13 +200,12 @@ function updateGateActivation(dt: number, p: Player): void {
     if (!gate.gateState) gate.gateState = "dormant";
     if (gate.chargeProgress === undefined) gate.chargeProgress = 0;
 
-    // Check if gate is locked and G is being held
-    const isGateLocked = p.targetLock?.id === gateStableId(gate);
+    // Check if G is being held and player is in range
     const isHoldingWarp = Client.keys["warp"] === true;
     const dist = Math.hypot(p.x - gate.x, p.y - gate.y);
     const inRange = dist < gate.radius * ACTIVATION_RADIUS_MULT;
 
-    if (isGateLocked && inRange && isHoldingWarp && (p.warpCooldown ?? 0) <= 0) {
+    if (inRange && isHoldingWarp && (p.warpCooldown ?? 0) <= 0) {
       // Start charging
       if (gate.gateState === "dormant") {
         gate.gateState = "charging";
@@ -223,7 +222,7 @@ function updateGateActivation(dt: number, p: Player): void {
         }
       }
     } else {
-      // Reset if not holding G, not locked, or out of range
+      // Reset if not holding G or out of range
       if (gate.gateState !== "dormant") {
         gate.gateState = "dormant";
         gate.chargeProgress = 0;

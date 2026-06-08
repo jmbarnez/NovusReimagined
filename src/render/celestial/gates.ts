@@ -202,7 +202,7 @@ export function syncGateSprites(now: number, sys: System): void {
       // --- 2. CONCENTRIC COUNTER-ROTATING RINGS ---
       b.rings.clear();
 
-      const spin = g.spin ?? 0;
+      const spin = (g.spin ?? 0) + now * spinSpeed;
 
       // Outer ring
       const outerTicks = state === "dormant" ? 4 : 8;

@@ -26,6 +26,9 @@ export interface EventMap {
   "tutorial:complete": { sysIdx: number };
   "tutorial:skip": { sysIdx: number };
   "inventory:changed": void;
+  "inventory:grid-move": { containerId: string; fromSlot: number; toSlot: number };
+  "inventory:grid-swap": { containerId: string; fromSlot: number; toSlot: number };
+  "inventory:grid-insert": { containerId: string; fromSlot: number; toVisualIndex: number };
   "warp:request": { gateId: string };
   "warp:charging": { gateId: string; duration: number; targetX: number; targetY: number };
   "warp:complete": { playerId: string; targetX: number; targetY: number };

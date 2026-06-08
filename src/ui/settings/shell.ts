@@ -92,6 +92,11 @@ export function settingsContentHTML(): string {
           <input type="checkbox" id="lens-flare-toggle" class="toggle-switch" checked>
           <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="${t("settings.tip.lensFlare")}">ⓘ</span>
         </div>
+        <div class="settings-row settings-toggle-row">
+          <label>${t("settings.antialiasing")}</label>
+          <input type="checkbox" id="antialias-toggle" class="toggle-switch">
+          <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="${t("settings.tip.antialiasing")}">ⓘ</span>
+        </div>
 
         </div>
         <div class="settings-tab-panel" data-tab-panel="interface">

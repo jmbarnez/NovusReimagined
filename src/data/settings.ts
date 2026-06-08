@@ -112,6 +112,7 @@ export interface Settings {
   bloomIntensity: number;
   uiScale: number;
   language: "en" | "es";
+  antialias: boolean;
 }
 
 export const DEFAULT_KEYBINDS: Keybinds = {
@@ -422,6 +423,7 @@ export const DEFAULT_SETTINGS: Settings = {
   bloomIntensity: 1.0,
   uiScale: 1.0,
   language: "en",
+  antialias: false,
 };
 
 function loadKeybinds(value: unknown): Keybinds {
@@ -466,6 +468,7 @@ export function loadSettings(): Settings {
         bloomIntensity: parsed.bloomIntensity ?? 1.0,
         uiScale: parsed.uiScale ?? 1.0,
         language: (parsed.language === "es" ? "es" : "en") as "en" | "es",
+        antialias: parsed.antialias ?? false,
       };
     }
   } catch {}

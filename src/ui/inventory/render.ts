@@ -78,30 +78,14 @@ export function renderInventoryHTML(): string {
     const layout = getLayout(INV_STATE.selectedTreeId);
     const itemMap = new Map(filtered.map(it => [it.id, it]));
 
-    // Build slot->item map using actual slotIndex values
-    const slotMap = new Map<number, InventoryItem>();
-    for (const pos of layout.positions) {
-      const item = itemMap.get(pos.itemId);
-      if (item) slotMap.set(pos.slotIndex, item);
-    }
+    // Render only items that pass the filter, in slotIndex order
+    const sortedPositions = [...layout.positions]
+      .filter(p => itemMap.has(p.itemId))
+      .sort((a, b) => a.slotIndex - b.slotIndex);
 
-    // Calculate how many slots to render: enough for all positioned items plus padding
-    const maxSlot = layout.positions.length > 0
-      ? Math.max(...layout.positions.map(p => p.slotIndex))
-      : -1;
-    const totalSlots = Math.max(maxSlot + 1 + 16, Math.max(filtered.length + 8, 48));
-    const slotHtml: string[] = [];
-
-    for (let slot = 0; slot < totalSlots; slot++) {
-      const item = slotMap.get(slot);
-      if (item) {
-        slotHtml.push(renderItemGridCell(item, slot));
-      } else {
-        slotHtml.push(renderEmptySlot(slot));
-      }
-    }
-
-    itemsHtml = slotHtml.join("");
+    itemsHtml = sortedPositions.length
+      ? sortedPositions.map(p => renderItemGridCell(itemMap.get(p.itemId)!, p.slotIndex)).join("")
+      : `<div class="inv-empty">${t("inventory.empty")}</div>`;
   } else {
     const renderItem = renderItemRow;
     itemsHtml = filtered.length
@@ -124,13 +108,15 @@ export function renderInventoryHTML(): string {
           ${itemsHtml}
         </div>
         <div class="inv-footer">
-          <div class="inv-cap-bar-wrap">
-            <div class="inv-cap-bar"><div class="inv-cap-fill" style="width:${pct}%"></div></div>
-            <span class="inv-cap-label">${totalVol.toFixed(1)} / ${capacity.toFixed(1)} m³ (${pct}%)</span>
-          </div>
-          <div class="inv-credits">
-            <span class="inv-credits-label">${t("inventory.credits")}</span>
-            <span class="inv-credits-value">${Math.floor(getState().player.credits).toLocaleString()}¢</span>
+          <div class="inv-footer-row">
+            <div class="inv-cap-bar-wrap">
+              <div class="inv-cap-bar"><div class="inv-cap-fill" style="width:${pct}%"></div></div>
+              <span class="inv-cap-label">${totalVol.toFixed(1)} / ${capacity.toFixed(1)} m³ (${pct}%)</span>
+            </div>
+            <div class="inv-credits">
+              <span class="inv-credits-label">${t("inventory.credits")}</span>
+              <span class="inv-credits-value">${Math.floor(getState().player.credits).toLocaleString()}¢</span>
+            </div>
           </div>
         </div>
       </div>
@@ -196,6 +182,3 @@ function renderItemGridCell(it: InventoryItem, slotIndex: number): string {
   </div>`;
 }
 
-function renderEmptySlot(index: number): string {
-  return `<div class="inv-grid-slot is-empty" data-slot="${index}"></div>`;
-}
