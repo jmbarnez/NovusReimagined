@@ -63,20 +63,20 @@ function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false)
 
   const { left, right } = gatePillarPositions(gate);
   const baseAngle = gate.angle + (isForward ? 0 : Math.PI);
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 32; i++) {
     const t = random();
     const bx = left.x + (right.x - left.x) * t;
     const by = left.y + (right.y - left.y) * t;
     const a = baseAngle + (random() - 0.5) * 0.5;
-    const sp = 100 + random() * 160;
+    const sp = 180 + random() * 100;
     addParticle({
-      x: bx + (random() - 0.5) * 16,
-      y: by + (random() - 0.5) * 16,
+      x: bx + (random() - 0.5) * 8,
+      y: by + (random() - 0.5) * 8,
       vx: Math.cos(a) * sp,
       vy: Math.sin(a) * sp,
-      life: 0.4 + random() * 0.3,
-      color: "#66ddff",
-      r: 2 + random() * 3,
+      life: 0.6 + random() * 0.3,
+      color: "#aaddff",
+      r: 1 + random() * 1,
     });
   }
   if (p === getState().player) {
@@ -117,7 +117,7 @@ function tickBoostGates(dt: number, gates: TutorialBoostGate[], p: Player, isRep
 
 /** Slingshot boost gates — fly through the arch between pillars. */
 export function updateTutorialTrack(dt: number, p: Player, isReplaying = false): void {
-  if (!p.tutorial?.active || p.sysIdx !== 0 || (p === getState().player && Client.stationOpen)) return;
+  if (p.sysIdx !== 0 || (p === getState().player && Client.stationOpen)) return;
 
   tickBoostGates(dt, TUTORIAL_BOOST_GATES, p, isReplaying);
 }

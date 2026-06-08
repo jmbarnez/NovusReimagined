@@ -2,7 +2,7 @@ import { Client } from "./state.js";
 import { WorldAccess, getState } from "./state-access.js";
 import { buildGalaxy, populateSystem } from "./world-gen.js";
 import { savePlayer } from "./player/player-data.js";
-import { initInput } from "./input.js";
+import { initInput } from "./input/index.js";
 import { ensureBridgeUI } from "./ui/bridge.js";
 import { initSettings } from "./ui/settings/index.js";
 import { SpatialGrid } from "./utils/spatial.js";
@@ -12,18 +12,18 @@ import { initBackgroundStars } from "./render/background.js";
 import { initPixi, renderPixi, resizePixi, entityLayer, effectLayer, stationLayer } from "./pixi.js";
 import { initPixiBackground, updatePixiBackground } from "./render/pixi-background.js";
 import { initPixiParticles } from "./render/pixi-particles.js";
-import { initPixiEntities } from "./render/pixi-entities.js";
-import { initPixiPlayer } from "./render/pixi-player.js";
-import { initPixiCombat } from "./render/pixi-combat.js";
-import { initPixiEffects } from "./render/pixi-effects.js";
+import { initPixiEntities } from "./render/enemy/index.js";
+import { initPixiPlayer } from "./render/player/index.js";
+import { initPixiCombat } from "./render/combat/index.js";
+import { initPixiEffects } from "./render/fx/index.js";
 import { initVignette } from "./render/pixi-vignette.js";
 import { initPixiHUD } from "./render/pixi-hud-core.js";
 import { initPixiTargetArrows } from "./render/pixi-target-arrows.js";
 import { initPixiMaps } from "./render/pixi-maps.js";
 import { initPixiMinimap } from "./render/pixi-minimap.js";
-import { initPixiCelestial } from "./render/pixi-celestial.js";
+import { initPixiCelestial } from "./render/celestial/index.js";
 
-import { bindTitleScreenEvents } from "./ui/title-screen.js";
+import { bindTitleScreenEvents, restoreTitleScreen } from "./ui/title-screen.js";
 import { localizeBootScreen, markBootPhase, registerLoadingConsole, transitionToTitleScreen } from "./ui/loading-screen.js";
 import { migrateLegacySave } from "./data/profiles.js";
 import { C } from "./config/index.js";
@@ -74,7 +74,11 @@ async function boot() {
     document.documentElement.style.visibility = "visible";
     const loadingEl = document.getElementById("loading");
     if (loadingEl) loadingEl.style.opacity = "1";
-    transitionToTitleScreen();
+    // Don't call transitionToTitleScreen() - the HTML already has the correct structure
+    // Just bind events to the existing buttons
+    bindTitleScreenEvents();
+    // Manually add the class to show buttons and hide loading elements
+    loadingEl?.classList.add("ld-title-mode");
 
     initPixiParticles();
     initPixiEntities();

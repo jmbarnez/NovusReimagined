@@ -4,6 +4,7 @@
 
 import type { Station } from "./types/world.js";
 import type { AppMode } from "./state.js";
+import type { Gate } from "./types/world.js";
 
 export interface EventMap {
   "simulation:clear": void;
@@ -25,6 +26,11 @@ export interface EventMap {
   "tutorial:complete": { sysIdx: number };
   "tutorial:skip": { sysIdx: number };
   "inventory:changed": void;
+  "warp:request": { gateId: string };
+  "warp:charging": { gateId: string; duration: number; targetSysIdx: number; targetX: number; targetY: number };
+  "warp:complete": { playerId: string; targetSysIdx: number; targetX: number; targetY: number };
+  "warp:exit-spawn": { gate: Gate; duration: number };
+  "warp:exit-despawn": { gateId: string };
 }
 
 const _handlers: Partial<Record<string, Array<(data: unknown) => void>>> = {};

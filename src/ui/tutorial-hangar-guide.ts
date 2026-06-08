@@ -55,7 +55,7 @@ function syncStationDimmerCutout(target: HTMLElement | null): void {
     return;
   }
 
-  const pad = 8;
+  const pad = 20;
   const rect = target.getBoundingClientRect();
   const left = Math.max(0, rect.left - stationRect.left - pad);
   const top = Math.max(0, rect.top - stationRect.top - pad);

@@ -58,7 +58,7 @@ src/ui/station/industry/renderers/
   index.ts              // re-exports
 ```
 
-### 1.3 `src/ui/station/industry-model.ts` (18 KB → 4 files) 🔄 IN PROGRESS
+### 1.3 `src/ui/station/industry-model.ts` (18 KB → 5 files) ✅ COMPLETE
 
 ```
 src/ui/station/industry/model/
@@ -70,7 +70,7 @@ src/ui/station/industry/model/
   index.ts
 ```
 
-**Status:** Planning complete. Directory NOT YET CREATED. Original `src/ui/station/industry-model.ts` still exists. This is the current work item.
+**Status:** Directory created, file split, barrel `index.ts` wired, all 16 consumers updated. Original monolithic file removed.
 
 ### 1.4 `src/ui/station/industry.ts` (11 KB stays, but imports change)
 Update its import to pull from `./industry/renderers/index.js` and `./industry/model/index.js`.
@@ -150,18 +150,17 @@ src/tutorial/
 
 **Status:** Directory created, file split, barrel wired, consumers updated. Original `tutorial.ts` removed. **Note:** A bug was discovered and fixed in `src/tutorial/index.ts` where `canAdvanceHangarTour` and `advanceHangarTutorialPanel` were incorrectly re-exported from `./runner.js` instead of `./hangar-tour.js`.
 
-### 2.6 `src/input/` (from `input.ts`)
+### 2.6 `src/input/` (from `input.ts`) ✅ COMPLETE
 
 ```
 src/input/
-  core.ts               // InputState, key/mouse tracking
-  bindings.ts           // keybind mapping, input-hotkeys integration
-  modes.ts              // waypoint vs direct mode logic
-  queue.ts              // frame action queuing (from sim/input.ts? Or keep sim/input.ts as-is)
-  index.ts
+  core.ts               // InputState, key/mouse tracking, UI blocking, cursor lock
+  bindings.ts           // keybind mapping, keydown/keyup handlers
+  mouse.ts              // mouse handlers (down, up, move, wheel, contextmenu, blur)
+  index.ts              // initInput, re-exports
 ```
 
-**Caution:** `input.ts` is tied to `sim/input.ts` (16 KB). Consider whether `sim/input.ts` should stay in `sim/` or split into `input/sim-queue.ts`.
+**Status:** Directory created, file split into 3 modules (core.ts, bindings.ts, mouse.ts) plus barrel `index.ts`. Consumer `src/main.ts` updated. Original `input.ts` removed. Note: `sim/input.ts` remains separate as it's simulation-side frame action queuing.
 
 ---
 

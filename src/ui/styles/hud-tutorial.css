@@ -368,9 +368,10 @@
   z-index: 999 !important;
   outline: 2px solid var(--hud-accent) !important;
   outline-offset: 0 !important;
+  filter: brightness(1.08) !important;
   box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--hud-accent) 18%, transparent) !important,
-    0 0 16px color-mix(in srgb, var(--hud-accent) 30%, transparent) !important;
+    0 0 0 2px color-mix(in srgb, var(--hud-accent) 22%, transparent) !important,
+    0 0 20px color-mix(in srgb, var(--hud-accent) 38%, transparent) !important;
   animation: hudTutorialPulse 1.4s ease-in-out infinite !important;
 }
 
@@ -381,13 +382,13 @@
 @keyframes hudTutorialPulse {
   0%, 100% {
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--hud-accent) 14%, transparent),
-      0 0 12px color-mix(in srgb, var(--hud-accent) 24%, transparent);
+      0 0 0 2px color-mix(in srgb, var(--hud-accent) 18%, transparent),
+      0 0 14px color-mix(in srgb, var(--hud-accent) 30%, transparent);
   }
   50% {
     box-shadow:
-      0 0 0 3px color-mix(in srgb, var(--hud-accent) 22%, transparent),
-      0 0 18px color-mix(in srgb, var(--hud-accent) 34%, transparent);
+      0 0 0 4px color-mix(in srgb, var(--hud-accent) 28%, transparent),
+      0 0 22px color-mix(in srgb, var(--hud-accent) 42%, transparent);
   }
 }
 

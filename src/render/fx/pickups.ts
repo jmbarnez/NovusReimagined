@@ -1,0 +1,369 @@
+/**
+ * Salvage pickup rendering with holographic icons, text labels, and pools.
+ */
+import { Graphics, Sprite, Texture, Text, TextStyle } from "pixi.js";
+import { Client } from "../../state.js";
+import { getState } from "../../state-access.js";
+import type { SalvagePickup } from "../../types/world.js";
+import { effectLayer } from "../../pixi.js";
+import { isVisible } from "../../utils/game.js";
+import { getUIFont } from "../ui-font.js";
+import { ORE, LOOT, COMPONENTS } from "../../data/resources.js";
+import { getModule } from "../../data/modules.js";
+import { RARITY_CONFIG } from "../../data/moduleRarity.js";
+import { PICKUP_LIFE_S } from "../../wreck/index.js";
+import { oreColorForComposition } from "../../utils/ore-naming.js";
+import { paintItemIconSubjectOnly } from "../../ui/icons/item-icon-paint.js";
+import { ICON_LOGICAL, ICON_TEX_SCALE } from "../../ui/icons/painters/shared.js";
+
+const TAU = Math.PI * 2;
+
+// Text labeling maps (keyed by stable pickup id)
+const _pickupLabels = new Map<string, Text>();
+
+// Object pool for Text objects to avoid GC pressure
+const _textPool: Text[] = [];
+const _textPoolSize = 64;
+
+function getPooledText(): Text {
+  if (_textPool.length > 0) {
+    const t = _textPool.pop()!;
+    t.visible = true;
+    return t;
+  }
+  const t = new Text({ text: "", style: _sharedPickupStyle });
+  t.anchor.set(0.5, 0.5);
+  effectLayer!.addChild(t);
+  return t;
+}
+
+function returnPooledText(t: Text): void {
+  t.visible = false;
+  t.text = "";
+  if (_textPool.length < _textPoolSize) {
+    _textPool.push(t);
+  } else {
+    effectLayer!.removeChild(t);
+    t.destroy();
+  }
+}
+
+// Texture cache for baked pickup icons (keyed by catalog id)
+const _pickupIconTextures = new Map<string, Texture>();
+
+// Sprite tracking for pickups that show an icon image (keyed by stable pickup id)
+const _pickupSprites = new Map<string, Sprite>();
+
+// Object pool for Sprite objects
+const _spritePool: Sprite[] = [];
+const _spritePoolSize = 64;
+
+// Reusable Sets/Maps to avoid per-frame GC allocation
+const _activePickupIds = new Set<string>();
+
+// Shared pickup label style base — Pixi clones it per Text instance
+const _sharedPickupStyle = new TextStyle({
+  fontFamily: getUIFont(),
+  fontSize: 7,
+  fontWeight: "bold",
+  align: "center",
+  fill: "#ffffff",
+  stroke: { color: "#000000", width: 1.5 },
+});
+
+export function refreshPickupFonts(): void {
+  const font = getUIFont();
+  const scale = Client.settings?.fontScale ?? 1.0;
+  _sharedPickupStyle.fontFamily = font;
+  _sharedPickupStyle.fontSize = 7 * scale;
+}
+
+const _hexCache = new Map<string, number>();
+function hexStringToNumber(hex: string): number {
+  const hit = _hexCache.get(hex);
+  if (hit !== undefined) return hit;
+  const val = parseInt(hex.replace("#", ""), 16) || 0xffffff;
+  _hexCache.set(hex, val);
+  return val;
+}
+
+function getPooledSprite(): Sprite {
+  if (_spritePool.length > 0) {
+    const s = _spritePool.pop()!;
+    s.visible = true;
+    return s;
+  }
+  const s = new Sprite();
+  s.anchor.set(0.5, 0.5);
+  effectLayer!.addChild(s);
+  return s;
+}
+
+function returnPooledSprite(s: Sprite): void {
+  s.visible = false;
+  s.texture = Texture.EMPTY;
+  if (_spritePool.length < _spritePoolSize) {
+    _spritePool.push(s);
+  } else {
+    effectLayer!.removeChild(s);
+    s.destroy();
+  }
+}
+
+/** Resolve the catalog icon key for a SalvagePickup. */
+function resolvePickupIconKey(s: SalvagePickup): string | null {
+  if (s.kind === "credits") return null;
+  if (s.kind === "ore") return s.payload;
+  if (s.kind === "module") return s.payload;
+  if (s.kind === "loot") return s.payload;
+  return null;
+}
+
+/** Lazily bake a subject-only icon texture and cache it. */
+function getPickupIconTexture(id: string): Texture | null {
+  const cached = _pickupIconTextures.get(id);
+  if (cached) return cached;
+  if (typeof document === "undefined") return null;
+
+  const canvas = document.createElement("canvas");
+  const physical = ICON_LOGICAL * ICON_TEX_SCALE;
+  canvas.width = physical;
+  canvas.height = physical;
+  const cx = canvas.getContext("2d");
+  if (!cx) return null;
+  cx.scale(ICON_TEX_SCALE, ICON_TEX_SCALE);
+  cx.clearRect(0, 0, ICON_LOGICAL, ICON_LOGICAL);
+  paintItemIconSubjectOnly(cx, id, ICON_LOGICAL);
+
+  const texture = Texture.from(canvas);
+  _pickupIconTextures.set(id, texture);
+  return texture;
+}
+
+// Draw dynamic vector shapes for resources inside PixiJS Graphics in world space coordinates
+function drawResourceIconGfx(g: Graphics, icon: string, size: number, colorNum: number, cx: number, cy: number, scale: number) {
+  const s = size * scale;
+  const strokeOpt = { color: 0x000000, width: 1.2 * scale };
+
+  switch (icon) {
+    case "shard":
+      g.poly([
+        cx, cy - s,
+        cx + s * 0.45, cy - s * 0.25,
+        cx + s * 0.75, cy + s * 0.45,
+        cx, cy + s * 0.9,
+        cx - s * 0.75, cy + s * 0.35
+      ], true).fill({ color: colorNum }).stroke({ color: 0xffffff, width: 0.8 * scale, alpha: 0.2 });
+      break;
+
+    case "box":
+      const bs = s * 0.85;
+      g.rect(cx - bs, cy - bs, bs * 2, bs * 2).fill({ color: colorNum }).stroke(strokeOpt);
+      g.rect(cx - bs, cy - 2 * scale, bs * 2, 4 * scale).fill({ color: 0x000000, alpha: 0.2 });
+      g.rect(cx - 2 * scale, cy - bs, 4 * scale, bs * 2).fill({ color: 0x000000, alpha: 0.2 });
+      break;
+
+    case "bolt":
+      const bw = s * 0.45;
+      g.rect(cx - bw, cy - s, bw * 2, s * 2).fill({ color: colorNum }).stroke(strokeOpt);
+      for (let y = -size + 4; y < size - 2; y += 4) {
+        g.rect(cx - bw, cy + y * scale, bw * 2, 1.2 * scale).fill({ color: 0x000000, alpha: 0.25 });
+      }
+      break;
+
+    case "chip":
+      const cw = s * 1.1, ch = s * 0.7;
+      g.rect(cx - cw, cy - ch, cw * 2, ch * 2).fill({ color: colorNum }).stroke(strokeOpt);
+      for (let x = -size + 3; x < size - 2; x += 4) {
+        g.rect(cx + x * scale, cy - ch - 2 * scale, 2 * scale, 2 * scale).fill({ color: 0xffcc44 });
+        g.rect(cx + x * scale, cy + ch, 2 * scale, 2 * scale).fill({ color: 0xffcc44 });
+      }
+      break;
+
+    case "cell":
+      g.ellipse(cx, cy, s * 0.65, s).fill({ color: colorNum }).stroke(strokeOpt);
+      g.rect(cx - s * 0.3, cy - s - 2 * scale, s * 0.6, 3 * scale).fill({ color: 0xffffff });
+      break;
+
+    case "gear":
+      const teeth = 8;
+      const polyPts: number[] = [];
+      for (let i = 0; i < teeth; i++) {
+        const a = (i / teeth) * TAU;
+        const r1 = s * 0.7, r2 = s;
+        polyPts.push(cx + Math.cos(a - 0.18) * r1, cy + Math.sin(a - 0.18) * r1);
+        polyPts.push(cx + Math.cos(a - 0.1) * r2, cy + Math.sin(a - 0.1) * r2);
+        polyPts.push(cx + Math.cos(a + 0.1) * r2, cy + Math.sin(a + 0.1) * r2);
+        polyPts.push(cx + Math.cos(a + 0.18) * r1, cy + Math.sin(a + 0.18) * r1);
+      }
+      g.poly(polyPts, true).fill({ color: colorNum }).stroke(strokeOpt);
+      // Inner circle hole
+      g.circle(cx, cy, s * 0.3).fill({ color: 0x0a0c10 }).stroke(strokeOpt);
+      break;
+
+    case "plate":
+      g.rect(cx - s * 1.1, cy - s * 0.4, s * 2.2, s * 0.8).fill({ color: colorNum }).stroke(strokeOpt);
+      g.circle(cx - s * 0.8, cy, 1.5 * scale).fill({ color: 0x000000, alpha: 0.3 });
+      g.circle(cx + s * 0.8, cy, 1.5 * scale).fill({ color: 0x000000, alpha: 0.3 });
+      break;
+
+    case "canister":
+      g.rect(cx - s * 0.55, cy - s, s * 1.1, s * 2).fill({ color: colorNum }).stroke(strokeOpt);
+      g.rect(cx - s * 0.55, cy - s * 0.4, s * 1.1, s * 0.8).fill({ color: 0xffffff, alpha: 0.25 });
+      break;
+
+    default:
+      g.circle(cx, cy, s).fill({ color: colorNum }).stroke(strokeOpt);
+  }
+}
+
+export function syncPickups(pickupGfx: Graphics, now: number): void {
+  const state = getState();
+  pickupGfx.clear();
+  _activePickupIds.clear();
+
+  if (state.salvagePickups) {
+    for (const s of state.salvagePickups) {
+      if (!isVisible(s.x, s.y, 60)) continue;
+      const pickupId = s.id;
+      _activePickupIds.add(pickupId);
+
+      const fade = s.life < 8 ? s.life / 8 : 1;
+      const bobY = Math.sin(s.bob) * 2.5;
+
+      // Warp-in materialize
+      const warpInAge = Math.min(1, Math.max(0, (PICKUP_LIFE_S - s.life) / 0.4));
+      const warpIn = 1 - warpInAge;
+      const warpScale = 1 + warpIn * 0.4;
+
+      // Holographic flicker
+      const flicker = 0.92 + 0.08 * Math.sin(now * 0.025 + s.bob * 7);
+
+      // Display metrics
+      let label: string;
+      let colStr: string;
+      let icon: string;
+      let iconSize = 5;
+
+      if (s.kind === "credits") {
+        label = `\xA2${s.qty}`;
+        colStr = "#ffd700";
+        icon = "box";
+        iconSize = 4;
+      } else if (s.kind === "ore") {
+        const def = ORE[s.payload];
+        colStr = s.composition ? oreColorForComposition(s.composition) : def?.color ?? "#a0a5aa";
+        icon = def?.icon ?? "shard";
+        label = s.name ?? def?.label ?? s.payload;
+      } else if (s.kind === "module") {
+        const def = getModule(s.payload);
+        const rarityColor = s.instance ? RARITY_CONFIG[s.instance.rarity]?.color : null;
+        colStr = rarityColor ?? "#00e8c8";
+        icon = "shard";
+        label = def?.short ?? def?.name ?? s.payload;
+        iconSize = 5;
+      } else {
+        const def = LOOT[s.payload] || COMPONENTS[s.payload];
+        colStr = def?.color ?? "#8899aa";
+        icon = def?.icon ?? "bolt";
+        label = def?.label ?? s.payload;
+      }
+
+      const colorNum = hexStringToNumber(colStr);
+
+      const px = s.x;
+      const py = s.y + bobY;
+
+      // Try actual catalog icon sprite; fall back to vector shape
+      const iconKey = resolvePickupIconKey(s);
+      const iconTexture = iconKey ? getPickupIconTexture(iconKey) : null;
+      if (iconTexture) {
+        let sprite = _pickupSprites.get(pickupId);
+        if (!sprite) {
+          sprite = getPooledSprite();
+          _pickupSprites.set(pickupId, sprite);
+        }
+        sprite.texture = iconTexture;
+        sprite.x = px;
+        sprite.y = py;
+        sprite.width = sprite.height = 12 * warpScale;
+        sprite.alpha = fade;
+      } else {
+        const existingSprite = _pickupSprites.get(pickupId);
+        if (existingSprite) {
+          returnPooledSprite(existingSprite);
+          _pickupSprites.delete(pickupId);
+        }
+        drawResourceIconGfx(pickupGfx, icon, iconSize, colorNum, px, py, warpScale);
+      }
+
+      // Text labeling inside effectLayer
+      let textObj = _pickupLabels.get(pickupId);
+      if (!textObj) {
+        textObj = getPooledText();
+        _pickupLabels.set(pickupId, textObj);
+      }
+      if (textObj.text !== label) textObj.text = label;
+
+      // Dark plate behind label (drawn into _pickupGfx so it scales with world)
+      const platePadX = 3;
+      const platePadY = 1.5;
+      const plateW = textObj.width + platePadX * 2;
+      const plateH = textObj.height + platePadY * 2;
+      pickupGfx
+        .roundRect(px - plateW / 2, py - 14 * warpScale - plateH / 2, plateW, plateH, 2)
+        .fill({ color: 0x000000, alpha: 0.4 * fade })
+        .stroke({ color: 0x3c78c8, width: 0.8, alpha: 0.3 * fade });
+
+      // Position text card above pickup
+      textObj.x = Math.round(px);
+      textObj.y = Math.round(py - 14 * warpScale);
+      textObj.alpha = fade * flicker;
+    }
+  }
+
+  // Clean obsolete pickup text objects
+  for (const [pickupId, textObj] of _pickupLabels.entries()) {
+    if (!_activePickupIds.has(pickupId)) {
+      returnPooledText(textObj);
+      _pickupLabels.delete(pickupId);
+    }
+  }
+
+  // Clean obsolete pickup sprites
+  for (const [pickupId, sprite] of _pickupSprites.entries()) {
+    if (!_activePickupIds.has(pickupId)) {
+      returnPooledSprite(sprite);
+      _pickupSprites.delete(pickupId);
+    }
+  }
+}
+
+export function destroyPickups(): void {
+  // Clean text labels
+  for (const textObj of _pickupLabels.values()) {
+    effectLayer!.removeChild(textObj);
+    textObj.destroy();
+  }
+  _pickupLabels.clear();
+
+  // Clean pickup sprites
+  for (const sprite of _pickupSprites.values()) {
+    effectLayer!.removeChild(sprite);
+    sprite.destroy();
+  }
+  _pickupSprites.clear();
+
+  // Clean sprite pool
+  for (const sprite of _spritePool) {
+    effectLayer!.removeChild(sprite);
+    sprite.destroy();
+  }
+  _spritePool.length = 0;
+
+  // Clean icon textures
+  for (const tex of _pickupIconTextures.values()) {
+    tex.destroy(true);
+  }
+  _pickupIconTextures.clear();
+}

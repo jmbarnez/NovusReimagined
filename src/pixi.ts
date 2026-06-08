@@ -16,8 +16,8 @@
 import { Application, Container, ColorMatrixFilter, Rectangle, Graphics } from "pixi.js";
 import "pixi.js/unsafe-eval";
 import { Client } from "./state.js";
-import { clearShipTextureCaches, rebuildPlayerSprites } from "./render/pixi-player.js";
-import { clearEnemyTextureCaches } from "./render/pixi-entities.js";
+import { clearShipTextureCaches, rebuildPlayerSprites } from "./render/player/index.js";
+import { clearEnemyTextureCaches } from "./render/enemy/index.js";
 import { clearStationTextureCaches } from "./render/pixi-stations.js";
 import { LOCK_RAIL_H } from "./constants.js";
 import { playRect, setViewportSize } from "./render/viewport.js";

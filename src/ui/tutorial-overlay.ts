@@ -109,7 +109,7 @@ function ensureDimmerSegments(dimmer: HTMLElement): HTMLElement[] {
 
 function syncDimmerCutout(dimmer: HTMLElement, target: HTMLElement | null, bounds: DOMRect): void {
   const segments = ensureDimmerSegments(dimmer);
-  const pad = 8;
+  const pad = 20;
   if (!target) {
     segments[0].style.cssText = "left:0;top:0;width:100%;height:100%;";
     for (let i = 1; i < segments.length; i++) segments[i].style.cssText = "display:none;";

@@ -10,7 +10,7 @@ import { clearSensorLocks } from "../targeting.js";
 import { floatText } from "../utils/fx.js";
 import { populateSystem } from "../world-gen.js";
 import { stationLayer } from "../pixi.js";
-import { initPixiCelestial, destroyPixiCelestial } from "../render/pixi-celestial.js";
+import { initPixiCelestial, destroyPixiCelestial } from "../render/celestial/index.js";
 import type { Gate } from "../types/world.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { didCrossGateAperture, gateDestinationName, gateStableId, isLocalWarpGate } from "../utils/warp-gates.js";
@@ -40,20 +40,20 @@ function spawnGateWarpBurst(gate: Gate, p: Player): void {
   if (p !== getState().player) return;
   const travelAngle = Math.atan2(p.y - p.py, p.x - p.px);
   const baseAngle = Number.isFinite(travelAngle) ? travelAngle : p.angle;
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < 32; i++) {
     const a = baseAngle + (random() - 0.5) * 0.9;
     const r = gate.radius * (0.25 + random() * 0.7);
     const theta = random() * Math.PI * 2;
-    const sp = 120 + random() * 260;
+    const sp = 200 + random() * 100;
     addParticle({
       x: gate.x + Math.cos(theta) * r,
       y: gate.y + Math.sin(theta) * r,
       vx: Math.cos(a) * sp,
       vy: Math.sin(a) * sp,
-      life: 0.35 + random() * 0.35,
-      color: random() > 0.35 ? "#a6e8ff" : "#ffffff",
-      r: 2 + random() * 3,
-      drag: 0.12,
+      life: 0.5 + random() * 0.3,
+      color: "#aaddff",
+      r: 1 + random() * 1,
+      drag: 0.08,
     });
   }
 }
