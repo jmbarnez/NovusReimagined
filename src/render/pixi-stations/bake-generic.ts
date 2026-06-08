@@ -1,144 +1,143 @@
-import { mkRng } from "../../utils/math.js";
 import {
   COL,
   TAU,
   type Station,
-  drawEnergyConduit,
-  drawGreebles,
-  drawHabitatDome,
-  drawHangar,
-  drawHullDisc,
-  drawLatticeSpoke,
-  drawSolarSail,
   cornerLight,
 } from "./shared.js";
 
-// ─── Archetype 2: Modular Sci-Fi Research Outpost (Generic Station) ────────
+// ─── Archetype 2: Sleek Outpost Station ────────
 
 export function drawGenericBody(cx: CanvasRenderingContext2D, half: number, st: Station) {
   const R = st.radius;
   const S = R / 38;
   const LW = 1 + (S - 1) * 0.4;
-  const rng = mkRng(st.id);
 
   cx.save();
   cx.translate(half, half);
 
-  // 1. Giant Asymmetrical High-Performance Solar Collector Wing (Left/Top)
-  {
-    const pW = 28 * S, pH = 50 * S;
-    const py = -(R * 0.55 + pH / 2 + 5 * S);
-    // Draw massive wing array
-    drawSolarSail(cx, -12 * S, py, pW, pH, -0.08, S, LW);
-    drawSolarSail(cx, 12 * S, py, pW, pH, 0.08, S, LW);
-
-    // Support structural strut
-    cx.fillStyle = COL.hullMid;
-    cx.fillRect(-3 * S, py + pH / 2 - 2 * S, 6 * S, (R * 0.55) - (py + pH / 2 - 2 * S));
-    cx.strokeStyle = "rgba(0,0,0,0.75)";
-    cx.lineWidth = 0.8 * LW;
-    cx.strokeRect(-3 * S, py + pH / 2 - 2 * S, 6 * S, (R * 0.55) - (py + pH / 2 - 2 * S));
-
-    // Green dynamic energy conduits running back to main reactor
-    drawEnergyConduit(cx, 0, py + 10 * S, 0, -R * 0.48, COL.green, LW);
-  }
-
-  // 2. Asymmetrical Spindly Mechanical Arms holding glowing Research Pods
-  {
-    const armLen = R * 1.35;
-    // 3 arms spaced at 120 degrees offset
-    for (let i = 0; i < 3; i++) {
-      const a = (i / 3) * TAU + Math.PI * 0.6;
-      const c = Math.cos(a), s = Math.sin(a);
-      const ix = c * R * 0.45, iy = s * R * 0.45;
-      const ox = c * armLen, oy = s * armLen;
-
-      // Draw mechanical skeletal latticed arm
-      drawLatticeSpoke(cx, ix, iy, ox, oy, 7 * S, LW);
-
-      // Glowing power transfer conduits in cyber emerald green
-      drawEnergyConduit(cx, ix, iy, ox, oy, COL.green, LW);
-
-      // Glowing Scientific Biosphere Pods at arm tips
-      drawHabitatDome(cx, ox, oy, 8 * S, S, LW, COL.green);
-
-      // Outer micro-navigation approach becons (green/cyan)
-      cornerLight(cx, ox + c * 9 * S, oy + s * 9 * S, S, COL.green);
-    }
-  }
-
-  // 3. Sleek Outer Collar Ring with neon status slits
+  // 1. Clean outer ring
   {
     const ringR = R * 1.05;
-    const ringW = 12 * S;
+    const ringW = 10 * S;
+
+    cx.save();
+    cx.shadowColor = "rgba(0,0,0,0.45)";
+    cx.shadowBlur = 10;
+    cx.beginPath(); cx.arc(0, 0, ringR, 0, TAU);
+    cx.lineWidth = ringW;
+    cx.strokeStyle = "#0d1117";
+    cx.stroke();
+    cx.restore();
 
     const rg = cx.createRadialGradient(0, 0, ringR - ringW / 2, 0, 0, ringR + ringW / 2);
-    rg.addColorStop(0.00, COL.hullDark);
-    rg.addColorStop(0.30, COL.hullMid);
-    rg.addColorStop(0.55, COL.hullLite);
-    rg.addColorStop(0.80, COL.hullMid);
-    rg.addColorStop(1.00, COL.hullDark);
+    rg.addColorStop(0.00, "#0d1117");
+    rg.addColorStop(0.30, "#1a2028");
+    rg.addColorStop(0.50, "#2a303a");
+    rg.addColorStop(0.70, "#1a2028");
+    rg.addColorStop(1.00, "#0d1117");
     cx.beginPath(); cx.arc(0, 0, ringR, 0, TAU);
     cx.lineWidth = ringW;
     cx.strokeStyle = rg;
     cx.stroke();
 
-    // Top rim reflection highlight
-    cx.strokeStyle = "rgba(220,240,255,0.36)";
+    cx.strokeStyle = "rgba(180,210,240,0.3)";
     cx.lineWidth = 1.0 * LW;
-    cx.beginPath(); cx.arc(0, 0, ringR + ringW / 2 - 1.2 * S, Math.PI * 1.05, Math.PI * 1.95);
+    cx.beginPath(); cx.arc(0, 0, ringR + ringW / 2 - 0.8 * S, Math.PI * 1.1, Math.PI * 1.9);
     cx.stroke();
+  }
 
-    // Glowing technical diagnostic window channels (emerald green energy lines)
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * TAU;
-      const slitA = a - 0.045;
-      const slitB = a + 0.045;
-      cx.strokeStyle = `rgba(${COL.green}, 0.85)`;
-      cx.lineWidth = 2.0 * S;
+  // 2. Minimal green status slits
+  {
+    const ringR = R * 1.05;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * TAU;
+      const slitA = a - 0.04;
+      const slitB = a + 0.04;
+      cx.strokeStyle = `rgba(${COL.green}, 0.75)`;
+      cx.lineWidth = 1.6 * S;
       cx.lineCap = "round";
       cx.beginPath(); cx.arc(0, 0, ringR, slitA, slitB); cx.stroke();
       cx.lineCap = "butt";
-
-      if (i % 2 === 0) {
-        cornerLight(cx, Math.cos(a) * (ringR + ringW / 2 + 1.5 * S), Math.sin(a) * (ringR + ringW / 2 + 1.5 * S), S, COL.cyan);
-      }
     }
   }
 
-  // 4. Central Hub with detailed Hangar bay and status reactor core
+  // 3. Three clean struts
   {
-    const hubR = R * 0.52;
+    const hubR = R * 0.48;
+    const ringInner = R * 1.05 - 5 * S;
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * TAU + Math.PI / 6;
+      const c = Math.cos(a), s = Math.sin(a);
+      const ix = c * hubR, iy = s * hubR;
+      const ox = c * ringInner, oy = s * ringInner;
+
+      cx.strokeStyle = "#1a2028";
+      cx.lineWidth = 2.5 * S;
+      cx.beginPath(); cx.moveTo(ix, iy); cx.lineTo(ox, oy); cx.stroke();
+
+      cx.strokeStyle = `rgba(${COL.green}, 0.5)`;
+      cx.lineWidth = 0.8 * S;
+      cx.beginPath(); cx.moveTo(ix, iy); cx.lineTo(ox, oy); cx.stroke();
+    }
+  }
+
+  // 4. Sleek central hub
+  {
+    const hubR = R * 0.48;
+
     cx.save();
-    cx.shadowColor = "rgba(0,0,0,0.65)";
-    cx.shadowBlur = 10;
-    cx.fillStyle = COL.hullDark;
+    cx.shadowColor = "rgba(0,0,0,0.45)";
+    cx.shadowBlur = 8;
+    cx.fillStyle = "#0a0e14";
     cx.beginPath(); cx.arc(0, 0, hubR, 0, TAU); cx.fill();
     cx.restore();
 
-    // Tier 1 base
-    drawHullDisc(cx, hubR);
+    const hullGrad = cx.createLinearGradient(0, -hubR, 0, hubR);
+    hullGrad.addColorStop(0.0, "#2a3544");
+    hullGrad.addColorStop(0.45, "#1c242e");
+    hullGrad.addColorStop(1.0, "#0d1218");
+    cx.fillStyle = hullGrad;
+    cx.beginPath(); cx.arc(0, 0, hubR, 0, TAU); cx.fill();
 
-    // Tier 2 Command deck
-    cx.save();
-    cx.translate(0, -1.2 * S);
-    drawHullDisc(cx, hubR * 0.72);
-    cx.restore();
+    cx.strokeStyle = "rgba(0,0,0,0.85)";
+    cx.lineWidth = 1.2;
+    cx.beginPath(); cx.arc(0, 0, hubR, 0, TAU); cx.stroke();
 
-    // Greeble paneling details
-    drawGreebles(cx, rng, hubR * 0.72, S, LW);
+    cx.strokeStyle = "rgba(160,190,220,0.35)";
+    cx.lineWidth = 1.0;
+    cx.beginPath(); cx.arc(0, 0, hubR - 0.7, Math.PI * 1.12, Math.PI * 1.88);
+    cx.stroke();
 
-    // Technical hangar launch gate
-    drawHangar(cx, hubR * 0.35, 0, 0, 15 * S, 18 * S, S, LW);
+    // Hangar slit
+    {
+      const hW = 18 * S;
+      const hH = 6 * S;
+      cx.fillStyle = "#06090e";
+      cx.fillRect(-hW / 2, -hH / 2, hW, hH);
+      cx.strokeStyle = "rgba(0,0,0,0.8)";
+      cx.lineWidth = 1;
+      cx.strokeRect(-hW / 2, -hH / 2, hW, hH);
+      cx.fillStyle = `rgba(${COL.green}, 0.12)`;
+      cx.fillRect(-hW / 2 + 2 * S, -hH / 2 + S, hW - 4 * S, hH - 2 * S);
+    }
 
-    // Reactor Core Status Glow (emerald central sphere)
-    const core = cx.createRadialGradient(0, -2 * S, 0, 0, -2 * S, hubR * 0.22);
-    core.addColorStop(0.0, `rgba(${COL.greenSoft}, 0.95)`);
-    core.addColorStop(0.5, `rgba(${COL.green}, 0.45)`);
-    core.addColorStop(1.0, "rgba(0,0,0,0)");
-    cx.fillStyle = core;
-    cx.beginPath(); cx.arc(0, -2 * S, hubR * 0.22, 0, TAU); cx.fill();
+    // Core glow
+    const coreR = hubR * 0.2;
+    const coreGrad = cx.createRadialGradient(0, -1.5 * S, 0, 0, -1.5 * S, coreR * 0.9);
+    coreGrad.addColorStop(0.0, `rgba(${COL.greenSoft}, 0.9)`);
+    coreGrad.addColorStop(0.5, `rgba(${COL.green}, 0.45)`);
+    coreGrad.addColorStop(1.0, "rgba(0,30,20,0)");
+    cx.fillStyle = coreGrad;
+    cx.beginPath(); cx.arc(0, -1.5 * S, coreR, 0, TAU); cx.fill();
+
+    cx.strokeStyle = `rgba(${COL.greenSoft}, 0.4)`;
+    cx.lineWidth = 1.0;
+    cx.beginPath(); cx.arc(0, -1.5 * S, coreR, 0, TAU); cx.stroke();
   }
+
+  // 5. Two nav beacons
+  cornerLight(cx, -R * 0.4, -R * 0.4, S, COL.cyan);
+  cornerLight(cx, R * 0.4, R * 0.4, S, COL.cyan);
 
   cx.restore();
 }

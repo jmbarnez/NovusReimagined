@@ -133,7 +133,7 @@ export function syncPixiTutorialTrack(now: number): void {
     return;
   }
 
-  drawCenterline(_trackGfx, track);
+  // drawCenterline(_trackGfx, track);
   drawChevrons(_trackGfx, trackId, track, now);
 
   _trackGfx.visible = true;

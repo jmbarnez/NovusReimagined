@@ -14,7 +14,7 @@ import { mulberry32 } from "../utils/math.js";
 import { viewportW, viewportH } from "./viewport.js";
 import { getUIFont } from "./ui-font.js";
 
-const PRE_WARP_DURATION = 2.4;
+const PRE_WARP_DURATION = 4.8;
 const POST_WARP_DURATION = 0.5;
 
 let warpLayer: Container | null = null;

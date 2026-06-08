@@ -185,6 +185,21 @@
   border-radius: 2px;
 }
 
+.inv-grid-slot.is-empty {
+  border: 1px dashed var(--hud-border);
+  border-radius: 2px;
+  min-height: 64px;
+  background: transparent;
+}
+.inv-grid-slot.is-drag-over,
+.inv-grid-cell.is-drag-over {
+  border-color: var(--hud-accent);
+  background: color-mix(in srgb, var(--hud-accent) 15%, transparent);
+}
+.inv-grid-cell.is-dragging {
+  opacity: 0.5;
+}
+
 /* ─── Capacity Bar ─── */
 .inv-cap-bar-wrap {
   display: flex;

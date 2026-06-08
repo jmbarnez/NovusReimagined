@@ -511,9 +511,10 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
         objectGfx.closePath();
         objectGfx.fill({ color: rgbaToHex(theme.shield), alpha: Math.max(0.5, alpha) });
 
-        const gateLabel = gateMapLabel(g);
-        const gateKey = `gate:${sSys.idx}:${g.targetSysIdx ?? -1}:${Math.round(g.x)}:${Math.round(g.y)}`;
-        setMapLabel(gateKey, gateLabel, "name", p.x, p.y + size + 8, alpha * 0.9, rgbaToHex(theme.shield));
+        // Hide gate labels
+        // const gateLabel = gateMapLabel(g);
+        // const gateKey = `gate:${sSys.idx}:${g.targetSysIdx ?? -1}:${Math.round(g.x)}:${Math.round(g.y)}`;
+        // setMapLabel(gateKey, gateLabel, "name", p.x, p.y + size + 8, alpha * 0.9, rgbaToHex(theme.shield));
       }
     }
 

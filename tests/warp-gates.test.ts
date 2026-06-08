@@ -60,4 +60,9 @@ describe("warp gate aperture crossing", () => {
     // Player at origin moving slightly — previously triggered because gate px/py was (0,0)
     expect(didCrossGateAperture(gate, playerSegment(0, 0, 5, 0))).toBe(false);
   });
+
+  it("triggers crossing even at very slow speeds (no minimum speed requirement)", () => {
+    // Previously this would fail due to WARP_GATE_MIN_CROSS_SPEED check
+    expect(didCrossGateAperture(makeGate(), playerSegment(-160, 0, -158, 0))).toBe(true);
+  });
 });

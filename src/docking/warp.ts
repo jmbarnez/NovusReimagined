@@ -171,6 +171,8 @@ export function beginWarpThroughGate(gate: Gate, p: Player = getState().player):
     return warpLocal(gate, p);
   }
   if (gate.targetSysIdx == null) return false;
+  gate.gateState = "warping";
+  gate.chargeProgress = 1;
   spawnGateWarpBurst(gate, p);
   PlayerAccess.setWarpCooldown(WARP_TIME, p);
   PlayerAccess.setWarpTargetIdx(gate.targetSysIdx, p);
@@ -241,7 +243,7 @@ function createTemporaryGate(sysIdx: number, x: number, y: number, fromIdx: numb
 function updateGateActivation(dt: number, p: Player): void {
   const sys = curSys(p);
   if (!sys) return;
-  
+
   for (const gate of sys.gates ?? []) {
     if (gate.isTemporary) {
       // Update dispense timer
@@ -254,36 +256,42 @@ function updateGateActivation(dt: number, p: Player): void {
       }
       continue;
     }
-    
-    const dist = Math.hypot(p.x - gate.x, p.y - gate.y);
-    const activationRadius = gate.radius * ACTIVATION_RADIUS_MULT;
-    
+
+    // Skip gates that are in warping state - proximity logic shouldn't override
+    if (gate.gateState === "warping") continue;
+
     // Initialize state if not set
     if (!gate.gateState) gate.gateState = "dormant";
     if (gate.chargeProgress === undefined) gate.chargeProgress = 0;
-    
-    if (dist < activationRadius && (p.warpCooldown ?? 0) <= 0) {
-      // Player in range - start charging
+
+    // Check if gate is locked and G is being held
+    const isGateLocked = p.targetLock?.id === gateStableId(gate);
+    const isHoldingWarp = Client.keys["warp"] === true;
+    const dist = Math.hypot(p.x - gate.x, p.y - gate.y);
+    const inRange = dist < gate.radius * ACTIVATION_RADIUS_MULT;
+
+    if (isGateLocked && inRange && isHoldingWarp && (p.warpCooldown ?? 0) <= 0) {
+      // Start charging
       if (gate.gateState === "dormant") {
         gate.gateState = "charging";
+        p.warpHoldStartTime = performance.now();
       }
-      
+
       if (gate.gateState === "charging") {
         gate.chargeProgress += dt / CHARGE_TIME;
         if (gate.chargeProgress >= 1) {
           gate.chargeProgress = 1;
           gate.gateState = "active";
           // Auto-warp when fully charged
-          if (didCrossGateAperture(gate, p)) {
-            beginWarpThroughGate(gate, p);
-          }
+          beginWarpThroughGate(gate, p);
         }
       }
     } else {
-      // Player out of range - reset
+      // Reset if not holding G, not locked, or out of range
       if (gate.gateState !== "dormant") {
         gate.gateState = "dormant";
         gate.chargeProgress = 0;
+        p.warpHoldStartTime = null;
       }
     }
   }
@@ -292,25 +300,29 @@ function updateGateActivation(dt: number, p: Player): void {
 function tickPlayerWarp(dt: number, p: Player): void {
   // Update gate activation states
   updateGateActivation(dt, p);
-  
+
   if ((p.warpCooldown ?? 0) > 0) {
     PlayerAccess.setWarpCooldown((p.warpCooldown ?? 0) - dt, p);
     if ((p.warpCooldown ?? 0) <= 0) {
       const targetIdx = p.warpTargetIdx ?? -1;
       PlayerAccess.setWarpCooldown(0, p);
+      // Reset warping gates in SOURCE system before changing systems
+      const sourceSys = curSys(p);
+      if (sourceSys) {
+        for (const gate of sourceSys.gates ?? []) {
+          if (gate.gateState === "warping") {
+            gate.gateState = "dormant";
+            gate.chargeProgress = 0;
+          }
+        }
+      }
       if (targetIdx >= 0) warpTo(targetIdx, p);
       PlayerAccess.setWarpTargetIdx(-1, p);
     }
     return;
   }
 
-  if (p === getState().player && Client.stationOpen) return;
-  const sys = curSys(p);
-  if (!sys) return;
-  for (const gate of sys.gates ?? []) {
-    if (!didCrossGateAperture(gate, p)) continue;
-    if (beginWarpThroughGate(gate, p)) return;
-  }
+  // Pass-through logic removed - warp only via hold-to-charge
 }
 
 export function updateWarp(dt: number): void {
@@ -318,17 +330,8 @@ export function updateWarp(dt: number): void {
 }
 
 export function tryWarp(p: Player = getState().player, targetIdx?: number | null): boolean {
-  const gate = getWarpGateInRange(p, targetIdx);
-  if (!gate) return false;
-  if (isLocalWarpGate(gate)) return warpLocal(gate, p);
-  if (gate.targetSysIdx == null) return false;
-  PlayerAccess.setWarpCooldown(WARP_TIME, p);
-  PlayerAccess.setWarpTargetIdx(gate.targetSysIdx, p);
-  if (p === getState().player) {
-    floatText(p.x, p.y - 45, `WARP to ${gateDestinationName(gate, getState().GALAXY)}`, "#66aaff");
-    playWarpAudio("charge");
-  }
-  return true;
+  // tryWarp is no longer used - warp is handled by hold-to-charge in updateGateActivation
+  return false;
 }
 
 export function clearWarpPresentation(p: Player = getState().player): void {

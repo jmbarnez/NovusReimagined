@@ -304,33 +304,33 @@ function drawGateOverlay(g: Graphics, gate: Gate, now: number) {
     });
   }
 
-  // ── Approach lane (when player is near) ──
-  const player = getState().player;
-  const playerDist = Math.hypot(player.x - gate.x, player.y - gate.y);
-  if (playerDist < gateR * 5) {
-    const laneAlpha = Math.max(0, 1 - playerDist / (gateR * 5)) * 0.18;
-    const laneLen = gateR * 3;
-    const dashLen = 12;
-    const dashGap = 18;
-    const totalDash = dashLen + dashGap;
-    const steps = Math.floor(laneLen / totalDash);
+  // ── Approach lane (when player is near) - REMOVED
+  // const player = getState().player;
+  // const playerDist = Math.hypot(player.x - gate.x, player.y - gate.y);
+  // if (playerDist < gateR * 5) {
+  //   const laneAlpha = Math.max(0, 1 - playerDist / (gateR * 5)) * 0.18;
+  //   const laneLen = gateR * 3;
+  //   const dashLen = 12;
+  //   const dashGap = 18;
+  //   const totalDash = dashLen + dashGap;
+  //   const steps = Math.floor(laneLen / totalDash);
 
-    for (const side of [-1, 1]) {
-      const offX = px * side * portalR * 0.6;
-      const offY = py * side * portalR * 0.6;
-      for (let i = 0; i < steps; i++) {
-        const d0 = i * totalDash;
-        const d1 = d0 + dashLen;
-        const x0 = gate.x + nx * d0 + offX;
-        const y0 = gate.y + ny * d0 + offY;
-        const x1 = gate.x + nx * d1 + offX;
-        const y1 = gate.y + ny * d1 + offY;
-        g.moveTo(x0, y0);
-        g.lineTo(x1, y1);
-        g.stroke({ color: colCyan, width: 1, alpha: laneAlpha * (1 - d0 / laneLen) });
-      }
-    }
-  }
+  //   for (const side of [-1, 1]) {
+  //     const offX = px * side * portalR * 0.6;
+  //     const offY = py * side * portalR * 0.6;
+  //     for (let i = 0; i < steps; i++) {
+  //       const d0 = i * totalDash;
+  //       const d1 = d0 + dashLen;
+  //       const x0 = gate.x + nx * d0 + offX;
+  //       const y0 = gate.y + ny * d0 + offY;
+  //       const x1 = gate.x + nx * d1 + offX;
+  //       const y1 = gate.y + ny * d1 + offY;
+  //       g.moveTo(x0, y0);
+  //       g.lineTo(x1, y1);
+  //       g.stroke({ color: colCyan, width: 1, alpha: laneAlpha * (1 - d0 / laneLen) });
+  //     }
+  //   }
+  // }
 }
 
 export function syncPixiStationOverlays(now: number, sys: System): void {
@@ -397,7 +397,9 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
     const inRange = dst(player.x, player.y, g.x, g.y) < g.radius + GATE_RANGE;
     if (inRange) {
       const canWarp = canWarpThroughGate(g, sys.idx, player);
-      const text = canWarp ? t("world.gate.flyThrough") : t("world.gate.clearanceRequired");
+      const warpKey = Client.settings?.keybinds.warp ?? "KeyG";
+      const keyLabel = warpKey.replace("Key", "");
+      const text = canWarp ? `Hold ${keyLabel} to Warp` : t("world.gate.clearanceRequired");
       const label = ensureGateText(
         id,
         text,

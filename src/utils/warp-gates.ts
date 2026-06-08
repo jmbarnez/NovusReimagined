@@ -5,7 +5,6 @@ import { getState } from "../state-access.js";
 import { curSys } from "./game.js";
 
 const WARP_GATE_APERTURE_FRACTION = 0.78;
-const WARP_GATE_MIN_CROSS_SPEED = 18;
 
 export function isLocalWarpGate(gate: Gate): boolean {
   return gate.target?.kind === "local";
@@ -58,8 +57,6 @@ export function didCrossGateAperture(gate: Gate, player: Player): boolean {
   const curY = player.y - gate.y;
   const moveX = curX - prevX;
   const moveY = curY - prevY;
-  const moveDist = Math.hypot(moveX, moveY);
-  if (moveDist < WARP_GATE_MIN_CROSS_SPEED) return false;
 
   const r = gateActivationRadius(gate);
   const prevInside = prevX * prevX + prevY * prevY <= r * r;

@@ -118,6 +118,7 @@ export interface Player {
   tractor?: TractorState | null;
   warpCooldown?: number;
   warpTargetIdx?: number;
+  warpHoldStartTime?: number | null;
   detectedSignatures: SignatureContact[];
   activeScan: ActiveScanTarget | null;
   scannerAngle: number;

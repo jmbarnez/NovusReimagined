@@ -5,6 +5,7 @@ export interface Keybinds {
   overview: string;
   map: string;
   dock: string;
+  warp: string;
   brake: string;
   engineBoost: string;
   forwardThrust: string;
@@ -118,6 +119,7 @@ export const DEFAULT_KEYBINDS: Keybinds = {
   overview: "KeyP",
   map: "KeyM",
   dock: "KeyF",
+  warp: "KeyG",
   brake: "Space",
   engineBoost: "ShiftLeft",
   forwardThrust: "KeyW",
@@ -142,6 +144,7 @@ export const CONTROL_SECTIONS: ControlSection[] = [
       { action: "turnLeft", labelKey: "settings.controls.turnLeft" },
       { action: "turnRight", labelKey: "settings.controls.turnRight" },
       { action: "dock", labelKey: "settings.controls.dock" },
+      { action: "warp", labelKey: "settings.controls.warp" },
       { action: "map", labelKey: "settings.controls.map" },
     ],
   },

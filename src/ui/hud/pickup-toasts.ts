@@ -21,9 +21,15 @@ const ICONS: Record<string, string> = {
   credits:    ICON_SVG('<circle cx="8" cy="8" r="6"/><path d="M8 4v8M5.5 8h5"/>'),
 };
 
-export function showPickupToast(kind: string, payload: string, qty: number, instance?: ModuleInstance, displayName?: string) {
-  if (!hudState.pickupContainer) return;
+interface ActiveStack {
+  element: HTMLElement;
+  qty: number;
+  timeoutId: number;
+}
 
+const _activeStacks = new Map<string, ActiveStack>();
+
+function resolvePickupDisplay(kind: string, payload: string, instance?: ModuleInstance, displayName?: string): { name: string; icon: string; color: string } {
   let name = "";
   let icon = "";
   let color = "#ffffff";
@@ -42,7 +48,6 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
     name = "Credits";
     icon = ICONS.credits;
     color = "#ffe066";
-    sfxCreditPickup();
   } else if (kind === "module") {
     const m = MODULES[payload];
     const rarityColor = instance ? RARITY_CONFIG[instance.rarity]?.color : "#00e8c8";
@@ -57,7 +62,35 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
     else icon = ICONS.module;
   }
 
-  if (kind === "ore" || kind === "loot" || kind === "module") {
+  return { name, icon, color };
+}
+
+export function showPickupToast(kind: string, payload: string, qty: number, instance?: ModuleInstance, displayName?: string) {
+  if (!hudState.pickupContainer) return;
+
+  const { name, icon, color } = resolvePickupDisplay(kind, payload, instance, displayName);
+
+  const existingStack = _activeStacks.get(name);
+  if (existingStack) {
+    clearTimeout(existingStack.timeoutId);
+    existingStack.qty += qty;
+    const qtySpan = existingStack.element.querySelector(".pickup-qty");
+    if (qtySpan) {
+      qtySpan.textContent = `x${existingStack.qty}`;
+    }
+    existingStack.timeoutId = window.setTimeout(() => {
+      existingStack.element.classList.add("fading");
+      window.setTimeout(() => {
+        existingStack.element.remove();
+        _activeStacks.delete(name);
+      }, 400);
+    }, 2100);
+    return;
+  }
+
+  if (kind === "credits") {
+    sfxCreditPickup();
+  } else if (kind === "ore" || kind === "loot" || kind === "module") {
     sfxItemPickup(kind);
   }
 
@@ -75,11 +108,21 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
 
   hudState.pickupContainer.appendChild(toast);
 
-  // Trigger smooth fade-out and destruction after a standard period
-  setTimeout(() => {
+  const timeoutId = window.setTimeout(() => {
     toast.classList.add("fading");
-    setTimeout(() => {
+    window.setTimeout(() => {
       toast.remove();
+      _activeStacks.delete(name);
     }, 400);
   }, 2100);
+
+  _activeStacks.set(name, { element: toast, qty, timeoutId });
+}
+
+export function destroyPickupToasts(): void {
+  for (const stack of _activeStacks.values()) {
+    clearTimeout(stack.timeoutId);
+    stack.element.remove();
+  }
+  _activeStacks.clear();
 }

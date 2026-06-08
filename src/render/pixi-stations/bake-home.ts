@@ -3,262 +3,177 @@ import {
   COL,
   TAU,
   type Station,
-  drawEnergyConduit,
-  drawGreebles,
-  drawHabitatDome,
-  drawHangar,
-  drawHullDisc,
-  drawLatticeSpoke,
-  drawSolarSail,
   cornerLight,
 } from "./shared.js";
 
-// ─── Archetype 1: Genesis Torus Prime (Home Station) ──────────────────────
+// ─── Archetype 1: Sleek Hub Station ──────────────────────
 
 export function drawHomeBody(cx: CanvasRenderingContext2D, half: number, st: Station) {
   const R = st.radius;
   const S = R / 55;
   const LW = 1 + (S - 1) * 0.4;
-  const rng = mkRng(st.id);
 
   cx.save();
   cx.translate(half, half);
 
-  // 1. Massive Triple-Jointed Crystalline Solar Wings (drawn first so torus overlaps inner mount)
+  // 1. Clean outer ring - smooth titanium torus
   {
-    const pW = 34 * S, pH = 55 * S;
-    for (let side = -1; side <= 1; side += 2) {
-      const py = side * (R * 0.72 + pH / 2 + 6 * S);
-      // Double solar array per side (side by side mechanical wings)
-      drawSolarSail(cx, -16 * S, py, pW, pH, 0, S, LW);
-      drawSolarSail(cx, 16 * S, py, pW, pH, 0, S, LW);
+    const ringR = R * 1.45;
+    const ringW = 18 * S;
 
-      // Detailed mechanical support frame linking panels to spine
-      cx.fillStyle = COL.hullMid;
-      cx.fillRect(-22 * S, py - 4 * S, 44 * S, 8 * S);
-      cx.strokeStyle = "rgba(0,0,0,0.8)";
-      cx.lineWidth = 0.8 * LW;
-      cx.strokeRect(-22 * S, py - 4 * S, 44 * S, 8 * S);
-    }
-
-    // Heavy central reactor support structural spine
-    cx.fillStyle = COL.hullMid;
-    cx.fillRect(-4.5 * S, -(R * 0.78 + 8 * S), 9 * S, 2 * (R * 0.78 + 8 * S));
-    cx.strokeStyle = "rgba(0,0,0,0.72)";
-    cx.lineWidth = 1.0 * LW;
-    cx.strokeRect(-4.5 * S, -(R * 0.78 + 8 * S), 9 * S, 2 * (R * 0.78 + 8 * S));
-
-    // Specular steel reflection on left side of spine
-    cx.fillStyle = "rgba(255,255,255,0.12)";
-    cx.fillRect(-4.5 * S, -(R * 0.78 + 8 * S), 1.6 * S, 2 * (R * 0.78 + 8 * S));
-
-    // Pulsing power conduits flowing along the spine in cyber cyan
-    drawEnergyConduit(cx, 0, -(R * 0.72), 0, R * 0.72, COL.cyan, LW);
-  }
-
-  // 2. Outer Torus Ring - Heavy Metropolis Plated Torus Segment Array
-  {
-    const ringR = R * 1.55;
-    const ringW = 24 * S;
-
-    // Drop shadow
+    // Soft ambient shadow
     cx.save();
-    cx.shadowColor = "rgba(0,0,0,0.65)";
-    cx.shadowBlur = 8;
+    cx.shadowColor = "rgba(0,0,0,0.5)";
+    cx.shadowBlur = 12;
     cx.beginPath(); cx.arc(0, 0, ringR, 0, TAU);
     cx.lineWidth = ringW;
     cx.strokeStyle = COL.hullDark;
     cx.stroke();
     cx.restore();
 
-    // Volume shading (cylinder radial gradient profile)
+    // Clean metallic band
     const rg = cx.createRadialGradient(0, 0, ringR - ringW / 2, 0, 0, ringR + ringW / 2);
-    rg.addColorStop(0.00, COL.hullDark);
-    rg.addColorStop(0.22, COL.hullMid);
-    rg.addColorStop(0.50, COL.hullLite);
-    rg.addColorStop(0.78, COL.hullMid);
-    rg.addColorStop(1.00, COL.hullDark);
+    rg.addColorStop(0.00, "#0d1117");
+    rg.addColorStop(0.30, "#1c2128");
+    rg.addColorStop(0.50, "#2a303a");
+    rg.addColorStop(0.70, "#1c2128");
+    rg.addColorStop(1.00, "#0d1117");
     cx.beginPath(); cx.arc(0, 0, ringR, 0, TAU);
     cx.lineWidth = ringW;
     cx.strokeStyle = rg;
     cx.stroke();
 
-    // Upper hemispherical light reflect highlight
-    cx.strokeStyle = "rgba(220,240,255,0.45)";
-    cx.lineWidth = 1.6 * LW;
-    cx.beginPath(); cx.arc(0, 0, ringR + ringW / 2 - 1.5 * S, Math.PI * 1.05, Math.PI * 1.95);
+    // Single clean highlight on top arc
+    cx.strokeStyle = "rgba(180,210,240,0.35)";
+    cx.lineWidth = 1.2 * LW;
+    cx.beginPath(); cx.arc(0, 0, ringR + ringW / 2 - 1 * S, Math.PI * 1.1, Math.PI * 1.9);
     cx.stroke();
 
-    // Bottom occlusion shadow
-    cx.strokeStyle = "rgba(0,0,0,0.65)";
-    cx.lineWidth = 1.8 * LW;
-    cx.beginPath(); cx.arc(0, 0, ringR + ringW / 2 - 1.5 * S, Math.PI * 0.05, Math.PI * 0.95);
-    cx.stroke();
-
-    // Sharp inner groove line
-    cx.strokeStyle = "rgba(0,0,0,0.72)";
-    cx.lineWidth = 1.4 * LW;
-    cx.beginPath(); cx.arc(0, 0, ringR - ringW / 2 + 1.6 * S, 0, TAU);
+    // Thin inner rim accent
+    cx.strokeStyle = "rgba(0,0,0,0.6)";
+    cx.lineWidth = 1.0 * LW;
+    cx.beginPath(); cx.arc(0, 0, ringR - ringW / 2 + 1 * S, 0, TAU);
     cx.stroke();
   }
 
-  // 3. Metropolis Segments & Botanical Glass Domes on Torus
+  // 2. Minimal equatorial windows - warm amber strips only
   {
-    const segR = R * 1.55;
-    const segCount = 8;
+    const segR = R * 1.45;
+    const segCount = 6;
     for (let i = 0; i < segCount; i++) {
       const aMid = (i / segCount) * TAU;
-      const span = (TAU / segCount) * 0.65;
-      const a0 = aMid - span / 2;
-      const a1 = aMid + span / 2;
-
-      // Heavy interlocking mechanical bulkheads bookending each segment
-      for (const a of [a0, a1]) {
-        cx.strokeStyle = "rgba(0,0,0,0.85)";
-        cx.lineWidth = 2.0 * LW;
-        cx.beginPath();
-        cx.moveTo(Math.cos(a) * (segR - 13 * S), Math.sin(a) * (segR - 13 * S));
-        cx.lineTo(Math.cos(a) * (segR + 13 * S), Math.sin(a) * (segR + 13 * S));
-        cx.stroke();
-
-        cx.strokeStyle = COL.steelRim;
-        cx.lineWidth = 0.7 * LW;
-        cx.beginPath();
-        cx.moveTo(Math.cos(a) * (segR - 12 * S), Math.sin(a) * (segR - 12 * S));
-        cx.lineTo(Math.cos(a) * (segR + 12 * S), Math.sin(a) * (segR + 12 * S));
-        cx.stroke();
-      }
-
-      // Alternate between Botanical Biosphere Domes and Residential Plated Windows
-      if (i % 2 === 0) {
-        // Glowing Botanical Domes! (Green life support biospheres)
-        const lx = Math.cos(aMid) * segR;
-        const ly = Math.sin(aMid) * segR;
-        drawHabitatDome(cx, lx, ly, 7.5 * S, S, LW, COL.green);
-      } else {
-        // Highly dense residential windows - warm sodium amber glow
-        const winR = segR - 1.2 * S;
-        const wA0 = aMid - span * 0.38;
-        const wA1 = aMid + span * 0.38;
-        cx.strokeStyle = `rgba(${COL.amber}, 0.95)`;
-        cx.lineWidth = 3.6 * S;
-        cx.lineCap = "round";
-        cx.beginPath();
-        cx.arc(0, 0, winR, wA0, wA1);
-        cx.stroke();
-        cx.lineCap = "butt";
-
-        // Specular atmospheric reflection overlay over window clusters
-        cx.strokeStyle = "rgba(255,255,255,0.22)";
-        cx.lineWidth = 1.0 * S;
-        cx.beginPath();
-        cx.arc(0, 0, winR + 1.8 * S, wA0, wA1);
-        cx.stroke();
-      }
-
-      // Outer cyber cyan nav beacons
-      const bx = Math.cos(aMid + span / 2) * (segR + 12.5 * S);
-      const by = Math.sin(aMid + span / 2) * (segR + 12.5 * S);
-      cornerLight(cx, bx, by, S, COL.cyan);
+      const span = (TAU / segCount) * 0.55;
+      const wA0 = aMid - span / 2;
+      const wA1 = aMid + span / 2;
+      cx.strokeStyle = `rgba(${COL.amber}, 0.8)`;
+      cx.lineWidth = 2.8 * S;
+      cx.lineCap = "round";
+      cx.beginPath();
+      cx.arc(0, 0, segR, wA0, wA1);
+      cx.stroke();
+      cx.lineCap = "butt";
     }
   }
 
-  // 4. Intricate Cross-Latticed spokes connecting hub to Torus
+  // 3. Four clean support struts
   {
-    const hubR = R * 0.65;
-    const ringInner = R * 1.55 - 12 * S;
+    const hubR = R * 0.58;
+    const ringInner = R * 1.45 - 9 * S;
     for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * TAU + Math.PI / 4;  // 45 deg offset
+      const a = (i / 4) * TAU + Math.PI / 4;
       const c = Math.cos(a), s = Math.sin(a);
       const ix = c * hubR, iy = s * hubR;
       const ox = c * ringInner, oy = s * ringInner;
 
-      // Draw beautifully complex lattice space trusses
-      drawLatticeSpoke(cx, ix, iy, ox, oy, 9 * S, LW);
+      // Simple clean strut
+      cx.strokeStyle = "#1a2028";
+      cx.lineWidth = 3.5 * S;
+      cx.beginPath();
+      cx.moveTo(ix, iy);
+      cx.lineTo(ox, oy);
+      cx.stroke();
 
-      // Cyber energy conduits feeding power from Torus to Core Reactor
-      drawEnergyConduit(cx, ix, iy, ox, oy, COL.cyan, LW);
+      // Subtle cyan power line inside strut
+      cx.strokeStyle = `rgba(${COL.cyan}, 0.6)`;
+      cx.lineWidth = 1.0 * S;
+      cx.beginPath();
+      cx.moveTo(ix, iy);
+      cx.lineTo(ox, oy);
+      cx.stroke();
 
-      // Heavy modular docking gate/port at torus endpoints
-      const portR = 7.5 * S;
-      cx.fillStyle = COL.hullDark;
+      // Small dock port at ring
+      const portR = 5 * S;
+      cx.fillStyle = "#0a0e14";
       cx.beginPath(); cx.arc(ox, oy, portR, 0, TAU); cx.fill();
-      cx.strokeStyle = "rgba(0,0,0,0.85)";
-      cx.lineWidth = 1.3 * LW;
+      cx.strokeStyle = "rgba(0,0,0,0.7)";
+      cx.lineWidth = 1 * LW;
       cx.beginPath(); cx.arc(ox, oy, portR, 0, TAU); cx.stroke();
-
-      // Glowing electromagnetic latch core
-      const portG = cx.createRadialGradient(ox, oy, 0, ox, oy, portR * 0.72);
-      portG.addColorStop(0.0, `rgba(${COL.amberSoft}, 0.85)`);
-      portG.addColorStop(0.55, `rgba(${COL.amber}, 0.35)`);
-      portG.addColorStop(1.0, "rgba(0,0,0,0)");
-      cx.fillStyle = portG;
-      cx.beginPath(); cx.arc(ox, oy, portR * 0.72, 0, TAU); cx.fill();
-
-      // Approach beacons on dock collar
-      cornerLight(cx, ox - s * 5 * S, oy + c * 5 * S, S, COL.green);
-      cornerLight(cx, ox + s * 5 * S, oy - c * 5 * S, S, COL.green);
     }
   }
 
-  // 5. Heavy Central Hub - Tiered Command Deck & Core Fusion Reactor
+  // 4. Sleek central hub - single smooth disc with core glow
   {
-    const hubR = R * 0.64;
+    const hubR = R * 0.58;
 
-    // Drop shadow
+    // Hub shadow
     cx.save();
-    cx.shadowColor = "rgba(0,0,0,0.7)";
-    cx.shadowBlur = 14;
-    cx.fillStyle = COL.hullDark;
+    cx.shadowColor = "rgba(0,0,0,0.5)";
+    cx.shadowBlur = 10;
+    cx.fillStyle = "#0a0e14";
     cx.beginPath(); cx.arc(0, 0, hubR, 0, TAU); cx.fill();
     cx.restore();
 
-    // Tier 1 Base Platform
-    drawHullDisc(cx, hubR);
+    // Main hull disc - smooth shaded cylinder
+    const hullGrad = cx.createLinearGradient(0, -hubR, 0, hubR);
+    hullGrad.addColorStop(0.0, "#2a3544");
+    hullGrad.addColorStop(0.45, "#1c242e");
+    hullGrad.addColorStop(1.0, "#0d1218");
+    cx.fillStyle = hullGrad;
+    cx.beginPath(); cx.arc(0, 0, hubR, 0, TAU); cx.fill();
 
-    // Tier 2 Command Bridge Deck
-    cx.save();
-    cx.translate(0, -1.5 * S);
-    drawHullDisc(cx, hubR * 0.78);
-    cx.restore();
+    // Rim outline
+    cx.strokeStyle = "rgba(0,0,0,0.85)";
+    cx.lineWidth = 1.3;
+    cx.beginPath(); cx.arc(0, 0, hubR, 0, TAU); cx.stroke();
 
-    // Equatorial high-tech landing hangars
-    for (let i = 0; i < 2; i++) {
-      const a = i === 0 ? 0 : Math.PI;
-      const hX = Math.cos(a) * hubR * 0.74;
-      const hY = Math.sin(a) * hubR * 0.74;
-      drawHangar(cx, hX, hY, a, 19 * S, 29 * S, S, LW);
+    // Upper rim highlight
+    cx.strokeStyle = "rgba(160,190,220,0.4)";
+    cx.lineWidth = 1.0;
+    cx.beginPath(); cx.arc(0, 0, hubR - 0.7, Math.PI * 1.12, Math.PI * 1.88);
+    cx.stroke();
+
+    // Lower hangar slit - clean and minimal
+    {
+      const hW = 22 * S;
+      const hH = 7 * S;
+      cx.fillStyle = "#06090e";
+      cx.fillRect(-hW / 2, -hH / 2, hW, hH);
+      cx.strokeStyle = "rgba(0,0,0,0.8)";
+      cx.lineWidth = 1;
+      cx.strokeRect(-hW / 2, -hH / 2, hW, hH);
+      // Faint cyan glow from hangar interior
+      cx.fillStyle = `rgba(${COL.cyan}, 0.15)`;
+      cx.fillRect(-hW / 2 + 2 * S, -hH / 2 + S, hW - 4 * S, hH - 2 * S);
     }
 
-    // Heavy plated greebling panels
-    drawGreebles(cx, rng, hubR * 0.75, S, LW);
+    // Core reactor - bright cyan glow, minimal
+    const coreR = hubR * 0.22;
+    const coreGrad = cx.createRadialGradient(-coreR * 0.1, -coreR * 0.1, 0, 0, 0, coreR * 0.9);
+    coreGrad.addColorStop(0.0, `rgba(${COL.cyanSoft}, 0.95)`);
+    coreGrad.addColorStop(0.5, `rgba(${COL.cyan}, 0.5)`);
+    coreGrad.addColorStop(1.0, "rgba(0,30,60,0)");
+    cx.fillStyle = coreGrad;
+    cx.beginPath(); cx.arc(0, -1.5 * S, coreR, 0, TAU); cx.fill();
 
-    // Tier 3 Shield Containment Wall
-    cx.save();
-    cx.translate(0, -2.5 * S);
-    drawHullDisc(cx, hubR * 0.48);
-    cx.restore();
-
-    // Tier 4 Core Fusion Reactor - Glowing neon dome
-    cx.save();
-    cx.translate(0, -3.5 * S);
-    const coreR = hubR * 0.25;
-    drawHullDisc(cx, coreR);
-
-    // Hyper glowing reactor plasma core
-    const core = cx.createRadialGradient(-coreR * 0.15, -coreR * 0.15, 0, 0, 0, coreR * 0.85);
-    core.addColorStop(0.0, `rgba(${COL.cyanSoft}, 0.98)`);
-    core.addColorStop(0.45, `rgba(${COL.cyan}, 0.65)`);
-    core.addColorStop(1.0, "rgba(0,40,80,0.2)");
-    cx.fillStyle = core;
-    cx.beginPath(); cx.arc(0, 0, coreR * 0.85, 0, TAU); cx.fill();
-
-    // Energy field outline
-    cx.strokeStyle = `rgba(${COL.cyanSoft}, 0.55)`;
+    // Core rim
+    cx.strokeStyle = `rgba(${COL.cyanSoft}, 0.45)`;
     cx.lineWidth = 1.0;
-    cx.beginPath(); cx.arc(0, 0, coreR * 0.85, 0, TAU); cx.stroke();
-    cx.restore();
+    cx.beginPath(); cx.arc(0, -1.5 * S, coreR, 0, TAU); cx.stroke();
   }
+
+  // 5. Two clean nav beacons only
+  cornerLight(cx, -R * 0.55, -R * 0.55, S, COL.cyan);
+  cornerLight(cx, R * 0.55, R * 0.55, S, COL.cyan);
 
   cx.restore();
 }

@@ -7,6 +7,7 @@ import { t } from "../../utils/i18n.js";
 import { dominantOreKey } from "../../utils/ore-naming.js";
 import { INV_STATE, type InventoryItem, type TreeNode } from "./state.js";
 import { calcVolume, getCapacityFor, getItemsForContainer, normalizeItems } from "./tree.js";
+import { getLayout, mergeLayoutWithItems } from "./grid-layout.js";
 
 const ICON_SIZE = 32;
 const ICON_SIZE_SM = 20;
@@ -45,6 +46,12 @@ export function itemIconSmall(it: InventoryItem): string {
 
 export function renderInventoryHTML(): string {
   const items = getItemsForContainer(INV_STATE.selectedTreeId);
+  const isGrid = INV_STATE.viewMode === "grid";
+
+  if (isGrid) {
+    mergeLayoutWithItems(INV_STATE.selectedTreeId, items.map(it => it.id));
+  }
+
   const filtered = (INV_STATE.filterText
     ? items.filter((it) => it.name.toLowerCase().includes(INV_STATE.filterText) || it.group.toLowerCase().includes(INV_STATE.filterText))
     : [...items]
@@ -64,12 +71,32 @@ export function renderInventoryHTML(): string {
 
   const sortLabels: Record<string, string> = { name: t("inventory.sortName"), group: t("inventory.sortType"), qty: t("inventory.sortQty"), vol: t("inventory.sortVol") };
   const sortArrow = INV_STATE.sortDir === 1 ? "↑" : "↓";
-  const isGrid = INV_STATE.viewMode === "grid";
   const wrapClass = isGrid ? "inv-grid-wrap" : "inv-list-wrap";
-  const renderItem = isGrid ? renderItemGridCell : renderItemRow;
-  const itemsHtml = filtered.length
-    ? filtered.map((it) => renderItem(it)).join("")
-    : `<div class="inv-empty">${t("inventory.empty")}</div>`;
+
+  let itemsHtml: string;
+  if (isGrid) {
+    const layout = getLayout(INV_STATE.selectedTreeId);
+    const itemMap = new Map(filtered.map(it => [it.id, it]));
+    // Render enough slots to fill a generous viewport; auto-fill handles column count
+    const totalSlots = Math.max(filtered.length + 16, 80);
+    const slotHtml: string[] = [];
+
+    for (let i = 0; i < totalSlots; i++) {
+      const pos = layout.positions[i];
+      if (pos && itemMap.has(pos.itemId)) {
+        slotHtml.push(renderItemGridCell(itemMap.get(pos.itemId)!, i));
+      } else {
+        slotHtml.push(renderEmptySlot(i));
+      }
+    }
+
+    itemsHtml = slotHtml.join("");
+  } else {
+    const renderItem = renderItemRow;
+    itemsHtml = filtered.length
+      ? filtered.map((it) => renderItem(it)).join("")
+      : `<div class="inv-empty">${t("inventory.empty")}</div>`;
+  }
 
   return `
     <div class="inv-layout">
@@ -146,14 +173,18 @@ function renderItemRow(it: InventoryItem): string {
   </div>`;
 }
 
-function renderItemGridCell(it: InventoryItem): string {
+function renderItemGridCell(it: InventoryItem, slotIndex: number): string {
   const isSel = INV_STATE.selectedItemId === it.id;
   const accentColor = colorForItem(it);
   const qtyStr = it.qty > 1 ? it.qty.toLocaleString() : "";
   const accentStyle = accentColor ? ` style="color:${accentColor}"` : "";
   const borderStyle = it.rarityColor ? ` style="border-left:2px solid ${it.rarityColor}"` : "";
-  return `<div class="inv-item inv-grid-cell ${isSel ? "is-selected" : ""}" data-item="${it.id}"${borderStyle}>
+  return `<div class="inv-item inv-grid-cell ${isSel ? "is-selected" : ""}" data-item="${it.id}" data-slot="${slotIndex}"${borderStyle} draggable="true">
     <div class="inv-grid-icon"${accentStyle}>${itemIconHtml(it, ICON_SIZE_GRID)}</div>
     ${qtyStr ? `<span class="inv-grid-qty">${qtyStr}</span>` : ""}
   </div>`;
+}
+
+function renderEmptySlot(index: number): string {
+  return `<div class="inv-grid-slot is-empty" data-slot="${index}"></div>`;
 }

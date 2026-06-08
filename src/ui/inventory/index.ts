@@ -12,6 +12,7 @@ import {
 } from "./state.js";
 import { getItemsForContainer, normalizeItems } from "./tree.js";
 import { renderInventoryHTML } from "./render.js";
+import { getLayout } from "./grid-layout.js";
 import {
   attachInventoryListeners as attachPaneListeners,
   attachInventoryListenersToPane,
@@ -192,7 +193,9 @@ function computeContentHash(): string {
       default: return d * a.name.localeCompare(b.name);
     }
   });
-  return `${INV_STATE.selectedTreeId}|${INV_STATE.viewMode}|${INV_STATE.sortKey}|${INV_STATE.sortDir}|${INV_STATE.filterText}|${sorted.map((i) => `${i.id}:${i.qty}`).join(",")}|${Array.from(INV_STATE.expanded).join(",")}`;
+  const layout = INV_STATE.viewMode === "grid" ? getLayout(INV_STATE.selectedTreeId) : null;
+  const layoutHash = layout ? layout.positions.map(p => `${p.itemId}@${p.slotIndex}`).join(",") : "";
+  return `${INV_STATE.selectedTreeId}|${INV_STATE.viewMode}|${INV_STATE.sortKey}|${INV_STATE.sortDir}|${INV_STATE.filterText}|${sorted.map((i) => `${i.id}:${i.qty}`).join(",")}|${Array.from(INV_STATE.expanded).join(",")}|${layoutHash}`;
 }
 
 function updateSelectionOnly(pane: HTMLElement) {

@@ -28,6 +28,16 @@ export interface TreeNode {
 
 export type InventoryViewMode = "grid" | "list";
 
+export interface GridPosition {
+  itemId: string;
+  slotIndex: number;
+}
+
+export interface ContainerLayout {
+  positions: GridPosition[];
+  nextSlot: number;
+}
+
 export interface InventoryState {
   selectedTreeId: string;
   expanded: Set<string>;

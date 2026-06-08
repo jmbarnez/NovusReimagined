@@ -120,6 +120,12 @@ export function handleKeyDown(e: KeyboardEvent): void {
       }
     }
   }
+
+  if (e.code === keybinds.warp) {
+    if (Client.stationOpen || Client.settingsOpen) return;
+    Client.keys["warp"] = true;
+  }
+
   if (e.code === keybinds.map) {
     toggleMapWindow();
   }
@@ -143,5 +149,6 @@ export function handleKeyUp(e: KeyboardEvent): void {
   if (e.code === keybinds.reverseThrust) Client.keys["s"] = false;
   if (e.code === keybinds.turnLeft) Client.keys["a"] = false;
   if (e.code === keybinds.turnRight) Client.keys["d"] = false;
+  if (e.code === keybinds.warp) Client.keys["warp"] = false;
   if (e.code === "ShiftLeft" || e.code === "ShiftRight") setCursorLock(true, canvasEl);
 }

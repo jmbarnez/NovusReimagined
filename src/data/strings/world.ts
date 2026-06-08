@@ -10,6 +10,7 @@ export const worldStrings: Record<Language, Record<string, string>> = {
     "world.location.academy": "Academy",
     "world.location.stargate": "Stargate",
     "world.gate.flyThrough": "Fly through ring",
+    "world.gate.warpKey": "[{key}] Warp",
     "world.gate.clearanceRequired": "Academy clearance required",
   },
   es: {
@@ -21,6 +22,7 @@ export const worldStrings: Record<Language, Record<string, string>> = {
     "world.location.academy": "Academia",
     "world.location.stargate": "Puerta Estelar",
     "world.gate.flyThrough": "Vuele por el anillo",
+    "world.gate.warpKey": "[{key}] Salto",
     "world.gate.clearanceRequired": "Se requiere autorizacion de la Academia",
   },
 };

@@ -1,6 +1,7 @@
 import { sfxBlip } from "../../audio/procedural.js";
 import { INVENTORY_PANE_IDS, INV_STATE, type InventoryViewMode } from "./state.js";
 import { findNode, getTreeNodes, normalizeItems } from "./tree.js";
+import { attachDragDropHandlers } from "./drag-drop.js";
 
 export interface InventoryEventHandlers {
   toggleTreeNode: (nodeId: string) => void;
@@ -54,6 +55,9 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
 
   for (const row of pane.querySelectorAll("[data-item]")) {
     row.addEventListener("click", (e) => {
+      // Skip click for draggable grid cells to allow drag-drop
+      if (INV_STATE.viewMode === "grid" && (row as HTMLElement).draggable) return;
+
       e.stopPropagation();
       sfxBlip(720, 0.04);
       handlers.selectItem((row as HTMLElement).dataset.item || null);
@@ -126,6 +130,10 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
     pane.addEventListener("click", () => {
       handlers.closeContextMenu();
     });
+  }
+
+  if (INV_STATE.viewMode === "grid") {
+    attachDragDropHandlers(pane, { onRerender: handlers.rerenderInventory });
   }
 }
 

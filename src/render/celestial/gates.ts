@@ -78,6 +78,9 @@ export function initGateSprites(sys: System): void {
     labelBg.y = labelY;
     gateCont.addChild(labelText);
     layoutWorldLabelCard(labelBg, labelText);
+    // Hide name plates
+    labelText.visible = false;
+    labelBg.visible = false;
 
     _gateBundles.push({
       id: gateStableId(g),
@@ -132,7 +135,7 @@ export function syncGateSprites(now: number, sys: System): void {
       if (state === "dormant") {
         renderScale = 2.0;
         renderAlpha = 0.2;
-        spinSpeed = 0.0001;
+        spinSpeed = 0;
       } else if (state === "charging") {
         renderScale = 2.0 + charge * 0.8;
         renderAlpha = 0.2 + charge * 0.8;
@@ -143,9 +146,9 @@ export function syncGateSprites(now: number, sys: System): void {
         spinSpeed = 0.0006;
         showParticles = true;
       } else if (state === "warping") {
-        renderScale = 2.8;
+        renderScale = 3.2;
         renderAlpha = 1.0;
-        spinSpeed = 0.002;
+        spinSpeed = 0.008;
       }
       
       // Handle dispense fade out
@@ -252,6 +255,114 @@ export function syncGateSprites(now: number, sys: System): void {
           const sparkAlpha = (0.4 + 0.4 * Math.sin(now * 0.01 + sIdx)) * renderAlpha;
           b.core.circle(sx, sy, 1.5)
             .fill({ color: sIdx % 2 === 0 ? 0xffffff : 0x78c0ff, alpha: sparkAlpha });
+        }
+      }
+
+      // DRAMATIC warp charge vortex effect
+      if (state === "warping") {
+        const warpTime = now * 0.003;
+        const warpPulse = (Math.sin(warpTime) + 1) * 0.5;
+        const collapsePulse = (Math.sin(warpTime * 1.7) + 1) * 0.5;
+
+        // --- VORTEX SPIRAL ARMS ---
+        const numArms = 6;
+        for (let armIdx = 0; armIdx < numArms; armIdx++) {
+          const baseAng = (armIdx / numArms) * TAU + warpTime * 2;
+          b.core.moveTo(0, 0);
+          for (let seg = 0; seg < 8; seg++) {
+            const t = seg / 8;
+            const r = g.radius * (0.15 + t * 1.2);
+            const ang = baseAng + t * Math.PI * 1.5;
+            const px = Math.cos(ang) * r;
+            const py = Math.sin(ang) * r;
+            if (seg === 0) b.core.moveTo(px, py);
+            else b.core.lineTo(px, py);
+          }
+          const armAlpha = (0.6 + warpPulse * 0.3) * renderAlpha;
+          b.core.stroke({
+            color: 0x66aaff,
+            width: 2.5,
+            alpha: armAlpha,
+          });
+        }
+
+        // --- ENERGY BEAMS (bright radial lines) ---
+        const numBeams = 16;
+        for (let bIdx = 0; bIdx < numBeams; bIdx++) {
+          const beamAng = (bIdx / numBeams) * TAU + warpTime * 0.5;
+          const beamLen = g.radius * (0.6 + collapsePulse * 0.8);
+          const beamStart = g.radius * 0.15;
+          const bx1 = Math.cos(beamAng) * beamStart;
+          const by1 = Math.sin(beamAng) * beamStart;
+          const bx2 = Math.cos(beamAng) * beamLen;
+          const by2 = Math.sin(beamAng) * beamLen;
+          const beamAlpha = (0.7 + 0.3 * Math.sin(warpTime * 3 + bIdx)) * renderAlpha;
+          b.core.moveTo(bx1, by1).lineTo(bx2, by2).stroke({
+            color: 0xccddff,
+            width: 2.0,
+            alpha: beamAlpha,
+          });
+          // Beam glow
+          b.core.moveTo(bx1, by1).lineTo(bx2, by2).stroke({
+            color: 0x5599ff,
+            width: 5.0,
+            alpha: beamAlpha * 0.35,
+          });
+        }
+
+        // --- COLLAPSING RING SHOCKWAVES ---
+        const numShock = 4;
+        for (let sIdx = 0; sIdx < numShock; sIdx++) {
+          const phase = (warpTime * 0.8 + sIdx / numShock) % 1;
+          const shockR = g.radius * 0.3 + phase * g.radius * 1.8;
+          const shockAlpha = (1 - phase) * (0.5 + collapsePulse * 0.4) * renderAlpha;
+          b.core.circle(0, 0, shockR).stroke({
+            color: 0xffffff,
+            width: 3,
+            alpha: shockAlpha,
+          });
+          // Outer glow ring
+          b.core.circle(0, 0, shockR).stroke({
+            color: 0x4488ff,
+            width: 8,
+            alpha: shockAlpha * 0.25,
+          });
+        }
+
+        // --- SINGULARITY CORE (collapsing bright center) ---
+        const coreR = g.radius * 0.25 * (0.6 + collapsePulse * 0.4);
+        // White hot center
+        b.core.circle(0, 0, coreR).fill({
+          color: 0xffffff,
+          alpha: (0.85 + warpPulse * 0.15) * renderAlpha,
+        });
+        // Blue plasma layer
+        b.core.circle(0, 0, coreR * 1.6).fill({
+          color: 0x66aaff,
+          alpha: (0.5 + collapsePulse * 0.2) * renderAlpha,
+        });
+        // Outer energy field
+        b.core.circle(0, 0, coreR * 2.5).fill({
+          color: 0x2255aa,
+          alpha: 0.15 * renderAlpha,
+        });
+
+        // --- HULL SEGMENTS GLOW WHITE-HOT during warp ---
+        b.hull.clear();
+        const hullSpin = now * spinSpeed;
+        const hullSegments = 12;
+        for (let j = 0; j < hullSegments; j++) {
+          const a = hullSpin + (j / hullSegments) * TAU;
+          const ar = a + (1 / hullSegments) * TAU * 0.85;
+          const isMajor = j % 3 === 0;
+          const segR = visR * (isMajor ? 1.0 : 0.96);
+          b.hull.moveTo(Math.cos(a) * segR, Math.sin(a) * segR);
+          b.hull.arc(0, 0, segR, a, ar);
+          b.hull.stroke({
+            color: isMajor ? 0xccddff : 0x7799bb,
+            width: isMajor ? 4.5 : 3.5,
+            alpha: isMajor ? (0.85 + warpPulse * 0.15) * renderAlpha : (0.5 + warpPulse * 0.2) * renderAlpha,
+          });
         }
       }
     }
