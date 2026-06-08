@@ -16,8 +16,10 @@ Shrink files to <400 lines (ideally <250) and group them into narrow, discoverab
 
 ## Phase 1 — Data & UI (safest, highest value)
 
-### 1.1 `src/data/strings.ts` (102 KB → ~10 files)
+### 1.1 `src/data/strings.ts` (102 KB → ~10 files) ✅ COMPLETE
 Current: one 102 KB dictionary.
+
+**Status:** Directory created, file split, barrel `index.ts` wired, all consumers updated. Original monolithic file removed.
 
 ```
 src/data/strings/
@@ -36,8 +38,10 @@ src/data/strings/
 
 `index.ts` builds the final `STRINGS` object so existing `import { STRINGS } from "../data/strings.js"` keeps working (or we can point it at `../data/strings/index.js`).
 
-### 1.2 `src/ui/station/industry-renderers.ts` (59 KB → 8 files)
+### 1.2 `src/ui/station/industry-renderers.ts` (59 KB → 8 files) ✅ COMPLETE
 Current: 11 exported render functions, many >200 lines.
+
+**Status:** Directory `src/ui/station/industry-renderers/` created with 15+ module files plus barrel `index.ts`. All consumers updated. Original monolithic file removed.
 
 ```
 src/ui/station/industry/renderers/
@@ -54,7 +58,7 @@ src/ui/station/industry/renderers/
   index.ts              // re-exports
 ```
 
-### 1.3 `src/ui/station/industry-model.ts` (18 KB → 4 files)
+### 1.3 `src/ui/station/industry-model.ts` (18 KB → 4 files) 🔄 IN PROGRESS
 
 ```
 src/ui/station/industry/model/
@@ -66,6 +70,8 @@ src/ui/station/industry/model/
   index.ts
 ```
 
+**Status:** Planning complete. Directory NOT YET CREATED. Original `src/ui/station/industry-model.ts` still exists. This is the current work item.
+
 ### 1.4 `src/ui/station/industry.ts` (11 KB stays, but imports change)
 Update its import to pull from `./industry/renderers/index.js` and `./industry/model/index.js`.
 
@@ -75,20 +81,27 @@ Update its import to pull from `./industry/renderers/index.js` and `./industry/m
 
 Move loose root files into domain directories with `index.ts` barrels.
 
-### 2.1 `src/refinery/` (from `refining.ts` + `hub.ts`)
+### 2.1 `src/refinery/` (from `refining.ts` + `hub.ts`) ✅ COMPLETE
 
 ```
 src/refinery/
-  core.ts               // alloy logic, heat modes, composition helpers (from refining.ts)
-  storage.ts            // BulkMaterialStack helpers, intake/processed/separated/alloy storage
-  hub.ts                // hub job creation, timing, deposit/output logic (from hub.ts)
-  cargo.ts              // mixed-ore cargo helpers, cargo mass estimation
+  families.ts           // alloy families, heat constants
+  composition.ts        // composition, volume, mass estimation
+  assessment.ts         // alloy assessment & discovery
+  storage.ts            // BulkMaterialStack helpers, storage utils
+  processing.ts         // processMixedSource, separateMaterial, alloyMaterial
+  hub-core.ts           // getHub, updateHub
+  hub-state.ts          // hub state helpers
+  hub-jobs.ts           // hub job completion handlers
+  hub-cargo.ts          // hub cargo actions
+  hub-output.ts         // hub output & queue
+  hub-queries.ts        // hub queries & formatting
   index.ts
 ```
 
-Consumers currently import `../../hub.js` or `../../refining.js` would switch to `../../refinery/index.js`.
+**Status:** Full domain directory created with 11 module files plus barrel `index.ts`. All consumers updated. Original monolithic `refining.ts` and `hub.ts` removed.
 
-### 2.2 `src/wreck/` (from `wreck.ts`)
+### 2.2 `src/wreck/` (from `wreck.ts`) ✅ COMPLETE
 
 ```
 src/wreck/
@@ -99,7 +112,9 @@ src/wreck/
   index.ts
 ```
 
-### 2.3 `src/scanning/` (from `scanning.ts`)
+**Status:** Directory created, file split, barrel wired, consumers updated. Original `wreck.ts` removed.
+
+### 2.3 `src/scanning/` (from `scanning.ts`) ✅ COMPLETE
 
 ```
 src/scanning/
@@ -110,7 +125,9 @@ src/scanning/
   index.ts
 ```
 
-### 2.4 `src/docking/` (from `dock.ts`)
+**Status:** Directory created, file split, barrel wired, consumers updated. Original `scanning.ts` removed.
+
+### 2.4 `src/docking/` (from `dock.ts`) ✅ COMPLETE
 
 ```
 src/docking/
@@ -119,7 +136,9 @@ src/docking/
   index.ts
 ```
 
-### 2.5 `src/tutorial/` (from `tutorial.ts`)
+**Status:** Directory created, file split, barrel wired, consumers updated. Original `dock.ts` removed.
+
+### 2.5 `src/tutorial/` (from `tutorial.ts`) ✅ COMPLETE
 
 ```
 src/tutorial/
@@ -128,6 +147,8 @@ src/tutorial/
   events.ts             // bindTutorialEvents, event listeners
   index.ts
 ```
+
+**Status:** Directory created, file split, barrel wired, consumers updated. Original `tutorial.ts` removed. **Note:** A bug was discovered and fixed in `src/tutorial/index.ts` where `canAdvanceHangarTour` and `advanceHangarTutorialPanel` were incorrectly re-exported from `./runner.js` instead of `./hangar-tour.js`.
 
 ### 2.6 `src/input/` (from `input.ts`)
 

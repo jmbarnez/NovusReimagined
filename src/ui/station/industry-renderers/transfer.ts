@@ -34,7 +34,7 @@ import {
   selectedHeatMode,
   selectedProcessQty,
   stageMeta,
-} from "../industry-model.js";
+} from "../industry/model/index.js";
 
 export function renderTransferSection(): string {
   if (!hasHubOutput(getState().player)) return "";

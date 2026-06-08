@@ -67,12 +67,12 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
   }
 
   const asteroids = sys?._liveAsteroids ?? [];
+  const isMultiplayer = Client.multiplayerRole !== "none";
 
   for (const a of asteroids) {
       if (!isVisible(a.x, a.y, a.radius + 10)) continue;
 
       const hp = a.hp / Math.max(1, a.maxHp);
-      const isMultiplayer = Client.multiplayerRole !== "none";
       const iSpin = isMultiplayer ? a.spinAngle : lerp(a.prevSpin, a.spinAngle, alpha);
       const cos = Math.cos(iSpin);
       const sin = Math.sin(iSpin);

@@ -36,3 +36,4 @@
 - ~~`src/state-access.ts` (~897 lines) — monolithic state accessors file~~ — Split into 7 domain-specific modules under `src/state/access/` and replaced with a barrel re-export file
 - ~~`src/ui/hud/ship-panel.ts` (~677 lines) — monolithic HUD ship stats/turrets panel file~~ — Split into 6 domain-specific modules under `src/ui/hud/ship-panel/` and replaced with a barrel re-export file
 - ~~`src/ui/settings.ts` (~535 lines) — monolithic settings panel file~~ — Split into 5 domain-specific modules under `src/ui/settings/` and replaced with a barrel re-export file
+- ~~`src/tutorial.ts` (~337 lines) — monolithic tutorial runner file~~ — Split into `src/tutorial/` directory (5 files: `index.ts`, `runner.ts`, `shared.ts`, `events.ts`, `hangar-tour.ts`) with barrel re-exports

@@ -34,7 +34,7 @@ import {
   selectedHeatMode,
   selectedProcessQty,
   stageMeta,
-} from "../industry-model.js";
+} from "../industry/model/index.js";
 
 import { renderStageWorkspace, renderDockOperatorStrip, renderRunRoute } from "./workspace.js";
 import { renderCompactHoldingsSummary, renderStorageSchematic } from "./overview.js";

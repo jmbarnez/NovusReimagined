@@ -85,6 +85,8 @@ let _playerSprites: Sprite[] = [];
 // Map from enemy id → sprite
 const _enemySprites = new Map<string, Sprite>();
 const _remoteSprites = new Map<string, Sprite[]>();
+const _remoteLiveIds = new Set<string>();
+const _enemyLiveIds = new Set<string>();
 
 function makeFlameSprite(): Sprite {
   const s = new Sprite(getFlameTex());
@@ -157,6 +159,12 @@ function _syncPlayerThrust(alpha: number, now: number) {
     s.destroy();
   }
 
+  // Idle skip: no need to compute transforms when flames are off
+  if (throttle <= 0) {
+    for (const sprite of _playerSprites) sprite.alpha = 0;
+    return;
+  }
+
   const px = lerp(p.px, p.x, alpha);
   const py = lerp(p.py, p.y, alpha);
   const ang = displayShipAngle(
@@ -191,11 +199,11 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
   const local = state.player;
   if (!local) return;
 
-  const liveIds = new Set<string>();
+  _remoteLiveIds.clear();
   for (const [key, p] of state.players) {
     const netId = p.netId ?? key;
     if (!netId || p === local || netId === local.netId || key === "local") continue;
-    liveIds.add(netId);
+    _remoteLiveIds.add(netId);
 
     let sprites = _remoteSprites.get(netId);
     const ship = SHIPS[p.shipId];
@@ -223,6 +231,12 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
     const thrusting = p.thrustFx === true;
     const throttle = flameThrottle(speed, ship?.simMaxSpeedPx ?? 100, thrusting);
     const boosted = p.boostFx === true;
+
+    if (throttle <= 0) {
+      for (const sprite of sprites) sprite.alpha = 0;
+      continue;
+    }
+
     const useRenderInterpolation = Client.multiplayerRole === "none";
     const px = useRenderInterpolation ? lerp(p.px, p.x, alpha) : p.x;
     const py = useRenderInterpolation ? lerp(p.py, p.y, alpha) : p.y;
@@ -253,7 +267,7 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
   }
 
   for (const [netId, sprites] of _remoteSprites) {
-    if (liveIds.has(netId)) continue;
+    if (_remoteLiveIds.has(netId)) continue;
     for (const sprite of sprites) {
       thrustLayer?.removeChild(sprite);
       sprite.destroy();
@@ -264,11 +278,11 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
 
 function _syncEnemyThrust(now: number) {
   const enemies = liveEnemies();
-  const liveIds = new Set<string>();
+  _enemyLiveIds.clear();
 
   for (const e of enemies) {
     if (!e.id) continue;
-    liveIds.add(e.id);
+    _enemyLiveIds.add(e.id);
 
     const def = ENEMY_DEFS[e.type];
     if (!def) continue;
@@ -310,7 +324,7 @@ function _syncEnemyThrust(now: number) {
 
   // Remove sprites for despawned enemies
   for (const [id, sprite] of _enemySprites) {
-    if (!liveIds.has(id)) {
+    if (!_enemyLiveIds.has(id)) {
       thrustLayer?.removeChild(sprite);
       sprite.destroy();
       _enemySprites.delete(id);

@@ -34,7 +34,7 @@ import {
   selectedHeatMode,
   selectedProcessQty,
   stageMeta,
-} from "../industry-model.js";
+} from "../industry/model/index.js";
 
 import { renderRightRailTabs } from "./bottom-bar.js";
 import { renderMaterialHoldSection, renderMaterialDossierSection } from "./material-sections.js";

@@ -37,6 +37,7 @@ let cardEl: HTMLElement | null = null;
 let titleEl: HTMLElement | null = null;
 let objectiveEl: HTMLElement | null = null;
 let tourLabelEl: HTMLElement | null = null;
+let tourBodyEl: HTMLElement | null = null;
 let statusEl: HTMLElement | null = null;
 let counterEl: HTMLElement | null = null;
 let tourNextBtn: HTMLButtonElement | null = null;
@@ -435,6 +436,15 @@ function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep
       tourLabelEl.style.display = "none";
     }
   }
+  if (tourBodyEl) {
+    if (tour && tour.body) {
+      tourBodyEl.textContent = tour.body;
+      tourBodyEl.style.display = "block";
+    } else {
+      tourBodyEl.textContent = "";
+      tourBodyEl.style.display = "none";
+    }
+  }
 }
 
 function updateObjectiveText() {
@@ -466,6 +476,7 @@ export function initTutorialOverlay(active: boolean) {
         <div class="tutorial-title"></div>
         <div class="tutorial-objective"></div>
         <div class="tutorial-tour-label"></div>
+        <div class="tutorial-tour-body"></div>
         <div class="tutorial-nav-progress" hidden>
           <div class="tutorial-nav-progress-track"><div class="tutorial-nav-progress-fill"></div></div>
           <span class="tutorial-nav-progress-label"></span>
@@ -499,6 +510,7 @@ export function initTutorialOverlay(active: boolean) {
     titleEl = root.querySelector(".tutorial-title");
     objectiveEl = root.querySelector(".tutorial-objective");
     tourLabelEl = root.querySelector(".tutorial-tour-label");
+    tourBodyEl = root.querySelector(".tutorial-tour-body");
     navProgressEl = root.querySelector(".tutorial-nav-progress");
     navProgressFillEl = root.querySelector(".tutorial-nav-progress-fill");
     navProgressLabelEl = root.querySelector(".tutorial-nav-progress-label");

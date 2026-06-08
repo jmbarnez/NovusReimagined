@@ -34,7 +34,7 @@ import {
   selectedHeatMode,
   selectedProcessQty,
   stageMeta,
-} from "../industry-model.js";
+} from "../industry/model/index.js";
 import { renderCompactHoldingsSummary, renderStorageSchematic } from "./overview.js";
 
 export function renderStageWorkspace(activeKind: "processed" | "separated" | "alloy", controlsHtml: string): string {

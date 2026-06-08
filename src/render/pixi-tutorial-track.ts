@@ -56,25 +56,47 @@ function drawCenterline(gfx: Graphics, track: TutorialTrackSegment): void {
   gfx.stroke({ color: 0x55aaff, width: 1.5, alpha: 0.3 });
 }
 
-function drawChevrons(gfx: Graphics, track: TutorialTrackSegment, now: number): void {
-  const total = trackTotalArcLength(track);
-  for (let arc = CHEVRON_SPACING * 0.5; arc < total; arc += CHEVRON_SPACING) {
-    const pt = pointAtArcLengthLocal(track, arc);
-    if (!isVisible(pt.x, pt.y, 80)) continue;
-    const ang = tangentAtArcLengthLocal(track, arc);
-    const blink = 0.3 + 0.6 * Math.abs(Math.sin(now * 0.006 + arc * 0.02));
+interface ChevronCache {
+  x: number;
+  y: number;
+  ang: number;
+  arc: number;
+}
+
+const _chevronCache = new Map<string, ChevronCache[]>();
+
+function getCachedChevrons(trackId: string, track: TutorialTrackSegment): ChevronCache[] {
+  let cached = _chevronCache.get(trackId);
+  if (!cached) {
+    cached = [];
+    const total = trackTotalArcLength(track);
+    for (let arc = CHEVRON_SPACING * 0.5; arc < total; arc += CHEVRON_SPACING) {
+      const pt = pointAtArcLengthLocal(track, arc);
+      const ang = tangentAtArcLengthLocal(track, arc);
+      cached.push({ x: pt.x, y: pt.y, ang, arc });
+    }
+    _chevronCache.set(trackId, cached);
+  }
+  return cached;
+}
+
+function drawChevrons(gfx: Graphics, trackId: string, track: TutorialTrackSegment, now: number): void {
+  const chevrons = getCachedChevrons(trackId, track);
+  for (const c of chevrons) {
+    if (!isVisible(c.x, c.y, 80)) continue;
+    const blink = 0.3 + 0.6 * Math.abs(Math.sin(now * 0.006 + c.arc * 0.02));
     const alpha = 0.65 * blink;
     const sz = 16;
-    const cx = pt.x;
-    const cy = pt.y;
-    const cos = Math.cos(ang);
-    const sin = Math.sin(ang);
+    const cx = c.x;
+    const cy = c.y;
+    const cos = Math.cos(c.ang);
+    const sin = Math.sin(c.ang);
     const tipX = cx + cos * sz;
     const tipY = cy + sin * sz;
-    const lx = cx + Math.cos(ang + 2.4) * sz * 0.55;
-    const ly = cy + Math.sin(ang + 2.4) * sz * 0.55;
-    const rx = cx + Math.cos(ang - 2.4) * sz * 0.55;
-    const ry = cy + Math.sin(ang - 2.4) * sz * 0.55;
+    const lx = cx + Math.cos(c.ang + 2.4) * sz * 0.55;
+    const ly = cy + Math.sin(c.ang + 2.4) * sz * 0.55;
+    const rx = cx + Math.cos(c.ang - 2.4) * sz * 0.55;
+    const ry = cy + Math.sin(c.ang - 2.4) * sz * 0.55;
     gfx.moveTo(tipX, tipY);
     gfx.lineTo(lx, ly);
     gfx.lineTo(rx, ry);
@@ -104,14 +126,15 @@ export function syncPixiTutorialTrack(now: number): void {
   }
 
   const activeStep = getCurrentTutorialStep(getState().player);
-  const track = getTutorialTrackForNav(activeStep?.nav?.trackId);
-  if (!track) {
+  const trackId = activeStep?.nav?.trackId;
+  const track = getTutorialTrackForNav(trackId);
+  if (!track || !trackId) {
     _trackGfx.visible = false;
     return;
   }
 
   drawCenterline(_trackGfx, track);
-  drawChevrons(_trackGfx, track, now);
+  drawChevrons(_trackGfx, trackId, track, now);
 
   _trackGfx.visible = true;
 }
@@ -119,6 +142,7 @@ export function syncPixiTutorialTrack(now: number): void {
 export function destroyPixiTutorialTrack(): void {
   _trackGfx?.destroy();
   _trackGfx = null;
+  _chevronCache.clear();
 }
 
 /** Draw the active goal track on the system map (Pixi Graphics). */

@@ -160,7 +160,11 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       const key = Client.settings.movementControlMode === "direct"
         ? "tutorial.step.targeting.objectiveDirect"
         : "tutorial.step.targeting.objective";
-      return t(key, { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake") });
+      const lockActionText = Client.settings.movementControlMode === "direct"
+        ? t("tutorial.action.shiftLeftClick")
+        : t("tutorial.action.leftClick");
+      const lockAction = `<span class="tutorial-keybind">${lockActionText}</span>`;
+      return t(key, { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake"), lockAction });
     },
     zone: tutorialRegionZone("targeting"),
     beaconColor: 0x88ccff,

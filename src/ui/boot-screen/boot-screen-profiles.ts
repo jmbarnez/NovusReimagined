@@ -67,8 +67,7 @@ function bindProfileSelectionEvents(monitor: HTMLElement): void {
       const pilotName = (card.querySelector(".profile-name") as HTMLElement)?.textContent ?? t("pilotTerminal.thisProfile");
       if (!confirm(t("profile.confirmDelete", { name: pilotName }))) return;
       deleteProfile(id);
-      monitor.innerHTML = buildProfileSelectionHtml();
-      bindProfileSelectionEvents(monitor);
+      showProfileSelection();
     });
   });
 

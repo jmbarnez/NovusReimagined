@@ -13,7 +13,7 @@ import {
   selectedHeatMode,
   selectedProcessQty,
   type RefiningStage,
-} from "./industry-model.js";
+} from "./industry/model/index.js";
 import {
   renderAlloyStage,
   renderAssemblyStage,

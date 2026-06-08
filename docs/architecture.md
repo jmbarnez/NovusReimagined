@@ -71,6 +71,7 @@ src/
   render/          PixiJS WebGL/WebGPU gameplay rendering. All in-game visuals
                    go through Pixi; the screen `<canvas id="c">` and `canvas.ts`
                    were removed in the 2026-06-01 migration.
+  tutorial/        Tutorial runner, step logic, hangar/refinery tours, snapshot state
   types/           Shared structural interfaces (entities, world, lock state)
   ui/              DOM-based overlays (station, bridge, inventory, settings)
   utils/           Pure utilities (math, spatial grid, FX helpers, camera, entities)

@@ -34,7 +34,7 @@ import {
   selectedHeatMode,
   selectedProcessQty,
   stageMeta,
-} from "../industry-model.js";
+} from "../industry/model/index.js";
 
 import { renderHubQueueSection, renderAssemblyQueueSection } from "./assembly.js";
 import { renderTransferSection } from "./transfer.js";

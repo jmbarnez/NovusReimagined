@@ -26,10 +26,6 @@ const _floatTextKeepSet = new Set<number>();
 // Object pool for float text Text objects to avoid GC pressure
 const _floatTextPool: Text[] = [];
 const _floatTextPoolSize = 128;
-const SHOCKWAVE_MIN_FRAME_MS = 1000 / 45;
-const WORLD_BORDER_MIN_FRAME_MS = 1000 / 30;
-let _lastShockwaveRenderMs = 0;
-let _lastWorldBorderRenderMs = 0;
 
 function getPooledFloatText(): Text {
   if (_floatTextPool.length > 0) {
@@ -146,9 +142,6 @@ function ensureFloatLayer(): Container | null {
 export function syncPixiShockwaves(): void {
   const g = ensureShockwaves();
   if (!g) return;
-  const now = performance.now();
-  if (now - _lastShockwaveRenderMs < SHOCKWAVE_MIN_FRAME_MS - 0.5) return;
-  _lastShockwaveRenderMs = now;
   const state = getState();
   if (!state.shockwaves?.length) { g.clear(); return; }
   g.clear();
@@ -229,8 +222,6 @@ export function syncPixiFloatTexts(): void {
 export function syncPixiWorldBorder(now: number, sectorOuterRadius: number = SECTOR_OUTER_RADIUS): void {
   const g = ensureBorder();
   if (!g) return;
-  if (now - _lastWorldBorderRenderMs < WORLD_BORDER_MIN_FRAME_MS - 0.5) return;
-  _lastWorldBorderRenderMs = now;
   const state = getState();
   const player = state.player;
   const pr = Math.hypot(player.x, player.y);

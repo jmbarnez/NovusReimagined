@@ -20,6 +20,14 @@
   display: none;
 }
 
+#hud-tutorial .tutorial-tour-body {
+  margin-top: 4px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  line-height: 1.4;
+  color: var(--hud-text-muted, #aab3bc);
+  display: none;
+}
+
 #hud-tutorial .tutorial-tour-next-btn {
   margin-left: auto;
   font-size: calc(10px * var(--effective-font-scale, 1));
