@@ -18,7 +18,7 @@ import { getSlotPowerCd } from "../../utils/slot-power.js";
 import { getStats } from "../../player/player-stats.js";
 import { resetTutorialTrackState } from "../../physics/tutorial-track.js";
 import { applyDecryptionReward } from "../../sites/decryption-rewards.js";
-import { startScanPulse } from "../../scanning.js";
+import { startScanPulse } from "../../scanning/index.js";
 import { checkDeliveryContracts } from "../../data/missions.js";
 import { alloyHubMaterial, collectHubOutput, processFloatingItem, processMixedOreCargo, separateHubMaterial } from "../../refinery/index.js";
 import {

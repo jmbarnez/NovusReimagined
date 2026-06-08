@@ -18,7 +18,7 @@ import { tickAbilities } from "./player/abilities.js";
 import { updateAsteroidDebris } from "./utils/mining.js";
 import { updateAmbientDirector } from "./physics/ambient-ships.js";
 import { tickIndustryQueue } from "./state/actions.js";
-import { updateMapScanner, updateScanning } from "./scanning.js";
+import { updateMapScanner, updateScanning } from "./scanning/index.js";
 
 export function tick(dt: number) {
   syncSpatialGrid();

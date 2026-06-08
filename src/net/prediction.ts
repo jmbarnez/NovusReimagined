@@ -16,7 +16,7 @@ import type { InputFrame } from "../sim/input.js";
 import type { WorldSnapshot } from "../sim/snapshot.js";
 import { TICK_DT } from "../constants.js";
 import { updateCombat } from "../physics/combat-physics.js";
-import { startScanPulse } from "../scanning.js";
+import { startScanPulse } from "../scanning/index.js";
 
 // PredictionManager class: Maintains unacknowledged local input frames
 // and replays them on top of incoming server snapshots to reconcile state.

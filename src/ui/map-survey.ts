@@ -27,7 +27,7 @@ import {
   mapScannerStrengthStepIndex,
   isMapScannerEmitting,
   getMapScannerStrength01,
-} from "../scanning.js";
+} from "../scanning/index.js";
 import { getPassiveScanRangePx } from "../targeting.js";
 import { SHIPS } from "../data/ships.js";
 import { logEvent } from "../feedback.js";

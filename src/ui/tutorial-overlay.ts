@@ -49,6 +49,13 @@ let completeEl: HTMLElement | null = null;
 let visible = false;
 let showCompleteBannerActive = false;
 let lastReady = false;
+let _activeHudHighlightEl: Element | null = null;
+let _hudDimmerEl: HTMLElement | null = null;
+let _hudDimmerVisible = false;
+let _hudDimmerHideTimer: number | null = null;
+let _lastDimmerCutoutKey = "";
+let _lastTutorialOverlayUpdateMs = 0;
+const TUTORIAL_OVERLAY_MIN_UPDATE_MS = 1000 / 60;
 
 function getActiveTutorialHighlight(): HTMLElement | null {
   return document.querySelector(".tutorial-hangar-highlight, .hud-highlight");
@@ -64,6 +71,21 @@ function getCardAnchorHighlight(step: ReturnType<typeof getCurrentTutorialStep>)
     return hudAnchoredSteps.has(step.id) ? highlighted : null;
   }
   return null;
+}
+
+function setHudHighlight(target: Element | null): void {
+  if (_activeHudHighlightEl === target) return;
+  if (_activeHudHighlightEl) {
+    _activeHudHighlightEl.classList.remove("hud-highlight");
+  }
+  _activeHudHighlightEl = target;
+  if (_activeHudHighlightEl) {
+    _activeHudHighlightEl.classList.add("hud-highlight");
+  }
+}
+
+function clearHudHighlight(): void {
+  setHudHighlight(null);
 }
 
 function ensureDimmerSegments(dimmer: HTMLElement): HTMLElement[] {
@@ -181,7 +203,10 @@ function syncTutorialLayerBounds() {
 }
 
 function syncDimmerVisibility() {
-  let dimmer = document.getElementById("hud-tour-dimmer");
+  let dimmer = _hudDimmerEl;
+  if (!dimmer) {
+    dimmer = document.getElementById("hud-tour-dimmer");
+  }
   if (!dimmer) {
     const hudOverlay = document.getElementById("hud-overlay");
     if (hudOverlay) {
@@ -190,24 +215,40 @@ function syncDimmerVisibility() {
       dimmer.className = "hidden";
       ensureDimmerSegments(dimmer);
       hudOverlay.appendChild(dimmer);
+      _hudDimmerEl = dimmer;
     }
+  } else {
+    _hudDimmerEl = dimmer;
   }
 
   const step = getCurrentTutorialStep(getState().player);
   const showDimmer = visible && getState().player?.tutorial?.active && step?.id === "hud-tour" && !Client.showMap;
   if (showDimmer) {
     if (dimmer) {
+      if (_hudDimmerHideTimer != null) {
+        window.clearTimeout(_hudDimmerHideTimer);
+        _hudDimmerHideTimer = null;
+      }
       dimmer.classList.remove("hidden");
       dimmer.style.display = "block";
-      syncDimmerCutout(dimmer, getActiveTutorialHighlight(), dimmer.getBoundingClientRect());
+      const target = getActiveTutorialHighlight();
+      const cutoutKey = target ? `${target.id}|${target.className}` : "none";
+      if (_lastDimmerCutoutKey !== cutoutKey) {
+        _lastDimmerCutoutKey = cutoutKey;
+        syncDimmerCutout(dimmer, target, dimmer.getBoundingClientRect());
+      }
+      _hudDimmerVisible = true;
     }
   } else {
-    if (dimmer) {
+    if (dimmer && _hudDimmerVisible) {
       dimmer.classList.add("hidden");
-      setTimeout(() => {
+      _hudDimmerVisible = false;
+      _lastDimmerCutoutKey = "";
+      _hudDimmerHideTimer = window.setTimeout(() => {
         if (dimmer && dimmer.classList.contains("hidden")) {
           dimmer.style.display = "none";
         }
+        _hudDimmerHideTimer = null;
       }, 250);
     }
   }
@@ -234,16 +275,19 @@ function syncRefineryGuideVisuals() {
 }
 
 function syncHudHighlights() {
-  document.querySelectorAll(".hud-highlight").forEach((el) => {
-    el.classList.remove("hud-highlight");
-  });
-
-  if (!visible || !getState().player?.tutorial?.active || Client.showMap) return;
+  if (!visible || !getState().player?.tutorial?.active || Client.showMap) {
+    clearHudHighlight();
+    return;
+  }
 
   const step = getCurrentTutorialStep(getState().player);
-  if (!step) return;
+  if (!step) {
+    clearHudHighlight();
+    return;
+  }
 
   const snapshot = getTutorialSnapshot();
+  let highlightTarget: Element | null = null;
 
   if (step.id === "hud-tour") {
     const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
@@ -251,34 +295,36 @@ function syncHudHighlights() {
     const logPanel = document.getElementById("hud-log-panel");
 
     if (phase === 0) {
-      document.getElementById("hud-status-bars")?.classList.add("hud-highlight");
+      highlightTarget = document.getElementById("hud-status-bars");
     } else if (phase === 1) {
-      document.getElementById("hud-slots")?.classList.add("hud-highlight");
+      highlightTarget = document.getElementById("hud-slots");
     } else if (phase === 2) {
-      document.getElementById("hud-lock-rail")?.classList.add("hud-highlight");
+      highlightTarget = document.getElementById("hud-lock-rail");
     } else if (phase === 3) {
-      scannerDock?.classList.add("hud-highlight");
+      highlightTarget = scannerDock;
     } else if (phase === 4) {
-      logPanel?.classList.add("hud-highlight");
+      highlightTarget = logPanel;
     } else if (phase === 5) {
-      document.getElementById("hud-missions")?.classList.add("hud-highlight");
+      highlightTarget = document.getElementById("hud-missions");
     }
   } else if (step.id === "fly-academy") {
-    document.getElementById("hud-missions")?.classList.add("hud-highlight");
+    highlightTarget = document.getElementById("hud-missions");
   } else if (step.id === "targeting") {
     const scannerDock = document.getElementById("hud-scanner-dock");
-    scannerDock?.classList.add("hud-highlight");
+    highlightTarget = scannerDock;
   } else if (step.id === "mining") {
-    document.getElementById("hud-slots")?.classList.add("hud-highlight");
+    highlightTarget = document.getElementById("hud-slots");
   } else if (step.id === "hangar-high" || step.id === "industry" || step.id === "hangar-turrets") {
     if (!Client.stationOpen) {
-      document.getElementById("hud-dock-prompt")?.classList.add("hud-highlight");
+      highlightTarget = document.getElementById("hud-dock-prompt");
     }
   } else if (step.id === "gunnery") {
-    document.getElementById("hud-slots")?.classList.add("hud-highlight");
+    highlightTarget = document.getElementById("hud-slots");
   } else if (step.id === "graduation") {
-    document.getElementById("hud-dock-prompt")?.classList.add("hud-highlight");
+    highlightTarget = document.getElementById("hud-dock-prompt");
   }
+
+  setHudHighlight(highlightTarget);
 }
 
 function updateReadyState() {
@@ -548,14 +594,14 @@ export function hideTutorialOverlay() {
   showCompleteBannerActive = false;
   clearHangarTutorialGuide();
   clearRefineryTutorialGuide();
-  document.querySelectorAll(".hud-highlight").forEach((el) => {
-    el.classList.remove("hud-highlight");
-  });
+  clearHudHighlight();
   const dimmer = document.getElementById("hud-tour-dimmer");
   if (dimmer) {
     dimmer.classList.add("hidden");
     dimmer.style.display = "none";
   }
+  _hudDimmerVisible = false;
+  _lastDimmerCutoutKey = "";
   if (layerEl) layerEl.style.display = "none";
   if (root) root.style.display = "none";
 }
@@ -563,25 +609,27 @@ export function hideTutorialOverlay() {
 export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
   if (!visible || !getState().player?.tutorial?.active) {
     clearRefineryTutorialGuide();
-    document.querySelectorAll(".hud-highlight").forEach((el) => {
-      el.classList.remove("hud-highlight");
-    });
+    clearHudHighlight();
     const dimmer = document.getElementById("hud-tour-dimmer");
     if (dimmer) {
       dimmer.classList.add("hidden");
       dimmer.style.display = "none";
     }
+    _hudDimmerVisible = false;
+    _lastDimmerCutoutKey = "";
     if (root) root.style.display = "none";
     return;
   }
+  if (_now - _lastTutorialOverlayUpdateMs < TUTORIAL_OVERLAY_MIN_UPDATE_MS - 0.5) {
+    return;
+  }
+  _lastTutorialOverlayUpdateMs = _now;
   syncTutorialLayerBounds();
   const show = shouldShowTutorialLayer();
   if (!show) {
     if (root) root.style.display = "none";
     clearRefineryTutorialGuide();
-    document.querySelectorAll(".hud-highlight").forEach((el) => {
-      el.classList.remove("hud-highlight");
-    });
+    clearHudHighlight();
     return;
   }
   if (root) root.style.display = "block";
@@ -598,6 +646,7 @@ export function updateTutorialOverlay(_Wc: number, _Hc: number, _now: number) {
 export function destroyTutorialOverlay() {
   clearHangarTutorialGuide();
   clearRefineryTutorialGuide();
+  clearHudHighlight();
   document.getElementById("hud-tour-dimmer")?.remove();
   root?.remove();
   root = null;

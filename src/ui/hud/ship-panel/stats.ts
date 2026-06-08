@@ -2,7 +2,7 @@ import { getState } from "../../../state-access.js";
 import { SHIPS } from "../../../data/ships.js";
 import { getHardpointSlotCount } from "../../../utils/hardpoints.js";
 import { getStats } from "../../../player/player-stats.js";
-import { getEffectiveSignatureRadius } from "../../../scanning.js";
+import { getEffectiveSignatureRadius } from "../../../scanning/index.js";
 import { t } from "../../../utils/i18n.js";
 import { maxTargetLocks } from "../../../targeting.js";
 import { renderTurretCard } from "./turrets.js";

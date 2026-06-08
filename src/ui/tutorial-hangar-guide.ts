@@ -5,6 +5,9 @@ import { getHangarGuidePanel, type HangarGuideTarget } from "../data/hangar-tuto
 import { activateStationTab } from "./station/tabs.js";
 
 const HIGHLIGHT_CLASS = "tutorial-hangar-highlight";
+let _activeHighlightEl: Element | null = null;
+let _lastCutoutKey = "";
+let _lastGuideKey = "";
 
 function ensureDimmerSegments(dimmer: HTMLElement): HTMLElement[] {
   const existing = Array.from(dimmer.querySelectorAll<HTMLElement>(".tutorial-dimmer-segment"));
@@ -20,6 +23,18 @@ function ensureDimmerSegments(dimmer: HTMLElement): HTMLElement[] {
   return segments;
 }
 
+function setActiveHighlight(target: Element | null): boolean {
+  if (_activeHighlightEl === target) return false;
+  if (_activeHighlightEl) {
+    _activeHighlightEl.classList.remove(HIGHLIGHT_CLASS);
+  }
+  _activeHighlightEl = target;
+  if (_activeHighlightEl) {
+    _activeHighlightEl.classList.add(HIGHLIGHT_CLASS);
+  }
+  return true;
+}
+
 function resetDimmerSegments(dimmer: HTMLElement): void {
   for (const segment of ensureDimmerSegments(dimmer)) {
     segment.removeAttribute("style");
@@ -29,6 +44,9 @@ function resetDimmerSegments(dimmer: HTMLElement): void {
 function syncStationDimmerCutout(target: HTMLElement | null): void {
   const dimmer = document.getElementById("st-dimmer");
   if (!dimmer) return;
+  const nextKey = target ? `${target.id}|${target.className}` : "none";
+  if (_lastCutoutKey === nextKey) return;
+  _lastCutoutKey = nextKey;
   const segments = ensureDimmerSegments(dimmer);
   const stationRect = dimmer.getBoundingClientRect();
   if (!target) {
@@ -80,9 +98,9 @@ function resolveGuideTarget(target: HangarGuideTarget): HTMLElement | null {
 }
 
 function clearHighlights(): void {
-  document.querySelectorAll(`.${HIGHLIGHT_CLASS}`).forEach((el) => {
-    el.classList.remove(HIGHLIGHT_CLASS);
-  });
+  setActiveHighlight(null);
+  _lastGuideKey = "";
+  _lastCutoutKey = "";
   const dimmer = document.getElementById("st-dimmer");
   if (!dimmer) return;
   dimmer.classList.remove("active");
@@ -94,17 +112,32 @@ export function clearHangarTutorialGuide(): void {
 }
 
 export function syncHangarTutorialGuide(snapshot: Record<string, unknown> = {}): void {
-  clearHighlights();
-  if (!Client.stationOpen) return;
+  if (!Client.stationOpen) {
+    clearHighlights();
+    return;
+  }
 
   const step = getCurrentTutorialStep(getState().player);
-  if (!step || (step.id !== "hangar-high" && step.id !== "hangar-turrets")) return;
+  if (!step || (step.id !== "hangar-high" && step.id !== "hangar-turrets")) {
+    clearHighlights();
+    return;
+  }
 
-  if (snapshot.hangarReviewComplete === true) return;
+  if (snapshot.hangarReviewComplete === true) {
+    clearHighlights();
+    return;
+  }
 
   const phase = currentHangarPhase(step.id, snapshot);
   const panel = getHangarGuidePanel(step.id, phase);
-  if (!panel) return;
+  if (!panel) {
+    clearHighlights();
+    return;
+  }
+
+  const guideKey = `${step.id}|${phase}|${panel.target}|${panel.stationTab ?? "none"}|${Client.stationOpen ? 1 : 0}|${isStationHangarTabActive() ? 1 : 0}`;
+  if (_lastGuideKey === guideKey) return;
+  _lastGuideKey = guideKey;
 
   document.getElementById("st-dimmer")?.classList.add("active");
 
@@ -114,17 +147,21 @@ export function syncHangarTutorialGuide(snapshot: Record<string, unknown> = {}):
 
   if (!isStationHangarTabActive()) {
     const tabEl = resolveGuideTarget("station-tab-hangar");
-    tabEl?.classList.add(HIGHLIGHT_CLASS);
-    syncStationDimmerCutout(tabEl);
+    setActiveHighlight(tabEl);
+    syncStationDimmerCutout(tabEl as HTMLElement | null);
     return;
   }
 
   const el = resolveGuideTarget(panel.target);
-  if (!el) return;
+  if (!el) {
+    setActiveHighlight(null);
+    syncStationDimmerCutout(null);
+    return;
+  }
 
-  el.classList.add(HIGHLIGHT_CLASS);
+  const changedTarget = setActiveHighlight(el);
   syncStationDimmerCutout(el);
-  if (typeof el.scrollIntoView === "function") {
+  if (changedTarget && typeof el.scrollIntoView === "function") {
     el.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 }

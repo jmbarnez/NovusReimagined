@@ -6,6 +6,9 @@ import { activateStationTab } from "./station/tabs.js";
 import { stationState } from "./station/shared.js";
 
 const HIGHLIGHT_CLASS = "tutorial-hangar-highlight";
+let _activeHighlightEl: Element | null = null;
+let _lastCutoutKey = "";
+let _lastGuideKey = "";
 
 function ensureDimmerSegments(dimmer: HTMLElement): HTMLElement[] {
   const existing = Array.from(dimmer.querySelectorAll<HTMLElement>(".tutorial-dimmer-segment"));
@@ -27,9 +30,24 @@ function resetDimmerSegments(dimmer: HTMLElement): void {
   }
 }
 
+function setActiveHighlight(target: Element | null): boolean {
+  if (_activeHighlightEl === target) return false;
+  if (_activeHighlightEl) {
+    _activeHighlightEl.classList.remove(HIGHLIGHT_CLASS);
+  }
+  _activeHighlightEl = target;
+  if (_activeHighlightEl) {
+    _activeHighlightEl.classList.add(HIGHLIGHT_CLASS);
+  }
+  return true;
+}
+
 function syncStationDimmerCutout(target: HTMLElement | null): void {
   const dimmer = document.getElementById("st-dimmer");
   if (!dimmer) return;
+  const nextKey = target ? `${target.id}|${target.className}` : "none";
+  if (_lastCutoutKey === nextKey) return;
+  _lastCutoutKey = nextKey;
   const segments = ensureDimmerSegments(dimmer);
   const stationRect = dimmer.getBoundingClientRect();
   if (!target) {
@@ -71,9 +89,9 @@ function resolveGuideTarget(target: RefineryGuideTarget): HTMLElement | null {
 }
 
 function clearHighlights(): void {
-  document.querySelectorAll(`.${HIGHLIGHT_CLASS}`).forEach((el) => {
-    el.classList.remove(HIGHLIGHT_CLASS);
-  });
+  setActiveHighlight(null);
+  _lastGuideKey = "";
+  _lastCutoutKey = "";
   const dimmer = document.getElementById("st-dimmer");
   if (!dimmer) return;
   dimmer.classList.remove("active");
@@ -85,16 +103,32 @@ export function clearRefineryTutorialGuide(): void {
 }
 
 export function syncRefineryTutorialGuide(snapshot: Record<string, unknown> = {}): void {
-  clearHighlights();
-  if (!Client.stationOpen) return;
+  if (!Client.stationOpen) {
+    clearHighlights();
+    return;
+  }
 
   const step = getCurrentTutorialStep(getState().player);
-  if (!step || step.id !== "industry") return;
-  if (snapshot.refineryGuideComplete === true) return;
+  if (!step || step.id !== "industry") {
+    clearHighlights();
+    return;
+  }
+  if (snapshot.refineryGuideComplete === true) {
+    clearHighlights();
+    return;
+  }
 
   const phase = typeof snapshot.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
   const panel = getRefineryGuidePanel(step.id, phase);
-  if (!panel) return;
+  if (!panel) {
+    clearHighlights();
+    return;
+  }
+
+  const panelActive = panel.stationTab ? !!document.getElementById(`panel-${panel.stationTab}`)?.classList.contains("active") : true;
+  const guideKey = `${step.id}|${phase}|${panel.target}|${panel.stationTab ?? "none"}|${panelActive ? 1 : 0}`;
+  if (_lastGuideKey === guideKey) return;
+  _lastGuideKey = guideKey;
 
   stationState.indRailTab = "queue";
 
@@ -105,11 +139,15 @@ export function syncRefineryTutorialGuide(snapshot: Record<string, unknown> = {}
   }
 
   const el = resolveGuideTarget(panel.target);
-  if (!el) return;
+  if (!el) {
+    setActiveHighlight(null);
+    syncStationDimmerCutout(null);
+    return;
+  }
 
-  el.classList.add(HIGHLIGHT_CLASS);
+  const changedTarget = setActiveHighlight(el);
   syncStationDimmerCutout(el);
-  if (typeof el.scrollIntoView === "function") {
+  if (changedTarget && typeof el.scrollIntoView === "function") {
     el.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 }

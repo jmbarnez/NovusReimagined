@@ -3,7 +3,7 @@ import { type Player } from "./state.js";
 import { PlayerAccess, getState } from "./state-access.js";
 import { C } from "./config/index.js";
 import { dst } from "./utils/math.js";
-import { isInScanCone, bearingToPointDeg } from "./scanning.js";
+import { isInScanCone, bearingToPointDeg } from "./scanning/index.js";
 import { populateSystem } from "./world-gen.js";
 import { curSys } from "./utils/game.js";
 import { TUTORIAL_LOCAL_REGIONS, TUTORIAL_SECTOR } from "./data/tutorial-layout.js";
