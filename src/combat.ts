@@ -7,7 +7,7 @@ import { removeSensorLock } from "./targeting.js";
 import { logEvent } from "./feedback.js";
 import { progressMissions } from "./data/missions.js";
 import { showDamageNumber } from "./combat/damage-display.js";
-import { spawnWreck } from "./wreck.js";
+import { spawnWreck } from "./wreck/index.js";
 import { C } from "./config/index.js";
 import type { Enemy } from "./types/world.js";
 import type { BulletOwner } from "./utils/entities.js";

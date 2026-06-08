@@ -72,6 +72,19 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     },
   },
   {
+    id: "boost-try",
+    title: t("tutorial.step.boostTry.title"),
+    objective: () => t("tutorial.step.boostTry.objective", { boostKey: tutorialKeyStyled("engineBoost") }),
+    zone: { x: 0, y: 0, r: 0 },
+    beaconColor: 0x55aaff,
+    onEnter(ctx) {
+      ctx.snapshot.boostUsed = false;
+    },
+    isComplete(ctx) {
+      return ctx.snapshot.boostUsed === true;
+    },
+  },
+  {
     id: "fly-academy",
     title: t("tutorial.step.flyAcademy.title"),
     objective: () => t("tutorial.step.flyAcademy.objective", {

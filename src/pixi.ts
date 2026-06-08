@@ -62,7 +62,7 @@ export async function initPixi(): Promise<Application> {
     height: rect.height,
     resolution: pixiDpr,
     autoDensity: true,
-    antialias: true,
+    antialias: false,
     // Snap sprite positions to whole pixels at render time. Without this, any
     // fractional camera/world position causes texture sampling to interpolate
     // across texel boundaries, producing the "ship never looks perfectly sharp"

@@ -493,6 +493,17 @@ export function initTutorialOverlay(active: boolean) {
       renderStep();
     });
 
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && visible) {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+        if (nextBtn && !nextBtn.hidden) {
+          nextBtn.click();
+        } else if (tourNextBtn && !tourNextBtn.hidden) {
+          tourNextBtn.click();
+        }
+      }
+    });
+
     on("tutorial:step-change", () => renderStep());
     on("tutorial:step-complete", () => renderStep());
     on("ui:close-overlays", () => renderStep());

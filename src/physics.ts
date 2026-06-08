@@ -8,7 +8,7 @@ import { updateStationTurrets } from "./physics/station-turrets.js";
 import { updateWarp } from "./dock.js";
 import { syncSpatialGrid } from "./utils/spatial.js";
 import { allActivePlayers } from "./utils/game.js";
-import { updateWreckPiecesAndPickups } from "./wreck.js";
+import { updateWreckPiecesAndPickups } from "./wreck/index.js";
 import { updateSalvager } from "./salvager.js";
 import { updateTractor } from "./tractor.js";
 import { updateHub, tickHubQueue } from "./refinery/index.js";

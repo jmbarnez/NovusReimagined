@@ -1,4 +1,5 @@
 import { getState } from "../state-access.js";
+import { Client } from "../state.js";
 import type { System, Star, DustParticle } from "../types/world.js";
 import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
 import { viewportW, viewportH } from "./viewport.js";
@@ -164,7 +165,7 @@ export function updateBackground(now: number, camX: number, camY: number) {
     spawnStarSprites();
     spawnDustSprites();
     if (sys) {
-      setNebulaSystem(sys);
+      setNebulaSystem(sys, (Client.settings?.nebulaDensity ?? 1.0) > 0.001);
       if (planetLayer) initPlanetSprites(planetLayer, sys);
       if (worldGradeFilter) {
         const sc = (sys.starClass ?? "G").toUpperCase();
@@ -182,7 +183,9 @@ export function updateBackground(now: number, camX: number, camY: number) {
     }
   }
 
-  updateNebulaMesh(now, camX, camY);
+  if ((Client.settings?.nebulaDensity ?? 1.0) > 0.001) {
+    updateNebulaMesh(now, camX, camY);
+  }
 
   if (farStarContainer)  updateStarLayer(farStarContainer,  getState().STARS_FAR  ?? [], WRAP_FAR,  STAR_FAR_PARALLAX,  Wc, Hc, now, 0,    camX, camY);
   if (midStarContainer)  updateStarLayer(midStarContainer,  getState().STARS      ?? [], WRAP_MID,  STAR_MID_PARALLAX,  Wc, Hc, now, 0.08, camX, camY);

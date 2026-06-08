@@ -71,9 +71,9 @@ function resolveGuideTarget(target: HangarGuideTarget): HTMLElement | null {
     case "hangar-undock":
       return document.getElementById("st-undock");
     case "hangar-slot-high-0":
-      return document.querySelector('[data-tutorial-slot="high-0"]');
+      return document.querySelector('[data-rack="high"][data-idx="0"]');
     case "hangar-slot-high-1":
-      return document.querySelector('[data-tutorial-slot="high-1"]');
+      return document.querySelector('[data-rack="high"][data-idx="1"]');
     default:
       return null;
   }

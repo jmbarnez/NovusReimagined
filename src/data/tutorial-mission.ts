@@ -23,6 +23,7 @@ export interface TutorialStepReward {
 /** Per-step payouts when the player presses Next after completing a tutorial objective. */
 export const TUTORIAL_STEP_REWARDS: Record<string, TutorialStepReward> = {
   "hud-tour":         { credits: 0,   skillId: "engineering", skillXp: 0 },
+  "boost-try":        { credits: 100, skillId: "engineering", skillXp: 0 },
   "fly-academy":      { credits: 150, skillId: "engineering", skillXp: 0 },
   "hangar-high":      { credits: 200, skillId: "engineering", skillXp: 0 },
   "fly-mining":       { credits: 180, skillId: "engineering", skillXp: 0 },

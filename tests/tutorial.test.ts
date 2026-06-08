@@ -544,8 +544,8 @@ describe("station tutorial spotlight", () => {
           <div id="panel-hangar" class="panel active"></div>
           <div id="panel-market" class="panel"></div>
           <div id="hangar-pane-cargo"></div>
-          <div data-tutorial-slot="high-0"></div>
-          <div data-tutorial-slot="high-1"></div>
+          <div data-rack="high" data-idx="0"></div>
+          <div data-rack="high" data-idx="1"></div>
         </div>
       </div>
     `;
@@ -636,8 +636,8 @@ describe("station tutorial spotlight", () => {
 
   it("uses the combat hangar phase to highlight high-slot tutorial targets", () => {
     G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-turrets");
-    const firstSlot = document.querySelector<HTMLElement>('[data-tutorial-slot="high-0"]')!;
-    const secondSlot = document.querySelector<HTMLElement>('[data-tutorial-slot="high-1"]')!;
+    const firstSlot = document.querySelector<HTMLElement>('[data-rack="high"][data-idx="0"]')!;
+    const secondSlot = document.querySelector<HTMLElement>('[data-rack="high"][data-idx="1"]')!;
 
     syncHangarTutorialGuide({ hangarCombatPhase: 1 });
     expect(firstSlot.classList.contains("tutorial-hangar-highlight")).toBe(true);

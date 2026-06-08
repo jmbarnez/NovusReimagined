@@ -4,7 +4,7 @@ import { PlayerAccess } from "../state-access.js";
 import { addSkillXp } from "../player/player-data.js";
 import { getStats } from "../player/player-stats.js";
 import { logEvent } from "../feedback.js";
-import { rollWreckSalvage } from "../wreck.js";
+import { rollWreckSalvage } from "../wreck/index.js";
 import type { WreckSalvageEntry } from "../types/world.js";
 import { normalizeComposition } from "../utils/ore-naming.js";
 import { processMixedSource, separateMaterial, alloyMaterial } from "./processing.js";

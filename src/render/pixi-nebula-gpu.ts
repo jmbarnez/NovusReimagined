@@ -139,12 +139,12 @@ export function updateNebulaMesh(now: number, camX: number, camY: number) {
   u.uCamera[1] = camY;
 }
 
-export function setNebulaSystem(sys: System) {
+export function setNebulaSystem(sys: System, enabled = true) {
   if (!_ug) return;
   const u = _ug.uniforms as unknown as NebulaUniforms;
 
-  if (_sprite) _sprite.visible = true;
-  if (!sys) return;
+  if (_sprite) _sprite.visible = enabled;
+  if (!enabled || !sys) return;
 
   // Vary the generated background nebula by session launch time
   const rng = mkRng(sys.id + "-neb-gpu-v2-" + _nebulaSessionSeed);

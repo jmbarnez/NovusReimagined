@@ -9,7 +9,7 @@ import { removeSensorLock } from "../targeting.js";
 import { logEvent } from "../feedback.js";
 import { progressMissions } from "../data/missions.js";
 import { getState } from "../state-access.js";
-import { spawnWreck } from "../wreck.js";
+import { spawnWreck } from "../wreck/index.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { addSalvagePickup } from "../utils/entities.js";
 import type { Enemy } from "../types/world.js";

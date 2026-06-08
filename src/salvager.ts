@@ -7,7 +7,7 @@ import { dst } from "./utils/math.js";
 import { floatText } from "./utils/fx.js";
 import { isWreckPieceTarget } from "./targeting.js";
 import { addSkillXp } from "./player/player-data.js";
-import { damageWreckPiece } from "./wreck.js";
+import { damageWreckPiece } from "./wreck/index.js";
 import { forEachFittedModuleSlot, getFittedModuleDef, isModuleSlotPowered } from "./utils/module-slots.js";
 import type { AssignableRack } from "./utils/module-slots.js";
 

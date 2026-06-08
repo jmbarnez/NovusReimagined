@@ -18,7 +18,7 @@ import { ENEMY_DEFS } from "../data/enemies.js";
 import { ORE, LOOT, COMPONENTS } from "../data/resources.js";
 import { getModule } from "../data/modules.js";
 import { RARITY_CONFIG } from "../data/moduleRarity.js";
-import { PICKUP_LIFE_S } from "../wreck.js";
+import { PICKUP_LIFE_S } from "../wreck/index.js";
 import { oreColorForComposition } from "../utils/ore-naming.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
 import { PixiGeometryBufferPool } from "./pixi-geometry-buffer-pool.js";
