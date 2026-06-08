@@ -13,7 +13,7 @@ import { syncThrust } from "../render/pixi-thrust.js";
 import { syncPixiStationInterior } from "../render/pixi-station-interior.js";
 import { drawPerfOverlay } from "../render/perf-overlay.js";
 import { updateHudOverlay } from "../ui/hud-overlay.js";
-import { updateTutorialOverlay } from "../ui/tutorial-overlay.js";
+import { updateTutorialOverlay } from "../ui/tutorial/index.js";
 import { renderPixi, worldContainer } from "../pixi.js";
 import { updatePixiBackground } from "../render/pixi-background.js";
 import { syncPixiParticles } from "../render/pixi-particles.js";
@@ -41,6 +41,7 @@ import { curSys, updateViewportBounds } from "../utils/game.js";
 import { rebuildSpatialGrid } from "../utils/spatial.js";
 import { dst } from "../utils/math.js";
 import { closeStationUi } from "../docking/index.js";
+import { updateClientWarpHint } from "../docking/warp.js";
 import { updateCamera } from "../utils/camera.js";
 import { setWorldView } from "../render/world-text.js";
 import { viewCenterX, viewCenterY, viewportW, viewportH, viewportLeft, viewportTop } from "../render/viewport.js";
@@ -53,7 +54,6 @@ import { recordRenderTimings, type PerfTimingMark } from "../render/perf-telemet
 // ─── Cached DOM refs ─────────────────────────────────────────────────────────
 let _cachedMapWinBody: HTMLElement | null = null;
 let _lastMapOpen = false;
-let _filterLogged = false;
 
 // ─── Frame timing helper ─────────────────────────────────────────────────────
 let _timingMarks: PerfTimingMark[] = [];
@@ -120,6 +120,9 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   // Hoist state once to avoid repeated object allocations
   const state = getState();
   const player = state.player;
+
+  // Drive client-side warp gate charging visuals independently of server snapshots
+  updateClientWarpHint(frameDt);
 
   // Ensure per-system live caches exist so renderers have data even if a tick missed rebuild.
   // Guard: only rebuild when the cache arrays are truly absent, not when they were already
@@ -237,12 +240,6 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   timeMark("vignette");
   renderPixi();
   timeMark("renderPixi");
-  // One-time debug: check if the expensive ColorMatrixFilter is active
-  if (worldContainer && (worldContainer.filters?.length ?? 0) > 0 && !_filterLogged) {
-    _filterLogged = true;
-    const names = worldContainer.filters.map((f) => ((f as unknown) as Record<string, unknown>).constructor?.name ?? "unknown");
-    console.log("[PERF] worldContainer.filters active:", names);
-  }
 
   // Canvas 2D map overlays sit above Pixi and are clipped to the map window body.
   if (mapBounds) {

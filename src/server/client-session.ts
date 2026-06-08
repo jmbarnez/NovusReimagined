@@ -16,6 +16,7 @@ export class ClientSession {
   public inputBuffer: InputFrame[] = [];
   public connectionTime: number;
   private lastInputTick = -1;
+  private lastContinuousFrame: InputFrame | null = null;
 
   constructor(id: string, name: string, initialState: Player) {
     this.id = id;
@@ -32,6 +33,7 @@ export class ClientSession {
       }
     }
     this.lastInputTick = frame.tick;
+    this.lastContinuousFrame = frame;
 
     // Keep inputs sorted by tick using insertion (O(1) in the common case)
     let insertIdx = this.inputBuffer.length;
@@ -50,6 +52,9 @@ export class ClientSession {
     const staleActions: GameCommand[] = [];
     let latestLaggedFrame: InputFrame | null = null;
     if (this.inputBuffer.length === 0) {
+      if (this.lastContinuousFrame) {
+        return { frame: { ...this.lastContinuousFrame, tick: currentTick, actions: [] }, staleActions };
+      }
       return { frame: null, staleActions };
     }
 
@@ -57,6 +62,7 @@ export class ClientSession {
     while (this.inputBuffer.length > 0 && this.inputBuffer[0].tick < currentTick) {
       const dropped = this.inputBuffer.shift()!;
       latestLaggedFrame = dropped;
+      this.lastContinuousFrame = dropped;
       if (dropped.actions.length > 0) {
         staleActions.push(...dropped.actions);
       }
@@ -67,6 +73,9 @@ export class ClientSession {
       if (latestLaggedFrame) {
         return { frame: { ...latestLaggedFrame, actions: [] }, staleActions };
       }
+      if (this.lastContinuousFrame) {
+        return { frame: { ...this.lastContinuousFrame, tick: currentTick, actions: [] }, staleActions };
+      }
       return { frame: null, staleActions };
     }
 
@@ -74,6 +83,7 @@ export class ClientSession {
     if (exactIdx !== -1) {
       const frame = this.inputBuffer[exactIdx];
       this.inputBuffer.splice(exactIdx, 1);
+      this.lastContinuousFrame = frame;
       return { frame, staleActions };
     }
 
@@ -81,6 +91,7 @@ export class ClientSession {
     const next = this.inputBuffer[0];
     if (next.tick <= currentTick + 8) {
       this.inputBuffer.shift();
+      this.lastContinuousFrame = next;
       return { frame: next, staleActions };
     }
 
@@ -89,6 +100,9 @@ export class ClientSession {
       return { frame: { ...latestLaggedFrame, actions: [] }, staleActions };
     }
 
+    if (this.lastContinuousFrame) {
+      return { frame: { ...this.lastContinuousFrame, tick: currentTick, actions: [] }, staleActions };
+    }
     return { frame: null, staleActions };
   }
 }

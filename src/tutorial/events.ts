@@ -2,7 +2,7 @@ import { Client } from "../state.js";
 import { emit, on } from "../events.js";
 import { getState } from "../state-access.js";
 import { getCurrentTutorialStep, isStationHangarTabActive } from "../data/tutorial.js";
-import { clearHangarTutorialGuide } from "../ui/tutorial-hangar-guide.js";
+import { clearHangarTutorialGuide } from "../ui/tutorial/hangar-guide.js";
 import {
   beginHangarReviewTour,
   markHangarStepComplete,

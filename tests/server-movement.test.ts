@@ -7,7 +7,7 @@ import type { InputFrame } from "../src/sim/input.js";
 function movementFrame(tick: number, x: number, y: number): InputFrame {
   return {
     tick,
-    keys: { space: false, w: false, a: false, s: false, d: false, boost: false },
+    keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false },
     mouseWorld: { x, y },
     waypoint: { x, y },
     navCommand: null,
@@ -28,9 +28,9 @@ function directFrame(tick: number, keys: InputFrame["keys"]): InputFrame {
   };
 }
 
-const DIRECT_IDLE_KEYS: InputFrame["keys"] = { space: false, w: false, a: false, s: false, d: false, boost: false };
-const DIRECT_FORWARD_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: false };
-const DIRECT_BOOST_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: true };
+const DIRECT_IDLE_KEYS: InputFrame["keys"] = { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false };
+const DIRECT_FORWARD_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: false, warp: false };
+const DIRECT_BOOST_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false };
 
 describe("GameServer movement input", () => {
   let server: GameServer;
@@ -85,7 +85,7 @@ describe("GameServer movement input", () => {
     expect(p.vx).toBeGreaterThan(0);
 
     p.vx = 0;
-    server.handleClientInput("direct-client", directFrame(2, { space: false, w: false, a: false, s: true, d: false, boost: false }));
+    server.handleClientInput("direct-client", directFrame(2, { space: false, w: false, a: false, s: true, d: false, boost: false, warp: false }));
     tick(1 / 60);
     expect(p.vx).toBeLessThan(0);
   });
@@ -101,12 +101,12 @@ describe("GameServer movement input", () => {
     p.va = 0;
     const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
 
-    server.handleClientInput("yaw-client", directFrame(1, { space: false, w: false, a: true, s: false, d: false, boost: false }));
+    server.handleClientInput("yaw-client", directFrame(1, { space: false, w: false, a: true, s: false, d: false, boost: false, warp: false }));
     tick(1 / 60);
     expect(p.va).toBeLessThan(0);
 
     p.va = 0;
-    server.handleClientInput("yaw-client", directFrame(2, { space: false, w: false, a: false, s: false, d: true, boost: false }));
+    server.handleClientInput("yaw-client", directFrame(2, { space: false, w: false, a: false, s: false, d: true, boost: false, warp: false }));
     tick(1 / 60);
     expect(p.va).toBeGreaterThan(0);
   });
@@ -125,7 +125,7 @@ describe("GameServer movement input", () => {
 
     server.handleClientInput("direct-mouse-client", {
       tick: 1,
-      keys: { space: false, w: false, a: false, s: false, d: false, boost: false },
+      keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false },
       mouseWorld: { x: p.x, y: p.y - 1000 },
       waypoint: null,
       navCommand: null,

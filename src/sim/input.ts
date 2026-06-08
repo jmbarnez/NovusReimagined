@@ -13,6 +13,7 @@ export interface InputFrame {
     s: boolean;
     d: boolean;
     boost: boolean;
+    warp: boolean;
   };
   mouseWorld: { x: number; y: number };
   waypoint: { x: number; y: number } | null;
@@ -79,6 +80,10 @@ function sanitizeAction(action: Record<string, unknown>): GameCommand | null {
     case "warp": {
       const targetIdx = numberPayload(action, "targetIdx");
       return targetIdx == null ? { type: "warp" } : { type: "warp", payload: { targetIdx } };
+    }
+    case "warpGate": {
+      const payload = optionalPayloadRecord(action);
+      return typeof payload.gateId === "string" ? { type: "warpGate", payload: { gateId: payload.gateId } } : { type: "warpGate" };
     }
     case "setFireControlSlot": {
       const slot = numberPayload(action, "slot");
@@ -304,6 +309,7 @@ export function sanitizeInputFrame(value: unknown): InputFrame | null {
       s: keys.s === true,
       d: keys.d === true,
       boost: keys.boost === true,
+      warp: keys.warp === true,
     },
     mouseWorld,
     waypoint,
@@ -326,7 +332,15 @@ export function queueFrameAction(command: GameCommand, opts?: { replaceByType?: 
 }
 
 export function applyInputFrameToPlayer(frame: InputFrame, p: Player): void {
-  p.inputKeys = { space: frame.keys.space, w: frame.keys.w, a: frame.keys.a, s: frame.keys.s, d: frame.keys.d, boost: frame.keys.boost };
+  p.inputKeys = {
+    space: frame.keys.space,
+    w: frame.keys.w,
+    a: frame.keys.a,
+    s: frame.keys.s,
+    d: frame.keys.d,
+    boost: frame.keys.boost,
+    warp: frame.keys.warp,
+  };
   p.inputMouseWorld = { x: frame.mouseWorld.x, y: frame.mouseWorld.y };
   p.movementControlMode = frame.movementControlMode;
   p.waypoint = frame.waypoint;
@@ -357,6 +371,7 @@ export function createLocalInputFrame(tickNum: number): InputFrame {
       s: Client.settings.movementControlMode === "direct" && !!Client.keys["s"],
       d: Client.settings.movementControlMode === "direct" && !!Client.keys["d"],
       boost: !!Client.keys["boost"],
+      warp: !!Client.keys["warp"],
     },
     mouseWorld: {
       x: Client.mouseWorld?.x ?? 0,

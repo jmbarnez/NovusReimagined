@@ -121,8 +121,3 @@ export function updateTutorialTrack(dt: number, p: Player, isReplaying = false):
 
   tickBoostGates(dt, TUTORIAL_BOOST_GATES, p, isReplaying);
 }
-
-/** @deprecated alias */
-export function getTutorialBoostCooldown(gateId: string): number {
-  return getTutorialGateCooldown(gateId, getState().player);
-}

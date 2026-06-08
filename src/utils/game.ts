@@ -248,8 +248,11 @@ export function respawnPlayer(p: Player = getState().player) {
 
 export function allActivePlayers(): Player[] {
   const G = getState();
-  if (!G.players) return [];
-  return Array.from(G.players.values());
+  if (G.players && G.players.size > 0) {
+    return Array.from(G.players.values());
+  }
+  const fallback = G.player;
+  return fallback ? [fallback] : [];
 }
 
 export function activeSystemIndices(): number[] {

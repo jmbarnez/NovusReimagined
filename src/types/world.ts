@@ -74,6 +74,8 @@ export interface Station {
   _orbitSpeed?: number;
 }
 
+export type GateFxProfile = "sector" | "tutorial-return" | "temporary";
+
 export interface Gate {
   id?: string;
   x: number;
@@ -91,10 +93,13 @@ export interface Gate {
   spin: number;
   angle?: number;
   _orbitSpeed?: number;
-  gateState?: "dormant" | "charging" | "active" | "warping";
+  gateState?: "dormant" | "charging" | "active" | "warping" | "cooldown";
   chargeProgress?: number;
+  cooldownTimer?: number;
   dispenseTimer?: number | null;
   isTemporary?: boolean;
+  activationRadius?: number;
+  fxProfile?: GateFxProfile;
 }
 
 export interface Planet {

@@ -3,6 +3,7 @@ import { PlayerAccess, WorldAccess, getState } from "../../state-access.js";
 import { fireSelectedTurret } from "../../combat/turret-control.js";
 import { tryInteractSite } from "../../sites/interact.js";
 import { getDockableStation, warpTo, beginWarpThroughGate } from "../../docking/index.js";
+import { gateStableId } from "../../utils/warp-gates.js";
 import {
   assignModuleSlotToTarget,
   clearSensorLocks,
@@ -301,6 +302,17 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
       if (!sys) break;
       const gate = sys.gates?.find((g) => g.targetSysIdx === targetIdx);
       if (gate) {
+        beginWarpThroughGate(gate, p);
+      }
+      break;
+    }
+    case "warpGate": {
+      const gateId = command.payload?.gateId;
+      if (typeof gateId !== "string") break;
+      const sys = getState().GALAXY[p.sysIdx];
+      if (!sys) break;
+      const gate = sys.gates?.find((g) => gateStableId(g) === gateId);
+      if (gate && (gate.gateState === "charging" || gate.gateState === "active")) {
         beginWarpThroughGate(gate, p);
       }
       break;

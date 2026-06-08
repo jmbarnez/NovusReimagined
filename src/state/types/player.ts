@@ -96,7 +96,7 @@ export interface Player {
   hubQueue: HubJob[];
   hubOutput: HubOutput;
   hubDeposit: HubDeposit;
-  inputKeys?: { space: boolean; w: boolean; a: boolean; s: boolean; d: boolean; boost: boolean } | null;
+  inputKeys?: { space: boolean; w: boolean; a: boolean; s: boolean; d: boolean; boost: boolean; warp: boolean } | null;
   inputMouseWorld?: { x: number; y: number } | null;
   waypoint?: { x: number; y: number } | null;
   navCommand?: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;

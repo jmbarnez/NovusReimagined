@@ -110,9 +110,6 @@ export function getGateControlHint(gate: TutorialBoostGate): string | undefined 
   return gate.hintKey ? resolveTutorialGateHint(gate.hintKey) : undefined;
 }
 
-/** @deprecated alias */
-export type TutorialBoostPad = TutorialBoostGate;
-
 export function gatePillarPositions(gate: TutorialBoostGate): {
   left: { x: number; y: number };
   right: { x: number; y: number };
@@ -386,9 +383,6 @@ export const TUTORIAL_BOOST_GATES: TutorialBoostGate[] = [
   ...buildEvenBoostGatesForTrackRange("spoke-gunnery", 4, 180, 108, { marginArc: 340 }),
   ...buildEvenBoostGatesForTrackRange("spoke-gate", 4, 190, 108, { marginArc: 340 }),
 ];
-
-/** @deprecated alias */
-export const TUTORIAL_BOOST_PADS = TUTORIAL_BOOST_GATES;
 
 export function getBoostGatesForTrack(trackId: string | undefined): TutorialBoostGate[] {
   if (!trackId) return [];

@@ -27,6 +27,11 @@ export interface WarpCommand {
   payload?: { targetIdx?: number };
 }
 
+export interface WarpGateCommand {
+  type: "warpGate";
+  payload?: { gateId?: string };
+}
+
 export interface InteractSiteCommand {
   type: "interactSite";
 }
@@ -232,6 +237,7 @@ export type GameCommand =
   | DockCommand
   | UndockCommand
   | WarpCommand
+  | WarpGateCommand
   | InteractSiteCommand
   | SetFireControlSlotCommand
   | ToggleSlotDefaultActionCommand

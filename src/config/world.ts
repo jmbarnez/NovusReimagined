@@ -80,6 +80,7 @@ export const WORLD = {
   },
   GATES: {
     radius: 30,
+    activationRadiusMult: 2.0,
     outwardPhaseOffset: 0.35,
     slotSpanMin: 0.28,
     slotSpanMax: 0.72,

@@ -55,6 +55,7 @@ describe("warp gate hold-to-charge", () => {
       py: 0,
       target: { kind: "local", x: 0, y: 0, label: "Academy" },
       radius: 30,
+      activationRadius: 60,
       spin: 0,
     };
     G.GALAXY = [makeSys([gate])];
@@ -65,7 +66,8 @@ describe("warp gate hold-to-charge", () => {
     p.y = 0;
     p.targetLock = null;
     p.warpCooldown = 0;
-    Client.keys["warp"] = true;
+    p.inputKeys = { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true };
+    Client.keys["warp"] = false;
 
     updateGateActivation(0.5, p);
 
@@ -82,6 +84,7 @@ describe("warp gate hold-to-charge", () => {
       py: 0,
       target: { kind: "local", x: 0, y: 0, label: "Academy" },
       radius: 30,
+      activationRadius: 60,
       spin: 0,
     };
     G.GALAXY = [makeSys([gate])];
@@ -92,7 +95,7 @@ describe("warp gate hold-to-charge", () => {
     p.y = 0;
     p.targetLock = null;
     p.warpCooldown = 0;
-    Client.keys["warp"] = true;
+    p.inputKeys = { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true };
 
     updateGateActivation(0.5, p);
 
@@ -109,17 +112,18 @@ describe("warp gate hold-to-charge", () => {
       py: 0,
       target: { kind: "local", x: 0, y: 0, label: "Academy" },
       radius: 30,
+      activationRadius: 60,
       spin: 0,
     };
     G.GALAXY = [makeSys([gate])];
 
     const p = G.P;
     p.sysIdx = 0;
-    p.x = 159;
+    p.x = 158;
     p.y = 0;
     p.targetLock = null;
     p.warpCooldown = 0;
-    Client.keys["warp"] = true;
+    p.inputKeys = { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true };
 
     updateGateActivation(0.5, p);
 
@@ -136,6 +140,7 @@ describe("warp gate hold-to-charge", () => {
       py: 0,
       target: { kind: "local", x: 0, y: 0, label: "Academy" },
       radius: 30,
+      activationRadius: 60,
       spin: 0,
     };
     G.GALAXY = [makeSys([gate])];
@@ -146,12 +151,13 @@ describe("warp gate hold-to-charge", () => {
     p.y = 0;
     p.targetLock = null;
     p.warpCooldown = 0;
-    Client.keys["warp"] = true;
+    p.inputKeys = { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true };
+    Client.keys["warp"] = false;
 
     // Charge time is 2.0 seconds; tick with dt=2.0 to complete in one call
     updateGateActivation(2.0, p);
 
-    expect(gate.gateState).toBe("warping");
+    expect(gate.gateState).toBe("cooldown");
     expect(gate.chargeProgress).toBe(1);
   });
 

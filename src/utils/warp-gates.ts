@@ -1,10 +1,12 @@
 import type { Gate, System } from "../types/world.js";
 import type { AutoTarget } from "../types/world.js";
 import type { Player } from "../state.js";
+import { C } from "../config/index.js";
 import { getState } from "../state-access.js";
 import { curSys } from "./game.js";
 
 const WARP_GATE_APERTURE_FRACTION = 0.78;
+const DEFAULT_CHARGE_RADIUS_MULT = C.WORLD.GATES.activationRadiusMult ?? 2.0;
 
 export function isGateLockId(id: string): boolean {
   return id.startsWith("gate-") || id.startsWith("local|");
@@ -29,6 +31,13 @@ export function gateMapLabel(gate: Gate): string {
 
 export function gateActivationRadius(gate: Gate): number {
   return gate.radius * WARP_GATE_APERTURE_FRACTION;
+}
+
+export function gateChargeRadius(gate: Gate): number {
+  if (typeof gate.activationRadius === "number" && gate.activationRadius > 0) {
+    return gate.activationRadius;
+  }
+  return gate.radius * DEFAULT_CHARGE_RADIUS_MULT;
 }
 
 function closestPointTOnSegment(ax: number, ay: number, bx: number, by: number): number {

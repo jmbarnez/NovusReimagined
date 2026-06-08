@@ -108,7 +108,9 @@ export function syncPixiWarpScreen(now: number): void {
     return;
   }
 
-  const preWarp = state.warpTargetIdx >= 0 || (state.warpCooldown > 2.0 && state.warpCooldown <= PRE_WARP_DURATION);
+  const gateHint = Client.warpGateHint;
+  const localGateCharging = Boolean(gateHint?.isCharging && gateHint?.inRange);
+  const preWarp = state.warpTargetIdx >= 0 || localGateCharging || (state.warpCooldown > 2.0 && state.warpCooldown <= PRE_WARP_DURATION);
   const cx = Wc / 2;
   const cy = Hc / 2;
   const halfDiag = Math.hypot(Wc, Hc) * 0.5;
@@ -184,7 +186,8 @@ export function syncPixiWarpScreen(now: number): void {
   const hasDestinationIdx = state.warpTargetIdx >= 0;
   const destIdx = hasDestinationIdx ? state.warpTargetIdx : player.sysIdx;
   const destSys = state.GALAXY[destIdx];
-  const destName = (destSys?.name || "").toUpperCase();
+  const fallbackLocalName = gateHint?.gateLabel ? `RETURN TO ${gateHint.gateLabel.toUpperCase()}` : (destSys?.name || "").toUpperCase();
+  const destName = hasDestinationIdx ? (destSys?.name || "").toUpperCase() : fallbackLocalName;
   const textA = preWarp ? Math.min(1, (progress - 0.12) / 0.18) : arrFade;
 
   if (!titleText || !destText || !secText) return;
@@ -192,7 +195,13 @@ export function syncPixiWarpScreen(now: number): void {
     titleText.visible = preWarp;
     secText.visible = preWarp && hasDestinationIdx && !!destSys;
     if (preWarp) {
-      titleText.text = hasDestinationIdx ? "JUMP DRIVE ENGAGED" : "WARP DRIVE ENGAGED";
+      if (hasDestinationIdx) {
+        titleText.text = "JUMP DRIVE ENGAGED";
+      } else if (gateHint?.gateLabel) {
+        titleText.text = "WARP GATE ENGAGED";
+      } else {
+        titleText.text = "WARP DRIVE ENGAGED";
+      }
       titleText.position.set(Math.round(cx), Math.round(cy - 32));
       titleText.alpha = textA;
       destText.text = `⟩⟩ ${destName}`;

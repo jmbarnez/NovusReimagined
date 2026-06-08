@@ -103,13 +103,3 @@ export function getHangarGuidePanel(stepId: string, phase: number): HangarGuideP
   if (!panels || phase < 0 || phase >= panels.length) return null;
   return panels[phase] ?? null;
 }
-
-/** @deprecated Use getHangarGuidePanel("hangar-high", phase)?.body */
-export function getHangarReviewHint(phase: number): string {
-  return getHangarGuidePanel("hangar-high", phase)?.body ?? "";
-}
-
-/** @deprecated Use getHangarGuidePanel("hangar-turrets", phase)?.body */
-export function getHangarCombatSwapHint(phase: number): string {
-  return getHangarGuidePanel("hangar-turrets", phase)?.body ?? "";
-}

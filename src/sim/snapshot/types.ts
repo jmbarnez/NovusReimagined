@@ -40,6 +40,8 @@ export interface PlayerSnapshot {
   tractor?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetId: string | null; tooHeavy: boolean } | null;
   gateCooldowns?: Record<string, number> | null;
   gatesCleared?: string[] | null;
+  warpCooldown?: number;
+  warpTargetIdx?: number;
   targetLock?: TargetLockSnapshot | null;
   lockQueue?: LockSlot[] | null;
   _assignTargetId?: string | null;

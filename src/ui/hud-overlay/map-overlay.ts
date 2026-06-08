@@ -4,7 +4,8 @@ import type { System } from "../../types/world.js";
 import { shouldShowWarpGate } from "../../data/tutorial.js";
 import { t } from "../../utils/i18n.js";
 import { openHudWindow, isOpen, closeHudWindow, getHudWindow } from "../hud/windows.js";
-import { app, positioningContainer } from "../../render/pixi-maps.js";
+import { app } from "../../pixi.js";
+import { pixiMapState } from "../../render/pixi-maps/state.js";
 
 export function closeMapWindow() {
   Client.showMap = false;
@@ -36,7 +37,7 @@ export function toggleMapWindow() {
       Client.mapZoom = 1.0;
       Client.mapPanX = 0;
       Client.mapPanY = 0;
-      if (positioningContainer) positioningContainer.visible = false;
+      if (pixiMapState.positioningContainer) pixiMapState.positioningContainer.visible = false;
     });
     
     // Set default window size and center it
@@ -52,9 +53,9 @@ export function toggleMapWindow() {
     }
     
     // Position PixiJS container to match window
-    if (win && positioningContainer && app) {
+    if (win && pixiMapState.positioningContainer && app) {
       // positioningContainer is already added to app.stage in initPixiMaps
-      positioningContainer.visible = true;
+      pixiMapState.positioningContainer.visible = true;
       // Position will be updated in render loop based on window position
     }
   }

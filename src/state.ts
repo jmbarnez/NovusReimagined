@@ -149,6 +149,7 @@ export const Client: ClientState = {
   mapScannerAngleDeg: 0,
   typingPlayers: new Set(),
   chatBubbles: new Map(),
+  warpGateHint: null,
 };
 
 export function isPlayerReady(): boolean {

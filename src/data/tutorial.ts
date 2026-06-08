@@ -11,8 +11,6 @@ import {
   getHangarGuidePanel,
   HANGAR_REVIEW_PHASE_COUNT,
   HANGAR_COMBAT_SWAP_PHASE_COUNT,
-  getHangarReviewHint,
-  getHangarCombatSwapHint,
 } from "./hangar-tutorial-guide.js";
 import {
   getRefineryGuidePanel,
@@ -34,8 +32,6 @@ export {
   HANGAR_REVIEW_PHASE_COUNT,
   HANGAR_COMBAT_SWAP_PHASE_COUNT,
   REFINERY_GUIDE_PHASE_COUNT,
-  getHangarReviewHint,
-  getHangarCombatSwapHint,
   getHangarGuidePanel,
   getRefineryGuidePanel,
 };

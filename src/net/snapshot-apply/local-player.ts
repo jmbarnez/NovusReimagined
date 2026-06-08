@@ -18,7 +18,9 @@ export function shouldApplyLocalPlayerSnapshot(p: Player | null, snap: WorldSnap
 
 export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullSnapshot: boolean): void {
   const prevSysIdx = p.sysIdx;
-  const dist = Math.hypot(p.x - snap.player.x, p.y - snap.player.y);
+  const prevX = p.x;
+  const prevY = p.y;
+  const dist = Math.hypot(prevX - snap.player.x, prevY - snap.player.y);
   const shouldSnap = isFullSnapshot || dist > 1000;
 
   if (snap.player.sysIdx !== prevSysIdx) {
@@ -95,6 +97,8 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
   p.navCommand = snap.player.navCommand;
   p.gateCooldowns = snap.player.gateCooldowns ? { ...snap.player.gateCooldowns } : {};
   p.gatesCleared = snap.player.gatesCleared ? [...snap.player.gatesCleared] : [];
+  if (typeof snap.player.warpCooldown === "number") p.warpCooldown = snap.player.warpCooldown;
+  if (typeof snap.player.warpTargetIdx === "number") p.warpTargetIdx = snap.player.warpTargetIdx;
   PlayerAccess.setTargetLock(snap.player.targetLock ? { ...snap.player.targetLock } : null, p);
   const incomingLocks = snap.player.lockQueue ? snap.player.lockQueue.map((s) => ({ ...s })) : [];
   PlayerAccess.setLockQueue(incomingLocks, p);

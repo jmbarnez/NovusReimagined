@@ -8,7 +8,7 @@ describe("bindPlayerNetInput", () => {
     const player = makePlayer();
     const frame: InputFrame = {
       tick: 1,
-      keys: { space: true, w: true, a: true, s: false, d: true, boost: true },
+      keys: { space: true, w: true, a: true, s: false, d: true, boost: true, warp: false },
       mouseWorld: { x: 10, y: 20 },
       waypoint: null,
       navCommand: null,
@@ -18,6 +18,6 @@ describe("bindPlayerNetInput", () => {
 
     bindPlayerNetInput(player, frame);
 
-    expect(player.inputKeys).toEqual({ space: true, w: true, a: true, s: false, d: true, boost: true });
+    expect(player.inputKeys).toEqual({ space: true, w: true, a: true, s: false, d: true, boost: true, warp: false });
   });
 });

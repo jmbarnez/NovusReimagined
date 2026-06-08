@@ -25,7 +25,7 @@ describe("ship physics", () => {
     PlayerAccess.updatePhysics({ vx: boostedCap + 50, vy: 0 }, G.P);
 
     // Enable boost input and thrust
-    G.P.inputKeys = { space: false, w: true, a: false, s: false, d: false, boost: true };
+    G.P.inputKeys = { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false };
     PlayerAccess.updatePhysics({ thrustFx: true }, G.P);
     PlayerAccess.setEnergy(100, G.P);
     PlayerAccess.setGateBoostRemaining(1.5, G.P);
@@ -44,7 +44,7 @@ describe("ship physics", () => {
     // Set velocity above boosted cap without gate boost
     PlayerAccess.updatePhysics({ vx: boostedCap + 50, vy: 0 }, G.P);
 
-    G.P.inputKeys = { space: false, w: true, a: false, s: false, d: false, boost: true };
+    G.P.inputKeys = { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false };
     PlayerAccess.updatePhysics({ thrustFx: true }, G.P);
     PlayerAccess.setEnergy(100, G.P);
     PlayerAccess.setGateBoostRemaining(0, G.P);

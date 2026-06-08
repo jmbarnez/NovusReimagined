@@ -8,8 +8,7 @@ import { isVisible } from "../utils/game.js";
 import { getDropZoneCenter } from "../refinery/index.js";
 import { getUIFont } from "./ui-font.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
-import { GATE_RANGE } from "../constants.js";
-import { gateStableId } from "../utils/warp-gates.js";
+import { gateChargeRadius, gateStableId } from "../utils/warp-gates.js";
 import { t } from "../utils/i18n.js";
 
 const TAU = Math.PI * 2;
@@ -252,6 +251,8 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
   // Gates
   const keepGates = new Set<string>();
   const keepGateLabels = new Set<string>();
+  const warpHint = Client.warpGateHint;
+
   for (const g of sys.gates ?? []) {
     if (!shouldShowWarpGate(g, sys.idx, getState().player)) continue;
     if (!isVisible(g.x, g.y, g.radius * 2.5)) continue;
@@ -267,18 +268,39 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
     drawGateOverlay(gfx, g as Gate, now);
 
     const player = getState().player;
-    const inRange = dst(player.x, player.y, g.x, g.y) < g.radius + GATE_RANGE;
-    if (inRange) {
+    const hintedGate = warpHint && warpHint.gateId === id ? warpHint : null;
+    const activationRadius = hintedGate?.activationRadius ?? gateChargeRadius(g as Gate);
+    const distanceToGate = dst(player.x, player.y, g.x, g.y);
+    const isNearGate = distanceToGate <= activationRadius * 1.35;
+    if (isNearGate) {
       const canWarp = canWarpThroughGate(g, sys.idx, player);
       const warpKey = Client.settings?.keybinds.warp ?? "KeyG";
       const keyLabel = warpKey.replace("Key", "");
-      const text = canWarp ? `Hold ${keyLabel} to Warp` : t("world.gate.clearanceRequired");
+      const inActivation = hintedGate?.inRange ?? (distanceToGate <= activationRadius);
+      const isCharging = hintedGate?.isCharging ?? g.gateState === "charging";
+      const progress = hintedGate?.chargeProgress ?? g.chargeProgress ?? 0;
+      let labelText: string;
+      let fill = "#88c8ff";
+      if (!canWarp) {
+        labelText = t("world.gate.clearanceRequired");
+        fill = "#8894a8";
+      } else if (isCharging && inActivation) {
+        const pct = Math.min(1, Math.max(0, progress));
+        labelText = `Warping ${Math.round(pct * 100)}%`;
+        fill = "#ffd166";
+      } else if (inActivation) {
+        labelText = `Hold ${keyLabel} to Warp`;
+        fill = "#88c8ff";
+      } else {
+        labelText = `Return Gate → ${g.target.label}`;
+        fill = "#aac8ff";
+      }
       const label = ensureGateText(
         id,
-        text,
+        labelText,
         g.x + g.radius + 15,
         g.y,
-        canWarp ? "#88c8ff" : "#8894a8"
+        fill,
       );
       keepGateLabels.add(id);
       if (!layer.children.includes(label)) layer.addChild(label);

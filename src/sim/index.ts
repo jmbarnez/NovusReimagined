@@ -28,7 +28,15 @@ export class Simulation {
   public applyInput(frame: InputFrame, p: Player) {
     if (!p) return;
     p.netInputFrame = frame;
-    p.inputKeys = { space: frame.keys.space, w: frame.keys.w, a: frame.keys.a, s: frame.keys.s, d: frame.keys.d, boost: frame.keys.boost };
+    p.inputKeys = {
+      space: frame.keys.space,
+      w: frame.keys.w,
+      a: frame.keys.a,
+      s: frame.keys.s,
+      d: frame.keys.d,
+      boost: frame.keys.boost,
+      warp: frame.keys.warp,
+    };
     p.inputMouseWorld = { x: frame.mouseWorld.x, y: frame.mouseWorld.y };
     p.movementControlMode = frame.movementControlMode;
     p.waypoint = frame.waypoint;
@@ -40,6 +48,8 @@ export class Simulation {
       Client.keys["a"] = frame.keys.a;
       Client.keys["s"] = frame.keys.s;
       Client.keys["d"] = frame.keys.d;
+      Client.keys["boost"] = frame.keys.boost;
+      Client.keys["warp"] = frame.keys.warp;
       Client.mouseWorld.x = frame.mouseWorld.x;
       Client.mouseWorld.y = frame.mouseWorld.y;
       Client.waypoint = frame.waypoint;

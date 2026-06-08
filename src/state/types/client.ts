@@ -1,10 +1,22 @@
 import type { Settings } from "../../data/settings.js";
-import type { Station } from "../../types/world.js";
+import type { Gate, GateFxProfile, Station } from "../../types/world.js";
 
 export enum AppMode {
   TITLE = "TITLE",
   SPACE = "SPACE",
   STATION = "STATION",
+}
+
+export interface WarpGateHint {
+  gateId: string;
+  gateLabel: string;
+  fxProfile?: GateFxProfile;
+  distance: number;
+  activationRadius: number;
+  gateState: NonNullable<Gate["gateState"]>;
+  chargeProgress: number;
+  inRange: boolean;
+  isCharging: boolean;
 }
 
 export interface ClientState {
@@ -45,4 +57,5 @@ export interface ClientState {
   mapScannerAngleDeg: number;
   typingPlayers: Set<string>;
   chatBubbles: Map<string, { text: string; expiresAt: number }>;
+  warpGateHint: WarpGateHint | null;
 }

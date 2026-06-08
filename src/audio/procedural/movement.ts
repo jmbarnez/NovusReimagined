@@ -15,24 +15,88 @@ export function sfxWarpCharge() {
   const t0 = now();
   const dur = 2.4;
 
-  const osc = ctx.createOscillator();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(80, t0);
-  osc.frequency.exponentialRampToValueAtTime(800, t0 + dur);
+  // --- Sub-bass drone: two detuned sines for cavernous depth ---
+  const drone1 = ctx.createOscillator();
+  drone1.type = "sine";
+  drone1.frequency.setValueAtTime(42, t0);
+  drone1.frequency.exponentialRampToValueAtTime(55, t0 + dur * 0.6);
 
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(200, t0);
-  filter.frequency.exponentialRampToValueAtTime(3000, t0 + dur);
+  const drone2 = ctx.createOscillator();
+  drone2.type = "sine";
+  drone2.frequency.setValueAtTime(43.5, t0);
+  drone2.frequency.exponentialRampToValueAtTime(56.5, t0 + dur * 0.6);
 
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.08, t0);
-  g.gain.linearRampToValueAtTime(0.22, t0 + dur * 0.7);
-  g.gain.linearRampToValueAtTime(0.001, t0 + dur);
+  const droneGain = ctx.createGain();
+  droneGain.gain.setValueAtTime(0.001, t0);
+  droneGain.gain.linearRampToValueAtTime(0.18, t0 + dur * 0.5);
+  droneGain.gain.linearRampToValueAtTime(0.001, t0 + dur);
 
-  osc.connect(filter).connect(g).connect(master);
-  osc.start(t0); osc.stop(t0 + dur);
-  _disconnectOnEnd(osc, filter, g);
+  drone1.connect(droneGain).connect(master);
+  drone2.connect(droneGain).connect(master);
+  drone1.start(t0); drone1.stop(t0 + dur);
+  drone2.start(t0); drone2.stop(t0 + dur);
+  _disconnectOnEnd(drone1, drone2, droneGain);
+
+  // --- Harmonic overtones: sawtooth swept through resonant filter ---
+  const saw = ctx.createOscillator();
+  saw.type = "sawtooth";
+  saw.frequency.setValueAtTime(55, t0);
+  saw.frequency.exponentialRampToValueAtTime(180, t0 + dur);
+
+  const sawFilter = ctx.createBiquadFilter();
+  sawFilter.type = "lowpass";
+  sawFilter.frequency.setValueAtTime(120, t0);
+  sawFilter.frequency.exponentialRampToValueAtTime(2800, t0 + dur);
+  sawFilter.Q.value = 4.0;
+
+  const sawGain = ctx.createGain();
+  sawGain.gain.setValueAtTime(0.001, t0);
+  sawGain.gain.linearRampToValueAtTime(0.10, t0 + dur * 0.6);
+  sawGain.gain.linearRampToValueAtTime(0.001, t0 + dur);
+
+  saw.connect(sawFilter).connect(sawGain).connect(master);
+  saw.start(t0); saw.stop(t0 + dur);
+  _disconnectOnEnd(saw, sawFilter, sawGain);
+
+  // --- Brown noise rumble for physical menace ---
+  const brownBuf = makeBrownNoiseBuffer(ctx, dur);
+  const rumble = ctx.createBufferSource();
+  rumble.buffer = brownBuf;
+
+  const rumbleFilter = ctx.createBiquadFilter();
+  rumbleFilter.type = "lowpass";
+  rumbleFilter.frequency.setValueAtTime(80, t0);
+  rumbleFilter.frequency.exponentialRampToValueAtTime(400, t0 + dur);
+
+  const rumbleGain = ctx.createGain();
+  rumbleGain.gain.setValueAtTime(0.001, t0);
+  rumbleGain.gain.linearRampToValueAtTime(0.14, t0 + dur * 0.5);
+  rumbleGain.gain.linearRampToValueAtTime(0.001, t0 + dur);
+
+  rumble.connect(rumbleFilter).connect(rumbleGain).connect(master);
+  rumble.start(t0); rumble.stop(t0 + dur);
+  _disconnectOnEnd(rumble, rumbleFilter, rumbleGain);
+
+  // --- Resonant ping: metallic sci-fi sheen ---
+  const ping = ctx.createOscillator();
+  ping.type = "square";
+  ping.frequency.setValueAtTime(110, t0);
+  ping.frequency.exponentialRampToValueAtTime(880, t0 + dur);
+
+  const pingFilter = ctx.createBiquadFilter();
+  pingFilter.type = "bandpass";
+  pingFilter.frequency.setValueAtTime(220, t0);
+  pingFilter.frequency.exponentialRampToValueAtTime(1200, t0 + dur);
+  pingFilter.Q.value = 8.0;
+
+  const pingGain = ctx.createGain();
+  pingGain.gain.setValueAtTime(0.001, t0);
+  pingGain.gain.linearRampToValueAtTime(0.04, t0 + dur * 0.4);
+  pingGain.gain.linearRampToValueAtTime(0.001, t0 + dur);
+
+  ping.connect(pingFilter).connect(pingGain).connect(master);
+  ping.start(t0); ping.stop(t0 + dur);
+  _disconnectOnEnd(ping, pingFilter, pingGain);
 }
 
 export function sfxWarpJump() {

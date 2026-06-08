@@ -359,6 +359,7 @@ export function populateSystem(sys: System) {
       x = Math.round(Math.cos(gateAngle) * gateDist);
       y = Math.round(Math.sin(gateAngle) * gateDist);
     }
+    const activationRadius = C.WORLD.GATES.radius * (C.WORLD.GATES.activationRadiusMult ?? 2.0);
     sys.gates.push({
       id: isTutorialSys && linkIdx === getNovusPrimeIdx()
         ? `gate-${sys.id}-graduation`
@@ -377,6 +378,8 @@ export function populateSystem(sys: System) {
       spin: rf(f, 0.004, 0.012),
       angle: Math.atan2(y, x) + Math.PI / 2,
       _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
+      activationRadius,
+      fxProfile: "sector",
     });
   }
 
@@ -391,6 +394,7 @@ export function populateSystem(sys: System) {
       const ny = (reg.y - TUTORIAL_STATION.y) / len;
       const x = Math.round(reg.x - nx * TUTORIAL_RETURN_GATE_OFFSET);
       const y = Math.round(reg.y - ny * TUTORIAL_RETURN_GATE_OFFSET);
+      const activationRadius = C.WORLD.GATES.radius * (C.WORLD.GATES.activationRadiusMult ?? 2.0);
       sys.gates.push({
         id: `gate-${sys.id}-return-${reg.id}`,
         x,
@@ -406,6 +410,8 @@ export function populateSystem(sys: System) {
         spin: rf(f, 0.004, 0.012),
         angle: Math.atan2(TUTORIAL_STATION.y - y, TUTORIAL_STATION.x - x),
         _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
+        activationRadius,
+        fxProfile: "tutorial-return",
       });
     }
   }

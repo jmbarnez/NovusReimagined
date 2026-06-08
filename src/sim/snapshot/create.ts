@@ -164,6 +164,8 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
       tractor: subject.tractor ? { ...subject.tractor } : null,
       gateCooldowns: subject.gateCooldowns ? { ...subject.gateCooldowns } : null,
       gatesCleared: subject.gatesCleared ? [ ...subject.gatesCleared ] : null,
+      warpCooldown: typeof subject.warpCooldown === "number" ? q(subject.warpCooldown) : undefined,
+      warpTargetIdx: typeof subject.warpTargetIdx === "number" ? subject.warpTargetIdx : undefined,
       targetLock: snapshotTargetLock(subject.targetLock),
       lockQueue: subject.lockQueue ? subject.lockQueue.map(s => ({ ...s })) : null,
       _assignTargetId: subject._assignTargetId,
