@@ -10,6 +10,7 @@ import { initGameLoop } from "./game-loop.js";
 import { initHudOverlay } from "./ui/hud-overlay.js";
 import { initBackgroundStars } from "./render/background.js";
 import { initPixi, renderPixi, resizePixi, entityLayer, effectLayer, stationLayer } from "./pixi.js";
+import { onWindowResize } from "./ui/dom-helpers.js";
 import { initPixiBackground, updatePixiBackground } from "./render/pixi-background.js";
 import { initPixiParticles } from "./render/pixi-particles.js";
 import { initPixiEntities } from "./render/enemy/index.js";
@@ -22,6 +23,15 @@ import { initPixiTargetArrows } from "./render/pixi-target-arrows.js";
 import { initPixiMaps } from "./render/pixi-maps.js";
 import { initPixiMinimap } from "./render/pixi-minimap.js";
 import { initPixiCelestial } from "./render/celestial/index.js";
+
+let _cleanupResizeListener: (() => void) | null = null;
+
+export function cleanupMainResizeListener() {
+  if (_cleanupResizeListener) {
+    _cleanupResizeListener();
+    _cleanupResizeListener = null;
+  }
+}
 
 import { bindTitleScreenEvents, restoreTitleScreen } from "./ui/title-screen.js";
 import { localizeBootScreen, markBootPhase, registerLoadingConsole, transitionToTitleScreen } from "./ui/loading-screen.js";
@@ -41,7 +51,6 @@ async function boot() {
     markBootPhase("start");
     WorldAccess.setSpatialGrid(new SpatialGrid(C.PHYSICS.SPAWN_GRID.cellSize));
     migrateLegacySave();
-    initInput();
     registerLoadingConsole();
 
     // 2. UI Pre-init
@@ -58,6 +67,10 @@ async function boot() {
 
     // 4. Rendering Engines
     await initPixi();
+    // Register window input handlers only after the Pixi renderer exists. Doing
+    // this earlier let window events (e.g. blur) fire mid-init and touch the
+    // not-yet-ready renderer, crashing boot.
+    initInput();
     initPixiBackground();
     initVignette();
 
@@ -89,7 +102,7 @@ async function boot() {
     initPixiTargetArrows();
     initPixiMinimap();
     initPixiMaps();
-    window.addEventListener("resize", resizePixi);
+    _cleanupResizeListener = onWindowResize(resizePixi);
 
     // 5. Start unified animation loop (in TITLE mode)
     Client.camx = 0;

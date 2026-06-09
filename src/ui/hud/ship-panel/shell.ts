@@ -9,6 +9,7 @@ import {
   resetLiveState,
   turretCardNodes
 } from "./state.js";
+import { createElement, setHtml, setStyle, onClick } from "../../dom-helpers.js";
 
 /** Builds the multi-tab SHIP HUD panel container structure */
 export function buildShipPanelShell(): HTMLElement {
@@ -16,16 +17,11 @@ export function buildShipPanelShell(): HTMLElement {
   resetLiveState();
   turretCardNodes.clear();
 
-  const root = document.createElement("div");
+  const root = createElement("div", "sp-root");
   root.id = "ship-panel-root";
-  root.className = "sp-root";
-  root.style.height = "100%";
-  root.style.width = "100%";
-  root.style.display = "flex";
-  root.style.flexDirection = "column";
-  root.style.overflow = "hidden";
+  setStyle(root, { height: "100%", width: "100%", display: "flex", flexDirection: "column", overflow: "hidden" });
 
-  root.innerHTML = `
+  setHtml(root, `
     <div class="sp-tabs">
       <button class="sp-tab active" data-tab="cargo">${t("ship.cargo")}</button>
       <button class="sp-tab"        data-tab="stats">${t("ship.stats")}</button>
@@ -42,7 +38,7 @@ export function buildShipPanelShell(): HTMLElement {
         </div>
       </div>
     </div>
-  `;
+  `);
 
   return root;
 }
@@ -50,8 +46,8 @@ export function buildShipPanelShell(): HTMLElement {
 /** Attaches click listeners for active tab toggles */
 export function attachShipPanelListeners(root: HTMLElement) {
   const tabs = root.querySelectorAll(".sp-tab");
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
+  for (const tab of tabs) {
+    onClick(tab, () => {
       sfxBlip();
       const targetTab = (tab as HTMLElement).dataset.tab as "cargo" | "stats";
       if (activeShipTab === targetTab) return;
@@ -59,14 +55,16 @@ export function attachShipPanelListeners(root: HTMLElement) {
       setActiveShipTab(targetTab);
 
       // Toggle tab classes
-      tabs.forEach((t) => t.classList.toggle("active", t === tab));
+      for (const t of tabs) {
+        t.classList.toggle("active", t === tab);
+      }
 
       // Toggle panel panels
       const panels = root.querySelectorAll(".sp-tab-panel");
-      panels.forEach((p) => {
+      for (const p of panels) {
         const isTarget = (p as HTMLElement).dataset.tabPanel === targetTab;
         p.classList.toggle("active", isTarget);
-      });
+      }
 
       // If switched to Stats, rebuild its static content and cache refs
       if (targetTab === "stats") {
@@ -74,5 +72,5 @@ export function attachShipPanelListeners(root: HTMLElement) {
         rebuildStatsTab();
       }
     });
-  });
+  }
 }

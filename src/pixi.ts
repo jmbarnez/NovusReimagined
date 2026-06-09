@@ -46,18 +46,22 @@ export { app, worldContainer, screenContainer, hudOverlayLayer, planetLayer, sta
 
 /** Render the PixiJS stage once. Call once per game frame after updating positions. */
 export function renderPixi() {
-  if (!app || !_pixiReady) return;
+  // `app.render()` calls `app.renderer.render(...)`; if the renderer never
+  // initialized (or was torn down) that throws "reading 'render' of undefined".
+  // Skip rendering rather than crashing the boot/game loop.
+  if (!app || !_pixiReady || !app.renderer) return;
   app.render();
 }
 
 export async function initPixi(): Promise<Application> {
-  app = new Application();
+  const application = new Application();
+  app = application;
 
   const cap = Client.settings?.renderScale ?? 2.5;
   pixiDpr = Math.min(window.devicePixelRatio || 1, cap);
 
   const rect = playRect();
-  await app.init({
+  await application.init({
     width: rect.width,
     height: rect.height,
     resolution: pixiDpr,
@@ -77,11 +81,18 @@ export async function initPixi(): Promise<Application> {
     autoStart: false,
   });
 
+  // If renderer creation was interrupted (e.g. a window event threw mid-init)
+  // `application.renderer` is undefined and `application.canvas` would throw a
+  // cryptic "reading 'canvas' of undefined". Fail loudly with a clear message.
+  if (!application.renderer) {
+    throw new Error("PixiJS renderer failed to initialize (no WebGL/WebGPU context).");
+  }
+
   setViewportSize(rect.width, rect.height);
   _pixiReady = true;
 
   // Insert the PixiJS canvas behind the HUD canvas (#c, zIndex 1).
-  const pixiCanvas = app.canvas as HTMLCanvasElement;
+  const pixiCanvas = application.canvas as HTMLCanvasElement;
   pixiCanvas.style.position = "fixed";
   pixiCanvas.style.top = `${rect.top}px`;
   pixiCanvas.style.left = "0";
@@ -91,18 +102,18 @@ export async function initPixi(): Promise<Application> {
   // Screen-space container comes first so it renders behind world content.
   screenContainer = new Container();
   screenContainer.label = "screen";
-  app.stage.addChild(screenContainer);
+  application.stage.addChild(screenContainer);
 
   // World container: camera transform is applied each frame by the game loop.
   worldContainer = new Container();
   worldContainer.label = "world";
-  app.stage.addChild(worldContainer);
+  application.stage.addChild(worldContainer);
 
   // Front-most Pixi HUD graphics layer. Used for screen-space overlays that
   // must always sit over world objects but still render in Pixi.
   hudOverlayLayer = new Container();
   hudOverlayLayer.label = "hud-overlay";
-  app.stage.addChild(hudOverlayLayer);
+  application.stage.addChild(hudOverlayLayer);
 
   // Named sub-layers so phase migrations land in the right draw order.
   planetLayer = new Container();
@@ -137,7 +148,7 @@ export async function initPixi(): Promise<Application> {
     worldContainer.filterArea = new Rectangle(0, 0, rect.width, rect.height);
   }
 
-  return app;
+  return application;
 }
 
 export function resizePixi() {

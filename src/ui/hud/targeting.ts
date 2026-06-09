@@ -7,6 +7,7 @@ import { hudState } from "./state.js";
 import { queueFrameAction } from "../../sim/input.js";
 import type { Enemy, Asteroid, WreckPiece, LockSlot, AutoTarget } from "../../types/world.js";
 import type { ComputedStats } from "../../player/player-stats.js";
+import { createElement, append, setText, setHtml, setStyle, onClick, getStyleProperty } from "../dom-helpers.js";
 
 export interface LockCard {
   el: HTMLElement;
@@ -247,144 +248,118 @@ export function updateLockRail(st: ComputedStats, now: number) {
 }
 
 export function createLockCard(id: string) {
-  const el = document.createElement("div");
-  el.className = "lock-card";
+  const el = createElement("div", "lock-card");
   el.dataset.id = id;
 
   // 1. Hologram Viewport on the left
-  const holoViewport = document.createElement("div");
-  holoViewport.className = "lc-hologram-viewport";
+  const holoViewport = createElement("div", "lc-hologram-viewport");
 
-  const canvas = document.createElement("canvas");
-  canvas.className = "lc-canvas";
+  const canvas = createElement("canvas", "lc-canvas") as HTMLCanvasElement;
   canvas.width = 48;
   canvas.height = 48;
-  holoViewport.appendChild(canvas);
+  append(holoViewport, canvas);
 
-  const holoGrid = document.createElement("div");
-  holoGrid.className = "lc-hologram-grid";
-  holoViewport.appendChild(holoGrid);
+  const holoGrid = createElement("div", "lc-hologram-grid");
+  append(holoViewport, holoGrid);
 
-  el.appendChild(holoViewport);
+  append(el, holoViewport);
 
   // 2. Content Area on the right
-  const contentArea = document.createElement("div");
-  contentArea.className = "lc-content-area";
+  const contentArea = createElement("div", "lc-content-area");
 
   // Header row inside content area
-  const header = document.createElement("div");
-  header.className = "lc-header";
+  const header = createElement("div", "lc-header");
 
-  const level = document.createElement("div");
-  level.className = "lc-level";
-  header.appendChild(level);
+  const level = createElement("div", "lc-level");
+  append(header, level);
 
-  const name = document.createElement("div");
-  name.className = "lc-name";
-  header.appendChild(name);
+  const name = createElement("div", "lc-name");
+  append(header, name);
 
-  const targetInd = document.createElement("div");
-  targetInd.className = "lc-target";
-  header.appendChild(targetInd);
+  const targetInd = createElement("div", "lc-target");
+  append(header, targetInd);
 
-  contentArea.appendChild(header);
+  append(contentArea, header);
 
   // Body inside content area
-  const body = document.createElement("div");
-  body.className = "lc-body";
+  const body = createElement("div", "lc-body");
 
   // Telemetry row (visible when resolved)
-  const telemetry = document.createElement("div");
-  telemetry.className = "lc-telemetry";
+  const telemetry = createElement("div", "lc-telemetry");
 
-  const spdMetric = document.createElement("div");
-  spdMetric.className = "lc-metric";
-  telemetry.appendChild(spdMetric);
+  const spdMetric = createElement("div", "lc-metric");
+  append(telemetry, spdMetric);
 
-  const distMetric = document.createElement("div");
-  distMetric.className = "lc-metric";
-  telemetry.appendChild(distMetric);
+  const distMetric = createElement("div", "lc-metric");
+  append(telemetry, distMetric);
 
-  const sigMetric = document.createElement("div");
-  sigMetric.className = "lc-metric";
-  telemetry.appendChild(sigMetric);
+  const sigMetric = createElement("div", "lc-metric");
+  append(telemetry, sigMetric);
 
-  const trsMetric = document.createElement("div");
-  trsMetric.className = "lc-metric";
-  telemetry.appendChild(trsMetric);
+  const trsMetric = createElement("div", "lc-metric");
+  append(telemetry, trsMetric);
 
-  body.appendChild(telemetry);
+  append(body, telemetry);
 
   // Telemetry details / backup labels
-  const meta = document.createElement("div");
-  meta.className = "lc-meta";
-  body.appendChild(meta);
+  const meta = createElement("div", "lc-meta");
+  append(body, meta);
 
   // Scan progress (resolving state)
-  const scan = document.createElement("div");
-  scan.className = "lc-scan";
-  body.appendChild(scan);
+  const scan = createElement("div", "lc-scan");
+  append(body, scan);
 
-  contentArea.appendChild(body);
-  el.appendChild(contentArea);
+  append(contentArea, body);
+  append(el, contentArea);
 
   // 3. Health bars (visible when resolved, spanning full bottom)
-  const bars = document.createElement("div");
-  bars.className = "lc-bars";
+  const bars = createElement("div", "lc-bars");
 
   // Shield bar
-  const shieldBar = document.createElement("div");
-  shieldBar.className = "lc-bar shield";
-  const shieldInner = document.createElement("span");
-  const shieldLabel = document.createElement("div");
-  shieldLabel.className = "lc-bar-label";
-  shieldBar.appendChild(shieldInner);
-  shieldBar.appendChild(shieldLabel);
-  bars.appendChild(shieldBar);
+  const shieldBar = createElement("div", "lc-bar shield");
+  const shieldInner = createElement("span");
+  const shieldLabel = createElement("div", "lc-bar-label");
+  append(shieldBar, shieldInner);
+  append(shieldBar, shieldLabel);
+  append(bars, shieldBar);
 
   // Hull (HP) bar
-  const hpBar = document.createElement("div");
-  hpBar.className = "lc-bar hp";
-  const hpInner = document.createElement("span");
-  const hpLabel = document.createElement("div");
-  hpLabel.className = "lc-bar-label";
-  hpBar.appendChild(hpInner);
-  hpBar.appendChild(hpLabel);
-  bars.appendChild(hpBar);
+  const hpBar = createElement("div", "lc-bar hp");
+  const hpInner = createElement("span");
+  const hpLabel = createElement("div", "lc-bar-label");
+  append(hpBar, hpInner);
+  append(hpBar, hpLabel);
+  append(bars, hpBar);
 
   // Structure bar
-  const structBar = document.createElement("div");
-  structBar.className = "lc-bar struct";
-  const structInner = document.createElement("span");
-  const structLabel = document.createElement("div");
-  structLabel.className = "lc-bar-label";
-  structBar.appendChild(structInner);
-  structBar.appendChild(structLabel);
-  bars.appendChild(structBar);
+  const structBar = createElement("div", "lc-bar struct");
+  const structInner = createElement("span");
+  const structLabel = createElement("div", "lc-bar-label");
+  append(structBar, structInner);
+  append(structBar, structLabel);
+  append(bars, structBar);
 
-  el.appendChild(bars);
+  append(el, bars);
 
   // 4. Badges / overlays (absolute positioned over base container)
-  const assign = document.createElement("div");
-  assign.className = "lc-assign";
-  el.appendChild(assign);
+  const assign = createElement("div", "lc-assign");
+  append(el, assign);
 
-  const close = document.createElement("div");
-  close.className = "lc-close";
-  close.textContent = "×";
-  close.addEventListener("click", (e) => {
-    e.stopPropagation();
+  const close = createElement("div", "lc-close");
+  setText(close, "×");
+  onClick(close, (e) => {
+    (e as MouseEvent).stopPropagation();
     sfxBlip();
     queueFrameAction({ type: "removeSensorLock", payload: { id } });
   });
-  el.appendChild(close);
+  append(el, close);
 
-  el.addEventListener("click", () => {
+  onClick(el, () => {
     sfxBlip();
     queueFrameAction({ type: "selectLockTarget", payload: { id } });
   });
 
-  hudState.lockRail!.appendChild(el);
+  append(hudState.lockRail!, el);
   return {
     el,
     headerEl: header,
@@ -438,34 +413,32 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
 
   // Name
   const nameText = (t.name || "Unknown").slice(0, 16);
-  if (nameEl.textContent !== nameText) nameEl.textContent = nameText;
+  if (nameEl.textContent !== nameText) setText(nameEl, nameText);
 
   if (isResolved) {
     // ── Resolved: draw live icon ──
-    canvasEl.style.display = "";
+    setStyle(canvasEl, { display: "" });
     drawLiveTargetIcon(canvasEl, t, isAst, isPiece, isGate);
 
     // Level
     if (isEnemy && enemy) {
       if (!enemy.level) enemy.level = computeEnemyLevel(enemy);
       const lvlText = String(enemy.level);
-      if (levelEl.textContent !== lvlText) levelEl.textContent = lvlText;
+      if (levelEl.textContent !== lvlText) setText(levelEl, lvlText);
 
       // Targeting indicator
       if (enemy.hasLockOnPlayer) {
-        targetIndEl.textContent = "▼";
-        targetIndEl.style.color = "var(--hud-danger)";
-        targetIndEl.style.display = "block";
+        setText(targetIndEl, "▼");
+        setStyle(targetIndEl, { color: "var(--hud-danger)", display: "block" });
       } else if (enemy.targetingPlayer) {
-        targetIndEl.textContent = "▽";
-        targetIndEl.style.color = "var(--hud-accent)";
-        targetIndEl.style.display = "block";
+        setText(targetIndEl, "▽");
+        setStyle(targetIndEl, { color: "var(--hud-accent)", display: "block" });
       } else {
-        targetIndEl.style.display = "none";
+        setStyle(targetIndEl, { display: "none" });
       }
     } else {
-      levelEl.textContent = "";
-      targetIndEl.style.display = "none";
+      setText(levelEl, "");
+      setStyle(targetIndEl, { display: "none" });
     }
 
     // Health bars
@@ -473,21 +446,21 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     const maxSh = enemy?.maxShield || 0;
     const curSh = enemy?.shield || 0;
     const shPct = maxSh > 0 ? curSh / maxSh : 0;
-    shieldInner.style.width = `${shPct * 100}%`;
-    shieldLabel.textContent = maxSh > 0 ? `${Math.round(shPct * 100)}%` : "0%";
+    setStyle(shieldInner, { width: `${shPct * 100}%` });
+    setText(shieldLabel, maxSh > 0 ? `${Math.round(shPct * 100)}%` : "0%");
 
     // Hull (HP)
     const maxHp = "maxHp" in t && typeof t.maxHp === "number" ? t.maxHp : Math.max(1, t.hp);
     const hpFrac = Math.max(0, Math.min(1, t.hp / Math.max(1, maxHp)));
-    hpInner.style.width = `${hpFrac * 100}%`;
-    hpLabel.textContent = `${Math.round(hpFrac * 100)}%`;
+    setStyle(hpInner, { width: `${hpFrac * 100}%` });
+    setText(hpLabel, `${Math.round(hpFrac * 100)}%`);
 
     // Structure
     const maxSt = enemy?.maxStructure || 0;
     const curSt = enemy?.structure || 0;
     const stPct = maxSt > 0 ? curSt / maxSt : 0;
-    structInner.style.width = `${stPct * 100}%`;
-    structLabel.textContent = maxSt > 0 ? `${Math.round(stPct * 100)}%` : "0%";
+    setStyle(structInner, { width: `${stPct * 100}%` });
+    setText(structLabel, maxSt > 0 ? `${Math.round(stPct * 100)}%` : "0%");
 
     // Telemetry Matrix
     const d = Math.round(dst(getState().player.x, getState().player.y, t.x, t.y));
@@ -510,42 +483,42 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     const sigHtml = `SIG <span class="m-val">${sig}</span>`;
     const trsHtml = `TRS <span class="m-val">${trs}</span>`;
 
-    if (spdMetric.innerHTML !== spdHtml) spdMetric.innerHTML = spdHtml;
-    if (distMetric.innerHTML !== distHtml) distMetric.innerHTML = distHtml;
-    if (sigMetric.innerHTML !== sigHtml) sigMetric.innerHTML = sigHtml;
-    if (trsMetric.innerHTML !== trsHtml) trsMetric.innerHTML = trsHtml;
+    if (spdMetric.innerHTML !== spdHtml) setHtml(spdMetric, spdHtml);
+    if (distMetric.innerHTML !== distHtml) setHtml(distMetric, distHtml);
+    if (sigMetric.innerHTML !== sigHtml) setHtml(sigMetric, sigHtml);
+    if (trsMetric.innerHTML !== trsHtml) setHtml(trsMetric, trsHtml);
 
     // Meta label text
     const metaText = isAst ? "ASTEROID" : isPiece ? "DEBRIS" : enemy ? enemyClassLabel(enemy.type) : "UNKNOWN";
-    if (metaEl.textContent !== metaText) metaEl.textContent = metaText;
+    if (metaEl.textContent !== metaText) setText(metaEl, metaText);
 
-    if (scanEl.style.display !== "none") scanEl.style.display = "none";
+    if (getStyleProperty(scanEl, "display") !== "none") setStyle(scanEl, { display: "none" });
 
   } else {
     /* ── Resolving: scan progress bar ── */
-    canvasEl.style.display = "none";
-    levelEl.textContent = "";
-    targetIndEl.style.display = "none";
+    setStyle(canvasEl, { display: "none" });
+    setText(levelEl, "");
+    setStyle(targetIndEl, { display: "none" });
 
     // Scan progress
     const need = computeLockTimeSec(t, st);
     const pct = Math.min(1, (slot.acc || 0) / Math.max(0.05, need));
-    hpInner.style.width = `${pct * 100}%`;
-    hpLabel.textContent = `${Math.round(pct * 100)}%`;
-    shieldInner.style.width = "0%";
-    shieldLabel.textContent = "0%";
-    structInner.style.width = "0%";
-    structLabel.textContent = "0%";
+    setStyle(hpInner, { width: `${pct * 100}%` });
+    setText(hpLabel, `${Math.round(pct * 100)}%`);
+    setStyle(shieldInner, { width: "0%" });
+    setText(shieldLabel, "0%");
+    setStyle(structInner, { width: "0%" });
+    setText(structLabel, "0%");
 
     const scanText = `SCANNING...`;
-    if (scanEl.textContent !== scanText) scanEl.textContent = scanText;
-    if (scanEl.style.display !== "block") scanEl.style.display = "block";
+    if (scanEl.textContent !== scanText) setText(scanEl, scanText);
+    if (getStyleProperty(scanEl, "display") !== "block") setStyle(scanEl, { display: "block" });
 
-    spdMetric.innerHTML = "";
-    distMetric.innerHTML = "";
-    sigMetric.innerHTML = "";
-    trsMetric.innerHTML = "";
-    metaEl.textContent = "";
+    setHtml(spdMetric, "");
+    setHtml(distMetric, "");
+    setHtml(sigMetric, "");
+    setHtml(trsMetric, "");
+    setText(metaEl, "");
   }
 
   // Assigned slot badges
@@ -563,5 +536,5 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     }
     assignText = assignedTurrets.length ? assignedTurrets.join(",") : "";
   }
-  if (assignEl.textContent !== assignText) assignEl.textContent = assignText;
+  if (assignEl.textContent !== assignText) setText(assignEl, assignText);
 }

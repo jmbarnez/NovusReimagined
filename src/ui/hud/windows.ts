@@ -1,10 +1,11 @@
 import { Client } from "../../state.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { WIN_EXPAND_ICON, WIN_CLOSE_ICON, WIN_RESET_ICON, setExpandButtonState, collapseWindowExpand } from "./window-chrome.js";
-import { insertHTML, getElement, setStyle, toggleClass, setHtml, append, onClick, onMouseEnter, onMouseLeave, getStyleProperty, setPosition, onWindowResize } from "../dom-helpers.js";
+import { insertHTML, getElement, setStyle, toggleClass, setHtml, append, onClick, onMouseEnter, onMouseLeave, getStyleProperty, setPosition, onWindowResize, onWindowMouseMove, onWindowMouseUp } from "../dom-helpers.js";
 
 const _windows = new Map<string, HTMLElement>();
 const _closeCallbacks = new Map<string, () => void>();
+let _cleanupHudResize: (() => void) | null = null;
 
 export function getHudWindow(id: string): HTMLElement | null {
   return _windows.get(id) || null;
@@ -115,19 +116,22 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       const baseY = parseFloat(topVal) || 0;
       const sx = me.clientX;
       const sy = me.clientY;
-      const onMove = (mv: MouseEvent) => {
+      const onMove = (e: Event) => {
+        const mv = e as MouseEvent;
         setStyle(win!, { left: `${baseX + (mv.clientX - sx)}px`, top: `${baseY + (mv.clientY - sy)}px` });
         clampWindow(win!);
         emitWindowLayoutChanged();
       };
+      let removeMove: (() => void) | null = null;
+      let removeUp: (() => void) | null = null;
       const onUp = () => {
         toggleClass(win!, "is-dragging", false);
         emitWindowLayoutChanged();
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
+        if (removeMove) { removeMove(); removeMove = null; }
+        if (removeUp) { removeUp(); removeUp = null; }
       };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
+      removeMove = onWindowMouseMove(onMove);
+      removeUp = onWindowMouseUp(onUp);
     });
 
     onClick(closeBtn, (ev) => {
@@ -190,7 +194,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
 }
 
 // Keep all active dynamic windows inside visible viewport bounds on resize
-onWindowResize(() => {
+_cleanupHudResize = onWindowResize(() => {
   _windows.forEach((win) => {
     if (getStyleProperty(win, "display") !== "none") {
       clampWindow(win);
@@ -198,6 +202,13 @@ onWindowResize(() => {
     }
   });
 });
+
+export function cleanupHudResize() {
+  if (_cleanupHudResize) {
+    _cleanupHudResize();
+    _cleanupHudResize = null;
+  }
+}
 
 export function closeHudWindow(id: string) {
   const win = _windows.get(id);

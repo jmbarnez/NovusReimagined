@@ -4,6 +4,7 @@ import { MODULES } from "../../data/modules.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { sfxCreditPickup, sfxItemPickup } from "../../audio/procedural.js";
 import type { ModuleInstance } from "../../types/moduleInstance.js";
+import { createElement, append, setHtml, setText, setCssVar, remove } from "../dom-helpers.js";
 
 const ICON_SVG = (paths: string, vb: string = "0 0 16 16") => 
   `<svg class="inv-svg-icon" viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
@@ -74,14 +75,14 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
   if (existingStack) {
     clearTimeout(existingStack.timeoutId);
     existingStack.qty += qty;
-    const qtySpan = existingStack.element.querySelector(".pickup-qty");
+    const qtySpan = existingStack.element.querySelector(".pickup-qty") as HTMLElement | null;
     if (qtySpan) {
-      qtySpan.textContent = `x${existingStack.qty}`;
+      setText(qtySpan, `x${existingStack.qty}`);
     }
     existingStack.timeoutId = window.setTimeout(() => {
       existingStack.element.classList.add("fading");
       window.setTimeout(() => {
-        existingStack.element.remove();
+        remove(existingStack.element);
         _activeStacks.delete(name);
       }, 400);
     }, 2100);
@@ -94,24 +95,23 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
     sfxItemPickup(kind);
   }
 
-  const toast = document.createElement("div");
-  toast.className = "pickup-toast";
-  toast.style.setProperty("--pickup-accent", color);
+  const toast = createElement("div", "pickup-toast");
+  setCssVar(toast, "--pickup-accent", color);
 
-  toast.innerHTML = `
+  setHtml(toast, `
     <div class="pickup-icon" style="color: ${color};">${icon}</div>
     <div class="pickup-details">
       <span class="pickup-name">${name}</span>
       <span class="pickup-qty">x${qty}</span>
     </div>
-  `;
+  `);
 
-  hudState.pickupContainer.appendChild(toast);
+  append(hudState.pickupContainer, toast);
 
   const timeoutId = window.setTimeout(() => {
     toast.classList.add("fading");
     window.setTimeout(() => {
-      toast.remove();
+      remove(toast);
       _activeStacks.delete(name);
     }, 400);
   }, 2100);
@@ -122,7 +122,7 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
 export function destroyPickupToasts(): void {
   for (const stack of _activeStacks.values()) {
     clearTimeout(stack.timeoutId);
-    stack.element.remove();
+    remove(stack.element);
   }
   _activeStacks.clear();
 }

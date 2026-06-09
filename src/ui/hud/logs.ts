@@ -1,5 +1,6 @@
 import "../styles/hud-logs.css";
 import { MAX_LOG_ENTRIES } from "./state.js";
+import { setHtml, createElement, append, setText, remove } from "../dom-helpers.js";
 
 interface LogEntry {
   msg: string;
@@ -36,20 +37,19 @@ export function appendLogEntry(msg: string, type: string = "info", prefix?: stri
 }
 
 function renderLogHistory(sink: HTMLElement): void {
-  sink.innerHTML = "";
+  setHtml(sink, "");
   for (const entry of logHistory) {
     appendLogEntryDirect(sink, entry);
   }
 }
 
 function appendLogEntryDirect(sink: HTMLElement, entryData: LogEntry): void {
-  const entry = document.createElement("div");
-  entry.className = `log-entry log-${entryData.type}`;
-  entry.textContent = entryData.prefix ? `[${entryData.time}] ${entryData.prefix} ${entryData.msg}` : `[${entryData.time}] ${entryData.msg}`;
-  sink.appendChild(entry);
+  const entry = createElement("div", `log-entry log-${entryData.type}`);
+  setText(entry, entryData.prefix ? `[${entryData.time}] ${entryData.prefix} ${entryData.msg}` : `[${entryData.time}] ${entryData.msg}`);
+  append(sink, entry);
 
   while (sink.children.length > MAX_LOG_ENTRIES) {
-    sink.removeChild(sink.firstChild!);
+    if (sink.firstChild) remove(sink.firstChild as HTMLElement);
   }
 
   const isNearBottom = sink.scrollHeight - sink.scrollTop <= sink.clientHeight + 10;

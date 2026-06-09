@@ -22,7 +22,7 @@ import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
 import { getSlotPowerCd, isSlotPoweredOn } from "../../utils/slot-power.js";
 import { t } from "../../utils/i18n.js";
-import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave, remove } from "../dom-helpers.js";
+import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave, remove, setCssVar } from "../dom-helpers.js";
 
 export interface SlotNode {
   el: HTMLElement;
@@ -254,7 +254,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
       }
     }
     const tightness = getState().player.tractorTightness ?? 0.5;
-    strBtn.style.setProperty("--tightness", String(tightness));
+    setCssVar(strBtn, "--tightness", String(tightness));
   } else {
     if (strBtn) {
       remove(strBtn);

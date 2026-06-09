@@ -120,6 +120,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     objective: () => t("tutorial.step.boostTry.objective", { boostKey: tutorialKeyStyled("engineBoost") }),
     zone: { x: 0, y: 0, r: 0 },
     beaconColor: 0x55aaff,
+    noDimmer: true,
     onEnter(ctx) {
       ctx.snapshot.boostUsed = false;
     },

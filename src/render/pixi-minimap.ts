@@ -88,15 +88,19 @@ export function initPixiMinimap(): void {
     antialias: Client.settings?.antialias ?? false,
     autoStart: false,
   }).then(() => {
-    if (!mmApp) return;
-    mmCanvas = mmApp.canvas as HTMLCanvasElement;
+    const appInstance = mmApp;
+    // `appInstance.canvas` is a getter that dereferences `appInstance.renderer`;
+    // checking it directly throws when the renderer failed to initialize. Guard
+    // on the renderer first, then the canvas getter is safe.
+    if (!appInstance || !appInstance.renderer) return;
+    mmCanvas = appInstance.canvas as HTMLCanvasElement;
     mmCanvas.style.width = `${HUD_MINIMAP_SIZE}px`;
     mmCanvas.style.height = `${HUD_MINIMAP_SIZE}px`;
     container.innerHTML = "";
     container.appendChild(mmCanvas);
 
     mmContainer = new Container();
-    mmApp.stage.addChild(mmContainer);
+    appInstance.stage.addChild(mmContainer);
 
     mmGfx = new Graphics();
     mmContainer.addChild(mmGfx);
@@ -106,6 +110,11 @@ export function initPixiMinimap(): void {
 
     // Mask removed: all drawing is already clipped to the circle by range checks
     // and the background circle bounds, so stencil testing per blip is unnecessary.
+  }).catch((err) => {
+    // Minimap is non-critical HUD chrome — degrade gracefully if its renderer
+    // fails to initialize rather than crashing boot with an unhandled rejection.
+    console.warn("Pixi minimap failed to initialize:", err);
+    mmApp = null;
   });
 }
 

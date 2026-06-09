@@ -1,6 +1,6 @@
 import { INV_STATE } from "./state.js";
 import { emit } from "../../events.js";
-import { queryAll, append, remove, setStyle, setPosition, onPointerDown, onWindowPointerMove, onWindowPointerUp, onWindowPointerCancel } from "../dom-helpers.js";
+import { queryAll, append, remove, setStyle, setPosition, onPointerDown, onWindowPointerMove, onWindowPointerUp, onWindowPointerCancel, getStyleProperty } from "../dom-helpers.js";
 
 interface DragState {
   pane: HTMLElement;
@@ -30,9 +30,9 @@ function createGhost(sourceCell: HTMLElement): HTMLElement {
 
 function getCellUnderPointer(clientX: number, clientY: number): HTMLElement | null {
   const ghost = activeDrag?.ghost;
-  if (ghost) ghost.style.display = "none";
+  if (ghost) setStyle(ghost, { display: "none" });
   const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
-  if (ghost) ghost.style.display = "";
+  if (ghost) setStyle(ghost, { display: "" });
   return el?.closest(".inv-grid-cell") as HTMLElement | null;
 }
 
@@ -43,7 +43,8 @@ function computeVisualIndex(pane: HTMLElement, clientX: number, clientY: number)
   const firstCell = cells[0] as HTMLElement;
   const cellW = firstCell.offsetWidth;
   const cellH = firstCell.offsetHeight;
-  const gridWrap = pane.querySelector(".inv-grid-wrap") as HTMLElement;
+  const gridWrap = (pane.matches(".inv-grid-wrap") ? pane : pane.querySelector(".inv-grid-wrap")) as HTMLElement | null;
+  if (!gridWrap) return 0;
   const gridRect = gridWrap.getBoundingClientRect();
   const gap = 4;
   const padding = 4;

@@ -108,6 +108,14 @@ export function onContextMenu(el: EventTarget, handler: EventListener): void {
   el.addEventListener("contextmenu", handler);
 }
 
+export function onFocus(el: EventTarget, handler: EventListener): void {
+  el.addEventListener("focus", handler);
+}
+
+export function onBlur(el: EventTarget, handler: EventListener): void {
+  el.addEventListener("blur", handler);
+}
+
 export function getBounds(el: Element): DOMRect {
   return el.getBoundingClientRect();
 }
@@ -122,6 +130,16 @@ export function onWindowKeydown(handler: EventListener): () => void {
   return () => window.removeEventListener("keydown", handler);
 }
 
+export function onWindowMouseMove(handler: EventListener): () => void {
+  window.addEventListener("mousemove", handler);
+  return () => window.removeEventListener("mousemove", handler);
+}
+
+export function onWindowMouseUp(handler: EventListener): () => void {
+  window.addEventListener("mouseup", handler);
+  return () => window.removeEventListener("mouseup", handler);
+}
+
 export function onDocumentMousedown(handler: EventListener): () => void {
   document.addEventListener("mousedown", handler, true);
   return () => document.removeEventListener("mousedown", handler, true);
@@ -130,6 +148,20 @@ export function onDocumentMousedown(handler: EventListener): () => void {
 export function onDocumentClick(handler: EventListener): () => void {
   document.addEventListener("click", handler);
   return () => document.removeEventListener("click", handler);
+}
+
+export function onDocumentMouseMove(handler: EventListener): () => void {
+  document.addEventListener("mousemove", handler);
+  return () => document.removeEventListener("mousemove", handler);
+}
+
+export function onDocumentMouseUp(handler: EventListener): () => void {
+  document.addEventListener("mouseup", handler);
+  return () => document.removeEventListener("mouseup", handler);
+}
+
+export function onWheel(el: EventTarget, handler: EventListener, options?: AddEventListenerOptions): void {
+  el.addEventListener("wheel", handler, options);
 }
 
 export function onPointerDown(el: EventTarget, handler: EventListener): void {

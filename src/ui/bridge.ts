@@ -13,7 +13,7 @@ import { on } from "../events.js";
 import type { Enemy, Asteroid } from "../types/world.js";
 import { t } from "../utils/i18n.js";
 import { gateDestinationName, gateStableId } from "../utils/warp-gates.js";
-import { getElement, query, createElement, setHtml, setText, setStyle, toggleClass, append } from "./dom-helpers.js";
+import { getElement, query, createElement, setHtml, setText, setStyle, toggleClass, append, getStyleProperty, setPosition, onMouseDown, onClick, onWindowMouseMove, onWindowMouseUp, onWindowResize } from "./dom-helpers.js";
 
 export { attachInventoryListeners, resetInventoryUI };
 
@@ -30,6 +30,7 @@ export interface OverviewRow {
 }
 
 let _bridgeToastTimer: ReturnType<typeof setTimeout> | null = null;
+let _cleanupBridgeResize: (() => void) | null = null;
 
 export function showBridgeToast(msg: string) {
   const el = getElement("bridge-toast");
@@ -233,12 +234,12 @@ export function renderBridgeCargoHTML(): string {
 }
 
 export function ensureBridgeUI() {
-  const el = document.getElementById("bridge-overlay");
+  const el = getElement("bridge-overlay");
   if (!el || el.getAttribute("data-initialized") === "true") return;
   el.setAttribute("data-initialized", "true");
 
   on("ui:close-overlays", () => {
-    el.style.display = "none";
+    setStyle(el, { display: "none" });
     Client.bridgeOpen = false;
     Client.overviewOpen = false;
     Client.skillsOpen = false;
@@ -255,99 +256,111 @@ export function initBridgeWindows(rootEl: HTMLElement) {
     const ws = workspace.getBoundingClientRect();
     const wr = win.getBoundingClientRect();
     if (wr.width === 0) return; // Hidden, skip
-    const x = Number(win.style.left.replace("px", "")) || wr.left - ws.left;
-    const y = Number(win.style.top.replace("px", "")) || wr.top - ws.top;
+    const leftVal = getStyleProperty(win, "left");
+    const topVal = getStyleProperty(win, "top");
+    const x = Number(leftVal.replace("px", "")) || wr.left - ws.left;
+    const y = Number(topVal.replace("px", "")) || wr.top - ws.top;
     const maxX = Math.max(0, ws.width - wr.width);
     const maxY = Math.max(0, ws.height - wr.height);
-    win.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
-    win.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
-    win.style.right = "auto";
+    setPosition(win, `${Math.max(0, Math.min(x, maxX))}px`, `${Math.max(0, Math.min(y, maxY))}px`);
+    setStyle(win, { right: "auto" });
   };
   for (const win of wins) {
     const r = win.getBoundingClientRect();
     const ws = workspace.getBoundingClientRect();
     if (r.width > 0) {
-      if (!win.style.left) { win.style.left = `${r.left - ws.left}px`; win.style.right = "auto"; }
-      if (!win.style.top) win.style.top = `${r.top - ws.top}px`;
-      if (!win.style.width) win.style.width = `${r.width}px`;
-      if (!win.style.height) win.style.height = `${r.height}px`;
+      if (!getStyleProperty(win, "left")) { setPosition(win, `${r.left - ws.left}px`, getStyleProperty(win, "top")); setStyle(win, { right: "auto" }); }
+      if (!getStyleProperty(win, "top")) setPosition(win, getStyleProperty(win, "left"), `${r.top - ws.top}px`);
+      if (!getStyleProperty(win, "width")) setStyle(win, { width: `${r.width}px` });
+      if (!getStyleProperty(win, "height")) setStyle(win, { height: `${r.height}px` });
     }
     const head = win.querySelector(".eve-win-head");
     const expandBtn = win.querySelector(".eve-win-expand");
     if (!head) continue;
     const bringToFront = () => {
       Client.bridgeWindowZ += 1;
-      win.style.zIndex = String(Client.bridgeWindowZ);
+      setStyle(win, { zIndex: String(Client.bridgeWindowZ) });
     };
     clampWindow(win);
-    head.addEventListener("mousedown", (ev) => {
+    onMouseDown(head, (ev) => {
       const mev = ev as MouseEvent;
       if (mev.button !== 0) return;
       if ((mev.target as HTMLElement).closest("button") || win.classList.contains("is-expanded")) return;
       mev.preventDefault();
       bringToFront();
       win.classList.add("is-dragging");
-      if (!win.style.left || !win.style.top) {
+      const leftVal = getStyleProperty(win, "left");
+      const topVal = getStyleProperty(win, "top");
+      if (!leftVal || !topVal) {
         const wr = win.getBoundingClientRect();
         const wsr = workspace.getBoundingClientRect();
-        if (!win.style.left) { win.style.left = `${wr.left - wsr.left}px`; win.style.right = "auto"; }
-        if (!win.style.top) win.style.top = `${wr.top - wsr.top}px`;
+        if (!leftVal) { setPosition(win, `${wr.left - wsr.left}px`, topVal); setStyle(win, { right: "auto" }); }
+        if (!topVal) setPosition(win, getStyleProperty(win, "left"), `${wr.top - wsr.top}px`);
       }
-      const baseX = parseFloat(win.style.left) || 0;
-      const baseY = parseFloat(win.style.top) || 0;
+      const baseX = parseFloat(leftVal) || 0;
+      const baseY = parseFloat(topVal) || 0;
       const sx = mev.clientX;
       const sy = mev.clientY;
-      const onMove = (mv: MouseEvent) => {
-        win.style.left = `${baseX + (mv.clientX - sx)}px`;
-        win.style.top = `${baseY + (mv.clientY - sy)}px`;
+      let removeMove: (() => void) | null = null;
+      let removeUp: (() => void) | null = null;
+      const onMove = (e: Event) => {
+        const mv = e as MouseEvent;
+        setPosition(win, `${baseX + (mv.clientX - sx)}px`, `${baseY + (mv.clientY - sy)}px`);
         clampWindow(win);
       };
       const onUp = () => {
         win.classList.remove("is-dragging");
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
+        if (removeMove) { removeMove(); removeMove = null; }
+        if (removeUp) { removeUp(); removeUp = null; }
       };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
+      removeMove = onWindowMouseMove(onMove);
+      removeUp = onWindowMouseUp(onUp);
     });
     if (expandBtn) {
-      expandBtn.addEventListener("click", (ev) => {
-        ev.stopPropagation();
+      onClick(expandBtn, (ev) => {
+        (ev as MouseEvent).stopPropagation();
         sfxBlip();
         const expand = !win.classList.contains("is-expanded");
         wins.forEach((w) => {
           w.classList.remove("is-expanded");
           const btn = w.querySelector(".eve-win-expand");
-          if (btn) btn.textContent = "▢";
+          if (btn) setText(btn as HTMLElement, "▢");
           if (w.dataset.prevLeft != null) {
-            w.style.left = w.dataset.prevLeft;
-            w.style.top = w.dataset.prevTop!;
-            w.style.width = w.dataset.prevWidth!;
-            w.style.height = w.dataset.prevHeight!;
+            setPosition(w, w.dataset.prevLeft, w.dataset.prevTop!);
+            setStyle(w, { width: w.dataset.prevWidth!, height: w.dataset.prevHeight! });
           }
         });
         if (expand) {
           bringToFront();
-          if (!win.style.left || !win.style.width) {
+          const leftVal2 = getStyleProperty(win, "left");
+          const widthVal2 = getStyleProperty(win, "width");
+          if (!leftVal2 || !widthVal2) {
             const wr = win.getBoundingClientRect();
             const wsr = workspace.getBoundingClientRect();
-            if (!win.style.left) { win.style.left = `${wr.left - wsr.left}px`; win.style.right = "auto"; }
-            if (!win.style.top) win.style.top = `${wr.top - wsr.top}px`;
-            if (!win.style.width) win.style.width = `${wr.width}px`;
-            if (!win.style.height) win.style.height = `${wr.height}px`;
+            if (!leftVal2) { setPosition(win, `${wr.left - wsr.left}px`, getStyleProperty(win, "top")); setStyle(win, { right: "auto" }); }
+            if (!getStyleProperty(win, "top")) setPosition(win, getStyleProperty(win, "left"), `${wr.top - wsr.top}px`);
+            if (!widthVal2) setStyle(win, { width: `${wr.width}px` });
+            if (!getStyleProperty(win, "height")) setStyle(win, { height: `${wr.height}px` });
           }
-          win.dataset.prevLeft = win.style.left;
-          win.dataset.prevTop = win.style.top;
-          win.dataset.prevWidth = win.style.width;
-          win.dataset.prevHeight = win.style.height;
+          win.dataset.prevLeft = getStyleProperty(win, "left");
+          win.dataset.prevTop = getStyleProperty(win, "top");
+          win.dataset.prevWidth = getStyleProperty(win, "width");
+          win.dataset.prevHeight = getStyleProperty(win, "height");
           win.classList.add("is-expanded");
-          (expandBtn as HTMLElement).textContent = "▣";
+          setText(expandBtn as HTMLElement, "▣");
         }
       });
     }
-    win.addEventListener("mousedown", bringToFront);
+    onMouseDown(win, bringToFront);
   }
-  window.addEventListener("resize", () => {
+  _cleanupBridgeResize = onWindowResize(() => {
     wins.forEach((w) => clampWindow(w));
   });
+}
+
+export function cleanupBridgeResize() {
+  if (_cleanupBridgeResize) {
+    _cleanupBridgeResize();
+    _cleanupBridgeResize = null;
+  }
 }

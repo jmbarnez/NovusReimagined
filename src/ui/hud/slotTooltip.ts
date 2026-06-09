@@ -5,16 +5,17 @@ import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { getInstance } from "../../utils/items.js";
 import { fmtModBonuses } from "../station/shared.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
+import { getElement, createElement, append, setHtml, setStyle, setPosition } from "../dom-helpers.js";
 
 const TOOLTIP_EL_ID = "hud-slot-tooltip";
 
 function getTooltipEl(): HTMLElement {
-  let el = document.getElementById(TOOLTIP_EL_ID);
+  let el = getElement(TOOLTIP_EL_ID);
   if (!el) {
-    el = document.createElement("div");
+    el = createElement("div");
     el.id = TOOLTIP_EL_ID;
-    el.style.display = "none";
-    document.body.appendChild(el);
+    setStyle(el, { display: "none" });
+    append(document.body, el);
   }
   return el;
 }
@@ -122,7 +123,7 @@ export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouse
   const wProf = m.weaponDelivery ? (WEAPON_PROFILES[m.id] || WEAPON_PROFILES.default) : null;
   const capCost = wProf && wProf.ec ? `<div class="tt-row"><span class="tt-label">Activation Cost</span><span class="tt-val">${wProf.ec} GJ</span></div>` : "";
 
-  el.innerHTML = `
+  setHtml(el, `
     <div class="tt-header">
       <span class="tt-rarity" style="color:${rarityCfg.color}">${escHtml(inst?.rarity || "Stock")}</span>
     </div>
@@ -152,20 +153,19 @@ export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouse
     </div>
 
     ${m.desc ? `<div class="tt-desc">${escHtml(m.desc)}</div>` : ""}
-  `;
+  `);
 
-  el.style.display = "block";
+  setStyle(el, { display: "block" });
   const rect = el.getBoundingClientRect();
   let left = mouseX + 14;
   let top = mouseY - 10;
   if (left + rect.width > window.innerWidth - 8) left = mouseX - rect.width - 14;
   if (top + rect.height > window.innerHeight - 8) top = window.innerHeight - rect.height - 8;
   if (top < 8) top = 8;
-  el.style.left = left + "px";
-  el.style.top = top + "px";
+  setPosition(el, `${left}px`, `${top}px`);
 }
 
 export function hideSlotTooltip() {
-  const el = document.getElementById(TOOLTIP_EL_ID);
-  if (el) el.style.display = "none";
+  const el = getElement(TOOLTIP_EL_ID);
+  if (el) setStyle(el, { display: "none" });
 }

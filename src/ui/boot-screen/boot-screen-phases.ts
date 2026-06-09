@@ -2,7 +2,7 @@ import { t } from "../../utils/i18n.js";
 import { getPerformanceTelemetrySnapshot } from "../../render/perf-overlay.js";
 import { appendLogEntry, flushPendingLogEntries, registerLogSink } from "../hud/logs.js";
 import { bakeExitIcon } from "../../ui/icons/exit-icon.js";
-import { getElement, query, setText as setDomText, setStyle } from "../dom-helpers.js";
+import { getElement, query, queryAll, setText as setDomText, setStyle, getStyleProperty } from "../dom-helpers.js";
 
 /**
  * Boot Screen Phase Controller
@@ -21,7 +21,7 @@ export function localizeBootScreen(): void {
   const mon2Title = query(".monitor-right .monitor-title");
   const consoleEl = query(".ld-console-line");
   const perfTitle = query(".boot-perf-title");
-  const labels    = document.querySelectorAll(".boot-perf-monitor [data-perf-label]");
+  const labels    = queryAll(".boot-perf-monitor [data-perf-label]");
   if (mon1Tag)   setDomText(mon1Tag, t("boot.monitorTagPrimary"));
   if (mon1Title) setDomText(mon1Title, t("boot.monitorTitlePrimary"));
   if (mon2Tag)   setDomText(mon2Tag, t("boot.monitorTagSecondary"));
@@ -47,10 +47,10 @@ export function localizeBootScreen(): void {
     setStyle(titleExit, { backgroundImage: `url(${bakeExitIcon()})`, backgroundSize: "20px", backgroundPosition: "center", backgroundRepeat: "no-repeat" });
   }
 
-  document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
-    const key = (el as HTMLElement).dataset.i18nAria;
+  for (const el of queryAll("[data-i18n-aria]")) {
+    const key = el.dataset.i18nAria;
     if (key) el.setAttribute("aria-label", t(key));
-  });
+  }
 
   startBootPerformanceMonitor();
 }
@@ -113,6 +113,13 @@ function startBootPerformanceMonitor(): void {
   bootPerfTimer = setInterval(updateBootPerformanceMonitor, 250);
 }
 
+export function stopBootPerformanceMonitor(): void {
+  if (bootPerfTimer) {
+    clearInterval(bootPerfTimer);
+    bootPerfTimer = null;
+  }
+}
+
 /**
  * Mark boot milestones for diagnostics and update visual progress UI.
  * Centralized here so all boot phase side effects are searchable in one place.
@@ -140,7 +147,7 @@ export function markBootPhase(name: string): void {
         world: "75%",
         pixi: "100%",
       };
-      setStyle(progressFill, { width: widthByPhase[name] ?? progressFill.style.width });
+      setStyle(progressFill, { width: widthByPhase[name] ?? getStyleProperty(progressFill, "width") });
     }
 
     const subEl = getElement("ld-sub");

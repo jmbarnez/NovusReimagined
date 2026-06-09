@@ -3,20 +3,18 @@ import { getState } from "../../state-access.js";
 import { dst } from "../../utils/math.js";
 import { fmtDuration, hasHubOutput } from "../../refinery/index.js";
 import type { System, Station } from "../../types/world.js";
+import { getElement, createElement, append, setHtml, setStyle, setPosition } from "../dom-helpers.js";
 
 const TOOLTIP_EL_ID = "hud-hub-tooltip";
 
 function getTooltipEl(): HTMLElement {
-  let el = document.getElementById(TOOLTIP_EL_ID);
+  let el = getElement(TOOLTIP_EL_ID);
   if (!el) {
-    el = document.createElement("div");
+    el = createElement("div", "hud-glass-panel");
     el.id = TOOLTIP_EL_ID;
-    el.className = "hud-glass-panel";
-    el.style.display = "none";
-    el.style.position = "absolute";
-    el.style.pointerEvents = "none";
-    el.style.zIndex = "100";
-    document.getElementById("hud-overlay")?.appendChild(el);
+    setStyle(el, { display: "none", position: "absolute", pointerEvents: "none", zIndex: "100" });
+    const overlay = getElement("hud-overlay");
+    if (overlay) append(overlay, el);
   }
   return el;
 }
@@ -24,13 +22,13 @@ function getTooltipEl(): HTMLElement {
 export function updateHubTooltip(sys: System | null) {
   const el = getTooltipEl();
   if (!sys) {
-    el.style.display = "none";
+    setStyle(el, { display: "none" });
     return;
   }
 
   const hub = sys.stations?.find((s: Station) => s.isProcessingHub);
   if (!hub) {
-    el.style.display = "none";
+    setStyle(el, { display: "none" });
     return;
   }
 
@@ -38,7 +36,7 @@ export function updateHubTooltip(sys: System | null) {
   const isHovered = !overlayOpen && dst(Client.mouseWorld.x, Client.mouseWorld.y, hub.x, hub.y) < hub.radius + 40;
 
   if (!isHovered) {
-    el.style.display = "none";
+    setStyle(el, { display: "none" });
     return;
   }
 
@@ -109,8 +107,8 @@ export function updateHubTooltip(sys: System | null) {
   }
 
   html += `</div>`;
-  el.innerHTML = html;
-  el.style.display = "block";
+  setHtml(el, html);
+  setStyle(el, { display: "block" });
 
   // Position at mouse coords
   const rect = el.getBoundingClientRect();
@@ -120,6 +118,5 @@ export function updateHubTooltip(sys: System | null) {
   if (top + rect.height > window.innerHeight - 8) top = Client.mouse.y - rect.height - 14;
   if (top < 8) top = 8;
   if (left < 8) left = 8;
-  el.style.left = `${left}px`;
-  el.style.top = `${top}px`;
+  setPosition(el, `${left}px`, `${top}px`);
 }

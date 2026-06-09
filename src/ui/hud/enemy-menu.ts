@@ -7,6 +7,7 @@ import { formatDistance } from "../../utils/format.js";
 import { hasCommsEquipment } from "../../player/player-stats.js";
 import { randomHailLine } from "../../data/faction-comms.js";
 import { t } from "../../utils/i18n.js";
+import { setHtml, setStyle, setPosition, onClick } from "../dom-helpers.js";
 
 let activeEnemyId: string | null = null;
 
@@ -33,7 +34,7 @@ export function showEnemyCtxMenu(x: number, y: number, enemyId: string) {
     hailHtml = `<div class="ctx-item" data-action="hail">${t("enemyMenu.hail")}</div><div class="ctx-sep"></div>`;
   }
 
-  hudState.enemyCtxMenu.innerHTML = `
+  setHtml(hudState.enemyCtxMenu, `
     ${hailHtml}
     <div class="ctx-item ctx-has-submenu">
       ${t("enemyMenu.orbit")} <span class="ctx-arrow">▸</span>
@@ -50,11 +51,10 @@ export function showEnemyCtxMenu(x: number, y: number, enemyId: string) {
     <div class="ctx-sep"></div>
     <div class="ctx-item" data-action="toggle-lock">${isLocked ? t("enemyMenu.unlockTarget") : t("enemyMenu.lockTarget")}</div>
     <div class="ctx-item ${hasNav ? '' : 'disabled'}" data-action="stop">${t("enemyMenu.stop")}</div>
-  `;
+  `);
 
-  hudState.enemyCtxMenu.style.display = "block";
-  hudState.enemyCtxMenu.style.left = `${x}px`;
-  hudState.enemyCtxMenu.style.top = `${y}px`;
+  setStyle(hudState.enemyCtxMenu, { display: "block" });
+  setPosition(hudState.enemyCtxMenu, `${x}px`, `${y}px`);
 
   // Clamp to viewport
   const rect = hudState.enemyCtxMenu.getBoundingClientRect();
@@ -70,8 +70,7 @@ export function showEnemyCtxMenu(x: number, y: number, enemyId: string) {
     adjustedY = y - rect.height;
   }
 
-  hudState.enemyCtxMenu.style.left = `${adjustedX}px`;
-  hudState.enemyCtxMenu.style.top = `${adjustedY}px`;
+  setPosition(hudState.enemyCtxMenu, `${adjustedX}px`, `${adjustedY}px`);
 
   if (isEdgeRight) {
     hudState.enemyCtxMenu.classList.add("edge-right");
@@ -79,14 +78,14 @@ export function showEnemyCtxMenu(x: number, y: number, enemyId: string) {
     hudState.enemyCtxMenu.classList.remove("edge-right");
   }
 
-  hudState.enemyCtxMenu.querySelectorAll(".ctx-item").forEach((item) => {
-    item.addEventListener("click", onEnemyCtxItemClick);
-  });
+  for (const item of hudState.enemyCtxMenu.querySelectorAll(".ctx-item")) {
+    onClick(item, onEnemyCtxItemClick);
+  }
 }
 
 export function hideEnemyCtxMenu() {
   if (hudState.enemyCtxMenu) {
-    hudState.enemyCtxMenu.style.display = "none";
+    setStyle(hudState.enemyCtxMenu, { display: "none" });
   }
 }
 

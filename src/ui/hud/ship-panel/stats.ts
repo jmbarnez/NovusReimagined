@@ -9,12 +9,13 @@ import { renderTurretCard } from "./turrets.js";
 import { cacheTurretCardRefs } from "./live.js";
 import { getIonBoostModuleState } from "../../../player/boost-module.js";
 import { C } from "../../../config/index.js";
+import { getElement, setHtml } from "../../dom-helpers.js";
 
 /** Triggers full rebuild of the stats display area */
 export function rebuildStatsTab() {
-  const scrollContainer = document.getElementById("ship-stats-scroll");
+  const scrollContainer = getElement("ship-stats-scroll");
   if (scrollContainer) {
-    scrollContainer.innerHTML = renderStatsTabHTML();
+    setHtml(scrollContainer, renderStatsTabHTML());
     cacheTurretCardRefs();
   }
 }

@@ -25,7 +25,13 @@ export interface ProfileMeta {
   credits: number;
   createdAt: string;
   updatedAt: string;
+  playTimeMs: number;
 }
+
+type StoredProfileMeta = Omit<ProfileMeta, "playTimeMs"> & { playTimeMs?: number };
+
+let sessionProfileId: string | null = null;
+let sessionLastTimestamp: number | null = null;
 
 function profileDataKey(id: string): string {
   return `novus-profile-data-${id}`;
@@ -38,7 +44,9 @@ export function getProfiles(): ProfileMeta[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed as ProfileMeta[];
+    return (parsed as StoredProfileMeta[]).map((p) =>
+      Number.isFinite(p.playTimeMs) ? (p as ProfileMeta) : { ...p, playTimeMs: 0 }
+    );
   } catch {
     return [];
   }
@@ -72,6 +80,7 @@ export function createProfile(player: Player): string {
     credits: player.credits ?? 0,
     createdAt: now,
     updatedAt: now,
+    playTimeMs: 0,
   };
 
   const profiles = getProfiles();
@@ -85,6 +94,7 @@ export function createProfile(player: Player): string {
   }
 
   localStorage.setItem(ACTIVE_PROFILE_KEY, id);
+  startActiveProfileSessionTimer();
   return id;
 }
 
@@ -99,6 +109,8 @@ export function activateProfile(id: string): boolean {
     const player = loadPlayer();
     WorldAccess.initPlayer(player);
     localStorage.setItem(ACTIVE_PROFILE_KEY, id);
+    sessionProfileId = id;
+    sessionLastTimestamp = Date.now();
     return true;
   } catch (e) {
     console.warn("[profiles] failed to activate profile:", e);
@@ -123,6 +135,7 @@ export function syncActiveProfile(): boolean {
     const profiles = getProfiles();
     const idx = profiles.findIndex((p) => p.id === id);
     if (idx !== -1) {
+      const sessionDelta = captureSessionDelta(id);
       profiles[idx] = {
         ...profiles[idx],
         pilotName: (player.pilotName || "").trim() || "Unnamed Pilot",
@@ -131,6 +144,7 @@ export function syncActiveProfile(): boolean {
         level: player.level ?? 1,
         credits: player.credits ?? 0,
         updatedAt: new Date().toISOString(),
+        playTimeMs: profiles[idx].playTimeMs + sessionDelta,
       };
       saveProfileIndex(profiles);
     }
@@ -209,4 +223,40 @@ export function timeAgo(iso: string): string {
   } catch {
     return t("timeAgo.unknown");
   }
+}
+
+/** Calculate elapsed milliseconds for the current session and reset the timer. */
+function captureSessionDelta(id: string): number {
+  if (!sessionProfileId || sessionProfileId !== id || sessionLastTimestamp == null) return 0;
+  const now = Date.now();
+  const delta = Math.max(0, now - sessionLastTimestamp);
+  sessionLastTimestamp = now;
+  return delta;
+}
+
+/** Start (or resume) the active-profile session timer. Call after activation. */
+export function startActiveProfileSessionTimer(): void {
+  const id = getActiveProfileId();
+  if (!id) {
+    sessionProfileId = null;
+    sessionLastTimestamp = null;
+    return;
+  }
+  sessionProfileId = id;
+  sessionLastTimestamp = Date.now();
+}
+
+/** Stop the session timer without syncing. Call when leaving gameplay. */
+export function stopActiveProfileSessionTimer(): void {
+  sessionProfileId = null;
+  sessionLastTimestamp = null;
+}
+
+/** Format milliseconds into a compact play-time string (e.g., "2h 15m"). */
+export function formatPlayTime(ms: number): string {
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }

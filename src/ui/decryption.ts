@@ -10,7 +10,7 @@ import { getStats } from "../player/player-stats.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../audio/procedural.js";
 import { logEvent } from "../feedback.js";
 import { t } from "../utils/i18n.js";
-import { getElement, createElement, setHtml, toggleClass, onClick } from "./dom-helpers.js";
+import { getElement, createElement, setHtml, toggleClass, onClick, onDocumentClick } from "./dom-helpers.js";
 
 type NodeType = "entry" | "access" | "cache" | "reveal" | "stabilize" | "corrupt" | "counter" | "dead";
 
@@ -347,7 +347,7 @@ function renderDecryptionWindow(locked = false, message = "") {
 
 function bindListeners() {
   if (listenersBound) return;
-  document.body.addEventListener("click", onDecryptClick);
+  onDocumentClick(onDecryptClick);
   listenersBound = true;
 }
 

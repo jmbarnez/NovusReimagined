@@ -27,7 +27,7 @@ export function syncDimmerVisibility() {
 
   const step = getCurrentTutorialStep(getState().player);
   const target = getActiveTutorialHighlight();
-  const showDimmer = tutorialState.visible && getState().player?.tutorial?.active && target !== null && !Client.showMap;
+  const showDimmer = tutorialState.visible && getState().player?.tutorial?.active && target !== null && !Client.showMap && !step?.noDimmer;
   if (showDimmer) {
     if (dimmer) {
       if (tutorialState._hudDimmerHideTimer != null) {

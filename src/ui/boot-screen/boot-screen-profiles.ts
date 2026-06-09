@@ -8,7 +8,7 @@
 import { sfxBlip, sfxConfirm } from "../../audio/procedural.js";
 import { SHIPS } from "../../data/ships.js";
 import { getState } from "../../state-access.js";
-import { getProfiles, getActiveProfileId, activateProfile, createProfile, deleteProfile, timeAgo, type ProfileMeta } from "../../data/profiles.js";
+import { getProfiles, getActiveProfileId, activateProfile, createProfile, deleteProfile, timeAgo, formatPlayTime, type ProfileMeta } from "../../data/profiles.js";
 import { pushMonitorMenu } from "../monitor-nav.js";
 import { makePlayer, validatePilotName } from "../../player/player-data.js";
 import { enterSpaceMode } from "../../game-loop.js";
@@ -27,7 +27,7 @@ let profileContinueInFlight = false;
 /* ──────────────────────────────────────────────────────────── */
 
 function buildProfileSelectionHtml(errorMessage = ""): string {
-  const profiles = getProfiles();
+  const profiles = getProfiles().sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   const activeId = getActiveProfileId();
   const cardsHtml = profiles.map((p) => renderProfileCard(p, p.id === activeId)).join("");
 
@@ -192,17 +192,17 @@ function renderProfileCard(p: ProfileMeta, isActive = false): string {
           <span class="profile-stat-val highlight-lvl">${p.level}</span>
         </div>
         <div class="profile-stat">
-          <span class="profile-stat-lbl">${t("profile.location")}</span>
-          <span class="profile-stat-val">${escapeHtml(systemName)}</span>
-        </div>
-        <div class="profile-stat">
           <span class="profile-stat-lbl">${t("profile.credits")}</span>
           <span class="profile-stat-val highlight-credits">${creditsFmt}${t("pilotTerminal.creditsSuffix")}</span>
         </div>
-        <div class="profile-stat">
-          <span class="profile-stat-lbl">${t("profile.lastPlayed")}</span>
-          <span class="profile-stat-val">${lastPlayed}</span>
+        <div class="profile-stat profile-stat--wide">
+          <span class="profile-stat-lbl">${t("profile.location")}</span>
+          <span class="profile-stat-val">${escapeHtml(systemName)}</span>
         </div>
+      </div>
+      <div class="profile-meta-row">
+        <span class="profile-meta-item">${t("profile.lastPlayed")}: ${lastPlayed}</span>
+        <span class="profile-meta-item">${t("profile.playTime")}: ${formatPlayTime(p.playTimeMs)}</span>
       </div>
       <div class="profile-actions">
         <button type="button" class="profile-continue-btn" data-profile-continue>${t("profile.continue")}</button>

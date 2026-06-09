@@ -24,6 +24,7 @@ import {
   turretCardNodes,
   TurretCardRefs
 } from "./state.js";
+import { getElement, setText, setStyle } from "../../dom-helpers.js";
 
 /** Caches dynamic element targets for efficient live-checking */
 export function cacheTurretCardRefs() {
@@ -32,17 +33,17 @@ export function cacheTurretCardRefs() {
   if (!ship) return;
   const numHardpoints = getHardpointSlotCount(ship);
   for (let idx = 0; idx < numHardpoints; idx++) {
-    const cardEl = document.getElementById(`sp-turret-card-${idx}`);
+    const cardEl = getElement(`sp-turret-card-${idx}`);
     if (!cardEl || cardEl.classList.contains("empty")) continue;
 
-    const powerPill = document.getElementById(`sptc-pill-${idx}`)!;
-    const cooldownFill = document.getElementById(`sptc-cd-fill-${idx}`)!;
-    const cooldownVal = document.getElementById(`sptc-cd-val-${idx}`)!;
-    const heatFill = document.getElementById(`sptc-heat-fill-${idx}`)!;
-    const heatVal = document.getElementById(`sptc-heat-val-${idx}`)!;
-    const durabilityFill = document.getElementById(`sptc-dur-fill-${idx}`)!;
-    const durabilityVal = document.getElementById(`sptc-dur-val-${idx}`)!;
-    const targetVal = document.getElementById(`sptc-target-${idx}`)!;
+    const powerPill = getElement(`sptc-pill-${idx}`)!;
+    const cooldownFill = getElement(`sptc-cd-fill-${idx}`)!;
+    const cooldownVal = getElement(`sptc-cd-val-${idx}`)!;
+    const heatFill = getElement(`sptc-heat-fill-${idx}`)!;
+    const heatVal = getElement(`sptc-heat-val-${idx}`)!;
+    const durabilityFill = getElement(`sptc-dur-fill-${idx}`)!;
+    const durabilityVal = getElement(`sptc-dur-val-${idx}`)!;
+    const targetVal = getElement(`sptc-target-${idx}`)!;
 
     turretCardNodes.set(idx, {
       cardEl,
@@ -76,13 +77,13 @@ export function updateShipPanelLive() {
   const st = getStats(p);
 
   // 1. Stat cell values
-  const hpEl = document.getElementById("sp-cur-hp");
-  const structEl = document.getElementById("sp-cur-struct");
-  const shieldEl = document.getElementById("sp-cur-shield");
-  const energyEl = document.getElementById("sp-cur-energy");
-  const boostModuleEl = document.getElementById("sp-cur-boost-module");
-  const boostStatsEl = document.getElementById("sp-cur-boost-stats");
-  const boostCapEl = document.getElementById("sp-cur-boost-cap");
+  const hpEl = getElement("sp-cur-hp");
+  const structEl = getElement("sp-cur-struct");
+  const shieldEl = getElement("sp-cur-shield");
+  const energyEl = getElement("sp-cur-energy");
+  const boostModuleEl = getElement("sp-cur-boost-module");
+  const boostStatsEl = getElement("sp-cur-boost-stats");
+  const boostCapEl = getElement("sp-cur-boost-cap");
 
   const curHp = Math.floor(p.hp);
   const curStruct = Math.floor(p.structure);
@@ -90,46 +91,46 @@ export function updateShipPanelLive() {
   const curEnergy = Math.floor(p.energy);
 
   if (hpEl && lastCurHp !== curHp) {
-    hpEl.textContent = String(curHp);
-    const bar = document.getElementById("sp-bar-hp");
-    if (bar) bar.style.width = `${Math.max(0, Math.min(1, curHp / Math.max(1, st.maxHp))) * 100}%`;
+    setText(hpEl, String(curHp));
+    const bar = getElement("sp-bar-hp");
+    if (bar) setStyle(bar, { width: `${Math.max(0, Math.min(1, curHp / Math.max(1, st.maxHp))) * 100}%` });
     setLastCurHp(curHp);
   }
   if (structEl && lastCurStruct !== curStruct) {
-    structEl.textContent = String(curStruct);
-    const bar = document.getElementById("sp-bar-struct");
-    if (bar) bar.style.width = `${Math.max(0, Math.min(1, curStruct / Math.max(1, st.maxStructure))) * 100}%`;
+    setText(structEl, String(curStruct));
+    const bar = getElement("sp-bar-struct");
+    if (bar) setStyle(bar, { width: `${Math.max(0, Math.min(1, curStruct / Math.max(1, st.maxStructure))) * 100}%` });
     setLastCurStruct(curStruct);
   }
   if (shieldEl && lastCurShield !== curShield) {
-    shieldEl.textContent = String(curShield);
-    const bar = document.getElementById("sp-bar-shield");
-    if (bar) bar.style.width = `${Math.max(0, Math.min(1, curShield / Math.max(1, st.maxShield))) * 100}%`;
+    setText(shieldEl, String(curShield));
+    const bar = getElement("sp-bar-shield");
+    if (bar) setStyle(bar, { width: `${Math.max(0, Math.min(1, curShield / Math.max(1, st.maxShield))) * 100}%` });
     setLastCurShield(curShield);
   }
   if (energyEl && lastCurEnergy !== curEnergy) {
-    energyEl.textContent = String(curEnergy);
-    const bar = document.getElementById("sp-bar-energy");
-    if (bar) bar.style.width = `${Math.max(0, Math.min(1, curEnergy / Math.max(1, st.maxEnergy))) * 100}%`;
+    setText(energyEl, String(curEnergy));
+    const bar = getElement("sp-bar-energy");
+    if (bar) setStyle(bar, { width: `${Math.max(0, Math.min(1, curEnergy / Math.max(1, st.maxEnergy))) * 100}%` });
     setLastCurEnergy(curEnergy);
   }
   if (boostModuleEl) {
     const boostModule = getIonBoostModuleState(p);
     const boostText = boostModule.online ? t("ship.online") : t("ship.offline");
-    if (boostModuleEl.textContent !== boostText) boostModuleEl.textContent = boostText;
+    if (boostModuleEl.textContent !== boostText) setText(boostModuleEl, boostText);
     if (boostStatsEl) {
       const boostThrust = C.PHYSICS.SHIP.boostBaseThrustMult
         + (boostModule.online ? C.PHYSICS.SHIP.boostModuleThrustBonus : 0);
       const boostSpeed = C.PHYSICS.SHIP.boostBaseSpeedMult
         + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
       const boostStatsText = `${boostThrust.toFixed(2)}x / ${boostSpeed.toFixed(2)}x`;
-      if (boostStatsEl.textContent !== boostStatsText) boostStatsEl.textContent = boostStatsText;
+      if (boostStatsEl.textContent !== boostStatsText) setText(boostStatsEl, boostStatsText);
     }
     if (boostCapEl) {
       const boostCap = C.PHYSICS.SHIP.boostCapDrainPerSec
         * (boostModule.online ? C.PHYSICS.SHIP.boostModuleCapCostMult : 1);
       const boostCapText = `${boostCap.toFixed(1)} GJ/s`;
-      if (boostCapEl.textContent !== boostCapText) boostCapEl.textContent = boostCapText;
+      if (boostCapEl.textContent !== boostCapText) setText(boostCapEl, boostCapText);
     }
   }
 
@@ -162,7 +163,7 @@ export function updateShipPanelLive() {
     }
 
     if (nodes.lastPower !== powerText) {
-      nodes.powerPill.textContent = powerText;
+      setText(nodes.powerPill, powerText);
       nodes.powerPill.className = powerCls;
       nodes.lastPower = powerText;
     }
@@ -192,11 +193,11 @@ export function updateShipPanelLive() {
 
     const cdPctStr = `${cdPct * 100}%`;
     if (nodes.lastCooldownPct !== cdPctStr) {
-      nodes.cooldownFill.style.width = cdPctStr;
+      setStyle(nodes.cooldownFill, { width: cdPctStr });
       nodes.lastCooldownPct = cdPctStr;
     }
     if (nodes.lastCooldownText !== cdText) {
-      nodes.cooldownVal.textContent = cdText;
+      setText(nodes.cooldownVal, cdText);
       nodes.lastCooldownText = cdText;
     }
 
@@ -207,8 +208,8 @@ export function updateShipPanelLive() {
     const heatDanger = heat > 0.82;
 
     if (nodes.lastHeatPct !== heatPctStr) {
-      nodes.heatFill.style.width = heatPctStr;
-      nodes.heatVal.textContent = heatText;
+      setStyle(nodes.heatFill, { width: heatPctStr });
+      setText(nodes.heatVal, heatText);
       nodes.lastHeatPct = heatPctStr;
     }
 
@@ -240,8 +241,8 @@ export function updateShipPanelLive() {
     }
 
     if (nodes.lastDurabilityPct !== durPctStr) {
-      nodes.durabilityFill.style.width = durPctStr;
-      nodes.durabilityVal.textContent = durPctStr;
+      setStyle(nodes.durabilityFill, { width: durPctStr });
+      setText(nodes.durabilityVal, durPctStr);
       nodes.lastDurabilityPct = durPctStr;
     }
 
@@ -259,7 +260,7 @@ export function updateShipPanelLive() {
     }
 
     if (nodes.lastTargetName !== targetText) {
-      nodes.targetVal.textContent = targetText;
+      setText(nodes.targetVal, targetText);
       nodes.lastTargetName = targetText;
     }
 

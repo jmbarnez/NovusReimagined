@@ -2,6 +2,7 @@ import { sfxBlip } from "../../audio/procedural.js";
 import { bindWindowChromeButton, panelPopoutButtonHTML, resetWindowExpand } from "./window-chrome.js";
 import { openHudWindow, getHudWindow } from "./windows.js";
 import { hudState } from "./state.js";
+import { query, getStyleProperty, setStyle, setPosition, append, onClick } from "../dom-helpers.js";
 
 export type PanelPopoutId = "event-log" | "scanner";
 
@@ -38,11 +39,11 @@ function cfg(id: PanelPopoutId): PanelPopoutConfig {
 }
 
 function dockHost(id: PanelPopoutId): HTMLElement | null {
-  return document.querySelector(cfg(id).dockHostSel);
+  return query(cfg(id).dockHostSel);
 }
 
 function contentMount(id: PanelPopoutId): HTMLElement | null {
-  return document.querySelector(cfg(id).contentMountSel);
+  return query(cfg(id).contentMountSel);
 }
 
 function floatingWindow(id: PanelPopoutId): HTMLElement | null {
@@ -56,20 +57,18 @@ export function isPanelPopout(id: PanelPopoutId): boolean {
 export function isPanelVisible(id: PanelPopoutId): boolean {
   if (isPanelPopout(id)) {
     const win = floatingWindow(id);
-    return !!win && win.style.display !== "none";
+    return !!win && getStyleProperty(win, "display") !== "none";
   }
   const host = dockHost(id);
-  return !!host && host.style.display !== "none";
+  return !!host && getStyleProperty(host, "display") !== "none";
 }
 
 function measureDockRect(host: HTMLElement): DOMRect {
-  const wasHidden = host.style.display === "none";
+  const wasHidden = getStyleProperty(host, "display") === "none";
   if (wasHidden) {
-    host.style.display = "flex";
-    host.style.visibility = "hidden";
+    setStyle(host, { display: "flex", visibility: "hidden" });
     const rect = host.getBoundingClientRect();
-    host.style.visibility = "";
-    host.style.display = "none";
+    setStyle(host, { visibility: "", display: "none" });
     return rect;
   }
   return host.getBoundingClientRect();
@@ -84,14 +83,14 @@ export function dockInPanel(id: PanelPopoutId): void {
   const win = floatingWindow(id);
   if (!host || !mount) return;
 
-  host.appendChild(mount);
+  append(host, mount);
   hudState[c.popoutFlag] = false;
 
   if (win) {
     resetWindowExpand(win, { capturePosition: true });
   }
 
-  host.style.display = "flex";
+  setStyle(host, { display: "flex" });
 }
 
 export function popOutPanel(id: PanelPopoutId): void {
@@ -105,16 +104,14 @@ export function popOutPanel(id: PanelPopoutId): void {
   sfxBlip();
   const rect = measureDockRect(host);
   hudState[c.popoutFlag] = true;
-  host.style.display = "none";
+  setStyle(host, { display: "none" });
 
   openHudWindow(c.windowId, c.title, mount, () => dockInPanel(id));
 
   const win = floatingWindow(id);
   if (win) {
-    win.style.left = `${rect.left}px`;
-    win.style.top = `${rect.top}px`;
-    win.style.width = `${Math.max(rect.width, 240)}px`;
-    win.style.height = `${Math.max(rect.height, 120)}px`;
+    setPosition(win, `${rect.left}px`, `${rect.top}px`);
+    setStyle(win, { width: `${Math.max(rect.width, 240)}px`, height: `${Math.max(rect.height, 120)}px` });
   }
 }
 
@@ -122,26 +119,26 @@ export function togglePanelVisibility(id: PanelPopoutId): void {
   if (isPanelPopout(id)) {
     const win = floatingWindow(id);
     if (!win) return;
-    const hidden = win.style.display === "none";
-    win.style.display = hidden ? "flex" : "none";
+    const hidden = getStyleProperty(win, "display") === "none";
+    setStyle(win, { display: hidden ? "flex" : "none" });
     return;
   }
 
   const host = dockHost(id);
   if (!host) return;
-  const hidden = host.style.display === "none";
-  host.style.display = hidden ? "flex" : "none";
+  const hidden = getStyleProperty(host, "display") === "none";
+  setStyle(host, { display: hidden ? "flex" : "none" });
 }
 
 export function initPanelPopouts(): void {
   for (const id of Object.keys(PANELS) as PanelPopoutId[]) {
     const c = cfg(id);
-    const btn = document.querySelector(c.popoutBtnSel) as HTMLElement | null;
+    const btn = query(c.popoutBtnSel);
     if (!btn || btn.dataset.bound === "true") continue;
     btn.dataset.bound = "true";
     bindWindowChromeButton(btn);
-    btn.addEventListener("click", (ev) => {
-      ev.stopPropagation();
+    onClick(btn, (ev) => {
+      (ev as MouseEvent).stopPropagation();
       popOutPanel(id);
     });
   }

@@ -157,5 +157,7 @@ export function handleContextMenu(e: Event): void {
 
 export function handleWindowBlur(): void {
   clearAllInputState();
-  setCursorLock(true, getCanvasElement());
+  const canvas = getCanvasElement();
+  if (!canvas) return;
+  setCursorLock(true, canvas);
 }

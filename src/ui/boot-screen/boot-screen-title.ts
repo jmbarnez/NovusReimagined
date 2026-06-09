@@ -5,6 +5,7 @@ import { showSinglePlayerMenu } from "../title-single-player.js";
 import { t } from "../../utils/i18n.js";
 import { formatBuildLabel } from "../../data/version.js";
 import { query, setHtml, onClick } from "../dom-helpers.js";
+import { stopActiveProfileSessionTimer } from "../../data/profiles.js";
 
 /**
  * Boot Screen Title Controller
@@ -50,6 +51,7 @@ export function bindTitleScreenEvents(): void {
 
 /** Restore default title monitor content and rebind events. */
 export function restoreTitleScreen(): void {
+  stopActiveProfileSessionTimer();
   const monitor = query(".monitor-center .monitor-content");
   if (!monitor) return;
 

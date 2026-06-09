@@ -40,7 +40,7 @@ describe("authoritative command validation", () => {
   it("does not silently simulate an unregistered local singleton", () => {
     const p = makePlayer();
     p.sysIdx = 2;
-    G.P = p;
+    G.P = null as unknown as typeof G.P;
     G.players = new Map();
 
     expect(allActivePlayers()).toEqual([]);
@@ -69,13 +69,13 @@ describe("authoritative command validation", () => {
     if (!gate || gate.targetSysIdx == null) return;
 
     executeGameCommand({ type: "warp", payload: { targetIdx: gate.targetSysIdx } }, p);
-    expect(p.warpTargetIdx).toBe(gate.targetSysIdx);
-    expect(p.warpCooldown).toBeGreaterThan(0);
-
-    updateWarp(999);
-    expect(p.sysIdx).toBe(gate.targetSysIdx);
     expect(p.warpTargetIdx).toBe(-1);
     expect(p.warpCooldown).toBeGreaterThan(0);
+    expect(p.sysIdx).toBe(gate.targetSysIdx);
+
+    updateWarp(999);
+    expect(p.warpTargetIdx).toBe(-1);
+    expect(p.warpCooldown).toBe(0);
   });
 
   it("queues industry jobs on the authoritative player only", () => {

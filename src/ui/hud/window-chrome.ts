@@ -1,4 +1,5 @@
 import { sfxBlip } from "../../audio/procedural.js";
+import { setHtml, setStyle, getStyleProperty, setPosition, onClick, onMouseDown } from "../dom-helpers.js";
 
 export const WIN_EXPAND_ICON =
   '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="1" width="8" height="8" rx="1"/></svg>';
@@ -17,7 +18,7 @@ export const WIN_RESET_ICON =
 
 /** Window chrome buttons should not steal keyboard focus or show native title tooltips. */
 export function bindWindowChromeButton(btn: HTMLElement): void {
-  btn.addEventListener("mousedown", (ev) => ev.preventDefault());
+  onMouseDown(btn, (ev) => (ev as MouseEvent).preventDefault());
 }
 
 export function panelPopoutButtonHTML(): string {
@@ -31,7 +32,7 @@ export function windowHeadButtonsHTML(): string {
 }
 
 export function setExpandButtonState(btn: HTMLElement, expanded: boolean): void {
-  btn.innerHTML = expanded ? WIN_COLLAPSE_ICON : WIN_EXPAND_ICON;
+  setHtml(btn, expanded ? WIN_COLLAPSE_ICON : WIN_EXPAND_ICON);
 }
 
 export interface WindowExpandOptions {
@@ -49,16 +50,12 @@ export function collapseWindowExpand(win: HTMLElement, options?: { capturePositi
   if (expandBtn) setExpandButtonState(expandBtn, false);
 
   if (options?.embedded) {
-    win.style.width = "";
-    win.style.height = "";
+    setStyle(win, { width: "", height: "" });
   } else if (options?.capturePosition && win.dataset.prevWidth != null) {
-    win.style.left = win.dataset.prevLeft ?? "";
-    win.style.top = win.dataset.prevTop ?? "";
-    win.style.width = win.dataset.prevWidth;
-    win.style.height = win.dataset.prevHeight ?? "";
+    setPosition(win, win.dataset.prevLeft ?? "", win.dataset.prevTop ?? "");
+    setStyle(win, { width: win.dataset.prevWidth, height: win.dataset.prevHeight ?? "" });
   } else {
-    win.style.width = "";
-    win.style.height = "";
+    setStyle(win, { width: "", height: "" });
   }
 
   delete win.dataset.prevLeft;
@@ -79,19 +76,23 @@ export function expandWindow(win: HTMLElement, expandBtn: HTMLElement, options?:
   const wr = win.getBoundingClientRect();
 
   if (options?.capturePosition) {
-    if (!win.style.left || win.style.left === "auto") {
-      win.style.left = `${wr.left}px`;
-      win.style.right = "auto";
+    const leftVal = getStyleProperty(win, "left");
+    if (!leftVal || leftVal === "auto") {
+      setPosition(win, `${wr.left}px`, getStyleProperty(win, "top"));
+      setStyle(win, { right: "auto" });
     }
-    if (!win.style.top) win.style.top = `${wr.top}px`;
-    win.dataset.prevLeft = win.style.left;
-    win.dataset.prevTop = win.style.top;
+    const topVal = getStyleProperty(win, "top");
+    if (!topVal) setPosition(win, getStyleProperty(win, "left"), `${wr.top}px`);
+    win.dataset.prevLeft = getStyleProperty(win, "left");
+    win.dataset.prevTop = getStyleProperty(win, "top");
   }
 
-  if (!win.style.width) win.style.width = `${wr.width}px`;
-  if (!win.style.height) win.style.height = `${wr.height}px`;
-  win.dataset.prevWidth = win.style.width;
-  win.dataset.prevHeight = win.style.height;
+  const widthVal = getStyleProperty(win, "width");
+  const heightVal = getStyleProperty(win, "height");
+  if (!widthVal) setStyle(win, { width: `${wr.width}px` });
+  if (!heightVal) setStyle(win, { height: `${wr.height}px` });
+  win.dataset.prevWidth = getStyleProperty(win, "width");
+  win.dataset.prevHeight = getStyleProperty(win, "height");
 
   win.classList.add("is-expanded");
   setExpandButtonState(expandBtn, true);
@@ -127,8 +128,8 @@ export function attachSingleWindowExpand(
   options?: WindowExpandOptions,
 ): void {
   bindWindowChromeButton(expandBtn);
-  expandBtn.addEventListener("click", (ev) => {
-    ev.stopPropagation();
+  onClick(expandBtn, (ev) => {
+    (ev as MouseEvent).stopPropagation();
     sfxBlip();
     toggleWindowExpand(win, expandBtn, options);
     expandBtn.blur();

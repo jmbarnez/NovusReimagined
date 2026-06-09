@@ -275,19 +275,19 @@ describe("hangar-high step completion", () => {
   it("defines hangar review panels for fitting, high slot, cargo, stats, training mission, and undock", () => {
     const step = stepById("hangar-high");
     expect(step.tour?.phases.length).toBe(6);
-    expect(step.tour?.phases[0].target).toBe("#hangar-fitting-panel");
-    expect(step.tour?.phases[0].body).toMatch(/mining laser/i);
-    expect(step.tour?.phases[1].target).toBe("#hangar-slot-high-0");
+    expect(step.tour?.phases[0].target).toBe("#hangar-pane-cargo");
+    expect(step.tour?.phases[0].body).toMatch(/spare modules/i);
+    expect(step.tour?.phases[1].target).toBe("#hangar-fitting-panel");
     expect(step.tour?.phases[1].body).toMatch(/mining laser/i);
-    expect(step.tour?.phases[2].target).toBe("#hangar-pane-cargo");
-    expect(step.tour?.phases[2].body).toMatch(/spare modules/i);
+    expect(step.tour?.phases[2].target).toBe("#hangar-slot-high-0");
+    expect(step.tour?.phases[2].body).toMatch(/mining laser/i);
     expect(step.tour?.phases[3].target).toBe("#hangar-stats-panel");
     expect(step.tour?.phases[4].target).toBe("#hangar-missions-panel");
     expect(step.tour?.phases[4].label).toBe("Training Mission");
     expect(step.tour?.phases[5].target).toBe("#st-undock");
     Client.stationOpen = true;
     const tour = getTourPanel(step, { hangarReviewPhase: 0 });
-    expect(tour?.label).toBe("Active Fitting");
+    expect(tour?.label).toBe("Ship Cargo");
     expect(tour?.index).toBe(1);
   });
 
@@ -456,8 +456,9 @@ describe("tutorial exit gate", () => {
     G.P.tutorial.step = stepIndex("graduation");
 
     executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
-    expect(G.P.warpTargetIdx).toBe(primeIdx);
+    expect(G.P.warpTargetIdx).toBe(-1);
     expect(G.P.warpCooldown).toBeGreaterThan(0);
+    expect(G.P.sysIdx).toBe(primeIdx);
   });
 
   it("graduates after using the final one-way gate to Novus Prime", () => {
@@ -469,12 +470,12 @@ describe("tutorial exit gate", () => {
     G.P.tutorial.step = stepIndex("graduation");
 
     executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx } }, G.P);
-    expect(G.P.warpTargetIdx).toBe(primeIdx);
+    expect(G.P.warpTargetIdx).toBe(-1);
+    expect(G.P.sysIdx).toBe(primeIdx);
 
     updateWarp(999);
     tickTutorial(0);
 
-    expect(G.P.sysIdx).toBe(primeIdx);
     expect(G.P.tutorial.active).toBe(false);
     expect(G.P.tutorial.completed).toBe(true);
     expect(G.P.homeSysIdx).toBe(primeIdx);
@@ -720,6 +721,76 @@ describe("station tutorial spotlight", () => {
 
     syncTutorialVisuals({ refineryGuidePhase: 4 });
     expect(stationState.indRailTab).toBe("queue");
+  });
+});
+
+describe("hud tutorial dimmer cleanup", () => {
+  beforeEach(() => {
+    installTestPlayer(makePlayer());
+    G.P.tutorial.active = true;
+    tutorialState.visible = true;
+    Client.stationOpen = false;
+    clearTutorialVisuals();
+    tutorialState._hudDimmerEl = null;
+    tutorialState._hudDimmerVisible = false;
+    tutorialState._hudDimmerHideTimer = null;
+    tutorialState._lastDimmerCutoutKey = "";
+    tutorialState._activeHudHighlightEl = null;
+    document.body.innerHTML = "";
+    const overlay = document.createElement("div");
+    overlay.id = "hud-overlay";
+    for (const id of [
+      "hud-status-bars",
+      "hud-slots",
+      "hud-lock-rail",
+      "hud-scanner-dock",
+      "hud-log-panel",
+      "hud-missions",
+      "hud-dock-prompt",
+    ]) {
+      const el = document.createElement("div");
+      el.id = id;
+      overlay.appendChild(el);
+    }
+    const hudDimmer = document.createElement("div");
+    hudDimmer.id = "hud-tour-dimmer";
+    hudDimmer.className = "hidden";
+    overlay.appendChild(hudDimmer);
+    document.body.appendChild(overlay);
+  });
+
+  afterEach(() => {
+    clearTutorialVisuals();
+    tutorialState.visible = false;
+    document.body.innerHTML = "";
+  });
+
+  function setStep(id: string) {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === id);
+  }
+
+  it("highlights missions only during the HUD tour", () => {
+    setStep("hud-tour");
+    syncTutorialVisuals({ hudTourPhase: 5 });
+
+    const missions = document.getElementById("hud-missions")!;
+    expect(missions.classList.contains("hud-highlight")).toBe(true);
+    const dimmer = document.getElementById("hud-tour-dimmer");
+    expect(dimmer?.classList.contains("hidden")).toBe(false);
+  });
+
+  it("clears the HUD dimmer and mission highlight after the tour", () => {
+    setStep("hud-tour");
+    syncTutorialVisuals({ hudTourPhase: 0 });
+    const dimmer = document.getElementById("hud-tour-dimmer")!;
+    expect(dimmer.classList.contains("hidden")).toBe(false);
+
+    setStep("fly-academy");
+    syncTutorialVisuals({});
+
+    const missions = document.getElementById("hud-missions")!;
+    expect(missions.classList.contains("hud-highlight")).toBe(false);
+    expect(dimmer.classList.contains("hidden")).toBe(true);
   });
 });
 

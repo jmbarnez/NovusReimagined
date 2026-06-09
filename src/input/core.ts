@@ -13,7 +13,11 @@ export function markInputInitialized(): void {
 }
 
 export function getCanvasElement(): HTMLCanvasElement | null {
-  return (app?.canvas as HTMLCanvasElement | undefined) ?? null;
+  // In Pixi v8, `app.canvas` is a getter that dereferences `app.renderer`.
+  // During async init (or after a failed init) the renderer is undefined, so
+  // reading `app.canvas` would throw. Guard on the renderer being ready first.
+  if (!app?.renderer) return null;
+  return (app.canvas as HTMLCanvasElement | undefined) ?? null;
 }
 
 export function getUiPointerBlockSelector(): string {

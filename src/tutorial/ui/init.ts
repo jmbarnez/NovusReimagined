@@ -1,3 +1,4 @@
+import "../../ui/styles/hud-tutorial.css";
 import { bringToFront } from "../../ui/hud/windows.js";
 import { on } from "../../events.js";
 import {

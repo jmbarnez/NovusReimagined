@@ -7,6 +7,10 @@ import { destroyPixi } from "../pixi.js";
 import { destroyPixiChatBubbles } from "../render/pixi-chat-bubbles.js";
 import { TICK_DT, MAX_CATCH } from "../constants.js";
 import { deinitInput } from "../input/index.js";
+import { stopBootPerformanceMonitor } from "../ui/boot-screen/boot-screen-phases.js";
+import { cleanupHudResize } from "../ui/hud/windows.js";
+import { cleanupBridgeResize } from "../ui/bridge.js";
+import { cleanupMainResizeListener } from "../main.js";
 import {
   updateTrails,
   updateFloatTexts,
@@ -311,7 +315,11 @@ export function stopGameLoop() {
   ticker.terminate();
   document.removeEventListener("visibilitychange", onVisibilityChange);
 
+  stopBootPerformanceMonitor();
   deinitInput();
+  cleanupMainResizeListener();
+  cleanupHudResize();
+  cleanupBridgeResize();
   stopMultiplayer();
   destroyHudOverlay();
   destroyChat();

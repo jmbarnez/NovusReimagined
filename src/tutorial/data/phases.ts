@@ -11,9 +11,9 @@ export const HUD_TOUR_PHASES = [
 ];
 
 export const HANGAR_REVIEW_TOUR = [
+  { label: t("tutorial.hangar.cargo.label"), body: t("tutorial.hangar.cargo.body"), target: "#hangar-pane-cargo", tab: "hangar" },
   { label: t("tutorial.hangar.activeFitting.label"), body: t("tutorial.hangar.activeFitting.body"), target: "#hangar-fitting-panel", tab: "hangar" },
   { label: t("tutorial.hangar.highSlot0.label"), body: t("tutorial.hangar.highSlot0.body"), target: "#hangar-slot-high-0", tab: "hangar" },
-  { label: t("tutorial.hangar.cargo.label"), body: t("tutorial.hangar.cargo.body"), target: "#hangar-pane-cargo", tab: "hangar" },
   { label: t("tutorial.hangar.shipStats.label"), body: t("tutorial.hangar.shipStats.body"), target: "#hangar-stats-panel", tab: "hangar" },
   { label: t("tutorial.hangar.trainingMission.label"), body: t("tutorial.hangar.trainingMission.body"), target: "#hangar-missions-panel", tab: "hangar" },
   { label: t("tutorial.hangar.undock.label"), body: t("tutorial.hangar.undock.body", { dockKey: tutorialKeyStyled("dock") }), target: "#st-undock", tab: "hangar" },

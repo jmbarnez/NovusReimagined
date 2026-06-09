@@ -9,6 +9,7 @@ import { showEnemyCtxMenu } from "./enemy-menu.js";
 import { formatDistance } from "../../utils/format.js";
 import { t } from "../../utils/i18n.js";
 import { queueFrameAction } from "../../sim/input.js";
+import { createElement, append, setHtml, setText, setStyle, onClick, onContextMenu, remove, onMouseDown, onDocumentMouseMove, onDocumentMouseUp } from "../dom-helpers.js";
 
 /* ── Overview Panel ── */
 export function updateHudOverviewPanel() {
@@ -52,35 +53,34 @@ export function updateHudOverviewPanel() {
   for (const r of rows) {
     let tr = existing.get(r.id);
     if (!tr) {
-      tr = document.createElement("tr");
-      tr.className = `ov-row ov-row-${r.kind}`;
+      tr = createElement("tr", `ov-row ov-row-${r.kind}`);
       tr.setAttribute("data-id", r.id);
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       const sig = String(r.sig);
       const relV = typeof r.relV === "number" ? Math.round(r.relV).toString() : String(r.relV);
-      tr.innerHTML = `
+      setHtml(tr, `
         <td class="ov-icon">${r.icon}</td>
         <td class="ov-st">${r.status}</td>
         <td>${r.cls}</td>
         <td class="ov-name">${r.name.slice(0, 12)}</td>
         <td class="ov-num ov-dist">${dist}</td>
         <td class="ov-num ov-sig">${sig}</td>
-        <td class="ov-num ov-relV">${relV}</td>`;
+        <td class="ov-num ov-relV">${relV}</td>`);
 
-      tr.addEventListener("contextmenu", (ev) => {
+      onContextMenu(tr, (ev) => {
         if (r.kind === "hostile" || r.kind === "neutral") {
-          ev.preventDefault();
-          ev.stopPropagation();
-          showEnemyCtxMenu(ev.clientX, ev.clientY, r.id);
+          (ev as MouseEvent).preventDefault();
+          (ev as MouseEvent).stopPropagation();
+          showEnemyCtxMenu((ev as MouseEvent).clientX, (ev as MouseEvent).clientY, r.id);
         }
       });
-      tr.addEventListener("click", () => {
+      onClick(tr, () => {
         if (r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid" || r.kind === "gate") {
           queueFrameAction({ type: "requestSensorLock", payload: { id: r.id } });
         }
       });
 
-      hudState.ovEntries.appendChild(tr);
+      append(hudState.ovEntries, tr);
     } else {
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
       const sig = String(r.sig);
@@ -89,21 +89,21 @@ export function updateHudOverviewPanel() {
       const sigCell = tr.querySelector(".ov-sig");
       const rCell = tr.querySelector(".ov-relV");
       const sCell = tr.querySelector(".ov-st");
-      if (dCell && dCell.textContent !== dist) dCell.textContent = dist;
-      if (sigCell && sigCell.textContent !== sig) sigCell.textContent = sig;
-      if (rCell && rCell.textContent !== relV) rCell.textContent = relV;
-      if (sCell && sCell.innerHTML !== r.status) sCell.innerHTML = r.status;
+      if (dCell && dCell.textContent !== dist) setText(dCell as HTMLElement, dist);
+      if (sigCell && sigCell.textContent !== sig) setText(sigCell as HTMLElement, sig);
+      if (rCell && rCell.textContent !== relV) setText(rCell as HTMLElement, relV);
+      if (sCell && sCell.innerHTML !== r.status) setHtml(sCell as HTMLElement, r.status);
 
       // Only re-append if this row is not already the last child (or not in correct position)
       const lastChild = hudState.ovEntries.lastElementChild;
       if (tr !== lastChild) {
-        hudState.ovEntries.appendChild(tr);
+        append(hudState.ovEntries, tr);
       }
 
       existing.delete(r.id);
     }
   }
-  for (const tr of existing.values()) tr.remove();
+  for (const tr of existing.values()) remove(tr);
 }
 
 export function updateHudOverviewPanelHeaders() {
@@ -115,9 +115,9 @@ export function updateHudOverviewPanelHeaders() {
     const ind = hudState.ovSortKey === key ? (hudState.ovSortDir === 1 ? " ↑" : " ↓") : "";
     const textEl = th.querySelector(".th-text");
     if (textEl) {
-      textEl.textContent = label + ind;
+      setText(textEl as HTMLElement, label + ind);
     } else {
-      th.textContent = label + ind;
+      setText(th as HTMLElement, label + ind);
     }
   }
 }
@@ -133,8 +133,7 @@ export function initOverviewResizers(panelEl: HTMLElement) {
     ths.forEach((th) => {
       total += th.getBoundingClientRect().width;
     });
-    table.style.minWidth = "100%";
-    table.style.width = total + "px";
+    setStyle(table, { minWidth: "100%", width: total + "px" });
   };
 
   // Load custom widths from localStorage
@@ -144,13 +143,12 @@ export function initOverviewResizers(panelEl: HTMLElement) {
       const widths = JSON.parse(savedWidths) as number[];
       ths.forEach((th, idx) => {
         if (widths[idx] !== undefined) {
-          th.style.width = widths[idx] + "px";
+          setStyle(th, { width: widths[idx] + "px" });
         }
       });
       // Also adjust table total width to fit the saved values exactly
       let totalSaved = widths.reduce((sum, w) => sum + w, 0);
-      table.style.minWidth = "100%";
-      table.style.width = totalSaved + "px";
+      setStyle(table, { minWidth: "100%", width: totalSaved + "px" });
     } catch (e) {
       console.error("Failed to load saved column widths", e);
     }
@@ -164,11 +162,12 @@ export function initOverviewResizers(panelEl: HTMLElement) {
     const resizer = th.querySelector(".ov-resizer") as HTMLElement;
     if (!resizer) return;
 
-    resizer.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      e.stopPropagation(); // Stop sorting trigger on th click!
+    onMouseDown(resizer, (e) => {
+      const me = e as MouseEvent;
+      me.preventDefault();
+      me.stopPropagation(); // Stop sorting trigger on th click!
 
-      const startX = e.clientX;
+      const startX = me.clientX;
       const startWidth = th.getBoundingClientRect().width;
 
       resizer.classList.add("resizing");
@@ -176,22 +175,25 @@ export function initOverviewResizers(panelEl: HTMLElement) {
       // Record widths of all columns initially to adjust table width during drag
       const colWidths = Array.from(ths).map(t => t.getBoundingClientRect().width);
 
-      const onMouseMove = (moveEvent: MouseEvent) => {
-        const dx = moveEvent.clientX - startX;
+      let removeMove: (() => void) | null = null;
+      let removeUp: (() => void) | null = null;
+
+      const onMove = (moveEvent: Event) => {
+        const mv = moveEvent as MouseEvent;
+        const dx = mv.clientX - startX;
         const newWidth = Math.max(15, startWidth + dx); // min width 15px
-        th.style.width = newWidth + "px";
+        setStyle(th, { width: `${newWidth}px` });
 
         // Sum current widths to update total table width
         colWidths[index] = newWidth;
         const total = colWidths.reduce((sum, w) => sum + w, 0);
-        table.style.minWidth = "100%";
-        table.style.width = total + "px";
+        setStyle(table, { minWidth: "100%", width: `${total}px` });
       };
 
-      const onMouseUp = () => {
+      const onUp = () => {
         resizer.classList.remove("resizing");
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
+        if (removeMove) { removeMove(); removeMove = null; }
+        if (removeUp) { removeUp(); removeUp = null; }
 
         // Compute final actual widths and persist
         const finalWidths = Array.from(ths).map(t => t.getBoundingClientRect().width);
@@ -199,12 +201,11 @@ export function initOverviewResizers(panelEl: HTMLElement) {
         
         // Finalize total table width
         const total = finalWidths.reduce((sum, w) => sum + w, 0);
-        table.style.minWidth = "100%";
-        table.style.width = total + "px";
+        setStyle(table, { minWidth: "100%", width: `${total}px` });
       };
 
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      removeMove = onDocumentMouseMove(onMove);
+      removeUp = onDocumentMouseUp(onUp);
     });
   });
 }
@@ -218,7 +219,7 @@ export function updateDockPrompt(sys: System | null | undefined) {
       const interactR = (st.collectRadius ?? 220) + 80;
       if (dst(getState().player.x, getState().player.y, st.x, st.y) < interactR) {
         if (hudState.dockPrompt) {
-          hudState.dockPrompt.textContent = t("hud.processingHub");
+          setText(hudState.dockPrompt, t("hud.processingHub"));
           hudState.dockPrompt.classList.add("visible");
         }
         return;

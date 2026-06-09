@@ -5,7 +5,7 @@ import { appendLogEntry } from "./hud/logs.js";
 import { showCommsLogPanel } from "./hud-overlay.js";
 import { t } from "../utils/i18n.js";
 import { Client } from "../state.js";
-import { getElement, setStyle, onKeydown, onClick, remove } from "./dom-helpers.js";
+import { getElement, setStyle, onKeydown, onClick, onFocus, onBlur, remove } from "./dom-helpers.js";
 
 let chatUnsubscribe: (() => void) | null = null;
 let inputKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -79,12 +79,12 @@ export function initChat() {
     }
   };
 
-  inputEl.addEventListener("keydown", inputKeydownHandler);
+  onKeydown(inputEl, inputKeydownHandler as EventListener);
 
   focusHandler = () => gameClient.sendTyping(true);
   blurHandler = () => gameClient.sendTyping(false);
-  inputEl.addEventListener("focus", focusHandler);
-  inputEl.addEventListener("blur", blurHandler);
+  onFocus(inputEl, focusHandler as EventListener);
+  onBlur(inputEl, blurHandler as EventListener);
 
   sendClickHandler = (e: MouseEvent) => {
     e.preventDefault();
@@ -92,7 +92,7 @@ export function initChat() {
     sendChatInput(inputEl);
     inputEl.focus();
   };
-  if (sendBtn) sendBtn.addEventListener("click", sendClickHandler);
+  if (sendBtn) onClick(sendBtn, sendClickHandler as EventListener);
 }
 
 export function destroyChat() {
