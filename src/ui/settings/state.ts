@@ -6,6 +6,7 @@ import { refreshTheme } from "../hud-overlay.js";
 import { ensureSettingsUI } from "./shell.js";
 import { renderSettings } from "./render.js";
 import { resetWindowExpand } from "../hud/window-chrome.js";
+import { getElement, setStyle } from "../dom-helpers.js";
 
 export let listeningFor: string | null = null;
 
@@ -25,19 +26,20 @@ export function openSettings() {
   if (Client.stationOpen) return;
   ensureSettingsUI();
   Client.settingsOpen = true;
-  (document.getElementById("settings-overlay") as HTMLElement).style.display = "flex";
+  const overlay = getElement("settings-overlay");
+  if (overlay) setStyle(overlay, { display: "flex" });
   renderSettings();
 }
 
 export function closeSettings() {
   Client.settingsOpen = false;
   setListeningFor(null);
-  const panel = document.getElementById("settings-panel");
+  const panel = getElement("settings-panel");
   if (panel) resetWindowExpand(panel, { embedded: true });
-  const el = document.getElementById("settings-overlay");
-  if (el) el.style.display = "none";
-  const bubble = document.getElementById("settings-tooltip-bubble");
-  if (bubble) bubble.style.display = "none";
+  const el = getElement("settings-overlay");
+  if (el) setStyle(el, { display: "none" });
+  const bubble = getElement("settings-tooltip-bubble");
+  if (bubble) setStyle(bubble, { display: "none" });
 }
 
 export function toggleSettings() {

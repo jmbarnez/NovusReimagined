@@ -61,8 +61,9 @@ const HUD_TOUR_PHASES = [
 ];
 
 const HANGAR_REVIEW_TOUR = [
-  { label: t("tutorial.hangar.cargo.label"), body: t("tutorial.hangar.cargo.body"), target: "#hangar-pane-cargo", tab: "hangar" },
   { label: t("tutorial.hangar.activeFitting.label"), body: t("tutorial.hangar.activeFitting.body"), target: "#hangar-fitting-panel", tab: "hangar" },
+  { label: t("tutorial.hangar.highSlot0.label"), body: t("tutorial.hangar.highSlot0.body"), target: "#hangar-slot-high-0", tab: "hangar" },
+  { label: t("tutorial.hangar.cargo.label"), body: t("tutorial.hangar.cargo.body"), target: "#hangar-pane-cargo", tab: "hangar" },
   { label: t("tutorial.hangar.shipStats.label"), body: t("tutorial.hangar.shipStats.body"), target: "#hangar-stats-panel", tab: "hangar" },
   { label: t("tutorial.hangar.trainingMission.label"), body: t("tutorial.hangar.trainingMission.body"), target: "#hangar-missions-panel", tab: "hangar" },
   { label: t("tutorial.hangar.undock.label"), body: t("tutorial.hangar.undock.body", { dockKey: tutorialKeyStyled("dock") }), target: "#st-undock", tab: "hangar" },
@@ -70,10 +71,10 @@ const HANGAR_REVIEW_TOUR = [
 
 const HANGAR_COMBAT_SWAP_TOUR = [
   { label: t("tutorial.hangar.combatLoadout.label"), body: t("tutorial.hangar.combatLoadout.body"), target: "#hangar-fitting-panel", tab: "hangar" },
-  { label: t("tutorial.hangar.unfitMiner.label"), body: t("tutorial.hangar.unfitMiner.body"), target: '[data-rack="high"][data-idx="0"]', tab: "hangar" },
-  { label: t("tutorial.hangar.unfitTractor.label"), body: t("tutorial.hangar.unfitTractor.body"), target: '[data-rack="high"][data-idx="1"]', tab: "hangar" },
-  { label: t("tutorial.hangar.fitAutocannon.label"), body: t("tutorial.hangar.fitAutocannon.body"), target: '[data-rack="high"][data-idx="0"]', tab: "hangar" },
-  { label: t("tutorial.hangar.fitSalvager.label"), body: t("tutorial.hangar.fitSalvager.body"), target: '[data-rack="high"][data-idx="1"]', tab: "hangar" },
+  { label: t("tutorial.hangar.unfitMiner.label"), body: t("tutorial.hangar.unfitMiner.body"), target: "#hangar-slot-high-0", tab: "hangar" },
+  { label: t("tutorial.hangar.unfitTractor.label"), body: t("tutorial.hangar.unfitTractor.body"), target: "#hangar-slot-high-1", tab: "hangar" },
+  { label: t("tutorial.hangar.fitAutocannon.label"), body: t("tutorial.hangar.fitAutocannon.body"), target: "#hangar-slot-high-0", tab: "hangar" },
+  { label: t("tutorial.hangar.fitSalvager.label"), body: t("tutorial.hangar.fitSalvager.body"), target: "#hangar-slot-high-1", tab: "hangar" },
   { label: t("tutorial.hangar.combatUndock.label"), body: t("tutorial.hangar.combatUndock.body", { dockKey: tutorialKeyStyled("dock") }), target: "#st-undock", tab: "hangar" },
 ];
 
@@ -115,6 +116,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "boost-try",
     title: t("tutorial.step.boostTry.title"),
+    highlight: "#hud-status-bars",
     objective: () => t("tutorial.step.boostTry.objective", { boostKey: tutorialKeyStyled("engineBoost") }),
     zone: { x: 0, y: 0, r: 0 },
     beaconColor: 0x55aaff,
@@ -183,6 +185,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-mining",
     title: t("tutorial.step.flyMining.title"),
+    highlight: "#hud-missions",
     objective: () => t("tutorial.step.flyMining.objective", { bar1Key: tutorialBarKeyStyled(0), bar2Key: tutorialBarKeyStyled(1) }),
     zone: tutorialRegionZone("fly-mining"),
     beaconColor: 0x88ccff,
@@ -238,6 +241,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-station",
     title: t("tutorial.step.flyStation.title"),
+    highlight: "#hud-dock-prompt",
     objective: () => t("tutorial.step.flyStation.objective"),
     zone: tutorialRegionZone("fly-station"),
     beaconColor: 0x88ff88,
@@ -326,6 +330,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-gunnery",
     title: t("tutorial.step.flyGunnery.title"),
+    highlight: "#hud-missions",
     objective: () => t("tutorial.step.flyGunnery.objective", { bar1Key: tutorialBarKeyStyled(0), bar2Key: tutorialBarKeyStyled(1) }),
     zone: tutorialRegionZone("fly-gunnery"),
     beaconColor: 0xff8866,
@@ -364,6 +369,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-gate",
     title: t("tutorial.step.flyGate.title"),
+    highlight: "#hud-missions",
     objective: () => t("tutorial.step.flyGate.objective"),
     zone: tutorialRegionZone("fly-gate"),
     beaconColor: 0xffffff,

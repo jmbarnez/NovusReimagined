@@ -3,6 +3,7 @@ import { pushMonitorMenu } from "./monitor-nav.js";
 import { showPilotJoinScreen } from "./pilot-join.js";
 import { bindTitleScreenEvents } from "./title-screen.js";
 import { t } from "../utils/i18n.js";
+import { onClick } from "./dom-helpers.js";
 
 export function showMultiplayerMenu(): void {
   const menuHtml = `
@@ -37,12 +38,14 @@ export function showMultiplayerMenu(): void {
       });
     };
 
-    monitor.querySelector("#mp-find")?.addEventListener("click", () => {
+    const mpFind = monitor.querySelector("#mp-find");
+    if (mpFind) onClick(mpFind, () => {
       sfxBlip();
       openJoin(true);
     });
 
-    monitor.querySelector("#mp-join")?.addEventListener("click", () => {
+    const mpJoin = monitor.querySelector("#mp-join");
+    if (mpJoin) onClick(mpJoin, () => {
       sfxBlip();
       openJoin(false);
     });

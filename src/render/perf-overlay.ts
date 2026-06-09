@@ -77,26 +77,8 @@ let _miniPerfEl: HTMLDivElement | null = null;
 let _miniPerfText = "";
 
 function ensureMiniPerfBadge(): void {
-  if (_miniPerfEl) return;
-  const el = document.createElement("div");
-  el.className = "perf-mini-badge";
-  el.style.position = "fixed";
-  el.style.left = "8px";
-  el.style.top = "8px";
-  el.style.zIndex = "2000";
-  el.style.pointerEvents = "none";
-  el.style.padding = "4px 7px";
-  el.style.borderRadius = "4px";
-  el.style.background = "rgba(2, 6, 12, 0.72)";
-  el.style.border = "1px solid rgba(115, 180, 220, 0.35)";
-  el.style.color = "#cfe8ff";
-  el.style.fontFamily = "monospace";
-  el.style.fontSize = "11px";
-  el.style.fontWeight = "700";
-  el.style.letterSpacing = "0.2px";
-  el.textContent = `${t("perf.title")}: -- FPS`;
-  document.body.appendChild(el);
-  _miniPerfEl = el;
+  // Disabled - mini performance badge removed from top-left
+  return;
 }
 
 function updateMiniPerfBadge(): void {

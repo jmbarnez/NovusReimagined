@@ -6,6 +6,7 @@ import { initHudOverlay, destroyHudOverlay } from "../ui/hud-overlay.js";
 import { destroyPixi } from "../pixi.js";
 import { destroyPixiChatBubbles } from "../render/pixi-chat-bubbles.js";
 import { TICK_DT, MAX_CATCH } from "../constants.js";
+import { deinitInput } from "../input/index.js";
 import {
   updateTrails,
   updateFloatTexts,
@@ -310,6 +311,7 @@ export function stopGameLoop() {
   ticker.terminate();
   document.removeEventListener("visibilitychange", onVisibilityChange);
 
+  deinitInput();
   stopMultiplayer();
   destroyHudOverlay();
   destroyChat();

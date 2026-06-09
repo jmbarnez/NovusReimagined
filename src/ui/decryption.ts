@@ -10,6 +10,7 @@ import { getStats } from "../player/player-stats.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../audio/procedural.js";
 import { logEvent } from "../feedback.js";
 import { t } from "../utils/i18n.js";
+import { getElement, createElement, setHtml, toggleClass, onClick } from "./dom-helpers.js";
 
 type NodeType = "entry" | "access" | "cache" | "reveal" | "stabilize" | "corrupt" | "counter" | "dead";
 
@@ -298,9 +299,9 @@ function renderGrid(run: DecryptRun) {
 function renderDecryptionWindow(locked = false, message = "") {
   if (!activeRun) return;
   const run = activeRun;
-  const body = document.createElement("div");
+  const body = createElement("div");
   body.id = "decryption-window-body";
-  body.innerHTML = `
+  setHtml(body, `
     <div class="decrypt-shell">
       <div class="decrypt-top">
         <div>
@@ -332,15 +333,15 @@ function renderDecryptionWindow(locked = false, message = "") {
         <button type="button" class="decrypt-action ghost" data-decrypt-action="abort" ${run.ended ? "" : ""}>${t("decrypt.abort")}</button>
       </div>
       <div class="decrypt-status">${message || (run.ended ? t("decrypt.linkClosed") : t("decrypt.prompt"))}</div>
-    </div>`;
+    </div>`);
 
   openHudWindow("decryption", t("decrypt.consoleTitle"), body, () => {
     activeRun = null;
   });
   bindListeners();
   if (locked) {
-    const win = document.getElementById("hud-win-decryption");
-    if (win) win.classList.remove("is-expanded");
+    const win = getElement("hud-win-decryption");
+    if (win) toggleClass(win, "is-expanded", false);
   }
 }
 

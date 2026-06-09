@@ -22,10 +22,12 @@ import {
   renderFabricationRail,
   renderManifestBand,
   renderOverview,
+  renderRightRail,
   renderProcessStage,
   renderSeparateStage,
   renderStageTabs,
 } from "./industry-renderers/index.js";
+import { getElement, setHtml, setText, setStyle } from "../dom-helpers.js";
 
 let lastIndustryContainer: HTMLElement | null = null;
 let lastFabricationContainer: HTMLElement | null = null;
@@ -45,7 +47,7 @@ function pulseRefineryRail(tab: typeof stationState.indRailTab): void {
 
 function resolvePanelContainer(panelId: string, lastContainer: HTMLElement | null, container?: HTMLElement): HTMLElement | null {
   if (container) return container;
-  const stationPanel = document.getElementById(panelId);
+  const stationPanel = getElement(panelId);
   if (stationPanel?.classList.contains("active")) return stationPanel;
   if (lastContainer?.isConnected) return lastContainer;
   return stationPanel;
@@ -61,7 +63,7 @@ function rerenderStationProduction(panelHint?: HTMLElement | null): void {
     renderIndustry(panel);
     return;
   }
-  const activeFab = document.getElementById("panel-fabrication");
+  const activeFab = getElement("panel-fabrication");
   if (activeFab?.classList.contains("active")) {
     renderFabrication(activeFab);
     return;
@@ -85,9 +87,9 @@ export function updateIndustryProgress() {
     const fill = jobEl.querySelector<HTMLElement>(".ind-queue-progress-fill");
     const pctEl = jobEl.querySelector<HTMLElement>(".ind-queue-pct");
     const timeEl = jobEl.querySelector<HTMLElement>(".ind-queue-time");
-    if (fill) fill.style.width = `${pct}%`;
-    if (pctEl) pctEl.textContent = `${pct}%`;
-    if (timeEl) timeEl.textContent = `${formatTime(remainingMs / 1000)} ${t("industry.remaining")}`;
+    if (fill) setStyle(fill, { width: `${pct}%` });
+    if (pctEl) setText(pctEl, `${pct}%`);
+    if (timeEl) setText(timeEl, `${formatTime(remainingMs / 1000)} ${t("industry.remaining")}`);
   });
 }
 
@@ -101,23 +103,25 @@ export function renderIndustry(container?: HTMLElement) {
   else if (currentStage() === "separate") stageHtml = renderSeparateStage();
   else stageHtml = renderAlloyStage();
 
-  div.innerHTML = `
+  setHtml(div, `
     <div class="ind-shell ind-shell--refinery">
       ${renderOverview()}
       ${renderStageTabs()}
-      <div class="ind-workspace">
+      ${renderManifestBand()}
+      <div class="ind-workspace ind-workspace--with-rail">
         <main class="ind-stage-column">${stageHtml}</main>
+        ${renderRightRail()}
       </div>
       ${renderBottomBar()}
     </div>
-  `;
+  `);
 }
 
 export function renderFabrication(container?: HTMLElement) {
   const div = resolvePanelContainer("panel-fabrication", lastFabricationContainer, container);
   if (!div) return;
   lastFabricationContainer = div;
-  div.innerHTML = `
+  setHtml(div, `
     <div class="ind-shell ind-shell--fabrication">
       ${renderFabricationOverview()}
       ${renderManifestBand()}
@@ -126,7 +130,7 @@ export function renderFabrication(container?: HTMLElement) {
         ${renderFabricationRail()}
       </div>
     </div>
-  `;
+  `);
 }
 
 export function handleIndustryAction(action: string, btn: HTMLElement): boolean {

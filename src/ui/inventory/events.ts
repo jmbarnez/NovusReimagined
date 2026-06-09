@@ -2,6 +2,7 @@ import { sfxBlip } from "../../audio/procedural.js";
 import { INVENTORY_PANE_IDS, INV_STATE, type InventoryViewMode } from "./state.js";
 import { findNode, getTreeNodes, normalizeItems } from "./tree.js";
 import { attachDragDropHandlers } from "./drag-drop.js";
+import { getElement, query, onClick, onMouseEnter, onMouseLeave, onMouseMove, onContextMenu, onInput, onKeydown } from "../dom-helpers.js";
 
 export interface InventoryEventHandlers {
   toggleTreeNode: (nodeId: string) => void;
@@ -20,11 +21,11 @@ export interface InventoryEventHandlers {
 export function getInventoryPanes(): HTMLElement[] {
   // First check for known pane IDs
   const panes = INVENTORY_PANE_IDS
-    .map((id) => document.getElementById(id))
+    .map((id) => getElement(id))
     .filter((el): el is HTMLElement => el !== null);
 
   // Also check for inventory panes inside HUD windows (e.g., floating cargo window)
-  const hudCargoPane = document.querySelector("#hud-win-cargo .br-pane");
+  const hudCargoPane = query("#hud-win-cargo .br-pane");
   if (hudCargoPane && hudCargoPane instanceof HTMLElement) {
     panes.push(hudCargoPane);
   }
@@ -42,8 +43,8 @@ export function attachInventoryListeners(handlers: InventoryEventHandlers) {
 
 export function attachInventoryListenersToPane(pane: HTMLElement, handlers: InventoryEventHandlers) {
   for (const nodeEl of pane.querySelectorAll(".inv-tree-node")) {
-    nodeEl.addEventListener("click", (e) => {
-      e.stopPropagation();
+    onClick(nodeEl, (e) => {
+      (e as MouseEvent).stopPropagation();
       sfxBlip(660, 0.04);
       const id = (nodeEl as HTMLElement).dataset.node;
       const nodes = getTreeNodes();
@@ -54,15 +55,15 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
   }
 
   for (const row of pane.querySelectorAll("[data-item]")) {
-    row.addEventListener("click", (e) => {
+    onClick(row, (e) => {
       // Skip click for draggable grid cells to allow drag-drop
       if (INV_STATE.viewMode === "grid" && (row as HTMLElement).draggable) return;
 
-      e.stopPropagation();
+      (e as MouseEvent).stopPropagation();
       sfxBlip(720, 0.04);
       handlers.selectItem((row as HTMLElement).dataset.item || null);
     });
-    row.addEventListener("contextmenu", (e) => {
+    onContextMenu(row, (e) => {
       e.preventDefault();
       e.stopPropagation();
       handlers.hideHoverTip();
@@ -73,20 +74,20 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
       const itemId = (row as HTMLElement).dataset.item;
       const it = itemId ? normalizeItems().find((x) => x.id === itemId) : undefined;
       if (it) {
-        row.addEventListener("mouseenter", (e) => {
+        onMouseEnter(row, (e) => {
           handlers.showHoverTip(it.id, (e as MouseEvent).clientX, (e as MouseEvent).clientY);
         });
-        row.addEventListener("mousemove", (e) => {
+        onMouseMove(row, (e) => {
           handlers.moveHoverTip((e as MouseEvent).clientX, (e as MouseEvent).clientY);
         });
-        row.addEventListener("mouseleave", () => handlers.hideHoverTip());
+        onMouseLeave(row, () => handlers.hideHoverTip());
       }
     }
   }
 
   for (const viewBtn of pane.querySelectorAll(".inv-view-btn")) {
-    viewBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
+    onClick(viewBtn, (e) => {
+      (e as MouseEvent).stopPropagation();
       const mode = (viewBtn as HTMLElement).dataset.view as InventoryViewMode | undefined;
       if (mode === "grid" || mode === "list") handlers.setInventoryViewMode(mode);
     });
@@ -95,8 +96,8 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
   const SORT_CYCLE: ("name" | "group" | "qty" | "vol")[] = ["name", "group", "qty", "vol"];
   const sortBtn = pane.querySelector(".inv-sort-btn");
   if (sortBtn) {
-    sortBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
+    onClick(sortBtn, (e) => {
+      (e as MouseEvent).stopPropagation();
       const curIdx = SORT_CYCLE.indexOf(INV_STATE.sortKey);
       const nextIdx = (curIdx + 1) % SORT_CYCLE.length;
       if (SORT_CYCLE[nextIdx] === INV_STATE.sortKey) {
@@ -108,7 +109,7 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
       sfxBlip(640, 0.04);
       handlers.rerenderInventory();
     });
-    sortBtn.addEventListener("contextmenu", (e) => {
+    onContextMenu(sortBtn, (e) => {
       e.preventDefault();
       e.stopPropagation();
       INV_STATE.sortDir = (INV_STATE.sortDir * -1) as 1 | -1;
@@ -119,15 +120,15 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
 
   const filterInput = pane.querySelector(".inv-filter-input");
   if (filterInput) {
-    filterInput.addEventListener("input", (e) => {
+    onInput(filterInput, (e) => {
       handlers.setFilter((e.target as HTMLInputElement).value);
     });
-    filterInput.addEventListener("keydown", (e) => e.stopPropagation());
+    onKeydown(filterInput, (e) => (e as KeyboardEvent).stopPropagation());
   }
 
   if (!paneClickAttached.has(pane.id)) {
     paneClickAttached.add(pane.id);
-    pane.addEventListener("click", () => {
+    onClick(pane, () => {
       handlers.closeContextMenu();
     });
   }
@@ -138,5 +139,5 @@ export function attachInventoryListenersToPane(pane: HTMLElement, handlers: Inve
 }
 
 export function getInventoryPaneById(paneId: string): HTMLElement | null {
-  return document.getElementById(paneId);
+  return getElement(paneId);
 }

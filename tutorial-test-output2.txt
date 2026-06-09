@@ -1,0 +1,1526 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.5 [39m[90mC:/Users/JBCry/Desktop/Novus[39m
+
+ [32m✓[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mendDrag[2m > [22mremoves all ghost elements[32m 30[2mms[22m[39m
+ [32m✓[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mendDrag[2m > [22mclears .is-dragging classes[32m 27[2mms[22m[39m
+ [32m✓[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mendDrag[2m > [22mclears .is-drag-over classes[32m 4[2mms[22m[39m
+ [32m✓[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22mdoes not throw when attaching to an empty pane[32m 3[2mms[22m[39m
+ [32m✓[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22mstarts a drag on pointerdown over a draggable cell[32m 17[2mms[22m[39m
+ [32m✓[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22mignores pointerdown on non-draggable elements[32m 4[2mms[22m[39m
+ [32m✓[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22mignores pointerdown with non-left button[32m 2[2mms[22m[39m
+ [31m×[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22memits inventory:grid-swap on drop over another item[32m 26[2mms[22m[39m
+[31m   → expected "vi.fn()" to be called with arguments: [ { containerId: 'shipCargo', …(2) } ][90m
+
+Number of calls: [1m0[22m
+[31m[39m
+ [32m✓[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22mdoes not emit inventory:grid-swap on drop to same slot[32m 8[2mms[22m[39m
+ [31m×[39m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22memits inventory:grid-insert on drop in a gap[32m 6[2mms[22m[39m
+[31m   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[31m[39m
+ [32m✓[39m tests/profile-continue.test.ts[2m > [22mprofile Continue loading gate[2m > [22mdisables Continue and ignores repeat clicks while the save load is pending[33m 1532[2mms[22m[39m
+[90mstderr[2m | tests/profile-continue.test.ts[2m > [22m[2mprofile Continue loading gate[2m > [22m[2mreturns to profile selection when authoritative entry fails
+[22m[39m[Profiles] Continue failed: Error: connect failed
+    at C:/Users/JBCry/Desktop/Novus/tests/profile-continue.test.ts:136:29
+    at Mock [90m(file:///C:/Users/JBCry/Desktop/Novus/[39mnode_modules/[4m@vitest[24m/spy/dist/index.js:332:34[90m)[39m
+    at continueSavedProfile (C:/Users/JBCry/Desktop/Novus/src/ui/boot-screen/boot-screen-profiles.ts:109:11)
+    at HTMLButtonElement.<anonymous> (C:/Users/JBCry/Desktop/Novus/src/ui/boot-screen/boot-screen-profiles.ts:61:12)
+    at HTMLButtonElement.callTheUserObjectsOperation [90m(C:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\generated\idl\EventListener.js:26:30[90m)[39m
+    at innerInvokeEventListeners [90m(C:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\events\EventTarget-impl.js:360:16[90m)[39m
+    at invokeEventListeners [90m(C:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\events\EventTarget-impl.js:296:3[90m)[39m
+    at HTMLButtonElementImpl._dispatch [90m(C:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\events\EventTarget-impl.js:243:9[90m)[39m
+    at fireAnEvent [90m(C:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\helpers\events.js:18:36[90m)[39m
+    at HTMLButtonElementImpl.click [90m(C:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\nodes\HTMLElement-impl.js:85:5[90m)[39m
+
+ [32m✓[39m tests/profile-continue.test.ts[2m > [22mprofile Continue loading gate[2m > [22mreturns to profile selection when authoritative entry fails[32m 40[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts[2m > [22mhub refining pipeline[2m > [22mprocesses mixed cargo into composition-preserving stock[32m 15[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts[2m > [22mhub refining pipeline[2m > [22mroutes processed mixed ore into the chosen tank[32m 2[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts[2m > [22mhub refining pipeline[2m > [22mseparates processed stock into simpler streams[32m 3[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts[2m > [22mhub refining pipeline[2m > [22mroutes separated stock streams to matching ore bins[32m 3[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts[2m > [22mhub refining pipeline[2m > [22malloys stock and transfers the result into cargo mass-aware storage[32m 4[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts[2m > [22mhub refining pipeline[2m > [22mdoes not remove refinery materials when alloying credits are insufficient[32m 1[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts[2m > [22mhub refining pipeline[2m > [22mroutes alloyed stock into the chosen alloy reservoir[32m 1[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts[2m > [22mhub refining pipeline[2m > [22mregisters discovered in-between alloys in the player codex[32m 3[2mms[22m[39m
+ [32m✓[39m tests/hangar-hardpoints.test.ts[2m > [22mhangar hardpoint rendering[2m > [22moffers turret modules in unified high slots and hides empty turret sections[32m 110[2mms[22m[39m
+ [32m✓[39m tests/hangar-hardpoints.test.ts[2m > [22mhangar hardpoint rendering[2m > [22mrenders hangar missions outside of ship statistics[32m 30[2mms[22m[39m
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+ [32m✓[39m tests/item-icons.test.ts[2m > [22mitem icon resolver[2m > [22mmaps every module id to a specific family (not rack fallback)[32m 18[2mms[22m[39m
+ [32m✓[39m tests/item-icons.test.ts[2m > [22mitem icon resolver[2m > [22mmaps tu-civilian-cannon like tu-cannon with civilian tint[32m 1[2mms[22m[39m
+ [32m✓[39m tests/item-icons.test.ts[2m > [22mitem icon resolver[2m > [22mresolves every resource key with exact painters[32m 1[2mms[22m[39m
+ [32m✓[39m tests/item-icons.test.ts[2m > [22mitem icon resolver[2m > [22mresolves ammo ids exactly[32m 0[2mms[22m[39m
+ [32m✓[39m tests/item-icons.test.ts[2m > [22mitem icon atlas manifest[2m > [22mlists a frame for every catalog id when baked[32m 4[2mms[22m[39m
+ [32m✓[39m tests/item-icons.test.ts[2m > [22mitem icon bake[2m > [22mbakeItemIcon returns a PNG data URL[32m 38[2mms[22m[39m
+ [32m✓[39m tests/item-icons.test.ts[2m > [22mitem icon bake[2m > [22mitemIconHtml returns atlas sprite or img tag[32m 1[2mms[22m[39m
+ [32m✓[39m tests/item-icons.test.ts[2m > [22mitem icon bake[2m > [22mcaches baked icons[32m 1[2mms[22m[39m
+ [32m✓[39m tests/ion-boost-ui.test.ts[2m > [22mion boost UI[2m > [22mrenders ion boost module status in the ship panel[32m 96[2mms[22m[39m
+ [32m✓[39m tests/ion-boost-ui.test.ts[2m > [22mion boost UI[2m > [22muses cap-only boost labels without thermal reserve wording[32m 2[2mms[22m[39m
+ [32m✓[39m tests/hangar-cargo-toolbar.test.ts[2m > [22mhangar cargo panel toolbar[2m > [22mdoes not thrash DOM when inventory:changed fires with no state change[32m 154[2mms[22m[39m
+ [32m✓[39m tests/pixi-entities.test.ts[2m > [22msyncPixiEntities[2m > [22mhides offscreen enemy bundles and restores them when visible again[32m 278[2mms[22m[39m
+ [32m✓[39m tests/input-hotkeys.test.ts[2m > [22mHUD panel hotkeys[2m > [22maccepts the configured overview key and the legacy P alias[32m 3[2mms[22m[39m
+ [32m✓[39m tests/input-hotkeys.test.ts[2m > [22mHUD panel hotkeys[2m > [22maccepts the configured comms-log key and the legacy C alias[32m 1[2mms[22m[39m
+ [32m✓[39m tests/input-hotkeys.test.ts[2m > [22mHUD panel hotkeys[2m > [22mrejects comms-log toggles while ctrl/cmd/alt are held[32m 0[2mms[22m[39m
+ [32m✓[39m tests/hud-missions.test.ts[2m > [22mHUD missions panel[2m > [22mrenders missions into the mounted HUD element[32m 10[2mms[22m[39m
+ [32m✓[39m tests/hud-missions.test.ts[2m > [22mHUD missions panel[2m > [22mrebinds to a fresh HUD element after the old panel is removed[32m 3[2mms[22m[39m
+ [32m✓[39m tests/hangar-cargo-toolbar.test.ts[2m > [22mhangar cargo panel toolbar[2m > [22mdoes not thrash DOM when inventory:changed fires repeatedly[32m 25[2mms[22m[39m
+ [32m✓[39m tests/hangar-cargo-toolbar.test.ts[2m > [22mhangar cargo panel toolbar[2m > [22mre-renders when a view button is clicked[32m 54[2mms[22m[39m
+ [32m✓[39m tests/hangar-cargo-toolbar.test.ts[2m > [22mhangar cargo panel toolbar[2m > [22mre-renders when sort button is clicked[32m 59[2mms[22m[39m
+ [32m✓[39m tests/net-prediction-actions.test.ts[2m > [22mprediction action replay[2m > [22mreapplies a pending sensor-lock request after an older snapshot overwrites local state[32m 57[2mms[22m[39m
+ [32m✓[39m tests/net-prediction-actions.test.ts[2m > [22mprediction action replay[2m > [22mdoes not toggle assignment off when replaying a pending second-click lock action[32m 6[2mms[22m[39m
+ [32m✓[39m tests/net-prediction-actions.test.ts[2m > [22mprediction action replay[2m > [22mreapplies a pending module toggle after an older snapshot overwrites local power state[32m 10[2mms[22m[39m
+ [32m✓[39m tests/net-prediction-actions.test.ts[2m > [22mprediction action replay[2m > [22mapplies mining laser snapshot state for host role on full snapshot[32m 5[2mms[22m[39m
+ [32m✓[39m tests/net-prediction-actions.test.ts[2m > [22mprediction action replay[2m > [22mapplies server-auth craft/resource state from snapshot[32m 5[2mms[22m[39m
+ [32m✓[39m tests/perf-telemetry.test.ts[2m > [22mperf telemetry[2m > [22msummarizes rolling samples with nearest-rank percentiles[32m 3[2mms[22m[39m
+ [32m✓[39m tests/perf-telemetry.test.ts[2m > [22mperf telemetry[2m > [22mrecords total and section timings from ordered marks[32m 1[2mms[22m[39m
+ [32m✓[39m tests/perf-telemetry.test.ts[2m > [22mperf telemetry[2m > [22mcaps the timing window to the newest 180 frames[32m 1[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-stats computeStats[2m > [22mbaseline scout stats are valid[32m 20[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-stats computeStats[2m > [22mfitting a weapon mult bonus increases weaponMult[32m 2[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-stats computeStats[2m > [22mresolves the primary weapon from the player's hardpoint rack[32m 2[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-stats computeStats[2m > [22mion boost module toggle changes thrustScale[32m 3[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-stats computeStats[2m > [22mskill levels increase HP and energy[32m 1[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-stats computeStats[2m > [22mgetStats caches result[32m 3[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-stats computeStats[2m > [22mmass_reduce affix lowers massMult without NaN[32m 1[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-data loadPlayer migrations[2m > [22mfresh load returns makePlayer when no save[32m 2[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-data loadPlayer migrations[2m > [22mmigrates moduleInventory to moduleCargo[32m 4[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-data loadPlayer migrations[2m > [22mmigrates missing moduleHp arrays[32m 1[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-data loadPlayer migrations[2m > [22mnormalizes hardpoint arrays from the active hardpoint rack length[32m 6[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-data loadPlayer migrations[2m > [22mmigrates legacy turret fits into unified high hardpoints[32m 2[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-data loadPlayer migrations[2m > [22mfalls back to makePlayer on corrupted JSON[32m 1[2mms[22m[39m
+ [32m✓[39m tests/player-stats.test.ts[2m > [22mplayer-data loadPlayer migrations[2m > [22mderives skills from skillXp after legacy gunnery migration[32m 1[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mnormalizeProfile[2m > [22msplits a relative profile into fractions summing to 1[32m 8[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mnormalizeProfile[2m > [22mreturns null for missing or empty profiles[32m 1[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mapplyResists[2m > [22mmitigates by the matching resist fraction[32m 0[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mapplyResists[2m > [22mpasses through when there is no profile or no resists[32m 0[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mapplyResists[2m > [22mclamps resist to the configured max[32m 0[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mapplyResists[2m > [22mblends mixed damage types against mixed resists[32m 0[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mcomputeScaledWeaponProfile optimal/falloff[2m > [22msplits range into optimal + falloff for a profiled weapon[32m 1[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mcomputeScaledWeaponProfile optimal/falloff[2m > [22mfalls back to optimalPx == range for a profileless weapon[32m 0[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mcomputeHitQuality[2m > [22mis ~1 for a stationary target inside optimal[32m 1[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mcomputeHitQuality[2m > [22mhalves roughly one falloff band past optimal (no transversal)[32m 1[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mcomputeHitQuality[2m > [22mdrops when the target has transversal velocity[32m 0[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mcomputeHitQuality[2m > [22mis more forgiving against a larger signature[32m 0[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mcomputeHitQuality[2m > [22muses the passed player position instead of the local singleton[32m 1[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mserver-side weapon ownership[2m > [22mdoes not credit player participation when damage has no player owner[32m 1[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mserver-side weapon ownership[2m > [22massigns fired missiles to the explicit firing player[32m 1[2mms[22m[39m
+ [32m✓[39m tests/combat.test.ts[2m > [22mserver-side weapon ownership[2m > [22mdrops one credit and one ferro chunk from target dummies[32m 3[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mtutorial tracks[2m > [22mdefines approach, return spoke, and three hub spokes[32m 4[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mtutorial tracks[2m > [22mspawn sits on approach lane opposite the sun[32m 2[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mtutorial tracks[2m > [22marc length progress increases toward track end[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mtutorial tracks[2m > [22mtotal arc length is positive for each track[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mtutorial tracks[2m > [22mgetActiveTutorialTracks filters by step[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mtutorial tracks[2m > [22mdetectGateCrossing requires passing between pillars with forward speed[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mtutorial tracks[2m > [22mkeeps boost gates centered and aligned on their guide tracks[32m 2[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mcanModifyFitting[2m > [22mallows when docked at a station[32m 3[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mcanModifyFitting[2m > [22mblocks fitting changes while in space[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts[2m > [22mcanModifyFitting[2m > [22mblocks fitting changes while moving in space[32m 1[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mpickHostileTarget[2m > [22macquires the player within aggro range[32m 20[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mpickHostileTarget[2m > [22mignores the player beyond aggro range[32m 13[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22mmarks a nearby hostile enemy as targeting the player[32m 3[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22mdoes not target the player when faction is neutral (until provoked)[32m 3[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22msets explicit hostile faction on spawned enemies[32m 2[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22mresolves stale player refs after initPlayer()[32m 8[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22mkeeps targeting when hull is breached but structure remains[32m 10[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22mdrops targeting only when structure is destroyed[32m 1[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22mretaliates when provoked even with neutral faction (via pickHostileTarget)[32m 10[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22maims projectile turrets per weapon speed instead of one shared lead[32m 13[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts[2m > [22mprocessNpcBehavior[2m > [22muses direct aim for beam turrets instead of projectile lead[32m 3[2mms[22m[39m
+ [32m✓[39m tests/pilot-profile.test.ts[2m > [22mvalidatePilotName[2m > [22maccepts a valid callsign[32m 11[2mms[22m[39m
+ [32m✓[39m tests/pilot-profile.test.ts[2m > [22mvalidatePilotName[2m > [22mrejects too short names[32m 2[2mms[22m[39m
+ [32m✓[39m tests/pilot-profile.test.ts[2m > [22mvalidatePilotName[2m > [22mrejects invalid characters[32m 5[2mms[22m[39m
+ [32m✓[39m tests/pilot-profile.test.ts[2m > [22mloadPlayer pilotName migration[2m > [22mdefaults missing pilotName to empty string[32m 4[2mms[22m[39m
+ [32m✓[39m tests/pilot-profile.test.ts[2m > [22mloadPlayer pilotName migration[2m > [22mpreserves saved pilotName[32m 1[2mms[22m[39m
+ [32m✓[39m tests/pilot-profile.test.ts[2m > [22mloadPlayer pilotName migration[2m > [22mclears transient input state from loaded saves[32m 1[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22minserts an entity into the correct cells[32m 5[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mupdate within same cell boundaries only updates coordinates[32m 1[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mupdate across cell boundaries moves entity to new cells[32m 1[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mupdate with radius change moves entity to new cells[32m 0[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mupdate returns false for non-existent entity[32m 0[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mremove deletes entity from all cells[32m 0[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mremove cleans up empty cells[32m 0[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mremove returns false for non-existent entity[32m 0[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mquery finds entities within radius[32m 1[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mquery respects type filter[32m 0[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mqueryAll returns all entities[32m 0[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts[2m > [22mSpatialGrid incremental updates[2m > [22mgetStats returns correct metrics[32m 0[2mms[22m[39m
+ [32m✓[39m tests/turret-menu-queue.test.ts[2m > [22mturret menu command queueing[2m > [22mqueues hardpoint power toggles instead of mutating local state directly[32m 7[2mms[22m[39m
+ [32m✓[39m tests/turret-menu-queue.test.ts[2m > [22mturret menu command queueing[2m > [22mdoes not queue a power toggle while the hardpoint is cycling[32m 1[2mms[22m[39m
+ [32m✓[39m tests/turret-menu-queue.test.ts[2m > [22mturret menu command queueing[2m > [22mqueues target clearing through assignModuleSlotToTarget[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mgetLayout[2m > [22mreturns an empty layout for a new container[32m 4[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mgetLayout[2m > [22mreturns the same cached layout on repeated calls[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mgetLayout[2m > [22mloads persisted layout from localStorage[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22msetLayout[2m > [22mpersists layout to localStorage[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mgetPosition[2m > [22mreturns the slot index for an existing item[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mgetPosition[2m > [22mreturns null for a missing item[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mremovePosition[2m > [22mremoves an item from the layout[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mremovePosition[2m > [22mis a no-op for a missing item[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmergeLayoutWithItems[2m > [22mpreserves relative order for existing items[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmergeLayoutWithItems[2m > [22mappends new items and renumbers to dense[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmergeLayoutWithItems[2m > [22mremoves deleted items and renumbers remaining to dense[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmergeLayoutWithItems[2m > [22mis a no-op when nothing changed[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mswapItems[2m > [22mswaps two items by slotIndex[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mswapItems[2m > [22mis a no-op when slots are the same[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mswapItems[2m > [22mis a no-op when one slot is missing[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22minsertItem[2m > [22minserts an item at the beginning[32m 1[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22minsertItem[2m > [22minserts an item at the end[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22minsertItem[2m > [22minserts an item in the middle[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22minsertItem[2m > [22mis a no-op when the source slot is missing[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22minsertItem[2m > [22mrenumbers all positions to dense 0..n-1[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmoveItemInGrid[2m > [22mswaps two occupied slots[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmoveItemInGrid[2m > [22mmoves an item to an empty slot[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmoveItemInGrid[2m > [22mis a no-op when from and to are the same slot[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmoveItemInGrid[2m > [22mis a no-op when the source slot is empty[32m 0[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts[2m > [22mgrid-layout[2m > [22mmoveItemInGrid[2m > [22mupdates nextSlot to max slot + 1[32m 0[2mms[22m[39m
+ [32m✓[39m tests/snapshot-players.test.ts[2m > [22mcreateSnapshot other players[2m > [22mincludes other players with the same ship class when netIds differ[32m 9[2mms[22m[39m
+ [32m✓[39m tests/snapshot-players.test.ts[2m > [22mcreateSnapshot other players[2m > [22mexcludes the local player from entity list[32m 3[2mms[22m[39m
+ [32m✓[39m tests/bullet-lifecycle.test.ts[2m > [22mbullet spawn immunity[2m > [22maddBullet initializes age to 0[32m 10[2mms[22m[39m
+ [32m✓[39m tests/bullet-lifecycle.test.ts[2m > [22mbullet spawn immunity[2m > [22maddEnemyBullet initializes age to 0[32m 2[2mms[22m[39m
+ [32m✓[39m tests/bullet-lifecycle.test.ts[2m > [22mbullet spawn immunity[2m > [22mplayer bullet survives first tick even when spawned inside a target[32m 4[2mms[22m[39m
+ [32m✓[39m tests/bullet-lifecycle.test.ts[2m > [22mbullet spawn immunity[2m > [22menemy bullet survives first tick even when spawned inside a target[32m 4[2mms[22m[39m
+ [32m✓[39m tests/bullet-lifecycle.test.ts[2m > [22mbullet spawn immunity[2m > [22menemy bullet is removed on second tick when still inside target[32m 2[2mms[22m[39m
+[90mstdout[2m | tests/multiplayer-join.test.ts[2m > [22m[2mconnectToRemote[2m > [22m[2mreconnects local gameplay with the restored save player
+[22m[39m[GameClient] Disconnected
+
+[90mstdout[2m | tests/multiplayer-join.test.ts[2m > [22m[2mconnectToRemote[2m > [22m[2mreconnects local gameplay with the restored save player
+[22m[39m[GameClient] Disconnected
+
+ [32m✓[39m tests/multiplayer-join.test.ts[2m > [22mconnectToRemote[2m > [22mreverts client role when connect returns false[32m 7[2mms[22m[39m
+ [32m✓[39m tests/multiplayer-join.test.ts[2m > [22mconnectToRemote[2m > [22mreverts client role when connect throws[32m 2[2mms[22m[39m
+ [32m✓[39m tests/multiplayer-join.test.ts[2m > [22mconnectToRemote[2m > [22mreconnects local gameplay with the restored save player[32m 20[2mms[22m[39m
+ [32m✓[39m tests/ship-physics.test.ts[2m > [22mship physics[2m > [22mgate boost exempts player from boost speed cap[32m 10[2mms[22m[39m
+ [32m✓[39m tests/ship-physics.test.ts[2m > [22mship physics[2m > [22mboost speed cap clamps when gate boost has expired[32m 2[2mms[22m[39m
+ [32m✓[39m tests/ship-physics.test.ts[2m > [22mship physics[2m > [22mgate boost remaining decays each frame[32m 3[2mms[22m[39m
+[90mstderr[2m | tests/player-spawn.test.ts[2m > [22m[2mplayer-spawn[2m > [22m[2mresolvePlayerSpawn uses TUTORIAL_SPAWN fallback when system has no anchors
+[22m[39m[player-spawn] No spawn anchors in system 99, using TUTORIAL_SPAWN fallback
+
+ [32m✓[39m tests/player-spawn.test.ts[2m > [22mplayer-spawn[2m > [22mneedsSpawnResolution when pendingHomeSpawn is set[32m 4[2mms[22m[39m
+ [32m✓[39m tests/player-spawn.test.ts[2m > [22mplayer-spawn[2m > [22mneedsSpawnResolution when coordinates are at origin[32m 1[2mms[22m[39m
+ [32m✓[39m tests/player-spawn.test.ts[2m > [22mplayer-spawn[2m > [22mresolvePlayerSpawn places player near station in populated system[32m 4[2mms[22m[39m
+ [32m✓[39m tests/player-spawn.test.ts[2m > [22mplayer-spawn[2m > [22mresolvePlayerSpawn uses TUTORIAL_SPAWN fallback when system has no anchors[32m 3[2mms[22m[39m
+ [32m✓[39m tests/player-spawn.test.ts[2m > [22mplayer-spawn[2m > [22mspawnNearFirstStation moves player outward from first station[32m 4[2mms[22m[39m
+[90mstdout[2m | tests/multiplayer-join.test.ts[2m > [22m[2mconnectToRemote[2m > [22m[2mretries a failed local reconnect with the restored save player
+[22m[39m[GameClient] Disconnected
+
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mdst computes Euclidean distance[32m 3[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mangleDiff returns shortest signed difference[32m 1[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mlerp interpolates linearly[32m 1[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mrayCircleSurfaceHit returns the near-side circle intersection[32m 0[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mmulberry32 is deterministic for same seed[32m 1[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mhashStr returns consistent integers[32m 1[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mrpick returns undefined on empty arrays[32m 1[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mrpick returns an element when array has items[32m 1[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts[2m > [22mmath utils[2m > [22mresolveElasticCollision returns 0 closing speed when dist is 0[32m 1[2mms[22m[39m
+ [32m✓[39m tests/multiplayer-join.test.ts[2m > [22mconnectToRemote[2m > [22mretries a failed local reconnect with the restored save player[32m 272[2mms[22m[39m
+ [32m✓[39m tests/turret-origin.test.ts[2m > [22mturret origins[2m > [22mrotates local ship offsets into world space[32m 3[2mms[22m[39m
+ [32m✓[39m tests/turret-origin.test.ts[2m > [22mturret origins[2m > [22mderives player nose mounts from ship render geometry[32m 2[2mms[22m[39m
+ [32m✓[39m tests/turret-origin.test.ts[2m > [22mturret origins[2m > [22mderives enemy nose mounts from enemy render geometry[32m 1[2mms[22m[39m
+ [32m✓[39m tests/turret-origin.test.ts[2m > [22mturret origins[2m > [22mfalls back to the global turret origin for unknown hulls[32m 0[2mms[22m[39m
+[90mstdout[2m | tests/multiplayer-join.test.ts[2m > [22m[2mconnectToRemote[2m > [22m[2mretries transient Tauri port bind failures without logging a failed startup
+[22m[39m[GameClient] Disconnected
+
+ [32m✓[39m tests/multiplayer-join.test.ts[2m > [22mconnectToRemote[2m > [22mretries transient Tauri port bind failures without logging a failed startup[32m 175[2mms[22m[39m
+ [32m✓[39m tests/local-player-registry.test.ts[2m > [22mlocal player registry stability[2m > [22mkeeps LOCAL_PLAYER_ID mapped to G.P after snapshot apply[32m 15[2mms[22m[39m
+ [32m✓[39m tests/settings-controls.test.ts[2m > [22mCONTROL_SECTIONS integrity[2m > [22mlists every keybind exactly once[32m 4[2mms[22m[39m
+ [32m✓[39m tests/settings-controls.test.ts[2m > [22mCONTROL_SECTIONS integrity[2m > [22mprovides human-readable metadata keys for each section and action[32m 2[2mms[22m[39m
+ [32m✓[39m tests/settings-controls.test.ts[2m > [22mCONTROL_SECTIONS integrity[2m > [22mmigrates legacy thrust keybind saves to forward thrust[32m 1[2mms[22m[39m
+ [32m✓[39m tests/settings-controls.test.ts[2m > [22mCONTROL_SECTIONS integrity[2m > [22mdefaults new settings to VSync render cadence[32m 0[2mms[22m[39m
+ [32m✓[39m tests/settings-controls.test.ts[2m > [22mCONTROL_SECTIONS integrity[2m > [22mfalls back invalid saved FPS limits to VSync[32m 1[2mms[22m[39m
+ [32m✓[39m tests/settings-controls.test.ts[2m > [22mCONTROL_SECTIONS integrity[2m > [22mpreserves finite saved FPS limits[32m 0[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mturretModuleAcceptsTarget[2m > [22mweapon turrets accept enemy locks only[32m 5[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mturretModuleAcceptsTarget[2m > [22mmining turrets accept asteroid locks only[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mturretModuleAcceptsTarget[2m > [22msalvagers accept wreck piece locks only[32m 0[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mtarget id helpers[2m > [22mclassifies asteroid and wreck ids[32m 0[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mpassive scan range[2m > [22muses hull passive km, not active sensor contact range[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mlock re-click assignment[2m > [22mrequestSensorLock on new target does not enter assignment mode[32m 2[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mlock re-click assignment[2m > [22mrequestSensorLock on existing lock enters assignment mode[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mlock re-click assignment[2m > [22mrequestSensorLock on unresolved lock leaves it resolving without entering assignment mode[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mlock re-click assignment[2m > [22mrequestSensorLock on existing lock toggles assignment mode off[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mlock re-click assignment[2m > [22mrequestSensorLock promotes re-selected lock to front of queue[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mlock re-click assignment[2m > [22mselectLockTarget toggles assignment mode[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mlock re-click assignment[2m > [22massignModuleSlotToTarget accepts null to clear an existing turret target[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mserver-side slot power[2m > [22mtoggles a non-local player's fitted hardpoint using that player's cargo[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mserver-side slot power[2m > [22mpreserves high-slot hardpoint power arrays after respawn[32m 10[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22mtarget resolution[2m > [22mkeeps asteroid locks when the runtime asteroid map is missing[32m 2[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22msensor lock range gating[2m > [22mrejects lock requests beyond drop range to prevent blink[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22msensor lock command path[2m > [22mexecuteGameCommand requestSensorLock adds target to queue[32m 2[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22msensor lock command path[2m > [22mexecuteGameCommand selectLockTarget sets assignment id[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22msensor lock command path[2m > [22mexecuteGameCommand selectLockTarget toggles assignment off when already assigned[32m 1[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22msensor lock command path[2m > [22mexecuteGameCommand removeSensorLock drops target from queue[32m 2[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts[2m > [22msensor lock command path[2m > [22massignModuleSlotToTarget resolves the player's hardpoint rack instead of legacy turret slots[32m 1[2mms[22m[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mrejects invalid hardpoint indexes[32m 6[2mms[22m[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mrejects invalid rack names for slot toggles[32m 2[2mms[22m[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22maccepts turret modules in unified high slots but rejects incompatible rack fits[32m 2[2mms[22m[39m
+ [31m×[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mdoes not silently simulate an unregistered local singleton[32m 24[2mms[22m[39m
+[31m   → expected [ { shipId: 'scout', …(81) } ] to deeply equal [][39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mregisters the local player through the world boot path[32m 1[2mms[22m[39m
+ [31m×[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mstarts and completes warp from an authoritative gate crossing[32m 14[2mms[22m[39m
+[31m   → expected -1 to be 1 // Object.is equality[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mqueues industry jobs on the authoritative player only[32m 4[2mms[22m[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mexecutes ammo/resource/home commands against authoritative player state[32m 2[2mms[22m[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22maccepts validated contract proposals via authoritative command[32m 2[2mms[22m[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mvalidates dock commands against nearby station range[32m 3[2mms[22m[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mturns in complete contracts from authoritative station state[32m 2[2mms[22m[39m
+ [32m✓[39m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mskipTutorial does not double-warp when already in target system[32m 1[2mms[22m[39m
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mmoves the primary player after reconnecting a local session
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-worker.test.ts[2m > [22m[2mGameServer[2m > [22m[2mstarts headless without throwing
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+[GameServer] Headless server stopped
+
+ [32m✓[39m tests/server-worker.test.ts[2m > [22mGameServer[2m > [22mstarts headless without throwing[32m 17[2mms[22m[39m
+[90mstdout[2m | tests/server-lock-resolution.test.ts[2m > [22m[2mGameServer sensor lock resolution[2m > [22m[2mresolves an in-range enemy lock after simulation time elapses
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mmoves the primary player after reconnecting a local session
+[22m[39m[GameServer] Player connected: Pilot (first-client)
+[GameServer] Player disconnected: Pilot (first-client)
+[GameServer] Player connected: Pilot (second-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mmoves the primary player after reconnecting a local session
+[22m[39m[GameServer] Headless server stopped
+
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mrenders into the active station panel instead of a stale previous host[32m 94[2mms[22m[39m
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct forward and reverse thrust from authoritative input
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct forward and reverse thrust from authoritative input
+[22m[39m[GameServer] Player connected: Pilot (direct-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct forward and reverse thrust from authoritative input
+[22m[39m[GameServer] Headless server stopped
+
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial step list[2m > [22mhas fourteen steps with hangar fitting legs before mining and gunnery[32m 4[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial step list[2m > [22muses only target dummies in the tutorial target range spawn[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mstyled keybind helpers[2m > [22mtutorialKeyStyled wraps keybind in a span[32m 0[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mstyled keybind helpers[2m > [22mtutorialBarKeyStyled wraps bar slot in a span[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mstyled keybind helpers[2m > [22mrenders keybinds as styled markup in step objectives[32m 3[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mstyled keybind helpers[2m > [22mreturns a refinery tour panel for the industry step[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mfly-academy step completion[2m > [22mrequires reaching the academy hub zone[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mfly-mining step completion[2m > [22mcompletes near an asteroid offset from belt center[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mfly-mining step completion[2m > [22mstays complete after leaving zone when zoneReached is latched[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mfly-mining step completion[2m > [22misZoneStepComplete respects latch and live position[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mfly-mining step completion[2m > [22mnav remaining uses zone edge distance when track arc is exhausted[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtargeting step completion[2m > [22mcompletes with resolving lock outside zone[32m 0[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtargeting step completion[2m > [22mcompletes with resolved lock outside zone[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtargeting step completion[2m > [22mfails with no asteroid lock[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mhangar-high step completion[2m > [22mdoes not complete until the player undocks after opening hangar[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mhangar-high step completion[2m > [22mdefines hangar review panels for fitting, high slot, cargo, stats, training mission, and undock[32m 5[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mhangar-high step completion[2m > [22mdefines combat swap panels for unfit, fit, and undock[32m 2[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mhangar-turrets step completion[2m > [22mrequires combat loadout and undock after opening hangar[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial step completion[2m > [22mmining completes on ore gain anywhere[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial step completion[2m > [22mindustry completes on refinery queue or material gain anywhere[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial step completion[2m > [22mgunnery requires in-zone dummy kill[32m 3[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mreveals the exit gate only for tutorial pulse logic[32m 9[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mblocks warp until graduation when exiting tutorial[32m 3[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mshows the graduation gate before it is warpable[32m 3[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mallows local tutorial return gates during tutorial[32m 2[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mrejects authoritative warp commands before graduation[32m 3[2mms[22m[39m
+ [31m×[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22marms graduation warp after flying through the gate[32m 26[2mms[22m[39m
+[31m   → expected -1 to be 1 // Object.is equality[39m
+ [31m×[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mgraduates after using the final one-way gate to Novus Prime[32m 5[2mms[22m[39m
+[31m   → expected -1 to be 1 // Object.is equality[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22muses local return gates without changing systems[32m 5[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mshows the exit gate after tutorial ends[32m 2[2mms[22m[39m
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct yaw from authoritative input
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct yaw from authoritative input
+[22m[39m[GameServer] Player connected: Pilot (yaw-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct yaw from authoritative input
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not rotate hull toward mouse in direct mode
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not rotate hull toward mouse in direct mode
+[22m[39m[GameServer] Player connected: Pilot (direct-mouse-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not rotate hull toward mouse in direct mode
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mbuilt-in boost works without a propulsion module and drains capacitor
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mbuilt-in boost works without a propulsion module and drains capacitor
+[22m[39m[GameServer] Player connected: Pilot (boost-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mbuilt-in boost works without a propulsion module and drains capacitor
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2monline ion boost module improves boost output and efficiency
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2monline ion boost module improves boost output and efficiency
+[22m[39m[GameServer] Player connected: Pilot (ion-boost-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2monline ion boost module improves boost output and efficiency
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2moffline ion boost module does not provide its boost bonus
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2moffline ion boost module does not provide its boost bonus
+[22m[39m[GameServer] Player connected: Pilot (offline-boost-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2moffline ion boost module does not provide its boost bonus
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not boost below the capacitor start threshold
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not boost below the capacitor start threshold
+[22m[39m[GameServer] Player connected: Pilot (low-cap-boost-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not boost below the capacitor start threshold
+[22m[39m[GameServer] Headless server stopped
+
+ [32m✓[39m tests/server-movement.test.ts[2m > [22mGameServer movement input[2m > [22mmoves the primary player after reconnecting a local session[32m 124[2mms[22m[39m
+ [32m✓[39m tests/server-movement.test.ts[2m > [22mGameServer movement input[2m > [22mapplies direct forward and reverse thrust from authoritative input[32m 10[2mms[22m[39m
+ [32m✓[39m tests/server-movement.test.ts[2m > [22mGameServer movement input[2m > [22mapplies direct yaw from authoritative input[32m 23[2mms[22m[39m
+ [32m✓[39m tests/server-movement.test.ts[2m > [22mGameServer movement input[2m > [22mdoes not rotate hull toward mouse in direct mode[32m 9[2mms[22m[39m
+ [32m✓[39m tests/server-movement.test.ts[2m > [22mGameServer movement input[2m > [22mbuilt-in boost works without a propulsion module and drains capacitor[32m 15[2mms[22m[39m
+ [32m✓[39m tests/server-movement.test.ts[2m > [22mGameServer movement input[2m > [22monline ion boost module improves boost output and efficiency[32m 10[2mms[22m[39m
+ [32m✓[39m tests/server-movement.test.ts[2m > [22mGameServer movement input[2m > [22moffline ion boost module does not provide its boost bonus[32m 8[2mms[22m[39m
+ [32m✓[39m tests/server-movement.test.ts[2m > [22mGameServer movement input[2m > [22mdoes not boost below the capacitor start threshold[32m 7[2mms[22m[39m
+ [32m✓[39m tests/bar-hotkeys.test.ts[2m > [22mbar hotkeys[2m > [22mqueues hardpoint selection through the command path[32m 10[2mms[22m[39m
+ [32m✓[39m tests/bar-hotkeys.test.ts[2m > [22mbar hotkeys[2m > [22mqueues hardpoint target assignment when an assignment target is selected[32m 2[2mms[22m[39m
+ [32m✓[39m tests/bar-hotkeys.test.ts[2m > [22mbar hotkeys[2m > [22mkeeps non-hardpoint slots on their default action path[32m 2[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mdoes not generate a return gate from Novus Prime to the tutorial system[32m 14[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mgenerates one graduation gate and local return gates for remote tutorial zones[32m 4[2mms[22m[39m
+ [31m×[39m tests/tutorial.test.ts[2m > [22mstation tutorial spotlight[2m > [22mcuts the station dimmer around the highlighted hangar target[32m 68[2mms[22m[39m
+[31m   → expected false to be true // Object.is equality[39m
+ [31m×[39m tests/tutorial.test.ts[2m > [22mstation tutorial spotlight[2m > [22mresyncs the hangar highlight after deferred station-open tutorial setup[32m 26[2mms[22m[39m
+[31m   → expected false to be true // Object.is equality[39m
+ [32m✓[39m tests/server-player-sanitize.test.ts[2m > [22mcreateServerPlayerState[2m > [22muses server identity and resets transient runtime state[32m 8[2mms[22m[39m
+ [32m✓[39m tests/server-player-sanitize.test.ts[2m > [22mcreateServerPlayerState[2m > [22mclamps invalid vitals and falls back from invalid names[32m 2[2mms[22m[39m
+ [32m✓[39m tests/server-player-sanitize.test.ts[2m > [22mcreateServerPlayerState[2m > [22mstrips session and runtime state from disconnect sync[32m 1[2mms[22m[39m
+ [32m✓[39m tests/server-player-sanitize.test.ts[2m > [22mcreateServerPlayerState[2m > [22mpreserves mixed ore cargo during sanitization[32m 4[2mms[22m[39m
+ [32m✓[39m tests/server-player-sanitize.test.ts[2m > [22mcreateServerPlayerState[2m > [22maccepts turret power commands after connect sanitization[32m 3[2mms[22m[39m
+ [32m✓[39m tests/server-player-sanitize.test.ts[2m > [22mcreateServerPlayerState[2m > [22mmigrates legacy turret fits into unified high hardpoints during sanitization[32m 2[2mms[22m[39m
+ [31m×[39m tests/tutorial.test.ts[2m > [22mstation tutorial spotlight[2m > [22mrestores the current hangar target highlight after station tab changes[32m 10[2mms[22m[39m
+[31m   → expected false to be true // Object.is equality[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mstation tutorial spotlight[2m > [22muses the combat hangar phase to highlight high-slot tutorial targets[32m 24[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mstation tutorial spotlight[2m > [22mcuts the station dimmer around the highlighted refinery target[32m 13[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial mission contract[2m > [22mstarts new pilots with an active academy training mission[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial mission contract[2m > [22mdefines step rewards for every tutorial step[32m 1[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial skip[2m > [22mmarks tutorial complete and skipped immediately[32m 2[2mms[22m[39m
+ [32m✓[39m tests/tutorial.test.ts[2m > [22mtutorial skip[2m > [22mpersists the skipped state to localStorage[32m 1[2mms[22m[39m
+ [32m✓[39m tests/frame-action-queue.test.ts[2m > [22mframe action queue[2m > [22mreplaces prior commands of the same type when requested[32m 4[2mms[22m[39m
+ [32m✓[39m tests/frame-action-queue.test.ts[2m > [22mframe action queue[2m > [22mkeeps distinct command types alongside replaced settings[32m 1[2mms[22m[39m
+ [32m✓[39m tests/frame-action-queue.test.ts[2m > [22mframe action queue[2m > [22mincludes WASD only in direct movement mode[32m 1[2mms[22m[39m
+ [32m✓[39m tests/frame-action-queue.test.ts[2m > [22mframe action queue[2m > [22msends waypoints only in waypoint movement mode[32m 1[2mms[22m[39m
+ [32m✓[39m tests/frame-action-queue.test.ts[2m > [22mframe action queue[2m > [22mdefaults missing legacy movement keys to false when sanitizing input[32m 1[2mms[22m[39m
+ [32m✓[39m tests/frame-action-queue.test.ts[2m > [22mframe action queue[2m > [22mincludes held engine boost input in local frames[32m 1[2mms[22m[39m
+ [32m✓[39m tests/frame-action-queue.test.ts[2m > [22mframe action queue[2m > [22mdoes not queue weapon fire while shift is held for click-to-lock[32m 0[2mms[22m[39m
+ [32m✓[39m tests/mixed-ore-cargo.test.ts[2m > [22mmixed ore cargo[2m > [22mstacks slots with same composition and richness[32m 6[2mms[22m[39m
+ [32m✓[39m tests/mixed-ore-cargo.test.ts[2m > [22mmixed ore cargo[2m > [22mcreates separate slots for same composition but different richness[32m 1[2mms[22m[39m
+ [32m✓[39m tests/mixed-ore-cargo.test.ts[2m > [22mmixed ore cargo[2m > [22mdefaults richness to 1 when not specified[32m 1[2mms[22m[39m
+ [32m✓[39m tests/mixed-ore-cargo.test.ts[2m > [22mmixed ore cargo[2m > [22msetMixedOreCargo preserves richness[32m 1[2mms[22m[39m
+ [32m✓[39m tests/station-ui-refresh.test.ts[2m > [22mstation UI snapshot refresh[2m > [22mrefreshes market rows and wallet after authoritative inventory changes[33m 408[2mms[22m[39m
+ [32m✓[39m tests/turret-control.test.ts[2m > [22mturret control hardpoint rack[2m > [22mdoes not auto-fire assigned combat weapons (manual fire only)[32m 5[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22muses the themed Refining tab label in the station shell[32m 48[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22muses the Fabrication tab label in the station shell[32m 13[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mactivates Refining when the tutorial advances while docked[32m 241[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22misInScanCone[2m > [22mincludes bearings inside half-width[32m 4[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22misInScanCone[2m > [22mexcludes bearings outside half-width[32m 0[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22misInScanCone[2m > [22mwraps across 0°[32m 0[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22misInScanCone[2m > [22mcovers ±90° with a 180° cone[32m 1[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22mangularDistanceDeg[2m > [22muses shortest arc[32m 1[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22mnormalizeAngleDeg[2m > [22mnormalizes negative and overflow angles[32m 0[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22mgetConeRangeMult[2m > [22mgives longer range for tighter cones[32m 1[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22mgetScanEnergyCost[2m > [22mcosts more cap for tighter cones[32m 0[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22mapplyProgressCap[2m > [22mcaps progress at 55% until second pulse[32m 1[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22mapplyProgressCap[2m > [22mallows full progress after two pulses[32m 0[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts[2m > [22mapplyProgressCap[2m > [22mexempts tutorial sites[32m 0[2mms[22m[39m
+ [32m✓[39m tests/station-ui-refresh.test.ts[2m > [22mstation UI snapshot refresh[2m > [22mrefreshes contracts when station offers move into active contracts[32m 201[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mshows ranked alloy fit guidance for processed stock[32m 176[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mshows process yield projections for mixed ore batches[32m 41[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mdefaults one process batch to the active source and compacts the others[32m 30[2mms[22m[39m
+ [32m✓[39m tests/station-ui-refresh.test.ts[2m > [22mstation UI snapshot refresh[2m > [22mrefreshes hangar fitting controls after authoritative fit changes[32m 158[2mms[22m[39m
+ [32m✓[39m tests/config-sync.test.ts[2m > [22mconfig/constants sync[2m > [22mre-exports combat tuning from config[32m 4[2mms[22m[39m
+ [32m✓[39m tests/config-sync.test.ts[2m > [22mconfig/constants sync[2m > [22mmissile modules use missile weapon profiles[32m 1[2mms[22m[39m
+ [31m×[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22muses the compact refinery header and rail instead of the old top manifest[32m 43[2mms[22m[39m
+[31m   → expected '\n    \n      \n    \n      \n       …' not to contain 'Cargo Material Manifest'[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mshows separation stream previews for processed stock[32m 42[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mdefaults one split source to the active stock and compacts the others[32m 33[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mrenders discovered alloy codex entries in the alloy stage[32m 97[2mms[22m[39m
+ [32m✓[39m tests/pixi-geometry-buffer-pool.test.ts[2m > [22mPixiGeometryBufferPool[2m > [22mreturns distinct buffers for separate polygon draws in the same frame[32m 6[2mms[22m[39m
+ [32m✓[39m tests/pixi-geometry-buffer-pool.test.ts[2m > [22mPixiGeometryBufferPool[2m > [22mreuses prior buffers safely after a frame reset[32m 1[2mms[22m[39m
+ [32m✓[39m tests/pixi-geometry-buffer-pool.test.ts[2m > [22mPixiGeometryBufferPool[2m > [22mwrites rotated and scaled world-space points[32m 0[2mms[22m[39m
+ [32m✓[39m tests/pixi-geometry-buffer-pool.test.ts[2m > [22mPixiGeometryBufferPool[2m > [22mwrites translated world-space points[32m 0[2mms[22m[39m
+[90mstdout[2m | tests/server-lock-resolution.test.ts[2m > [22m[2mGameServer sensor lock resolution[2m > [22m[2mresolves an in-range enemy lock after simulation time elapses
+[22m[39m[GameServer] Player connected: Pilot (lock-test-client)
+
+[90mstdout[2m | tests/server-lock-resolution.test.ts[2m > [22m[2mGameServer sensor lock resolution[2m > [22m[2mresolves an in-range enemy lock after simulation time elapses
+[22m[39m[GameServer] Headless server stopped
+
+ [32m✓[39m tests/server-lock-resolution.test.ts[2m > [22mGameServer sensor lock resolution[2m > [22mresolves an in-range enemy lock after simulation time elapses[33m 980[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mrenders clearer refinery queue job states[32m 18[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mframes stored output transfer as intentional cargo transfer[32m 23[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mroutes the hub Industry tab to the canonical Station Refining workflow[32m 97[2mms[22m[39m
+ [32m✓[39m tests/warp-charge.test.ts[2m > [22mwarp gate hold-to-charge[2m > [22mstarts charging when holding G in range without a sensor lock[32m 4[2mms[22m[39m
+ [32m✓[39m tests/warp-charge.test.ts[2m > [22mwarp gate hold-to-charge[2m > [22mdoes not charge when out of range even if holding G[32m 1[2mms[22m[39m
+ [32m✓[39m tests/warp-charge.test.ts[2m > [22mwarp gate hold-to-charge[2m > [22mcharges at the outer visible ring radius (2.0x gate radius)[32m 1[2mms[22m[39m
+ [32m✓[39m tests/warp-charge.test.ts[2m > [22mwarp gate hold-to-charge[2m > [22mactivates warp when charge reaches 1.0[32m 4[2mms[22m[39m
+ [32m✓[39m tests/warp-charge.test.ts[2m > [22mwarp gate hold-to-charge[2m > [22mmarks local-gate warp cooldown as pre-warp visual active[32m 1[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mrenders fabrication separately from refining[32m 21[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22mmarks refining and fabrication panels as tool surfaces in the station shell[32m 4[2mms[22m[39m
+ [32m✓[39m tests/client-session.test.ts[2m > [22mClientSession.consumeInputForTick[2m > [22mconsumes a slightly ahead client frame when server tick leads[32m 7[2mms[22m[39m
+ [32m✓[39m tests/client-session.test.ts[2m > [22mClientSession.consumeInputForTick[2m > [22mreuses latest lagged frame for continuous movement when server tick is far ahead[32m 1[2mms[22m[39m
+ [32m✓[39m tests/client-session.test.ts[2m > [22mClientSession.consumeInputForTick[2m > [22mreturns stale actions while still preserving latest lagged movement frame[32m 1[2mms[22m[39m
+ [32m✓[39m tests/warp-gates.test.ts[2m > [22mwarp gate aperture crossing[2m > [22muses an inner activation radius[32m 4[2mms[22m[39m
+ [32m✓[39m tests/warp-gates.test.ts[2m > [22mwarp gate aperture crossing[2m > [22mtriggers when the player crosses from outside into the aperture[32m 4[2mms[22m[39m
+ [32m✓[39m tests/warp-gates.test.ts[2m > [22mwarp gate aperture crossing[2m > [22mtriggers when a fast segment passes through the aperture[32m 1[2mms[22m[39m
+ [32m✓[39m tests/warp-gates.test.ts[2m > [22mwarp gate aperture crossing[2m > [22mdoes not trigger while stationary inside the aperture[32m 0[2mms[22m[39m
+ [32m✓[39m tests/warp-gates.test.ts[2m > [22mwarp gate aperture crossing[2m > [22mdoes not trigger when passing beside the ring opening[32m 1[2mms[22m[39m
+ [32m✓[39m tests/warp-gates.test.ts[2m > [22mwarp gate aperture crossing[2m > [22mdoes not falsely trigger for a stationary gate at a non-zero position[32m 1[2mms[22m[39m
+ [32m✓[39m tests/warp-gates.test.ts[2m > [22mwarp gate aperture crossing[2m > [22mtriggers crossing even at very slow speeds (no minimum speed requirement)[32m 0[2mms[22m[39m
+ [32m✓[39m tests/lock-brackets.test.ts[2m > [22mresolveLockBracketStyle[2m > [22muses hostile orange when an enemy lock resolves[32m 4[2mms[22m[39m
+ [32m✓[39m tests/lock-brackets.test.ts[2m > [22mresolveLockBracketStyle[2m > [22muses neutral blue for asteroids and wrecks[32m 1[2mms[22m[39m
+ [32m✓[39m tests/lock-brackets.test.ts[2m > [22mresolveLockBracketStyle[2m > [22muses cyan blink while resolving neutral targets[32m 0[2mms[22m[39m
+ [32m✓[39m tests/lock-brackets.test.ts[2m > [22mresolveLockBracketStyle[2m > [22muses red when the enemy has locked the player[32m 0[2mms[22m[39m
+ [32m✓[39m tests/station-ui-refresh.test.ts[2m > [22mstation UI snapshot refresh[2m > [22mrefreshes active refining and fabrication panels after authoritative material changes[33m 394[2mms[22m[39m
+ [32m✓[39m tests/map-discovery.test.ts[2m > [22mmap discovery[2m > [22mdiscovers sectors idempotently[32m 4[2mms[22m[39m
+ [32m✓[39m tests/map-discovery.test.ts[2m > [22mmap discovery[2m > [22mbounds shrink to discovered sectors only[32m 1[2mms[22m[39m
+ [32m✓[39m tests/map-discovery.test.ts[2m > [22mmap discovery[2m > [22mlocal region discovery by id[32m 1[2mms[22m[39m
+ [32m✓[39m tests/map-discovery.test.ts[2m > [22mmap discovery[2m > [22mwaypoint allowed only in current concentric sector[32m 1[2mms[22m[39m
+ [32m✓[39m tests/map-discovery.test.ts[2m > [22mmap discovery[2m > [22mwaypoint always allowed in cadet system[32m 1[2mms[22m[39m
+ [32m✓[39m tests/map-discovery.test.ts[2m > [22mmap pan transform[2m > [22mapplies pan offset to map center[32m 1[2mms[22m[39m
+ [32m✓[39m tests/map-scanner.test.ts[2m > [22mmap scanner strength[2m > [22mmaps dial steps to 0–1 strength[32m 5[2mms[22m[39m
+ [32m✓[39m tests/map-scanner.test.ts[2m > [22mmap scanner strength[2m > [22mscales drain and signature at max strength[32m 1[2mms[22m[39m
+ [32m✓[39m tests/map-scanner.test.ts[2m > [22mmap scanner strength[2m > [22muses base signature when scanner is off[32m 1[2mms[22m[39m
+ [32m✓[39m tests/map-scanner.test.ts[2m > [22mmap scanner strength[2m > [22mdrain per second follows config base[32m 1[2mms[22m[39m
+ [32m✓[39m tests/damage-display.test.ts[2m > [22mshowDamageNumber[2m > [22mpushes a floatText GameEffect into pendingEffects[32m 4[2mms[22m[39m
+ [32m✓[39m tests/damage-display.test.ts[2m > [22mshowDamageNumber[2m > [22muses crit styling for crit hits[32m 2[2mms[22m[39m
+ [32m✓[39m tests/damage-display.test.ts[2m > [22mshowDamageNumber[2m > [22muses miss styling for misses[32m 1[2mms[22m[39m
+ [32m✓[39m tests/damage-display.test.ts[2m > [22mshowDamageNumber[2m > [22muses heal styling for heals[32m 0[2mms[22m[39m
+ [32m✓[39m tests/entities.test.ts[2m > [22mentity lifecycle[2m > [22mclearSimulationEntities empties all arrays[32m 6[2mms[22m[39m
+ [32m✓[39m tests/entities.test.ts[2m > [22mentity lifecycle[2m > [22maddBullet generates unique ids[32m 2[2mms[22m[39m
+ [32m✓[39m tests/station-ui-refresh.test.ts[2m > [22mstation UI snapshot refresh[2m > [22mswitches live station panels when clicking Refining and Fabrication[32m 105[2mms[22m[39m
+ [32m✓[39m tests/radar-sweep.test.ts[2m > [22mradar signature decay[2m > [22mdecays large signatures more slowly than small signatures[32m 3[2mms[22m[39m
+ [32m✓[39m tests/scanner-commands.test.ts[2m > [22mscanner and tractor commands[2m > [22mclamps tractor tightness through authoritative commands[32m 7[2mms[22m[39m
+ [32m✓[39m tests/scanner-commands.test.ts[2m > [22mscanner and tractor commands[2m > [22mapplies map scanner settings through authoritative commands[32m 1[2mms[22m[39m
+ [32m✓[39m tests/scanner-commands.test.ts[2m > [22mscanner and tractor commands[2m > [22mstarts a scan pulse from the command layer[32m 3[2mms[22m[39m
+ [32m✓[39m tests/net-input-binding.test.ts[2m > [22mbindPlayerNetInput[2m > [22mcopies expanded movement keys to the player[32m 9[2mms[22m[39m
+ [32m✓[39m tests/authority-boundary.test.ts[2m > [22mserver authority boundary[2m > [22mdoes not depend on the local player singleton[32m 5[2mms[22m[39m
+ [32m✓[39m tests/industry-authority.test.ts[2m > [22mindustry server authority helpers[2m > [22mcompletes queued craft jobs on the passed player state[32m 6[2mms[22m[39m
+ [32m✓[39m tests/industry-authority.test.ts[2m > [22mindustry server authority helpers[2m > [22mconsumes alloy material volume for fabrication recipes[32m 2[2mms[22m[39m
+ [32m✓[39m tests/canvas-2d-ban.test.ts[2m > [22mCanvas 2D ban[2m > [22mno src/ file imports from the removed canvas.js shim[32m 16[2mms[22m[39m
+ [32m✓[39m tests/canvas-2d-ban.test.ts[2m > [22mCanvas 2D ban[2m > [22msrc/canvas.ts is gone[32m 1[2mms[22m[39m
+ [32m✓[39m tests/sfx-coverage.test.ts[2m > [22mSFX coverage guard[2m > [22mevery exported sfx* function has at least one non-definition call site[33m 837[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 10 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mdoes not silently simulate an unregistered local singleton
+[31m[1mAssertionError[22m: expected [ { shipId: 'scout', …(81) } ] to deeply equal [][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "_assignTargetId": null,[39m
+[31m+     "activeScan": null,[39m
+[31m+     "alloyCodex": {[39m
+[31m+       "discoveries": [],[39m
+[31m+       "knownFamilyIds": [[39m
+[31m+         "ferro_nickel_stock",[39m
+[31m+         "carbon_steel_stock",[39m
+[31m+         "crystal_matrix",[39m
+[31m+         "exotic_conductive",[39m
+[31m+       ],[39m
+[31m+     },[39m
+[31m+     "ammo": {[39m
+[31m+       "hybrid": 2600,[39m
+[31m+       "missile": 140,[39m
+[31m+     },[39m
+[31m+     "angle": 0,[39m
+[31m+     "blueprints": {},[39m
+[31m+     "boostFx": false,[39m
+[31m+     "boostLockout": false,[39m
+[31m+     "bulkMaterialsCargo": [],[39m
+[31m+     "combatBar": {[39m
+[31m+       "dir": 1,[39m
+[31m+       "pos": 0.5,[39m
+[31m+     },[39m
+[31m+     "completedSiteIds": [],[39m
+[31m+     "components": {[39m
+[31m+       "circuit": 0,[39m
+[31m+       "gear": 0,[39m
+[31m+       "harness": 0,[39m
+[31m+       "sensor_cluster": 0,[39m
+[31m+     },[39m
+[31m+     "contracts": [[39m
+[31m+       {[39m
+[31m+         "description": "Complete Academy training and warp to Novus Prime.",[39m
+[31m+         "id": "mc_academy_training",[39m
+[31m+         "objective": {[39m
+[31m+           "current": 0,[39m
+[31m+           "required": 14,[39m
+[31m+           "target": "step",[39m
+[31m+           "type": "tutorial",[39m
+[31m+         },[39m
+[31m+         "reward": 2500,[39m
+[31m+         "stationId": "station-sys-0-academy",[39m
+[31m+         "status": "active",[39m
+[31m+         "sysIdx": 0,[39m
+[31m+         "title": "Academy Training",[39m
+[31m+         "type": "tutorial",[39m
+[31m+       },[39m
+[31m+     ],[39m
+[31m+     "craftQueue": [],[39m
+[31m+     "credits": 5000,[39m
+[31m+     "detectedSignatures": [],[39m
+[31m+     "discoveredConcentricSectors": [],[39m
+[31m+     "discoveredLocalRegionIds": [[39m
+[31m+       "tut-flight",[39m
+[31m+       "tut-mining",[39m
+[31m+       "tut-industry",[39m
+[31m+       "tut-gunnery",[39m
+[31m+     ],[39m
+[31m+     "energy": 100,[39m
+[31m+     "fireControlSlot": 0,[39m
+[31m+     "fitting": {[39m
+[31m+       "high": [[39m
+[31m+         "start-tu-civ-miner",[39m
+[31m+         "start-tu-tractor",[39m
+[31m+       ],[39m
+[31m+       "low": [[39m
+[31m+         null,[39m
+[31m+       ],[39m
+[31m+       "med": [[39m
+[31m+         null,[39m
+[31m+       ],[39m
+[31m+       "turret": [],[39m
+[31m+     },[39m
+[31m+     "highTargets": [[39m
+[31m+       null,[39m
+[31m+       null,[39m
+[31m+     ],[39m
+[31m+     "homeSysIdx": 0,[39m
+[31m+     "hp": 12,[39m
+[31m+     "hubDeposit": {[39m
+[31m+       "loot": {},[39m
+[31m+       "materials": [],[39m
+[31m+       "modules": [],[39m
+[31m+       "ore": {},[39m
+[31m+       "raw": [],[39m
+[31m+     },[39m
+[31m+     "hubOutput": {[39m
+[31m+       "loot": {},[39m
+[31m+       "materials": [],[39m
+[31m+       "modules": [],[39m
+[31m+       "ore": {},[39m
+[31m+     },[39m
+[31m+     "hubQueue": [],[39m
+[31m+     "hullHitAngle": 0,[39m
+[31m+     "hullHitGlow": 0,[39m
+[31m+     "invincible": 0,[39m
+[31m+     "kills": 0,[39m
+[31m+     "level": 1,[39m
+[31m+     "lockQueue": [],[39m
+[31m+     "loot": {[39m
+[31m+       "cell": 0,[39m
+[31m+       "chip": 0,[39m
+[31m+       "scrap": 0,[39m
+[31m+     },[39m
+[31m+     "mapScannerActive": false,[39m
+[31m+     "mapScannerStrength": 0.5,[39m
+[31m+     "maxHp": 12,[39m
+[31m+     "maxStructure": 9,[39m
+[31m+     "mineCd": 0,[39m
+[31m+     "mixedOreCargo": [],[39m
+[31m+     "moduleCargo": [[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "tu-civilian-cannon",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-tu-civ-cannon",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "tu-civilian-miner",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-tu-civ-miner",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "tu-civilian-salvager",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-tu-civ-salvager",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "tu-tractor",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-tu-tractor",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "tu-civilian-scanner",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-tu-civ-scanner",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "me-ab1",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-me-ab1",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "me-shield",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-me-shield",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "hi-comms",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-hi-comms",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "lo-dcu",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-lo-dcu",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "affixes": [],[39m
+[31m+         "baseId": "lo-battery",[39m
+[31m+         "durability": 100,[39m
+[31m+         "itemLevel": 1,[39m
+[31m+         "maxDurability": 100,[39m
+[31m+         "rarity": "Stock",[39m
+[31m+         "uid": "start-lo-battery",[39m
+[31m+       },[39m
+[31m+     ],[39m
+[31m+     "moduleHp": {[39m
+[31m+       "high": [[39m
+[31m+         null,[39m
+[31m+         null,[39m
+[31m+       ],[39m
+[31m+       "low": [[39m
+[31m+         null,[39m
+[31m+       ],[39m
+[31m+       "med": [[39m
+[31m+         null,[39m
+[31m+       ],[39m
+[31m+       "turret": [],[39m
+[31m+     },[39m
+[31m+     "ore": {[39m
+[31m+       "carbon": 0,[39m
+[31m+       "crystal": 0,[39m
+[31m+       "exotic": 0,[39m
+[31m+       "iron": 0,[39m
+[31m+       "nickel": 0,[39m
+[31m+       "silicate": 0,[39m
+[31m+     },[39m
+[31m+     "pendingHomeSpawn": true,[39m
+[31m+     "pilotName": "Freelancer",[39m
+[31m+     "prevAngle": 0,[39m
+[31m+     "px": 0,[39m
+[31m+     "py": 0,[39m
+[31m+     "refineryStorage": [[39m
+[31m+       {[39m
+[31m+         "capacityM3": 9,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "intake-hopper-a",[39m
+[31m+         "kind": "intake",[39m
+[31m+         "label": "Intake Hopper A",[39m
+[31m+         "notes": "Mixed feed intake",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 14,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "processed-tank-a",[39m
+[31m+         "kind": "processed",[39m
+[31m+         "label": "Process Tank A",[39m
+[31m+         "notes": "Primary processed stock tank",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 14,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "processed-tank-b",[39m
+[31m+         "kind": "processed",[39m
+[31m+         "label": "Process Tank B",[39m
+[31m+         "notes": "Secondary processed stock tank",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 10,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "separated-iron",[39m
+[31m+         "kind": "separated",[39m
+[31m+         "label": "Iron Bin",[39m
+[31m+         "preferredOreKey": "iron",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 10,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "separated-nickel",[39m
+[31m+         "kind": "separated",[39m
+[31m+         "label": "Nickel Bin",[39m
+[31m+         "preferredOreKey": "nickel",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 9,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "separated-carbon",[39m
+[31m+         "kind": "separated",[39m
+[31m+         "label": "Carbon Bin",[39m
+[31m+         "preferredOreKey": "carbon",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 9,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "separated-crystal",[39m
+[31m+         "kind": "separated",[39m
+[31m+         "label": "Crystal Bin",[39m
+[31m+         "preferredOreKey": "crystal",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 9,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "separated-silicate",[39m
+[31m+         "kind": "separated",[39m
+[31m+         "label": "Silicate Bin",[39m
+[31m+         "preferredOreKey": "silicate",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 8,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "separated-exotic",[39m
+[31m+         "kind": "separated",[39m
+[31m+         "label": "Exotic Bin",[39m
+[31m+         "preferredOreKey": "exotic",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 12,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "alloy-reservoir-a",[39m
+[31m+         "kind": "alloy",[39m
+[31m+         "label": "Alloy Reservoir A",[39m
+[31m+         "notes": "Main alloy output",[39m
+[31m+       },[39m
+[31m+       {[39m
+[31m+         "capacityM3": 12,[39m
+[31m+         "entries": [],[39m
+[31m+         "id": "alloy-reservoir-b",[39m
+[31m+         "kind": "alloy",[39m
+[31m+         "label": "Alloy Reservoir B",[39m
+[31m+         "notes": "Secondary alloy output",[39m
+[31m+       },[39m
+[31m+     ],[39m
+[31m+     "scannedSiteIds": [],[39m
+[31m+     "scannerAngle": 0,[39m
+[31m+     "scannerConeDeg": 180,[39m
+[31m+     "shield": 0,[39m
+[31m+     "shieldCd": 0,[39m
+[31m+     "shieldHitAngle": 0,[39m
+[31m+     "shieldHitGlow": 0,[39m
+[31m+     "shipId": "scout",[39m
+[31m+     "shootCd": 0,[39m
+[31m+     "skillXp": {[39m
+[31m+       "ballistics": 0,[39m
+[31m+       "beam_weapons": 0,[39m
+[31m+       "decryption": 0,[39m
+[31m+       "engineering": 0,[39m
+[31m+       "metallurgy": 0,[39m
+[31m+       "mining": 0,[39m
+[31m+       "missile_guidance": 0,[39m
+[31m+       "refining": 0,[39m
+[31m+       "salvage": 0,[39m
+[31m+       "surveying": 0,[39m
+[31m+     },[39m
+[31m+     "skills": {[39m
+[31m+       "ballistics": 0,[39m
+[31m+       "beam_weapons": 0,[39m
+[31m+       "decryption": 0,[39m
+[31m+       "engineering": 0,[39m
+[31m+       "metallurgy": 0,[39m
+[31m+       "mining": 0,[39m
+[31m+       "missile_guidance": 0,[39m
+[31m+       "refining": 0,[39m
+[31m+       "salvage": 0,[39m
+[31m+       "surveying": 0,[39m
+[31m+     },[39m
+[31m+     "slotActive": {[39m
+[31m+       "high": [[39m
+[31m+         true,[39m
+[31m+         true,[39m
+[31m+       ],[39m
+[31m+       "low": [[39m
+[31m+         true,[39m
+[31m+       ],[39m
+[31m+       "med": [[39m
+[31m+         true,[39m
+[31m+       ],[39m
+[31m+       "turret": [],[39m
+[31m+     },[39m
+[31m+     "stationOfferStationId": null,[39m
+[31m+     "stationOffers": [],[39m
+[31m+     "structure": 9,[39m
+[31m+     "sysIdx": 2,[39m
+[31m+     "targetLock": null,[39m
+[31m+     "thrustFx": false,[39m
+[31m+     "tractorCarryKg": 0,[39m
+[31m+     "tractorTightness": 0.5,[39m
+[31m+     "turretCds": [[39m
+[31m+       0,[39m
+[31m+       0,[39m
+[31m+     ],[39m
+[31m+     "turretPower": [[39m
+[31m+       false,[39m
+[31m+       false,[39m
+[31m+     ],[39m
+[31m+     "turretPowerCd": [[39m
+[31m+       0,[39m
+[31m+       0,[39m
+[31m+     ],[39m
+[31m+     "turretTargets": [[39m
+[31m+       null,[39m
+[31m+       null,[39m
+[31m+     ],[39m
+[31m+     "tutorial": {[39m
+[31m+       "active": true,[39m
+[31m+       "completed": false,[39m
+[31m+       "skipped": false,[39m
+[31m+       "step": 0,[39m
+[31m+     },[39m
+[31m+     "va": 0,[39m
+[31m+     "vx": 0,[39m
+[31m+     "vy": 0,[39m
+[31m+     "warpCooldown": 0,[39m
+[31m+     "warpTargetIdx": -1,[39m
+[31m+     "x": 0,[39m
+[31m+     "xp": 0,[39m
+[31m+     "y": 0,[39m
+[31m+   },[39m
+[31m+ ][39m
+
+[36m [2m❯[22m tests/commands-authority.test.ts:[2m46:32[22m[39m
+    [90m 44|[39m     [33mG[39m[33m.[39mplayers [33m=[39m [35mnew[39m [33mMap[39m()[33m;[39m
+    [90m 45|[39m
+    [90m 46|[39m     [34mexpect[39m([34mallActivePlayers[39m())[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m   |[39m                                [31m^[39m
+    [90m 47|[39m     [34mexpect[39m([34mactiveSystemIndices[39m())[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m 48|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/commands-authority.test.ts[2m > [22mauthoritative command validation[2m > [22mstarts and completes warp from an authoritative gate crossing
+[31m[1mAssertionError[22m: expected -1 to be 1 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ -1[39m
+
+[36m [2m❯[22m tests/commands-authority.test.ts:[2m72:29[22m[39m
+    [90m 70|[39m
+    [90m 71|[39m     executeGameCommand({ type: "warp", payload: { targetIdx: gate.targ…
+    [90m 72|[39m     [34mexpect[39m(p[33m.[39mwarpTargetIdx)[33m.[39m[34mtoBe[39m(gate[33m.[39mtargetSysIdx)[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m 73|[39m     [34mexpect[39m(p[33m.[39mwarpCooldown)[33m.[39m[34mtoBeGreaterThan[39m([34m0[39m)[33m;[39m
+    [90m 74|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22memits inventory:grid-swap on drop over another item
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ { containerId: 'shipCargo', …(2) } ][90m
+
+Number of calls: [1m0[22m
+[31m[39m
+[36m [2m❯[22m tests/drag-drop.test.ts:[2m129:23[22m[39m
+    [90m127|[39m       [34mdispatchPointerEvent[39m(cellB[33m,[39m [32m"pointerup"[39m[33m,[39m [34m150[39m[33m,[39m [34m50[39m)[33m;[39m
+    [90m128|[39m
+    [90m129|[39m       [34mexpect[39m(handler)[33m.[39m[34mtoHaveBeenCalledWith[39m({
+    [90m   |[39m                       [31m^[39m
+    [90m130|[39m         containerId[33m:[39m [32m"shipCargo"[39m[33m,[39m
+    [90m131|[39m         fromSlot[33m:[39m [34m0[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/drag-drop.test.ts[2m > [22mdrag-drop[2m > [22mattachDragDropHandlers[2m > [22memits inventory:grid-insert on drop in a gap
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[31m[39m
+[36m [2m❯[22m tests/drag-drop.test.ts:[2m173:23[22m[39m
+    [90m171|[39m       }))[33m;[39m
+    [90m172|[39m
+    [90m173|[39m       [34mexpect[39m(handler)[33m.[39m[34mtoHaveBeenCalledWith[39m(expect[33m.[39m[34mobjectContaining[39m({
+    [90m   |[39m                       [31m^[39m
+    [90m174|[39m         containerId[33m:[39m [32m"shipCargo"[39m[33m,[39m
+    [90m175|[39m         fromSlot[33m:[39m [34m0[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/station-industry.test.ts[2m > [22mstation refining panel[2m > [22muses the compact refinery header and rail instead of the old top manifest
+[31m[1mAssertionError[22m: expected '\n    \n      \n    \n      \n       …' not to contain 'Cargo Material Manifest'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- Cargo Material Manifest[39m
+[31m+[39m
+[31m+     [39m
+[31m+       [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         Station Refining[39m
+[31m+         [39m
+[31m+           Process[39m
+[31m+           [39m
+[31m+             0 ore[39m
+[31m+             0.00 m³ refinery[39m
+[31m+             0 jobs[39m
+[31m+           [39m
+[31m+         [39m
+[31m+         Turn ore from cargo into stock.[39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+       [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           Process[39m
+[31m+         [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           Separate[39m
+[31m+         [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           Alloy[39m
+[31m+         [39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+       [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         Cargo Material Manifest[39m
+[31m+         Bulk stock already transferred into ship cargo.[39m
+[31m+       [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           [39m
+[31m+             [39m
+[31m+               Ferro-nickel stock[39m
+[31m+               1.20 m³[39m
+[31m+             [39m
+[31m+             Structural frames[39m
+[31m+             9,780 kg[39m
+[31m+           [39m
+[31m+         [39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+       [39m
+[31m+         [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         Ore In[39m
+[31m+         Turn ore into stock.[39m
+[31m+       [39m
+[31m+       [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         [39m
+[31m+         [39m
+[31m+           [39m
+[31m+             Input[39m
+[31m+             Pick ore and start.[39m
+[31m+           [39m
+[31m+         [39m
+[31m+         [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         Selected ore[39m
+[31m+         No ore selected[39m
+[31m+         Mine or transfer mixed ore to begin.[39m
+[31m+       [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           [39m
+[31m+             Route[39m
+[31m+             Cargo -> Stock[39m
+[31m+           [39m
+[31m+         [39m
+[31m+           [39m
+[31m+             Sources[39m
+[31m+             0[39m
+[31m+           [39m
+[31m+         [39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+         [39m
+[31m+           No mixed ore cargo available for processing.[39m
+[31m+         [39m
+[31m+       [39m
+[31m+       [39m
+[31m+       [39m
+[31m+         [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         Ore0in cargo[39m
+[31m+         Stock0.00 m³mixed[39m
+[31m+         Streams0.00 m³split[39m
+[31m+         Alloy0.00 m³ready[39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+         [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         [39m
+[31m+             [39m
+[31m+               [39m
+[31m+                 Intake[39m
+[31m+                 0.00 m³[39m
+[31m+               [39m
+[31m+               [39m
+[31m+                 [39m
+[31m+               [39m
+[31m+               [39m
+[31m+             [39m
+[31m+           [39m
+[31m+             [39m
+[31m+               [39m
+[31m+                 Processed[39m
+[31m+                 0.00 m³[39m
+[31m+               [39m
+[31m+               [39m
+[31m+                 [39m
+[31m+               [39m
+[31m+               [39m
+[31m+             [39m
+[31m+           [39m
+[31m+             [39m
+[31m+               [39m
+[31m+                 Separated[39m
+[31m+                 0.00 m³[39m
+[31m+               [39m
+[31m+               [39m
+[31m+                 [39m
+[31m+               [39m
+[31m+               [39m
+[31m+             [39m
+[31m+           [39m
+[31m+             [39m
+[31m+               [39m
+[31m+                 Alloy[39m
+[31m+                 0.00 m³[39m
+[31m+               [39m
+[31m+               [39m
+[31m+                 [39m
+[31m+               [39m
+[31m+               [39m
+[31m+             [39m
+[31m+           [39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+     [39m
+[31m+   [39m
+[31m+         [39m
+[31m+     [39m
+[31m+       [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           Hold[39m
+[31m+         [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           Dossier[39m
+[31m+         [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           Queue[39m
+[31m+         [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           Output[39m
+[31m+         [39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+       [39m
+[31m+         [39m
+[31m+       [39m
+[31m+         Queue[39m
+[31m+         No refinery jobs running.[39m
+[31m+       [39m
+[31m+     [39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+       [39m
+[31m+       [39m
+[31m+     [39m
+[31m+       [39m
+[31m+         [39m
+[31m+       [39m
+[31m+         Queue[39m
+[31m+         No refinery jobs running.[39m
+[31m+       [39m
+[31m+     [39m
+[31m+       [39m
+[31m+       [39m
+[31m+         [39m
+[31m+           [39m
+[31m+             ⏳[39m
+[31m+             [39m
+[31m+           [39m
+[31m+         [39m
+[31m+           [39m
+[31m+             📦[39m
+[31m+             [39m
+[31m+           [39m
+[31m+         [39m
+[31m+           [39m
+[31m+             📖[39m
+[31m+             [39m
+[31m+           [39m
+[31m+         [39m
+[31m+       [39m
+[31m+     [39m
+[31m+   [39m
+[31m+     [39m
+[31m+   [39m
+
+[36m [2m❯[22m tests/station-industry.test.ts:[2m222:36[22m[39m
+    [90m220|[39m     [34mexpect[39m(panel[33m?.[39mtextContent)[33m.[39m[34mtoContain[39m([32m"Separated"[39m)[33m;[39m
+    [90m221|[39m     [34mexpect[39m(panel[33m?.[39mtextContent)[33m.[39m[34mtoContain[39m([32m"Queue"[39m)[33m;[39m
+    [90m222|[39m     expect(panel?.textContent).not.toContain("Cargo Material Manifest"…
+    [90m   |[39m                                    [31m^[39m
+    [90m223|[39m   })[33m;[39m
+    [90m224|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22marms graduation warp after flying through the gate
+[31m[1mAssertionError[22m: expected -1 to be 1 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ -1[39m
+
+[36m [2m❯[22m tests/tutorial.test.ts:[2m459:31[22m[39m
+    [90m457|[39m
+    [90m458|[39m     executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx …
+    [90m459|[39m     [34mexpect[39m([33mG[39m[33m.[39m[33mP[39m[33m.[39mwarpTargetIdx)[33m.[39m[34mtoBe[39m(primeIdx)[33m;[39m
+    [90m   |[39m                               [31m^[39m
+    [90m460|[39m     [34mexpect[39m([33mG[39m[33m.[39m[33mP[39m[33m.[39mwarpCooldown)[33m.[39m[34mtoBeGreaterThan[39m([34m0[39m)[33m;[39m
+    [90m461|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/tutorial.test.ts[2m > [22mtutorial exit gate[2m > [22mgraduates after using the final one-way gate to Novus Prime
+[31m[1mAssertionError[22m: expected -1 to be 1 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ -1[39m
+
+[36m [2m❯[22m tests/tutorial.test.ts:[2m472:31[22m[39m
+    [90m470|[39m
+    [90m471|[39m     executeGameCommand({ type: "warp", payload: { targetIdx: primeIdx …
+    [90m472|[39m     [34mexpect[39m([33mG[39m[33m.[39m[33mP[39m[33m.[39mwarpTargetIdx)[33m.[39m[34mtoBe[39m(primeIdx)[33m;[39m
+    [90m   |[39m                               [31m^[39m
+    [90m473|[39m
+    [90m474|[39m     [34mupdateWarp[39m([34m999[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/tutorial.test.ts[2m > [22mstation tutorial spotlight[2m > [22mcuts the station dimmer around the highlighted hangar target
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/tutorial.test.ts:[2m593:68[22m[39m
+    [90m591|[39m     const segments = Array.from(dimmer.querySelectorAll<HTMLElement>("…
+    [90m592|[39m     [34mexpect[39m(segments)[33m.[39m[34mtoHaveLength[39m([34m4[39m)[33m;[39m
+    [90m593|[39m     expect(target.classList.contains("tutorial-hangar-highlight")).toB…
+    [90m   |[39m                                                                    [31m^[39m
+    [90m594|[39m     [34mexpect[39m(segments[[34m0[39m][33m.[39mstyle[33m.[39mheight)[33m.[39m[34mtoBe[39m([32m"112px"[39m)[33m;[39m
+    [90m595|[39m     [34mexpect[39m(segments[[34m1[39m][33m.[39mstyle[33m.[39mtop)[33m.[39m[34mtoBe[39m([32m"228px"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/tutorial.test.ts[2m > [22mstation tutorial spotlight[2m > [22mresyncs the hangar highlight after deferred station-open tutorial setup
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/tutorial.test.ts:[2m626:70[22m[39m
+    [90m624|[39m       [34mexpect[39m(snapshot[33m.[39mhangarReviewPhase)[33m.[39m[34mtoBe[39m([34m0[39m)[33m;[39m
+    [90m625|[39m       [34mexpect[39m(events[33m.[39mlength)[33m.[39m[34mtoBeGreaterThan[39m([34m0[39m)[33m;[39m
+    [90m626|[39m       expect(target.classList.contains("tutorial-hangar-highlight")).t…
+    [90m   |[39m                                                                      [31m^[39m
+    [90m627|[39m     } [35mfinally[39m {
+    [90m628|[39m       [34moff[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/tutorial.test.ts[2m > [22mstation tutorial spotlight[2m > [22mrestores the current hangar target highlight after station tab changes
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/tutorial.test.ts:[2m637:68[22m[39m
+    [90m635|[39m
+    [90m636|[39m     [34msyncTutorialVisuals[39m({ hangarReviewPhase[33m:[39m [34m0[39m })[33m;[39m
+    [90m637|[39m     expect(target.classList.contains("tutorial-hangar-highlight")).toB…
+    [90m   |[39m                                                                    [31m^[39m
+    [90m638|[39m
+    [90m639|[39m     [34mactivateStationTab[39m([32m"market"[39m[33m,[39m root)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Errors [49m[22m[31m⎯⎯⎯⎯⎯⎯[39m
+[31m[1m
+Vitest caught 5 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.[22m[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'getBoundingClientRect')[39m
+[36m [2m❯[22m computeVisualIndex src/ui/inventory/drag-drop.ts:[2m47:29[22m[39m
+    [90m 45|[39m   [35mconst[39m cellH [33m=[39m firstCell[33m.[39moffsetHeight[33m;[39m
+    [90m 46|[39m   [35mconst[39m gridWrap [33m=[39m pane[33m.[39m[34mquerySelector[39m([32m".inv-grid-wrap"[39m) [35mas[39m [33mHTMLElement[39m[33m;[39m
+    [90m 47|[39m   [35mconst[39m gridRect [33m=[39m gridWrap[33m.[39m[34mgetBoundingClientRect[39m()[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m 48|[39m   [35mconst[39m gap [33m=[39m [34m4[39m[33m;[39m
+    [90m 49|[39m   [35mconst[39m padding [33m=[39m [34m4[39m[33m;[39m
+[90m [2m❯[22m src/ui/inventory/drag-drop.ts:[2m137:23[22m[39m
+[90m [2m❯[22m callTheUserObjectsOperation node_modules/jsdom/lib/generated/idl/EventListener.js:[2m26:30[22m[39m
+[90m [2m❯[22m innerInvokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m360:16[22m[39m
+[90m [2m❯[22m invokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m296:3[22m[39m
+[90m [2m❯[22m HTMLDivElementImpl._dispatch node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m243:9[22m[39m
+[90m [2m❯[22m HTMLDivElementImpl.dispatchEvent node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m114:17[22m[39m
+[90m [2m❯[22m HTMLDivElement.dispatchEvent node_modules/jsdom/lib/generated/idl/EventTarget.js:[2m241:34[22m[39m
+[90m [2m❯[22m dispatchPointerEvent tests/drag-drop.test.ts:[2m48:12[22m[39m
+[90m [2m❯[22m tests/drag-drop.test.ts:[2m127:7[22m[39m
+
+[31mThis error originated in "[1mtests/drag-drop.test.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1memits inventory:grid-swap on drop over another item[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'getBoundingClientRect')[39m
+[36m [2m❯[22m computeVisualIndex src/ui/inventory/drag-drop.ts:[2m47:29[22m[39m
+    [90m 45|[39m   [35mconst[39m cellH [33m=[39m firstCell[33m.[39moffsetHeight[33m;[39m
+    [90m 46|[39m   [35mconst[39m gridWrap [33m=[39m pane[33m.[39m[34mquerySelector[39m([32m".inv-grid-wrap"[39m) [35mas[39m [33mHTMLElement[39m[33m;[39m
+    [90m 47|[39m   [35mconst[39m gridRect [33m=[39m gridWrap[33m.[39m[34mgetBoundingClientRect[39m()[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m 48|[39m   [35mconst[39m gap [33m=[39m [34m4[39m[33m;[39m
+    [90m 49|[39m   [35mconst[39m padding [33m=[39m [34m4[39m[33m;[39m
+[90m [2m❯[22m src/ui/inventory/drag-drop.ts:[2m137:23[22m[39m
+[90m [2m❯[22m callTheUserObjectsOperation node_modules/jsdom/lib/generated/idl/EventListener.js:[2m26:30[22m[39m
+[90m [2m❯[22m innerInvokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m360:16[22m[39m
+[90m [2m❯[22m invokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m296:3[22m[39m
+[90m [2m❯[22m EventTargetImpl._dispatch node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m243:9[22m[39m
+[90m [2m❯[22m EventTargetImpl.dispatchEvent node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m114:17[22m[39m
+[90m [2m❯[22m dispatchEvent node_modules/jsdom/lib/generated/idl/EventTarget.js:[2m241:34[22m[39m
+[90m [2m❯[22m dispatchPointerEvent tests/drag-drop.test.ts:[2m51:14[22m[39m
+[90m [2m❯[22m tests/drag-drop.test.ts:[2m127:7[22m[39m
+
+[31mThis error originated in "[1mtests/drag-drop.test.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1memits inventory:grid-swap on drop over another item[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'getBoundingClientRect')[39m
+[36m [2m❯[22m computeVisualIndex src/ui/inventory/drag-drop.ts:[2m47:29[22m[39m
+    [90m 45|[39m   [35mconst[39m cellH [33m=[39m firstCell[33m.[39moffsetHeight[33m;[39m
+    [90m 46|[39m   [35mconst[39m gridWrap [33m=[39m pane[33m.[39m[34mquerySelector[39m([32m".inv-grid-wrap"[39m) [35mas[39m [33mHTMLElement[39m[33m;[39m
+    [90m 47|[39m   [35mconst[39m gridRect [33m=[39m gridWrap[33m.[39m[34mgetBoundingClientRect[39m()[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m 48|[39m   [35mconst[39m gap [33m=[39m [34m4[39m[33m;[39m
+    [90m 49|[39m   [35mconst[39m padding [33m=[39m [34m4[39m[33m;[39m
+[90m [2m❯[22m src/ui/inventory/drag-drop.ts:[2m137:23[22m[39m
+[90m [2m❯[22m callTheUserObjectsOperation node_modules/jsdom/lib/generated/idl/EventListener.js:[2m26:30[22m[39m
+[90m [2m❯[22m innerInvokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m360:16[22m[39m
+[90m [2m❯[22m invokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m296:3[22m[39m
+[90m [2m❯[22m HTMLDivElementImpl._dispatch node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m243:9[22m[39m
+[90m [2m❯[22m HTMLDivElementImpl.dispatchEvent node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m114:17[22m[39m
+[90m [2m❯[22m HTMLDivElement.dispatchEvent node_modules/jsdom/lib/generated/idl/EventTarget.js:[2m241:34[22m[39m
+[90m [2m❯[22m dispatchPointerEvent tests/drag-drop.test.ts:[2m48:12[22m[39m
+[90m [2m❯[22m tests/drag-drop.test.ts:[2m147:7[22m[39m
+
+[31mThis error originated in "[1mtests/drag-drop.test.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1mdoes not emit inventory:grid-swap on drop to same slot[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'getBoundingClientRect')[39m
+[36m [2m❯[22m computeVisualIndex src/ui/inventory/drag-drop.ts:[2m47:29[22m[39m
+    [90m 45|[39m   [35mconst[39m cellH [33m=[39m firstCell[33m.[39moffsetHeight[33m;[39m
+    [90m 46|[39m   [35mconst[39m gridWrap [33m=[39m pane[33m.[39m[34mquerySelector[39m([32m".inv-grid-wrap"[39m) [35mas[39m [33mHTMLElement[39m[33m;[39m
+    [90m 47|[39m   [35mconst[39m gridRect [33m=[39m gridWrap[33m.[39m[34mgetBoundingClientRect[39m()[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m 48|[39m   [35mconst[39m gap [33m=[39m [34m4[39m[33m;[39m
+    [90m 49|[39m   [35mconst[39m padding [33m=[39m [34m4[39m[33m;[39m
+[90m [2m❯[22m src/ui/inventory/drag-drop.ts:[2m137:23[22m[39m
+[90m [2m❯[22m callTheUserObjectsOperation node_modules/jsdom/lib/generated/idl/EventListener.js:[2m26:30[22m[39m
+[90m [2m❯[22m innerInvokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m360:16[22m[39m
+[90m [2m❯[22m invokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m296:3[22m[39m
+[90m [2m❯[22m EventTargetImpl._dispatch node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m243:9[22m[39m
+[90m [2m❯[22m EventTargetImpl.dispatchEvent node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m114:17[22m[39m
+[90m [2m❯[22m dispatchEvent node_modules/jsdom/lib/generated/idl/EventTarget.js:[2m241:34[22m[39m
+[90m [2m❯[22m dispatchPointerEvent tests/drag-drop.test.ts:[2m51:14[22m[39m
+[90m [2m❯[22m tests/drag-drop.test.ts:[2m147:7[22m[39m
+
+[31mThis error originated in "[1mtests/drag-drop.test.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1mdoes not emit inventory:grid-swap on drop to same slot[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'getBoundingClientRect')[39m
+[36m [2m❯[22m computeVisualIndex src/ui/inventory/drag-drop.ts:[2m47:29[22m[39m
+    [90m 45|[39m   [35mconst[39m cellH [33m=[39m firstCell[33m.[39moffsetHeight[33m;[39m
+    [90m 46|[39m   [35mconst[39m gridWrap [33m=[39m pane[33m.[39m[34mquerySelector[39m([32m".inv-grid-wrap"[39m) [35mas[39m [33mHTMLElement[39m[33m;[39m
+    [90m 47|[39m   [35mconst[39m gridRect [33m=[39m gridWrap[33m.[39m[34mgetBoundingClientRect[39m()[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m 48|[39m   [35mconst[39m gap [33m=[39m [34m4[39m[33m;[39m
+    [90m 49|[39m   [35mconst[39m padding [33m=[39m [34m4[39m[33m;[39m
+[90m [2m❯[22m src/ui/inventory/drag-drop.ts:[2m137:23[22m[39m
+[90m [2m❯[22m callTheUserObjectsOperation node_modules/jsdom/lib/generated/idl/EventListener.js:[2m26:30[22m[39m
+[90m [2m❯[22m innerInvokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m360:16[22m[39m
+[90m [2m❯[22m invokeEventListeners node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m296:3[22m[39m
+[90m [2m❯[22m EventTargetImpl._dispatch node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m243:9[22m[39m
+[90m [2m❯[22m EventTargetImpl.dispatchEvent node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:[2m114:17[22m[39m
+[90m [2m❯[22m dispatchEvent node_modules/jsdom/lib/generated/idl/EventTarget.js:[2m241:34[22m[39m
+[90m [2m❯[22m tests/drag-drop.test.ts:[2m164:14[22m[39m
+[90m [2m❯[22m node_modules/@vitest/runner/dist/chunk-artifact.js:[2m302:11[22m[39m
+
+[31mThis error originated in "[1mtests/drag-drop.test.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1memits inventory:grid-insert on drop in a gap[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+
+[2m Test Files [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m56 passed[39m[22m[90m (60)[39m
+[2m      Tests [22m [1m[31m10 failed[39m[22m[2m | [22m[1m[32m366 passed[39m[22m[90m (376)[39m
+[2m     Errors [22m [1m[31m5 errors[39m[22m
+[2m   Start at [22m 11:47:59
+[2m   Duration [22m 13.49s[2m (transform 49.90s, setup 7.65s, import 91.46s, tests 8.60s, environment 40.80s)[22m
+

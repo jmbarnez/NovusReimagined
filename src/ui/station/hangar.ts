@@ -12,6 +12,7 @@ import { getInstance } from "../../utils/items.js";
 import { ModuleInstance } from "../../types/moduleInstance.js";
 import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { moduleFitsShipRack } from "../../utils/hardpoints.js";
+import { getElement, setHtml } from "../dom-helpers.js";
 
 export function buildStatHtml(st: ComputedStats, pst: ComputedStats | null): string {
   const getValue = (obj: unknown, k: string): unknown => k.split('.').reduce((o: unknown, i: string) => (o as Record<string, unknown>)?.[i], obj);
@@ -49,17 +50,17 @@ export function buildStatHtml(st: ComputedStats, pst: ComputedStats | null): str
 }
 
 export function updateStatsGrid() {
-  const grid = document.getElementById("hangar-stats-grid");
+  const grid = getElement("hangar-stats-grid");
   if (!grid) return;
   const st = getStats();
   const pst = stationState.previewFitting ? computeStats(stationState.previewFitting) : null;
-  grid.innerHTML = buildStatHtml(st, pst);
+  setHtml(grid, buildStatHtml(st, pst));
   const pgOv = st.usedPG > st.totalPG, cpuOv = st.usedCPU > st.totalCPU;
-  const warn = document.getElementById("hangar-stats-warn");
-  if (warn) warn.innerHTML =
+  const warn = getElement("hangar-stats-warn");
+  if (warn) setHtml(warn,
     (pgOv ? `<div class="al">⚠ Powergrid overloaded! Stats penalized.</div>` : "") +
     (cpuOv ? `<div class="al">⚠ CPU overloaded! Active modules disabled.</div>` : "") +
-    `<span>Hover slots to preview changes.</span>`;
+    `<span>Hover slots to preview changes.</span>`);
 }
 
 export function setPreview(rack: Rack, idx: number, instanceId: string | null) {
@@ -106,7 +107,7 @@ function renderSlot(rack: Rack, i: number, instanceId: string | null): string {
     const affixStr = fmtAffixesShort(instance.affixes);
     const rarityCfg = RARITY_CONFIG[instance.rarity];
 
-    return `<div class="slot filled minimal" data-rack="${rack}" data-idx="${i}" data-instance="${instance.uid}" style="border-left: 3px solid ${rarityCfg.color}">
+    return `<div class="slot filled minimal" id="hangar-slot-${rack}-${i}" data-rack="${rack}" data-idx="${i}" data-instance="${instance.uid}" style="border-left: 3px solid ${rarityCfg.color}">
       <div class="slot-main">
         <div class="slot-info">
           <div class="slot-title">
@@ -130,7 +131,7 @@ function renderSlot(rack: Rack, i: number, instanceId: string | null): string {
     </div>`;
   }
 
-  return `<div class="slot minimal" data-rack="${rack}" data-idx="${i}">
+  return `<div class="slot minimal" id="hangar-slot-${rack}-${i}" data-rack="${rack}" data-idx="${i}">
     <div class="slot-main">
       <div class="slot-info">
         <span class="stag">[EMPTY ${rack.toUpperCase()}]</span>
@@ -149,7 +150,7 @@ function renderSlot(rack: Rack, i: number, instanceId: string | null): string {
 }
 
 export function renderHangar() {
-  const div = document.getElementById("panel-hangar");
+  const div = getElement("panel-hangar");
   if (!div) return;
   const st = getStats();
   const pst = stationState.previewFitting ? computeStats(stationState.previewFitting) : null;
@@ -205,7 +206,7 @@ export function renderHangar() {
       <div class="ct-mini-list">${activeRows}</div>
     </aside>`;
 
-  div.innerHTML = `
+  setHtml(div, `
   <h3>Ship Status</h3>
   <div class="row"><span class="lbl">Active Ship</span><span class="val" style="font-weight:600">${ship.name}</span><span class="stag">${ship.role}</span></div>
   <div class="row"><span class="lbl">Hull / Structure / Shield</span><span class="val">${Math.round(getState().player.hp)}/${st.maxHp} · ${Math.round(getState().player.structure)}/${st.maxStructure} · ${Math.round(getState().player.shield)}/${st.maxShield}</span></div>
@@ -234,5 +235,5 @@ export function renderHangar() {
       <h3>Cargo</h3>
       <div id="hangar-pane-cargo"></div>
     </main>
-  </div>`;
+  </div>`);
 }

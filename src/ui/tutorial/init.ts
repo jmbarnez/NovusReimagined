@@ -12,17 +12,17 @@ import { t } from "../../utils/i18n.js";
 import { tutorialState } from "./state.js";
 import { renderStep } from "./render.js";
 import { hideTutorialOverlay, showCompleteBanner } from "./lifecycle.js";
-import { createElement, append, onClick, onKeydown } from "../dom-helpers.js";
+import { getElement, createElement, append, setHtml, onClick, onKeydown } from "../dom-helpers.js";
 
 export function initTutorialOverlay(active: boolean) {
   tutorialState.visible = active;
   if (!tutorialState.layerEl) {
-    tutorialState.layerEl = document.getElementById("world-tutorial-layer");
+    tutorialState.layerEl = getElement("world-tutorial-layer");
     if (!tutorialState.layerEl) return;
 
     tutorialState.root = createElement("div");
     tutorialState.root.id = "hud-tutorial";
-    tutorialState.root.innerHTML = `
+    setHtml(tutorialState.root, `
       <div class="tutorial-card">
         <div class="tutorial-header">
           <span class="tutorial-counter"></span>
@@ -57,7 +57,7 @@ export function initTutorialOverlay(active: boolean) {
           <div class="tutorial-complete-sub">${t("tutorial.welcomeSub")}</div>
         </div>
       </div>
-    `;
+    `);
     append(tutorialState.layerEl, tutorialState.root);
 
     tutorialState.cardEl = tutorialState.root.querySelector(".tutorial-card");

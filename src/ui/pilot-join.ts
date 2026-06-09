@@ -9,6 +9,7 @@ import { appendLogEntry } from "./hud/logs.js";
 import { runPilotConnection } from "./pilot-connecting.js";
 import { showPilotProfileScreen } from "./pilot-profile.js";
 import { t } from "../utils/i18n.js";
+import { setHtml, onClick } from "./dom-helpers.js";
 import {
   discoverLanSessions,
   stopSessionDiscovery,
@@ -112,13 +113,13 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
       );
     }
     if (rows.length === 0) {
-      listEl.innerHTML = `<div class="pilot-session-empty">${t("pilotTerminal.noRelaysFound")}</div>`;
+      setHtml(listEl, `<div class="pilot-session-empty">${t("pilotTerminal.noRelaysFound")}</div>`);
     } else {
-      listEl.innerHTML = rows.join("");
+      setHtml(listEl, rows.join(""));
     }
 
     listEl.querySelectorAll("[data-addr]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      onClick(btn, () => {
         sfxBlip();
         selectedAddress = (btn as HTMLElement).dataset.addr ?? selectedAddress;
         addrInput.value = selectedAddress;
@@ -135,7 +136,7 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
     scanBtn.disabled = true;
     terminal.setStatus(t("pilotTerminal.scanningLocalNet"));
     appendLogEntry(t("pilotTerminal.scanningSubnet"), "net");
-    listEl.innerHTML = `<div class="pilot-session-empty">${t("pilotTerminal.scanning")}</div>`;
+    setHtml(listEl, `<div class="pilot-session-empty">${t("pilotTerminal.scanning")}</div>`);
 
     const discovered: DiscoveredSession[] = [];
     await discoverLanSessions((batch) => {
@@ -163,18 +164,18 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
     options.onClose();
   };
 
-  backBtn.addEventListener("click", () => {
+  onClick(backBtn, () => {
     sfxBlip();
     close();
     options.onBack?.();
   });
 
-  scanBtn.addEventListener("click", () => {
+  onClick(scanBtn, () => {
     sfxBlip();
     void runScan();
   });
 
-  connectBtn.addEventListener("click", () => {
+  onClick(connectBtn, () => {
     sfxConfirm();
     if (!hasPilot) {
       stopSessionDiscovery();
@@ -227,6 +228,6 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
   if (options.autoScan) {
     void runScan();
   } else {
-    listEl.innerHTML = `<div class="pilot-session-empty">${t("pilotTerminal.pressScanOrEnter")}</div>`;
+    setHtml(listEl, `<div class="pilot-session-empty">${t("pilotTerminal.pressScanOrEnter")}</div>`);
   }
 }

@@ -6,6 +6,7 @@ import { t } from "../../utils/i18n.js";
 import { openHudWindow, isOpen, closeHudWindow, getHudWindow } from "../hud/windows.js";
 import { app } from "../../pixi.js";
 import { pixiMapState } from "../../render/pixi-maps/state.js";
+import { getElement, createElement, setHtml, setStyle } from "../dom-helpers.js";
 
 export function closeMapWindow() {
   Client.showMap = false;
@@ -18,13 +19,9 @@ export function toggleMapWindow() {
   } else {
     // Create DOM content for window body
     const sys = getState().player ? curSys() : null;
-    const contentEl = document.createElement("div");
+    const contentEl = createElement("div", "map-overlay");
     contentEl.id = "map-overlay";
-    contentEl.className = "map-overlay";
-    contentEl.style.position = "relative";
-    contentEl.style.width = "100%";
-    contentEl.style.height = "100%";
-    contentEl.style.overflow = "hidden";
+    setStyle(contentEl, { position: "relative", width: "100%", height: "100%", overflow: "hidden" });
     
     if (sys) {
       updateMapOverlayDOM(sys, contentEl);
@@ -43,13 +40,7 @@ export function toggleMapWindow() {
     // Set default window size and center it
     const win = getHudWindow("map");
     if (win) {
-      win.style.width = "800px";
-      win.style.height = "600px";
-      const centerX = (window.innerWidth - 800) / 2;
-      const centerY = (window.innerHeight - 600) / 2;
-      win.style.left = `${centerX}px`;
-      win.style.top = `${centerY}px`;
-      win.style.right = "auto";
+      setStyle(win, { width: "800px", height: "600px", left: `${(window.innerWidth - 800) / 2}px`, top: `${(window.innerHeight - 600) / 2}px`, right: "auto" });
     }
     
     // Position PixiJS container to match window
@@ -69,7 +60,7 @@ function curSys() {
 }
 
 export function updateMapOverlayDOM(sys: System, targetEl?: HTMLElement) {
-  const overlayEl = targetEl ?? document.getElementById("map-overlay");
+  const overlayEl = targetEl ?? getElement("map-overlay");
   if (!overlayEl || !sys) return;
 
   const hasStations = sys.stations.length > 0;
@@ -143,6 +134,6 @@ export function updateMapOverlayDOM(sys: System, targetEl?: HTMLElement) {
   `;
 
   if (overlayEl.innerHTML !== headerHtml) {
-    overlayEl.innerHTML = headerHtml;
+    setHtml(overlayEl, headerHtml);
   }
 }

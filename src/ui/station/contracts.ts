@@ -3,9 +3,10 @@ import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
 import { escHtml } from "../../utils/format.js";
 import { stationState, MAX_ACTIVE_CONTRACTS, CONTRACT_TYPE_ICONS } from "./shared.js";
+import { getElement, setHtml } from "../dom-helpers.js";
 
 export function renderContracts() {
-  const div = document.getElementById("panel-contracts");
+  const div = getElement("panel-contracts");
   if (!div) return;
 
   const active = getState().player.contracts.filter(c => c.status === "active" || c.status === "complete");
@@ -58,10 +59,10 @@ export function renderContracts() {
       </div>`;
   }).join("");
 
-  div.innerHTML = `
+  setHtml(div, `
     <div class="ct-section-head">Active Contracts <span class="ct-cap">${activeCount} / ${MAX_ACTIVE_CONTRACTS}</span></div>
     ${active.length ? activeRows : `<div class="ct-empty">No active contracts.</div>`}
     <div class="ct-section-head">Available</div>
     ${stationState._stationContracts.length ? availableRows : `<div class="ct-empty">No contracts available.</div>`}
-  `;
+  `);
 }

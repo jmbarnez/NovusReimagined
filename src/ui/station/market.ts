@@ -5,9 +5,10 @@ import { ORE, LOOT } from "../../data/resources.js";
 import { ORE_MARKET_BUY, COMPONENT_MARKET_BUY } from "../../data/marketCatalog.js";
 import { escHtml } from "../../utils/format.js";
 import { stationState, fmtModBonuses, iconSvg } from "./shared.js";
+import { getElement, setHtml } from "../dom-helpers.js";
 
 export function renderMarket() {
-  const div = document.getElementById("panel-market");
+  const div = getElement("panel-market");
   if (!div) return;
   const q = stationState.mktSearch.trim().toLowerCase();
 
@@ -96,5 +97,5 @@ export function renderMarket() {
   </div>`;
 
   const content = stationState.mktTab === "modules" ? modRows : stationState.mktTab === "ammo" ? ammoRows : resRows;
-  div.innerHTML = controls + `<div class="mkt-list">${content}</div>`;
+  setHtml(div, controls + `<div class="mkt-list">${content}</div>`);
 }

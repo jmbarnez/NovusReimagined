@@ -11,6 +11,7 @@ import { runPilotConnection } from "./pilot-connecting.js";
 import { isTauriApp } from "../utils/app-exit.js";
 import { netLog } from "./net-console.js";
 import { t } from "../utils/i18n.js";
+import { onClick } from "./dom-helpers.js";
 
 interface PilotHostScreenOptions {
   mount?: HTMLElement;
@@ -78,12 +79,12 @@ export function showPilotHostScreen(onClose: () => void, options: PilotHostScree
     onClose();
   };
 
-  closeBtn.addEventListener("click", () => {
+  onClick(closeBtn, () => {
     sfxBlip();
     close();
   });
 
-  copyBtn?.addEventListener("click", async () => {
+  if (copyBtn) onClick(copyBtn, async () => {
     sfxBlip();
     try {
       await navigator.clipboard.writeText(listenAddr);
@@ -93,7 +94,7 @@ export function showPilotHostScreen(onClose: () => void, options: PilotHostScree
     }
   });
 
-  startBtn?.addEventListener("click", () => {
+  if (startBtn) onClick(startBtn, () => {
     if (!hasPilot) return;
     sfxConfirm();
     terminal.remove();

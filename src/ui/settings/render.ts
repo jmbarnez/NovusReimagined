@@ -20,63 +20,64 @@ import { refreshTargetArrowFonts } from "../../render/pixi-target-arrows.js";
 import { refreshTutorialGateFonts } from "../../render/pixi-tutorial-gates.js";
 import { refreshWarpScreenFonts } from "../../render/pixi-warp-screen.js";
 import { refreshEffectsOverlayFonts } from "../../render/pixi-effects-overlay.js";
+import { getElement, setHtml, setText, onClick } from "../dom-helpers.js";
 
 export function renderSettings() {
   const settings = Client.settings;
   if (!settings) return;
 
-  const sfxSlider = document.getElementById("sfx-volume") as HTMLInputElement | null;
+  const sfxSlider = getElement("sfx-volume") as HTMLInputElement | null;
   if (sfxSlider) sfxSlider.value = String(settings.sfxVolume ?? 1.0);
-  const musicSlider = document.getElementById("music-volume") as HTMLInputElement | null;
+  const musicSlider = getElement("music-volume") as HTMLInputElement | null;
   if (musicSlider) musicSlider.value = String(settings.musicVolume ?? 1.0);
 
-  const renderSlider = document.getElementById("render-scale") as HTMLInputElement | null;
+  const renderSlider = getElement("render-scale") as HTMLInputElement | null;
   if (renderSlider) renderSlider.value = String(settings.renderScale ?? 2.5);
-  const renderVal = document.getElementById("render-scale-val") as HTMLElement | null;
-  if (renderVal) renderVal.textContent = (settings.renderScale ?? 2.5).toFixed(1) + "x";
-  const fpsSelect = document.getElementById("fps-limit") as HTMLSelectElement | null;
+  const renderVal = getElement("render-scale-val") as HTMLElement | null;
+  if (renderVal) setText(renderVal, (settings.renderScale ?? 2.5).toFixed(1) + "x");
+  const fpsSelect = getElement("fps-limit") as HTMLSelectElement | null;
   if (fpsSelect) fpsSelect.value = String(settings.fpsLimit ?? 0);
 
-  const bloomSlider = document.getElementById("bloom-intensity") as HTMLInputElement | null;
+  const bloomSlider = getElement("bloom-intensity") as HTMLInputElement | null;
   if (bloomSlider) bloomSlider.value = String(settings.bloomIntensity ?? 1.0);
-  const bloomVal = document.getElementById("bloom-intensity-val") as HTMLElement | null;
-  if (bloomVal) bloomVal.textContent = (settings.bloomIntensity ?? 1.0).toFixed(1) + "x";
+  const bloomVal = getElement("bloom-intensity-val") as HTMLElement | null;
+  if (bloomVal) setText(bloomVal, (settings.bloomIntensity ?? 1.0).toFixed(1) + "x");
 
-  const vignetteToggle = document.getElementById("vignette-toggle") as HTMLInputElement | null;
+  const vignetteToggle = getElement("vignette-toggle") as HTMLInputElement | null;
   if (vignetteToggle) vignetteToggle.checked = settings.vignetteEnabled ?? true;
-  const dirLightToggle = document.getElementById("dir-light-toggle") as HTMLInputElement | null;
+  const dirLightToggle = getElement("dir-light-toggle") as HTMLInputElement | null;
   if (dirLightToggle) dirLightToggle.checked = settings.directionalLighting ?? true;
-  const atmRimToggle = document.getElementById("atm-rim-toggle") as HTMLInputElement | null;
+  const atmRimToggle = getElement("atm-rim-toggle") as HTMLInputElement | null;
   if (atmRimToggle) atmRimToggle.checked = settings.atmosphericRim ?? true;
-  const colorGradeToggle = document.getElementById("color-grade-toggle") as HTMLInputElement | null;
+  const colorGradeToggle = getElement("color-grade-toggle") as HTMLInputElement | null;
   if (colorGradeToggle) colorGradeToggle.checked = settings.colorGrading ?? true;
-  const mipmappingToggle = document.getElementById("mipmapping-toggle") as HTMLInputElement | null;
+  const mipmappingToggle = getElement("mipmapping-toggle") as HTMLInputElement | null;
   if (mipmappingToggle) mipmappingToggle.checked = settings.mipmapping ?? true;
-  const lensFlareToggle = document.getElementById("lens-flare-toggle") as HTMLInputElement | null;
+  const lensFlareToggle = getElement("lens-flare-toggle") as HTMLInputElement | null;
   if (lensFlareToggle) lensFlareToggle.checked = settings.lensFlare ?? true;
-  const antialiasToggle = document.getElementById("antialias-toggle") as HTMLInputElement | null;
+  const antialiasToggle = getElement("antialias-toggle") as HTMLInputElement | null;
   if (antialiasToggle) antialiasToggle.checked = settings.antialias ?? false;
 
-  const uiScaleSlider = document.getElementById("ui-scale") as HTMLInputElement | null;
+  const uiScaleSlider = getElement("ui-scale") as HTMLInputElement | null;
   if (uiScaleSlider) uiScaleSlider.value = String(settings.uiScale ?? 1.0);
-  const uiScaleVal = document.getElementById("ui-scale-val") as HTMLElement | null;
-  if (uiScaleVal) uiScaleVal.textContent = (settings.uiScale ?? 1.0).toFixed(2) + "x";
+  const uiScaleVal = getElement("ui-scale-val") as HTMLElement | null;
+  if (uiScaleVal) setText(uiScaleVal, (settings.uiScale ?? 1.0).toFixed(2) + "x");
 
-  const fontScaleSlider = document.getElementById("font-scale") as HTMLInputElement | null;
+  const fontScaleSlider = getElement("font-scale") as HTMLInputElement | null;
   if (fontScaleSlider) fontScaleSlider.value = String(settings.fontScale ?? 1.0);
-  const fontScaleVal = document.getElementById("font-scale-val") as HTMLElement | null;
-  if (fontScaleVal) fontScaleVal.textContent = (settings.fontScale ?? 1.0).toFixed(2) + "x";
+  const fontScaleVal = getElement("font-scale-val") as HTMLElement | null;
+  if (fontScaleVal) setText(fontScaleVal, (settings.fontScale ?? 1.0).toFixed(2) + "x");
 
-  const langSelect = document.getElementById("settings-language") as HTMLSelectElement | null;
+  const langSelect = getElement("settings-language") as HTMLSelectElement | null;
   if (langSelect) langSelect.value = settings.language;
 
-  const movementModeButtons = document.getElementById("movement-mode-buttons") as HTMLElement | null;
+  const movementModeButtons = getElement("movement-mode-buttons") as HTMLElement | null;
   if (movementModeButtons) {
     const modes: { id: MovementControlMode; label: string; desc: string; icon: string }[] = [
       { id: "waypoint", label: t("settings.movementMode.waypoint"), desc: t("settings.movementMode.waypointDesc"), icon: "MOUSE" },
       { id: "direct", label: t("settings.movementMode.direct"), desc: t("settings.movementMode.directDesc"), icon: "KEYS" },
     ];
-    movementModeButtons.innerHTML = modes
+    setHtml(movementModeButtons, modes
       .map((mode) => `
         <button class="movement-mode-card${settings.movementControlMode === mode.id ? " active" : ""}" data-movement-mode="${mode.id}">
           <span class="movement-mode-icon" aria-hidden="true">${mode.icon}</span>
@@ -86,9 +87,9 @@ export function renderSettings() {
           </span>
         </button>
       `)
-      .join("");
+      .join(""));
     movementModeButtons.querySelectorAll("[data-movement-mode]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      onClick(btn, () => {
         sfxBlip();
         const mode = (btn as HTMLElement).dataset.movementMode as MovementControlMode;
         settings.movementControlMode = mode;
@@ -105,22 +106,22 @@ export function renderSettings() {
     });
   }
 
-  const detailContainer = document.getElementById("detail-buttons") as HTMLElement | null;
+  const detailContainer = getElement("detail-buttons") as HTMLElement | null;
   if (detailContainer) {
     const detailOptions = [
       { id: "low", label: t("settings.detail.low"), dots: 3 },
       { id: "medium", label: t("settings.detail.med"), dots: 6 },
       { id: "high", label: t("settings.detail.high"), dots: 9 },
     ];
-    detailContainer.innerHTML = detailOptions.map((opt) => {
+    setHtml(detailContainer, detailOptions.map((opt) => {
       const dotsHtml = Array.from({ length: opt.dots }).map(() => "<i></i>").join("");
       return `<button class="detail-card${settings.backgroundDetail === opt.id ? " active" : ""}" data-detail="${opt.id}">
         <span class="detail-card-stars ${opt.id}">${dotsHtml}</span>
         <span class="detail-card-label">${opt.label}</span>
       </button>`;
-    }).join("");
+    }).join(""));
     detailContainer.querySelectorAll(".detail-card").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      onClick(btn, () => {
         sfxConfirm();
         settings.backgroundDetail = (btn as HTMLElement).dataset.detail!;
         initBackgroundStars(settings.backgroundDetail);
@@ -131,17 +132,17 @@ export function renderSettings() {
     });
   }
 
-  const themeContainer = document.getElementById("theme-buttons") as HTMLElement | null;
+  const themeContainer = getElement("theme-buttons") as HTMLElement | null;
   if (themeContainer) {
-    themeContainer.innerHTML = Object.entries(HUD_THEMES).map(([id, theme]) =>
+    setHtml(themeContainer, Object.entries(HUD_THEMES).map(([id, theme]) =>
       `<button class="theme-swatch${settings.theme === id ? " active" : ""}" data-theme="${id}"
          style="--sw-bg:${theme.bgPanel};--sw-border:${theme.borderAccent};--sw-text:${theme.textMain};--sw-accent:${theme.accent}">
          <span class="sw-dots"><i style="background:${theme.accent}"></i><i style="background:${theme.shield}"></i><i style="background:${theme.positive}"></i><i style="background:${theme.danger}"></i></span>
          <span class="sw-name">${theme.name}</span>
        </button>`
-    ).join("");
+    ).join(""));
     themeContainer.querySelectorAll(".theme-swatch").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      onClick(btn, () => {
         sfxConfirm();
         settings.theme = (btn as HTMLElement).dataset.theme!;
         saveSettings(settings);
@@ -151,13 +152,13 @@ export function renderSettings() {
     });
   }
 
-  const fontContainer = document.getElementById("font-buttons") as HTMLElement | null;
+  const fontContainer = getElement("font-buttons") as HTMLElement | null;
   if (fontContainer) {
-    fontContainer.innerHTML = FONT_OPTIONS.map((f) =>
+    setHtml(fontContainer, FONT_OPTIONS.map((f) =>
       `<button class="detail-btn${settings.fontFamily === f.id ? " active" : ""}" data-font="${f.id}" style="font-family:${f.stack}">${f.label}</button>`
-    ).join("");
+    ).join(""));
     fontContainer.querySelectorAll(".detail-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      onClick(btn, () => {
         sfxConfirm();
         settings.fontFamily = (btn as HTMLElement).dataset.font!;
         saveSettings(settings);
@@ -178,14 +179,14 @@ export function renderSettings() {
     });
   }
 
-  const reticleContainer = document.getElementById("reticle-buttons") as HTMLElement | null;
+  const reticleContainer = getElement("reticle-buttons") as HTMLElement | null;
   if (reticleContainer) {
-    reticleContainer.innerHTML = RETICLE_OPTIONS.map((r) =>
+    setHtml(reticleContainer, RETICLE_OPTIONS.map((r) =>
       `<button class="reticle-btn${settings.reticleStyle === r.id ? " active" : ""}" data-reticle="${r.id}">
         <canvas class="reticle-preview" width="32" height="32" data-reticle-id="${r.id}"></canvas>
         <span class="reticle-label">${r.label}</span>
       </button>`
-    ).join("");
+    ).join(""));
 
     const themeColors = HUD_THEMES[settings.theme] || HUD_THEMES.default;
 
@@ -198,7 +199,7 @@ export function renderSettings() {
     });
 
     reticleContainer.querySelectorAll(".reticle-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      onClick(btn, () => {
         sfxConfirm();
         settings.reticleStyle = (btn as HTMLElement).dataset.reticle!;
         saveSettings(settings);
@@ -207,7 +208,7 @@ export function renderSettings() {
     });
   }
 
-  const presetContainer = document.getElementById("preset-buttons") as HTMLElement | null;
+  const presetContainer = getElement("preset-buttons") as HTMLElement | null;
   if (presetContainer) {
     const presets: { id: string; label: string }[] = [
       { id: "performance", label: "Performance" },
@@ -215,11 +216,11 @@ export function renderSettings() {
       { id: "cinematic", label: "Cinematic" },
       { id: "custom", label: "Custom" },
     ];
-    presetContainer.innerHTML = presets.map((p) =>
+    setHtml(presetContainer, presets.map((p) =>
       `<button class="detail-btn${settings.videoPreset === p.id ? " active" : ""}" data-preset="${p.id}">${p.label}</button>`
-    ).join("");
+    ).join(""));
     presetContainer.querySelectorAll(".detail-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      onClick(btn, () => {
         sfxConfirm();
         const preset = (btn as HTMLElement).dataset.preset! as VideoPreset;
         settings.videoPreset = preset;
@@ -262,9 +263,9 @@ export function renderSettings() {
     });
   }
 
-  const list = document.getElementById("keybind-list") as HTMLElement | null;
+  const list = getElement("keybind-list") as HTMLElement | null;
   if (list) {
-    list.innerHTML = CONTROL_SECTIONS.map((section) => {
+    setHtml(list, CONTROL_SECTIONS.map((section) => {
       const rows = section.actions.map(({ action, labelKey, descriptionKey }) => {
         const bound = settings.keybinds[action] || DEFAULT_KEYBINDS[action];
         const isListening = listeningFor === action;
@@ -285,9 +286,9 @@ export function renderSettings() {
         </div>
         <div class="kb-section-body">${rows}</div>
       </section>`;
-    }).join("");
+    }).join(""));
     list.querySelectorAll(".kb-key").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      onClick(btn, () => {
         sfxBlip();
         setListeningFor((btn as HTMLElement).dataset.action!);
         renderSettings();

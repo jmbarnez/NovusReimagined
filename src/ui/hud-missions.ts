@@ -4,6 +4,7 @@ import { getState } from "../state-access.js";
 import { fmtCompact } from "../utils/format.js";
 import type { MissionContract } from "../data/missions.js";
 import { attachMissionTooltipListeners } from "./hud-mission-tooltip.js";
+import { setHtml } from "./dom-helpers.js";
 
 let _panel: HTMLElement | null = null;
 
@@ -32,12 +33,12 @@ export function updateMissionsPanel() {
   const active = contracts.filter(c => c.status === "active" || c.status === "complete");
 
   if (active.length === 0) {
-    _panel.innerHTML = `<div class="hm-empty">NO ACTIVE<br>CONTRACTS</div>`;
+    setHtml(_panel, `<div class="hm-empty">NO ACTIVE<br>CONTRACTS</div>`);
     return;
   }
 
   const rows = active.slice(0, 3).map(c => renderContract(c)).join("");
-  _panel.innerHTML = `<div class="hm-header">CONTRACTS</div>${rows}`;
+  setHtml(_panel, `<div class="hm-header">CONTRACTS</div>${rows}`);
 }
 
 function renderContract(c: MissionContract): string {

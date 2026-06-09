@@ -3,6 +3,7 @@ import "../styles/pilot-terminal.css";
 import "../styles/hud-logs.css";
 import { buildDockHeaderHTML } from "../hud/panel-popout.js";
 import { t } from "../../utils/i18n.js";
+import { createElement, setHtml, append, setText, onClick } from "../dom-helpers.js";
 
 export interface PilotTerminalOverlay {
   root: HTMLElement;
@@ -28,11 +29,11 @@ export interface CreatePilotTerminalOptions {
 
 export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions): PilotTerminalOverlay {
   const showConsole = options.showConsole !== false;
-  const overlay = document.createElement("div");
+  const overlay = createElement("div");
   overlay.id = options.id;
   overlay.className = `pilot-terminal-overlay${options.embedded ? " pilot-terminal-overlay--embedded" : ""}`;
 
-  overlay.innerHTML = `
+  setHtml(overlay, `
     <div class="pilot-terminal-corners" aria-hidden="true">
       <div class="pt-corner tl"></div>
       <div class="pt-corner tr"></div>
@@ -67,16 +68,16 @@ export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions):
           : ""
       }
     </div>
-  `;
+  `);
 
-  (options.mount ?? document.body).appendChild(overlay);
+  append(options.mount ?? document.body, overlay);
 
   const statusEl = overlay.querySelector("[data-pilot-status]") as HTMLElement;
   const dashboardMain = overlay.querySelector("[data-pilot-dashboard]") as HTMLElement;
   const consoleEntries = overlay.querySelector("[data-pilot-console]") as HTMLElement | null;
 
   const abortBtn = overlay.querySelector("[data-pilot-abort]") as HTMLButtonElement | null;
-  abortBtn?.addEventListener("click", () => options.onAbort?.());
+  if (abortBtn) onClick(abortBtn, () => options.onAbort?.());
 
   const originalRemove = overlay.remove.bind(overlay);
   const remove = () => originalRemove();
@@ -86,7 +87,7 @@ export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions):
     dashboardMain,
     consoleEntries: consoleEntries ?? dashboardMain,
     setStatus(text: string) {
-      if (statusEl) statusEl.textContent = text;
+      if (statusEl) setText(statusEl, text);
     },
     remove,
   };

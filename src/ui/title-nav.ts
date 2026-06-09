@@ -1,6 +1,7 @@
 import { sfxBlip } from "../audio/procedural.js";
 import { Client } from "../state.js";
 import { TITLE_BASE_W, TITLE_BASE_H } from "../constants.js";
+import { getElement, createElement, setHtml, setStyle, append, onClick, onWindowResize } from "./dom-helpers.js";
 
 export interface TitleMenuMount {
   root: HTMLElement;
@@ -10,7 +11,7 @@ export interface TitleMenuMount {
 /** Fade out and remove a full-screen menu overlay. */
 export function dismissMenuOverlay(overlay: HTMLElement, onDone?: () => void): void {
   overlay.classList.add("fade-out");
-  overlay.style.pointerEvents = "none";
+  setStyle(overlay, { pointerEvents: "none" });
   window.setTimeout(() => {
     overlay.remove();
     onDone?.();
@@ -18,19 +19,18 @@ export function dismissMenuOverlay(overlay: HTMLElement, onDone?: () => void): v
 }
 
 export function mountTitleMenu(id: string, innerHtml: string): TitleMenuMount {
-  const hud = document.getElementById("hud-overlay") as HTMLElement | null;
-  if (hud) hud.style.display = "none";
+  const hud = getElement("hud-overlay");
+  if (hud) setStyle(hud, { display: "none" });
 
-  const overlay = document.createElement("div");
+  const overlay = createElement("div", "title-screen title-subscreen");
   overlay.id = id;
-  overlay.className = "title-screen title-subscreen";
-  overlay.innerHTML = innerHtml;
-  document.body.appendChild(overlay);
+  setHtml(overlay, innerHtml);
+  append(document.body, overlay);
 
   const scaleRoot = overlay.querySelector(".title-ui-scale") as HTMLElement;
   const handleResize = () => {
     if (!document.body.contains(overlay)) {
-      window.removeEventListener("resize", handleResize);
+      removeResize();
       return;
     }
     const scaleX = window.innerWidth / TITLE_BASE_W;
@@ -40,21 +40,20 @@ export function mountTitleMenu(id: string, innerHtml: string): TitleMenuMount {
     const targetScale = (window.innerHeight / 1080) * 1.25 * userScale;
     const finalScale = Math.max(0.35, Math.min(maxScale * 0.95, targetScale));
 
-    scaleRoot.style.transform = `scale(${finalScale})`;
+    setStyle(scaleRoot, { transform: `scale(${finalScale})` });
 
     const settingsBtn = overlay.querySelector(".title-settings-btn") as HTMLElement | null;
     if (settingsBtn) {
-      settingsBtn.style.transform = `scale(${finalScale})`;
-      settingsBtn.style.transformOrigin = "top right";
+      setStyle(settingsBtn, { transform: `scale(${finalScale})`, transformOrigin: "top right" });
     }
   };
 
   handleResize();
-  window.addEventListener("resize", handleResize);
+  const removeResize = onWindowResize(handleResize);
 
   const originalRemove = overlay.remove.bind(overlay);
   overlay.remove = () => {
-    window.removeEventListener("resize", handleResize);
+    removeResize();
     originalRemove();
   };
 
@@ -66,7 +65,7 @@ export function mountTitleMenu(id: string, innerHtml: string): TitleMenuMount {
 
 export function bindMenuBack(overlay: HTMLElement, onBack: () => void): void {
   overlay.querySelectorAll("[data-menu-back]").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    onClick(btn, () => {
       sfxBlip();
       onBack();
     });

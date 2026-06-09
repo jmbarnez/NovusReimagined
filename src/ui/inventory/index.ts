@@ -14,6 +14,7 @@ import { getItemsForContainer, normalizeItems } from "./tree.js";
 import { renderInventoryHTML } from "./render.js";
 import { getLayout, moveItemInGrid, swapItems, insertItem } from "./grid-layout.js";
 import { endDrag } from "./drag-drop.js";
+import { getElement, setHtml, setStyle, getStyleProperty } from "../dom-helpers.js";
 import {
   attachInventoryListeners as attachPaneListeners,
   attachInventoryListenersToPane,
@@ -129,10 +130,9 @@ export function showInfoPanel(itemId: string, anchorX?: number, anchorY?: number
 }
 
 function moveHoverTip(clientX: number, clientY: number) {
-  const tip = document.getElementById("inv-hover-tip");
-  if (tip && tip.style.display !== "none") {
-    tip.style.left = `${clientX + 12}px`;
-    tip.style.top = `${clientY + 12}px`;
+  const tip = getElement("inv-hover-tip");
+  if (tip && getStyleProperty(tip, "display") !== "none") {
+    setStyle(tip, { left: `${clientX + 12}px`, top: `${clientY + 12}px` });
   }
 }
 
@@ -216,7 +216,7 @@ function rerenderInventory() {
     if (contentChanged) {
       hideInvHoverTip();
       endDrag();
-      pane.innerHTML = renderInventoryHTML();
+      setHtml(pane, renderInventoryHTML());
       attachInventoryListenersToPane(pane, handlers);
     } else if (selectionChanged && pane.querySelector(".inv-item")) {
       updateSelectionOnly(pane);
@@ -251,9 +251,9 @@ function syncContentHashAfterMount() {
 }
 
 export function mountInventoryInPane(paneId: string): void {
-  const pane = document.getElementById(paneId);
+  const pane = getElement(paneId);
   if (!pane) return;
-  pane.innerHTML = renderInventoryHTML();
+  setHtml(pane, renderInventoryHTML());
   attachInventoryListenersToPane(pane, getEventHandlers());
   syncContentHashAfterMount();
 }

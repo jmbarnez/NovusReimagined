@@ -31,6 +31,7 @@ import { ENEMY_SPAWNS } from "../src/data/enemy-spawns.js";
 import { executeGameCommand } from "../src/sim/commands.js";
 import { updateWarp } from "../src/docking/index.js";
 import { syncTutorialVisuals, clearTutorialVisuals } from "../src/ui/tutorial/visuals.js";
+import { tutorialState } from "../src/ui/tutorial/state.js";
 import { stationState } from "../src/ui/station/shared.js";
 import { activateStationTab } from "../src/ui/station/tabs.js";
 import { emit, on } from "../src/events.js";
@@ -271,20 +272,22 @@ describe("hangar-high step completion", () => {
     }, G.P))).toBe(true);
   });
 
-  it("defines hangar review panels for cargo, fitting, stats, training mission, and undock", () => {
+  it("defines hangar review panels for fitting, high slot, cargo, stats, training mission, and undock", () => {
     const step = stepById("hangar-high");
-    expect(step.tour?.phases.length).toBe(5);
-    expect(step.tour?.phases[0].target).toBe("#hangar-pane-cargo");
-    expect(step.tour?.phases[0].body).toMatch(/autocannon/i);
-    expect(step.tour?.phases[1].target).toBe("#hangar-fitting-panel");
+    expect(step.tour?.phases.length).toBe(6);
+    expect(step.tour?.phases[0].target).toBe("#hangar-fitting-panel");
+    expect(step.tour?.phases[0].body).toMatch(/mining laser/i);
+    expect(step.tour?.phases[1].target).toBe("#hangar-slot-high-0");
     expect(step.tour?.phases[1].body).toMatch(/mining laser/i);
-    expect(step.tour?.phases[2].target).toBe("#hangar-stats-panel");
-    expect(step.tour?.phases[3].target).toBe("#hangar-missions-panel");
-    expect(step.tour?.phases[3].label).toBe("Training Mission");
-    expect(step.tour?.phases[4].target).toBe("#st-undock");
+    expect(step.tour?.phases[2].target).toBe("#hangar-pane-cargo");
+    expect(step.tour?.phases[2].body).toMatch(/spare modules/i);
+    expect(step.tour?.phases[3].target).toBe("#hangar-stats-panel");
+    expect(step.tour?.phases[4].target).toBe("#hangar-missions-panel");
+    expect(step.tour?.phases[4].label).toBe("Training Mission");
+    expect(step.tour?.phases[5].target).toBe("#st-undock");
     Client.stationOpen = true;
     const tour = getTourPanel(step, { hangarReviewPhase: 0 });
-    expect(tour?.label).toBe("Ship Cargo");
+    expect(tour?.label).toBe("Active Fitting");
     expect(tour?.index).toBe(1);
   });
 
@@ -292,7 +295,7 @@ describe("hangar-high step completion", () => {
     const step = stepById("hangar-turrets");
     expect(step.tour?.phases.length).toBe(6);
     expect(step.tour?.phases[0].label).toMatch(/Combat Loadout/i);
-    expect(step.tour?.phases[1].target).toBe('[data-rack="high"][data-idx="0"]');
+    expect(step.tour?.phases[1].target).toBe("#hangar-slot-high-0");
     expect(step.tour?.phases[3].body).toMatch(/Autocannon/i);
     expect(step.tour?.phases[5].target).toBe("#st-undock");
   });
@@ -542,6 +545,7 @@ describe("station tutorial spotlight", () => {
     installTestPlayer(makePlayer());
     G.P.tutorial.active = true;
     G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+    tutorialState.visible = true;
     Client.stationOpen = true;
     document.body.innerHTML = `
       <div id="station-overlay">
@@ -551,8 +555,8 @@ describe("station tutorial spotlight", () => {
           <div id="panel-hangar" class="panel active"></div>
           <div id="panel-market" class="panel"></div>
           <div id="hangar-pane-cargo"></div>
-          <div data-rack="high" data-idx="0"></div>
-          <div data-rack="high" data-idx="1"></div>
+          <div id="hangar-slot-high-0" data-rack="high" data-idx="0"></div>
+          <div id="hangar-slot-high-1" data-rack="high" data-idx="1"></div>
         </div>
         <div id="st-dimmer"></div>
       </div>
@@ -643,8 +647,8 @@ describe("station tutorial spotlight", () => {
 
   it("uses the combat hangar phase to highlight high-slot tutorial targets", () => {
     G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-turrets");
-    const firstSlot = document.querySelector<HTMLElement>('[data-rack="high"][data-idx="0"]')!;
-    const secondSlot = document.querySelector<HTMLElement>('[data-rack="high"][data-idx="1"]')!;
+    const firstSlot = document.getElementById("hangar-slot-high-0")!;
+    const secondSlot = document.getElementById("hangar-slot-high-1")!;
 
     syncTutorialVisuals({ hangarCombatPhase: 1 });
     expect(firstSlot.classList.contains("tutorial-hangar-highlight")).toBe(true);

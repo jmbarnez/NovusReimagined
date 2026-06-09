@@ -6,6 +6,7 @@ import { savePlayer, validatePilotName } from "../player/player-data.js";
 import { createPilotTerminalOverlay } from "./pilot-terminal/layout.js";
 import { appendLogEntry } from "./hud/logs.js";
 import { t } from "../utils/i18n.js";
+import { setText, onClick, onKeydown } from "./dom-helpers.js";
 
 interface PilotProfileScreenOptions {
   mount?: HTMLElement;
@@ -59,7 +60,7 @@ export function showPilotProfileScreen(
   const submit = () => {
     const result = validatePilotName(input.value);
     if (!result.ok) {
-      errorEl.textContent = result.error ?? t("pilot.invalidCallsign");
+      setText(errorEl, result.error ?? t("pilot.invalidCallsign"));
       sfxBlip();
       return;
     }
@@ -72,15 +73,15 @@ export function showPilotProfileScreen(
     onComplete(pilotName);
   };
 
-  confirmBtn.addEventListener("click", submit);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
+  onClick(confirmBtn, submit);
+  onKeydown(input, (e) => {
+    if ((e as KeyboardEvent).key === "Enter") {
+      (e as KeyboardEvent).preventDefault();
       submit();
     }
   });
 
-  cancelBtn?.addEventListener("click", () => {
+  if (cancelBtn) onClick(cancelBtn, () => {
     sfxBlip();
     finish();
     onCancel?.();

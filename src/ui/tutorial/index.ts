@@ -1,2 +1,7 @@
-export { initTutorialOverlay } from "./init.js";
-export { hideTutorialOverlay, destroyTutorialOverlay, updateTutorialOverlay } from "./lifecycle.js";
+export {
+  initTutorialOverlay,
+  hideTutorialOverlay,
+  destroyTutorialOverlay,
+  updateTutorialOverlay,
+  showCompleteBanner,
+} from "../../tutorial/ui/index.js";

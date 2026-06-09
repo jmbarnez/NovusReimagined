@@ -1,5 +1,6 @@
 import { INV_STATE } from "./state.js";
 import { emit } from "../../events.js";
+import { queryAll, append, remove, setStyle, setPosition, onPointerDown, onWindowPointerMove, onWindowPointerUp, onWindowPointerCancel } from "../dom-helpers.js";
 
 interface DragState {
   pane: HTMLElement;
@@ -13,8 +14,8 @@ let activeDrag: DragState | null = null;
 let _dragAutoCleanup: ReturnType<typeof setTimeout> | null = null;
 
 function removeAllGhosts() {
-  for (const g of document.querySelectorAll(".inv-drag-ghost")) {
-    g.parentNode?.removeChild(g);
+  for (const g of queryAll(".inv-drag-ghost")) {
+    remove(g);
   }
 }
 
@@ -22,14 +23,8 @@ function createGhost(sourceCell: HTMLElement): HTMLElement {
   removeAllGhosts();
   const ghost = sourceCell.cloneNode(true) as HTMLElement;
   ghost.classList.add("inv-drag-ghost");
-  ghost.style.position = "fixed";
-  ghost.style.pointerEvents = "none";
-  ghost.style.zIndex = "9999";
-  ghost.style.opacity = "0.85";
-  ghost.style.transform = "scale(1.05)";
-  ghost.style.width = `${sourceCell.offsetWidth}px`;
-  ghost.style.height = `${sourceCell.offsetHeight}px`;
-  document.body.appendChild(ghost);
+  setStyle(ghost, { position: "fixed", pointerEvents: "none", zIndex: "9999", opacity: "0.85", transform: "scale(1.05)", width: `${sourceCell.offsetWidth}px`, height: `${sourceCell.offsetHeight}px` });
+  append(document.body, ghost);
   return ghost;
 }
 
@@ -66,7 +61,7 @@ function computeVisualIndex(pane: HTMLElement, clientX: number, clientY: number)
 }
 
 function clearDragOver() {
-  for (const el of document.querySelectorAll(".is-drag-over")) {
+  for (const el of queryAll(".is-drag-over")) {
     el.classList.remove("is-drag-over");
   }
 }
@@ -78,14 +73,14 @@ export function endDrag(): void {
   }
   removeAllGhosts();
   activeDrag = null;
-  for (const el of document.querySelectorAll(".is-dragging")) {
+  for (const el of queryAll(".is-dragging")) {
     el.classList.remove("is-dragging");
   }
   clearDragOver();
 }
 
 export function attachDragDropHandlers(pane: HTMLElement): void {
-  pane.addEventListener("pointerdown", (e: Event) => {
+  onPointerDown(pane, (e: Event) => {
     const ptr = e as PointerEvent;
     if (ptr.button !== 0) return;
 
@@ -105,27 +100,27 @@ export function attachDragDropHandlers(pane: HTMLElement): void {
     activeDrag = { pane, sourceSlot, itemId, ghost, containerId: INV_STATE.selectedTreeId };
     htmlCell.classList.add("is-dragging");
 
-    ghost.style.left = `${ptr.clientX - htmlCell.offsetWidth / 2}px`;
-    ghost.style.top = `${ptr.clientY - htmlCell.offsetHeight / 2}px`;
+    setPosition(ghost, `${ptr.clientX - htmlCell.offsetWidth / 2}px`, `${ptr.clientY - htmlCell.offsetHeight / 2}px`);
 
     _dragAutoCleanup = setTimeout(() => endDrag(), 5000);
   });
 }
 
-window.addEventListener("pointermove", (e: PointerEvent) => {
+onWindowPointerMove((e: Event) => {
+  const ev = e as PointerEvent;
   if (!activeDrag) return;
-  activeDrag.ghost.style.left = `${e.clientX - activeDrag.ghost.offsetWidth / 2}px`;
-  activeDrag.ghost.style.top = `${e.clientY - activeDrag.ghost.offsetHeight / 2}px`;
+  setPosition(activeDrag.ghost, `${ev.clientX - activeDrag.ghost.offsetWidth / 2}px`, `${ev.clientY - activeDrag.ghost.offsetHeight / 2}px`);
 
-  const target = getCellUnderPointer(e.clientX, e.clientY);
+  const target = getCellUnderPointer(ev.clientX, ev.clientY);
   clearDragOver();
   if (target) target.classList.add("is-drag-over");
 });
 
-window.addEventListener("pointerup", (e: PointerEvent) => {
+onWindowPointerUp((e: Event) => {
+  const ev = e as PointerEvent;
   if (!activeDrag) return;
 
-  const target = getCellUnderPointer(e.clientX, e.clientY);
+  const target = getCellUnderPointer(ev.clientX, ev.clientY);
   if (target) {
     const targetSlotStr = target.dataset.slot;
     if (targetSlotStr !== undefined) {
@@ -139,7 +134,7 @@ window.addEventListener("pointerup", (e: PointerEvent) => {
       }
     }
   } else {
-    const visualIdx = computeVisualIndex(activeDrag.pane, e.clientX, e.clientY);
+    const visualIdx = computeVisualIndex(activeDrag.pane, ev.clientX, ev.clientY);
     emit("inventory:grid-insert", {
       containerId: activeDrag.containerId,
       fromSlot: activeDrag.sourceSlot,
@@ -149,6 +144,6 @@ window.addEventListener("pointerup", (e: PointerEvent) => {
   endDrag();
 });
 
-window.addEventListener("pointercancel", () => {
+onWindowPointerCancel(() => {
   endDrag();
 });

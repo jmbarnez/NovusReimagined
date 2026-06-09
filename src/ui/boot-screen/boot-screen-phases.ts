@@ -2,6 +2,7 @@ import { t } from "../../utils/i18n.js";
 import { getPerformanceTelemetrySnapshot } from "../../render/perf-overlay.js";
 import { appendLogEntry, flushPendingLogEntries, registerLogSink } from "../hud/logs.js";
 import { bakeExitIcon } from "../../ui/icons/exit-icon.js";
+import { getElement, query, setText as setDomText, setStyle } from "../dom-helpers.js";
 
 /**
  * Boot Screen Phase Controller
@@ -14,40 +15,36 @@ let bootPerfTimer: ReturnType<typeof setInterval> | null = null;
 
 /** Apply i18n translations to the static boot screen HTML immediately after settings load. */
 export function localizeBootScreen(): void {
-  const q = (sel: string): HTMLElement | null => document.querySelector(sel) as HTMLElement | null;
-  const mon1Tag   = q(".monitor-center .monitor-tag");
-  const mon1Title = q(".monitor-center .monitor-title");
-  const mon2Tag   = q(".monitor-right .monitor-tag");
-  const mon2Title = q(".monitor-right .monitor-title");
-  const consoleEl = q(".ld-console-line");
-  const perfTitle = q(".boot-perf-title");
+  const mon1Tag   = query(".monitor-center .monitor-tag");
+  const mon1Title = query(".monitor-center .monitor-title");
+  const mon2Tag   = query(".monitor-right .monitor-tag");
+  const mon2Title = query(".monitor-right .monitor-title");
+  const consoleEl = query(".ld-console-line");
+  const perfTitle = query(".boot-perf-title");
   const labels    = document.querySelectorAll(".boot-perf-monitor [data-perf-label]");
-  if (mon1Tag)   mon1Tag.textContent   = t("boot.monitorTagPrimary");
-  if (mon1Title) mon1Title.textContent = t("boot.monitorTitlePrimary");
-  if (mon2Tag)   mon2Tag.textContent   = t("boot.monitorTagSecondary");
-  if (mon2Title) mon2Title.textContent = t("boot.monitorTitleSecondary");
-  if (consoleEl) consoleEl.textContent = t("boot.consoleInit");
-  if (perfTitle) perfTitle.textContent = t("perf.bootTitle");
+  if (mon1Tag)   setDomText(mon1Tag, t("boot.monitorTagPrimary"));
+  if (mon1Title) setDomText(mon1Title, t("boot.monitorTitlePrimary"));
+  if (mon2Tag)   setDomText(mon2Tag, t("boot.monitorTagSecondary"));
+  if (mon2Title) setDomText(mon2Title, t("boot.monitorTitleSecondary"));
+  if (consoleEl) setDomText(consoleEl, t("boot.consoleInit"));
+  if (perfTitle) setDomText(perfTitle, t("perf.bootTitle"));
   labels.forEach((el) => {
     const key = (el as HTMLElement).dataset.perfLabel;
     if (!key) return;
-    el.textContent = t(`perf.${key}`);
+    setDomText(el as HTMLElement, t(`perf.${key}`));
   });
 
-  const titleSp = document.getElementById("title-sp");
-  const titleMp = document.getElementById("title-mp");
-  const titleSettings = document.getElementById("title-settings");
-  const titleExit = document.getElementById("title-exit");
-  if (titleSp) titleSp.textContent = t("title.singleplayer");
-  if (titleMp) titleMp.textContent = t("title.multiplayer");
+  const titleSp = getElement("title-sp");
+  const titleMp = getElement("title-mp");
+  const titleSettings = getElement("title-settings");
+  const titleExit = getElement("title-exit");
+  if (titleSp) setDomText(titleSp, t("title.singleplayer"));
+  if (titleMp) setDomText(titleMp, t("title.multiplayer"));
   if (titleSettings) titleSettings.setAttribute("aria-label", t("title.settings"));
   if (titleExit) {
-    titleExit.textContent = "";
+    setDomText(titleExit, "");
     titleExit.setAttribute("aria-label", t("title.safeExit"));
-    titleExit.style.backgroundImage = `url(${bakeExitIcon()})`;
-    titleExit.style.backgroundSize = "20px";
-    titleExit.style.backgroundPosition = "center";
-    titleExit.style.backgroundRepeat = "no-repeat";
+    setStyle(titleExit, { backgroundImage: `url(${bakeExitIcon()})`, backgroundSize: "20px", backgroundPosition: "center", backgroundRepeat: "no-repeat" });
   }
 
   document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
@@ -60,7 +57,7 @@ export function localizeBootScreen(): void {
 
 /** Register the right-monitor loading console as a system log sink. */
 export function registerLoadingConsole(): void {
-  const consoleEl = document.querySelector(".ld-console") as HTMLElement | null;
+  const consoleEl = query(".ld-console");
   if (!consoleEl) return;
   registerLogSink(consoleEl);
   flushPendingLogEntries();
@@ -68,27 +65,26 @@ export function registerLoadingConsole(): void {
 
 /** Fade the full loading overlay out when entering space mode. */
 export function dismissLoadingScreen(): void {
-  const loadingEl = document.getElementById("loading");
+  const loadingEl = getElement("loading");
   if (!loadingEl) return;
-  loadingEl.style.opacity = "";
+  setStyle(loadingEl, { opacity: "", pointerEvents: "none" });
   loadingEl.classList.add("out");
-  loadingEl.style.pointerEvents = "none";
 }
 
 /** Switch monitor presentation from loading phase to title/menu phase. */
 export function transitionToTitleScreen(): void {
-  const loadingEl = document.getElementById("loading");
+  const loadingEl = getElement("loading");
   if (!loadingEl) return;
   loadingEl.classList.add("ld-title-mode");
 }
 
 function setText(id: string, text: string): void {
-  const el = document.getElementById(id);
-  if (el && el.textContent !== text) el.textContent = text;
+  const el = getElement(id);
+  if (el && el.textContent !== text) setDomText(el, text);
 }
 
 function updateBootPerformanceMonitor(): void {
-  const loadingEl = document.getElementById("loading");
+  const loadingEl = getElement("loading");
   if (!loadingEl || loadingEl.classList.contains("out")) {
     if (bootPerfTimer) {
       clearInterval(bootPerfTimer);
@@ -136,7 +132,7 @@ export function markBootPhase(name: string): void {
       appendLogEntry(line.replace(/^>\s*/, ""), "system");
     }
 
-    const progressFill = document.querySelector(".ld-progress-fill") as HTMLElement | null;
+    const progressFill = query(".ld-progress-fill");
     if (progressFill) {
       const widthByPhase: Record<string, string> = {
         start: "15%",
@@ -144,10 +140,10 @@ export function markBootPhase(name: string): void {
         world: "75%",
         pixi: "100%",
       };
-      progressFill.style.width = widthByPhase[name] ?? progressFill.style.width;
+      setStyle(progressFill, { width: widthByPhase[name] ?? progressFill.style.width });
     }
 
-    const subEl = document.getElementById("ld-sub");
+    const subEl = getElement("ld-sub");
     if (subEl) {
       const subByPhase: Record<string, string> = {
         start: t("loading.init"),
@@ -156,7 +152,7 @@ export function markBootPhase(name: string): void {
         pixi:  t("loading.pixi"),
       };
       const text = subByPhase[name] ?? subEl.textContent ?? "";
-      subEl.textContent = text.replace(/^>\s*/, "");
+      setDomText(subEl, text.replace(/^>\s*/, ""));
     }
   } catch {
     // Ignore if performance API / DOM is unavailable.

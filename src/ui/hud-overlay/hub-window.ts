@@ -19,6 +19,7 @@ import {
 } from "../station/industry.js";
 import { t } from "../../utils/i18n.js";
 import { queueFrameAction } from "../../sim/input.js";
+import { getElement, query, queryAll, createElement, setHtml, setText, setStyle, toggleClass, onClick, onInput, onChange } from "../dom-helpers.js";
 
 let hubRefreshTimer: ReturnType<typeof setInterval> | null = null;
 let hubListenersBound = false;
@@ -26,19 +27,19 @@ let hubActiveTab: "processing" | "industry" = "processing";
 let hubShellReady = false;
 
 function getHubWindowBody(): HTMLElement {
-  let body = document.getElementById("hub-window-body");
+  let body = getElement("hub-window-body");
   if (!body) {
-    body = document.createElement("div");
+    body = createElement("div");
     body.id = "hub-window-body";
-    body.style.cssText = "padding:10px;color:var(--hud-text-main);font-size:11px;pointer-events:auto;";
+    setStyle(body, { padding: "10px", color: "var(--hud-text-main)", fontSize: "11px", pointerEvents: "auto" });
   }
   ensureHubShell(body);
   return body;
 }
 
 function ensureHubShell(body: HTMLElement) {
-  if (hubShellReady && body.querySelector("#hub-tab-processing")) return;
-  body.innerHTML = `
+  if (hubShellReady && query("#hub-tab-processing", body)) return;
+  setHtml(body, `
     <div class="hub-panel-shell">
       <div class="hub-tab-bar">
         <button type="button" class="hub-tab-btn active" data-hub-tab="processing">${t("hud.processing")}</button>
@@ -46,22 +47,20 @@ function ensureHubShell(body: HTMLElement) {
       </div>
       <div id="hub-tab-processing"></div>
       <div id="hub-tab-industry" hidden></div>
-    </div>`;
+    </div>`);
   hubShellReady = true;
 }
 
 function applyHubWindowSize() {
-  const win = document.getElementById("hud-win-industrial-hub");
-  const body = document.getElementById("hub-window-body");
+  const win = getElement("hud-win-industrial-hub");
+  const body = getElement("hub-window-body");
   if (!win || !body) return;
   if (hubActiveTab === "industry") {
-    body.style.minWidth = "720px";
-    body.style.maxWidth = "860px";
-    win.style.width = "740px";
+    setStyle(body, { minWidth: "720px", maxWidth: "860px" });
+    setStyle(win, { width: "740px" });
   } else {
-    body.style.minWidth = "420px";
-    body.style.maxWidth = "560px";
-    win.style.width = "520px";
+    setStyle(body, { minWidth: "420px", maxWidth: "560px" });
+    setStyle(win, { width: "520px" });
   }
 }
 
@@ -71,9 +70,9 @@ function renderHubWindow(body: HTMLElement) {
   const ind = body.querySelector("#hub-tab-industry") as HTMLElement | null;
   if (!proc || !ind) return;
 
-  body.querySelectorAll(".hub-tab-btn").forEach((btn) => {
+  queryAll(".hub-tab-btn", body).forEach((btn) => {
     const tab = btn.getAttribute("data-hub-tab");
-    btn.classList.toggle("active", tab === hubActiveTab);
+    toggleClass(btn, "active", tab === hubActiveTab);
   });
 
   if (hubActiveTab === "processing") {
@@ -90,7 +89,7 @@ function renderHubWindow(body: HTMLElement) {
 
 function setHubTab(tab: "processing" | "industry") {
   hubActiveTab = tab;
-  const body = document.getElementById("hub-window-body");
+  const body = getElement("hub-window-body");
   if (body) renderHubWindow(body);
 }
 
@@ -108,7 +107,7 @@ function startHubRefresh() {
       stopHubRefresh();
       return;
     }
-    const body = document.getElementById("hub-window-body");
+    const body = getElement("hub-window-body");
     if (body) renderHubWindow(body);
   }, 1000);
 }
@@ -129,17 +128,17 @@ function openHubWindow() {
 
 function ensureHubWindowListeners() {
   if (hubListenersBound) return;
-  const host = document.getElementById("hud-win-body-industrial-hub");
+  const host = getElement("hud-win-body-industrial-hub");
   if (!host) return;
-  host.addEventListener("click", onHubWindowClick);
-  host.addEventListener("input", (e) => { handleIndustryFieldEvent(e.target); });
-  host.addEventListener("change", (e) => { handleIndustryFieldEvent(e.target); });
+  onClick(host, onHubWindowClick);
+  onInput(host, (e) => { handleIndustryFieldEvent((e as Event).target); });
+  onChange(host, (e) => { handleIndustryFieldEvent((e as Event).target); });
   hubListenersBound = true;
 }
 
 function onHubWindowClick(e: Event) {
   if (!isOpen("industrial-hub")) return;
-  const body = document.getElementById("hub-window-body");
+  const body = getElement("hub-window-body");
   if (!body) return;
 
   const target = e.target as HTMLElement;
@@ -312,7 +311,7 @@ function renderHubProcessingContent(container: HTMLElement) {
   }
 
   html += `<div style="margin-top:8px;font-size:9px;color:#556677;text-align:right;">Wallet: ${player.credits.toLocaleString()}¢</div>`;
-  container.innerHTML = html;
+  setHtml(container, html);
 }
 
 export function toggleHubWindow() {
@@ -325,7 +324,7 @@ export function toggleHubWindow() {
 
 export function updateHubWindowIfOpen() {
   if (!isOpen("industrial-hub")) return;
-  const body = document.getElementById("hub-window-body");
+  const body = getElement("hub-window-body");
   if (body) renderHubWindow(body);
 }
 

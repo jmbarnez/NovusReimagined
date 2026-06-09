@@ -5,50 +5,55 @@ import { sfxBlip, sfxConfirm } from "../audio/procedural.js";
 import { openSettings } from "./settings/index.js";
 import { t } from "../utils/i18n.js";
 import { on } from "../events.js";
+import { getElement, createElement, setHtml, setStyle, setText, append, onClick, getStyleProperty } from "./dom-helpers.js";
 
 export function initPauseMenu() {
-  if (document.getElementById("pause-overlay")) return;
+  if (getElement("pause-overlay")) return;
 
-  const el = document.createElement("div");
+  const el = createElement("div");
   el.id = "pause-overlay";
-  el.innerHTML = `
+  setHtml(el, `
     <div class="pause-panel">
       <h2 class="pause-title">${t("pause.title")}</h2>
       <button type="button" id="pause-resume" class="pause-btn pause-btn-primary">${t("pause.resume")}</button>
       <button type="button" id="pause-save" class="pause-btn">${t("pause.save")}</button>
       <button type="button" id="pause-settings" class="pause-btn">${t("pause.settings")}</button>
       <button type="button" id="pause-exit" class="pause-btn pause-btn-exit">${t("pause.exit")}</button>
-    </div>`;
-  document.body.appendChild(el);
+    </div>`);
+  append(document.body, el);
 
   on("ui:close-overlays", () => {
-    el.style.display = "none";
+    setStyle(el, { display: "none" });
   });
 
-  el.querySelector("#pause-resume")!.addEventListener("click", () => {
+  const resumeBtn = el.querySelector("#pause-resume");
+  if (resumeBtn) onClick(resumeBtn, () => {
     sfxBlip();
     closePauseMenu();
   });
 
-  el.querySelector("#pause-save")!.addEventListener("click", () => {
+  const saveBtn = el.querySelector("#pause-save");
+  if (saveBtn) onClick(saveBtn, () => {
     sfxConfirm();
     savePlayer();
-    const btn = el.querySelector("#pause-save") as HTMLButtonElement;
-    btn.textContent = t("common.saved");
+    const btn = saveBtn as HTMLButtonElement;
+    setText(btn, t("common.saved"));
     btn.disabled = true;
     setTimeout(() => {
-      btn.textContent = t("pause.save");
+      setText(btn, t("pause.save"));
       btn.disabled = false;
     }, 1200);
   });
 
-  el.querySelector("#pause-settings")!.addEventListener("click", () => {
+  const settingsBtn = el.querySelector("#pause-settings");
+  if (settingsBtn) onClick(settingsBtn, () => {
     sfxBlip();
     closePauseMenu();
     openSettings();
   });
 
-  el.querySelector("#pause-exit")!.addEventListener("click", () => {
+  const exitBtn = el.querySelector("#pause-exit");
+  if (exitBtn) onClick(exitBtn, () => {
     sfxBlip();
     if (
       !confirm(
@@ -65,17 +70,17 @@ export function initPauseMenu() {
 export function openPauseMenu() {
   if (!Client.gameStarted || Client.mode !== AppMode.SPACE || Client.stationOpen) return;
   initPauseMenu();
-  const el = document.getElementById("pause-overlay") as HTMLElement;
-  el.style.display = "flex";
+  const overlay = getElement("pause-overlay");
+  if (overlay) setStyle(overlay, { display: "flex" });
 }
 
 export function closePauseMenu() {
-  const el = document.getElementById("pause-overlay");
-  if (el) el.style.display = "none";
+  const el = getElement("pause-overlay");
+  if (el) setStyle(el, { display: "none" });
 }
 
 export function togglePauseMenu() {
-  const el = document.getElementById("pause-overlay");
-  if (el && el.style.display === "flex") closePauseMenu();
+  const el = getElement("pause-overlay");
+  if (el && getStyleProperty(el, "display") === "flex") closePauseMenu();
   else openPauseMenu();
 }

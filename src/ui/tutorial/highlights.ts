@@ -12,9 +12,10 @@ import {
   getHudMissions,
   getHudDockPrompt,
 } from "../hud-elements.js";
+import { query, toggleClass } from "../dom-helpers.js";
 
 export function getActiveTutorialHighlight(): HTMLElement | null {
-  return document.querySelector(".tutorial-hangar-highlight, .hud-highlight");
+  return query(".tutorial-hangar-highlight, .hud-highlight");
 }
 
 export function getCardAnchorHighlight(step: ReturnType<typeof getCurrentTutorialStep>): HTMLElement | null {
@@ -32,11 +33,11 @@ export function getCardAnchorHighlight(step: ReturnType<typeof getCurrentTutoria
 export function setHudHighlight(target: Element | null): void {
   if (tutorialState._activeHudHighlightEl === target) return;
   if (tutorialState._activeHudHighlightEl) {
-    tutorialState._activeHudHighlightEl.classList.remove("hud-highlight");
+    toggleClass(tutorialState._activeHudHighlightEl, "hud-highlight", false);
   }
   tutorialState._activeHudHighlightEl = target;
   if (tutorialState._activeHudHighlightEl) {
-    tutorialState._activeHudHighlightEl.classList.add("hud-highlight");
+    toggleClass(tutorialState._activeHudHighlightEl, "hud-highlight", true);
   }
 }
 

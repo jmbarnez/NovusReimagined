@@ -2,11 +2,12 @@ import { Client } from "../../state.js";
 import { emit } from "../../events.js";
 import { renderFabrication, renderIndustry } from "./industry.js";
 import { stationState } from "./shared.js";
+import { getElement, toggleClass } from "../dom-helpers.js";
 
 export type StationTabId = "hangar" | "market" | "industry" | "fabrication" | "contracts";
 
 function resolveStationOverlay(): HTMLElement | null {
-  return document.getElementById("station-overlay");
+  return getElement("station-overlay");
 }
 
 function resolveTabButton(root: HTMLElement, tab: StationTabId): HTMLButtonElement | null {
@@ -23,11 +24,11 @@ export function activateStationTab(tab: StationTabId, root: HTMLElement | null =
   const panel = resolveTabPanel(root, tab);
   if (!button || button.disabled || !panel) return false;
 
-  root.querySelectorAll(".st-tab").forEach((entry) => entry.classList.remove("active"));
-  root.querySelectorAll(".panel").forEach((entry) => entry.classList.remove("active"));
+  root.querySelectorAll(".st-tab").forEach((entry) => toggleClass(entry, "active", false));
+  root.querySelectorAll(".panel").forEach((entry) => toggleClass(entry, "active", false));
 
-  button.classList.add("active");
-  panel.classList.add("active");
+  toggleClass(button, "active", true);
+  toggleClass(panel, "active", true);
   stationState.activeTab = tab;
 
   if (tab === "industry") renderIndustry(panel);

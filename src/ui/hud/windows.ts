@@ -1,7 +1,7 @@
 import { Client } from "../../state.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { WIN_EXPAND_ICON, WIN_CLOSE_ICON, WIN_RESET_ICON, setExpandButtonState, collapseWindowExpand } from "./window-chrome.js";
-import { insertHTML, getElement, setStyle, toggleClass, setHtml, append, onClick, onMouseEnter, onMouseLeave } from "../dom-helpers.js";
+import { insertHTML, getElement, setStyle, toggleClass, setHtml, append, onClick, onMouseEnter, onMouseLeave, getStyleProperty, setPosition, onWindowResize } from "../dom-helpers.js";
 
 const _windows = new Map<string, HTMLElement>();
 const _closeCallbacks = new Map<string, () => void>();
@@ -21,7 +21,8 @@ function clampWindow(win: HTMLElement) {
   const maxX = Math.max(0, window.innerWidth - wr.width);
   const maxY = Math.max(0, window.innerHeight - wr.height);
 
-  const hasInline = win.style.left && win.style.left !== "auto";
+  const leftVal = getStyleProperty(win, "left");
+  const hasInline = leftVal && leftVal !== "auto";
   if (!hasInline) {
     // If the window has never been dragged and it fits inside the viewport,
     // let CSS handle the centering or absolute offset responsively.
@@ -30,14 +31,15 @@ function clampWindow(win: HTMLElement) {
     }
   }
 
-  win.style.left = `${Math.max(0, Math.min(parseFloat(win.style.left) || wr.left, maxX))}px`;
-  win.style.top = `${Math.max(0, Math.min(parseFloat(win.style.top) || wr.top, maxY))}px`;
-  win.style.right = "auto";
+  const newLeft = `${Math.max(0, Math.min(parseFloat(leftVal) || wr.left, maxX))}px`;
+  const newTop = `${Math.max(0, Math.min(parseFloat(getStyleProperty(win, "top")) || wr.top, maxY))}px`;
+  setPosition(win, newLeft, newTop);
+  setStyle(win, { right: "auto" });
 }
 
 export function bringToFront(win: HTMLElement) {
   Client.bridgeWindowZ += 1;
-  win.style.zIndex = String(Client.bridgeWindowZ);
+  setStyle(win, { zIndex: String(Client.bridgeWindowZ) });
 }
 
 function makeWindowHTML(id: string, title: string): string {
@@ -102,13 +104,15 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       ev.preventDefault();
       bringToFront(win!);
       toggleClass(win!, "is-dragging", true);
-      if (!win!.style.left || !win!.style.top) {
+      const leftVal = getStyleProperty(win!, "left");
+      const topVal = getStyleProperty(win!, "top");
+      if (!leftVal || !topVal) {
         const wr = win!.getBoundingClientRect();
-        if (!win!.style.left) { setStyle(win!, { left: `${wr.left}px`, right: "auto" }); }
-        if (!win!.style.top) setStyle(win!, { top: `${wr.top}px` });
+        if (!leftVal) { setStyle(win!, { left: `${wr.left}px`, right: "auto" }); }
+        if (!topVal) setStyle(win!, { top: `${wr.top}px` });
       }
-      const baseX = parseFloat(win!.style.left) || 0;
-      const baseY = parseFloat(win!.style.top) || 0;
+      const baseX = parseFloat(leftVal) || 0;
+      const baseY = parseFloat(topVal) || 0;
       const sx = me.clientX;
       const sy = me.clientY;
       const onMove = (mv: MouseEvent) => {
@@ -146,17 +150,19 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       emitWindowLayoutChanged();
       if (expand) {
         bringToFront(win!);
-        if (!win!.style.left || !win!.style.width) {
+        const leftVal2 = getStyleProperty(win!, "left");
+        const widthVal2 = getStyleProperty(win!, "width");
+        if (!leftVal2 || !widthVal2) {
           const wr = win!.getBoundingClientRect();
-          if (!win!.style.left) { setStyle(win!, { left: `${wr.left}px`, right: "auto" }); }
-          if (!win!.style.top) setStyle(win!, { top: `${wr.top}px` });
-          if (!win!.style.width) setStyle(win!, { width: `${wr.width}px` });
-          if (!win!.style.height) setStyle(win!, { height: `${wr.height}px` });
+          if (!leftVal2) { setStyle(win!, { left: `${wr.left}px`, right: "auto" }); }
+          if (!getStyleProperty(win!, "top")) setStyle(win!, { top: `${wr.top}px` });
+          if (!widthVal2) setStyle(win!, { width: `${wr.width}px` });
+          if (!getStyleProperty(win!, "height")) setStyle(win!, { height: `${wr.height}px` });
         }
-        win!.dataset.prevLeft = win!.style.left;
-        win!.dataset.prevTop = win!.style.top;
-        win!.dataset.prevWidth = win!.style.width;
-        win!.dataset.prevHeight = win!.style.height;
+        win!.dataset.prevLeft = getStyleProperty(win!, "left");
+        win!.dataset.prevTop = getStyleProperty(win!, "top");
+        win!.dataset.prevWidth = getStyleProperty(win!, "width");
+        win!.dataset.prevHeight = getStyleProperty(win!, "height");
         toggleClass(win!, "is-expanded", true);
         setExpandButtonState(expandBtn as HTMLElement, true);
       }
@@ -184,9 +190,9 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
 }
 
 // Keep all active dynamic windows inside visible viewport bounds on resize
-window.addEventListener("resize", () => {
+onWindowResize(() => {
   _windows.forEach((win) => {
-    if (win.style.display !== "none") {
+    if (getStyleProperty(win, "display") !== "none") {
       clampWindow(win);
       emitWindowLayoutChanged();
     }
@@ -215,7 +221,7 @@ export function toggleHudWindow(id: string, title: string, contentEl: HTMLElemen
 
 export function isOpen(id: string): boolean {
   const win = _windows.get(id);
-  return !!win && win.style.display !== "none";
+  return !!win && getStyleProperty(win, "display") !== "none";
 }
 
 export function closeTopmostWindow(): boolean {
@@ -223,8 +229,8 @@ export function closeTopmostWindow(): boolean {
   let topmost: HTMLElement | null = null;
   let topZ = -1;
   for (const [id, win] of _windows.entries()) {
-    if (win.style.display === "none") continue;
-    const z = parseInt(win.style.zIndex) || 0;
+    if (getStyleProperty(win, "display") === "none") continue;
+    const z = parseInt(getStyleProperty(win, "zIndex")) || 0;
     if (z > topZ) { topZ = z; topmost = win; topmostId = id; }
   }
   if (topmost && topmostId) {

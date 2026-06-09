@@ -6,6 +6,7 @@ import { stationState } from "./shared.js";
 import { bindStationDomEvents } from "./events.js";
 import { stationActionHandlers } from "./actions.js";
 import { t } from "../../utils/i18n.js";
+import { getElement, createElement, setHtml, setStyle, append } from "../dom-helpers.js";
 
 function onStationAction(e: Event): void {
   const target = e.target as HTMLElement | null;
@@ -18,10 +19,10 @@ function onStationAction(e: Event): void {
 }
 
 export function ensureStationUI(): void {
-  if (document.getElementById("station-overlay")) return;
-  const el = document.createElement("div");
+  if (getElement("station-overlay")) return;
+  const el = createElement("div");
   el.id = "station-overlay";
-  el.innerHTML = `
+  setHtml(el, `
     <div id="st-ui">
       <aside id="st-sidebar">
         <div id="st-station-info">
@@ -49,13 +50,13 @@ export function ensureStationUI(): void {
         <div class="panel" id="panel-contracts"></div>
       </main>
     </div>
-    <div id="st-dimmer"></div>`;
-  document.body.appendChild(el);
+    <div id="st-dimmer"></div>`);
+  append(document.body, el);
 
   bindStationDomEvents(el, onStationAction);
 
   on("ui:close-overlays", () => {
-    el.style.display = "none";
+    setStyle(el, { display: "none" });
     stationState.previewFitting = null;
     Client.stationOpen = false;
     Client.activeStation = null;

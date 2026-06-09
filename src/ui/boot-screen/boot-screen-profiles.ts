@@ -16,6 +16,7 @@ import { logEvent } from "../hud-overlay.js";
 import { t } from "../../utils/i18n.js";
 import { initGameSession, restoreGameFromSave } from "../../utils/restore-save.js";
 import { bindTitleScreenEvents, restoreTitleScreen } from "../title-screen.js";
+import { query, setHtml, setText, onClick, onKeydown } from "../dom-helpers.js";
 
 type ContinueLoadingPhase = "restore" | "simulation" | "sync" | "enter";
 
@@ -55,14 +56,14 @@ function bindProfileSelectionEvents(monitor: HTMLElement): void {
     const id = (card as HTMLElement).dataset.profileId!;
 
     const continueBtn = card.querySelector("[data-profile-continue]") as HTMLButtonElement | null;
-    continueBtn?.addEventListener("click", (e) => {
-      e.stopPropagation();
+    if (continueBtn) onClick(continueBtn, (e) => {
+      (e as MouseEvent).stopPropagation();
       void continueSavedProfile(id, continueBtn, monitor);
     });
 
     const delBtn = card.querySelector("[data-profile-delete]");
-    delBtn?.addEventListener("click", (e) => {
-      e.stopPropagation();
+    if (delBtn) onClick(delBtn, (e) => {
+      (e as MouseEvent).stopPropagation();
       sfxBlip();
       const pilotName = (card.querySelector(".profile-name") as HTMLElement)?.textContent ?? t("pilotTerminal.thisProfile");
       if (!confirm(t("profile.confirmDelete", { name: pilotName }))) return;
@@ -71,7 +72,8 @@ function bindProfileSelectionEvents(monitor: HTMLElement): void {
     });
   });
 
-  monitor.querySelector("#profile-new")?.addEventListener("click", () => {
+  const profileNew = monitor.querySelector("#profile-new");
+  if (profileNew) onClick(profileNew, () => {
     sfxBlip();
     showProfileCreation();
   });
@@ -133,14 +135,14 @@ function setProfileControlsDisabled(monitor: HTMLElement, disabled: boolean): vo
 }
 
 function renderContinueLoading(phase: ContinueLoadingPhase): void {
-  const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
+  const monitor = query(".monitor-center .monitor-content");
   if (!monitor) return;
 
   const steps: ContinueLoadingPhase[] = ["restore", "simulation", "sync", "enter"];
   const index = steps.indexOf(phase);
   const width = `${Math.max(15, Math.round(((index + 1) / steps.length) * 100))}%`;
 
-  monitor.innerHTML = `
+  setHtml(monitor, `
     <div class="profile-continue-loading" aria-busy="true">
       <div class="ld-title">NOVUS</div>
       <div class="ld-sep"></div>
@@ -150,7 +152,7 @@ function renderContinueLoading(phase: ContinueLoadingPhase): void {
         <div class="ld-progress-fill" style="width: ${width};"></div>
       </div>
     </div>
-  `;
+  `);
 }
 
 function getContinueLoadingKey(phase: ContinueLoadingPhase): string {
@@ -256,13 +258,13 @@ function showProfileCreation(): void {
     const submit = () => {
       const result = validatePilotName(input.value);
       if (!result.ok) {
-        errorEl.textContent = result.error ?? t("pilot.invalidCallsign");
+        setText(errorEl, result.error ?? t("pilot.invalidCallsign"));
         sfxBlip();
         return;
       }
 
       sfxConfirm();
-      errorEl.textContent = "";
+      setText(errorEl, "");
 
       // Create a fresh player and initialize the session.
       const freshPlayer = makePlayer();
@@ -283,17 +285,17 @@ function showProfileCreation(): void {
       }
     };
 
-    establishBtn?.addEventListener("click", submit);
-    input?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
+    if (establishBtn) onClick(establishBtn, submit);
+    if (input) onKeydown(input, (e) => {
+      if ((e as KeyboardEvent).key === "Enter") {
+        (e as KeyboardEvent).preventDefault();
         submit();
       }
     });
 
     window.setTimeout(() => input?.focus(), 80);
   }, (monitor) => {
-    monitor.innerHTML = buildProfileSelectionHtml();
+    setHtml(monitor, buildProfileSelectionHtml());
     bindProfileSelectionEvents(monitor);
   });
 }

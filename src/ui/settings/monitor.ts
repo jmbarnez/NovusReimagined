@@ -3,12 +3,13 @@ import { t } from "../../utils/i18n.js";
 import { settingsContentHTML } from "./shell.js";
 import { attachSettingsListeners } from "./listeners.js";
 import { renderSettings } from "./render.js";
+import { getElement, query, createElement, setHtml, setText, append, onClick } from "../dom-helpers.js";
 
 let _savedMonitorContent: string | null = null;
 let _monitorRestore: (() => void) | null = null;
 
 export function openSettingsOnBootMonitor(restoreFn: () => void): void {
-  const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
+  const monitor = query(".monitor-center .monitor-content");
   if (!monitor) return;
   if (monitor.classList.contains("monitor-settings-open")) return;
 
@@ -16,22 +17,21 @@ export function openSettingsOnBootMonitor(restoreFn: () => void): void {
   _savedMonitorContent = monitor.innerHTML;
   monitor.classList.add("monitor-settings-open");
 
-  const panel = document.createElement("div");
+  const panel = createElement("div", "eve-window monitor-settings-panel");
   panel.id = "settings-panel";
-  panel.className = "eve-window monitor-settings-panel";
-  panel.innerHTML = `
+  setHtml(panel, `
     <div class="eve-win-head">
       <span class="eve-win-title">${t("boot.settingsPanelTitle")}</span>
       <span class="eve-win-sub">${t("boot.settingsPanelSubtitle")}</span>
     </div>
-    ${settingsContentHTML()}`;
+    ${settingsContentHTML()}`);
 
-  monitor.innerHTML = "";
-  monitor.appendChild(panel);
+  setHtml(monitor, "");
+  append(monitor, panel);
 
-  const bubble = document.createElement("div");
+  const bubble = createElement("div");
   bubble.id = "settings-tooltip-bubble";
-  document.body.appendChild(bubble);
+  append(document.body, bubble);
 
   attachSettingsListeners(panel, bubble);
   renderSettings();
@@ -41,8 +41,8 @@ export function openSettingsOnBootMonitor(restoreFn: () => void): void {
     const backBtn = exitBtn.cloneNode(true) as HTMLButtonElement;
     backBtn.classList.remove("btn-exit");
     backBtn.classList.add("settings-back-btn");
-    backBtn.textContent = t("common.back");
-    backBtn.addEventListener("click", () => {
+    setText(backBtn, t("common.back"));
+    onClick(backBtn, () => {
       sfxBlip();
       toggleSettingsMonitor();
     });
@@ -51,16 +51,16 @@ export function openSettingsOnBootMonitor(restoreFn: () => void): void {
 }
 
 export function toggleSettingsMonitor(): void {
-  const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
+  const monitor = query(".monitor-center .monitor-content");
   if (!monitor) return;
 
   if (monitor.classList.contains("monitor-settings-open")) {
     monitor.classList.remove("monitor-settings-open");
-    const bubble = document.getElementById("settings-tooltip-bubble");
+    const bubble = getElement("settings-tooltip-bubble");
     if (bubble) bubble.remove();
 
     if (_savedMonitorContent) {
-      monitor.innerHTML = _savedMonitorContent;
+      setHtml(monitor, _savedMonitorContent);
       _savedMonitorContent = null;
     }
 

@@ -24,20 +24,20 @@ import { closeSettings, listeningFor, setListeningFor } from "./state.js";
 import { renderSettings } from "./render.js";
 import { resetSettings } from "./reset.js";
 import { t } from "../../utils/i18n.js";
+import { getElement, setHtml, setText, setStyle, onClick, onInput, onChange, onMouseOver, onMouseOut, onMouseLeave, onWindowKeydown } from "../dom-helpers.js";
 
 export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
   const impactClass: Record<string, string> = { NONE: "tip-impact-none", LOW: "tip-impact-low", MEDIUM: "tip-impact-medium", HIGH: "tip-impact-high" };
-  el.addEventListener("mouseover", (e) => {
+  onMouseOver(el, (e) => {
     const icon = (e.target as HTMLElement).closest(".settings-tip-icon") as HTMLElement | null;
     if (!icon) {
-      bubble.style.display = "none";
+      setStyle(bubble, { display: "none" });
       return;
     }
     const impact = icon.dataset.tipImpact || "NONE";
     const desc = icon.dataset.tipDesc || "";
-    bubble.innerHTML = `<div class="tip-impact ${impactClass[impact] || "tip-impact-none"}">PERF IMPACT: ${impact}</div><div class="tip-desc">${desc}</div>`;
-    bubble.style.visibility = "hidden";
-    bubble.style.display = "block";
+    setHtml(bubble, `<div class="tip-impact ${impactClass[impact] || "tip-impact-none"}">PERF IMPACT: ${impact}</div><div class="tip-desc">${desc}</div>`);
+    setStyle(bubble, { visibility: "hidden", display: "block" });
     const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
     const r = icon.getBoundingClientRect();
     let left = r.left - bw - 8;
@@ -45,23 +45,21 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     let top = r.top + r.height / 2 - bh / 2;
     if (top < 8) top = 8;
     if (top + bh > window.innerHeight - 8) top = window.innerHeight - bh - 8;
-    bubble.style.left = `${left}px`;
-    bubble.style.top = `${top}px`;
-    bubble.style.visibility = "visible";
+    setStyle(bubble, { left: `${left}px`, top: `${top}px`, visibility: "visible" });
   });
-  el.addEventListener("mouseout", (e) => {
+  onMouseOut(el, (e) => {
     const icon = (e.target as HTMLElement).closest(".settings-tip-icon") as HTMLElement | null;
     if (icon) {
-      bubble.style.display = "none";
+      setStyle(bubble, { display: "none" });
     }
   });
-  el.addEventListener("mouseleave", () => { bubble.style.display = "none"; });
+  onMouseLeave(el, () => { setStyle(bubble, { display: "none" }); });
 
   on("ui:close-overlays", () => {
     const panel = el.querySelector("#settings-panel") as HTMLElement | null;
     if (panel) resetWindowExpand(panel, { embedded: true });
-    el.style.display = "none";
-    bubble.style.display = "none";
+    setStyle(el, { display: "none" });
+    setStyle(bubble, { display: "none" });
     Client.settingsOpen = false;
   });
 
@@ -71,7 +69,7 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     const expandBtn = panel.querySelector(".eve-win-expand") as HTMLElement | null;
     if (closeBtn) {
       bindWindowChromeButton(closeBtn);
-      closeBtn.addEventListener("click", (ev) => {
+      onClick(closeBtn, (ev) => {
         ev.stopPropagation();
         sfxBlip();
         closeSettings();
@@ -84,32 +82,32 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
 
   // Tab strip — toggle which panel is visible.
   el.querySelectorAll(".settings-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
+    onClick(tab, () => {
       sfxBlip();
-      bubble.style.display = "none";
+      setStyle(bubble, { display: "none" });
       const name = (tab as HTMLElement).dataset.tab!;
       el.querySelectorAll(".settings-tab").forEach((t) => t.classList.toggle("active", t === tab));
       el.querySelectorAll(".settings-tab-panel").forEach((p) =>
         p.classList.toggle("active", (p as HTMLElement).dataset.tabPanel === name));
     });
   });
-  el.querySelector("#settings-exit")!.addEventListener("click", () => { sfxBlip(); closeSettings(); });
-  el.querySelector("#settings-reset")!.addEventListener("click", () => { sfxBlip(); resetSettings(); });
-  el.querySelector("#settings-save")!.addEventListener("click", () => {
+  onClick(el.querySelector("#settings-exit")!, () => { sfxBlip(); closeSettings(); });
+  onClick(el.querySelector("#settings-reset")!, () => { sfxBlip(); resetSettings(); });
+  onClick(el.querySelector("#settings-save")!, () => {
     sfxConfirm();
     saveSettings(Client.settings);
     const btn = el.querySelector("#settings-save") as HTMLButtonElement;
-    btn.textContent = "✓ " + t("common.saved");
+    setText(btn, "✓ " + t("common.saved"));
     btn.disabled = true;
-    setTimeout(() => { btn.textContent = t("common.save"); btn.disabled = false; }, 1200);
+    setTimeout(() => { setText(btn, t("common.save")); btn.disabled = false; }, 1200);
   });
-  el.querySelector("#sfx-volume")!.addEventListener("input", (e) => {
+  onInput(el.querySelector("#sfx-volume")!, (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.sfxVolume = v;
     setSfxVolume(v);
     saveSettings(Client.settings);
   });
-  el.querySelector("#music-volume")!.addEventListener("input", (e) => {
+  onInput(el.querySelector("#music-volume")!, (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.musicVolume = v;
     setMusicVolume(v);
@@ -122,51 +120,51 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     }
   };
 
-  el.querySelector("#render-scale")!.addEventListener("input", (e) => {
+  onInput(el.querySelector("#render-scale")!, (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.renderScale = v;
-    (document.getElementById("render-scale-val") as HTMLElement).textContent = v.toFixed(1) + "x";
+    setText(getElement("render-scale-val") as HTMLElement, v.toFixed(1) + "x");
     resizePixi();
     setCustomPreset();
     saveSettings(Client.settings);
   });
-  el.querySelector("#fps-limit")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#fps-limit")!, (e) => {
     const v = parseInt((e.target as HTMLSelectElement).value, 10);
     Client.settings.fpsLimit = Number.isFinite(v) ? v : 0;
     saveSettings(Client.settings);
   });
-  el.querySelector("#bloom-intensity")!.addEventListener("input", (e) => {
+  onInput(el.querySelector("#bloom-intensity")!, (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.bloomIntensity = v;
-    (document.getElementById("bloom-intensity-val") as HTMLElement).textContent = v.toFixed(1) + "x";
+    setText(getElement("bloom-intensity-val") as HTMLElement, v.toFixed(1) + "x");
     setCustomPreset();
     saveSettings(Client.settings);
   });
-  el.querySelector("#vignette-toggle")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#vignette-toggle")!, (e) => {
     Client.settings.vignetteEnabled = (e.target as HTMLInputElement).checked;
     setCustomPreset();
     saveSettings(Client.settings);
   });
-  el.querySelector("#dir-light-toggle")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#dir-light-toggle")!, (e) => {
     Client.settings.directionalLighting = (e.target as HTMLInputElement).checked;
     setCustomPreset();
     saveSettings(Client.settings);
     clearShipTextureCaches(); clearEnemyTextureCaches(); clearStationTextureCaches();
     rebuildPlayerSprites();
   });
-  el.querySelector("#atm-rim-toggle")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#atm-rim-toggle")!, (e) => {
     Client.settings.atmosphericRim = (e.target as HTMLInputElement).checked;
     setCustomPreset();
     saveSettings(Client.settings);
   });
-  el.querySelector("#color-grade-toggle")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#color-grade-toggle")!, (e) => {
     const checked = (e.target as HTMLInputElement).checked;
     Client.settings.colorGrading = checked;
     syncColorGrading(checked);
     setCustomPreset();
     saveSettings(Client.settings);
   });
-  el.querySelector("#mipmapping-toggle")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#mipmapping-toggle")!, (e) => {
     Client.settings.mipmapping = (e.target as HTMLInputElement).checked;
     setCustomPreset();
     saveSettings(Client.settings);
@@ -174,22 +172,22 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     clearEnemyTextureCaches();
     rebuildPlayerSprites();
   });
-  el.querySelector("#lens-flare-toggle")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#lens-flare-toggle")!, (e) => {
     Client.settings.lensFlare = (e.target as HTMLInputElement).checked;
     setCustomPreset();
     saveSettings(Client.settings);
   });
-  el.querySelector("#antialias-toggle")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#antialias-toggle")!, (e) => {
     Client.settings.antialias = (e.target as HTMLInputElement).checked;
     setCustomPreset();
     saveSettings(Client.settings);
   });
 
 
-  el.querySelector("#ui-scale")!.addEventListener("input", (e) => {
+  onInput(el.querySelector("#ui-scale")!, (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.uiScale = v;
-    (document.getElementById("ui-scale-val") as HTMLElement).textContent = v.toFixed(2) + "x";
+    setText(getElement("ui-scale-val") as HTMLElement, v.toFixed(2) + "x");
     saveSettings(Client.settings);
     refreshTheme();
     refreshWorldLabelTextStyle();
@@ -206,10 +204,10 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     window.dispatchEvent(new Event("resize"));
   });
 
-  el.querySelector("#font-scale")!.addEventListener("input", (e) => {
+  onInput(el.querySelector("#font-scale")!, (e) => {
     const v = parseFloat((e.target as HTMLInputElement).value);
     Client.settings.fontScale = v;
-    (document.getElementById("font-scale-val") as HTMLElement).textContent = v.toFixed(2) + "x";
+    setText(getElement("font-scale-val") as HTMLElement, v.toFixed(2) + "x");
     saveSettings(Client.settings);
     refreshTheme();
     refreshWorldLabelTextStyle();
@@ -226,7 +224,7 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     window.dispatchEvent(new Event("resize"));
   });
 
-  el.querySelector("#settings-language")!.addEventListener("change", (e) => {
+  onChange(el.querySelector("#settings-language")!, (e) => {
     const v = (e.target as HTMLSelectElement).value as "en" | "es";
     Client.settings.language = v;
     saveSettings(Client.settings);
@@ -234,15 +232,16 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     location.reload();
   });
 
-  window.addEventListener("keydown", (e) => {
+  onWindowKeydown((e) => {
+    const ev = e as KeyboardEvent;
     if (!Client.settingsOpen || !listeningFor) return;
-    e.preventDefault();
-    if (e.code === "Escape") {
+    ev.preventDefault();
+    if (ev.code === "Escape") {
       setListeningFor(null);
       renderSettings();
       return;
     }
-    (Client.settings.keybinds as unknown as Record<string, string>)[listeningFor!] = e.code;
+    (Client.settings.keybinds as unknown as Record<string, string>)[listeningFor!] = ev.code;
     saveSettings(Client.settings);
     setListeningFor(null);
     renderSettings();

@@ -1,4 +1,5 @@
 import { sfxBlip } from "../audio/procedural.js";
+import { query, setHtml, onClick } from "./dom-helpers.js";
 
 let _currentRestore: (() => void) | null = null;
 let _currentOnRestore: ((container: HTMLElement) => void) | null = null;
@@ -10,14 +11,14 @@ function triggerRestore(): void {
   _currentRestore = null;
   _currentOnRestore = null;
   if (onRestore) {
-    const restoredMonitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
+    const restoredMonitor = query(".monitor-center .monitor-content");
     if (restoredMonitor) onRestore(restoredMonitor);
   }
 }
 
 /** Swap the left monitor content with new HTML. Returns cleanup function. */
 export function swapMonitorContent(html: string, onReady?: (container: HTMLElement) => void): () => void {
-  const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
+  const monitor = query(".monitor-center .monitor-content");
   if (!monitor) {
     console.warn("Monitor content not found");
     return () => {};
@@ -27,7 +28,7 @@ export function swapMonitorContent(html: string, onReady?: (container: HTMLEleme
   const originalContent = monitor.innerHTML;
 
   // Replace with new content
-  monitor.innerHTML = html;
+  setHtml(monitor, html);
 
   // Call ready callback with the monitor container for event binding
   if (onReady) {
@@ -36,7 +37,7 @@ export function swapMonitorContent(html: string, onReady?: (container: HTMLEleme
 
   // Return function to restore original content
   return () => {
-    monitor.innerHTML = originalContent;
+    setHtml(monitor, originalContent);
   };
 }
 
@@ -49,10 +50,10 @@ export function pushMonitorMenu(html: string, onReady: (container: HTMLElement) 
 
   // Bind inline back buttons
   setTimeout(() => {
-    const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
+    const monitor = query(".monitor-center .monitor-content");
     if (monitor) {
       monitor.querySelectorAll("[data-menu-back]").forEach((btn) => {
-        btn.addEventListener("click", () => {
+        onClick(btn, () => {
           sfxBlip();
           triggerRestore();
         });

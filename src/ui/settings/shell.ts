@@ -2,6 +2,7 @@ import "../styles/settings.css";
 import { t } from "../../utils/i18n.js";
 import { windowHeadButtonsHTML } from "../hud/window-chrome.js";
 import { attachSettingsListeners } from "./listeners.js";
+import { getElement, createElement, setHtml, append } from "../dom-helpers.js";
 
 export function settingsContentHTML(): string {
   return `
@@ -148,22 +149,22 @@ export function settingsContentHTML(): string {
 }
 
 export function ensureSettingsUI() {
-  if (document.getElementById("settings-overlay")) return;
-  const el = document.createElement("div");
+  if (getElement("settings-overlay")) return;
+  const el = createElement("div");
   el.id = "settings-overlay";
-  el.innerHTML = `
+  setHtml(el, `
     <div id="settings-panel" class="eve-window">
       <div class="eve-win-head">
         <div class="eve-win-title">${t("settings.title")}</div>
         ${windowHeadButtonsHTML()}
       </div>
       ${settingsContentHTML()}
-    </div>`;
-  document.body.appendChild(el);
+    </div>`);
+  append(document.body, el);
 
-  const bubble = document.createElement("div");
+  const bubble = createElement("div");
   bubble.id = "settings-tooltip-bubble";
-  document.body.appendChild(bubble);
+  append(document.body, bubble);
 
   attachSettingsListeners(el, bubble);
 }

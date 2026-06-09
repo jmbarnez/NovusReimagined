@@ -2,6 +2,7 @@ import { Client } from "../../state.js";
 import { HUD_BOTTOM_H } from "../../constants.js";
 import { getTheme, getFontStack } from "../../data/settings.js";
 import { hudState } from "../hud/state.js";
+import { setCssVar } from "../dom-helpers.js";
 
 /* ── Theme ──
  * Tokens are written to the document root so every DOM UI surface (HUD,
@@ -16,16 +17,16 @@ let appliedFontScale = -1;
 export function applyTheme(themeId: string, fontId: string) {
   // Layout var on the HUD root.
   if (hudState.root) {
-    hudState.root.style.setProperty("--hud-bottom-h", `${HUD_BOTTOM_H}px`);
+    setCssVar(hudState.root, "--hud-bottom-h", `${HUD_BOTTOM_H}px`);
   }
   const uiScale = Client.settings?.uiScale ?? 1.0;
   const fontScale = Client.settings?.fontScale ?? 1.0;
-  const s = document.documentElement.style;
-  s.setProperty("--ui-scale", String(uiScale));
-  s.setProperty("--font-scale", String(fontScale));
+  const s = document.documentElement;
+  setCssVar(s, "--ui-scale", String(uiScale));
+  setCssVar(s, "--font-scale", String(fontScale));
   // UI overlays are scaled via `transform: scale(var(--ui-scale))`. Counteract that
   // so font size can be controlled independently.
-  s.setProperty("--effective-font-scale", String(fontScale / uiScale));
+  setCssVar(s, "--effective-font-scale", String(fontScale / uiScale));
 
   if (themeId === appliedTheme && fontId === appliedFont && uiScale === appliedUiScale && fontScale === appliedFontScale) return;
   appliedTheme = themeId;
@@ -35,35 +36,35 @@ export function applyTheme(themeId: string, fontId: string) {
 
   const t = getTheme(themeId);
   // Font
-  s.setProperty("--font-family", getFontStack(fontId));
+  setCssVar(s, "--font-family", getFontStack(fontId));
   // Surfaces
-  s.setProperty("--hud-bg-deep", t.bgDeep);
-  s.setProperty("--hud-bg-window", t.bgWindow);
-  s.setProperty("--hud-bg-panel", t.bgPanel);
-  s.setProperty("--hud-bg-elevated", t.bgElevated);
+  setCssVar(s, "--hud-bg-deep", t.bgDeep);
+  setCssVar(s, "--hud-bg-window", t.bgWindow);
+  setCssVar(s, "--hud-bg-panel", t.bgPanel);
+  setCssVar(s, "--hud-bg-elevated", t.bgElevated);
   // Borders
-  s.setProperty("--hud-border", t.border);
-  s.setProperty("--hud-border-soft", t.borderSoft);
-  s.setProperty("--hud-border-accent", t.borderAccent);
+  setCssVar(s, "--hud-border", t.border);
+  setCssVar(s, "--hud-border-soft", t.borderSoft);
+  setCssVar(s, "--hud-border-accent", t.borderAccent);
   // Text
-  s.setProperty("--hud-text-bright", t.textBright);
-  s.setProperty("--hud-text-main", t.textMain);
-  s.setProperty("--hud-text-dim", t.textDim);
-  s.setProperty("--hud-text-faint", t.textFaint);
+  setCssVar(s, "--hud-text-bright", t.textBright);
+  setCssVar(s, "--hud-text-main", t.textMain);
+  setCssVar(s, "--hud-text-dim", t.textDim);
+  setCssVar(s, "--hud-text-faint", t.textFaint);
   // Semantic accents
-  s.setProperty("--hud-accent", t.accent);
-  s.setProperty("--hud-positive", t.positive);
-  s.setProperty("--hud-shield", t.shield);
-  s.setProperty("--hud-hull", t.hull);
-  s.setProperty("--hud-danger", t.danger);
-  s.setProperty("--hud-cap", t.cap);
-  s.setProperty("--hud-arcane", t.arcane ?? "#8858a8");
+  setCssVar(s, "--hud-accent", t.accent);
+  setCssVar(s, "--hud-positive", t.positive);
+  setCssVar(s, "--hud-shield", t.shield);
+  setCssVar(s, "--hud-hull", t.hull);
+  setCssVar(s, "--hud-danger", t.danger);
+  setCssVar(s, "--hud-cap", t.cap);
+  setCssVar(s, "--hud-arcane", t.arcane ?? "#8858a8");
   // Legacy aliases used by existing layout CSS (top/bottom bars).
-  s.setProperty("--hud-top-bar", t.bgDeep);
-  s.setProperty("--hud-top-border", t.border);
-  s.setProperty("--hud-bottom-top", t.bgPanel);
-  s.setProperty("--hud-bottom-bot", t.bgDeep);
-  s.setProperty("--hud-bottom-border", t.borderAccent);
+  setCssVar(s, "--hud-top-bar", t.bgDeep);
+  setCssVar(s, "--hud-top-border", t.border);
+  setCssVar(s, "--hud-bottom-top", t.bgPanel);
+  setCssVar(s, "--hud-bottom-bot", t.bgDeep);
+  setCssVar(s, "--hud-bottom-border", t.borderAccent);
 }
 
 /** Force a re-apply (e.g. after the player changes theme/font in settings). */

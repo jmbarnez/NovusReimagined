@@ -8,6 +8,7 @@ import { TUTORIAL_STEP_REWARDS } from "../data/tutorial-mission.js";
 import { getCurrentTutorialStep } from "../data/tutorial.js";
 import { SKILL_DEF } from "../data/skills.js";
 import { CONTRACT_TYPE_ICONS } from "./station/shared.js";
+import { getElement, createElement, append, setHtml, setStyle, setPosition, getStyleProperty, onMouseOver, onMouseMove, onMouseLeave } from "./dom-helpers.js";
 
 const TOOLTIP_ID = "hud-mission-tooltip";
 let listenersPanel: HTMLElement | null = null;
@@ -18,12 +19,12 @@ function findContractById(id: string): MissionContract | null {
 }
 
 function ensureMissionTooltip(): HTMLElement {
-  let el = document.getElementById(TOOLTIP_ID);
+  let el = getElement(TOOLTIP_ID);
   if (!el) {
-    el = document.createElement("div");
+    el = createElement("div");
     el.id = TOOLTIP_ID;
     el.setAttribute("role", "tooltip");
-    document.body.appendChild(el);
+    append(document.body, el);
   }
   return el;
 }
@@ -74,14 +75,14 @@ export function showMissionTooltip(contractId: string, clientX: number, clientY:
   const c = findContractById(contractId);
   if (!c) return;
   const tip = ensureMissionTooltip();
-  tip.innerHTML = buildMissionTooltipHtml(c);
-  tip.style.display = "block";
+  setHtml(tip, buildMissionTooltipHtml(c));
+  setStyle(tip, { display: "block" });
   positionMissionTooltip(tip, clientX, clientY);
 }
 
 export function hideMissionTooltip(): void {
-  const tip = document.getElementById(TOOLTIP_ID);
-  if (tip) tip.style.display = "none";
+  const tip = getElement(TOOLTIP_ID);
+  if (tip) setStyle(tip, { display: "none" });
 }
 
 function positionMissionTooltip(tip: HTMLElement, clientX: number, clientY: number): void {
@@ -96,33 +97,34 @@ function positionMissionTooltip(tip: HTMLElement, clientX: number, clientY: numb
   if (top + rect.height > window.innerHeight - 8) {
     top = clientY - rect.height - pad;
   }
-  tip.style.left = `${Math.max(8, left) / scale}px`;
-  tip.style.top = `${Math.max(8, top) / scale}px`;
+  setPosition(tip, `${Math.max(8, left) / scale}px`, `${Math.max(8, top) / scale}px`);
 }
 
 export function attachMissionTooltipListeners(panel: HTMLElement): void {
   if (listenersPanel === panel) return;
   listenersPanel = panel;
 
-  panel.addEventListener("mouseover", (e) => {
-    const card = (e.target as HTMLElement).closest(".hm-contract") as HTMLElement | null;
+  onMouseOver(panel, (e) => {
+    const ev = e as MouseEvent;
+    const card = (ev.target as HTMLElement).closest(".hm-contract") as HTMLElement | null;
     if (!card?.dataset.contractId) return;
-    showMissionTooltip(card.dataset.contractId, e.clientX, e.clientY);
+    showMissionTooltip(card.dataset.contractId, ev.clientX, ev.clientY);
   });
 
-  panel.addEventListener("mousemove", (e) => {
-    const tip = document.getElementById(TOOLTIP_ID);
-    if (!tip || tip.style.display === "none") return;
-    const card = (e.target as HTMLElement).closest(".hm-contract");
+  onMouseMove(panel, (e) => {
+    const ev = e as MouseEvent;
+    const tip = getElement(TOOLTIP_ID);
+    if (!tip || getStyleProperty(tip, "display") === "none") return;
+    const card = (ev.target as HTMLElement).closest(".hm-contract");
     if (!card) {
       hideMissionTooltip();
       return;
     }
-    positionMissionTooltip(tip, e.clientX, e.clientY);
+    positionMissionTooltip(tip, ev.clientX, ev.clientY);
   });
 
-  panel.addEventListener("mouseleave", (e) => {
-    const related = e.relatedTarget as Node | null;
+  onMouseLeave(panel, (e) => {
+    const related = (e as MouseEvent).relatedTarget as Node | null;
     if (related && panel.contains(related)) return;
     hideMissionTooltip();
   });

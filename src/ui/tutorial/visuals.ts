@@ -12,22 +12,17 @@ import {
 } from "./tutorial-dimmer.js";
 import { setHudHighlight, clearHudHighlight } from "./highlights.js";
 import { syncDimmerVisibility } from "./dimmer.js";
-
-let _lastCacheKey = "";
+import { getElement, query, setStyle, toggleClass } from "../dom-helpers.js";
 
 function resolveTarget(selector: string): HTMLElement | null {
   if (selector === "#hud-missions" && Client.stationOpen) {
-    return document.getElementById("hangar-missions-panel");
+    return getElement("hangar-missions-panel");
   }
-  return document.querySelector<HTMLElement>(selector);
+  return query(selector);
 }
 
 function isTabActive(tab: string): boolean {
-  return document.getElementById(`panel-${tab}`)?.classList.contains("active") ?? false;
-}
-
-function buildCacheKey(stepId: string, phase: number, selector: string, tab: string | undefined): string {
-  return `${stepId}|${phase}|${selector}|${tab ?? "none"}|${Client.stationOpen ? 1 : 0}|${isTabActive(tab ?? "") ? 1 : 0}`;
+  return getElement(`panel-${tab}`)?.classList.contains("active") ?? false;
 }
 
 function getTourPhase(step: { tour?: { phaseKey: string; phases: unknown[] } }, snapshot: Record<string, unknown>): number {
@@ -43,7 +38,8 @@ function isTourComplete(step: { tour?: { completeKey: string } }, snapshot: Reco
 
 function syncStationVisuals(target: HTMLElement | null): void {
   if (target) {
-    document.getElementById("st-dimmer")?.classList.add("active");
+    const stDimmer = getElement("st-dimmer");
+    if (stDimmer) toggleClass(stDimmer, "active", true);
     setActiveHighlight(target);
     syncStationDimmerCutout(target);
   } else {
@@ -89,37 +85,26 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
     if (panel) {
       selector = panel.target;
       tab = panel.tab;
-
-      if (Client.stationOpen) {
-        isStation = true;
-        if (tab && !isTabActive(tab)) {
-          activateStationTab(tab as StationTabId);
-        }
-        target = resolveTarget(selector);
-      } else {
-        // Not in station: fallback to step.highlight
-        selector = step.highlight ?? "";
-        target = selector ? resolveTarget(selector) : null;
+      target = resolveTarget(selector);
+      isStation = Client.stationOpen && !!tab;
+      if (isStation && tab && !isTabActive(tab)) {
+        activateStationTab(tab as StationTabId);
       }
     }
   } else if (step.highlight) {
     selector = step.highlight;
     target = resolveTarget(selector);
-    isStation = Client.stationOpen && !!document.getElementById("station-overlay")?.contains(target);
+    isStation = Client.stationOpen && !!getElement("station-overlay")?.contains(target);
   }
 
-  const cacheKey = buildCacheKey(step.id, phase, selector, tab);
-  if (_lastCacheKey === cacheKey) return;
-  _lastCacheKey = cacheKey;
-
-  if (isStation || (Client.stationOpen && step.tour)) {
+  if (isStation) {
     syncStationVisuals(target);
     clearHudHighlight();
     // Ensure HUD dimmer is hidden when station visuals are active
     const hudDimmer = tutorialState._hudDimmerEl;
     if (hudDimmer) {
-      hudDimmer.classList.add("hidden");
-      hudDimmer.style.display = "none";
+      toggleClass(hudDimmer, "hidden", true);
+      setStyle(hudDimmer, { display: "none" });
     }
     tutorialState._hudDimmerVisible = false;
     tutorialState._lastDimmerCutoutKey = "";
@@ -134,15 +119,13 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
 }
 
 export function clearTutorialVisuals(): void {
-  if (_lastCacheKey === "") return;
-  _lastCacheKey = "";
   setActiveHighlight(null);
   resetStationDimmer();
   clearHudHighlight();
   const hudDimmer = tutorialState._hudDimmerEl;
   if (hudDimmer) {
-    hudDimmer.classList.add("hidden");
-    hudDimmer.style.display = "none";
+    toggleClass(hudDimmer, "hidden", true);
+    setStyle(hudDimmer, { display: "none" });
   }
   tutorialState._hudDimmerVisible = false;
   tutorialState._lastDimmerCutoutKey = "";

@@ -18,6 +18,7 @@ import { formatCompositionBreakdown } from "../../utils/ore-naming.js";
 import { itemIconSmall } from "./render.js";
 import { type InventoryItem, INV_STATE } from "./state.js";
 import { normalizeItems } from "./tree.js";
+import { getElement, createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onDocumentMousedown } from "../dom-helpers.js";
 
 const CTX_ROOT_ID = "inv-ctx-root";
 const INFO_WINDOW_ID = "item-info";
@@ -40,58 +41,52 @@ let bridgeToastTimeout: ReturnType<typeof setTimeout> | null = null;
 export function showCargoToast(msg: string) {
   const show = (el: HTMLElement | null) => {
     if (!el) return;
-    el.textContent = msg;
-    el.style.opacity = "1";
+    setText(el, msg);
+    setStyle(el, { opacity: "1" });
   };
-  show(document.getElementById(TOAST_ID));
-  const legacy = document.getElementById("bridge-toast");
-  if (legacy) show(legacy as HTMLElement);
+  show(getElement(TOAST_ID));
+  const legacy = getElement("bridge-toast");
+  if (legacy) show(legacy);
 
   if (bridgeToastTimeout) clearTimeout(bridgeToastTimeout);
   bridgeToastTimeout = setTimeout(() => {
-    document.getElementById(TOAST_ID) && ((document.getElementById(TOAST_ID) as HTMLElement).style.opacity = "0");
-    const leg = document.getElementById("bridge-toast");
-    if (leg) (leg as HTMLElement).style.opacity = "0";
+    const toast = getElement(TOAST_ID);
+    if (toast) setStyle(toast, { opacity: "0" });
+    const leg = getElement("bridge-toast");
+    if (leg) setStyle(leg, { opacity: "0" });
   }, 2400);
 }
 
 function ensureInvCtxRoot(): HTMLElement {
-  let el = document.getElementById(CTX_ROOT_ID);
+  let el = getElement(CTX_ROOT_ID);
   if (!el) {
-    el = document.createElement("div");
+    el = createElement("div");
     el.id = CTX_ROOT_ID;
     el.setAttribute("role", "presentation");
-    el.style.display = "none";
-    el.style.position = "fixed";
-    el.style.left = "0";
-    el.style.top = "0";
-    el.style.zIndex = "9200";
-    el.style.pointerEvents = "none";
-    document.body.appendChild(el);
+    setStyle(el, { display: "none", position: "fixed", left: "0", top: "0", zIndex: "9200", pointerEvents: "none" });
+    append(document.body, el);
   }
   return el as HTMLElement;
 }
 
 function ensureCargoToast(): HTMLElement {
-  let el = document.getElementById(TOAST_ID);
+  let el = getElement(TOAST_ID);
   if (!el) {
-    el = document.createElement("div");
+    el = createElement("div", "inv-toast-float");
     el.id = TOAST_ID;
-    el.className = "inv-toast-float";
-    el.style.opacity = "0";
-    document.body.appendChild(el);
+    setStyle(el, { opacity: "0" });
+    append(document.body, el);
   }
   return el as HTMLElement;
 }
 
 function ensureInvHoverTip(): HTMLElement {
-  let el = document.getElementById(HOVER_TIP_ID);
+  let el = getElement(HOVER_TIP_ID);
   if (!el) {
-    el = document.createElement("div");
+    el = createElement("div", "inv-hover-tip");
     el.id = HOVER_TIP_ID;
-    el.className = "inv-hover-tip";
-    el.style.display = "none";
-    document.body.appendChild(el);
+    setStyle(el, { display: "none" });
+    append(document.body, el);
   }
   return el as HTMLElement;
 }
@@ -105,14 +100,12 @@ export function showInvHoverTip(it: InventoryItem, clientX: number, clientY: num
     : it.type === "material" && it.composition
       ? formatCompositionBreakdown(it.composition)
     : it.group;
-  el.innerHTML = `
+  setHtml(el, `
     <div class="inv-hover-tip-name" style="color:${nameColor}">${escHtml(it.name)}</div>
     <div class="inv-hover-tip-sub">${escHtml(subLine)} · ${volStr} m³ · ${it.qty.toLocaleString()}×</div>
-  `;
-  el.style.display = "block";
+  `);
   const scale = Client.settings?.uiScale ?? 1.0;
-  el.style.left = `${(clientX + 12) / scale}px`;
-  el.style.top = `${(clientY + 12) / scale}px`;
+  setStyle(el, { display: "block", left: `${(clientX + 12) / scale}px`, top: `${(clientY + 12) / scale}px` });
 
   requestAnimationFrame(() => {
     const pad = 6;
@@ -121,14 +114,13 @@ export function showInvHoverTip(it: InventoryItem, clientX: number, clientY: num
     let top = clientY + 12;
     if (left + r.width > window.innerWidth - pad) left = Math.max(pad, clientX - r.width - 8);
     if (top + r.height > window.innerHeight - pad) top = Math.max(pad, clientY - r.height - 8);
-    el.style.left = `${left / scale}px`;
-    el.style.top = `${top / scale}px`;
+    setStyle(el, { left: `${left / scale}px`, top: `${top / scale}px` });
   });
 }
 
 export function hideInvHoverTip() {
-  const el = document.getElementById(HOVER_TIP_ID);
-  if (el) el.style.display = "none";
+  const el = getElement(HOVER_TIP_ID);
+  if (el) setStyle(el, { display: "none" });
 }
 
 function clampCtxPosition(el: HTMLElement, clientX: number, clientY: number) {
@@ -146,8 +138,7 @@ function clampCtxPosition(el: HTMLElement, clientX: number, clientY: number) {
     if (left < pad) left = pad;
     if (top < pad) top = pad;
     const scale = Client.settings?.uiScale ?? 1.0;
-    el.style.left = `${left / scale}px`;
-    el.style.top = `${top / scale}px`;
+    setStyle(el, { left: `${left / scale}px`, top: `${top / scale}px` });
   });
 }
 
@@ -155,16 +146,12 @@ let docDismissAttached = false;
 export function ensureOutsideDismissHandlers(closeContextMenu: () => void) {
   if (docDismissAttached) return;
   docDismissAttached = true;
-  document.addEventListener(
-    "mousedown",
-    (ev) => {
-      const t = ev.target as HTMLElement | null;
-      if (!t) return;
-      if (t.closest(`#${CTX_ROOT_ID}`) || t.closest(`#hud-win-${INFO_WINDOW_ID}`)) return;
-      closeContextMenu();
-    },
-    true,
-  );
+  onDocumentMousedown((ev) => {
+    const t = (ev as MouseEvent).target as HTMLElement | null;
+    if (!t) return;
+    if (t.closest(`#${CTX_ROOT_ID}`) || t.closest(`#hud-win-${INFO_WINDOW_ID}`)) return;
+    closeContextMenu();
+  });
 }
 
 function getIndustryPoolInput(it: InventoryItem): { pool: IndustryPool; key: string } | null {
@@ -426,30 +413,26 @@ export function updateInvContextOverlay(handlers: InventoryOverlayHandlers) {
   const root = ensureInvCtxRoot();
   const cm = INV_STATE.contextMenu;
   if (!cm) {
-    root.style.display = "none";
-    root.style.pointerEvents = "none";
-    root.innerHTML = "";
+    setStyle(root, { display: "none", pointerEvents: "none" });
+    setHtml(root, "");
     return;
   }
 
   const html = buildContextMenuHTML(cm.itemId);
   if (!html) {
     INV_STATE.contextMenu = null;
-    root.style.display = "none";
-    root.style.pointerEvents = "none";
-    root.innerHTML = "";
+    setStyle(root, { display: "none", pointerEvents: "none" });
+    setHtml(root, "");
     return;
   }
 
-  root.innerHTML = html;
-  root.style.display = "block";
-  root.style.pointerEvents = "auto";
+  setHtml(root, html);
+  setStyle(root, { display: "block", pointerEvents: "auto" });
 
   const menuEl = root.querySelector(".inv-ctx") as HTMLElement | null;
   if (menuEl) {
     const scale = Client.settings?.uiScale ?? 1.0;
-    menuEl.style.left = `${cm.x / scale}px`;
-    menuEl.style.top = `${cm.y / scale}px`;
+    setStyle(menuEl, { left: `${cm.x / scale}px`, top: `${cm.y / scale}px` });
     clampCtxPosition(menuEl, cm.x, cm.y);
   }
 

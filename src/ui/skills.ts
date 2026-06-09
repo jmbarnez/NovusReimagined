@@ -2,6 +2,7 @@ import { getState } from "../state-access.js";
 import { SKILL_IDS, SKILL_DEF, SKILL_CATEGORIES, CATEGORY_LABELS, CATEGORY_COLORS, xpForSkillLevel, levelForSkillXp, MAX_SKILL_LEVEL, type SkillId } from "../data/skills.js";
 import { escHtml } from "../utils/format.js";
 import "./styles/skills.css";
+import { setHtml, onMouseOver, onMouseOut } from "./dom-helpers.js";
 
 let _hoveredSkillId: string | null = null;
 
@@ -72,20 +73,21 @@ function setHoveredSkill(rootEl: HTMLElement, id: string | null) {
   if (id === _hoveredSkillId) return;
   _hoveredSkillId = id;
   const detail = rootEl.querySelector(".sk-detail") as HTMLElement | null;
-  if (detail) detail.innerHTML = renderSkillDetail(id);
+  if (detail) setHtml(detail, renderSkillDetail(id));
 }
 
 export function initSkillsInteractions(rootEl: HTMLElement) {
-  rootEl.addEventListener("mouseover", (e) => {
+  onMouseOver(rootEl, (e) => {
     const tile = (e.target as HTMLElement).closest(".sk-tile") as HTMLElement | null;
     if (tile) {
       setHoveredSkill(rootEl, tile.dataset.skill ?? null);
     }
   });
-  rootEl.addEventListener("mouseout", (e) => {
-    const tile = (e.target as HTMLElement).closest(".sk-tile") as HTMLElement | null;
+  onMouseOut(rootEl, (e) => {
+    const ev = e as MouseEvent;
+    const tile = (ev.target as HTMLElement).closest(".sk-tile") as HTMLElement | null;
     if (!tile) return;
-    const next = (e.relatedTarget as HTMLElement | null)?.closest(".sk-tile");
+    const next = (ev.relatedTarget as HTMLElement | null)?.closest(".sk-tile");
     if (next !== tile) setHoveredSkill(rootEl, null);
   });
 }

@@ -352,6 +352,11 @@
   height: 100%;
 }
 
+.ind-workspace--with-rail {
+  grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.9fr);
+  align-items: stretch;
+}
+
 .ind-stage-column {
   min-width: 0;
   min-height: 0;
@@ -2095,8 +2100,22 @@
 }
 
 .ind-bottom-bar {
-  display: grid;
+  display: none;
   gap: 0;
+}
+
+@media (max-width: 1500px) {
+  .ind-workspace--with-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #refinery-right-rail {
+    display: none;
+  }
+
+  .ind-bottom-bar {
+    display: grid;
+  }
 }
 
 .ind-bottom-popover {

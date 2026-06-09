@@ -4,6 +4,7 @@ import { sfxBlip, sfxConfirm, sfxError } from "../../audio/procedural.js";
 import { queueFrameAction } from "../../sim/input.js";
 import { stationState } from "./shared.js";
 import { renderMarket } from "./market.js";
+import { getElement } from "../dom-helpers.js";
 
 export type StationActionHandler = (btn: HTMLElement) => void;
 
@@ -96,7 +97,7 @@ export const stationActionHandlers: Record<string, StationActionHandler> = {
   },
   swapMod: (btn) => {
     const { rack, idx } = getRackAndIndex(btn);
-    const select = document.getElementById(`swap-${rack}-${idx}`) as HTMLSelectElement | null;
+    const select = getElement(`swap-${rack}-${idx}`) as HTMLSelectElement | null;
     const newUid = select?.value ?? "";
     if (!newUid) { sfxError(); return; }
     queueFrameAction({ type: "swapModule", payload: { rack, slotIdx: idx, instanceId: newUid } });

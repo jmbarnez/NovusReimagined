@@ -99,10 +99,36 @@ async function boot() {
 
   } catch (err) {
     console.error("FATAL BOOT ERROR:", err);
+    // Reveal page so user can see the error
+    document.documentElement.style.visibility = "visible";
+    const loadingEl = document.getElementById("loading");
+    if (loadingEl) {
+      loadingEl.style.opacity = "1";
+      loadingEl.innerHTML = `
+        <div style="color: #ff4444; font-family: monospace; padding: 20px; text-align: center;">
+          <h2>Boot Failed</h2>
+          <p>${err instanceof Error ? err.message : String(err)}</p>
+          <p style="font-size: 12px; color: #888;">Check console for details</p>
+        </div>
+      `;
+    }
+    throw err; // Re-throw to trigger unhandled rejection handler
   }
 }
 
-boot();
+// Boot with proper error handling
+boot().catch((err) => {
+  console.error("Unhandled boot rejection:", err);
+});
+
+// Global error handlers for runtime errors
+window.addEventListener("error", (e) => {
+  console.error("Global error:", e.error);
+});
+
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("Unhandled promise rejection:", e.reason);
+});
 
 window.addEventListener("beforeunload", () => {
   if (Client.gameStarted) {

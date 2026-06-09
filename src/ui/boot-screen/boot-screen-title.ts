@@ -4,6 +4,7 @@ import { showMultiplayerMenu } from "../title-multiplayer.js";
 import { showSinglePlayerMenu } from "../title-single-player.js";
 import { t } from "../../utils/i18n.js";
 import { formatBuildLabel } from "../../data/version.js";
+import { query, setHtml, onClick } from "../dom-helpers.js";
 
 /**
  * Boot Screen Title Controller
@@ -13,7 +14,7 @@ import { formatBuildLabel } from "../../data/version.js";
 
 /** Bind title events in the left monitor. Idempotent: clones each button before attaching listeners. */
 export function bindTitleScreenEvents(): void {
-  const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
+  const monitor = query(".monitor-center .monitor-content");
   if (!monitor) return;
 
   const bind = (id: string, handler: () => void) => {
@@ -21,7 +22,7 @@ export function bindTitleScreenEvents(): void {
     if (!el) return;
     const clone = el.cloneNode(true) as HTMLElement;
     el.replaceWith(clone);
-    clone.addEventListener("click", handler);
+    onClick(clone, handler);
   };
 
   bind("#title-sp", () => {
@@ -49,10 +50,10 @@ export function bindTitleScreenEvents(): void {
 
 /** Restore default title monitor content and rebind events. */
 export function restoreTitleScreen(): void {
-  const monitor = document.querySelector(".monitor-center .monitor-content") as HTMLElement | null;
+  const monitor = query(".monitor-center .monitor-content");
   if (!monitor) return;
 
-  monitor.innerHTML = `
+  setHtml(monitor, `
     <div class="ld-title">NOVUS</div>
     <div class="ld-sep"></div>
     <div class="ld-sub">${t("title.initializing")}</div>
@@ -69,7 +70,7 @@ export function restoreTitleScreen(): void {
       </div>
     </div>
     <div class="title-build-label">${formatBuildLabel()}</div>
-  `;
+  `);
 
   bindTitleScreenEvents();
 }

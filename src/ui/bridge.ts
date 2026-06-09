@@ -13,6 +13,7 @@ import { on } from "../events.js";
 import type { Enemy, Asteroid } from "../types/world.js";
 import { t } from "../utils/i18n.js";
 import { gateDestinationName, gateStableId } from "../utils/warp-gates.js";
+import { getElement, query, createElement, setHtml, setText, setStyle, toggleClass, append } from "./dom-helpers.js";
 
 export { attachInventoryListeners, resetInventoryUI };
 
@@ -31,12 +32,12 @@ export interface OverviewRow {
 let _bridgeToastTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function showBridgeToast(msg: string) {
-  const el = document.getElementById("bridge-toast");
+  const el = getElement("bridge-toast");
   if (!el) return;
-  el.textContent = msg;
-  el.style.opacity = "1";
+  setText(el, msg);
+  setStyle(el, { opacity: "1" });
   if (_bridgeToastTimer) clearTimeout(_bridgeToastTimer);
-  _bridgeToastTimer = setTimeout(() => { el.style.opacity = "0"; }, 2400);
+  _bridgeToastTimer = setTimeout(() => { setStyle(el, { opacity: "0" }); }, 2400);
 }
 
 export function buildLocalOverviewRows(): OverviewRow[] {
@@ -184,7 +185,7 @@ export function renderBridgeOverviewHTML(): string {
 
 export function updateBridgeOverview() {
   if (!Client.overviewOpen) return;
-  const tbody = document.querySelector("#bridge-pane-overview .ov-table tbody");
+  const tbody = query("#bridge-pane-overview .ov-table tbody");
   if (!tbody) return;
 
   const rows = buildLocalOverviewRows();
@@ -196,29 +197,28 @@ export function updateBridgeOverview() {
   for (const r of rows) {
     let tr = existing.get(r.id);
     if (!tr) {
-      tr = document.createElement("tr");
-      tr.className = `ov-row ov-row-${r.kind}`;
+      tr = createElement("tr", `ov-row ov-row-${r.kind}`) as HTMLTableRowElement;
       tr.dataset.id = r.id;
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
-      tr.innerHTML = `
+      setHtml(tr, `
         <td class="ov-icon">${r.icon}</td>
         <td class="ov-st">${r.status}</td>
         <td>${r.cls}</td>
         <td class="ov-name">${escHtml(r.name)}</td>
         <td class="ov-num ov-dist">${dist}</td>
         <td class="ov-num ov-sig">${r.sig}</td>
-        <td class="ov-num ov-relV">${r.relV}</td>`;
-      tbody.appendChild(tr);
+        <td class="ov-num ov-relV">${r.relV}</td>`);
+      append(tbody, tr);
     } else {
       const dist = typeof r.dist === "number" ? formatDistance(r.dist) : r.dist;
-      const dCell = tr.querySelector(".ov-dist");
-      const sCell = tr.querySelector(".ov-st");
-      const rCell = tr.querySelector(".ov-relV");
-      const sigCell = tr.querySelector(".ov-sig");
-      if (dCell) dCell.textContent = dist;
-      if (sCell) sCell.innerHTML = r.status;
-      if (rCell) rCell.textContent = String(r.relV);
-      if (sigCell) sigCell.textContent = String(r.sig);
+      const dCell = tr.querySelector(".ov-dist") as HTMLElement | null;
+      const sCell = tr.querySelector(".ov-st") as HTMLElement | null;
+      const rCell = tr.querySelector(".ov-relV") as HTMLElement | null;
+      const sigCell = tr.querySelector(".ov-sig") as HTMLElement | null;
+      if (dCell) setText(dCell, dist);
+      if (sCell) setHtml(sCell, r.status);
+      if (rCell) setText(rCell, String(r.relV));
+      if (sigCell) setText(sigCell, String(r.sig));
       existing.delete(r.id);
     }
   }

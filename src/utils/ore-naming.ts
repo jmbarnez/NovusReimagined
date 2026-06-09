@@ -24,12 +24,12 @@ const SINGLE_PREFIX: Record<OreKey, string> = {
 };
 
 const NOUNS: Record<OreKey, string> = {
-  iron: "aggregate",
+  iron: "chunk",
   nickel: "chunk",
-  silicate: "regolith",
-  carbon: "matrix",
-  crystal: "breccia",
-  exotic: "debris",
+  silicate: "chunk",
+  carbon: "chunk",
+  crystal: "chunk",
+  exotic: "chunk",
 };
 
 export function normalizeComposition(composition: OreComposition): OreComposition {
@@ -84,11 +84,11 @@ export function generateOreName(composition: OreComposition): string {
   }
 
   if (secondKey && sorted.length >= 3 && firstFraction >= 0.45) {
-    return `${singlePrefixFor(firstKey)}-rich polymict breccia`;
+    return `${singlePrefixFor(firstKey)}-rich mixed chunk`;
   }
 
   if (secondKey) {
-    return `${prefixFor(firstKey)}-${prefixFor(secondKey)} composite`;
+    return `${prefixFor(firstKey)}-${prefixFor(secondKey)} chunk`;
   }
 
   return `${singlePrefixFor(firstKey)} ${noun}`;

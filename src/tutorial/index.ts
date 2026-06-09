@@ -13,5 +13,6 @@ export {
   advanceStep,
   completeTutorial,
   skipTutorial,
-} from "./runner.js";
-export { canAdvanceHangarTour, advanceHangarTutorialPanel } from "./hangar-tour.js";
+  canAdvanceHangarTour,
+  advanceHangarTutorialPanel,
+} from "./logic/index.js";

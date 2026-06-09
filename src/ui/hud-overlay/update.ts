@@ -24,6 +24,7 @@ import { applyTheme } from "./theme.js";
 import { updateMapOverlayDOM } from "./map-overlay.js";
 import { maybeAutoCloseHubWindow } from "./hub-window.js";
 import { C } from "../../config/index.js";
+import { getElement, queryAll, createElement, setText, setHtml, setStyle, setPosition, getStyleProperty, toggleClass, remove } from "../dom-helpers.js";
 
 function shouldShowLegacyOnboard(): boolean {
   if (localStorage.getItem("novus-onboarded")) return false;
@@ -37,10 +38,10 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
 
   // Dismiss legacy onboarding when pilot sets a waypoint/moves
   if (shouldShowLegacyOnboard() && Client.waypoint !== null) {
-    const onboardEl = document.getElementById("hud-onboard");
+    const onboardEl = getElement("hud-onboard");
     if (onboardEl && !onboardEl.classList.contains("fade-out")) {
-      onboardEl.classList.add("fade-out");
-      setTimeout(() => onboardEl.remove(), 1000);
+      toggleClass(onboardEl, "fade-out", true);
+      setTimeout(() => remove(onboardEl), 1000);
       localStorage.setItem("novus-onboarded", "true");
     }
   }
@@ -54,13 +55,13 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   // Top bar text
   const sysName = sys?.name || "";
   if (hudState.sysName!.textContent !== sysName) {
-    hudState.sysName!.textContent = sysName;
-    hudState.sysName!.style.fontSize = sysName.length > 12 ? "7.5px" : "9px";
+    setText(hudState.sysName!, sysName);
+    setStyle(hudState.sysName!, { fontSize: sysName.length > 12 ? "7.5px" : "9px" });
   }
   const sec = sys?.security ?? 0.5;
   const secText = `SEC ${sec.toFixed(1)}`;
   const secCls = sec >= 0.7 ? "high" : sec >= 0.4 ? "med" : "low";
-  if (hudState.secEl!.textContent !== secText) hudState.secEl!.textContent = secText;
+  if (hudState.secEl!.textContent !== secText) setText(hudState.secEl!, secText);
   if (hudState.secEl!.className !== secCls) hudState.secEl!.className = secCls;
 
   const barData = [
@@ -72,7 +73,7 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   for (let i = 0; i < 4; i++) {
     const [val, max] = barData[i];
     const w = `${Math.max(0, Math.min(1, val / Math.max(1, max))) * 100}%`;
-    if (hudState.statusFills[i].style.width !== w) hudState.statusFills[i].style.width = w;
+    if (getStyleProperty(hudState.statusFills[i], "width") !== w) setStyle(hudState.statusFills[i], { width: w });
   }
   if (hudState.boostStatus) {
     const p = getState().player;
@@ -85,7 +86,7 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
         : t("hud.boostReady");
     const className = `hud-boost-status ${cls}`;
     if (hudState.boostStatus.className !== className) hudState.boostStatus.className = className;
-    if (hudState.boostStatus.textContent !== label) hudState.boostStatus.textContent = label;
+    if (hudState.boostStatus.textContent !== label) setText(hudState.boostStatus, label);
   }
 
   updateSlots(ship, st, now);
@@ -98,18 +99,18 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   updateHudOverviewPanel();
   updateMissionsPanel();
   updateShipPanelLive();
-  for (const credEl of document.querySelectorAll(".inv-credits-value")) {
+  for (const credEl of queryAll(".inv-credits-value")) {
     const credText = `${Math.floor(getState().player.credits).toLocaleString()}¢`;
-    if (credEl.textContent !== credText) credEl.textContent = credText;
+    if (credEl.textContent !== credText) setText(credEl, credText);
   }
 
   // Update visual overlay for Map (title, dynamic legend, view toggle buttons)
   const showMap = Client.showMap;
-  const mapOverlayEl = document.getElementById("map-overlay");
+  const mapOverlayEl = getElement("map-overlay");
   if (mapOverlayEl) {
-    const isCurrentlyVisible = mapOverlayEl.style.display !== "none";
+    const isCurrentlyVisible = getStyleProperty(mapOverlayEl, "display") !== "none";
     if (showMap !== isCurrentlyVisible) {
-      mapOverlayEl.style.display = showMap ? "block" : "none";
+      setStyle(mapOverlayEl, { display: showMap ? "block" : "none" });
     }
     if (showMap && sys) {
       updateMapOverlayDOM(sys);
@@ -134,14 +135,10 @@ export function toggleCargoWindow() {
 }
 
 export function toggleSkillsWindow() {
-  const div = document.createElement("div");
+  const div = createElement("div", "br-pane");
   div.id = "bridge-pane-skills";
-  div.className = "br-pane";
-  div.style.height = "100%";
-  div.style.overflow = "auto";
-  div.style.display = "flex";
-  div.style.flexDirection = "column";
-  div.innerHTML = renderSkillsContent();
+  setStyle(div, { height: "100%", overflow: "auto", display: "flex", flexDirection: "column" });
+  setHtml(div, renderSkillsContent());
   toggleHudWindow("skills", "Skills", div);
   initSkillsInteractions(div);
 }
@@ -149,57 +146,57 @@ export function toggleSkillsWindow() {
 export function toggleScannerDock() {
   if (isPanelPopout("scanner")) {
     const win = getHudWindow("scanner-overview");
-    if (win && win.style.display !== "none") {
+    if (win && getStyleProperty(win, "display") !== "none") {
       // window visible → off
       togglePanelVisibility("scanner");
       return;
     }
     // window hidden but still popped out → treat as off: dock back
     dockInPanel("scanner");
-    if (hudState.scannerDock) hudState.scannerDock.style.display = "flex";
+    if (hudState.scannerDock) setStyle(hudState.scannerDock, { display: "flex" });
     return;
   }
   const host = hudState.scannerDock;
-  if (host && host.style.display !== "none") {
+  if (host && getStyleProperty(host, "display") !== "none") {
     // mounted → window
     popOutPanel("scanner");
     return;
   }
   // off → mounted
   dockInPanel("scanner");
-  if (host) host.style.display = "flex";
+  if (host) setStyle(host, { display: "flex" });
 }
 
 export function showCommsLogPanel() {
   if (isPanelPopout("event-log")) {
     const win = getHudWindow("event-log");
-    if (win) win.style.display = "flex";
+    if (win) setStyle(win, { display: "flex" });
     return;
   }
   if (hudState.logPanel) {
-    hudState.logPanel.style.display = "flex";
+    setStyle(hudState.logPanel, { display: "flex" });
   }
 }
 
 export function toggleEventLogPanel() {
   if (isPanelPopout("event-log")) {
     const win = getHudWindow("event-log");
-    if (win && win.style.display !== "none") {
+    if (win && getStyleProperty(win, "display") !== "none") {
       // window visible → off
       togglePanelVisibility("event-log");
       return;
     }
     // window hidden but still popped out → treat as off: dock back
     dockInPanel("event-log");
-    if (hudState.logPanel) hudState.logPanel.style.display = "flex";
+    if (hudState.logPanel) setStyle(hudState.logPanel, { display: "flex" });
     return;
   }
-  if (hudState.logPanel && hudState.logPanel.style.display !== "none") {
+  if (hudState.logPanel && getStyleProperty(hudState.logPanel, "display") !== "none") {
     // mounted → window
     popOutPanel("event-log");
     return;
   }
   // off → mounted
   dockInPanel("event-log");
-  if (hudState.logPanel) hudState.logPanel.style.display = "flex";
+  if (hudState.logPanel) setStyle(hudState.logPanel, { display: "flex" });
 }

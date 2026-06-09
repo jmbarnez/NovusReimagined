@@ -6,6 +6,7 @@ import "../styles/hud-pickup-toasts.css";
 import "../styles/hud-logs.css";
 import "../styles/map-overlay.css";
 import "../styles/bridge.css";
+import { getElement, query, queryAll, createElement, append, remove, setHtml, setStyle, setText, toggleClass, onClick, onDocumentClick } from "../dom-helpers.js";
 import { getState } from "../../state-access.js";
 import { sfxConfirm } from "../../audio/procedural.js";
 import { initMissionsPanel } from "../hud-missions.js";
@@ -28,6 +29,7 @@ import { resetHubWindowState } from "./hub-window.js";
 let crossingTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubCrossing: (() => void) | null = null;
 let ctxMenuDismissBound = false;
+let _removeDocumentClick: (() => void) | null = null;
 
 function shouldShowLegacyOnboard(): boolean {
   if (localStorage.getItem("novus-onboarded")) return false;
@@ -35,8 +37,8 @@ function shouldShowLegacyOnboard(): boolean {
   return true;
 }
 
-function onCtxMenuDismiss(e: MouseEvent) {
-  if (hudState.turretCtxMenu && !hudState.turretCtxMenu.contains(e.target as Node)) {
+function onCtxMenuDismiss(e: Event) {
+  if (hudState.turretCtxMenu && !hudState.turretCtxMenu.contains((e as MouseEvent).target as Node)) {
     hideTurretCtxMenu();
   }
   if (hudState.enemyCtxMenu && !hudState.enemyCtxMenu.contains(e.target as Node)) {
@@ -55,10 +57,10 @@ export function initHudOverlay() {
     showPickupToast,
   });
 
-  const overlay = document.getElementById("hud-overlay");
+  const overlay = getElement("hud-overlay");
   if (!overlay) return;
 
-  overlay.innerHTML = `
+  setHtml(overlay, `
     <span id="hud-sys-name"></span>
     <span id="hud-sec"></span>
     <div id="hud-lock-rail"></div>
@@ -120,14 +122,14 @@ export function initHudOverlay() {
       <div class="onboard-line"><span class="onboard-k">${t("hud.hotkeys")}</span></div>
     </div>
     ` : ""}
-  `;
+  `);
 
   if (shouldShowLegacyOnboard()) {
     setTimeout(() => {
-      const onboardEl = document.getElementById("hud-onboard");
+      const onboardEl = getElement("hud-onboard");
       if (onboardEl && !onboardEl.classList.contains("fade-out")) {
-        onboardEl.classList.add("fade-out");
-        setTimeout(() => onboardEl.remove(), 1000);
+        toggleClass(onboardEl, "fade-out", true);
+        setTimeout(() => remove(onboardEl), 1000);
         localStorage.setItem("novus-onboarded", "true");
       }
     }, 12000);
@@ -160,20 +162,18 @@ export function initHudOverlay() {
   ];
   hudState.statusFills = [];
   for (const [label, cls] of barDefs) {
-    const g = document.createElement("div");
-    g.className = "hud-bar-group";
-    g.innerHTML = `
+    const g = createElement("div", "hud-bar-group");
+    setHtml(g, `
       <span class="hud-bar-label">${label}</span>
       <div class="hud-bar-track"><span class="hud-bar-fill ${cls}"></span></div>
-    `;
-    bars.appendChild(g);
+    `);
+    append(bars, g);
     hudState.statusFills.push(g.querySelector(".hud-bar-fill") as HTMLElement);
   }
-  const boostStatus = document.createElement("div");
+  const boostStatus = createElement("div", "hud-boost-status ready");
   boostStatus.id = "hud-boost-status";
-  boostStatus.className = "hud-boost-status ready";
-  boostStatus.textContent = t("hud.boostReady");
-  bars.appendChild(boostStatus);
+  setText(boostStatus, t("hud.boostReady"));
+  append(bars, boostStatus);
   hudState.boostStatus = boostStatus;
 
   // Overview panel - scanner dock always present
@@ -183,7 +183,7 @@ export function initHudOverlay() {
   // Attach sort listeners
   const headers = hudState.ovPanel!.querySelectorAll("thead th[data-sort]");
   headers.forEach((th) => {
-    th.addEventListener("click", () => {
+    onClick(th, () => {
       const key = (th as HTMLElement).dataset.sort as "state" | "class" | "name" | "dist";
       if (hudState.ovSortKey === key) {
         hudState.ovSortDir = (hudState.ovSortDir * -1) as 1 | -1;
@@ -198,7 +198,7 @@ export function initHudOverlay() {
   });
   updateHudOverviewPanelHeaders();
   initOverviewResizers(hudState.ovPanel!);
-  document.body.addEventListener("click", (ev) => {
+  onClick(document.body, (ev) => {
     const btn = (ev.target as HTMLElement).closest("#hud-overview-panel .ov-decrypt");
     if (!btn) return;
     ev.stopPropagation();
@@ -206,28 +206,28 @@ export function initHudOverlay() {
     if (siteId) openDecryptionWindowForSite(siteId);
   });
   // Turret context menu
-  if (!document.getElementById("turret-ctx-menu")) {
-    hudState.turretCtxMenu = document.createElement("div");
+  if (!getElement("turret-ctx-menu")) {
+    hudState.turretCtxMenu = createElement("div");
     hudState.turretCtxMenu.id = "turret-ctx-menu";
-    hudState.turretCtxMenu.style.display = "none";
-    document.body.appendChild(hudState.turretCtxMenu);
+    setStyle(hudState.turretCtxMenu, { display: "none" });
+    append(document.body, hudState.turretCtxMenu);
   } else {
-    hudState.turretCtxMenu = document.getElementById("turret-ctx-menu");
+    hudState.turretCtxMenu = getElement("turret-ctx-menu");
   }
 
   // Enemy context menu
-  if (!document.getElementById("enemy-ctx-menu")) {
-    hudState.enemyCtxMenu = document.createElement("div");
+  if (!getElement("enemy-ctx-menu")) {
+    hudState.enemyCtxMenu = createElement("div");
     hudState.enemyCtxMenu.id = "enemy-ctx-menu";
-    hudState.enemyCtxMenu.style.display = "none";
-    document.body.appendChild(hudState.enemyCtxMenu);
+    setStyle(hudState.enemyCtxMenu, { display: "none" });
+    append(document.body, hudState.enemyCtxMenu);
   } else {
-    hudState.enemyCtxMenu = document.getElementById("enemy-ctx-menu");
+    hudState.enemyCtxMenu = getElement("enemy-ctx-menu");
   }
 
   // Global context menus click listener
   if (!ctxMenuDismissBound) {
-    document.addEventListener("click", onCtxMenuDismiss);
+    _removeDocumentClick = onDocumentClick(onCtxMenuDismiss);
     ctxMenuDismissBound = true;
   }
 
@@ -237,7 +237,7 @@ export function initHudOverlay() {
     const sys = getState().GALAXY[toIdx];
     if (!sys) return;
 
-    const banner = document.getElementById("hud-crossing-banner");
+    const banner = getElement("hud-crossing-banner");
     if (!banner) return;
 
     banner.className = "hud-crossing-banner";
@@ -250,16 +250,16 @@ export function initHudOverlay() {
     } else if (sys.security >= 0.1) {
       secClass = "low-sec";
     }
-    banner.classList.add(secClass);
+    toggleClass(banner, secClass, true);
 
     const secPercent = Math.round(sys.security * 100);
-    banner.innerHTML = `
+    setHtml(banner, `
       <div class="crossing-label">${t("hud.enteringSector")}</div>
       <div class="crossing-name">${sys.name.toUpperCase()}</div>
       <div class="crossing-sec">${t("hud.securityLevel", { sec: sys.security.toFixed(1), pct: secPercent })}</div>
-    `;
+    `);
 
-    banner.style.display = "flex";
+    setStyle(banner, { display: "flex" });
 
     try {
       sfxConfirm();
@@ -269,7 +269,7 @@ export function initHudOverlay() {
       clearTimeout(crossingTimer);
     }
     crossingTimer = setTimeout(() => {
-      banner.style.display = "none";
+      setStyle(banner, { display: "none" });
     }, 4000);
   });
 
@@ -278,12 +278,13 @@ export function initHudOverlay() {
 }
 
 export function destroyHudOverlay() {
-  if (ctxMenuDismissBound) {
-    document.removeEventListener("click", onCtxMenuDismiss);
+  if (ctxMenuDismissBound && _removeDocumentClick) {
+    _removeDocumentClick();
+    _removeDocumentClick = null;
     ctxMenuDismissBound = false;
   }
   if (hudState.root) {
-    hudState.root.innerHTML = "";
+    setHtml(hudState.root, "");
     hudState.root = null;
   }
   hudState.logEntries = null;
@@ -297,15 +298,17 @@ export function destroyHudOverlay() {
   hudState.slotNodes.clear();
   hudState.rackSwitchNodes.clear();
   hudState.lockCards.clear();
-  hudState.turretCtxMenu?.remove();
-  hudState.enemyCtxMenu?.remove();
+  if (hudState.turretCtxMenu) remove(hudState.turretCtxMenu);
+  if (hudState.enemyCtxMenu) remove(hudState.enemyCtxMenu);
   if (hudState.logPopout) dockInPanel("event-log");
   if (hudState.scannerPopout) dockInPanel("scanner");
   hudState.logPopout = false;
   hudState.scannerPopout = false;
   hudState.turretCtxMenu = null;
   hudState.enemyCtxMenu = null;
-  document.getElementById("hud-slot-tooltip")?.remove();
-  document.querySelectorAll('[id^="hud-win-"]').forEach((el) => el.remove());
-  document.getElementById("map-scanner-panel")?.remove();
+  const slotTooltip = getElement("hud-slot-tooltip");
+  if (slotTooltip) remove(slotTooltip);
+  for (const el of queryAll('[id^="hud-win-"]')) remove(el);
+  const mapScannerPanel = getElement("map-scanner-panel");
+  if (mapScannerPanel) remove(mapScannerPanel);
 }

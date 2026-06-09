@@ -13,6 +13,7 @@ import {
   mapScannerStrengthStepIndex,
   isMapScannerEmitting,
 } from "../../scanning/index.js";
+import { getElement, createElement, setHtml, setText, append, onInput, onClick } from "../dom-helpers.js";
 
 const CONE_PRESETS = [180, 90, 45, 15] as const;
 
@@ -33,9 +34,9 @@ function toggleScannerPower(): void {
 export function ensurePanel() {
   if (panelEl) return;
   const steps = C.SCANNING.MAP_STRENGTH_STEPS;
-  panelEl = document.createElement("div");
+  panelEl = createElement("div") as HTMLDivElement;
   panelEl.id = "map-scanner-panel";
-  panelEl.innerHTML = `
+  setHtml(panelEl, `
     <div class="map-scanner-row">
       <button type="button" data-action="power" class="map-scanner-power" title="${t("map.survey.power")}">${t("map.survey.power")}</button>
       <div class="map-scanner-dial">
@@ -46,21 +47,21 @@ export function ensurePanel() {
       <button type="button" data-action="scan" class="map-survey-scan">${t("map.survey.scan")}</button>
     </div>
     <div class="map-scanner-status">${t("map.survey.off")}</div>
-  `;
-  (document.getElementById("hud-overlay") || document.body).appendChild(panelEl);
+  `);
+  append(getElement("hud-overlay") || document.body, panelEl);
   statusEl = panelEl.querySelector(".map-scanner-status");
   strengthInput = panelEl.querySelector(".map-scanner-strength");
 
   const coneWrap = panelEl.querySelector(".map-survey-cones")!;
   for (const deg of CONE_PRESETS) {
-    const btn = document.createElement("button");
-    btn.type = "button";
+    const btn = createElement("button");
+    (btn as HTMLButtonElement).type = "button";
     btn.dataset.cone = String(deg);
-    btn.textContent = `${deg}°`;
-    coneWrap.appendChild(btn);
+    setText(btn, `${deg}°`);
+    append(coneWrap, btn);
   }
 
-  strengthInput?.addEventListener("input", () => {
+  if (strengthInput) onInput(strengthInput, () => {
     const step = Number(strengthInput!.value);
     const prev = mapScannerStrengthStepIndex(getState().player);
     const stepsDenom = Math.max(1, C.SCANNING.MAP_STRENGTH_STEPS - 1);
@@ -69,7 +70,7 @@ export function ensurePanel() {
     if (step !== prev) sfxBlip(640 + step * 120, 0.02);
   });
 
-  panelEl.addEventListener("click", (ev) => {
+  onClick(panelEl, (ev) => {
     const target = (ev.target as HTMLElement).closest("button");
     if (!target || !panelEl) return;
     if (target.dataset.action === "power") {
