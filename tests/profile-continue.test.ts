@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => {
     credits: 1250,
     createdAt: "2026-06-01T00:00:00.000Z",
     updatedAt: "2026-06-01T00:00:00.000Z",
+    playTimeMs: 0,
   };
 
   const state = {
@@ -43,6 +44,7 @@ vi.mock("../src/data/profiles.js", () => ({
   createProfile: vi.fn(),
   deleteProfile: vi.fn(),
   timeAgo: () => "just now",
+  formatPlayTime: (ms: number) => `${Math.floor(ms / 60000)}m`,
 }));
 
 vi.mock("../src/utils/restore-save.js", () => ({

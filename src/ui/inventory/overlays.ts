@@ -35,25 +35,20 @@ const LOOT_SELL_PER_UNIT: Record<string, number> = {
   "intact-part": 30,
 };
 
-let bridgeToastTimeout: ReturnType<typeof setTimeout> | null = null;
+let cargoToastTimeout: ReturnType<typeof setTimeout> | null = null;
 
-/** Toast visible in HUD cargo window (also tries legacy #bridge-toast when present). */
+/** Toast visible in HUD cargo window. */
 export function showCargoToast(msg: string) {
-  const show = (el: HTMLElement | null) => {
-    if (!el) return;
-    setText(el, msg);
-    setStyle(el, { opacity: "1" });
-  };
-  show(getElement(TOAST_ID));
-  const legacy = getElement("bridge-toast");
-  if (legacy) show(legacy);
+  const toast = getElement(TOAST_ID);
+  if (toast) {
+    setText(toast, msg);
+    setStyle(toast, { opacity: "1" });
+  }
 
-  if (bridgeToastTimeout) clearTimeout(bridgeToastTimeout);
-  bridgeToastTimeout = setTimeout(() => {
-    const toast = getElement(TOAST_ID);
-    if (toast) setStyle(toast, { opacity: "0" });
-    const leg = getElement("bridge-toast");
-    if (leg) setStyle(leg, { opacity: "0" });
+  if (cargoToastTimeout) clearTimeout(cargoToastTimeout);
+  cargoToastTimeout = setTimeout(() => {
+    const t = getElement(TOAST_ID);
+    if (t) setStyle(t, { opacity: "0" });
   }, 2400);
 }
 

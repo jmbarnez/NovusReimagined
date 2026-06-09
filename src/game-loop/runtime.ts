@@ -29,7 +29,7 @@ import { tickTutorial } from "../tutorial/index.js";
 import { on } from "../events.js";
 import { transitionTo } from "../ui/transition-manager.js";
 import { drawFrame } from "./render-pass.js";
-import { dismissLoadingScreen } from "../ui/loading-screen.js";
+import { dismissLoadingScreen } from "../ui/boot-screen/boot-screen-phases.js";
 import {
   gameClient,
   ensureGameplayConnected,

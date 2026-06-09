@@ -33,8 +33,8 @@ export function cleanupMainResizeListener() {
   }
 }
 
-import { bindTitleScreenEvents, restoreTitleScreen } from "./ui/title-screen.js";
-import { localizeBootScreen, markBootPhase, registerLoadingConsole, transitionToTitleScreen } from "./ui/loading-screen.js";
+import { bindTitleScreenEvents, restoreTitleScreen } from "./ui/boot-screen/boot-screen-title.js";
+import { localizeBootScreen, markBootPhase, registerLoadingConsole, transitionToTitleScreen } from "./ui/boot-screen/boot-screen-phases.js";
 import { migrateLegacySave } from "./data/profiles.js";
 import { C } from "./config/index.js";
 

@@ -1,6 +1,5 @@
 import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
-import type { Station } from "../../types/world.js";
 import { curSys } from "../../utils/game.js";
 import { getStats } from "../../player/player-stats.js";
 import { SHIPS } from "../../data/ships.js";
@@ -26,25 +25,9 @@ import { maybeAutoCloseHubWindow } from "./hub-window.js";
 import { C } from "../../config/index.js";
 import { getElement, queryAll, createElement, setText, setHtml, setStyle, setPosition, getStyleProperty, toggleClass, remove } from "../dom-helpers.js";
 
-function shouldShowLegacyOnboard(): boolean {
-  if (localStorage.getItem("novus-onboarded")) return false;
-  if (getState().player?.tutorial?.active || getState().player?.tutorial?.completed) return false;
-  return true;
-}
-
 /* ── Update ── */
 export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   if (!hudState.root) return;
-
-  // Dismiss legacy onboarding when pilot sets a waypoint/moves
-  if (shouldShowLegacyOnboard() && Client.waypoint !== null) {
-    const onboardEl = getElement("hud-onboard");
-    if (onboardEl && !onboardEl.classList.contains("fade-out")) {
-      toggleClass(onboardEl, "fade-out", true);
-      setTimeout(() => remove(onboardEl), 1000);
-      localStorage.setItem("novus-onboarded", "true");
-    }
-  }
 
   const sys = curSys();
   const st = getStats(getState().player);

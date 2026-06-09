@@ -15,7 +15,7 @@ import { enterSpaceMode } from "../../game-loop.js";
 import { logEvent } from "../hud-overlay.js";
 import { t } from "../../utils/i18n.js";
 import { initGameSession, restoreGameFromSave } from "../../utils/restore-save.js";
-import { bindTitleScreenEvents, restoreTitleScreen } from "../title-screen.js";
+import { bindTitleScreenEvents, restoreTitleScreen } from "./boot-screen-title.js";
 import { query, setHtml, setText, onClick, onKeydown } from "../dom-helpers.js";
 
 type ContinueLoadingPhase = "restore" | "simulation" | "sync" | "enter";

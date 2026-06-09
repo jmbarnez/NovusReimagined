@@ -31,12 +31,6 @@ let unsubCrossing: (() => void) | null = null;
 let ctxMenuDismissBound = false;
 let _removeDocumentClick: (() => void) | null = null;
 
-function shouldShowLegacyOnboard(): boolean {
-  if (localStorage.getItem("novus-onboarded")) return false;
-  if (getState().player?.tutorial?.active || getState().player?.tutorial?.completed) return false;
-  return true;
-}
-
 function onCtxMenuDismiss(e: Event) {
   if (hudState.turretCtxMenu && !hudState.turretCtxMenu.contains((e as MouseEvent).target as Node)) {
     hideTurretCtxMenu();
@@ -113,27 +107,7 @@ export function initHudOverlay() {
       </div>
     </div>
 
-    ${shouldShowLegacyOnboard() ? `
-    <div id="hud-onboard">
-      <div class="onboard-title">${t("hud.pilotQuickstart")}</div>
-      <div class="onboard-line"><span class="onboard-k">${t("hud.rightClick")}</span></div>
-      <div class="onboard-line"><span class="onboard-k">${t("hud.leftClick")}</span></div>
-      <div class="onboard-line"><span class="onboard-k">${t("hud.clickLocked")}</span></div>
-      <div class="onboard-line"><span class="onboard-k">${t("hud.hotkeys")}</span></div>
-    </div>
-    ` : ""}
   `);
-
-  if (shouldShowLegacyOnboard()) {
-    setTimeout(() => {
-      const onboardEl = getElement("hud-onboard");
-      if (onboardEl && !onboardEl.classList.contains("fade-out")) {
-        toggleClass(onboardEl, "fade-out", true);
-        setTimeout(() => remove(onboardEl), 1000);
-        localStorage.setItem("novus-onboarded", "true");
-      }
-    }, 12000);
-  }
 
   // Bind references
   hudState.root = overlay;

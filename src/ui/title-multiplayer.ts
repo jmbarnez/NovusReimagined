@@ -1,7 +1,7 @@
 import { sfxBlip } from "../audio/procedural.js";
 import { pushMonitorMenu } from "./monitor-nav.js";
 import { showPilotJoinScreen } from "./pilot-join.js";
-import { bindTitleScreenEvents } from "./title-screen.js";
+import { bindTitleScreenEvents } from "./boot-screen/boot-screen-title.js";
 import { t } from "../utils/i18n.js";
 import { onClick } from "./dom-helpers.js";
 

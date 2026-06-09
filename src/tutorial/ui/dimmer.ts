@@ -36,10 +36,11 @@ export function syncDimmerVisibility() {
       }
       toggleClass(dimmer, "hidden", false);
       setStyle(dimmer, { display: "block" });
-      const cutoutKey = target ? `${target.id}|${target.className}` : "none";
+      const bounds = getBounds(dimmer);
+      const cutoutKey = target ? `${target.id}|${target.className}|${bounds.width}|${bounds.height}` : "none";
       if (tutorialState._lastDimmerCutoutKey !== cutoutKey) {
         tutorialState._lastDimmerCutoutKey = cutoutKey;
-        syncDimmerCutout(dimmer, target, getBounds(dimmer));
+        syncDimmerCutout(dimmer, target, bounds);
       }
       tutorialState._hudDimmerVisible = true;
     }
