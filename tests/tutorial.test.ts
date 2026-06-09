@@ -548,7 +548,6 @@ describe("station tutorial spotlight", () => {
     Client.stationOpen = true;
     document.body.innerHTML = `
       <div id="station-overlay">
-        <div id="st-dimmer"></div>
         <div id="st-ui">
           <button class="st-tab active" data-tab="hangar"></button>
           <button class="st-tab" data-tab="market"></button>
@@ -558,6 +557,7 @@ describe("station tutorial spotlight", () => {
           <div data-rack="high" data-idx="0"></div>
           <div data-rack="high" data-idx="1"></div>
         </div>
+        <div id="st-dimmer"></div>
       </div>
     `;
   });
@@ -591,10 +591,10 @@ describe("station tutorial spotlight", () => {
     const segments = Array.from(dimmer.querySelectorAll<HTMLElement>(".tutorial-dimmer-segment"));
     expect(segments).toHaveLength(4);
     expect(target.classList.contains("tutorial-hangar-highlight")).toBe(true);
-    expect(segments[0].style.height).toBe("100px");
-    expect(segments[1].style.top).toBe("240px");
-    expect(segments[2].style.width).toBe("80px");
-    expect(segments[3].style.left).toBe("320px");
+    expect(segments[0].style.height).toBe("112px");
+    expect(segments[1].style.top).toBe("228px");
+    expect(segments[2].style.width).toBe("92px");
+    expect(segments[3].style.left).toBe("308px");
 
     clearHangarTutorialGuide();
 
@@ -676,7 +676,6 @@ describe("station tutorial spotlight", () => {
     G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "industry");
     document.body.innerHTML = `
       <div id="station-overlay">
-        <div id="st-dimmer"></div>
         <div id="st-ui">
           <button class="st-tab active" data-tab="industry"></button>
           <div id="panel-industry" class="panel active">
@@ -686,6 +685,7 @@ describe("station tutorial spotlight", () => {
             <aside id="refinery-right-rail"></aside>
           </div>
         </div>
+        <div id="st-dimmer"></div>
       </div>
     `;
 
@@ -712,10 +712,10 @@ describe("station tutorial spotlight", () => {
     const segments = Array.from(dimmer.querySelectorAll<HTMLElement>(".tutorial-dimmer-segment"));
     expect(segments).toHaveLength(4);
     expect(target.classList.contains("tutorial-hangar-highlight")).toBe(true);
-    expect(segments[0].style.height).toBe("240px");
-    expect(segments[1].style.top).toBe("360px");
-    expect(segments[2].style.width).toBe("140px");
-    expect(segments[3].style.left).toBe("440px");
+    expect(segments[0].style.height).toBe("252px");
+    expect(segments[1].style.top).toBe("348px");
+    expect(segments[2].style.width).toBe("152px");
+    expect(segments[3].style.left).toBe("428px");
     expect(stationState.indRailTab).toBe("queue");
 
     syncRefineryTutorialGuide({ refineryGuidePhase: 4 });

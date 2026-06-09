@@ -88,6 +88,9 @@ export const WORLD = {
     distanceMin: 0.95,
     distanceMax: 1.05,
     capOffset: 112,
+    chargeTimeBase: 2.0,
+    cooldownTimeBase: 3.0,
+    dispenseLifetimeBase: 3.0,
   },
   LINKS: {
     minBase: 2,

@@ -56,11 +56,12 @@ export interface Bullet {
   accel?: number;
   maxSpeed?: number;
   dmgProfile?: DamageProfile;
+  age?: number;
 }
 
 export function addBullet(data: Omit<Bullet, "id" | "hitChance"> & { id?: number; hitChance?: number }) {
   const { id, hitChance = 1, ...rest } = data;
-  getState().bullets.push({ id: id ?? generateId(), hitChance, ...rest });
+  getState().bullets.push({ id: id ?? generateId(), hitChance, age: 0, ...rest });
 }
 
 export interface EnemyBullet {
@@ -79,11 +80,12 @@ export interface EnemyBullet {
   ownerFaction?: "hostile" | "neutral" | "player" | "friendly";
   ownerId?: string;
   kind?: string | null;
+  age?: number;
 }
 
 export function addEnemyBullet(data: Omit<EnemyBullet, "id"> & { id?: number }) {
   const { id, ...rest } = data;
-  getState().enemyBullets.push({ id: id ?? generateId(), ...rest });
+  getState().enemyBullets.push({ id: id ?? generateId(), age: 0, ...rest });
 }
 
 export interface Beam {

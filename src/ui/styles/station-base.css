@@ -383,7 +383,7 @@ h4 {
   position: relative;
   z-index: 20 !important;
   outline: 2px solid var(--hud-accent);
-  outline-offset: 0;
+  outline-offset: 4px;
   filter: brightness(1.08);
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--hud-accent) 22%, transparent),

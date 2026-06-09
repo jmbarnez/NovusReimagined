@@ -78,3 +78,23 @@ const origGetContext = (HTMLCanvasElement.prototype as any).getContext;
   }
   return origGetContext.call(this, type, _opts);
 };
+
+// jsdom does not implement document.elementFromPoint; provide a simple fallback
+// that uses elementsFromPoint when available, or a naive bounding-box scan
+// over the current document body. This is only for tests (drag-drop).
+if (typeof document !== "undefined" && typeof (document as any).elementFromPoint !== "function") {
+  (document as any).elementFromPoint = function (x: number, y: number): Element | null {
+    if (typeof (document as any).elementsFromPoint === "function") {
+      const list = (document as any).elementsFromPoint(x, y) as Element[];
+      return list[0] ?? null;
+    }
+    const all = Array.from(document.querySelectorAll("*")) as HTMLElement[];
+    for (const el of all) {
+      const rect = el.getBoundingClientRect();
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+        return el;
+      }
+    }
+    return null;
+  };
+}

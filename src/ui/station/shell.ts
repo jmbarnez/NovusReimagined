@@ -22,7 +22,6 @@ export function ensureStationUI(): void {
   const el = document.createElement("div");
   el.id = "station-overlay";
   el.innerHTML = `
-    <div id="st-dimmer"></div>
     <div id="st-ui">
       <aside id="st-sidebar">
         <div id="st-station-info">
@@ -49,7 +48,8 @@ export function ensureStationUI(): void {
         <div class="panel panel--tool" id="panel-fabrication"></div>
         <div class="panel" id="panel-contracts"></div>
       </main>
-    </div>`;
+    </div>
+    <div id="st-dimmer"></div>`;
   document.body.appendChild(el);
 
   bindStationDomEvents(el, onStationAction);

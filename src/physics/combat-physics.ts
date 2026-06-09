@@ -77,7 +77,16 @@ export function updateProjectiles(dt: number) {
   const grid = getState().spatialGrid;
 
   for (let i = getState().bullets.length - 1; i >= 0; i--) {
-    const b = getState().bullets[i]; b.px = b.x; b.py = b.y; b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+    const b = getState().bullets[i];
+    b.px = b.x;
+    b.py = b.y;
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.age = (b.age ?? 0) + 1;
+    if (b.age <= 1) {
+      continue;
+    }
+    b.life -= dt;
 
     if (grid) {
       const bRad = b.sz || 2;

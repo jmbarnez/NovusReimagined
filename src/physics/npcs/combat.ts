@@ -56,6 +56,10 @@ export function updateEnemyBullets(dt: number, sysIdx: number) {
     b.py = b.y;
     b.x += b.vx * dt;
     b.y += b.vy * dt;
+    b.age = (b.age ?? 0) + 1;
+    if (b.age <= 1) {
+      continue;
+    }
     b.life -= dt;
 
     const moveDist = Math.max(0, Math.hypot(b.x - b.px, b.y - b.py));
