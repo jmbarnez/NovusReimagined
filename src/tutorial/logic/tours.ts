@@ -45,6 +45,15 @@ export function advanceRefineryTutorialPanel(): void {
 export function canAdvanceTour(): boolean {
   const step = getCurrentTutorialStep(getState().player);
   if (!step?.tour) return false;
+
+  if (step.id === "hangar-high" || step.id === "hangar-turrets") {
+    if (!Client.stationOpen || snapshot.hangarReviewComplete === true) return false;
+  }
+
+  if (step.id === "industry") {
+    if (!Client.stationOpen || snapshot.refineryGuideComplete === true) return false;
+  }
+
   const phaseKey = step.tour.phaseKey;
   const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
   return phase < step.tour.phases.length - 1;

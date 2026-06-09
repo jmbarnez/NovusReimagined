@@ -15,6 +15,7 @@ import { t } from "../utils/i18n.js";
 
 const PROFILES_INDEX_KEY = "novus-profiles-v1";
 const ACTIVE_PROFILE_KEY = "novus-active-profile-id";
+const PROFILE_MIGRATION_KEY = "novus-profiles-migrated";
 
 export interface ProfileMeta {
   id: string;
@@ -191,16 +192,29 @@ export function setActiveProfileId(id: string | null): void {
 }
 
 /** Convert a legacy single-save into the new multi-profile format.
- *  Safe to call repeatedly — it no-ops if profiles already exist. */
+ *  No-ops once migration has been performed or profiles already exist. */
 export function migrateLegacySave(): void {
+  try {
+    if (localStorage.getItem(PROFILE_MIGRATION_KEY)) return;
+  } catch {
+    return;
+  }
+
   const existing = getProfiles();
-  if (existing.length > 0) return;
+  if (existing.length > 0) {
+    try { localStorage.setItem(PROFILE_MIGRATION_KEY, "1"); } catch { /* ignore */ }
+    return;
+  }
 
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return;
+    if (!raw) {
+      localStorage.setItem(PROFILE_MIGRATION_KEY, "1");
+      return;
+    }
     const player = JSON.parse(raw) as Player;
     createProfile(player);
+    localStorage.setItem(PROFILE_MIGRATION_KEY, "1");
   } catch (e) {
     console.warn("[profiles] legacy migration failed:", e);
   }

@@ -14,7 +14,7 @@ export interface ActiveScanTarget {
 }
 
 export interface GameEffect {
-  type: "floatText" | "explosion" | "shockwave" | "impact" | "beam" | "weaponFire" | "shieldImpact" | "hullImpact" | "hostileLocking" | "hostileLock" | "underAttackPulse" | "industrialBeam" | "blip";
+  type: "floatText" | "explosion" | "shockwave" | "impact" | "beam" | "weaponFire" | "shieldImpact" | "hullImpact" | "hostileLocking" | "hostileLock" | "underAttackPulse" | "industrialBeam" | "blip" | "gateBoostParticles";
   payload?: {
     x?: number;
     y?: number;
@@ -32,6 +32,10 @@ export interface GameEffect {
     typeId?: string;
     vol?: number;
     count?: number;
+    gateId?: string;
+    angle?: number;
+    halfWidth?: number;
+    isForward?: boolean;
   };
 }
 

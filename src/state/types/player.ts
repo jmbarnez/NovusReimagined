@@ -125,4 +125,5 @@ export interface Player {
   scannerConeDeg: number;
   mapScannerActive: boolean;
   mapScannerStrength: number;
+  saveVersion?: number;
 }

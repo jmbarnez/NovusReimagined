@@ -9,7 +9,6 @@ import {
   getGateControlHint,
   type TutorialBoostGate,
 } from "../data/tutorial-layout.js";
-import { addParticle } from "../utils/entities.js";
 import { logEvent } from "../feedback.js";
 
 const gateHintsShown = new Set<string>();
@@ -61,28 +60,21 @@ function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false)
 
   if (isReplaying) return;
 
-  const { left, right } = gatePillarPositions(gate);
-  const baseAngle = gate.angle + (isForward ? 0 : Math.PI);
-  for (let i = 0; i < 32; i++) {
-    const t = random();
-    const bx = left.x + (right.x - left.x) * t;
-    const by = left.y + (right.y - left.y) * t;
-    const a = baseAngle + (random() - 0.5) * 0.5;
-    const sp = 180 + random() * 100;
-    addParticle({
-      x: bx + (random() - 0.5) * 8,
-      y: by + (random() - 0.5) * 8,
-      vx: Math.cos(a) * sp,
-      vy: Math.sin(a) * sp,
-      life: 0.6 + random() * 0.3,
-      color: "#aaddff",
-      r: 1 + random() * 1,
-    });
-  }
   if (p === getState().player) {
     getState().pendingEffects.push({
       type: "blip",
       payload: { x: 720 + random() * 240, y: 0.06 },
+    });
+    getState().pendingEffects.push({
+      type: "gateBoostParticles",
+      payload: {
+        gateId: gate.id,
+        x: gate.x,
+        y: gate.y,
+        angle: gate.angle,
+        halfWidth: gate.halfWidth,
+        isForward,
+      },
     });
   }
 }

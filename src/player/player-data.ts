@@ -23,6 +23,8 @@ import { syncActiveProfile } from "../data/profiles.js";
 import { getHardpointSlotCount, mergeLegacyTurretSlotsIntoHigh, playerHardpointRack } from "../utils/hardpoints.js";
 import { ALLOY_FAMILIES, flattenStorageMaterials, makeDefaultAlloyCodex, makeDefaultRefineryStorage, preferredStorageForMaterial } from "../refinery/index.js";
 
+const CURRENT_SAVE_VERSION = 1;
+
 export function defaultFitting(shipId: string): Record<string, (string | null)[]> {
   const s = SHIPS[shipId];
   const out: Record<string, (string | null)[]> = {};
@@ -245,6 +247,7 @@ export function makePlayer(): Player {
     scannerConeDeg: 180,
     mapScannerActive: false,
     mapScannerStrength: 0.5,
+    saveVersion: CURRENT_SAVE_VERSION,
   };
 }
 
@@ -284,6 +287,9 @@ export function loadPlayer(): Player {
     p.structureHitGlow = 0;
     p.structureHitAngle = 0;
     p.targetLock = null;
+
+    if (p.saveVersion === CURRENT_SAVE_VERSION) return p;
+
     if (!p.fitting) p.fitting = defaultFitting(p.shipId);
     migrateLegacyHardpointFit(p);
     if (!Array.isArray(p.turretTargets)) p.turretTargets = [];
@@ -401,6 +407,7 @@ export function loadPlayer(): Player {
     p.skills = Object.fromEntries(SKILL_IDS.map(id => [id, levelForSkillXp(p.skillXp[id] || 0)]));
     // Skill points were removed — strip the field from old saves.
     if ("skillPoints" in (p as object)) delete (p as { skillPoints?: number }).skillPoints;
+    p.saveVersion = CURRENT_SAVE_VERSION;
     return p;
   } catch {
     return makePlayer();

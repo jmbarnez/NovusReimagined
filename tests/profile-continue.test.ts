@@ -60,7 +60,7 @@ vi.mock("../src/ui/hud-overlay.js", () => ({
   logEvent: mocks.logEvent,
 }));
 
-vi.mock("../src/ui/title-screen.js", () => ({
+vi.mock("../src/ui/boot-screen/boot-screen-title.js", () => ({
   bindTitleScreenEvents: vi.fn(),
   restoreTitleScreen: mocks.restoreTitleScreen,
 }));

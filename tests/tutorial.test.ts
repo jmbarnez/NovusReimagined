@@ -24,7 +24,7 @@ import {
   hasTutorialCombatLoadout,
 } from "../src/data/tutorial.js";
 import { TUTORIAL_STEP_REWARDS } from "../src/data/tutorial-mission.js";
-import { getTutorialSnapshot, initTutorial, skipTutorial, tickTutorial } from "../src/tutorial/index.js";
+import { getTutorialSnapshot, initTutorial, skipTutorial, tickTutorial, canAdvanceTour } from "../src/tutorial/index.js";
 import { SAVE_KEY } from "../src/constants.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { ENEMY_SPAWNS } from "../src/data/enemy-spawns.js";
@@ -325,6 +325,43 @@ describe("hangar-turrets step completion", () => {
     expect(hangar.isComplete(buildTutorialCtx(0, 0, {
       hangarReviewStarted: true,
     }, G.P))).toBe(true);
+  });
+});
+
+describe("canAdvanceTour", () => {
+  beforeEach(() => {
+    installTestPlayer(makePlayer());
+    G.P.tutorial.active = true;
+    Client.stationOpen = false;
+  });
+
+  it("returns false for hangar-high before docking", () => {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+    expect(canAdvanceTour()).toBe(false);
+  });
+
+  it("returns true for hangar-high while docked and incomplete", () => {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+    Client.stationOpen = true;
+    expect(canAdvanceTour()).toBe(true);
+  });
+
+  it("returns false for hangar-high when review is complete", () => {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+    Client.stationOpen = true;
+    const snapshot = getTutorialSnapshot();
+    snapshot.hangarReviewComplete = true;
+    expect(canAdvanceTour()).toBe(false);
+  });
+
+  it("returns false for hangar-turrets before docking", () => {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-turrets");
+    expect(canAdvanceTour()).toBe(false);
+  });
+
+  it("returns false for industry before docking", () => {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "industry");
+    expect(canAdvanceTour()).toBe(false);
   });
 });
 

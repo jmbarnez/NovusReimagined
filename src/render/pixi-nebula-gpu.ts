@@ -9,14 +9,14 @@ interface NebulaUniforms {
   uTime: number;
   uCamera: Float32Array;
   uDensity: number;
-  uColor0: { set(v: [number, number, number]): void };
-  uColor1: { set(v: [number, number, number]): void };
-  uColor2: { set(v: [number, number, number]): void };
+  uColor0: Float32Array;
+  uColor1: Float32Array;
+  uColor2: Float32Array;
   uOffset: Float32Array;
-  uAspect: { set(v: number[]): void };
+  uAspect: Float32Array;
   uRidgeFactor: number;
   uWarpStrength: number;
-  uLaneDir: { set(v: number[]): void };
+  uLaneDir: Float32Array;
   [key: string]: unknown;
 }
 
@@ -135,8 +135,7 @@ export function updateNebulaMesh(now: number, camX: number, camY: number) {
   if (!_ug) return;
   const u = _ug.uniforms as unknown as NebulaUniforms;
   u.uTime = now;
-  u.uCamera[0] = camX;
-  u.uCamera[1] = camY;
+  u.uCamera = new Float32Array([camX, camY]);
 }
 
 export function setNebulaSystem(sys: System, enabled = true) {
@@ -172,13 +171,12 @@ export function setNebulaSystem(sys: System, enabled = true) {
   const c0 = hslToRgb(h0 / 360, s0, l0);
   const c1 = hslToRgb(h1 / 360, s1, l1);
   const c2 = hslToRgb(h2 / 360, s2, l2);
-  u.uColor0.set(c0);
-  u.uColor1.set(c1);
-  u.uColor2.set(c2);
+  u.uColor0 = new Float32Array(c0);
+  u.uColor1 = new Float32Array(c1);
+  u.uColor2 = new Float32Array(c2);
 
   // Randomize offset with larger ranges to avoid repeated patterns
-  u.uOffset[0] = rng() * 1000;
-  u.uOffset[1] = rng() * 1000;
+  u.uOffset = new Float32Array([rng() * 1000, rng() * 1000]);
 
   _applyArchetype(u, sys.archetype ?? "wisps", rng);
 }
@@ -227,10 +225,10 @@ function _applyArchetype(u: NebulaUniforms, arch: string, rng: () => number) {
       break;
   }
 
-  u.uAspect.set(aspect);
+  u.uAspect = new Float32Array(aspect);
   u.uRidgeFactor  = ridge;
   u.uWarpStrength = warp;
-  u.uLaneDir.set(lane);
+  u.uLaneDir = new Float32Array(lane);
 }
 
 export function resizeNebulaMesh() {
