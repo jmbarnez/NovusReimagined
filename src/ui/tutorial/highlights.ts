@@ -52,6 +52,10 @@ export function syncHudHighlights() {
   }
 
   const snapshot = getTutorialSnapshot();
+  if (step.id === "hud-tour" && snapshot.hudTourComplete === true) {
+    clearHudHighlight();
+    return;
+  }
   let highlightTarget: Element | null = null;
 
   if (step.id === "hud-tour") {
