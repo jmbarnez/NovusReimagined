@@ -1,6 +1,7 @@
 import { PlayerAccess, getState } from "../state-access.js";
 import { MODULE_FLAGS, type ModuleDef, type Rack } from "../data/modules.js";
 import { floatText } from "../utils/fx.js";
+import { t } from "../utils/i18n.js";
 import type { Player } from "../state.js";
 import { isAsteroidTarget, isWreckPieceTarget, targetByLockId } from "./lookup.js";
 import { ensureLockQueue } from "./locks.js";
@@ -88,7 +89,7 @@ export function assignModuleSlotToTarget(
   const lockSlot = p.lockQueue.find((s) => s.id === targetId);
   if (!lockSlot) {
     if (!opts?.silent && typeof window !== "undefined" && p === getState().player) {
-      floatText(p.x, p.y - 30, "TARGET NOT LOCKED", "#ff8844");
+      floatText(p.x, p.y - 30, t("system.targetNotLocked"), "#ff8844");
     }
     return false;
   }
@@ -101,7 +102,7 @@ export function assignModuleSlotToTarget(
 
   if (!turretModuleAcceptsTarget(m, targetId)) {
     if (!opts?.silent && typeof window !== "undefined" && p === getState().player) {
-      floatText(p.x, p.y - 30, "INVALID TARGET TYPE", "#ff8844");
+      floatText(p.x, p.y - 30, t("system.invalidTargetType"), "#ff8844");
     }
     return false;
   }

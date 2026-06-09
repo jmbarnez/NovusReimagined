@@ -2,6 +2,7 @@ import { addXp, addSkillXp } from "../player/player-data.js";
 import { spawnParticles } from "./fx.js";
 import { addSalvagePickup, addShockwave } from "./entities.js";
 import { logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import { sfxShipExplosion } from "../audio/procedural.js";
 import type { Asteroid } from "../types/world.js";
 import { generateOreName, normalizeComposition, oreColorForComposition, sortedCompositionEntries } from "./ore-naming.js";
@@ -150,9 +151,9 @@ export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, mini
   addXp(10);
   if (isMiningLaser) {
     addSkillXp("mining", 15);
-    logEvent(`Asteroid mined — ${totalQty}× ${chunkName} released · +10 XP · Mining +15`, "loot");
+    logEvent(t("system.asteroidMined", { qty: totalQty, chunk: chunkName }), "loot");
   } else {
-    logEvent(`Asteroid shattered — ${totalQty}× ${chunkName} released (40% yield) · +10 XP`, "loot");
+    logEvent(t("system.asteroidShattered", { qty: totalQty, chunk: chunkName }), "loot");
   }
 }
 

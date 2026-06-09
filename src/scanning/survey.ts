@@ -7,6 +7,7 @@ import { C } from "../config/index.js";
 import { tryDiscoverLocalRegionsFromScan } from "../world/map-discovery.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../audio/procedural.js";
 import { logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import { addSkillXp } from "../player/player-data.js";
 import { levelForSkillXp } from "../data/skills.js";
 import type { HiddenSite, SignatureClassification } from "../types/world.js";
@@ -74,7 +75,7 @@ export function startScanPulse(
   if (p === getState().player && !opts?.silent) {
     surveyBlockedLogged = new Set();
     sfxConfirm();
-    logEvent(`Active scan launched.`, "system");
+    logEvent(t("system.scanLaunched"), "system");
   }
   return { started: true };
 }
@@ -96,7 +97,7 @@ function logSurveyBlocked(site: HiddenSite): void {
   }
   surveyBlockedLogged.add(site.id);
   const required = site.requiredSurveyLevel ?? 0;
-  logEvent(`Surveying level ${required} required to resolve this signature.`, "system");
+  logEvent(t("system.surveyLevelRequired", { level: required }), "system");
 }
 
 function getConeMultipliers(coneDeg: number): { resolveMult: number; detectFloor: number } {
@@ -147,8 +148,8 @@ export function updateScanning(dt: number, p: Player): void {
       if (p === getState().player) {
         sfxBlip(940, 0.04);
         const detectMsg = site.isTutorialSite
-          ? "Training signature detected."
-          : `Signal contact detected: ${site.family} signature.`;
+          ? t("system.trainingSignature")
+          : t("system.signalDetected", { family: site.family });
         logEvent(detectMsg, "system");
       }
     }
@@ -193,7 +194,7 @@ export function updateScanning(dt: number, p: Player): void {
       changed = true;
       if (p === getState().player) {
         sfxConfirm();
-        logEvent(`Signature resolved: ${site.name}.`, "loot");
+        logEvent(t("system.signatureResolved", { name: site.name }), "loot");
       }
     }
   }

@@ -12,6 +12,7 @@ import { isAsteroidTarget, transversalVs } from "../targeting.js";
 import { MODULES, MODULE_FLAGS, type ModuleDef } from "../data/modules.js";
 import { getPlayerTurretOrigin } from "./turret-origin.js";
 import { flashSlotFire, logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import { aimDeviationCone, calculatePredictiveAimAngle } from "./aim.js";
 import { computeHitQuality } from "./hit-quality.js";
 import { fireBeamWeapon } from "./beam-weapon.js";
@@ -49,8 +50,8 @@ function validatePlayerShootRequirements(
   const ammoCost = wProf.ammoPerShot ?? 1;
   if (ammoCost > 0 && (p.ammo[ammoKey as keyof typeof p.ammo] ?? 0) < ammoCost) {
     if (!isAutoFire && typeof window !== "undefined") {
-      floatText(p.x, p.y - 22, "NO AMMO", "#ff9944");
-      logEvent("Weapon failed: ammunition depleted", "warn");
+      floatText(p.x, p.y - 22, t("combat.noAmmo"), "#ff9944");
+      logEvent(t("combat.noAmmoLog"), "warn");
     }
     return null;
   }
@@ -117,7 +118,7 @@ export function playerShoot(slotIdx: number, targetEnemy: Enemy | Asteroid | Wre
       const now = performance.now();
       if (now - _lastNotInArcWarn > NOT_INARC_COOLDOWN_MS) {
         _lastNotInArcWarn = now;
-        floatText(p.x, p.y - 22, "NOT IN ARC", "#ff9944");
+        floatText(p.x, p.y - 22, t("combat.notInArc"), "#ff9944");
       }
     }
     return false;

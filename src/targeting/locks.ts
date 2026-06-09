@@ -3,6 +3,7 @@ import { SHIPS } from "../data/ships.js";
 import { dst } from "../utils/math.js";
 import { LOCK_TIME_BASE } from "../constants.js";
 import { floatText } from "../utils/fx.js";
+import { t } from "../utils/i18n.js";
 import { isTargetDestroyed } from "../utils/entities.js";
 import { sfxLockAcquired, sfxLockLost, sfxTurretAssign } from "../audio/procedural.js";
 import { C } from "../config/index.js";
@@ -221,16 +222,16 @@ export function updateSensorLocks(dt: number, st: ComputedStats, p: Player = get
   const dropRange = sensorRange * C.TARGETING.SENSOR.dropRangeMultiplier;
   for (let i = p.lockQueue.length - 1; i >= 0; i--) {
     const slot = p.lockQueue[i];
-    const t = targetByLockId(slot.id, p);
-    if (!t || isTargetDestroyed(t)) {
+    const target = targetByLockId(slot.id, p);
+    if (!target || isTargetDestroyed(target)) {
       removeLockAndAssignments(p, i, slot.id);
       continue;
     }
-    if (dst(p.x, p.y, t.x, t.y) > dropRange) {
+    if (dst(p.x, p.y, target.x, target.y) > dropRange) {
       removeLockAndAssignments(p, i, slot.id);
       if (isLocalPlayer(p)) {
         sfxLockLost();
-        floatText(t.x, t.y - 25, "LOCK LOST", "#cc8844");
+        floatText(target.x, target.y - 25, t("system.lockLost"), "#cc8844");
       }
       continue;
     }
@@ -238,22 +239,22 @@ export function updateSensorLocks(dt: number, st: ComputedStats, p: Player = get
       const nextAcc = (slot.acc || 0) + dt;
       if (isLocalPlayer(p)) PlayerAccess.updateLockQueueSlot(slot.id, { acc: nextAcc }, p);
       else slot.acc = nextAcc;
-      if (nextAcc >= computeLockTimeSec(t, st, p)) {
+      if (nextAcc >= computeLockTimeSec(target, st, p)) {
         if (isLocalPlayer(p)) PlayerAccess.updateLockQueueSlot(slot.id, { resolving: false }, p);
         else slot.resolving = false;
         syncPrimaryTargetLock(p);
-        const isAst = isAsteroidTarget(t.id);
-        const isPiece = isWreckPieceTarget(t.id);
+        const isAst = isAsteroidTarget(target.id);
+        const isPiece = isWreckPieceTarget(target.id);
         if (isLocalPlayer(p)) {
           if (!isAst) sfxLockAcquired();
         }
-        tryAutoAssignSpecialTurret(t.id, isAst, isPiece, p);
+        tryAutoAssignSpecialTurret(target.id, isAst, isPiece, p);
         if (!isAst && !isPiece) {
           const turretSlot = p.fireControlSlot ?? 0;
           const m = getFittedHardpointModule(p, turretSlot);
           if (m && isWeaponHardpointModule(m)) {
             if ((p.turretPower?.[turretSlot]) && !(p.turretTargets?.[turretSlot])) {
-              setPlayerTurretTarget(p, turretSlot, t.id, true);
+              setPlayerTurretTarget(p, turretSlot, target.id, true);
             }
           }
         }
@@ -279,7 +280,7 @@ export function requestSensorLock(id: string, p: Player = getState().player, opt
     const dropRange = sensorRange * C.TARGETING.SENSOR.dropRangeMultiplier;
     if (dst(p.x, p.y, target.x, target.y) > dropRange) {
       if (!opts?.suppressFrameAction && typeof window !== "undefined" && isLocalPlayer(p)) {
-        floatText(p.x, p.y - 38, "LOCK FAIL — OUT OF RANGE", "#cc8844");
+        floatText(p.x, p.y - 38, t("system.lockFailRange"), "#cc8844");
       }
       return;
     }
@@ -289,7 +290,7 @@ export function requestSensorLock(id: string, p: Player = getState().player, opt
     if (isLocalPlayer(p)) PlayerAccess.popLockQueue(p);
     else p.lockQueue.pop();
     if (isLocalPlayer(p)) {
-      floatText(p.x, p.y - 38, "LOCK CAP — DROPPED TAIL", "#cc8844");
+      floatText(p.x, p.y - 38, t("system.lockCapDropped"), "#cc8844");
     }
   }
   if (isLocalPlayer(p)) PlayerAccess.unshiftLockQueue({ id, resolving: true, acc: 0 }, p);

@@ -32,6 +32,7 @@ import { executeGameCommand } from "../src/sim/commands.js";
 import { updateWarp } from "../src/docking/index.js";
 import { syncTutorialVisuals, clearTutorialVisuals } from "../src/tutorial/ui/visuals.js";
 import { tutorialState } from "../src/tutorial/ui/state.js";
+import { getActiveTutorialHighlight, getCardAnchorHighlight } from "../src/tutorial/ui/highlights.js";
 import { stationState } from "../src/ui/station/shared.js";
 import { activateStationTab } from "../src/ui/station/tabs.js";
 import { emit, on } from "../src/events.js";
@@ -828,6 +829,29 @@ describe("hud tutorial dimmer cleanup", () => {
     const missions = document.getElementById("hud-missions")!;
     expect(missions.classList.contains("hud-highlight")).toBe(false);
     expect(dimmer.classList.contains("hidden")).toBe(true);
+  });
+
+  it("ignores stale hud highlights when hudTourComplete is true", () => {
+    setStep("hud-tour");
+    const missions = document.getElementById("hud-missions")!;
+    missions.classList.add("hud-highlight");
+
+    const snapshot = getTutorialSnapshot();
+    snapshot.hudTourComplete = true;
+
+    expect(getActiveTutorialHighlight()).toBeNull();
+    syncTutorialVisuals({ hudTourPhase: 5, hudTourComplete: true });
+    const dimmer = document.getElementById("hud-tour-dimmer")!;
+    expect(dimmer.classList.contains("hidden")).toBe(true);
+  });
+
+  it("anchors the card to any highlighted element, not just hud-tour", () => {
+    setStep("boost-try");
+    const statusBars = document.getElementById("hud-status-bars")!;
+    statusBars.classList.add("hud-highlight");
+
+    const step = getCurrentTutorialStep(G.P);
+    expect(getCardAnchorHighlight(step)).toBe(statusBars);
   });
 });
 

@@ -91,17 +91,17 @@ export function killEnemy(e: Enemy) {
       const skillId = WEAPON_SKILL[kind];
       addSkillXp(skillId, 25);
       floatText(e.x, e.y - 35, `+${XP_PER_KILL} XP`, "#aaddff");
-      logEvent(`Destroyed ${e.name} — +${XP_PER_KILL} XP · ~${e.credits} CR loot`, "combat");
+      logEvent(t("combat.destroyed", { name: e.name, xp: XP_PER_KILL, credits: e.credits }), "combat");
       spawnWreck(e);
     } else {
-      logEvent(`Destroyed ambient ship: ${e.name}`, "combat");
+      logEvent(t("combat.destroyedAmbient", { name: e.name }), "combat");
       spawnWreck(e);
     }
   } else {
     if (e.faction === "neutral") {
-      logEvent(`Ambient ship destroyed: ${e.name}`, "combat");
+      logEvent(t("combat.ambientDestroyed", { name: e.name }), "combat");
     } else {
-      floatText(e.x, e.y - 35, "Turret Kill", "#88aacc");
+      floatText(e.x, e.y - 35, t("combat.turretKill"), "#88aacc");
     }
     spawnWreck(e);
   }

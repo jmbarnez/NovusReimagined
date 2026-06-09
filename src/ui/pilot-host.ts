@@ -5,12 +5,12 @@ import { loadPlayer } from "../player/player-data.js";
 import { ensureGameplayConnected, enterSpaceMode, getMultiplayerPort } from "../game-loop.js";
 import { restoreGameFromSave } from "../utils/restore-save.js";
 import { logEvent } from "./hud-overlay.js";
+import { t } from "../utils/i18n.js";
 import { createPilotTerminalOverlay } from "./pilot-terminal/layout.js";
 import { appendLogEntry } from "./hud/logs.js";
 import { runPilotConnection } from "./pilot-connecting.js";
 import { isTauriApp } from "../utils/app-exit.js";
 import { netLog } from "./net-console.js";
-import { t } from "../utils/i18n.js";
 import { onClick } from "./dom-helpers.js";
 
 interface PilotHostScreenOptions {
@@ -113,7 +113,7 @@ export function showPilotHostScreen(onClose: () => void, options: PilotHostScree
       task: () => ensureGameplayConnected({ reconnectLocal: true }),
       onSuccess: async () => {
         await enterSpaceMode();
-        logEvent(`Host relay active on ${listenAddr}`, "system");
+        logEvent(t("system.hostRelayActive", { addr: listenAddr }), "system");
         netLog(`[OK] Host listening ${listenAddr}`);
       },
       onFailure: () => {

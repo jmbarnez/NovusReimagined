@@ -4,6 +4,7 @@ import { MODULES, MODULE_FLAGS, ModuleDef } from "./data/modules.js";
 import { getInstance } from "./utils/items.js";
 import { dst } from "./utils/math.js";
 import { floatText } from "./utils/fx.js";
+import { t } from "./utils/i18n.js";
 import { isWreckPieceTarget, isAsteroidTarget } from "./targeting.js";
 import { curSys } from "./utils/game.js";
 import { ASTEROID_DENSITY } from "./constants.js";
@@ -94,14 +95,14 @@ export function updateTractor(dt: number) {
   const { entity, mass, id } = resolved;
   const maxMass = slot.mod.tractorMaxMassKg ?? 3000;
 
-  const t = getState().player.tractorTightness ?? 0.5;
-  const pullMult = 0.45 + t * 1.10;
-  const drainMult = 0.5 + t * 1.5;
+  const tightness = getState().player.tractorTightness ?? 0.5;
+  const pullMult = 0.45 + tightness * 1.10;
+  const drainMult = 0.5 + tightness * 1.5;
   const drain = (slot.mod.capDrainPerSec ?? 3) * drainMult * dt;
 
   if (getState().player.energy < drain) {
     TractorAccess.update({ active: false, tooHeavy: false, targetId: null });
-    floatText(getState().player.x, getState().player.y - 35, "No cap", "#ff8844");
+    floatText(getState().player.x, getState().player.y - 35, t("system.tractorNoCap"), "#ff8844");
     setCarryKg(0);
     return;
   }
@@ -124,7 +125,7 @@ export function updateTractor(dt: number) {
     setCarryKg(0);
     _tooHeavyTimer -= dt;
     if (_tooHeavyTimer <= 0) {
-      floatText(entity.x, entity.y - 22, "Too heavy", "#ff8844");
+      floatText(entity.x, entity.y - 22, t("system.tractorTooHeavy"), "#ff8844");
       _tooHeavyTimer = TOO_HEAVY_TEXT_INTERVAL;
     }
   } else {

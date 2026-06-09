@@ -2,6 +2,7 @@ import type { Player, RefiningHeatMode, BulkMaterialStack } from "../state.js";
 import { getState } from "../state-access.js";
 import { PlayerAccess, WorldAccess } from "../state-access.js";
 import { floatText } from "../utils/fx.js";
+import { t } from "../utils/i18n.js";
 import { curSys } from "../utils/game.js";
 import { random } from "../utils/math.js";
 import { removeSensorLock } from "../targeting.js";
@@ -50,8 +51,8 @@ export function processFloatingItem(itemId: string, p: Player): { success: boole
   }, p);
   if (p === getState().player) {
     const dropZone = getDropZoneCenter(hub);
-    floatText(dropZone.x, dropZone.y - 35, "Reclamation Initiated", "#ffaa44");
-    logEvent(`Matter reclamation initiated: ${item.label} (${fee}¢ fee)`, "system");
+    floatText(dropZone.x, dropZone.y - 35, t("system.reclamationInitiated"), "#ffaa44");
+    logEvent(t("system.reclamationLog", { label: item.label, fee }), "system");
   }
   return { success: true };
 }
@@ -88,7 +89,7 @@ export function processMixedOreCargo(
     targetStorageId: targetStorageId ?? undefined,
   }, p);
   if (p === getState().player) {
-    logEvent(`Queued feedstock processing: ${slot.name} ×${qty} (${fee}¢ fee)`, "system");
+    logEvent(t("system.queuedProcessing", { name: slot.name, qty, fee }), "system");
   }
   return { success: true };
 }

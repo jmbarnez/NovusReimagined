@@ -7,6 +7,7 @@ import { random } from "../utils/math.js";
 import { curSys } from "../utils/game.js";
 import { clearSensorLocks } from "../targeting.js";
 import { floatText } from "../utils/fx.js";
+import { t } from "../utils/i18n.js";
 import { populateSystem } from "../world-gen.js";
 import { stationLayer } from "../pixi.js";
 import { initPixiCelestial, destroyPixiCelestial } from "../render/celestial/index.js";
@@ -84,11 +85,11 @@ export function warpTo(gate: Gate, p: Player = getState().player) {
   }
   if (p === getState().player) {
     const actionLabel = crossSys
-      ? `WARPED TO ${gate.target.label.toUpperCase()}`
-      : `RETURNED TO ${gate.target.label.toUpperCase()}`;
+      ? t("system.warpedFloat", { label: gate.target.label.toUpperCase() })
+      : t("system.returnedFloat", { label: gate.target.label.toUpperCase() });
     floatText(p.x, p.y - 55, actionLabel, "#66aaff");
     playWarpAudio("jump");
-    logDockEvent(crossSys ? `Warped to ${gate.target.label}` : `Returned to ${gate.target.label}`, "system");
+    logDockEvent(crossSys ? t("system.warpedTo", { label: gate.target.label }) : t("system.returnedTo", { label: gate.target.label }), "system");
     savePlayer();
   }
 }

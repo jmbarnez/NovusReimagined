@@ -6,6 +6,7 @@ import { MODULE_DAMAGE_CHANCE, MODULE_DAMAGE_RATIO, RACK_TYPES } from "../consta
 import { invalidate } from "../player/player-stats.js";
 import { MODULES } from "../data/modules.js";
 import { logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import { getInstance } from "../utils/items.js";
 
 export const DMG_COLORS: Record<string, string> = {
@@ -80,13 +81,13 @@ function damageRandomModule(amount: number, p: Player) {
       PlayerAccess.setTurretPower(pick.idx, false, p);
     }
     invalidate(p);
-    const msg = m ? `${m.short || m.name} OFFLINE — critically damaged` : "Module OFFLINE";
+    const msg = m ? t("combat.moduleOfflineLog", { name: m.short || m.name }) : t("combat.moduleOffline");
     if (p === getState().player) {
       logEvent(msg, "warn");
-      floatText(p.x, p.y - 38, "MODULE OFFLINE", "#ff4444");
+      floatText(p.x, p.y - 38, t("combat.moduleOffline"), "#ff4444");
     }
   } else if (p === getState().player) {
-    floatText(p.x, p.y - 38, "MODULE HIT", "#ff8844");
+    floatText(p.x, p.y - 38, t("combat.moduleHit"), "#ff8844");
   }
 }
 

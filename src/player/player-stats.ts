@@ -3,7 +3,7 @@ import { SHIPS, ShipDef } from "../data/ships.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "../data/modules.js";
 import { WEAPON_PROFILES, WeaponProfile } from "../data/weaponProfiles.js";
 import { resolveWeaponTurret, getWeaponTurretAtSlot } from "../targeting.js";
-import { MODULE_HP_MAX, MIN_THRUST_PCT, SHIP_MASS_REF } from "../constants.js";
+import { MODULE_HP_MAX, MIN_THRUST_PCT, SHIP_MASS_REF, RACK_TYPES } from "../constants.js";
 import { levelForSkillXp, WEAPON_SKILL, type WeaponDelivery } from "../data/skills.js";
 import { getInstance } from "../utils/items.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
@@ -77,7 +77,7 @@ export function weaponSkillBonus(delivery: WeaponDelivery, p: Player = getState(
   return lvl * C.PLAYER.SKILL_POTENCY.weaponMultPerLevel;
 }
 
-function isModuleActive(m: ModuleDef, rack: "turret" | "high" | "med" | "low", idx: number, p: Player): boolean {
+function isModuleActive(m: ModuleDef, rack: RackId, idx: number, p: Player): boolean {
   return rack === playerHardpointRack(p) ? (p.turretPower?.[idx] ?? false) : (p.slotActive?.[rack]?.[idx] ?? true);
 }
 
@@ -115,7 +115,7 @@ export function computeStats(
   let miningRangeKmMult = 1, miningRangeKmFlat = 0;
   let actSimThrustPct = 0, actSimMaxSpeedPct = 0, actSimTurnPct = 0, actEngineMN = 0;
 
-  for (const rack of ["turret", "high", "med", "low"] as const) {
+  for (const rack of RACK_TYPES) {
     for (let idx = 0; idx < (fitting[rack]?.length || 0); idx++) {
       const instanceId = fitting[rack][idx];
       if (!instanceId) continue;
@@ -188,7 +188,7 @@ export function computeStats(
   const maxHp = Math.floor(ship.hull * (1 + ehpB + engSkl + lvlHp));
   const maxStructure = Math.floor(ship.hull * C.PLAYER.STRUCTURE_RATIO * (1 + ehpB + engSkl + lvlHp));
   let hasShieldSystem = false;
-  for (const rack of ["turret", "high", "med", "low"] as const) {
+  for (const rack of RACK_TYPES) {
     for (let idx = 0; idx < (fitting[rack]?.length || 0); idx++) {
       const uid = fitting[rack][idx];
       if (!uid) continue;
@@ -276,7 +276,7 @@ export function computeStats(
     const m = inst ? MODULES[inst.baseId] : null;
     if (!m?.isSalvager) continue;
     hasSalvager = true;
-    salvageBonus += (m as { salvageRollBonus?: number }).salvageRollBonus ?? 0;
+    salvageBonus += m.salvageRollBonus ?? 0;
   }
   const metallurgyLevel = skLv('metallurgy');
   const weaponTurret = resolveWeaponTurret(fitting, p);
@@ -339,13 +339,13 @@ export function getWeaponProfileForSlot(idx: number, p: Player = getState().play
 export function hasCommsEquipment(p: Player = getState().player): boolean {
   const fitting = p?.fitting;
   if (!fitting) return false;
-  for (const rack of ["turret", "high", "med", "low"] as const) {
+  for (const rack of RACK_TYPES) {
     for (const uid of fitting[rack] || []) {
       if (!uid) continue;
       const inst = getInstance(uid, p);
       if (!inst) continue;
       const m = MODULES[inst.baseId];
-      if (m && (m as { isComms?: boolean }).isComms) return true;
+      if (m?.isComms) return true;
     }
   }
   return false;

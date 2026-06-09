@@ -1,21 +1,21 @@
 import { getCurrentTutorialStep } from "../data/helpers.js";
+import { getTutorialSnapshot } from "../logic/index.js";
+import { getState } from "../../state-access.js";
 import { tutorialState } from "./state.js";
 import { query, toggleClass } from "../../ui/dom-helpers.js";
 
 export function getActiveTutorialHighlight(): HTMLElement | null {
+  const step = getCurrentTutorialStep(getState().player);
+  if (step?.id === "hud-tour") {
+    const snapshot = getTutorialSnapshot();
+    if (snapshot.hudTourComplete === true) return null;
+  }
   return query(".tutorial-hangar-highlight, .hud-highlight");
 }
 
 export function getCardAnchorHighlight(step: ReturnType<typeof getCurrentTutorialStep>): HTMLElement | null {
   if (!step) return null;
-  const highlighted = getActiveTutorialHighlight();
-  if (!highlighted) return null;
-  if (highlighted.classList.contains("tutorial-hangar-highlight")) return highlighted;
-  if (highlighted.classList.contains("hud-highlight")) {
-    const hudAnchoredSteps = new Set(["hud-tour"]);
-    return hudAnchoredSteps.has(step.id) ? highlighted : null;
-  }
-  return null;
+  return getActiveTutorialHighlight();
 }
 
 export function setHudHighlight(target: Element | null): void {

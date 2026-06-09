@@ -3,6 +3,7 @@ export type Language = "en" | "es";
 import { bootStrings } from "./boot.js";
 import { bridgeStrings } from "./bridge.js";
 import { chatStrings } from "./chat.js";
+import { combatStrings } from "./combat.js";
 import { commonStrings } from "./common.js";
 import { contractsStrings } from "./contracts.js";
 import { decryptStrings } from "./decrypt.js";
@@ -25,6 +26,7 @@ import { profileStrings } from "./profile.js";
 import { settingsStrings } from "./settings.js";
 import { shipStrings } from "./ship.js";
 import { siteStrings } from "./site.js";
+import { systemStrings } from "./system.js";
 import { skillStrings } from "./skill.js";
 import { stationStrings } from "./station.js";
 import { timeAgoStrings } from "./timeAgo.js";
@@ -38,6 +40,7 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     ...bootStrings.en,
     ...bridgeStrings.en,
     ...chatStrings.en,
+    ...combatStrings.en,
     ...commonStrings.en,
     ...contractsStrings.en,
     ...decryptStrings.en,
@@ -95,6 +98,7 @@ export const STRINGS: Record<Language, Record<string, string>> = {
     ...shipStrings.es,
     ...siteStrings.es,
     ...skillStrings.es,
+    ...systemStrings.es,
     ...stationStrings.es,
     ...timeAgoStrings.es,
     ...titleStrings.es,

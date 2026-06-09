@@ -1,6 +1,7 @@
 import { sfxBlip, sfxConfirm } from "../audio/procedural.js";
 import { getMultiplayerPort, connectToRemote, enterSpaceMode } from "../game-loop.js";
 import { logEvent } from "./hud-overlay.js";
+import { t } from "../utils/i18n.js";
 import { prepareRemoteJoinPilot } from "../utils/restore-save.js";
 import { loadPlayer } from "../player/player-data.js";
 import { netLog } from "./net-console.js";
@@ -8,7 +9,6 @@ import { createPilotTerminalOverlay } from "./pilot-terminal/layout.js";
 import { appendLogEntry } from "./hud/logs.js";
 import { runPilotConnection } from "./pilot-connecting.js";
 import { showPilotProfileScreen } from "./pilot-profile.js";
-import { t } from "../utils/i18n.js";
 import { setHtml, onClick } from "./dom-helpers.js";
 import {
   discoverLanSessions,
@@ -215,7 +215,7 @@ export function showPilotJoinScreen(options: ShowPilotJoinOptions): void {
       task: () => connectToRemote(address),
       onSuccess: async () => {
         await enterSpaceMode();
-        logEvent(`Neural link established to remote server: ${address}`, "system");
+        logEvent(t("system.neuralLinkRemote", { addr: address }), "system");
         netLog(`[OK] Join complete → ${address}`);
       },
       onFailure: () => {

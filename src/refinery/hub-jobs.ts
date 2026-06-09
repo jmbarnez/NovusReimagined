@@ -4,6 +4,7 @@ import { PlayerAccess } from "../state-access.js";
 import { addSkillXp } from "../player/player-data.js";
 import { getStats } from "../player/player-stats.js";
 import { logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import { rollWreckSalvage } from "../wreck/index.js";
 import type { WreckSalvageEntry } from "../types/world.js";
 import { normalizeComposition } from "../utils/ore-naming.js";
@@ -42,7 +43,7 @@ export function completeAsteroidProcessing(job: HubJob, p: Player) {
   const xp = Math.max(12, Math.floor(processed.massKg * 0.012 * skillUnlockBonus(skillLv)));
   addSkillXp("refining", xp, p);
   if (p === getState().player) {
-    logEvent(`Processing complete — ${material.label} ready · ${material.volumeM3.toFixed(1)} m³ · Refining +${xp} XP`, "loot");
+    logEvent(t("system.processingComplete", { label: material.label, volume: material.volumeM3.toFixed(1), xp }), "loot");
   }
 }
 
@@ -69,7 +70,7 @@ export function completeMixedOreProcessing(job: HubJob, p: Player) {
   const xp = Math.max(8, Math.floor(processed.massKg * 0.015 * skillUnlockBonus(skillLv)));
   addSkillXp("refining", xp, p);
   if (p === getState().player) {
-    logEvent(`Feedstock stabilized — ${material.label} stockpiled · Refining +${xp} XP`, "loot");
+    logEvent(t("system.feedstockStabilized", { label: material.label, xp }), "loot");
   }
 }
 
@@ -103,7 +104,7 @@ export function completeSeparation(job: HubJob, p: Player) {
   const xp = Math.max(6, Math.floor(result.outputs.reduce((sum, output) => sum + output.massKg, 0) * 0.01));
   addSkillXp("refining", xp, p);
   if (p === getState().player) {
-    logEvent(`Separation complete — ${result.outputs.length} stock streams recovered · Refining +${xp} XP`, "loot");
+    logEvent(t("system.separationComplete", { count: result.outputs.length, xp }), "loot");
   }
 }
 
@@ -144,7 +145,7 @@ export function completeAlloying(job: HubJob, p: Player) {
   if (p === getState().player) {
     const label = discovered?.label ?? output.label;
     const suffix = discovered ? " · Discovery logged" : "";
-    logEvent(`Alloying complete — ${label} produced${suffix} · Refining +${xp} XP`, "loot");
+    logEvent(t("system.alloyingComplete", { label, suffix, xp }), "loot");
   }
 }
 
@@ -162,6 +163,6 @@ export function completeDebrisProcessing(mass: number, salvagePool: WreckSalvage
   const xp = Math.max(5, Math.floor(mass * 0.015));
   addSkillXp("salvage", xp, p);
   if (p === getState().player) {
-    logEvent(`Processing complete — salvage ready · Salvage +${xp} XP`, "loot");
+    logEvent(t("system.salvageReady", { xp }), "loot");
   }
 }

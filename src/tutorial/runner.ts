@@ -12,6 +12,7 @@ import { TUTORIAL_SPAWN, shouldRelocateTutorialStart } from "../data/tutorial-la
 import { floatText } from "../utils/fx.js";
 import { clearTutorialVisuals } from "../ui/tutorial/visuals.js";
 import { logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { resetTutorialTrackState } from "../physics/tutorial-track.js";
 import {
@@ -165,7 +166,7 @@ export function tickTutorial(_dt: number) {
       if (ctx.inZone({ x: reg.x, y: reg.y, r: reg.r })) {
         visited.push(reg.id);
         snapshot.visitedZones = visited;
-        logEvent(`Entering ${reg.name}`, "system");
+        logEvent(t("system.enteringRegion", { name: reg.name }), "system");
       }
     }
   }
@@ -243,8 +244,8 @@ export function advanceStep() {
   if (!isCurrentStepComplete()) {
     const step = getCurrentTutorialStep(getState().player);
     if (step?.zone) {
-      logEvent("Hold position at the objective to continue", "system");
-      floatText(getState().player.x, getState().player.y - 38, "Return to objective area", "#cc8844");
+      logEvent(t("system.holdPosition"), "system");
+      floatText(getState().player.x, getState().player.y - 38, t("system.returnToObjective"), "#cc8844");
     }
     return;
   }
@@ -253,8 +254,8 @@ export function advanceStep() {
   const step = TUTORIAL_STEPS[stepIdx];
   if (!step) return;
 
-  logEvent(`Step complete: ${step.title}`, "system");
-  floatText(getState().player.x, getState().player.y - 40, `${step.title} — complete`, "#88ccff");
+  logEvent(t("system.stepComplete", { title: step.title }), "system");
+  floatText(getState().player.x, getState().player.y - 40, t("system.stepCompleteFloat", { title: step.title }), "#88ccff");
 
   grantTutorialStepReward(step.id);
   step.onComplete?.(buildCtx());
@@ -288,8 +289,8 @@ export function completeTutorial(fromSkip: boolean) {
   setTutorialGatePulse(0);
   resetTutorialTrackState(getState().player);
   if (!fromSkip) {
-    floatText(getState().player.x, getState().player.y - 55, "Training complete — Welcome to Novus Prime", "#66aaff");
-    logEvent("Training complete. Welcome to Novus Prime.", "system");
+    floatText(getState().player.x, getState().player.y - 55, t("system.trainingCompleteFloat"), "#66aaff");
+    logEvent(t("system.trainingCompleteLog"), "system");
   }
   emit(fromSkip ? "tutorial:skip" : "tutorial:complete", { sysIdx: primeIdx });
   savePlayer();
@@ -314,7 +315,7 @@ export function skipTutorial() {
   }
 
   queueFrameAction({ type: "skipTutorial", payload: { primeIdx } });
-  logEvent("Tutorial skip requested. Awaiting server confirmation.", "system");
-  floatText(getState().player.x, getState().player.y - 55, "Skip request uplinked", "#66aaff");
+  logEvent(t("system.skipRequestedLog"), "system");
+  floatText(getState().player.x, getState().player.y - 55, t("system.skipRequestedFloat"), "#66aaff");
 }
 

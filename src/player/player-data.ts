@@ -444,9 +444,9 @@ export function addXp(amount: number, p: Player = getState().player) {
     invalidate(p);
     PlayerAccess.setHp(Math.min(p.hp + 30, getStats(p).maxHp), p);
     if (p === getState().player) {
-      floatText(p.x, p.y - 50, `✦ LEVEL ${p.level} ✦`, "#ffe066");
+      floatText(p.x, p.y - 50, t("system.levelUpFloat", { level: p.level }), "#ffe066");
       spawnParticles(p.x, p.y, "#ffe066", 6, 70);
-      logEvent(`Level up! You are now level ${p.level}`, "system");
+      logEvent(t("system.levelUpLog", { level: p.level }), "system");
     }
     leveledUp = true;
   }
@@ -470,9 +470,9 @@ export function addSkillXp(skillId: string, amount: number, p: Player = getState
     const name = def?.name ?? skillId;
     const icon = def?.icon ?? "⭐";
     if (p === getState().player) {
-      floatText(p.x, p.y - 45, `${icon} ${name} Lv ${newLvl}`, "#ffe066");
+      floatText(p.x, p.y - 45, t("system.skillUpFloat", { icon, name, level: newLvl }), "#ffe066");
       spawnParticles(p.x, p.y, "#ffe066", 4, 60);
-      logEvent(`${name} improved to level ${newLvl}!`, "system");
+      logEvent(t("system.skillUpLog", { name, level: newLvl }), "system");
       savePlayer();
     }
   }

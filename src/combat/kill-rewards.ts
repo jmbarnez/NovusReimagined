@@ -7,6 +7,7 @@ import { WEAPON_SKILL, type WeaponDelivery } from "../data/skills.js";
 import { floatText, spawnExplosion } from "../utils/fx.js";
 import { removeSensorLock } from "../targeting.js";
 import { logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import { progressMissions } from "../data/missions.js";
 import { getState } from "../state-access.js";
 import { spawnWreck } from "../wreck/index.js";
@@ -66,7 +67,7 @@ export function killEnemy(e: Enemy) {
     removeSensorLock(e.id, killer);
     if (isTutorialEnemy) {
       PlayerAccess.setKills(killer.kills + 1, killer);
-      logEvent(`Destroyed ${e.name}`, "combat");
+      logEvent(t("combat.destroyedTargetDummy", { name: e.name }), "combat");
       if (e.type === "target_dummy") dropTargetDummyRewards(e);
       if ((ENEMY_DEFS[e.type]?.wreckChance ?? 0) > 0) spawnWreck(e, killer);
     } else if (e.faction !== "neutral") {
@@ -77,17 +78,17 @@ export function killEnemy(e: Enemy) {
       const skillId = WEAPON_SKILL[kind];
       addSkillXp(skillId, C.COMBAT.XP.weaponSkillPerKill, killer);
       floatText(e.x, e.y - 35, `+${C.COMBAT.XP.perKill} XP`, "#aaddff");
-      logEvent(`Destroyed ${e.name} — +${C.COMBAT.XP.perKill} XP · ~${e.credits} CR loot`, "combat");
+      logEvent(t("combat.destroyed", { name: e.name, xp: C.COMBAT.XP.perKill, credits: e.credits }), "combat");
       spawnWreck(e, killer);
     } else {
-      logEvent(`Destroyed ambient ship: ${e.name}`, "combat");
+      logEvent(t("combat.destroyedAmbient", { name: e.name }), "combat");
       spawnWreck(e, killer);
     }
   } else {
     if (e.faction === "neutral") {
-      logEvent(`Ambient ship destroyed: ${e.name}`, "combat");
+      logEvent(t("combat.ambientDestroyed", { name: e.name }), "combat");
     } else {
-      floatText(e.x, e.y - 35, "Turret Kill", "#88aacc");
+      floatText(e.x, e.y - 35, t("combat.turretKill"), "#88aacc");
     }
     spawnWreck(e, killer);
   }

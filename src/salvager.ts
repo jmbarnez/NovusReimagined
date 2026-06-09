@@ -5,6 +5,7 @@ import { getInstance } from "./utils/items.js";
 import type { WreckPiece, LockSlot } from "./types/world.js";
 import { dst } from "./utils/math.js";
 import { floatText } from "./utils/fx.js";
+import { t } from "./utils/i18n.js";
 import { isWreckPieceTarget } from "./targeting.js";
 import { addSkillXp } from "./player/player-data.js";
 import { damageWreckPiece } from "./wreck/index.js";
@@ -73,7 +74,7 @@ export function updateSalvager(dt: number) {
   const drain = (mod?.capDrainPerSec ?? 2) * dt;
   if (getState().player.energy < drain) {
     SalvagerAccess.update({ active: false });
-    floatText(getState().player.x, getState().player.y - 35, "No cap", "#ff8844");
+    floatText(getState().player.x, getState().player.y - 35, t("system.salvagerNoCap"), "#ff8844");
     return;
   }
   PlayerAccess.setEnergy(getState().player.energy - drain);

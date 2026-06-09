@@ -6,6 +6,7 @@ import { MODULES } from "../data/modules.js";
 import { invalidate } from "./player-stats.js";
 import { enemyByLockId, targetByLockId } from "../targeting.js";
 import { floatText } from "../utils/fx.js";
+import { t } from "../utils/i18n.js";
 import { MODULE_HP_MAX, TURRET_POWER_CYCLE_S, RACK_TYPES } from "../constants.js";
 import { emit } from "../events.js";
 import { sfxPowerCycle, sfxTurretAssign } from "../audio/procedural.js";
@@ -139,11 +140,11 @@ export function toggleSlotDefaultAction(rack: string, idx: number, p: Player = g
       const r = tryActivateAbility(m.ability);
       if (r === "fired") {
         const def = ABILITY_BY_ID[m.ability];
-        floatText(p.x, p.y - 30, `${def.name.toUpperCase()}`, "#9adfff");
+        floatText(p.x, p.y - 30, t("combat.abilityFired", { name: def.name.toUpperCase() }), "#9adfff");
       } else if (r === "cooldown") {
-        floatText(p.x, p.y - 30, `COOLDOWN`, "#ff8844");
+        floatText(p.x, p.y - 30, t("combat.abilityCooldown"), "#ff8844");
       } else if (r === "no-cap") {
-        floatText(p.x, p.y - 30, `NO CAP`, "#ff8844");
+        floatText(p.x, p.y - 30, t("combat.abilityNoCap"), "#ff8844");
       }
     }
     return;
@@ -157,7 +158,7 @@ export function toggleSlotDefaultAction(rack: string, idx: number, p: Player = g
       PlayerAccess.setTurretPower(idx, nowPowered);
       PlayerAccess.setTurretPowerCd(idx, TURRET_POWER_CYCLE_S);
       sfxPowerCycle(nowPowered);
-      floatText(p.x, p.y - 30, `${m.short || m.name} ${nowPowered ? "POWERING UP" : "POWERING DOWN"}`, "#88ccff");
+      floatText(p.x, p.y - 30, nowPowered ? t("combat.modulePoweringUp", { name: m.short || m.name }) : t("combat.modulePoweringDown", { name: m.short || m.name }), "#88ccff");
     } else {
       p.turretPower[idx] = nowPowered;
       if (!p.turretPowerCd) p.turretPowerCd = [];
@@ -169,7 +170,7 @@ export function toggleSlotDefaultAction(rack: string, idx: number, p: Player = g
       PlayerAccess.setSlotActive(rack, idx, nowActive);
       invalidate(p);
       emit("module:toggle", { rack, idx, active: nowActive, moduleId: instanceId! });
-      floatText(p.x, p.y - 30, `${m.short || m.name} ${nowActive ? "ON" : "OFF"}`, nowActive ? "#44ffaa" : "#ff8844");
+      floatText(p.x, p.y - 30, nowActive ? t("combat.moduleOn", { name: m.short || m.name }) : t("combat.moduleOff", { name: m.short || m.name }), nowActive ? "#44ffaa" : "#ff8844");
     } else {
       if (!p.slotActive) p.slotActive = {};
       if (!p.slotActive[rack]) p.slotActive[rack] = [];
@@ -205,7 +206,7 @@ export function toggleRackPower(rack: string, wantOn: boolean, silent: boolean =
     if (!silent) {
       sfxPowerCycle(wantOn);
       const rackLabel = rack[0].toUpperCase() + rack.slice(1);
-      floatText(getState().player.x, getState().player.y - 30, `${rackLabel} RACK ${wantOn ? "ONLINE" : "OFFLINE"}`, wantOn ? "#44ffaa" : "#ff8844");
+      floatText(getState().player.x, getState().player.y - 30, wantOn ? t("combat.rackOnline", { rack: rackLabel }) : t("combat.rackOffline", { rack: rackLabel }), wantOn ? "#44ffaa" : "#ff8844");
     }
   }
   return queued;
@@ -220,7 +221,7 @@ export function toggleGlobalPower(wantOn: boolean) {
   }
   if (changed) {
     sfxPowerCycle(wantOn);
-    floatText(getState().player.x, getState().player.y - 30, `ALL SYSTEMS ${wantOn ? "ONLINE" : "OFFLINE"}`, wantOn ? "#44ffaa" : "#ff8844");
+    floatText(getState().player.x, getState().player.y - 30, wantOn ? t("combat.allSystemsOnline") : t("combat.allSystemsOffline"), wantOn ? "#44ffaa" : "#ff8844");
   }
   return wantOn;
 }

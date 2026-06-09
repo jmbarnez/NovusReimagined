@@ -6,6 +6,7 @@ import { clearSensorLocks } from "../targeting.js";
 import { SHIPS } from "../data/ships.js";
 import { populateSystem } from "../world-gen.js";
 import { floatText, spawnExplosion, spawnShockwave } from "./fx.js";
+import { t } from "./i18n.js";
 import { sfxShipExplosion } from "../audio/procedural.js";
 import { viewCenterX, viewCenterY } from "../render/viewport.js";
 import { MODULE_HP_MAX, RACK_TYPES, LOCK_RAIL_H, HUD_SIDE_W, HUD_BOTTOM_H } from "../constants.js";
@@ -236,7 +237,7 @@ export function respawnPlayer(p: Player = getState().player) {
     spawnExplosion(p.x, p.y, "#ff4444", 1.2);
     spawnShockwave(p.x, p.y, "#ff4444", 1.2);
     sfxShipExplosion(p.x, p.y, 1.2);
-    floatText(p.x, p.y - 50, `SHIP DESTROYED — POD ESCAPED${penalty > 0 ? ` (-${penalty}¢)` : ""}`, "#ff4444");
+    floatText(p.x, p.y - 50, t("system.shipDestroyed", { penalty: penalty > 0 ? ` (-${penalty}¢)` : "" }), "#ff4444");
     savePlayer();
   } else {
     p.x = spawnX;

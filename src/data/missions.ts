@@ -1,6 +1,7 @@
 import { getState } from "../state-access.js";
 import { emit } from "../events.js";
 import { logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import type { Station } from "../types/world.js";
 import type { Player } from "../state.js";
 
@@ -167,7 +168,7 @@ export function progressMissions(type: MissionType, amount: number, target?: str
       c.status = "complete";
       if (p === getState().player) {
         emit("mission:completed", { contract: c });
-        logEvent(`Contract complete: ${c.title} — dock to claim ${c.reward} CR`, "loot");
+        logEvent(t("system.contractComplete", { title: c.title, reward: c.reward }), "loot");
       }
     }
   }
@@ -193,7 +194,7 @@ export function checkDeliveryContracts(station: Station, p: Player = getState().
       c.status = "complete";
       if (p === getState().player) {
         emit("mission:completed", { contract: c });
-        logEvent(`Contract complete: ${c.title} — dock to claim ${c.reward} CR`, "loot");
+        logEvent(t("system.contractComplete", { title: c.title, reward: c.reward }), "loot");
       }
     }
   }

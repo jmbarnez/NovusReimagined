@@ -2,6 +2,7 @@ import type { Player, BulkMaterialStack, RefiningHeatMode } from "../state.js";
 import { getState } from "../state-access.js";
 import { PlayerAccess } from "../state-access.js";
 import { logEvent } from "../feedback.js";
+import { t } from "../utils/i18n.js";
 import { C } from "../config/index.js";
 import { normalizeComposition, type OreComposition } from "../utils/ore-naming.js";
 import { averageDensityKgPerM3, materialLabelForComposition } from "./composition.js";
@@ -47,7 +48,7 @@ export function storeRefineryMaterial(
 export function logStorageOverflow(label: string, overflow: BulkMaterialStack | null, p: Player): void {
   if (!overflow || overflow.volumeM3 <= 1e-4) return;
   if (p === getState().player) {
-    logEvent(`${label} overflowed storage — ${overflow.volumeM3.toFixed(1)} m³ lost as slag`, "system");
+    logEvent(t("system.storageOverflow", { label, volume: overflow.volumeM3.toFixed(1) }), "system");
   }
 }
 

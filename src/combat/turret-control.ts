@@ -3,6 +3,7 @@ import { playerHardpointRack } from "../utils/hardpoints.js";
 import { isSlotOnline } from "../utils/slot-power.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import { floatText } from "../utils/fx.js";
+import { t } from "../utils/i18n.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { C } from "../config/index.js";
 import { playerShoot } from "./player-shoot.js";
@@ -21,7 +22,7 @@ export function fireSelectedTurret(isAutoFire = false, p: Player = getState().pl
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m || MODULE_FLAGS.isMiningTurret(m) || !m.weaponDelivery) return;
   if (!isTurretReady(slot, p)) {
-    if (!isAutoFire && typeof window !== "undefined") floatText(p.x, p.y - 32, "TURRET OFFLINE", "#ff6644");
+    if (!isAutoFire && typeof window !== "undefined") floatText(p.x, p.y - 32, t("combat.turretOffline"), "#ff6644");
     return;
   }
   playerShoot(slot, null, isAutoFire, p);

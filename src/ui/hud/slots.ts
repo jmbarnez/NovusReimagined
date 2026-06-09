@@ -400,8 +400,7 @@ export function flashSlotFire(slotIdx: number) {
       const node = hudState.slotNodes.get(`${rack}|${idx}`) as SlotNode | undefined;
       if (node) {
         toggleClass(node.el, "firing", false);
-        void node.el.offsetWidth; // force reflow to restart animation
-        toggleClass(node.el, "firing", true);
+        requestAnimationFrame(() => toggleClass(node.el, "firing", true));
       }
       return;
     }
