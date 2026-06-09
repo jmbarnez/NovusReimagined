@@ -7,15 +7,6 @@ import {
   trackTotalArcLength,
   trackArcLengthProgress,
 } from "./tutorial-layout.js";
-import {
-  getHangarGuidePanel,
-  HANGAR_REVIEW_PHASE_COUNT,
-  HANGAR_COMBAT_SWAP_PHASE_COUNT,
-} from "./hangar-tutorial-guide.js";
-import {
-  getRefineryGuidePanel,
-  REFINERY_GUIDE_PHASE_COUNT,
-} from "./refinery-tutorial-guide.js";
 import { t } from "../utils/i18n.js";
 import {
   type TutorialZone,
@@ -28,13 +19,6 @@ import {
 } from "./tutorial-bypass.js";
 import { TUTORIAL_STEPS, isZoneStepComplete } from "./tutorial-steps.js";
 
-export {
-  HANGAR_REVIEW_PHASE_COUNT,
-  HANGAR_COMBAT_SWAP_PHASE_COUNT,
-  REFINERY_GUIDE_PHASE_COUNT,
-  getHangarGuidePanel,
-  getRefineryGuidePanel,
-};
 export { TUTORIAL_TRAINING_SITE_ID } from "./tutorial-site.js";
 export {
   type TutorialZone,
@@ -53,75 +37,15 @@ export function getTutorialStepObjective(step: TutorialStep, snapshot: Record<st
   return typeof step.objective === "function" ? step.objective(snapshot) : step.objective;
 }
 
-export const HUD_TOUR_PANELS = [
-  {
-    label: t("tutorial.hudTour.vitals.label"),
-    body: t("tutorial.hudTour.vitals.body"),
-  },
-  {
-    label: t("tutorial.hudTour.modules.label"),
-    body: t("tutorial.hudTour.modules.body"),
-  },
-  {
-    label: t("tutorial.hudTour.lockRail.label"),
-    body: t("tutorial.hudTour.lockRail.body"),
-  },
-  {
-    label: t("tutorial.hudTour.overview.label"),
-    body: t("tutorial.hudTour.overview.body"),
-  },
-  {
-    label: t("tutorial.hudTour.comms.label"),
-    body: t("tutorial.hudTour.comms.body"),
-  },
-  {
-    label: t("tutorial.hudTour.missions.label"),
-    body: t("tutorial.hudTour.missions.body"),
-  }
-];
-
-export function getHudTourPanel(
+export function getTourPanel(
   step: TutorialStep | null,
   snapshot: Record<string, unknown> = {},
 ): { label: string; body: string; index: number; total: number } | null {
-  if (!step || step.id !== "hud-tour") return null;
-  const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-  const panel = HUD_TOUR_PANELS[phase];
+  if (!step?.tour) return null;
+  const phase = typeof snapshot[step.tour.phaseKey] === "number" ? snapshot[step.tour.phaseKey] as number : 0;
+  const panel = step.tour.phases[phase];
   if (!panel) return null;
-  return {
-    label: panel.label,
-    body: panel.body,
-    index: phase + 1,
-    total: HUD_TOUR_PANELS.length,
-  };
-}
-
-export function getHangarTourPanel(
-  step: TutorialStep | null,
-  snapshot: Record<string, unknown> = {},
-): { label: string; body: string; index: number; total: number } | null {
-  if (!step || (step.id !== "hangar-high" && step.id !== "hangar-turrets")) return null;
-  if (!Client.stationOpen || snapshot.hangarReviewComplete === true) return null;
-  const phaseKey = step.id === "hangar-turrets" ? "hangarCombatPhase" : "hangarReviewPhase";
-  const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
-  const panel = getHangarGuidePanel(step.id, phase);
-  if (!panel) return null;
-  const total = step.id === "hangar-turrets"
-    ? HANGAR_COMBAT_SWAP_PHASE_COUNT
-    : HANGAR_REVIEW_PHASE_COUNT;
-  return { label: panel.label, body: panel.body, index: phase + 1, total };
-}
-
-export function getRefineryTourPanel(
-  step: TutorialStep | null,
-  snapshot: Record<string, unknown> = {},
-): { label: string; body: string; index: number; total: number } | null {
-  if (!step || step.id !== "industry") return null;
-  if (!Client.stationOpen || snapshot.refineryGuideComplete === true) return null;
-  const phase = typeof snapshot.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
-  const panel = getRefineryGuidePanel(step.id, phase);
-  if (!panel) return null;
-  return { label: panel.label, body: panel.body, index: phase + 1, total: REFINERY_GUIDE_PHASE_COUNT };
+  return { label: panel.label, body: panel.body, index: phase + 1, total: step.tour.phases.length };
 }
 
 export function isStationHangarTabActive(): boolean {

@@ -2,7 +2,7 @@ import { Client } from "../state.js";
 import { emit, on } from "../events.js";
 import { getState } from "../state-access.js";
 import { getCurrentTutorialStep, isStationHangarTabActive } from "../data/tutorial.js";
-import { clearHangarTutorialGuide } from "../ui/tutorial/hangar-guide.js";
+import { clearTutorialVisuals } from "../ui/tutorial/visuals.js";
 import {
   beginHangarReviewTour,
   markHangarStepComplete,
@@ -48,7 +48,7 @@ export function bindTutorialEvents(): void {
       return;
     }
     snapshot.hangarTabActive = false;
-    clearHangarTutorialGuide();
+    clearTutorialVisuals();
     markHangarStepComplete(stepId === "hangar-turrets");
   });
 }

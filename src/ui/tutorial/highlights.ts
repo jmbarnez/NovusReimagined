@@ -3,6 +3,15 @@ import { getTutorialSnapshot } from "../../tutorial/index.js";
 import { getState } from "../../state-access.js";
 import { Client } from "../../state.js";
 import { tutorialState } from "./state.js";
+import {
+  getHudScannerDock,
+  getHudLogPanel,
+  getHudStatusBars,
+  getHudSlots,
+  getHudLockRail,
+  getHudMissions,
+  getHudDockPrompt,
+} from "../hud-elements.js";
 
 export function getActiveTutorialHighlight(): HTMLElement | null {
   return document.querySelector(".tutorial-hangar-highlight, .hud-highlight");
@@ -60,37 +69,36 @@ export function syncHudHighlights() {
 
   if (step.id === "hud-tour") {
     const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-    const scannerDock = document.getElementById("hud-scanner-dock");
-    const logPanel = document.getElementById("hud-log-panel");
+    const scannerDock = getHudScannerDock();
+    const logPanel = getHudLogPanel();
 
     if (phase === 0) {
-      highlightTarget = document.getElementById("hud-status-bars");
+      highlightTarget = getHudStatusBars();
     } else if (phase === 1) {
-      highlightTarget = document.getElementById("hud-slots");
+      highlightTarget = getHudSlots();
     } else if (phase === 2) {
-      highlightTarget = document.getElementById("hud-lock-rail");
+      highlightTarget = getHudLockRail();
     } else if (phase === 3) {
       highlightTarget = scannerDock;
     } else if (phase === 4) {
       highlightTarget = logPanel;
     } else if (phase === 5) {
-      highlightTarget = document.getElementById("hud-missions");
+      highlightTarget = getHudMissions();
     }
   } else if (step.id === "fly-academy") {
-    highlightTarget = document.getElementById("hud-missions");
+    highlightTarget = getHudMissions();
   } else if (step.id === "targeting") {
-    const scannerDock = document.getElementById("hud-scanner-dock");
-    highlightTarget = scannerDock;
+    highlightTarget = getHudScannerDock();
   } else if (step.id === "mining") {
-    highlightTarget = document.getElementById("hud-slots");
+    highlightTarget = getHudSlots();
   } else if (step.id === "hangar-high" || step.id === "industry" || step.id === "hangar-turrets") {
     if (!Client.stationOpen) {
-      highlightTarget = document.getElementById("hud-dock-prompt");
+      highlightTarget = getHudDockPrompt();
     }
   } else if (step.id === "gunnery") {
-    highlightTarget = document.getElementById("hud-slots");
+    highlightTarget = getHudSlots();
   } else if (step.id === "graduation") {
-    highlightTarget = document.getElementById("hud-dock-prompt");
+    highlightTarget = getHudDockPrompt();
   }
 
   setHudHighlight(highlightTarget);

@@ -22,6 +22,7 @@ import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
 import { getSlotPowerCd, isSlotPoweredOn } from "../../utils/slot-power.js";
 import { t } from "../../utils/i18n.js";
+import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave, remove } from "../dom-helpers.js";
 
 export interface SlotNode {
   el: HTMLElement;
@@ -103,7 +104,7 @@ export function getRackState(rack: string): "on" | "off" | "partial" {
 
 export function rebuildSlots(ship: ShipDef) {
   if (!hudState.slotsContainer) return;
-  hudState.slotsContainer.innerHTML = "";
+  setHtml(hudState.slotsContainer, "");
   hudState.slotNodes.clear();
   hudState.rackSwitchNodes.clear();
 
@@ -111,7 +112,7 @@ export function rebuildSlots(ship: ShipDef) {
 
   // Global master switch
   const globalSwitch = createRackSwitch("global", "All");
-  hudState.slotsContainer.appendChild(globalSwitch);
+  append(hudState.slotsContainer, globalSwitch);
   hudState.rackSwitchNodes.set("global", globalSwitch);
 
   let hkIdx = 0;
@@ -119,59 +120,49 @@ export function rebuildSlots(ship: ShipDef) {
     const count = ft[rack as keyof ShipFitting] | 0;
     if (count > 0) {
       const rackSwitch = createRackSwitch(rack, rack[0].toUpperCase());
-      hudState.slotsContainer.appendChild(rackSwitch);
+      append(hudState.slotsContainer, rackSwitch);
       hudState.rackSwitchNodes.set(rack, rackSwitch);
     }
     for (let idx = 0; idx < count; idx++) {
-      const el = document.createElement("div");
-      el.className = `hud-slot rack-${rack}`;
+      const el = createElement("div", `hud-slot rack-${rack}`);
       el.dataset.rack = rack;
       el.dataset.idx = String(idx);
 
-      const badge = document.createElement("span");
-      badge.className = "sl-badge";
-      badge.textContent = hotkeyBadge(hkIdx);
-      el.appendChild(badge);
+      const badge = createElement("span", "sl-badge");
+      setText(badge, hotkeyBadge(hkIdx));
+      append(el, badge);
 
-      const rackLabel = document.createElement("span");
-      rackLabel.className = "sl-rack";
-      rackLabel.textContent = `${rack[0]}${idx + 1}`;
-      el.appendChild(rackLabel);
+      const rackLabel = createElement("span", "sl-rack");
+      setText(rackLabel, `${rack[0]}${idx + 1}`);
+      append(el, rackLabel);
 
-      const name = document.createElement("div");
-      name.className = "sl-name empty";
-      name.textContent = "—";
-      el.appendChild(name);
+      const name = createElement("div", "sl-name empty");
+      setText(name, "—");
+      append(el, name);
 
-      const sub = document.createElement("div");
-      sub.className = "sl-sub";
-      el.appendChild(sub);
+      const sub = createElement("div", "sl-sub");
+      append(el, sub);
 
-      const heatTrack = document.createElement("div");
-      heatTrack.className = "sl-heat-track";
-      const heatFill = document.createElement("span");
-      heatFill.className = "sl-heat-fill";
-      heatTrack.appendChild(heatFill);
-      el.appendChild(heatTrack);
+      const heatTrack = createElement("div", "sl-heat-track");
+      const heatFill = createElement("span", "sl-heat-fill");
+      append(heatTrack, heatFill);
+      append(el, heatTrack);
 
-      const cdOverlay = document.createElement("div");
-      cdOverlay.className = "sl-cd-overlay";
-      cdOverlay.style.height = "0%";
-      el.appendChild(cdOverlay);
+      const cdOverlay = createElement("div", "sl-cd-overlay");
+      setStyle(cdOverlay, { height: "0%" });
+      append(el, cdOverlay);
 
-      const muzzle = document.createElement("div");
-      muzzle.className = "sl-muzzle";
-      el.appendChild(muzzle);
+      const muzzle = createElement("div", "sl-muzzle");
+      append(el, muzzle);
 
-      el.addEventListener("click", (e) => onSlotClick(e, rack, idx));
+      onClick(el, (e) => onSlotClick(e as MouseEvent, rack, idx));
       if (rack === playerHardpointRack(getState().player)) {
-        el.addEventListener("contextmenu", (e) => onTurretContextMenu(e, rack, idx));
+        onClick(el, (e) => onTurretContextMenu(e as MouseEvent, rack, idx));
       }
-      el.addEventListener("mouseenter", (e) => showSlotTooltip(rack, idx, e.clientX, e.clientY));
-      el.addEventListener("mousemove", (e) => showSlotTooltip(rack, idx, e.clientX, e.clientY));
-      el.addEventListener("mouseleave", () => hideSlotTooltip());
+      onMouseEnter(el, (e) => showSlotTooltip(rack, idx, (e as MouseEvent).clientX, (e as MouseEvent).clientY));
+      onMouseLeave(el, () => hideSlotTooltip());
 
-      hudState.slotsContainer.appendChild(el);
+      append(hudState.slotsContainer, el);
       hudState.slotNodes.set(`${rack}|${idx}`, {
         el, muzzleEl: muzzle, cdOverlay, heatFill, subEl: sub, nameEl: name, hkIdx,
       });
@@ -223,10 +214,10 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   if (m) {
     const iconHtml = iconSvg(m.id, 8);
     const nameHtml = iconHtml + ' ' + (m.short || m.name);
-    if (nameEl.innerHTML !== nameHtml) nameEl.innerHTML = nameHtml;
+    setHtml(nameEl, nameHtml);
     if (nameEl.className !== "sl-name") nameEl.className = "sl-name";
   } else {
-    if (nameEl.textContent !== "—") nameEl.textContent = "—";
+    setText(nameEl, "—");
     if (nameEl.className !== "sl-name empty") nameEl.className = "sl-name empty";
   }
 
@@ -239,13 +230,12 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     const btnText = `STR ${arrow}`;
 
     if (!strBtn) {
-      strBtn = document.createElement("button");
-      strBtn.className = "sl-str-toggle";
-      strBtn.textContent = btnText;
+      strBtn = createElement("button", "sl-str-toggle") as HTMLButtonElement;
+      setText(strBtn, btnText);
       strBtn.title = t("ship.tractorControls");
-      el.appendChild(strBtn);
+      append(el, strBtn);
 
-      strBtn.addEventListener("click", (ev) => {
+      onClick(strBtn, (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
 
@@ -260,14 +250,14 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
       });
     } else {
       if (strBtn.textContent !== btnText) {
-        strBtn.textContent = btnText;
+        setText(strBtn, btnText);
       }
     }
     const tightness = getState().player.tractorTightness ?? 0.5;
     strBtn.style.setProperty("--tightness", String(tightness));
   } else {
     if (strBtn) {
-      strBtn.remove();
+      remove(strBtn);
     }
   }
 
@@ -282,12 +272,12 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     barW = `${Math.min(1, heat) * 100}%`;
     barCls = `sl-heat-fill${heat > 0.82 ? " danger" : ""}`;
   }
-  if (heatFill.style.width !== barW) heatFill.style.width = barW;
+  setStyle(heatFill, { width: barW });
   if (heatFill.className !== barCls) heatFill.className = barCls;
   const overheat = heat > 0.82 && !modDamaged && !modOffline;
   const hasOverheat = el.classList.contains("overheat");
-  if (overheat && !hasOverheat) el.classList.add("overheat");
-  else if (!overheat && hasOverheat) el.classList.remove("overheat");
+  if (overheat && !hasOverheat) toggleClass(el, "overheat", true);
+  else if (!overheat && hasOverheat) toggleClass(el, "overheat", false);
 
   // Cooldown overlay (dirty-check) — weapon fire OR power cycle
   const isWeaponTurret = isTurret && inst?.baseId && m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m);
@@ -314,7 +304,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
       cdH = `${pct * 100}%`;
     }
   }
-  if (cdOverlay.style.height !== cdH) cdOverlay.style.height = cdH;
+  setStyle(cdOverlay, { height: cdH });
 
   // Subtext (dirty-check)
   let subText = "", subCls = "sl-sub";
@@ -349,30 +339,26 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     subText = isSlotActive ? t("ship.online") : t("ship.offline");
     subCls = isSlotActive ? "sl-sub on" : "sl-sub off";
   }
-  if (subEl.textContent !== subText) subEl.textContent = subText;
+  setText(subEl, subText);
   if (subEl.className !== subCls) subEl.className = subCls;
 }
 
 export function createRackSwitch(rack: string, label: string): HTMLElement {
-  const el = document.createElement("div");
-  el.className = `rack-master-switch ${rack === "global" ? "global" : "rack-" + rack}`;
+  const el = createElement("div", `rack-master-switch ${rack === "global" ? "global" : "rack-" + rack}`);
   el.dataset.rack = rack;
   el.title = rack === "global" ? t("ship.allSystems") : `${t("inventory.slot" + (rack[0].toUpperCase() + rack.slice(1)))} ${t("ship.rack")}`;
 
-  const onBtn = document.createElement("div");
-  onBtn.className = "rms-btn rms-on";
-  el.appendChild(onBtn);
+  const onBtn = createElement("div", "rms-btn rms-on");
+  append(el, onBtn);
 
-  const sep = document.createElement("div");
-  sep.className = "rms-label";
-  sep.textContent = label;
-  el.appendChild(sep);
+  const sep = createElement("div", "rms-label");
+  setText(sep, label);
+  append(el, sep);
 
-  const offBtn = document.createElement("div");
-  offBtn.className = "rms-btn rms-off";
-  el.appendChild(offBtn);
+  const offBtn = createElement("div", "rms-btn rms-off");
+  append(el, offBtn);
 
-  el.addEventListener("click", (e) => {
+  onClick(el, (e) => {
     const rect = el.getBoundingClientRect();
     const wantOn = (e as MouseEvent).clientY < rect.top + rect.height / 2;
     onRackSwitchZoneClick(rack, wantOn);
@@ -413,9 +399,9 @@ export function flashSlotFire(slotIdx: number) {
       const idx = slotIdx - count;
       const node = hudState.slotNodes.get(`${rack}|${idx}`) as SlotNode | undefined;
       if (node) {
-        node.el.classList.remove("firing");
+        toggleClass(node.el, "firing", false);
         void node.el.offsetWidth; // force reflow to restart animation
-        node.el.classList.add("firing");
+        toggleClass(node.el, "firing", true);
       }
       return;
     }

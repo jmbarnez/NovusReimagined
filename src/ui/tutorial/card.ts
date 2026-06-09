@@ -4,20 +4,22 @@ import { Client } from "../../state.js";
 import { viewportW, viewportH } from "../../render/viewport.js";
 import { tutorialState } from "./state.js";
 import { getCardAnchorHighlight } from "./highlights.js";
+import { getHudXpPopup } from "../hud-elements.js";
+import { getBounds, setStyle, toggleClass } from "../dom-helpers.js";
 
 export function positionCardForStep(): void {
   if (!tutorialState.root || !tutorialState.cardEl || !tutorialState.layerEl || tutorialState.cardEl.hidden) return;
   const step = getCurrentTutorialStep(getState().player);
-  const layerRect = tutorialState.layerEl.getBoundingClientRect();
+  const layerRect = getBounds(tutorialState.layerEl);
   const target = getCardAnchorHighlight(step);
-  const cardRect = tutorialState.cardEl.getBoundingClientRect();
+  const cardRect = getBounds(tutorialState.cardEl);
   const margin = 16;
   const safeW = Math.max(1, layerRect.width - cardRect.width - margin * 2);
   let x = margin + safeW / 2;
   let y = margin;
 
   if (target) {
-    const rect = target.getBoundingClientRect();
+    const rect = getBounds(target);
     const targetLeft = rect.left - layerRect.left;
     const targetRight = rect.right - layerRect.left;
     const targetTop = rect.top - layerRect.top;
@@ -46,13 +48,15 @@ export function positionCardForStep(): void {
     }
   }
 
-  tutorialState.root.style.left = `${Math.max(margin, Math.min(x, layerRect.width - cardRect.width - margin))}px`;
-  tutorialState.root.style.top = `${Math.max(margin, Math.min(y, layerRect.height - cardRect.height - margin))}px`;
-  tutorialState.root.style.transform = "none";
+  setStyle(tutorialState.root, {
+    left: `${Math.max(margin, Math.min(x, layerRect.width - cardRect.width - margin))}px`,
+    top: `${Math.max(margin, Math.min(y, layerRect.height - cardRect.height - margin))}px`,
+    transform: "none",
+  });
 }
 
 export function xpPopupObscuresTutorial(): boolean {
-  const xp = document.getElementById("hud-xp-popup");
+  const xp = getHudXpPopup();
   return !!(xp && (xp.classList.contains("visible") || xp.classList.contains("fading")));
 }
 
@@ -71,11 +75,13 @@ export function shouldShowTutorialLayer(): boolean {
 export function syncTutorialLayerBounds() {
   if (!tutorialState.layerEl) return;
   const show = shouldShowTutorialLayer();
-  tutorialState.layerEl.style.display = show ? "block" : "none";
+  setStyle(tutorialState.layerEl, { display: show ? "block" : "none" });
   if (!show) return;
-  tutorialState.layerEl.classList.toggle("tutorial-layer--over-station", Client.stationOpen);
-  tutorialState.layerEl.style.left = "0px";
-  tutorialState.layerEl.style.top = "0px";
-  tutorialState.layerEl.style.width = `${viewportW()}px`;
-  tutorialState.layerEl.style.height = `${viewportH()}px`;
+  toggleClass(tutorialState.layerEl, "tutorial-layer--over-station", Client.stationOpen);
+  setStyle(tutorialState.layerEl, {
+    left: "0px",
+    top: "0px",
+    width: `${viewportW()}px`,
+    height: `${viewportH()}px`,
+  });
 }

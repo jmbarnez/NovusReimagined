@@ -4,20 +4,21 @@ import { Client } from "../../state.js";
 import { tutorialState } from "./state.js";
 import { getActiveTutorialHighlight } from "./highlights.js";
 import { ensureDimmerSegments, syncDimmerCutout } from "./tutorial-dimmer.js";
+import { getHudOverlay, getHudTourDimmer } from "../hud-elements.js";
+import { createElement, append, getBounds, toggleClass, setStyle } from "../dom-helpers.js";
 
 export function syncDimmerVisibility() {
   let dimmer = tutorialState._hudDimmerEl;
   if (!dimmer) {
-    dimmer = document.getElementById("hud-tour-dimmer");
+    dimmer = getHudTourDimmer();
   }
   if (!dimmer) {
-    const hudOverlay = document.getElementById("hud-overlay");
+    const hudOverlay = getHudOverlay();
     if (hudOverlay) {
-      dimmer = document.createElement("div");
+      dimmer = createElement("div", "hidden");
       dimmer.id = "hud-tour-dimmer";
-      dimmer.className = "hidden";
       ensureDimmerSegments(dimmer);
-      hudOverlay.appendChild(dimmer);
+      append(hudOverlay, dimmer);
       tutorialState._hudDimmerEl = dimmer;
     }
   } else {
@@ -33,23 +34,23 @@ export function syncDimmerVisibility() {
         window.clearTimeout(tutorialState._hudDimmerHideTimer);
         tutorialState._hudDimmerHideTimer = null;
       }
-      dimmer.classList.remove("hidden");
-      dimmer.style.display = "block";
+      toggleClass(dimmer, "hidden", false);
+      setStyle(dimmer, { display: "block" });
       const cutoutKey = target ? `${target.id}|${target.className}` : "none";
       if (tutorialState._lastDimmerCutoutKey !== cutoutKey) {
         tutorialState._lastDimmerCutoutKey = cutoutKey;
-        syncDimmerCutout(dimmer, target, dimmer.getBoundingClientRect());
+        syncDimmerCutout(dimmer, target, getBounds(dimmer));
       }
       tutorialState._hudDimmerVisible = true;
     }
   } else {
     if (dimmer && tutorialState._hudDimmerVisible) {
-      dimmer.classList.add("hidden");
+      toggleClass(dimmer, "hidden", true);
       tutorialState._hudDimmerVisible = false;
       tutorialState._lastDimmerCutoutKey = "";
       tutorialState._hudDimmerHideTimer = window.setTimeout(() => {
         if (dimmer && dimmer.classList.contains("hidden")) {
-          dimmer.style.display = "none";
+          setStyle(dimmer, { display: "none" });
         }
         tutorialState._hudDimmerHideTimer = null;
       }, 250);

@@ -1,0 +1,304 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.5 [39m[90mc:/Users/JBCry/Desktop/Novus[39m
+
+ [31m❯[39m tests/drag-drop.test.ts [2m([22m[2m10 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 130[2mms[22m[39m
+       [32m✓[39m removes all ghost elements[32m 28[2mms[22m[39m
+       [32m✓[39m clears .is-dragging classes[32m 23[2mms[22m[39m
+       [32m✓[39m clears .is-drag-over classes[32m 4[2mms[22m[39m
+       [32m✓[39m does not throw when attaching to an empty pane[32m 3[2mms[22m[39m
+       [32m✓[39m starts a drag on pointerdown over a draggable cell[32m 17[2mms[22m[39m
+       [32m✓[39m ignores pointerdown on non-draggable elements[32m 4[2mms[22m[39m
+       [32m✓[39m ignores pointerdown with non-left button[32m 3[2mms[22m[39m
+[31m       [31m×[31m emits inventory:grid-swap on drop over another item[39m[32m 30[2mms[22m[39m
+       [32m✓[39m does not emit inventory:grid-swap on drop to same slot[32m 7[2mms[22m[39m
+[31m       [31m×[31m emits inventory:grid-insert on drop in a gap[39m[32m 8[2mms[22m[39m
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+ [32m✓[39m tests/item-icons.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's toDataURL() method: without installing the canvas npm package
+[90mstderr[2m | tests/profile-continue.test.ts[2m > [22m[2mprofile Continue loading gate[2m > [22m[2mreturns to profile selection when authoritative entry fails
+[22m[39m[Profiles] Continue failed: Error: connect failed
+    at C:/Users/JBCry/Desktop/Novus/tests/profile-continue.test.ts:136:29
+    at Mock (file:///C:/Users/JBCry/Desktop/Novus/node_modules/[4m@vitest[24m/spy/dist/index.js:332:34)
+    at continueSavedProfile (C:/Users/JBCry/Desktop/Novus/src/ui/boot-screen/boot-screen-profiles.ts:107:11)
+    at HTMLButtonElement.<anonymous> (C:/Users/JBCry/Desktop/Novus/src/ui/boot-screen/boot-screen-profiles.ts:60:12)
+    at HTMLButtonElement.callTheUserObjectsOperation [90m(c:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\generated\idl\EventListener.js:26:30[90m)[39m
+    at innerInvokeEventListeners [90m(c:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\events\EventTarget-impl.js:360:16[90m)[39m
+    at invokeEventListeners [90m(c:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\events\EventTarget-impl.js:296:3[90m)[39m
+    at HTMLButtonElementImpl._dispatch [90m(c:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\events\EventTarget-impl.js:243:9[90m)[39m
+    at fireAnEvent [90m(c:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\helpers\events.js:18:36[90m)[39m
+    at HTMLButtonElementImpl.click [90m(c:\Users\JBCry\Desktop\Novus\[39mnode_modules\[4mjsdom[24m\lib\jsdom\living\nodes\HTMLElement-impl.js:85:5[90m)[39m
+
+ [32m✓[39m tests/player-stats.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m tests/profile-continue.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 1504[2mms[22m[39m
+     [33m[2m✓[22m[39m disables Continue and ignores repeat clicks while the save load is pending [33m 1470[2mms[22m[39m
+ [32m✓[39m tests/hangar-hardpoints.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 150[2mms[22m[39m
+ [32m✓[39m tests/ion-boost-ui.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 85[2mms[22m[39m
+ [32m✓[39m tests/pixi-entities.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 221[2mms[22m[39m
+ [32m✓[39m tests/hangar-cargo-toolbar.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 222[2mms[22m[39m
+ [32m✓[39m tests/hud-missions.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/hub-refining.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32m✓[39m tests/net-prediction-actions.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32m✓[39m tests/npc-ai.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 76[2mms[22m[39m
+[90mstdout[2m | tests/multiplayer-join.test.ts[2m > [22m[2mconnectToRemote[2m > [22m[2mreconnects local gameplay with the restored save player
+[22m[39m[GameClient] Disconnected
+
+[90mstdout[2m | tests/multiplayer-join.test.ts[2m > [22m[2mconnectToRemote[2m > [22m[2mreconnects local gameplay with the restored save player
+[22m[39m[GameClient] Disconnected
+
+ [32m✓[39m tests/combat.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32m✓[39m tests/grid-layout.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/ship-physics.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/bullet-lifecycle.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+[90mstdout[2m | tests/multiplayer-join.test.ts[2m > [22m[2mconnectToRemote[2m > [22m[2mretries a failed local reconnect with the restored save player
+[22m[39m[GameClient] Disconnected
+
+ [32m✓[39m tests/settings-controls.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+[90mstdout[2m | tests/multiplayer-join.test.ts[2m > [22m[2mconnectToRemote[2m > [22m[2mretries transient Tauri port bind failures without logging a failed startup
+[22m[39m[GameClient] Disconnected
+
+ [32m✓[39m tests/multiplayer-join.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 524[2mms[22m[39m
+ [32m✓[39m tests/math.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 65[2mms[22m[39m
+ [32m✓[39m tests/tutorial-track.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m tests/scanning.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/turret-origin.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m tests/pixi-geometry-buffer-pool.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+[90mstderr[2m | tests/player-spawn.test.ts[2m > [22m[2mplayer-spawn[2m > [22m[2mresolvePlayerSpawn uses TUTORIAL_SPAWN fallback when system has no anchors
+[22m[39m[player-spawn] No spawn anchors in system 99, using TUTORIAL_SPAWN fallback
+
+ [32m✓[39m tests/player-spawn.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/bar-hotkeys.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/map-discovery.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/scanner-commands.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m tests/targeting.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 62[2mms[22m[39m
+ [31m❯[39m tests/commands-authority.test.ts [2m([22m[2m12 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 79[2mms[22m[39m
+     [32m✓[39m rejects invalid hardpoint indexes[32m 7[2mms[22m[39m
+     [32m✓[39m rejects invalid rack names for slot toggles[32m 2[2mms[22m[39m
+     [32m✓[39m accepts turret modules in unified high slots but rejects incompatible rack fits[32m 2[2mms[22m[39m
+[31m     [31m×[31m does not silently simulate an unregistered local singleton[39m[32m 26[2mms[22m[39m
+     [32m✓[39m registers the local player through the world boot path[32m 3[2mms[22m[39m
+[31m     [31m×[31m starts and completes warp from an authoritative gate crossing[39m[32m 17[2mms[22m[39m
+     [32m✓[39m queues industry jobs on the authoritative player only[32m 4[2mms[22m[39m
+     [32m✓[39m executes ammo/resource/home commands against authoritative player state[32m 2[2mms[22m[39m
+     [32m✓[39m accepts validated contract proposals via authoritative command[32m 3[2mms[22m[39m
+     [32m✓[39m validates dock commands against nearby station range[32m 5[2mms[22m[39m
+     [32m✓[39m turns in complete contracts from authoritative station state[32m 2[2mms[22m[39m
+     [32m✓[39m skipTutorial does not double-warp when already in target system[32m 1[2mms[22m[39m
+ [32m✓[39m tests/input-hotkeys.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/config-sync.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [31m❯[39m tests/tutorial.test.ts [2m([22m[2m41 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[32m 274[2mms[22m[39m
+     [32m✓[39m has fourteen steps with hangar fitting legs before mining and gunnery[32m 6[2mms[22m[39m
+     [32m✓[39m uses only target dummies in the tutorial target range spawn[32m 4[2mms[22m[39m
+     [32m✓[39m tutorialKeyStyled wraps keybind in a span[32m 0[2mms[22m[39m
+     [32m✓[39m tutorialBarKeyStyled wraps bar slot in a span[32m 1[2mms[22m[39m
+     [32m✓[39m renders keybinds as styled markup in step objectives[32m 2[2mms[22m[39m
+     [32m✓[39m returns a refinery tour panel for the industry step[32m 1[2mms[22m[39m
+     [32m✓[39m requires reaching the academy hub zone[32m 2[2mms[22m[39m
+     [32m✓[39m completes near an asteroid offset from belt center[32m 1[2mms[22m[39m
+     [32m✓[39m stays complete after leaving zone when zoneReached is latched[32m 1[2mms[22m[39m
+     [32m✓[39m isZoneStepComplete respects latch and live position[32m 2[2mms[22m[39m
+     [32m✓[39m nav remaining uses zone edge distance when track arc is exhausted[32m 3[2mms[22m[39m
+     [32m✓[39m completes with resolving lock outside zone[32m 1[2mms[22m[39m
+     [32m✓[39m completes with resolved lock outside zone[32m 0[2mms[22m[39m
+     [32m✓[39m fails with no asteroid lock[32m 1[2mms[22m[39m
+     [32m✓[39m does not complete until the player undocks after opening hangar[32m 1[2mms[22m[39m
+     [32m✓[39m defines hangar review panels for cargo, fitting, stats, training mission, and undock[32m 1[2mms[22m[39m
+     [32m✓[39m defines combat swap panels for unfit, fit, and undock[32m 0[2mms[22m[39m
+     [32m✓[39m requires combat loadout and undock after opening hangar[32m 1[2mms[22m[39m
+     [32m✓[39m mining completes on ore gain anywhere[32m 1[2mms[22m[39m
+     [32m✓[39m industry completes on refinery queue or material gain anywhere[32m 0[2mms[22m[39m
+     [32m✓[39m gunnery requires in-zone dummy kill[32m 1[2mms[22m[39m
+     [32m✓[39m reveals the exit gate only for tutorial pulse logic[32m 29[2mms[22m[39m
+     [32m✓[39m blocks warp until graduation when exiting tutorial[32m 5[2mms[22m[39m
+     [32m✓[39m shows the graduation gate before it is warpable[32m 3[2mms[22m[39m
+     [32m✓[39m allows local tutorial return gates during tutorial[32m 4[2mms[22m[39m
+     [32m✓[39m rejects authoritative warp commands before graduation[32m 15[2mms[22m[39m
+[31m     [31m×[31m arms graduation warp after flying through the gate[39m[32m 25[2mms[22m[39m
+[31m     [31m×[31m graduates after using the final one-way gate to Novus Prime[39m[32m 5[2mms[22m[39m
+     [32m✓[39m uses local return gates without changing systems[32m 5[2mms[22m[39m
+     [32m✓[39m shows the exit gate after tutorial ends[32m 3[2mms[22m[39m
+     [32m✓[39m does not generate a return gate from Novus Prime to the tutorial system[32m 3[2mms[22m[39m
+     [32m✓[39m generates one graduation gate and local return gates for remote tutorial zones[32m 3[2mms[22m[39m
+[31m     [31m×[31m cuts the station dimmer around the highlighted hangar target[39m[32m 39[2mms[22m[39m
+[31m     [31m×[31m resyncs the hangar highlight after deferred station-open tutorial setup[39m[32m 41[2mms[22m[39m
+[31m     [31m×[31m restores the current hangar target highlight after station tab changes[39m[32m 8[2mms[22m[39m
+[31m     [31m×[31m uses the combat hangar phase to highlight high-slot tutorial targets[39m[32m 24[2mms[22m[39m
+[31m     [31m×[31m cuts the station dimmer around the highlighted refinery target[39m[32m 24[2mms[22m[39m
+     [32m✓[39m starts new pilots with an active academy training mission[32m 1[2mms[22m[39m
+     [32m✓[39m defines step rewards for every tutorial step[32m 1[2mms[22m[39m
+     [32m✓[39m marks tutorial complete and skipped immediately[32m 2[2mms[22m[39m
+     [32m✓[39m persists the skipped state to localStorage[32m 1[2mms[22m[39m
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mmoves the primary player after reconnecting a local session
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-lock-resolution.test.ts[2m > [22m[2mGameServer sensor lock resolution[2m > [22m[2mresolves an in-range enemy lock after simulation time elapses
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-worker.test.ts[2m > [22m[2mGameServer[2m > [22m[2mstarts headless without throwing
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+[GameServer] Headless server stopped
+
+ [32m✓[39m tests/server-worker.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 24[2mms[22m[39m
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mmoves the primary player after reconnecting a local session
+[22m[39m[GameServer] Player connected: Pilot (first-client)
+[GameServer] Player disconnected: Pilot (first-client)
+[GameServer] Player connected: Pilot (second-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mmoves the primary player after reconnecting a local session
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct forward and reverse thrust from authoritative input
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct forward and reverse thrust from authoritative input
+[22m[39m[GameServer] Player connected: Pilot (direct-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct forward and reverse thrust from authoritative input
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct yaw from authoritative input
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct yaw from authoritative input
+[22m[39m[GameServer] Player connected: Pilot (yaw-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mapplies direct yaw from authoritative input
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not rotate hull toward mouse in direct mode
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+ [32m✓[39m tests/server-player-sanitize.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not rotate hull toward mouse in direct mode
+[22m[39m[GameServer] Player connected: Pilot (direct-mouse-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not rotate hull toward mouse in direct mode
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mbuilt-in boost works without a propulsion module and drains capacitor
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mbuilt-in boost works without a propulsion module and drains capacitor
+[22m[39m[GameServer] Player connected: Pilot (boost-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mbuilt-in boost works without a propulsion module and drains capacitor
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2monline ion boost module improves boost output and efficiency
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2monline ion boost module improves boost output and efficiency
+[22m[39m[GameServer] Player connected: Pilot (ion-boost-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2monline ion boost module improves boost output and efficiency
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2moffline ion boost module does not provide its boost bonus
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2moffline ion boost module does not provide its boost bonus
+[22m[39m[GameServer] Player connected: Pilot (offline-boost-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2moffline ion boost module does not provide its boost bonus
+[22m[39m[GameServer] Headless server stopped
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not boost below the capacitor start threshold
+[22m[39m[GameServer] Headless server running at 60Hz and simulating all systems
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not boost below the capacitor start threshold
+[22m[39m[GameServer] Player connected: Pilot (low-cap-boost-client)
+
+[90mstdout[2m | tests/server-movement.test.ts[2m > [22m[2mGameServer movement input[2m > [22m[2mdoes not boost below the capacitor start threshold
+[22m[39m[GameServer] Headless server stopped
+
+ [32m✓[39m tests/server-movement.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 191[2mms[22m[39m
+ [32m✓[39m tests/client-session.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/frame-action-queue.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/turret-menu-queue.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/damage-display.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/snapshot-players.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/perf-telemetry.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/spatial-grid.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+[90mstdout[2m | tests/server-lock-resolution.test.ts[2m > [22m[2mGameServer sensor lock resolution[2m > [22m[2mresolves an in-range enemy lock after simulation time elapses
+[22m[39m[GameServer] Player connected: Pilot (lock-test-client)
+
+[90mstdout[2m | tests/server-lock-resolution.test.ts[2m > [22m[2mGameServer sensor lock resolution[2m > [22m[2mresolves an in-range enemy lock after simulation time elapses
+[22m[39m[GameServer] Headless server stopped
+
+ [32m✓[39m tests/server-lock-resolution.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 905[2mms[22m[39m
+     [33m[2m✓[22m[39m resolves an in-range enemy lock after simulation time elapses [33m 902[2mms[22m[39m
+ [32m✓[39m tests/mixed-ore-cargo.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/warp-charge.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/warp-gates.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/lock-brackets.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/pilot-profile.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/map-scanner.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/radar-sweep.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/station-ui-refresh.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 1520[2mms[22m[39m
+     [33m[2m✓[22m[39m refreshes market rows and wallet after authoritative inventory changes [33m 505[2mms[22m[39m
+     [33m[2m✓[22m[39m refreshes active refining and fabrication panels after authoritative material changes [33m 444[2mms[22m[39m
+ [32m✓[39m tests/local-player-registry.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/net-input-binding.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/station-industry.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 1472[2mms[22m[39m
+     [33m[2m✓[22m[39m activates Refining when the tutorial advances while docked [33m 505[2mms[22m[39m
+ [32m✓[39m tests/entities.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/turret-control.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/authority-boundary.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 10[2mms[22m[39m

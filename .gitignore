@@ -17,3 +17,15 @@ Thumbs.db
 # Platform wrappers and test artifacts
 src-tauri/
 coverage/
+
+# AI assistant settings and plans
+.claude/
+.devin/
+.kilo/
+.opencode/
+.windsurf/
+.antigravitycli/
+
+# Temporary and generated files
+tmp*.js
+*.tmp

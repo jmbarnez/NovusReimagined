@@ -5,6 +5,7 @@ import { appendLogEntry } from "./hud/logs.js";
 import { showCommsLogPanel } from "./hud-overlay.js";
 import { t } from "../utils/i18n.js";
 import { Client } from "../state.js";
+import { getElement, setStyle, onKeydown, onClick, remove } from "./dom-helpers.js";
 
 let chatUnsubscribe: (() => void) | null = null;
 let inputKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -39,25 +40,25 @@ function appendChatMessage(sender: string, text: string, isSystem = false) {
 
 /** Open comms log chat input (bound to settings keybind, default T). */
 export function openChatTransmit() {
-  const inputRow = document.getElementById("hud-log-chat-input-row");
-  const inputEl = document.getElementById("hud-log-chat-input") as HTMLInputElement | null;
+  const inputRow = getElement("hud-log-chat-input-row");
+  const inputEl = getElement("hud-log-chat-input") as HTMLInputElement | null;
   if (!inputRow || !inputEl) return;
 
   showCommsLogPanel();
-  inputRow.style.display = "flex";
+  setStyle(inputRow, { display: "flex" });
   inputEl.focus();
 }
 
 export function initChat() {
   destroyChat();
 
-  const inputRow = document.getElementById("hud-log-chat-input-row");
-  const inputEl = document.getElementById("hud-log-chat-input") as HTMLInputElement | null;
-  const sendBtn = document.getElementById("hud-log-chat-send") as HTMLButtonElement | null;
+  const inputRow = getElement("hud-log-chat-input-row");
+  const inputEl = getElement("hud-log-chat-input") as HTMLInputElement | null;
+  const sendBtn = getElement("hud-log-chat-send") as HTMLButtonElement | null;
   if (!inputRow || !inputEl) return;
 
   appendChatMessage("SYSTEM", t("chat.welcome"), true);
-  inputRow.style.display = "flex";
+  setStyle(inputRow, { display: "flex" });
 
   chatUnsubscribe = gameClient.onChatMessage((senderName, message, senderId) => {
     appendChatMessage(senderName, message);
@@ -91,7 +92,7 @@ export function initChat() {
     sendChatInput(inputEl);
     inputEl.focus();
   };
-  sendBtn?.addEventListener("click", sendClickHandler);
+  if (sendBtn) sendBtn.addEventListener("click", sendClickHandler);
 }
 
 export function destroyChat() {
@@ -99,7 +100,7 @@ export function destroyChat() {
     chatUnsubscribe();
     chatUnsubscribe = null;
   }
-  const inputEl = document.getElementById("hud-log-chat-input") as HTMLInputElement | null;
+  const inputEl = getElement("hud-log-chat-input") as HTMLInputElement | null;
   if (inputEl && inputKeydownHandler) {
     inputEl.removeEventListener("keydown", inputKeydownHandler);
   }
@@ -109,7 +110,7 @@ export function destroyChat() {
   if (inputEl && blurHandler) {
     inputEl.removeEventListener("blur", blurHandler);
   }
-  const sendBtn = document.getElementById("hud-log-chat-send");
+  const sendBtn = getElement("hud-log-chat-send");
   if (sendBtn && sendClickHandler) {
     sendBtn.removeEventListener("click", sendClickHandler);
   }
@@ -118,8 +119,9 @@ export function destroyChat() {
   focusHandler = null;
   blurHandler = null;
 
-  const inputRow = document.getElementById("hud-log-chat-input-row");
-  if (inputRow) inputRow.style.display = "none";
+  const inputRow = getElement("hud-log-chat-input-row");
+  if (inputRow) setStyle(inputRow, { display: "none" });
 
-  document.getElementById("hud-chat-overlay")?.remove();
+  const chatOverlay = getElement("hud-chat-overlay");
+  if (chatOverlay) remove(chatOverlay);
 }

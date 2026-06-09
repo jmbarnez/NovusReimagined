@@ -1,6 +1,7 @@
 import { Client } from "../../state.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { WIN_EXPAND_ICON, WIN_CLOSE_ICON, WIN_RESET_ICON, setExpandButtonState, collapseWindowExpand } from "./window-chrome.js";
+import { insertHTML, getElement, setStyle, toggleClass, setHtml, append, onClick, onMouseEnter, onMouseLeave } from "../dom-helpers.js";
 
 const _windows = new Map<string, HTMLElement>();
 const _closeCallbacks = new Map<string, () => void>();
@@ -70,8 +71,8 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
   }
   let win = _windows.get(id);
   if (!win) {
-    document.body.insertAdjacentHTML("beforeend", makeWindowHTML(id, title));
-    win = document.getElementById(`hud-win-${id}`)!;
+    insertHTML(document.body, "beforeend", makeWindowHTML(id, title));
+    win = getElement(`hud-win-${id}`)!;
     _windows.set(id, win);
 
     const head = win.querySelector(".eve-win-head") as HTMLElement;
@@ -80,7 +81,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
     const resetBtn = win.querySelector(".eve-win-reset") as HTMLElement;
 
     if (resetBtn) {
-      resetBtn.addEventListener("click", (ev) => {
+      onClick(resetBtn, (ev) => {
         ev.stopPropagation();
         Client.mapZoom = 1.0;
         Client.mapPanX = 0;
@@ -88,37 +89,35 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       });
     }
 
-    head.addEventListener("mousedown", (ev) => {
-      if ((ev as MouseEvent).button !== 0) return;
-      if ((ev.target as HTMLElement).closest("button")) return;
+    onClick(head, (ev) => {
+      const me = ev as MouseEvent;
+      if (me.button !== 0) return;
+      if ((me.target as HTMLElement).closest("button")) return;
       if (win!.classList.contains("is-expanded")) {
         collapseWindowExpand(win!, { capturePosition: true });
         const wr = win!.getBoundingClientRect();
         const headH = (win!.querySelector(".eve-win-head") as HTMLElement | null)?.offsetHeight ?? 26;
-        win!.style.left = `${Math.max(0, (ev as MouseEvent).clientX - wr.width / 2)}px`;
-        win!.style.top = `${Math.max(0, (ev as MouseEvent).clientY - headH / 2)}px`;
-        win!.style.right = "auto";
+        setStyle(win!, { left: `${Math.max(0, me.clientX - wr.width / 2)}px`, top: `${Math.max(0, me.clientY - headH / 2)}px`, right: "auto" });
       }
       ev.preventDefault();
       bringToFront(win!);
-      win!.classList.add("is-dragging");
+      toggleClass(win!, "is-dragging", true);
       if (!win!.style.left || !win!.style.top) {
         const wr = win!.getBoundingClientRect();
-        if (!win!.style.left) { win!.style.left = `${wr.left}px`; win!.style.right = "auto"; }
-        if (!win!.style.top) win!.style.top = `${wr.top}px`;
+        if (!win!.style.left) { setStyle(win!, { left: `${wr.left}px`, right: "auto" }); }
+        if (!win!.style.top) setStyle(win!, { top: `${wr.top}px` });
       }
       const baseX = parseFloat(win!.style.left) || 0;
       const baseY = parseFloat(win!.style.top) || 0;
-      const sx = (ev as MouseEvent).clientX;
-      const sy = (ev as MouseEvent).clientY;
+      const sx = me.clientX;
+      const sy = me.clientY;
       const onMove = (mv: MouseEvent) => {
-        win!.style.left = `${baseX + (mv.clientX - sx)}px`;
-        win!.style.top = `${baseY + (mv.clientY - sy)}px`;
+        setStyle(win!, { left: `${baseX + (mv.clientX - sx)}px`, top: `${baseY + (mv.clientY - sy)}px` });
         clampWindow(win!);
         emitWindowLayoutChanged();
       };
       const onUp = () => {
-        win!.classList.remove("is-dragging");
+        toggleClass(win!, "is-dragging", false);
         emitWindowLayoutChanged();
         window.removeEventListener("mousemove", onMove);
         window.removeEventListener("mouseup", onUp);
@@ -127,24 +126,21 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       window.addEventListener("mouseup", onUp);
     });
 
-    closeBtn.addEventListener("click", (ev) => {
+    onClick(closeBtn, (ev) => {
       ev.stopPropagation();
       closeHudWindow(id);
     });
 
-    expandBtn.addEventListener("click", (ev) => {
+    onClick(expandBtn, (ev) => {
       ev.stopPropagation();
       sfxBlip();
       const expand = !win!.classList.contains("is-expanded");
       _windows.forEach((w) => {
-        w.classList.remove("is-expanded");
+        toggleClass(w, "is-expanded", false);
         const btn = w.querySelector(".eve-win-expand");
         if (btn) setExpandButtonState(btn as HTMLElement, false);
         if (w.dataset.prevLeft != null) {
-          w.style.left = w.dataset.prevLeft;
-          w.style.top = w.dataset.prevTop!;
-          w.style.width = w.dataset.prevWidth!;
-          w.style.height = w.dataset.prevHeight!;
+          setStyle(w, { left: w.dataset.prevLeft, top: w.dataset.prevTop!, width: w.dataset.prevWidth!, height: w.dataset.prevHeight! });
         }
       });
       emitWindowLayoutChanged();
@@ -152,33 +148,33 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
         bringToFront(win!);
         if (!win!.style.left || !win!.style.width) {
           const wr = win!.getBoundingClientRect();
-          if (!win!.style.left) { win!.style.left = `${wr.left}px`; win!.style.right = "auto"; }
-          if (!win!.style.top) win!.style.top = `${wr.top}px`;
-          if (!win!.style.width) win!.style.width = `${wr.width}px`;
-          if (!win!.style.height) win!.style.height = `${wr.height}px`;
+          if (!win!.style.left) { setStyle(win!, { left: `${wr.left}px`, right: "auto" }); }
+          if (!win!.style.top) setStyle(win!, { top: `${wr.top}px` });
+          if (!win!.style.width) setStyle(win!, { width: `${wr.width}px` });
+          if (!win!.style.height) setStyle(win!, { height: `${wr.height}px` });
         }
         win!.dataset.prevLeft = win!.style.left;
         win!.dataset.prevTop = win!.style.top;
         win!.dataset.prevWidth = win!.style.width;
         win!.dataset.prevHeight = win!.style.height;
-        win!.classList.add("is-expanded");
+        toggleClass(win!, "is-expanded", true);
         setExpandButtonState(expandBtn as HTMLElement, true);
       }
       emitWindowLayoutChanged();
     });
 
-    win.addEventListener("mousedown", () => bringToFront(win!));
+    onClick(win, () => bringToFront(win!));
   }
 
-  const body = document.getElementById(`hud-win-body-${id}`);
+  const body = getElement(`hud-win-body-${id}`);
   if (body && typeof contentEl === "string") {
-    body.innerHTML = contentEl;
+    setHtml(body, contentEl);
   } else if (body && contentEl instanceof HTMLElement) {
-    body.innerHTML = "";
-    body.appendChild(contentEl);
+    setHtml(body, "");
+    append(body, contentEl);
   }
 
-  win.style.display = "flex";
+  setStyle(win, { display: "flex" });
   // Clamp immediately to handle small viewports gracefully on launch.
   // If it has no inline style and fits within the screen, clampWindow will return early and do nothing,
   // letting it center/position via bridge.css rules.
@@ -200,7 +196,7 @@ window.addEventListener("resize", () => {
 export function closeHudWindow(id: string) {
   const win = _windows.get(id);
   if (win) {
-    win.style.display = "none";
+    setStyle(win, { display: "none" });
     emitWindowLayoutChanged();
     const cb = _closeCallbacks.get(id);
     if (cb) {

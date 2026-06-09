@@ -6,6 +6,8 @@ export {
   advanceHudTour,
   canAdvanceRefineryTour,
   advanceRefineryTutorialPanel,
+  canAdvanceTour,
+  advanceTour,
   tickTutorial,
   goBackStep,
   advanceStep,

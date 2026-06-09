@@ -6,14 +6,13 @@ import { on } from "../../events.js";
 import {
   skipTutorial,
   advanceStep,
-  advanceHangarTutorialPanel,
-  advanceRefineryTutorialPanel,
-  advanceHudTour,
+  advanceTour,
 } from "../../tutorial/index.js";
 import { t } from "../../utils/i18n.js";
 import { tutorialState } from "./state.js";
 import { renderStep } from "./render.js";
 import { hideTutorialOverlay, showCompleteBanner } from "./lifecycle.js";
+import { createElement, append, onClick, onKeydown } from "../dom-helpers.js";
 
 export function initTutorialOverlay(active: boolean) {
   tutorialState.visible = active;
@@ -21,7 +20,7 @@ export function initTutorialOverlay(active: boolean) {
     tutorialState.layerEl = document.getElementById("world-tutorial-layer");
     if (!tutorialState.layerEl) return;
 
-    tutorialState.root = document.createElement("div");
+    tutorialState.root = createElement("div");
     tutorialState.root.id = "hud-tutorial";
     tutorialState.root.innerHTML = `
       <div class="tutorial-card">
@@ -59,7 +58,7 @@ export function initTutorialOverlay(active: boolean) {
         </div>
       </div>
     `;
-    tutorialState.layerEl.appendChild(tutorialState.root);
+    append(tutorialState.layerEl, tutorialState.root);
 
     tutorialState.cardEl = tutorialState.root.querySelector(".tutorial-card");
     tutorialState.counterEl = tutorialState.root.querySelector(".tutorial-counter");
@@ -76,43 +75,36 @@ export function initTutorialOverlay(active: boolean) {
     tutorialState.confirmEl = tutorialState.root.querySelector(".tutorial-confirm");
     tutorialState.completeEl = tutorialState.root.querySelector(".tutorial-complete");
 
-    tutorialState.root.addEventListener("mousedown", () => {
+    onClick(tutorialState.root, () => {
       if (tutorialState.layerEl) bringToFront(tutorialState.layerEl);
     });
 
-    tutorialState.root.querySelector(".tutorial-skip-btn")?.addEventListener("click", () => {
+    const skipBtn = tutorialState.root.querySelector(".tutorial-skip-btn");
+    if (skipBtn) onClick(skipBtn, () => {
       if (tutorialState.confirmEl) tutorialState.confirmEl.hidden = false;
     });
-    tutorialState.root.querySelector(".tutorial-confirm-no")?.addEventListener("click", () => {
+    const confirmNoBtn = tutorialState.root.querySelector(".tutorial-confirm-no");
+    if (confirmNoBtn) onClick(confirmNoBtn, () => {
       if (tutorialState.confirmEl) tutorialState.confirmEl.hidden = true;
     });
-    tutorialState.root.querySelector(".tutorial-confirm-yes")?.addEventListener("click", () => {
+    const confirmYesBtn = tutorialState.root.querySelector(".tutorial-confirm-yes");
+    if (confirmYesBtn) onClick(confirmYesBtn, () => {
       if (tutorialState.confirmEl) tutorialState.confirmEl.hidden = true;
       skipTutorial();
       hideTutorialOverlay();
     });
-    tutorialState.tourNextBtn?.addEventListener("click", () => {
-      const step = getCurrentTutorialStep(getState().player);
-      if (step?.id === "hud-tour") {
-        advanceHudTour();
-        renderStep();
-        return;
-      }
-      if (step?.id === "industry") {
-        advanceRefineryTutorialPanel();
-        renderStep();
-        return;
-      }
-      advanceHangarTutorialPanel();
+    if (tutorialState.tourNextBtn) onClick(tutorialState.tourNextBtn, () => {
+      advanceTour();
       renderStep();
     });
-    tutorialState.nextBtn?.addEventListener("click", () => {
+    if (tutorialState.nextBtn) onClick(tutorialState.nextBtn, () => {
       advanceStep();
       renderStep();
     });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && tutorialState.visible) {
+    onKeydown(document, (e) => {
+      const ke = e as KeyboardEvent;
+      if (ke.key === "Enter" && tutorialState.visible) {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         if (tutorialState.nextBtn && !tutorialState.nextBtn.hidden) {
           tutorialState.nextBtn.click();

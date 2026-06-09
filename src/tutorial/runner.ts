@@ -10,7 +10,7 @@ import { getNovusPrimeIdx } from "../world/galaxy-build.js";
 import { ensureTutorialRegionsDiscovered } from "../world/map-discovery.js";
 import { TUTORIAL_SPAWN, shouldRelocateTutorialStart } from "../data/tutorial-layout.js";
 import { floatText } from "../utils/fx.js";
-import { clearHangarTutorialGuide } from "../ui/tutorial/hangar-guide.js";
+import { clearTutorialVisuals } from "../ui/tutorial/visuals.js";
 import { logEvent } from "../feedback.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { resetTutorialTrackState } from "../physics/tutorial-track.js";
@@ -20,7 +20,6 @@ import {
   getCurrentTutorialStep,
   setTutorialGatePulse,
   isStationHangarTabActive,
-  REFINERY_GUIDE_PHASE_COUNT,
 } from "../data/tutorial.js";
 import {
   ensureTutorialMission,
@@ -103,10 +102,10 @@ export function advanceHudTour(): void {
 
 export function canAdvanceRefineryTour(): boolean {
   const step = getCurrentTutorialStep(getState().player);
-  if (!step || step.id !== "industry") return false;
+  if (!step || step.id !== "industry" || !step.tour) return false;
   if (!Client.stationOpen || snapshot.refineryGuideComplete === true) return false;
   const phase = typeof snapshot.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
-  return phase < REFINERY_GUIDE_PHASE_COUNT - 1;
+  return phase < step.tour.phases.length - 1;
 }
 
 export function advanceRefineryTutorialPanel(): void {
@@ -115,6 +114,29 @@ export function advanceRefineryTutorialPanel(): void {
   const phase = typeof snapshot.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
   snapshot.refineryGuidePhase = phase + 1;
   emit("tutorial:refinery-tour-change");
+}
+
+export function canAdvanceTour(): boolean {
+  const step = getCurrentTutorialStep(getState().player);
+  if (!step?.tour) return false;
+  const phaseKey = step.tour.phaseKey;
+  const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
+  return phase < step.tour.phases.length - 1;
+}
+
+export function advanceTour(): void {
+  const step = getCurrentTutorialStep(getState().player);
+  if (!step?.tour || !canAdvanceTour()) return;
+  const phaseKey = step.tour.phaseKey;
+  const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
+  snapshot[phaseKey] = phase + 1;
+  if (step.id === "hud-tour" && step.tour.completeKey) {
+    snapshot[step.tour.completeKey] = phase + 1 >= step.tour.phases.length - 1;
+  }
+  // Emit step-specific event for backward compatibility with listeners
+  if (step.id === "hud-tour") emit("tutorial:hud-tour-change");
+  else if (step.id === "industry") emit("tutorial:refinery-tour-change");
+  else emit("tutorial:hangar-tour-change");
 }
 
 export function tickTutorial(_dt: number) {

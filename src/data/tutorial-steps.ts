@@ -8,8 +8,6 @@ import {
   TUTORIAL_GUNNERY_CENTER,
 } from "./tutorial-layout.js";
 import { tutorialKeyStyled, tutorialBarKeyStyled } from "./tutorial-controls.js";
-import { getHangarGuidePanel } from "./hangar-tutorial-guide.js";
-import { getRefineryGuidePanel } from "./refinery-tutorial-guide.js";
 import { t } from "../utils/i18n.js";
 import { flattenStorageMaterials } from "../refinery/index.js";
 import {
@@ -53,16 +51,59 @@ function initTrackProgress(ctx: TutorialCtx, trackId: string): void {
   ctx.snapshot.trackProgressTotal = track ? trackTotalArcLength(track) : 0;
 }
 
+const HUD_TOUR_PHASES = [
+  { label: t("tutorial.hudTour.vitals.label"), body: t("tutorial.hudTour.vitals.body"), target: "#hud-status-bars" },
+  { label: t("tutorial.hudTour.modules.label"), body: t("tutorial.hudTour.modules.body"), target: "#hud-slots" },
+  { label: t("tutorial.hudTour.lockRail.label"), body: t("tutorial.hudTour.lockRail.body"), target: "#hud-lock-rail" },
+  { label: t("tutorial.hudTour.overview.label"), body: t("tutorial.hudTour.overview.body"), target: "#hud-scanner-dock" },
+  { label: t("tutorial.hudTour.comms.label"), body: t("tutorial.hudTour.comms.body"), target: "#hud-log-panel" },
+  { label: t("tutorial.hudTour.missions.label"), body: t("tutorial.hudTour.missions.body"), target: "#hud-missions" },
+];
+
+const HANGAR_REVIEW_TOUR = [
+  { label: t("tutorial.hangar.cargo.label"), body: t("tutorial.hangar.cargo.body"), target: "#hangar-pane-cargo", tab: "hangar" },
+  { label: t("tutorial.hangar.activeFitting.label"), body: t("tutorial.hangar.activeFitting.body"), target: "#hangar-fitting-panel", tab: "hangar" },
+  { label: t("tutorial.hangar.shipStats.label"), body: t("tutorial.hangar.shipStats.body"), target: "#hangar-stats-panel", tab: "hangar" },
+  { label: t("tutorial.hangar.trainingMission.label"), body: t("tutorial.hangar.trainingMission.body"), target: "#hangar-missions-panel", tab: "hangar" },
+  { label: t("tutorial.hangar.undock.label"), body: t("tutorial.hangar.undock.body", { dockKey: tutorialKeyStyled("dock") }), target: "#st-undock", tab: "hangar" },
+];
+
+const HANGAR_COMBAT_SWAP_TOUR = [
+  { label: t("tutorial.hangar.combatLoadout.label"), body: t("tutorial.hangar.combatLoadout.body"), target: "#hangar-fitting-panel", tab: "hangar" },
+  { label: t("tutorial.hangar.unfitMiner.label"), body: t("tutorial.hangar.unfitMiner.body"), target: '[data-rack="high"][data-idx="0"]', tab: "hangar" },
+  { label: t("tutorial.hangar.unfitTractor.label"), body: t("tutorial.hangar.unfitTractor.body"), target: '[data-rack="high"][data-idx="1"]', tab: "hangar" },
+  { label: t("tutorial.hangar.fitAutocannon.label"), body: t("tutorial.hangar.fitAutocannon.body"), target: '[data-rack="high"][data-idx="0"]', tab: "hangar" },
+  { label: t("tutorial.hangar.fitSalvager.label"), body: t("tutorial.hangar.fitSalvager.body"), target: '[data-rack="high"][data-idx="1"]', tab: "hangar" },
+  { label: t("tutorial.hangar.combatUndock.label"), body: t("tutorial.hangar.combatUndock.body", { dockKey: tutorialKeyStyled("dock") }), target: "#st-undock", tab: "hangar" },
+];
+
+const REFINERY_TOUR = [
+  { label: t("tutorial.refining.tab.label"), body: t("tutorial.refining.tab.body"), target: '.st-tab[data-tab="industry"]', tab: "industry" },
+  { label: t("tutorial.refining.plant.label"), body: t("tutorial.refining.plant.body"), target: "#refinery-pipeline", tab: "industry" },
+  { label: t("tutorial.refining.source.label"), body: t("tutorial.refining.source.body"), target: "#refinery-process-source", tab: "industry" },
+  { label: t("tutorial.refining.controls.label"), body: t("tutorial.refining.controls.body"), target: "#refinery-process-controls", tab: "industry" },
+  { label: t("tutorial.refining.queue.label"), body: t("tutorial.refining.queue.body", { dockKey: tutorialKeyStyled("dock") }), target: "#refinery-right-rail", tab: "industry" },
+];
+
+function getTourPanelFromStep(step: TutorialStep | undefined, snapshot: Record<string, unknown>): { label: string; body: string; index: number; total: number } | null {
+  if (!step?.tour) return null;
+  const phase = typeof snapshot[step.tour.phaseKey] === "number" ? snapshot[step.tour.phaseKey] as number : 0;
+  const panel = step.tour.phases[phase];
+  if (!panel) return null;
+  return { label: panel.label, body: panel.body, index: phase + 1, total: step.tour.phases.length };
+}
+
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "hud-tour",
     title: t("tutorial.step.hudTour.title"),
     objective: (snapshot) => {
       const phase = typeof snapshot?.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-      return t("tutorial.step.hudTour.objective", { n: phase + 1, total: 6 });
+      return t("tutorial.step.hudTour.objective", { n: phase + 1, total: HUD_TOUR_PHASES.length });
     },
     zone: { x: 0, y: 0, r: 0 },
     beaconColor: 0x55aaff,
+    tour: { phases: HUD_TOUR_PHASES, phaseKey: "hudTourPhase", completeKey: "hudTourComplete" },
     onEnter(ctx) {
       ctx.snapshot.hudTourPhase = 0;
       ctx.snapshot.hudTourComplete = false;
@@ -87,6 +128,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-academy",
     title: t("tutorial.step.flyAcademy.title"),
+    highlight: "#hud-missions",
     objective: () => t("tutorial.step.flyAcademy.objective", {
       mapKey: tutorialKeyStyled("map"),
       forwardKey: tutorialKeyStyled("forwardThrust"),
@@ -112,16 +154,18 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "hangar-high",
     title: t("tutorial.step.hangarHigh.title"),
+    highlight: "#hud-dock-prompt",
     objective: (snapshot) => {
       if (Client.stationOpen && snapshot?.hangarReviewComplete !== true) {
         const phase = typeof snapshot?.hangarReviewPhase === "number" ? snapshot.hangarReviewPhase : 0;
-        const panel = getHangarGuidePanel("hangar-high", phase);
+        const panel = HANGAR_REVIEW_TOUR[phase];
         if (panel) return `${panel.label}: ${panel.body}`;
       }
       return t("tutorial.step.hangarHigh.objective", { dockKey: tutorialKeyStyled("dock") });
     },
     zone: tutorialRegionZone("hangar-high"),
     beaconColor: 0x88ff88,
+    tour: { phases: HANGAR_REVIEW_TOUR, phaseKey: "hangarReviewPhase", completeKey: "hangarReviewComplete" },
     onEnter(ctx) {
       ctx.snapshot.minerInHigh = isModuleFitted("tu-civilian-miner", "high", ctx.player);
       ctx.snapshot.hangarReviewPhase = 0;
@@ -156,6 +200,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "targeting",
     title: t("tutorial.step.targeting.title"),
+    highlight: "#hud-scanner-dock",
     objective() {
       const key = Client.settings.movementControlMode === "direct"
         ? "tutorial.step.targeting.objectiveDirect"
@@ -176,6 +221,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "mining",
     title: t("tutorial.step.mining.title"),
+    highlight: "#hud-slots",
     objective: () => t("tutorial.step.mining.objective", { bar1Key: tutorialBarKeyStyled(0) }),
     zone: tutorialRegionZone("mining"),
     beaconColor: 0xaa88ff,
@@ -210,16 +256,18 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "industry",
     title: t("tutorial.step.industry.title"),
+    highlight: "#hud-dock-prompt",
     objective: (snapshot) => {
       if (Client.stationOpen && snapshot?.refineryGuideComplete !== true) {
         const phase = typeof snapshot?.refineryGuidePhase === "number" ? snapshot.refineryGuidePhase : 0;
-        const panel = getRefineryGuidePanel("industry", phase);
+        const panel = REFINERY_TOUR[phase];
         if (panel) return `${panel.label}: ${panel.body}`;
       }
       return t("tutorial.step.industry.objective", { dockKey: tutorialKeyStyled("dock") });
     },
     zone: tutorialRegionZone("industry"),
     beaconColor: 0x88ff88,
+    tour: { phases: REFINERY_TOUR, phaseKey: "refineryGuidePhase", completeKey: "refineryGuideComplete" },
     onEnter(ctx) {
       ctx.snapshot.craftQueue = ctx.player.craftQueue.length;
       ctx.snapshot.hubQueue = ctx.player.hubQueue.length;
@@ -247,16 +295,18 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "hangar-turrets",
     title: t("tutorial.step.hangarTurrets.title"),
+    highlight: "#hud-dock-prompt",
     objective: (snapshot) => {
       if (Client.stationOpen && snapshot?.hangarReviewComplete !== true) {
         const phase = typeof snapshot?.hangarCombatPhase === "number" ? snapshot.hangarCombatPhase : 0;
-        const panel = getHangarGuidePanel("hangar-turrets", phase);
+        const panel = HANGAR_COMBAT_SWAP_TOUR[phase];
         if (panel) return `${panel.label}: ${panel.body}`;
       }
       return t("tutorial.step.hangarTurrets.objective", { dockKey: tutorialKeyStyled("dock") });
     },
     zone: tutorialRegionZone("hangar-turrets"),
     beaconColor: 0xff8866,
+    tour: { phases: HANGAR_COMBAT_SWAP_TOUR, phaseKey: "hangarCombatPhase", completeKey: "hangarReviewComplete" },
     onEnter(ctx) {
       ctx.snapshot.hangarCombatPhase = 0;
       ctx.snapshot.hangarCombatPhaseAt = ctx.now;
@@ -293,6 +343,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "gunnery",
     title: t("tutorial.step.gunnery.title"),
+    highlight: "#hud-slots",
     objective: () => t("tutorial.step.gunnery.objective", { bar1Key: tutorialBarKeyStyled(0) }),
     zone: tutorialRegionZone("gunnery"),
     beaconColor: 0xff8866,
@@ -330,6 +381,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "graduation",
     title: t("tutorial.step.graduation.title"),
+    highlight: "#hud-dock-prompt",
     objective: () => t("tutorial.step.graduation.objective", { dockKey: tutorialKeyStyled("dock") }),
     zone: tutorialRegionZone("graduation"),
     beaconColor: 0xffffff,

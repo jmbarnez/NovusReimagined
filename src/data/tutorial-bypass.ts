@@ -27,6 +27,19 @@ export interface TutorialNavTarget {
   targetY: number;
 }
 
+export interface TutorialTourPhase {
+  label: string;
+  body: string;
+  target: string;
+  tab?: string;
+}
+
+export interface TutorialTour {
+  phases: TutorialTourPhase[];
+  phaseKey: string;
+  completeKey: string;
+}
+
 export interface TutorialStep {
   id: string;
   title: string;
@@ -34,6 +47,8 @@ export interface TutorialStep {
   zone: TutorialZone;
   beaconColor: number;
   nav?: TutorialNavTarget;
+  highlight?: string;
+  tour?: TutorialTour;
   isComplete: (ctx: TutorialCtx) => boolean;
   onEnter?: (ctx: TutorialCtx) => void;
   onComplete?: (ctx: TutorialCtx) => void;

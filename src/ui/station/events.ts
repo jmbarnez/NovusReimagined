@@ -8,10 +8,11 @@ import {
   handleIndustryAction,
   handleIndustryFieldEvent,
 } from "./industry.js";
+import { onClick, onMouseEnter, onMouseLeave, onInput, onChange } from "../dom-helpers.js";
 
 function bindTabClicks(el: HTMLElement): void {
   el.querySelectorAll(".st-tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    onClick(btn, () => {
       if ((btn as HTMLButtonElement).disabled) return;
       sfxBlip(720, 0.05);
       activateStationTab((btn as HTMLElement).dataset.tab as StationTabId, el);
@@ -20,7 +21,7 @@ function bindTabClicks(el: HTMLElement): void {
 }
 
 function bindClickActions(el: HTMLElement, onStationAction: (e: Event) => void): void {
-  el.addEventListener("click", (e: Event) => {
+  onClick(el, (e: Event) => {
     const target = e.target as HTMLElement | null;
     const actionBtn = target?.closest("[data-action]") as HTMLElement | null;
     if (actionBtn?.dataset.action && handleIndustryAction(actionBtn.dataset.action, actionBtn)) {
@@ -33,9 +34,10 @@ function bindClickActions(el: HTMLElement, onStationAction: (e: Event) => void):
 }
 
 function bindSlotHover(el: HTMLElement): void {
-  el.addEventListener("mouseover", (e: MouseEvent) => {
+  onMouseEnter(el, (e: Event) => {
+    const me = e as MouseEvent;
     if (!Client.stationOpen) return;
-    const target = e.target as HTMLElement | null;
+    const target = me.target as HTMLElement | null;
     if (!target) return;
     const btn = target.closest("[data-action='unfit'], [data-action='swapMod'], [data-action='fit']");
     if (!btn) return;
@@ -53,8 +55,9 @@ function bindSlotHover(el: HTMLElement): void {
     }
   });
 
-  el.addEventListener("mouseout", (e: MouseEvent) => {
-    const target = e.target as HTMLElement | null;
+  onMouseLeave(el, (e: Event) => {
+    const me = e as MouseEvent;
+    const target = me.target as HTMLElement | null;
     if (target && target.closest("[data-action='unfit'], [data-action='swapMod'], [data-action='fit']")) {
       stationState.previewFitting = null;
       updateStatsGrid();
@@ -63,7 +66,7 @@ function bindSlotHover(el: HTMLElement): void {
 }
 
 function bindFieldEvents(el: HTMLElement): void {
-  el.addEventListener("input", (e: Event) => {
+  onInput(el, (e: Event) => {
     if (handleIndustryFieldEvent(e.target)) return;
     const target = e.target as HTMLInputElement | null;
     if (!target) return;
@@ -73,7 +76,7 @@ function bindFieldEvents(el: HTMLElement): void {
     }
   });
 
-  el.addEventListener("change", (e: Event) => {
+  onChange(el, (e: Event) => {
     if (handleIndustryFieldEvent(e.target)) return;
     const target = e.target as HTMLSelectElement | HTMLInputElement | null;
     if (!target) return;

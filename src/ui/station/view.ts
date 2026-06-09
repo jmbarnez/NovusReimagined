@@ -9,29 +9,20 @@ import { renderMarket } from "./market.js";
 import { renderContracts } from "./contracts.js";
 import { renderFabrication, renderIndustry } from "./industry.js";
 import { mountInventoryInPane, resetInventoryUI } from "../inventory/index.js";
-import { syncHangarTutorialGuide, clearHangarTutorialGuide } from "../tutorial/hangar-guide.js";
-import { syncRefineryTutorialGuide, clearRefineryTutorialGuide } from "../tutorial/refinery-guide.js";
+import { syncTutorialVisuals, clearTutorialVisuals } from "../tutorial/visuals.js";
 import { activateStationTab, type StationTabId } from "./tabs.js";
 import { t } from "../../utils/i18n.js";
 import { getState } from "../../state-access.js";
 import { on } from "../../events.js";
+import { getElement, query, setText, setHtml, toggleClass } from "../dom-helpers.js";
 
-function syncHangarTutorialGuideFromActiveStep(): void {
+function syncTutorialVisualsFromActiveStep(): void {
   const step = getCurrentTutorialStep(getState().player)?.id;
-  if (step !== "hangar-high" && step !== "hangar-turrets") {
-    clearHangarTutorialGuide();
+  if (step !== "hangar-high" && step !== "hangar-turrets" && step !== "industry") {
+    clearTutorialVisuals();
     return;
   }
-  syncHangarTutorialGuide(getTutorialSnapshot());
-}
-
-function syncRefineryTutorialGuideFromActiveStep(): void {
-  const step = getCurrentTutorialStep(getState().player)?.id;
-  if (step !== "industry") {
-    clearRefineryTutorialGuide();
-    return;
-  }
-  syncRefineryTutorialGuide(getTutorialSnapshot());
+  syncTutorialVisuals();
 }
 
 function preferredTutorialStationTab(st: Station): StationTabId | null {
@@ -103,7 +94,7 @@ function signatureForStationView(): string {
 
 function refreshStationViewFromSnapshot(): void {
   if (!Client.stationOpen || !Client.activeStation) return;
-  const el = document.getElementById("station-overlay");
+  const el = getElement("station-overlay");
   if (!el) return;
 
   const nextSignature = signatureForStationView();
@@ -121,8 +112,7 @@ function bindStationTutorialEvents(): void {
     if (!Client.stationOpen || !Client.activeStation) return;
     const preferredTab = preferredTutorialStationTab(Client.activeStation);
     if (preferredTab) activateStationTab(preferredTab);
-    syncHangarTutorialGuideFromActiveStep();
-    syncRefineryTutorialGuideFromActiveStep();
+    syncTutorialVisualsFromActiveStep();
   });
 }
 
@@ -133,18 +123,21 @@ function bindStationRefreshEvents(): void {
 }
 
 export function buildStationView(st: Station): void {
-  const el = document.getElementById("station-overlay");
+  const el = getElement("station-overlay");
   if (!el) return;
   bindStationTutorialEvents();
   bindStationRefreshEvents();
 
-  el.querySelector("#st-name")!.textContent = st.name;
-  el.querySelector("#st-meta")!.textContent = `Services: ${st.services.join(" · ")}`;
+  const nameEl = query("#st-name", el);
+  if (nameEl) setText(nameEl, st.name);
+  const metaEl = query("#st-meta", el);
+  if (metaEl) setText(metaEl, `Services: ${st.services.join(" · ")}`);
   const sys = getState().GALAXY[getState().player.sysIdx];
   const sec = sys?.security ?? 0.5;
   const secColor = sec >= 0.7 ? "var(--hud-positive)" : sec >= 0.4 ? "var(--hud-accent)" : "var(--hud-danger)";
   const secLabel = sec >= 0.7 ? t("station.highSec") : sec >= 0.4 ? t("station.midSec") : t("station.lowSec");
-  (el.querySelector("#st-sec-badge") as HTMLElement).innerHTML = `<span style="color:${secColor}">●</span> ${secLabel} ${sec.toFixed(1)}`;
+  const secBadgeEl = query("#st-sec-badge", el);
+  if (secBadgeEl) setHtml(secBadgeEl, `<span style="color:${secColor}">●</span> ${secLabel} ${sec.toFixed(1)}`);
 
   el.querySelectorAll(".st-tab").forEach((btn) => {
     const tab = (btn as HTMLElement).dataset.tab;
@@ -152,14 +145,14 @@ export function buildStationView(st: Station): void {
       || tab === "contracts"
       || (tab === "fabrication" ? st.services.includes("industry") : st.services.includes(tab!));
     (btn as HTMLButtonElement).disabled = !avail;
-    btn.classList.remove("active");
+    toggleClass(btn, "active", false);
   });
-  el.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
+  el.querySelectorAll(".panel").forEach((panel) => toggleClass(panel, "active", false));
 
   const preferredTab = preferredTutorialStationTab(st);
   const first = preferredTab
-    ? el.querySelector(`.st-tab[data-tab="${preferredTab}"]:not([disabled])`)
-    : el.querySelector(".st-tab:not([disabled])");
+    ? query(`.st-tab[data-tab="${preferredTab}"]:not([disabled])`, el)
+    : query(".st-tab:not([disabled])", el);
   if (first) {
     stationState.activeTab = (first as HTMLElement).dataset.tab as StationTabId;
     activateStationTab(stationState.activeTab, el);
@@ -186,25 +179,25 @@ export function buildStationView(st: Station): void {
 }
 
 export function renderStationView(): void {
-  const el = document.getElementById("station-overlay");
+  const el = getElement("station-overlay");
   if (!el || !Client.stationOpen) return;
   syncStationStateFromActiveStation();
-  el.querySelector("#st-cr")!.textContent = `${getState().player.credits}¢`;
-  const undockKey = document.getElementById("st-undock-key");
-  if (undockKey) undockKey.textContent = fmtKey(Client.settings.keybinds.dock);
+  const crEl = query("#st-cr", el);
+  if (crEl) setText(crEl, `${getState().player.credits}¢`);
+  const undockKey = getElement("st-undock-key");
+  if (undockKey) setText(undockKey, fmtKey(Client.settings.keybinds.dock));
 
   renderHangar();
   mountInventoryInPane("hangar-pane-cargo");
   renderMarket();
   renderContracts();
-  const industryPanel = document.getElementById("panel-industry");
+  const industryPanel = getElement("panel-industry");
   if (industryPanel?.classList.contains("active")) {
     renderIndustry(industryPanel);
   }
-  const fabricationPanel = document.getElementById("panel-fabrication");
+  const fabricationPanel = getElement("panel-fabrication");
   if (fabricationPanel?.classList.contains("active")) {
     renderFabrication(fabricationPanel);
   }
-  syncHangarTutorialGuideFromActiveStep();
-  syncRefineryTutorialGuideFromActiveStep();
+  syncTutorialVisualsFromActiveStep();
 }

@@ -3,20 +3,12 @@ import { emit } from "../events.js";
 import { getState } from "../state-access.js";
 import {
   getCurrentTutorialStep,
-  HANGAR_COMBAT_SWAP_PHASE_COUNT,
-  HANGAR_REVIEW_PHASE_COUNT,
   hasTutorialCombatLoadout,
 } from "../data/tutorial.js";
 import { snapshot } from "./shared.js";
 
 function hangarTourPhaseKey(stepId: string): string {
   return stepId === "hangar-turrets" ? "hangarCombatPhase" : "hangarReviewPhase";
-}
-
-function hangarTourMaxPhase(stepId: string): number {
-  return stepId === "hangar-turrets"
-    ? HANGAR_COMBAT_SWAP_PHASE_COUNT - 1
-    : HANGAR_REVIEW_PHASE_COUNT - 1;
 }
 
 export function beginHangarReviewTour(now: number): void {
@@ -44,7 +36,8 @@ export function canAdvanceHangarTour(): boolean {
   if (!Client.stationOpen || snapshot.hangarReviewComplete === true) return false;
   const phaseKey = hangarTourPhaseKey(step.id);
   const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
-  return phase < hangarTourMaxPhase(step.id);
+  const maxPhase = step.tour ? step.tour.phases.length - 1 : 0;
+  return phase < maxPhase;
 }
 
 export function advanceHangarTutorialPanel(): void {
