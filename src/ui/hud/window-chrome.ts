@@ -10,9 +10,6 @@ export const WIN_COLLAPSE_ICON =
 export const WIN_CLOSE_ICON =
   '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="2" x2="8" y2="8"/><line x1="8" y1="2" x2="2" y2="8"/></svg>';
 
-export const WIN_POPOUT_ICON =
-  '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="5" height="5" rx="0.5"/><path d="M4 3.5V2.5H8.5V7H7.5"/><path d="M6 4L8.5 1.5"/></svg>';
-
 export const WIN_RESET_ICON =
   '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="5" cy="5" r="3.5"/><line x1="5" y1="2.5" x2="5" y2="5"/><line x1="5" y1="5" x2="7" y2="6.5"/></svg>';
 
@@ -21,8 +18,9 @@ export function bindWindowChromeButton(btn: HTMLElement): void {
   onMouseDown(btn, (ev) => (ev as MouseEvent).preventDefault());
 }
 
-export function panelPopoutButtonHTML(): string {
-  return `<button type="button" class="eve-win-btn hud-panel-popout" aria-label="Pop out" tabindex="-1">${WIN_POPOUT_ICON}</button>`;
+/** Simple dock-header title (no pop-out button since we use standalone windows only). */
+export function buildDockHeaderHTML(title: string): string {
+  return `<span class="hud-dock-title">${title}</span>`;
 }
 
 export function windowHeadButtonsHTML(): string {

@@ -11,11 +11,52 @@ import { t } from "../../utils/i18n.js";
 import { queueFrameAction } from "../../sim/input.js";
 import { createElement, append, setHtml, setText, setStyle, onClick, onContextMenu, remove, onMouseDown, onDocumentMouseMove, onDocumentMouseUp } from "../dom-helpers.js";
 
+/* ── Overview Panel Builder ── */
+export function buildOverviewPanel(): HTMLElement {
+  const panel = createElement("div", "");
+  panel.id = "hud-overview-panel";
+  setHtml(panel, `
+    <div class="ov-wrap">
+      <table class="ov-table">
+        <thead><tr>
+          <th></th>
+          <th class="ov-sortable" data-sort="state"><span class="th-text">${t("hud.state")}</span><div class="ov-resizer"></div></th>
+          <th class="ov-sortable" data-sort="class"><span class="th-text">${t("hud.class")}</span><div class="ov-resizer"></div></th>
+          <th class="ov-sortable" data-sort="name"><span class="th-text">${t("common.name")}</span><div class="ov-resizer"></div></th>
+          <th class="ov-sortable" data-sort="dist"><span class="th-text">${t("hud.dist")}</span><div class="ov-resizer"></div></th>
+          <th><span class="th-text">${t("hud.sig")}</span><div class="ov-resizer"></div></th>
+          <th><span class="th-text">${t("bridge.overviewDv")}</span><div class="ov-resizer"></div></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  `);
+
+  // Attach sort listeners
+  const headers = panel.querySelectorAll("thead th[data-sort]");
+  for (const th of headers) {
+    onClick(th, () => {
+      const key = (th as HTMLElement).dataset.sort as "state" | "class" | "name" | "dist";
+      if (hudState.ovSortKey === key) {
+        hudState.ovSortDir = (hudState.ovSortDir * -1) as 1 | -1;
+      } else {
+        hudState.ovSortKey = key;
+        hudState.ovSortDir = 1;
+      }
+      updateHudOverviewPanelHeaders();
+      updateHudOverviewPanel();
+    });
+  }
+
+  initOverviewResizers(panel);
+  return panel;
+}
+
 /* ── Overview Panel ── */
 export function updateHudOverviewPanel() {
   if (!hudState.ovEntries) return;
   let rows = buildLocalOverviewRows();
-  
+
   // Sort rows while keeping player ("self") fixed at the top
   const playerRow = rows.find((r) => r.kind === "self");
   const otherRows = rows.filter((r) => r.kind !== "self");
@@ -152,8 +193,8 @@ export function initOverviewResizers(panelEl: HTMLElement) {
     } catch (e) {
       console.error("Failed to load saved column widths", e);
     }
-  } else {
-    // If no saved widths, set the initial table total width
+  } else if (panelEl.isConnected) {
+    // If no saved widths and element is in the DOM, set the initial table total width
     updateTableTotalWidth();
   }
 
@@ -198,7 +239,7 @@ export function initOverviewResizers(panelEl: HTMLElement) {
         // Compute final actual widths and persist
         const finalWidths = Array.from(ths).map(t => t.getBoundingClientRect().width);
         localStorage.setItem("hud-overview-widths", JSON.stringify(finalWidths));
-        
+
         // Finalize total table width
         const total = finalWidths.reduce((sum, w) => sum + w, 0);
         setStyle(table, { minWidth: "100%", width: `${total}px` });

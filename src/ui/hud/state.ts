@@ -25,8 +25,6 @@ export const hudState = {
 
   logEntries: null as HTMLElement | null,
   logPanel: null as HTMLElement | null,
-  logPopout: false,
-  scannerPopout: false,
 
   xpPopup: null as HTMLElement | null,
   xpAccum: new Map<string, number>(),
@@ -35,7 +33,6 @@ export const hudState = {
   xpClearTimer: null as number | null,
 
   minimapContainer: null as HTMLElement | null,
-  scannerDock: null as HTMLElement | null,
   pickupContainer: null as HTMLElement | null,
 };
 

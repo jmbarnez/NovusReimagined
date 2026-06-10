@@ -1,4 +1,6 @@
 import "../styles/hud-base.css";
+import "../styles/hud-bottom-bar.css";
+import "../styles/hud-minimap.css";
 import "../styles/hud-sys-info.css";
 import "../styles/hud-status-bars.css";
 import "../styles/hud-misc.css";
@@ -13,7 +15,7 @@ import { initMissionsPanel } from "../hud-missions.js";
 import { t } from "../../utils/i18n.js";
 import { on } from "../../events.js";
 import { hudState } from "../hud/state.js";
-import { updateHudOverviewPanel, updateHudOverviewPanelHeaders, initOverviewResizers } from "../hud/overview.js";
+import { updateHudOverviewPanel, updateHudOverviewPanelHeaders, buildOverviewPanel } from "../hud/overview.js";
 import { hideTurretCtxMenu } from "../hud/turret-menu.js";
 import { hideEnemyCtxMenu } from "../hud/enemy-menu.js";
 import { flushPendingLogEntries, logEvent, registerLogSink } from "../hud/logs.js";
@@ -22,7 +24,6 @@ import { flashSlotFire } from "../hud/slots.js";
 import { showPickupToast } from "../hud/pickup-toasts.js";
 import { registerFeedbackHandlers } from "../../feedback.js";
 import { openDecryptionWindowForSite } from "../decryption.js";
-import { initPanelPopouts, dockInPanel, buildDockHeaderHTML } from "../hud/panel-popout.js";
 import { flushNetLogPending } from "../net-console.js";
 import { resetHubWindowState } from "./hub-window.js";
 
@@ -69,45 +70,28 @@ export function initHudOverlay() {
     <div id="map-overlay" class="map-overlay" style="display: none;"></div>
 
     <div id="hud-bottom">
-      <div id="hud-log-panel">
-        <div id="hud-log-header" class="hud-dock-header">${buildDockHeaderHTML(t("hud.commsLog"))}</div>
-        <div id="hud-log-body" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
-          <div id="hud-log-entries"></div>
-          <div id="hud-log-chat-input-row" class="hud-log-chat-input-row">
-            <span class="hud-log-chat-prefix">${t("hud.chatPrefix")}</span>
-            <input type="text" id="hud-log-chat-input" class="hud-log-chat-input" placeholder="${t("hud.chatPlaceholder")}" maxlength="128" autocomplete="off" />
-            <button type="button" id="hud-log-chat-send" class="hud-log-chat-send">SEND</button>
-          </div>
-        </div>
-      </div>
       <div id="hud-bottom-right">
         <div id="hud-status-bars"></div>
         <div id="hud-slots"></div>
       </div>
-      <div id="hud-scanner-dock">
-        <div id="hud-scanner-header" class="hud-dock-header">${buildDockHeaderHTML(t("hud.overview"))}</div>
-        <div id="hud-scanner-body">
-          <div id="hud-overview-panel">
-            <div class="ov-wrap">
-              <table class="ov-table">
-                <thead><tr>
-                  <th></th>
-                  <th class="ov-sortable" data-sort="state"><span class="th-text">${t("hud.state")}</span><div class="ov-resizer"></div></th>
-                  <th class="ov-sortable" data-sort="class"><span class="th-text">${t("hud.class")}</span><div class="ov-resizer"></div></th>
-                  <th class="ov-sortable" data-sort="name"><span class="th-text">${t("common.name")}</span><div class="ov-resizer"></div></th>
-                  <th class="ov-sortable" data-sort="dist"><span class="th-text">${t("hud.dist")}</span><div class="ov-resizer"></div></th>
-                  <th><span class="th-text">${t("hud.sig")}</span><div class="ov-resizer"></div></th>
-                  <th><span class="th-text">${t("bridge.overviewDv")}</span><div class="ov-resizer"></div></th>
-                </tr></thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+    </div>
+  `);
+
+  // Build detached log panel (standalone window content)
+  const logPanel = createElement("div", "");
+  logPanel.id = "hud-log-panel";
+  setHtml(logPanel, `
+    <div id="hud-log-body" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+      <div id="hud-log-entries"></div>
+      <div id="hud-log-chat-input-row" class="hud-log-chat-input-row">
+        <span class="hud-log-chat-prefix">${t("hud.chatPrefix")}</span>
+        <input type="text" id="hud-log-chat-input" class="hud-log-chat-input" placeholder="${t("hud.chatPlaceholder")}" maxlength="128" autocomplete="off" />
+        <button type="button" id="hud-log-chat-send" class="hud-log-chat-send">SEND</button>
       </div>
     </div>
-
   `);
+  setStyle(logPanel, { display: "none", height: "100%" });
+  append(document.body, logPanel);
 
   // Bind references
   hudState.root = overlay;
@@ -116,14 +100,13 @@ export function initHudOverlay() {
   hudState.lockRail = overlay.querySelector("#hud-lock-rail");
   hudState.dockPrompt = overlay.querySelector("#hud-dock-prompt");
   hudState.xpPopup = overlay.querySelector("#hud-xp-popup");
-  hudState.logEntries = overlay.querySelector("#hud-log-entries");
-  hudState.logPanel = overlay.querySelector("#hud-log-panel");
+  hudState.logEntries = logPanel.querySelector("#hud-log-entries");
+  hudState.logPanel = logPanel;
   registerLogSink(hudState.logEntries);
   flushPendingLogEntries();
   hudState.slotsContainer = overlay.querySelector("#hud-slots");
   hudState.minimapContainer = overlay.querySelector("#hud-minimap");
   initMissionsPanel(overlay.querySelector("#hud-missions") as HTMLElement);
-  hudState.scannerDock = overlay.querySelector("#hud-scanner-dock");
   hudState.pickupContainer = overlay.querySelector("#hud-pickup-container");
 
   // Status bars injection
@@ -150,28 +133,12 @@ export function initHudOverlay() {
   append(bars, boostStatus);
   hudState.boostStatus = boostStatus;
 
-  // Overview panel - scanner dock always present
-  hudState.ovPanel = overlay.querySelector("#hud-overview-panel");
-  hudState.ovEntries = hudState.ovPanel!.querySelector("tbody");
-
-  // Attach sort listeners
-  const headers = hudState.ovPanel!.querySelectorAll("thead th[data-sort]");
-  headers.forEach((th) => {
-    onClick(th, () => {
-      const key = (th as HTMLElement).dataset.sort as "state" | "class" | "name" | "dist";
-      if (hudState.ovSortKey === key) {
-        hudState.ovSortDir = (hudState.ovSortDir * -1) as 1 | -1;
-      } else {
-        hudState.ovSortKey = key;
-        hudState.ovSortDir = 1;
-      }
-      sfxConfirm();
-      updateHudOverviewPanelHeaders();
-      updateHudOverviewPanel();
-    });
-  });
+  // Overview panel — created detached, shown in a floating window on demand
+  const ovPanel = buildOverviewPanel();
+  hudState.ovPanel = ovPanel;
+  hudState.ovEntries = ovPanel.querySelector("tbody");
   updateHudOverviewPanelHeaders();
-  initOverviewResizers(hudState.ovPanel!);
+
   onClick(document.body, (ev) => {
     const btn = (ev.target as HTMLElement).closest("#hud-overview-panel .ov-decrypt");
     if (!btn) return;
@@ -179,6 +146,7 @@ export function initHudOverlay() {
     const siteId = btn.getAttribute("data-site-id");
     if (siteId) openDecryptionWindowForSite(siteId);
   });
+
   // Turret context menu
   if (!getElement("turret-ctx-menu")) {
     hudState.turretCtxMenu = createElement("div");
@@ -247,7 +215,6 @@ export function initHudOverlay() {
     }, 4000);
   });
 
-  initPanelPopouts();
   flushNetLogPending();
 }
 
@@ -261,8 +228,11 @@ export function destroyHudOverlay() {
     setHtml(hudState.root, "");
     hudState.root = null;
   }
+  if (hudState.logPanel) {
+    remove(hudState.logPanel);
+    hudState.logPanel = null;
+  }
   hudState.logEntries = null;
-  hudState.logPanel = null;
   registerLogSink(null);
   if (unsubCrossing) {
     unsubCrossing();
@@ -274,10 +244,6 @@ export function destroyHudOverlay() {
   hudState.lockCards.clear();
   if (hudState.turretCtxMenu) remove(hudState.turretCtxMenu);
   if (hudState.enemyCtxMenu) remove(hudState.enemyCtxMenu);
-  if (hudState.logPopout) dockInPanel("event-log");
-  if (hudState.scannerPopout) dockInPanel("scanner");
-  hudState.logPopout = false;
-  hudState.scannerPopout = false;
   hudState.turretCtxMenu = null;
   hudState.enemyCtxMenu = null;
   const slotTooltip = getElement("hud-slot-tooltip");

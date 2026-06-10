@@ -99,6 +99,7 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
   pointer-events: auto;
 }
 
+/* ── Dock Header (shared by pop-out panels) ── */
 .hud-dock-header {
   display: flex;
   align-items: center;
@@ -129,88 +130,4 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
     color-mix(in srgb, var(--hud-bg-window) 65%, transparent) 0%,
     color-mix(in srgb, var(--hud-bg-panel) 85%, transparent) 100%);
   color: color-mix(in srgb, var(--hud-text-bright) 80%, #050607 20%);
-}
-
-/* ── Bottom Bar (includes scanner dock on right) ── */
-#hud-bottom {
-  position: absolute;
-  bottom: 0; left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  pointer-events: auto;
-}
-
-/* ── Bottom Right (middle area) ── */
-#hud-bottom-right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-  height: var(--hud-bottom-h);
-  background: var(--hud-bg-panel);
-  border-top: 1px solid var(--hud-border-soft);
-}
-
-/* ── Minimap (top-right corner, flush squared radar) ── */
-#hud-minimap {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: var(--hud-minimap-w);
-  height: var(--hud-minimap-w);
-  border-radius: 0px; /* Sharp retro/radar corners */
-  border: none;
-  border-left: 1px solid var(--hud-border);
-  border-bottom: 1px solid var(--hud-border);
-  box-sizing: border-box;
-  z-index: 15;
-  pointer-events: auto;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--hud-bg-deep) 35%, transparent);
-}
-#hud-minimap canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  border-radius: 0px;
-}
-
-/* ── Scanner Dock (integrated with bottom bar, right side) ── */
-#hud-scanner-dock {
-  width: var(--hud-scanner-w);
-  min-width: 200px;
-  max-width: 38%;
-  height: var(--hud-mounted-panel-h);
-  display: flex;
-  flex-direction: column;
-  background: var(--hud-bg-panel);
-  border: 1px solid var(--hud-border-soft);
-  border-left: 1px solid var(--hud-border);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  position: relative;
-  flex-shrink: 0;
-  pointer-events: auto;
-  overflow: hidden;
-}
-
-#hud-scanner-dock > * {
-  position: relative;
-  z-index: 1;
-}
-
-#hud-scanner-header {
-  display: none;
-}
-
-#hud-scanner-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
 }

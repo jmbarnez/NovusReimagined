@@ -8,10 +8,6 @@ export function getHudOverlay(): HTMLElement | null {
   return getElement("hud-overlay");
 }
 
-export function getHudScannerDock(): HTMLElement | null {
-  return getElement("hud-scanner-dock");
-}
-
 export function getHudLogPanel(): HTMLElement | null {
   return getElement("hud-log-panel");
 }

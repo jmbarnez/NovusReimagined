@@ -1,7 +1,7 @@
 import "../styles/hud-base.css";
 import "../styles/pilot-terminal.css";
 import "../styles/hud-logs.css";
-import { buildDockHeaderHTML } from "../hud/panel-popout.js";
+import { buildDockHeaderHTML } from "../hud/window-chrome.js";
 import { t } from "../../utils/i18n.js";
 import { createElement, setHtml, append, setText, onClick } from "../dom-helpers.js";
 

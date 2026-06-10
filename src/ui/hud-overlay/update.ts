@@ -14,15 +14,15 @@ import { updateMapSurveyUi } from "../map-survey.js";
 import { hudState } from "../hud/state.js";
 import { updateSlots } from "../hud/slots.js";
 import { updateLockRail } from "../hud/targeting.js";
-import { updateDockPrompt, updateHudOverviewPanel, updateHudOverviewPanelHeaders } from "../hud/overview.js";
+import { updateDockPrompt, updateHudOverviewPanel } from "../hud/overview.js";
 import { updateShipPanelLive, buildShipPanelShell, attachShipPanelListeners } from "../hud/ship-panel/index.js";
 import { updateTractorDial } from "../hud/tractor-dial.js";
 import { updateHubTooltip } from "../hud/hub-tooltip.js";
-import { isPanelPopout, popOutPanel, dockInPanel, togglePanelVisibility } from "../hud/panel-popout.js";
 import { applyTheme } from "./theme.js";
 import { updateMapOverlayDOM } from "./map-overlay.js";
 import { maybeAutoCloseHubWindow } from "./hub-window.js";
 import { C } from "../../config/index.js";
+import { HUD_BOTTOM_H } from "../../constants.js";
 import { getElement, queryAll, createElement, setText, setHtml, setStyle, setPosition, getStyleProperty, toggleClass, remove } from "../dom-helpers.js";
 
 /* ── Update ── */
@@ -127,59 +127,40 @@ export function toggleSkillsWindow() {
 }
 
 export function toggleScannerDock() {
-  if (isPanelPopout("scanner")) {
-    const win = getHudWindow("scanner-overview");
-    if (win && getStyleProperty(win, "display") !== "none") {
-      // window visible → off
-      togglePanelVisibility("scanner");
-      return;
-    }
-    // window hidden but still popped out → treat as off: dock back
-    dockInPanel("scanner");
-    if (hudState.scannerDock) setStyle(hudState.scannerDock, { display: "flex" });
+  const win = getHudWindow("scanner-overview");
+  if (win && getStyleProperty(win, "display") !== "none") {
+    closeHudWindow("scanner-overview");
     return;
   }
-  const host = hudState.scannerDock;
-  if (host && getStyleProperty(host, "display") !== "none") {
-    // mounted → window
-    popOutPanel("scanner");
-    return;
+  if (!hudState.ovPanel) return;
+  openHudWindow("scanner-overview", "LOCAL OVERVIEW", hudState.ovPanel);
+  const w = getHudWindow("scanner-overview");
+  if (w) {
+    const ww = 360;
+    const wh = 280;
+    const left = Math.max(0, window.innerWidth - ww - 8);
+    const top = Math.max(0, window.innerHeight - wh - HUD_BOTTOM_H - 8);
+    setStyle(w, { left: `${left}px`, top: `${top}px`, right: "auto", bottom: "auto", width: `${ww}px`, height: `${wh}px` });
   }
-  // off → mounted
-  dockInPanel("scanner");
-  if (host) setStyle(host, { display: "flex" });
 }
 
 export function showCommsLogPanel() {
-  if (isPanelPopout("event-log")) {
-    const win = getHudWindow("event-log");
-    if (win) setStyle(win, { display: "flex" });
-    return;
-  }
-  if (hudState.logPanel) {
-    setStyle(hudState.logPanel, { display: "flex" });
-  }
+  if (isOpen("event-log")) return;
+  if (!hudState.logPanel) return;
+  setStyle(hudState.logPanel, { display: "flex" });
+  openHudWindow("event-log", "COMMS LOG", hudState.logPanel, () => {
+    setStyle(hudState.logPanel!, { display: "none" });
+  });
 }
 
 export function toggleEventLogPanel() {
-  if (isPanelPopout("event-log")) {
-    const win = getHudWindow("event-log");
-    if (win && getStyleProperty(win, "display") !== "none") {
-      // window visible → off
-      togglePanelVisibility("event-log");
-      return;
-    }
-    // window hidden but still popped out → treat as off: dock back
-    dockInPanel("event-log");
-    if (hudState.logPanel) setStyle(hudState.logPanel, { display: "flex" });
+  if (isOpen("event-log")) {
+    closeHudWindow("event-log");
     return;
   }
-  if (hudState.logPanel && getStyleProperty(hudState.logPanel, "display") !== "none") {
-    // mounted → window
-    popOutPanel("event-log");
-    return;
-  }
-  // off → mounted
-  dockInPanel("event-log");
-  if (hudState.logPanel) setStyle(hudState.logPanel, { display: "flex" });
+  if (!hudState.logPanel) return;
+  setStyle(hudState.logPanel, { display: "flex" });
+  openHudWindow("event-log", "COMMS LOG", hudState.logPanel, () => {
+    setStyle(hudState.logPanel!, { display: "none" });
+  });
 }

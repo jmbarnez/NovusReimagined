@@ -1,0 +1,24 @@
+/* ── Minimap (top-right corner, flush squared radar) ── */
+#hud-minimap {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: var(--hud-minimap-w);
+  height: var(--hud-minimap-w);
+  border-radius: 0px; /* Sharp retro/radar corners */
+  border: none;
+  border-left: 1px solid var(--hud-border);
+  border-bottom: 1px solid var(--hud-border);
+  box-sizing: border-box;
+  z-index: 15;
+  pointer-events: auto;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--hud-bg-deep) 35%, transparent);
+}
+#hud-minimap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 0px;
+}
