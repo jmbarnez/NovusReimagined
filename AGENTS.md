@@ -17,7 +17,7 @@ Star Sonata uses a **server-authoritative** simulation. Whether the user is play
 - Write or update tests for any non-trivial change.
 - Leave the codebase cleaner than you found it.
 - **File editing**: Always use the `write` tool instead of `edit`. Before modifying a file, read it first to get the current content, then rewrite the entire file with your changes. This avoids stale content conflicts and ensures clean diffs.
-- **Pixi-only rendering**: All in-game rendering goes through PixiJS. The screen `<canvas id="c">` and `src/canvas.ts` were removed in the canvas-to-Pixi migration (see `docs/audit-2026-06-01.md`); `src/canvas.js` no longer exists. New code must not import from `canvas.js`, acquire a `CanvasRenderingContext2D`, or call `getElementById("c")`. `tests/canvas-2d-ban.test.ts` enforces this.
+- **Pixi-only rendering**: All in-game rendering goes through PixiJS. The legacy `<canvas id="c">` and `src/canvas.ts` were removed in the canvas-to-Pixi migration (see `docs/audit-2026-06-01.md`); `src/canvas.js` no longer exists. New code must not import from `canvas.js`, acquire a `CanvasRenderingContext2D`, or call `getElementById("c")`. `tests/canvas-2d-ban.test.ts` enforces this.
 
 ### 3. Self-Criticism & Review
 Before finalizing any change, pause and critically evaluate your own work:
@@ -43,7 +43,7 @@ Use the event bus for cross-system communication instead of direct imports or ti
 Treat state objects as immutable. Replace rather than mutate. This prevents subtle reactivity and render bugs, especially when diffing or syncing state across client and server.
 
 ### 7. Frame Budget / Hot Path Awareness
-This is a canvas game. Avoid allocations, heavy loops, or unnecessary object creation inside the render and update loops. Consider object pooling for frequently spawned and destroyed entities (projectiles, particles, wreckage).
+This is a WebGL/WebGPU-rendered game. Avoid allocations, heavy loops, or unnecessary object creation inside the render and update loops. Consider object pooling for frequently spawned and destroyed entities (projectiles, particles, wreckage).
 
 ### 8. UI vs. Simulation Separation
 Keep HUD and UI logic decoupled from combat, docking, and economy simulation. The client renders state; it does not decide outcomes. Presentation code should never mutate simulation state directly.

@@ -33,16 +33,6 @@ npm run test:run
 npm run typecheck
 ```
 
-## Architecture
-
-Novus follows a server-authoritative simulation model. All game state mutations go through dedicated accessors in `src/state-access.ts`, ensuring clean boundaries between systems.
-
-Key architectural principles:
-- **State immutability** — Replace rather than mutate
-- **Event-driven communication** — Use the event bus for cross-module messaging
-- **Modular state access** — All writes go through domain-specific accessors
-- **Pixi-only rendering** — All in-game visuals go through PixiJS
-
 ## Documentation
 
 - [Architecture Overview](docs/architecture.md) — State management, event bus, and system design
