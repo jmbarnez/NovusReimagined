@@ -92,7 +92,7 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
   user-select: none;
   transform: scale(var(--ui-scale));
   transform-origin: top left;
-  --hud-bottom-h: 95px;
+  --hud-bottom-h: 56px;
   --hud-mounted-panel-h: var(--hud-bottom-h);
 }
 #hud-overlay > * {
@@ -151,8 +151,8 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
   min-width: 0;
   overflow: hidden;
   height: var(--hud-bottom-h);
-  background: linear-gradient(180deg, var(--hud-bottom-top), var(--hud-bottom-bot));
-  border-top: 1px solid var(--hud-bottom-border);
+  background: var(--hud-bg-panel);
+  border-top: 1px solid var(--hud-border-soft);
 }
 
 /* ── Minimap (top-right corner, flush squared radar) ── */
@@ -188,36 +188,14 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
   height: var(--hud-mounted-panel-h);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--hud-bg-window) 58%, var(--hud-bg-panel) 42%) 0%,
-    color-mix(in srgb, var(--hud-bg-panel) 80%, var(--hud-bg-deep) 20%) 100%);
-  border: 1px solid color-mix(in srgb, var(--hud-border) 65%, transparent);
-  border-left: 1px solid color-mix(in srgb, var(--hud-border) 80%, transparent);
-  box-shadow:
-    0 14px 28px color-mix(in srgb, var(--hud-bg-deep) 44%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--hud-border-soft) 35%, transparent) inset,
-    0 0 20px color-mix(in srgb, var(--hud-accent) 6%, transparent) inset;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  isolation: isolate;
+  background: var(--hud-bg-panel);
+  border: 1px solid var(--hud-border-soft);
+  border-left: 1px solid var(--hud-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   position: relative;
   flex-shrink: 0;
   pointer-events: auto;
   overflow: hidden;
-}
-
-#hud-scanner-dock::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(140deg,
-    color-mix(in srgb, var(--hud-text-bright) 12%, transparent) 0%,
-    transparent 42%,
-    transparent 70%,
-    color-mix(in srgb, var(--hud-accent) 8%, transparent) 100%);
-  opacity: 0.55;
-  pointer-events: none;
-  z-index: 0;
 }
 
 #hud-scanner-dock > * {

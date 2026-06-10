@@ -1,8 +1,8 @@
 /* ── Status Bars ── */
 #hud-status-bars {
   display: flex;
-  gap: 4px;
-  padding: 2px 6px 0;
+  gap: 3px;
+  padding: 1px 4px 0;
   align-items: center;
 }
 .hud-bar-group {
@@ -12,13 +12,13 @@
   gap: 2px;
 }
 .hud-bar-label {
-  font-size: calc(6px * var(--effective-font-scale, 1)); font-weight: 700;
+  font-size: calc(5.5px * var(--effective-font-scale, 1)); font-weight: 700;
   color: var(--hud-text-dim);
-  min-width: 20px;
+  min-width: 16px;
 }
 .hud-bar-track {
   flex: 1;
-  height: 5px;
+  height: 4px;
   background: rgba(0,0,0,0.6);
   position: relative;
 }
@@ -54,16 +54,16 @@
   animation: cap-electric-flow 1.5s linear infinite;
 }
 .hud-boost-status {
-  min-width: 48px;
-  height: 13px;
+  min-width: 42px;
+  height: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 5px;
+  padding: 0 4px;
   border: 1px solid var(--hud-border-soft);
   background: rgba(0,0,0,0.45);
   color: var(--hud-text-dim);
-  font-size: calc(6px * var(--effective-font-scale, 1));
+  font-size: calc(5.5px * var(--effective-font-scale, 1));
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0;

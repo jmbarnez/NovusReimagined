@@ -380,8 +380,11 @@
 }
 
 #hud-boost-status.hud-highlight {
-  outline: 2px solid var(--hud-accent) !important;
-  outline-offset: 3px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+  border: 1px solid var(--hud-accent) !important;
+  background: color-mix(in srgb, var(--hud-accent) 12%, rgba(0,0,0,0.45)) !important;
 }
 
 @keyframes hudTutorialPulse {

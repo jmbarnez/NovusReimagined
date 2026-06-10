@@ -1,15 +1,13 @@
 /* ── Lock Rail (bar that holds lock cards) ── */
 #hud-lock-rail {
   position: absolute;
-  /* End the rail flush against the minimap's left edge so lock cards never
-     scroll behind the (semi-transparent) minimap. */
   top: 0; left: 0; right: var(--hud-minimap-w);
-  height: 102px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
-  padding: 0 12px 0 8px;
+  gap: 4px;
+  padding: 0 8px 0 6px;
   background: transparent;
   border-bottom: 1px solid transparent;
   box-sizing: border-box;
@@ -25,13 +23,11 @@
 
 /* ── Lock Card Base ── */
 .lock-card {
-  flex: 0 0 176px;
-  height: 86px;
-  background: rgba(10, 15, 25, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  flex: 0 0 130px;
+  height: 58px;
+  background: rgba(10, 15, 25, 0.95);
   border: 1px solid var(--lc-border);
-  border-radius: 6px; /* Smooth sci-fi rounding matching the rest of the game widgets */
+  border-radius: 4px;
   position: relative;
   cursor: pointer;
   transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -40,11 +36,9 @@
               box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   display: grid;
-  grid-template-columns: 48px 1fr;
+  grid-template-columns: 34px 1fr;
   grid-template-rows: 1fr;
   box-sizing: border-box;
-
-  /* Default theme (Neutral / Locking phase) */
   --lc-theme: var(--hud-text-bright);
   --lc-border: var(--hud-border-soft);
   --lc-bg-header: color-mix(in srgb, var(--hud-text-bright) 6%, transparent);
@@ -57,7 +51,6 @@
               0 0 8px color-mix(in srgb, var(--lc-theme) 30%, transparent);
 }
 
-/* Primary/Active Target Highlight (Sky-blue glow outline) */
 .lock-card.primary {
   border-color: var(--lc-theme);
   background: color-mix(in srgb, var(--lc-theme) 12%, rgba(10, 15, 25, 0.8));
@@ -71,7 +64,6 @@
               inset 0 0 6px color-mix(in srgb, var(--lc-theme) 25%, transparent);
 }
 
-/* Assigned Target Highlight (Turrets / Salvager target - Amber glow) */
 .lock-card.assigned {
   border-color: var(--hud-border-accent);
   background: color-mix(in srgb, var(--hud-border-accent) 12%, rgba(10, 15, 25, 0.8));
@@ -83,30 +75,24 @@
               0 0 14px color-mix(in srgb, var(--hud-border-accent) 40%, transparent);
 }
 
-/* ── Dynamic Threat & Object Themes ── */
-
-/* Asteroid */
 .lock-card.asteroid {
   --lc-theme: var(--hud-shield);
   --lc-border: color-mix(in srgb, var(--hud-shield) 30%, transparent);
   --lc-bg-header: color-mix(in srgb, var(--hud-shield) 5%, transparent);
 }
 
-/* Wreck */
 .lock-card.wreck {
   --lc-theme: var(--hud-text-dim);
   --lc-border: color-mix(in srgb, var(--hud-text-dim) 25%, transparent);
   --lc-bg-header: color-mix(in srgb, var(--hud-text-dim) 4%, transparent);
 }
 
-/* Enemy (Hostile) */
 .lock-card.enemy {
   --lc-theme: var(--hud-danger);
   --lc-border: color-mix(in srgb, var(--hud-danger) 40%, transparent);
   --lc-bg-header: color-mix(in srgb, var(--hud-danger) 6%, transparent);
 }
 
-/* Enemy is targeting player (Pulsing Gold Warning) */
 .lock-card.enemy.target-targeting {
   --lc-theme: var(--hud-accent);
   --lc-border: color-mix(in srgb, var(--hud-accent) 60%, transparent);
@@ -114,7 +100,6 @@
   animation: lc-warning-pulse 1.5s infinite alternate ease-in-out;
 }
 
-/* Enemy has active lock on player (Critical Threat Flashing Red) */
 .lock-card.enemy.target-locked {
   --lc-theme: var(--hud-danger);
   --lc-border: color-mix(in srgb, var(--hud-danger) 80%, transparent);
@@ -144,10 +129,9 @@
   }
 }
 
-/* ── Hologram Viewport ── */
 .lock-card .lc-hologram-viewport {
-  width: 48px;
-  height: 64px; /* Leaves exactly 18px (bottom + gap) for the new status bars */
+  width: 34px;
+  height: 40px;
   position: relative;
   background: rgba(0, 0, 0, 0.55);
   border-right: 1px solid var(--lc-border);
@@ -160,14 +144,12 @@
   overflow: hidden;
 }
 
-/* Faint scan scopes and grids depending on target type */
 .lock-card .lc-hologram-grid {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-/* Neutral scope - horizontal scanning grid lines */
 .lock-card:not(.enemy) .lc-hologram-grid {
   background: linear-gradient(color-mix(in srgb, var(--lc-theme) 6%, transparent) 1px, transparent 1px),
               linear-gradient(90deg, color-mix(in srgb, var(--lc-theme) 6%, transparent) 1px, transparent 1px);
@@ -176,7 +158,6 @@
   opacity: 0.75;
 }
 
-/* Enemy scope - tactical circular crosshair scope */
 .lock-card.enemy .lc-hologram-grid {
   background: radial-gradient(circle, transparent 35%, color-mix(in srgb, var(--lc-theme) 8%, transparent) 36%, color-mix(in srgb, var(--lc-theme) 8%, transparent) 40%, transparent 41%),
               radial-gradient(circle, transparent 65%, color-mix(in srgb, var(--lc-theme) 4%, transparent) 66%, color-mix(in srgb, var(--lc-theme) 4%, transparent) 70%, transparent 71%);
@@ -190,41 +171,37 @@
   pointer-events: none;
   background: color-mix(in srgb, var(--lc-theme) 20%, transparent);
 }
-/* Horizontal line of crosshair */
 .lock-card.enemy .lc-hologram-viewport::before {
   top: 50%; left: 4px; right: 4px;
   height: 1px;
 }
-/* Vertical line of crosshairs */
 .lock-card.enemy .lc-hologram-viewport::after {
   left: 50%; top: 4px; bottom: 4px;
   width: 1px;
 }
 
 .lock-card .lc-canvas {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   z-index: 2;
   position: relative;
 }
 
-/* ── Content Area & Detail Columns ── */
 .lock-card .lc-content-area {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   min-width: 0;
-  height: 64px; /* Align perfectly with hologram column */
+  height: 40px;
 }
 
-/* ── Header row ── */
 .lock-card .lc-header {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 4px;
-  padding: 3px 38px 3px 8px;
-  height: 20px;
+  padding: 2px 28px 2px 6px;
+  height: 16px;
   box-sizing: border-box;
   background: var(--lc-bg-header);
   border-bottom: 1px solid var(--lc-border);
@@ -233,7 +210,7 @@
 
 .lock-card .lc-name {
   font-family: var(--font-family);
-  font-size: calc(8.5px * var(--effective-font-scale, 1));
+  font-size: calc(7px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-bright);
   white-space: nowrap;
@@ -247,13 +224,13 @@
 
 .lock-card .lc-level {
   font-family: var(--font-family);
-  font-size: calc(8px * var(--effective-font-scale, 1));
+  font-size: calc(7px * var(--effective-font-scale, 1));
   font-weight: 900;
   color: var(--lc-theme);
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid var(--lc-border);
   border-radius: 3px;
-  padding: 1px 4px;
+  padding: 1px 3px;
   flex-shrink: 0;
   line-height: 1;
 }
@@ -261,7 +238,6 @@
   display: none;
 }
 
-/* Targeting indicator in header */
 .lock-card .lc-target {
   font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
@@ -271,7 +247,6 @@
   margin-left: auto;
 }
 
-/* Body container inside content area */
 .lock-card .lc-body {
   flex: 1;
   display: flex;
@@ -280,7 +255,6 @@
   position: relative;
 }
 
-/* ── Telemetry Matrix ── */
 .lock-card .lc-telemetry {
   display: none;
   grid-template-columns: 1fr 1fr;
@@ -305,7 +279,6 @@
   font-weight: 700;
 }
 
-/* ── Meta label ── */
 .lock-card .lc-meta {
   font-family: var(--font-family);
   font-size: calc(7.5px * var(--effective-font-scale, 1));
@@ -317,7 +290,6 @@
   display: none;
 }
 
-/* ── Scan progress (resolving state) ── */
 .lock-card .lc-scan {
   display: none;
   position: absolute;
@@ -342,21 +314,20 @@
   100% { opacity: 1.0; }
 }
 
-/* ── Close button ── */
 .lock-card .lc-close {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 14px;
-  height: 14px;
+  top: 3px;
+  right: 3px;
+  width: 12px;
+  height: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid var(--lc-border);
-  border-radius: 50%; /* Modern circular minimalist close */
+  border-radius: 50%;
   font-family: var(--font-family);
-  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-dim);
   cursor: pointer;
@@ -379,20 +350,19 @@
   box-shadow: 0 0 6px var(--hud-danger);
 }
 
-/* ── Assign slot badge (Dynamic Theme Tag) ── */
 .lock-card .lc-assign {
   position: absolute;
-  top: 4px;
-  right: 22px; /* Perfectly positioned adjacent to the new close button */
-  height: 14px;
+  top: 3px;
+  right: 18px;
+  height: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 5px;
+  padding: 0 4px;
   background: var(--hud-border-accent);
   color: var(--hud-bg-deep);
   font-family: var(--font-family);
-  font-size: calc(8px * var(--effective-font-scale, 1));
+  font-size: calc(7px * var(--effective-font-scale, 1));
   font-weight: 900;
   border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -403,17 +373,16 @@
   display: none;
 }
 
-/* ── Health & Status Bars (Edge-to-edge absolute bottom) ── */
 .lock-card .lc-bars {
   position: absolute;
-  bottom: 4px;
-  left: 6px;
-  right: 6px;
+  bottom: 3px;
+  left: 5px;
+  right: 5px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   z-index: 1;
-  height: 16px; /* High fidelity nested gauge rails */
+  height: 14px;
 }
 
 .lock-card .lc-bar {
@@ -433,7 +402,6 @@
   transition: width 0.15s linear;
 }
 
-/* Rounded gradients matching Ship Panel visual system */
 .lock-card .lc-bar.hp > span {
   background: linear-gradient(90deg, var(--hud-hull), color-mix(in srgb, var(--hud-hull) 45%, #000));
 }
@@ -460,14 +428,13 @@
   text-shadow: 0 0 1px #000;
 }
 
-/* Space-Filling Scan Progress HP Bar */
 .lock-card:not(.resolved) .lc-bar.shield,
 .lock-card:not(.resolved) .lc-bar.struct {
   display: none;
 }
 
 .lock-card:not(.resolved) .lc-bar.hp {
-  height: 16px; /* Fills complete gauge space during scanning */
+  height: 14px;
   border-radius: 3px;
   background: rgba(0, 0, 0, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.05);

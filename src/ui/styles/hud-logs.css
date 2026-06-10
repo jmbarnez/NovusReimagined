@@ -6,9 +6,9 @@
   height: var(--hud-mounted-panel-h);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, var(--hud-bottom-top), var(--hud-bottom-bot));
-  border-top: 1px solid var(--hud-bottom-border);
-  border-right: 1px solid var(--hud-bottom-border);
+  background: var(--hud-bg-panel);
+  border-top: 1px solid var(--hud-border-soft);
+  border-right: 1px solid var(--hud-border-soft);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -27,13 +27,12 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 6px 8px;
-  font-size: calc(8px * var(--effective-font-scale, 1));
-  line-height: 12px;
+  padding: 4px 6px;
+  font-size: calc(7.5px * var(--effective-font-scale, 1));
+  line-height: 11px;
   font-family: var(--font-family);
-  background: transparent;
-  color: color-mix(in srgb, var(--hud-text-main) 85%, var(--hud-accent) 15%);
-  text-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+  background: var(--hud-bg-deep);
+  color: var(--hud-text-main);
   scrollbar-width: thin;
   scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
   user-select: text;
@@ -57,12 +56,11 @@
 .hud-log-chat-input-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex-shrink: 0;
-  padding: 4px 6px;
-  background: color-mix(in srgb, var(--hud-bg-deep) 88%, transparent);
-  border-top: 1px solid color-mix(in srgb, var(--hud-border-soft) 70%, transparent);
-  border-radius: 4px;
+  padding: 2px 4px;
+  background: var(--hud-bg-deep);
+  border-top: 1px solid var(--hud-border-soft);
 }
 
 .hud-log-chat-prefix {
@@ -75,14 +73,14 @@
 .hud-log-chat-input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 17px;
+  height: 15px;
   box-sizing: border-box;
   padding: 2px 5px;
   font-family: var(--font-family);
-  font-size: calc(8px * var(--effective-font-scale, 1));
+  font-size: calc(7.5px * var(--effective-font-scale, 1));
   color: var(--hud-text-bright);
-  background: color-mix(in srgb, var(--hud-bg-deep) 70%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hud-border-soft) 75%, transparent);
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--hud-border-soft);
   border-radius: 2px;
   outline: none;
 }
@@ -98,10 +96,10 @@
 
 .hud-log-chat-send {
   flex: 0 0 auto;
-  height: 17px;
-  padding: 0 7px;
+  height: 15px;
+  padding: 0 6px;
   font-family: var(--font-family);
-  font-size: calc(7px * var(--effective-font-scale, 1));
+  font-size: calc(6.5px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: color-mix(in srgb, var(--hud-text-bright) 88%, #050607 12%);
   background: linear-gradient(180deg,
