@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { _G as G } from "../src/state.js";;
+import { _G as G } from "../src/state.js";
 import { PlayerAccess, WorldAccess } from "../src/state-access.js";
 import {
   isSectorDiscovered,
@@ -9,7 +9,7 @@ import {
   discoverLocalRegion,
   canSetMapWaypointAt,
   getConcentricSectorAt,
-} from "../src/map-discovery.js";
+} from "../src/world/map-discovery.js";
 import { computeSystemMapTransform } from "../src/ui/map-survey.js";
 import { Client } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
