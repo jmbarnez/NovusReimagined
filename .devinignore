@@ -29,3 +29,46 @@ Thumbs.db
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# AI assistant config
+.claude/
+.devin/
+.kilo/
+.opencode/
+.windsurf/
+.antigravitycli/
+
+# Static assets and data
+public/
+data/
+
+# Build and utility scripts
+scripts/
+
+# Server code (if separate from main src)
+server/
+
+# Build tool configs (rarely need AI attention)
+vite.config.js
+vitest.config.ts
+
+# Editor and project configs
+.editorconfig
+.gitignore
+
+# Static entry point
+index.html
+
+# Temporary test output files
+*-output.txt
+*-test*.txt
+*-run*.txt
+check-output.txt
+tmp*.js
+profile-test*.txt
+typecheck*.txt
+vitest-output.txt
+warp-exec-diff.txt
+
+# Historical audit docs
+AUDIT*.md

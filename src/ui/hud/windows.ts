@@ -1,7 +1,7 @@
 import { Client } from "../../state.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { WIN_EXPAND_ICON, WIN_CLOSE_ICON, WIN_RESET_ICON, setExpandButtonState, collapseWindowExpand } from "./window-chrome.js";
-import { insertHTML, getElement, setStyle, toggleClass, setHtml, append, onClick, onMouseEnter, onMouseLeave, getStyleProperty, setPosition, onWindowResize, onWindowMouseMove, onWindowMouseUp } from "../dom-helpers.js";
+import { insertHTML, getElement, setStyle, toggleClass, setHtml, append, onClick, onMouseDown, onMouseEnter, onMouseLeave, getStyleProperty, setPosition, onWindowResize, onWindowMouseMove, onWindowMouseUp } from "../dom-helpers.js";
 
 const _windows = new Map<string, HTMLElement>();
 const _closeCallbacks = new Map<string, () => void>();
