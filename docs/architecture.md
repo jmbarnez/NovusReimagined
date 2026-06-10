@@ -122,7 +122,10 @@ src/
   state.ts            Global state definition
   targeting/          Targeting system (assignment, locks, lookup, ranges)
   tractor.ts          Tractor beam system
-  tutorial/           Tutorial runner, step logic, hangar/refinery tours, snapshot state
+  tutorial/           Tutorial system with modular step data, logic, and UI overlay
+                      data/              Tutorial step definitions, phases, layout, controls, helpers
+                      logic/             Tutorial runtime logic (context, events, lifecycle, sync, tick)
+                      ui/                Tutorial UI overlay (card, cutout, dimmer, highlights, visuals)
   types/              Shared structural interfaces (entities, world, lock state)
   ui/                 DOM-based overlays (station, bridge, inventory, settings)
   ui/tutorial/        Tutorial UI overlay system
@@ -132,6 +135,58 @@ src/
   wreck/              Wreck system (collection, pieces, salvage, spawn)
   worker/             Off-main-thread workers (e.g. ticker)
 ```
+
+## Tutorial System Architecture
+
+The tutorial system is modularized into three layers: data, logic, and UI.
+
+### Data Layer (`src/tutorial/data/`)
+
+Pure data definitions for tutorial content:
+
+- **`steps.ts`** — `TUTORIAL_STEPS` array defining all tutorial steps with objectives, zones, beacons, tours, and completion logic
+- **`phases.ts`** — Tour phase definitions (HUD tour, hangar review, combat swap, refinery tour)
+- **`layout.ts`** — Tutorial world layout: regions, tracks, boost gates/pads, navigation targets, zone definitions
+- **`controls.ts`** — Keybinding helpers for tutorial text (`tutorialKeyStyled`, `tutorialBarKeyStyled`)
+- **`bypass.ts`** — Bypass condition checks (mining, industry, hangar turrets, gunnery) for skipping steps
+- **`helpers.ts`** — Shared helper functions (zone completion, track progress, step lookup, tour panels)
+- **`mission.ts`** — Tutorial mission contracts and reward granting
+- **`site.ts`** — Training site definitions and IDs
+
+### Logic Layer (`src/tutorial/logic/`)
+
+Tutorial runtime and state management:
+
+- **`context.ts`** — `TutorialCtx` type and context creation
+- **`lifecycle.ts`** — Step lifecycle (enter, exit, complete, advance)
+- **`events.ts`** — Tutorial-specific event handling
+- **`sync.ts`** — State synchronization between tutorial and game state
+- **`tick.ts`** — Per-frame tutorial updates
+- **`snapshot.ts`** — Tutorial snapshot state for save/load
+- **`tours.ts`** — Tour execution logic (hangar, refinery)
+- **`hangar.ts`** — Hangar-specific tour logic
+
+### UI Layer (`src/tutorial/ui/`)
+
+Tutorial visual presentation:
+
+- **`card.ts`** — Tutorial card component (title, objective, hint)
+- **`cutout.ts`** — UI element cutout/highlight effects
+- **`dimmer.ts`** — Screen dimming overlay
+- **`highlights.ts`** — Element highlighting system
+- **`visuals.ts`** — Visual effects (beacons, pulses, gate animations)
+- **`overlay.ts`** — Main tutorial overlay container
+- **`render.ts`** — Tutorial render pass integration
+- **`state.ts`** — UI state management
+- **`init.ts`** — UI initialization
+
+### Key Patterns
+
+- **Step-driven progression**: Each step has `onEnter`, `isComplete`, and optional `tour` for multi-phase UI tours
+- **Zone-based completion**: Many steps complete when the player enters/exits specific spatial regions
+- **Bypass support**: Players can skip tutorial sections if they already have the required skills/loadout
+- **Snapshot state**: Tutorial progress is persisted in `TutorialSnapshot` (separate from `G.P.tutorialSnapshot`)
+- **Tour phases**: Complex UI tours (HUD, hangar, refinery) are broken into phases with panels
 
 ## State Access Rules
 
