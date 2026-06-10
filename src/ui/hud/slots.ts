@@ -9,7 +9,7 @@ import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
 import { MODULE_HP_MAX, TURRET_POWER_CYCLE_S } from "../../constants.js";
 import { hotkeyBadge } from "../../utils/format.js";
 import { targetByLockId } from "../../targeting.js";
-import { applyBarHotkey, toggleRackPower, toggleGlobalPower } from "../../player/player-fitting.js";
+import { applyBarHotkey } from "../../player/player-fitting.js";
 import { floatText } from "../../utils/fx.js";
 import { getAbilityState, ABILITY_BY_ID } from "../../player/abilities.js";
 import { onTurretContextMenu } from "./turret-menu.js";
@@ -18,7 +18,6 @@ import { getInstance } from "../../utils/items.js";
 import { showSlotTooltip, hideSlotTooltip } from "./slotTooltip.js";
 import { iconSvg } from "../station/shared.js";
 import type { ComputedStats } from "../../player/player-stats.js";
-import { savePlayer } from "../../player/player-data.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
 import { getSlotPowerCd, isSlotPoweredOn } from "../../utils/slot-power.js";
@@ -58,71 +57,26 @@ export function updateSlots(ship: ShipDef, st: ComputedStats, now: number) {
       hkIdx++;
     }
   }
-
-  // Update rack/global power switches
-  for (const rack of [...RACK_ORDER, "global"]) {
-    const sw = hudState.rackSwitchNodes.get(rack);
-    if (!sw) continue;
-    const state = getRackState(rack);
-    const cls = `rack-master-switch ${rack === "global" ? "global" : "rack-" + rack} ${state}`;
-    if (sw.className !== cls) sw.className = cls;
-  }
-}
-
-export function getRackState(rack: string): "on" | "off" | "partial" {
-  let allOn = true;
-  let allOff = true;
-  let count = 0;
-
-  const checkSlot = (r: "turret" | "high" | "med" | "low", i: number) => {
-    const slots = getState().player.fitting[r];
-    if (!slots || !slots[i]) return;
-    count++;
-    const power = isSlotPoweredOn(r, i, getState().player);
-    if (power) allOff = false;
-    else allOn = false;
-  };
-
-  if (rack === "global") {
-    for (const r of RACK_ORDER as ("turret" | "high" | "med" | "low")[]) {
-      const slots = getState().player.fitting[r];
-      const n = slots ? slots.length : 0;
-      for (let i = 0; i < n; i++) checkSlot(r, i);
-    }
-  } else {
-    const r = rack as "turret" | "high" | "med" | "low";
-    const slots = getState().player.fitting[r];
-    const n = slots ? slots.length : 0;
-    for (let i = 0; i < n; i++) checkSlot(r, i);
-  }
-
-  if (count === 0) return "off";
-  if (allOn) return "on";
-  if (allOff) return "off";
-  return "partial";
 }
 
 export function rebuildSlots(ship: ShipDef) {
   if (!hudState.slotsContainer) return;
   setHtml(hudState.slotsContainer, "");
   hudState.slotNodes.clear();
-  hudState.rackSwitchNodes.clear();
 
   const ft = ship.fitting;
-
-  // Global master switch
-  const globalSwitch = createRackSwitch("global", "All");
-  append(hudState.slotsContainer, globalSwitch);
-  hudState.rackSwitchNodes.set("global", globalSwitch);
 
   let hkIdx = 0;
   for (const rack of RACK_ORDER) {
     const count = ft[rack as keyof ShipFitting] | 0;
-    if (count > 0) {
-      const rackSwitch = createRackSwitch(rack, rack[0].toUpperCase());
-      append(hudState.slotsContainer, rackSwitch);
-      hudState.rackSwitchNodes.set(rack, rackSwitch);
+    if (count === 0) continue;
+
+    // Insert a visual divider before each rack after the first one
+    if (hkIdx > 0) {
+      const divider = createElement("div", "sl-divider");
+      append(hudState.slotsContainer, divider);
     }
+
     for (let idx = 0; idx < count; idx++) {
       const el = createElement("div", `hud-slot rack-${rack}`);
       el.dataset.rack = rack;
@@ -341,37 +295,6 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   }
   setText(subEl, subText);
   if (subEl.className !== subCls) subEl.className = subCls;
-}
-
-export function createRackSwitch(rack: string, label: string): HTMLElement {
-  const el = createElement("div", `rack-master-switch ${rack === "global" ? "global" : "rack-" + rack}`);
-  el.dataset.rack = rack;
-  el.title = rack === "global" ? t("ship.allSystems") : `${t("inventory.slot" + (rack[0].toUpperCase() + rack.slice(1)))} ${t("ship.rack")}`;
-
-  const onBtn = createElement("div", "rms-btn rms-on");
-  append(el, onBtn);
-
-  const sep = createElement("div", "rms-label");
-  setText(sep, label);
-  append(el, sep);
-
-  const offBtn = createElement("div", "rms-btn rms-off");
-  append(el, offBtn);
-
-  onClick(el, (e) => {
-    const rect = el.getBoundingClientRect();
-    const wantOn = (e as MouseEvent).clientY < rect.top + rect.height / 2;
-    onRackSwitchZoneClick(rack, wantOn);
-  });
-  return el;
-}
-
-export function onRackSwitchZoneClick(rack: string, wantOn: boolean) {
-  if (rack === "global") {
-    toggleGlobalPower(wantOn);
-  } else {
-    toggleRackPower(rack, wantOn);
-  }
 }
 
 export function onSlotClick(e: MouseEvent, rack: string, idx: number) {

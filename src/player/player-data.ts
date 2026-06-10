@@ -17,12 +17,16 @@ import { getStats, invalidate } from "./player-stats.js";
 import { logEvent, showXpEarned } from "../feedback.js";
 import { ModuleRarity } from "../data/moduleRarity.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
-import { createTutorialMission } from "../data/missions.js";
-import { TUTORIAL_STEP_COUNT } from "../data/tutorial.js";
-import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { syncActiveProfile } from "../data/profiles.js";
-import { getHardpointSlotCount, mergeLegacyTurretSlotsIntoHigh, playerHardpointRack } from "../utils/hardpoints.js";
-import { ALLOY_FAMILIES, flattenStorageMaterials, makeDefaultAlloyCodex, makeDefaultRefineryStorage, preferredStorageForMaterial } from "../refinery/index.js";
+import { ALLOY_FAMILIES, makeDefaultAlloyCodex } from "../refinery/index.js";
+import { makePlayer as makePlayerImpl } from "./player-factory.js";
+import {
+  normalizeHardpointArrays,
+  migrateLegacyHardpointFit,
+  applyStarterTrainingFit,
+} from "./migrations/hardpoint-migrations.js";
+import { migrateLegacyRefinedCargo } from "./migrations/refined-cargo-migration.js";
+import { migrateRefineryStorage } from "./migrations/refinery-storage-migration.js";
 
 const CURRENT_SAVE_VERSION = 1;
 
@@ -38,218 +42,8 @@ export function getPilotDisplayName(player: Player): string {
   return name && name.length > 0 ? name : "Pilot";
 }
 
-function copyPaddedArray<T>(prev: T[] | undefined, length: number, fallback: (idx: number) => T): T[] {
-  return Array.from({ length }, (_, idx) => prev?.[idx] ?? fallback(idx));
-}
-
-function normalizeHardpointArrays(p: Player): void {
-  const hardpointCount = p.fitting?.[playerHardpointRack(p)]?.length ?? 0;
-  const highCount = p.fitting?.high?.length ?? 0;
-  p.turretTargets = copyPaddedArray(p.turretTargets, hardpointCount, () => null);
-  p.highTargets = copyPaddedArray(p.highTargets, highCount, () => null);
-  p.turretCds = copyPaddedArray(p.turretCds, hardpointCount, () => 0);
-  p.turretPower = copyPaddedArray(p.turretPower, hardpointCount, () => false);
-  p.turretPowerCd = copyPaddedArray(p.turretPowerCd, hardpointCount, () => 0);
-}
-
-function migrateLegacyHardpointFit(p: Player): void {
-  if (playerHardpointRack(p) !== "high") return;
-  const legacyTurretSlots = Array.isArray(p.fitting?.turret) ? p.fitting.turret : [];
-  if (legacyTurretSlots.length === 0) return;
-  const highCount = SHIPS[p.shipId]?.fitting.high ?? 0;
-  p.fitting.high = mergeLegacyTurretSlotsIntoHigh(p.fitting?.high, legacyTurretSlots, highCount, () => null);
-  p.fitting.turret = [];
-  if (p.moduleHp && typeof p.moduleHp === "object") {
-    p.moduleHp.high = mergeLegacyTurretSlotsIntoHigh(p.moduleHp.high, p.moduleHp.turret, highCount, () => null);
-    p.moduleHp.turret = [];
-  }
-  if (p.slotActive && typeof p.slotActive === "object") {
-    p.slotActive.high = mergeLegacyTurretSlotsIntoHigh(p.slotActive.high, p.slotActive.turret, highCount, () => true);
-    p.slotActive.turret = [];
-  }
-}
-
-function applyStarterTrainingFit(p: Player): void {
-  const hasRegressedStarterFit =
-    p.fitting?.turret?.includes("start-tu-civ-cannon") ||
-    p.fitting?.high?.includes("start-tu-civ-cannon") ||
-    p.fitting?.med?.includes("start-me-ab1") ||
-    p.fitting?.low?.includes("start-tu-civ-scanner");
-  if (!p.tutorial?.active || p.tutorial.completed || !hasRegressedStarterFit) return;
-  const fit = defaultFitting(p.shipId);
-  fit.high[0] = "start-tu-civ-miner";
-  fit.high[1] = "start-tu-tractor";
-  p.fitting = fit;
-  const hardpointCount = fit[playerHardpointRack(p)]?.length ?? 0;
-  p.turretTargets = Array(hardpointCount).fill(null);
-  p.highTargets = Array(fit.high?.length ?? 0).fill(null);
-  p.turretCds = Array(hardpointCount).fill(0);
-  p.turretPower = Array(hardpointCount).fill(false);
-  p.turretPowerCd = Array(hardpointCount).fill(0);
-  p.moduleHp = {
-    turret: Array(fit.turret.length).fill(null),
-    high: Array(fit.high?.length ?? 0).fill(null),
-    med: Array(fit.med?.length ?? 0).fill(null),
-    low: Array(fit.low?.length ?? 0).fill(null),
-  };
-  p.slotActive = {
-    turret: Array(fit.turret.length).fill(true),
-    high: Array(fit.high?.length ?? 0).fill(true),
-    med: Array(fit.med?.length ?? 0).fill(true),
-    low: Array(fit.low?.length ?? 0).fill(true),
-  };
-}
-
-type LegacyRefinedPool = Partial<Record<"bar" | "lattice" | "condensate", number>>;
-
-function migrateLegacyRefinedCargo(refined: LegacyRefinedPool | undefined, p: Player): void {
-  if (!refined) return;
-  const mappings: Array<{ key: keyof LegacyRefinedPool; familyId: string; composition: Record<string, number> }> = [
-    { key: "bar", familyId: "ferro_nickel_stock", composition: { iron: 0.64, nickel: 0.24, carbon: 0.08, silicate: 0.04 } },
-    { key: "lattice", familyId: "crystal_matrix", composition: { crystal: 0.62, silicate: 0.24, nickel: 0.08, iron: 0.06 } },
-    { key: "condensate", familyId: "exotic_conductive", composition: { exotic: 0.3, crystal: 0.3, nickel: 0.2, iron: 0.12, carbon: 0.08 } },
-  ];
-  for (const mapping of mappings) {
-    const qty = refined[mapping.key] ?? 0;
-    if (qty <= 0) continue;
-    const family = ALLOY_FAMILIES.find((entry) => entry.id === mapping.familyId);
-    if (!family) continue;
-    PlayerAccess.addBulkMaterial({
-      id: `legacy-${mapping.key}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      materialId: family.id,
-      kind: "alloy",
-      label: family.label,
-      volumeM3: qty,
-      massKg: qty * family.densityKgPerM3,
-      composition: { ...mapping.composition },
-      alloyFamilyId: family.id,
-    }, p);
-  }
-}
-
-function migrateRefineryStorage(p: Player): void {
-  if (!Array.isArray(p.refineryStorage) || p.refineryStorage.length === 0) {
-    p.refineryStorage = makeDefaultRefineryStorage();
-  } else {
-    p.refineryStorage = p.refineryStorage.map((unit) => ({
-      ...unit,
-      entries: (unit.entries ?? []).map((entry) => ({
-        ...entry,
-        composition: { ...entry.composition },
-      })),
-    }));
-  }
-
-  const legacyMaterials = Array.isArray(p.hubDeposit?.materials) ? [...p.hubDeposit.materials] : [];
-  if (legacyMaterials.length > 0 && flattenStorageMaterials(p.refineryStorage).length === 0) {
-    for (const stack of legacyMaterials) {
-      const target = preferredStorageForMaterial(stack, p.refineryStorage);
-      if (!target) continue;
-      target.entries.push({
-        ...stack,
-        composition: { ...stack.composition },
-      });
-    }
-  }
-
-  if (!p.hubDeposit || typeof p.hubDeposit !== "object") p.hubDeposit = { raw: [], ore: {}, materials: [], loot: {}, modules: [] };
-  p.hubDeposit.materials = flattenStorageMaterials(p.refineryStorage);
-}
-
 export function makePlayer(): Player {
-  const fit = defaultFitting('scout');
-  const hardpointCount = getHardpointSlotCount("scout");
-  const startingModules: ModuleInstance[] = [
-    { uid: "start-tu-civ-cannon", baseId: "tu-civilian-cannon", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-tu-civ-miner", baseId: "tu-civilian-miner", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-tu-civ-salvager", baseId: "tu-civilian-salvager", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-tu-tractor", baseId: "tu-tractor", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-tu-civ-scanner", baseId: "tu-civilian-scanner", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-me-ab1", baseId: "me-ab1", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-me-shield", baseId: "me-shield", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-hi-comms", baseId: "hi-comms", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-lo-dcu", baseId: "lo-dcu", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-    { uid: "start-lo-battery", baseId: "lo-battery", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
-  ];
-  fit.high[0] = "start-tu-civ-miner";
-  fit.high[1] = "start-tu-tractor";
-  return {
-    shipId: "scout",
-    homeSysIdx: 0,
-    pendingHomeSpawn: true,
-    x: 0, y: 0, px: 0, py: 0,
-    vx: 0, vy: 0, va: 0,
-    angle: 0, prevAngle: 0,
-    hp: SHIPS.scout.hull,
-    maxHp: SHIPS.scout.hull,
-    structure: Math.floor(SHIPS.scout.hull * 0.8),
-    maxStructure: Math.floor(SHIPS.scout.hull * 0.8),
-    shield: 0,
-    shieldCd: 0,
-    shieldHitGlow: 0,
-    shieldHitAngle: 0,
-    hullHitGlow: 0,
-    hullHitAngle: 0,
-    targetLock: null,
-    lockQueue: [],
-    fireControlSlot: 0,
-    turretTargets: Array(hardpointCount).fill(null),
-    highTargets: Array(fit.high?.length ?? 0).fill(null),
-    turretCds: Array(hardpointCount).fill(0),
-    turretPower: Array(hardpointCount).fill(false),
-    turretPowerCd: Array(hardpointCount).fill(0),
-    combatBar: { pos: 0.5, dir: 1 },
-    energy: 100,
-    sysIdx: 0,
-    credits: 5000,
-    ore: { iron: 0, nickel: 0, silicate: 0, carbon: 0, crystal: 0, exotic: 0 },
-    mixedOreCargo: [],
-    bulkMaterialsCargo: [],
-    loot: { scrap: 0, chip: 0, cell: 0 },
-    components: { circuit: 0, gear: 0, harness: 0, sensor_cluster: 0 },
-    ammo: { hybrid: AMMO_START_HYBRID, missile: AMMO_START_MISSILE },
-    moduleCargo: startingModules,
-    moduleHp: { turret: Array(fit.turret.length).fill(null), high: Array(fit.high?.length ?? 0).fill(null), med: Array(fit.med?.length ?? 0).fill(null), low: Array(fit.low?.length ?? 0).fill(null) },
-    slotActive: { turret: Array(fit.turret.length).fill(true), high: Array(fit.high?.length ?? 0).fill(true), med: Array(fit.med?.length ?? 0).fill(true), low: Array(fit.low?.length ?? 0).fill(true) },
-    blueprints: {},
-    skills: Object.fromEntries(SKILL_IDS.map(id => [id, 0])),
-    skillXp: Object.fromEntries(SKILL_IDS.map(id => [id, 0])),
-    xp: 0, level: 1, kills: 0,
-    shootCd: 0, mineCd: 0,
-    invincible: 0,
-    thrustFx: false,
-    boostFx: false,
-    boostLockout: false,
-    fitting: fit,
-
-    _assignTargetId: null,
-    contracts: [createTutorialMission(0, TUTORIAL_STEP_COUNT)],
-    craftQueue: [],
-    tractorCarryKg: 0,
-    tractorTightness: 0.5,
-    hubQueue: [],
-    hubOutput: { loot: {}, ore: {}, materials: [], modules: [] },
-    hubDeposit: { raw: [], ore: {}, materials: [], loot: {}, modules: [] },
-    refineryStorage: makeDefaultRefineryStorage(),
-    alloyCodex: makeDefaultAlloyCodex(),
-    tutorial: { active: true, step: 0, completed: false, skipped: false },
-    pilotName: "Freelancer",
-    scannedSiteIds: [],
-    completedSiteIds: [],
-    discoveredConcentricSectors: [],
-    discoveredLocalRegionIds: TUTORIAL_LOCAL_REGIONS.map((r) => r.id),
-    stationOffers: [],
-    stationOfferStationId: null,
-    warpCooldown: 0,
-    warpTargetIdx: -1,
-    detectedSignatures: [],
-    activeScan: null,
-    scannerAngle: 0,
-    scannerConeDeg: 180,
-    mapScannerActive: false,
-    mapScannerStrength: 0.5,
-    saveVersion: CURRENT_SAVE_VERSION,
-  };
+  return makePlayerImpl();
 }
 
 export function clearTransientPlayerInput(p: Player): void {
@@ -261,6 +55,8 @@ export function clearTransientPlayerInput(p: Player): void {
   p.boostFx = false;
   p.boostLockout = false;
 }
+
+type LegacyRefinedPool = Partial<Record<"bar" | "lattice" | "condensate", number>>;
 
 export function loadPlayer(): Player {
   try {
@@ -395,7 +191,8 @@ export function loadPlayer(): Player {
     }
     // Split legacy `gunnery` XP evenly across the three weapon-type skills.
     const legacyGunneryXp = (p.skillXp as Record<string, number>)["gunnery"];
-    if (typeof legacyGunneryXp === "number" && legacyGunneryXp > 0) {
+    if (legacyGunneryXp != null) {
+      delete (p.skillXp as Record<string, number>)["gunnery"];
       const share = Math.floor(legacyGunneryXp / 3);
       for (const id of ["ballistics", "beam_weapons", "missile_guidance"] as const) {
         p.skillXp[id] = (p.skillXp[id] || 0) + share;

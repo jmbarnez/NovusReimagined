@@ -2,7 +2,7 @@
 #hud-pickup-container {
   position: absolute;
   left: 10px;
-  bottom: calc(var(--hud-bottom-h) + 12px);
+  bottom: 16px;
   display: flex;
   flex-direction: column-reverse; /* Stacks new toasts at the bottom, push older ones up */
   gap: 6px;

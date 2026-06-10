@@ -22,7 +22,6 @@ import { applyTheme } from "./theme.js";
 import { updateMapOverlayDOM } from "./map-overlay.js";
 import { maybeAutoCloseHubWindow } from "./hub-window.js";
 import { C } from "../../config/index.js";
-import { HUD_BOTTOM_H } from "../../constants.js";
 import { getElement, queryAll, createElement, setText, setHtml, setStyle, setPosition, getStyleProperty, toggleClass, remove } from "../dom-helpers.js";
 
 /* ── Update ── */
@@ -139,7 +138,7 @@ export function toggleScannerDock() {
     const ww = 360;
     const wh = 280;
     const left = Math.max(0, window.innerWidth - ww - 8);
-    const top = Math.max(0, window.innerHeight - wh - HUD_BOTTOM_H - 8);
+    const top = Math.max(0, window.innerHeight - wh - 8);
     setStyle(w, { left: `${left}px`, top: `${top}px`, right: "auto", bottom: "auto", width: `${ww}px`, height: `${wh}px` });
   }
 }

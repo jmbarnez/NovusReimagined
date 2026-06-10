@@ -92,8 +92,6 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
   user-select: none;
   transform: scale(var(--ui-scale));
   transform-origin: top left;
-  --hud-bottom-h: 56px;
-  --hud-mounted-panel-h: var(--hud-bottom-h);
 }
 #hud-overlay > * {
   pointer-events: auto;

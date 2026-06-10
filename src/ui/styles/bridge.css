@@ -10,6 +10,8 @@
 .eve-window-missions{right:8px;top:60px;width:360px;height:360px;min-width:220px;}
 .eve-window.is-expanded{left:0!important;top:0!important;right:auto!important;width:100%!important;height:100%!important;resize:none;border-width:2px;border-color:var(--hud-border-accent);}
 .eve-window.is-expanded .eve-win-head{cursor:default;background:var(--hud-bg-panel);}
+.eve-window.is-dragging{cursor:grabbing;}
+.eve-window.is-dragging *{user-select:none;}
 .eve-win-head{flex-shrink:0;display:flex;align-items:center;gap:6px;height:26px;padding:0 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--hud-bg-window) 34%,transparent) 0%,transparent 100%);border-bottom:1px solid color-mix(in srgb,var(--hud-border-soft) 70%,transparent);cursor:grab;user-select:none;position:relative;z-index:2;backdrop-filter:blur(6px);}
 .eve-window-overview .eve-win-head{height:20px;background:color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);}
 .eve-window-skills .eve-win-head{height:20px;background:color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);}

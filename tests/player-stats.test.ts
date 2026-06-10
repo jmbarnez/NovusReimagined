@@ -118,8 +118,8 @@ describe("player-data loadPlayer migrations", () => {
     // makePlayer now issues civilian starter modules with this uid.
     expect(p.fitting.high[0]).toBe("start-tu-civ-miner");
     expect(p.fitting.high[1]).toBe("start-tu-tractor");
-    expect(p.fitting.med[0]).toBeNull();
-    expect(p.fitting.low[0]).toBeNull();
+    expect(p.fitting.med[0]).toBe("start-me-ab1");
+    expect(p.fitting.low[0]).toBe("start-lo-dcu");
     expect(p.moduleCargo.length).toBe(10);
   });
 

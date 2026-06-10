@@ -92,17 +92,18 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       });
     }
 
-    onClick(head, (ev) => {
+    onMouseDown(head, (ev) => {
       const me = ev as MouseEvent;
       if (me.button !== 0) return;
       if ((me.target as HTMLElement).closest("button")) return;
+      me.preventDefault();
+      me.stopPropagation();
       if (win!.classList.contains("is-expanded")) {
         collapseWindowExpand(win!, { capturePosition: true });
         const wr = win!.getBoundingClientRect();
         const headH = (win!.querySelector(".eve-win-head") as HTMLElement | null)?.offsetHeight ?? 26;
         setStyle(win!, { left: `${Math.max(0, me.clientX - wr.width / 2)}px`, top: `${Math.max(0, me.clientY - headH / 2)}px`, right: "auto" });
       }
-      ev.preventDefault();
       bringToFront(win!);
       toggleClass(win!, "is-dragging", true);
       const leftVal = getStyleProperty(win!, "left");

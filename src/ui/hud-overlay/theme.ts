@@ -1,5 +1,4 @@
 import { Client } from "../../state.js";
-import { HUD_BOTTOM_H } from "../../constants.js";
 import { getTheme, getFontStack } from "../../data/settings.js";
 import { hudState } from "../hud/state.js";
 import { setCssVar } from "../dom-helpers.js";
@@ -15,10 +14,6 @@ let appliedUiScale = -1;
 let appliedFontScale = -1;
 
 export function applyTheme(themeId: string, fontId: string) {
-  // Layout var on the HUD root.
-  if (hudState.root) {
-    setCssVar(hudState.root, "--hud-bottom-h", `${HUD_BOTTOM_H}px`);
-  }
   const uiScale = Client.settings?.uiScale ?? 1.0;
   const fontScale = Client.settings?.fontScale ?? 1.0;
   const s = document.documentElement;

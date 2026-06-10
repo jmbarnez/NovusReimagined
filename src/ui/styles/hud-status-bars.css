@@ -2,7 +2,7 @@
 #hud-status-bars {
   display: flex;
   gap: 3px;
-  padding: 1px 4px 0;
+  padding: 2px 4px;
   align-items: center;
 }
 .hud-bar-group {

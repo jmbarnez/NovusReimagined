@@ -1,15 +1,17 @@
 /* ── Module Slots ── */
 #hud-slots {
-  flex: 1;
   display: flex;
   gap: 2px;
-  padding: 1px 4px 2px;
+  padding: 2px 0;
   align-items: stretch;
   min-height: 0;
+  height: 38px;
 }
+
 .hud-slot {
   flex: 1;
   min-width: 26px;
+  height: 100%;
   background: rgba(6,8,12,0.98);
   border: 1px solid rgba(28,32,40,0.6);
   padding: 1px 2px;
@@ -150,228 +152,34 @@
   100% { border-color: #882211; box-shadow: 0 0 2px rgba(255,68,34,0.1); }
 }
 
-/* ── Rack Master Switches ── */
-
-/* Per-rack LED colours */
-.rack-master-switch.rack-turret { --rack-color: #c8a050; }
-.rack-master-switch.rack-high   { --rack-color: #c0b040; }
-.rack-master-switch.rack-med    { --rack-color: #40b0c0; }
-.rack-master-switch.rack-low    { --rack-color: #8090a8; }
-.rack-master-switch.global      { --rack-color: #d0c890; }
-
-/* Housing — compact column */
-.rack-master-switch {
-  width: 20px;
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--hud-bg-window, rgba(10,14,20,0.82)) 65%, transparent) 0%,
-      color-mix(in srgb, var(--hud-bg-deep, rgba(2,5,10,0.88)) 85%, transparent) 100%);
-  border: 1px solid var(--hud-border, rgba(55,85,110,0.65));
-  border-radius: 3px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  pointer-events: auto;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.04),
-    0 2px 6px rgba(0,0,0,0.45);
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-}
-.rack-master-switch:hover {
-  border-color: color-mix(in srgb, var(--hud-border, rgba(55,85,110,0.65)) 140%, rgba(255,255,255,0.08));
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.07),
-    0 2px 8px rgba(0,0,0,0.55);
-}
-
-/* ON state — rack-colour border glow */
-.rack-master-switch.on {
-  border-color: color-mix(in srgb, var(--rack-color) 55%, var(--hud-border, rgba(55,85,110,0.65)));
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.06),
-    0 0 8px color-mix(in srgb, var(--rack-color) 30%, transparent),
-    0 2px 6px rgba(0,0,0,0.45);
-}
-/* OFF state — faint red border tint */
-.rack-master-switch.off {
-  border-color: rgba(180,40,40,0.35);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.03),
-    0 2px 6px rgba(0,0,0,0.45);
-}
-/* PARTIAL — dim rack-colour border */
-.rack-master-switch.partial {
-  border-color: color-mix(in srgb, var(--rack-color) 30%, var(--hud-border, rgba(55,85,110,0.65)));
-}
-
-/* Cap button */
-.rack-master-switch .rms-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  cursor: pointer;
-  user-select: none;
-  background:
-    linear-gradient(180deg,
-      rgba(255,255,255,0.07) 0%,
-      rgba(255,255,255,0.02) 35%,
-      rgba(0,0,0,0.04) 65%,
-      rgba(0,0,0,0.12) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.09),
-    inset 0 -1px 0 rgba(0,0,0,0.15);
-  transition: background 0.12s ease, box-shadow 0.12s ease;
-}
-
-/* ON — top cap glows rack colour through the glass */
-.rack-master-switch.on .rms-on {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--rack-color) 22%, rgba(255,255,255,0.10)) 0%,
-      color-mix(in srgb, var(--rack-color) 38%, rgba(0,0,0,0.12)) 50%,
-      color-mix(in srgb, var(--rack-color) 28%, rgba(0,0,0,0.22)) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.14),
-    inset 0 -1px 0 rgba(0,0,0,0.18),
-    inset 0 0 14px color-mix(in srgb, var(--rack-color) 35%, transparent),
-    0 0 6px color-mix(in srgb, var(--rack-color) 20%, transparent);
-}
-
-/* ON — bottom cap is dark glass */
-.rack-master-switch.on .rms-off {
-  background:
-    linear-gradient(180deg,
-      rgba(255,255,255,0.04) 0%,
-      rgba(0,0,0,0.10) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    inset 0 -1px 0 rgba(0,0,0,0.15);
-}
-
-/* OFF — bottom cap glows red through the glass */
-.rack-master-switch.off .rms-off {
-  background:
-    linear-gradient(180deg,
-      rgba(255,55,55,0.18) 0%,
-      rgba(255,55,55,0.32) 50%,
-      rgba(200,30,30,0.22) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.12),
-    inset 0 -1px 0 rgba(0,0,0,0.18),
-    inset 0 0 12px rgba(255,55,55,0.30),
-    0 0 5px rgba(255,55,55,0.15);
-}
-
-/* OFF — top cap is dark glass */
-.rack-master-switch.off .rms-on {
-  background:
-    linear-gradient(180deg,
-      rgba(255,255,255,0.04) 0%,
-      rgba(0,0,0,0.10) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    inset 0 -1px 0 rgba(0,0,0,0.15);
-}
-
-/* PARTIAL — both caps glow dim rack colour through glass */
-.rack-master-switch.partial .rms-on,
-.rack-master-switch.partial .rms-off {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--rack-color) 10%, rgba(255,255,255,0.05)) 0%,
-      color-mix(in srgb, var(--rack-color) 20%, rgba(0,0,0,0.10)) 50%,
-      color-mix(in srgb, var(--rack-color) 14%, rgba(0,0,0,0.18)) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.09),
-    inset 0 -1px 0 rgba(0,0,0,0.16),
-    inset 0 0 8px color-mix(in srgb, var(--rack-color) 22%, transparent);
-}
-
-/* Centre label separator */
-.rack-master-switch .rms-label {
-  height: 9px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(5px * var(--effective-font-scale, 1));
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(58,78,98,0.55);
-  background: rgba(4,6,9,0.96);
-  border-top: 1px solid rgba(20,28,38,0.7);
-  border-bottom: 1px solid rgba(20,28,38,0.7);
-  pointer-events: none;
-}
-.rack-master-switch.on .rms-label { color: rgba(90,110,130,0.65); }
-
-/* Global switch — slightly wider */
-.rack-master-switch.global { width: 24px; }
-.rack-master-switch.global .rms-label { height: 10px; font-size: calc(4.5px * var(--effective-font-scale, 1)); }
-
-/* ── Module Damage States ── */
-.hud-slot.module-damaged { border-color: rgba(220,120,30,0.6) !important; }
-.hud-slot.module-damaged .sl-name { color: var(--hud-hull); }
-.hud-slot.module-damaged .sl-sub.damaged { color: var(--hud-hull); font-weight: 700; }
-.hud-slot.module-offline { opacity: 0.45; filter: grayscale(0.75); border-color: rgba(180,40,40,0.55) !important; }
-.hud-slot.module-offline .sl-name { color: var(--hud-danger); text-decoration: line-through; }
-.hud-slot.module-offline .sl-sub.damage-offline { color: var(--hud-danger); font-weight: 700; }
-.hud-slot .sl-heat-fill.damaged { background: var(--hud-hull); }
-
-/* ── Turret Power States ── */
-.hud-slot.turret-off { opacity: 0.5; filter: grayscale(0.7); }
-.hud-slot.turret-off .sl-name { color: var(--hud-text-faint); text-decoration: line-through; }
-.hud-slot.turret-cycling { border-color: rgba(80,120,160,0.5) !important; }
-.hud-slot.turret-cycling .sl-name { color: var(--hud-text-dim); }
-.hud-slot.turret-on { border-color: rgba(80,60,40,0.6); }
-
-/* ── Tractor Beam Strength Toggle Button ── */
-.hud-slot .sl-str-toggle {
-  position: absolute;
-  top: 1px;
-  right: 12px;
-  padding: 1px 3px;
-  font-family: var(--font-family);
-  font-size: calc(5px * var(--effective-font-scale, 1));
-  font-weight: 700;
-  border-radius: 2px;
-  background: var(--hud-bg-elevated);
-  cursor: pointer;
-  pointer-events: auto;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 2.5px;
-  line-height: 1;
-  text-transform: uppercase;
-  outline: none;
-
-  /* Dynamic visual indicators scaling with tightness */
-  color: color-mix(in srgb, var(--hud-text-bright) calc(var(--tightness) * 100%), var(--hud-text-dim));
-  border: 1px solid color-mix(in srgb, var(--hud-shield) calc(var(--tightness) * 80%), var(--hud-border-soft));
-  box-shadow: 0 0 5px color-mix(in srgb, var(--hud-shield) calc(var(--tightness) * 25%), transparent);
-  transition: all 0.15s ease-in-out;
-}
-
-.hud-slot .sl-str-toggle:hover {
-  background: var(--hud-bg-panel);
-  border-color: var(--hud-shield);
-  color: var(--hud-text-bright);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--hud-shield) 40%, transparent);
-}
-
-/* Dynamic status dot inside the button */
-.hud-slot .sl-str-toggle::after {
-  content: "";
-  display: inline-block;
+/* ── Rack Dividers ── */
+.sl-divider {
   width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--hud-shield) calc(var(--tightness) * 100%), var(--hud-text-faint));
-  box-shadow: 0 0 3px color-mix(in srgb, var(--hud-shield) calc(var(--tightness) * 100%), transparent);
-  transition: all 0.15s ease-in-out;
+  flex-shrink: 0;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--hud-border) 40%, transparent) 0%,
+    color-mix(in srgb, var(--hud-border-soft) 60%, transparent) 50%,
+    color-mix(in srgb, var(--hud-border) 40%, transparent) 100%);
+  border-radius: 1px;
+  margin: 2px 1px;
+  opacity: 0.7;
+}
+
+/* ── Tractor Strength Toggle ── */
+.sl-str-toggle {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: calc(5.5px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  color: var(--hud-shield);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid color-mix(in srgb, var(--hud-shield) 40%, transparent);
+  border-radius: 2px;
+  padding: 1px 3px;
+  cursor: pointer;
+  pointer-events: auto;
+  line-height: 1;
+  z-index: 2;
 }

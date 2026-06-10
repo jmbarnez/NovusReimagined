@@ -8,8 +8,8 @@ export function getHudOverlay(): HTMLElement | null {
   return getElement("hud-overlay");
 }
 
-export function getHudLogPanel(): HTMLElement | null {
-  return getElement("hud-log-panel");
+export function getHudModules(): HTMLElement | null {
+  return getElement("hud-modules");
 }
 
 export function getHudStatusBars(): HTMLElement | null {

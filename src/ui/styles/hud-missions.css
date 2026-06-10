@@ -4,7 +4,7 @@
   top: var(--hud-minimap-w);
   right: 0;
   width: var(--hud-minimap-w);
-  max-height: calc(100vh - var(--hud-minimap-w) - var(--hud-bottom-h) - 8px);
+  max-height: calc(100vh - var(--hud-minimap-w) - 8px);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

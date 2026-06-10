@@ -69,11 +69,9 @@ export function initHudOverlay() {
 
     <div id="map-overlay" class="map-overlay" style="display: none;"></div>
 
-    <div id="hud-bottom">
-      <div id="hud-bottom-right">
-        <div id="hud-status-bars"></div>
-        <div id="hud-slots"></div>
-      </div>
+    <div id="hud-modules">
+      <div id="hud-status-bars"></div>
+      <div id="hud-slots"></div>
     </div>
   `);
 
@@ -240,7 +238,6 @@ export function destroyHudOverlay() {
   }
   resetHubWindowState();
   hudState.slotNodes.clear();
-  hudState.rackSwitchNodes.clear();
   hudState.lockCards.clear();
   if (hudState.turretCtxMenu) remove(hudState.turretCtxMenu);
   if (hudState.enemyCtxMenu) remove(hudState.enemyCtxMenu);

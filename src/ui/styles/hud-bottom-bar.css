@@ -1,23 +1,22 @@
-/* ── Bottom Bar Layout ── */
-#hud-bottom {
+/* ── Floating Modules Panel (status bars + slots overlay) ── */
+#hud-modules {
   position: absolute;
-  bottom: 0; left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  pointer-events: auto;
-}
-
-/* ── Bottom Right (status bars + slots) ── */
-#hud-bottom-right {
-  flex: 1;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-  height: var(--hud-bottom-h);
-  background: var(--hud-bg-panel);
-  border-top: 1px solid var(--hud-border-soft);
+  gap: 2px;
+  padding: 4px 6px;
+  background: color-mix(in srgb, var(--hud-bg-deep) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hud-border) 55%, transparent);
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+  pointer-events: auto;
+  z-index: 12;
+  max-width: calc(100vw - 16px);
+  min-width: 240px;
+  min-height: 52px;
 }
