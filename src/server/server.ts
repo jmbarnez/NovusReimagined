@@ -244,6 +244,10 @@ export class GameServer {
 
     const effects = getState().pendingEffects;
     if (effects && effects.length > 0) {
+      const gbpCount = effects.filter((e) => e.type === "gateBoostParticles").length;
+      if (gbpCount > 0) {
+        console.log("[GameServer] broadcasting " + effects.length + " effects including " + gbpCount + " gateBoostParticles");
+      }
       this.broadcast({
         type: "effects",
         payload: {

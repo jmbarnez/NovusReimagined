@@ -62,7 +62,9 @@ function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false)
 
   if (isReplaying) return;
 
-  if (isHeadlessServer() && isLocalPlayer(p)) {
+  const shouldQueue = isHeadlessServer() && isLocalPlayer(p);
+  console.log("[applyGateBoost] gate=" + gate.id + " server=" + isHeadlessServer() + " local=" + isLocalPlayer(p) + " queue=" + shouldQueue);
+  if (shouldQueue) {
     getState().pendingEffects.push({
       type: "blip",
       payload: { x: 720 + random() * 240, y: 0.06 },
@@ -78,6 +80,7 @@ function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false)
         isForward,
       },
     });
+    console.log("[applyGateBoost] queued gateBoostParticles for gate=" + gate.id);
   }
 }
 
