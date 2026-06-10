@@ -16,6 +16,7 @@ import {
 } from "../src/data/tutorial-layout.js";
 import { canModifyFitting } from "../src/utils/fitting-gate.js";
 import { detectGateCrossing, getBoostGatesForTrack } from "../src/data/tutorial-layout.js";
+import { updateTutorialTrack } from "../src/physics/tutorial-track.js";
 
 describe("tutorial tracks", () => {
   it("defines approach, return spoke, and three hub spokes", () => {
@@ -97,6 +98,93 @@ describe("tutorial tracks", () => {
         expect(prox.arcLength).toBeGreaterThan(300);
       }
     }
+  });
+});
+
+describe("gate boost particles", () => {
+  beforeEach(() => {
+    installTestPlayer(makePlayer());
+    Client.stationOpen = false;
+    G.pendingEffects = [];
+  });
+
+  it("queues gateBoostParticles effect when local player crosses a boost gate", () => {
+    (globalThis as { IS_SERVER?: boolean }).IS_SERVER = true;
+    try {
+      const gate = getBoostGatesForTrack("approach")[0]!;
+      const nx = Math.cos(gate.angle);
+      const ny = Math.sin(gate.angle);
+
+      // Place player behind gate, moving forward through it
+      G.P.px = gate.x - nx * 30;
+      G.P.py = gate.y - ny * 30;
+      G.P.x = gate.x + nx * 10;
+      G.P.y = gate.y + ny * 10;
+      G.P.vx = nx * 40;
+      G.P.vy = ny * 40;
+      G.P.sysIdx = 0;
+
+      updateTutorialTrack(0.016, G.P);
+
+      const effects = G.pendingEffects.filter((e) => e.type === "gateBoostParticles");
+      expect(effects).toHaveLength(1);
+      expect(effects[0]!.payload).toMatchObject({
+        gateId: gate.id,
+        x: gate.x,
+        y: gate.y,
+        angle: gate.angle,
+        halfWidth: gate.halfWidth,
+        isForward: true,
+      });
+    } finally {
+      (globalThis as { IS_SERVER?: boolean }).IS_SERVER = false;
+    }
+  });
+
+  it("queues gateBoostParticles with isForward false for backward crossing", () => {
+    (globalThis as { IS_SERVER?: boolean }).IS_SERVER = true;
+    try {
+      const gate = getBoostGatesForTrack("approach")[0]!;
+      const nx = Math.cos(gate.angle);
+      const ny = Math.sin(gate.angle);
+
+      // Place player in front of gate, moving backward through it
+      G.P.px = gate.x + nx * 30;
+      G.P.py = gate.y + ny * 30;
+      G.P.x = gate.x - nx * 10;
+      G.P.y = gate.y - ny * 10;
+      G.P.vx = -nx * 40;
+      G.P.vy = -ny * 40;
+      G.P.sysIdx = 0;
+
+      updateTutorialTrack(0.016, G.P);
+
+      const effects = G.pendingEffects.filter((e) => e.type === "gateBoostParticles");
+      expect(effects).toHaveLength(1);
+      expect(effects[0]!.payload?.isForward).toBe(false);
+    } finally {
+      (globalThis as { IS_SERVER?: boolean }).IS_SERVER = false;
+    }
+  });
+
+  it("does not queue effects during client-side prediction", () => {
+    (globalThis as { IS_SERVER?: boolean }).IS_SERVER = false;
+    const gate = getBoostGatesForTrack("approach")[0]!;
+    const nx = Math.cos(gate.angle);
+    const ny = Math.sin(gate.angle);
+
+    G.P.px = gate.x - nx * 30;
+    G.P.py = gate.y - ny * 30;
+    G.P.x = gate.x + nx * 10;
+    G.P.y = gate.y + ny * 10;
+    G.P.vx = nx * 40;
+    G.P.vy = ny * 40;
+    G.P.sysIdx = 0;
+
+    updateTutorialTrack(0.016, G.P);
+
+    const effects = G.pendingEffects.filter((e) => e.type === "gateBoostParticles");
+    expect(effects).toHaveLength(0);
   });
 });
 

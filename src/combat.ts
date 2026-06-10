@@ -90,7 +90,7 @@ export function killEnemy(e: Enemy) {
       const kind: WeaponDelivery = (e._lastPlayerHitKind as WeaponDelivery) ?? "projectile";
       const skillId = WEAPON_SKILL[kind];
       addSkillXp(skillId, 25);
-      floatText(e.x, e.y - 35, `+${XP_PER_KILL} XP`, "#aaddff");
+      floatText(e.x, e.y - 35, t("combat.xpGain", { xp: XP_PER_KILL }), "#aaddff");
       logEvent(t("combat.destroyed", { name: e.name, xp: XP_PER_KILL, credits: e.credits }), "combat");
       spawnWreck(e);
     } else {

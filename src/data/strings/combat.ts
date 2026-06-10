@@ -25,6 +25,7 @@ export const combatStrings: Record<Language, Record<string, string>> = {
     "combat.modulePoweringDown": "{name} POWERING DOWN",
     "combat.moduleOn": "{name} ON",
     "combat.moduleOff": "{name} OFF",
+    "combat.xpGain": "+{xp} XP",
   },
   es: {
     "combat.destroyed": "Destruido {name} — +{xp} XP · ~{credits} CR botín",
@@ -50,5 +51,6 @@ export const combatStrings: Record<Language, Record<string, string>> = {
     "combat.modulePoweringDown": "{name} DESACTIVANDO",
     "combat.moduleOn": "{name} ACTIVADO",
     "combat.moduleOff": "{name} DESACTIVADO",
+    "combat.xpGain": "+{xp} XP",
   },
 };

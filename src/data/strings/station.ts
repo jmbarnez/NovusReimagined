@@ -11,6 +11,7 @@ export const stationStrings: Record<Language, Record<string, string>> = {
     "station.highSec": "HIGH SEC",
     "station.midSec": "MID SEC",
     "station.lowSec": "LOW SEC",
+    "station.services": "Services",
   },
   es: {
     "station.hangar": "Hangar",
@@ -22,5 +23,6 @@ export const stationStrings: Record<Language, Record<string, string>> = {
     "station.highSec": "ALTA SEC",
     "station.midSec": "MEDIA SEC",
     "station.lowSec": "BAJA SEC",
+    "station.services": "Servicios",
   },
 };

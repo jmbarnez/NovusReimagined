@@ -1,6 +1,7 @@
 import "../styles/hud-slots.css";
 
 import { getState } from "../../state-access.js";
+import { t } from "../../utils/i18n.js";
 import { queueFrameAction } from "../../sim/input.js";
 import { SHIPS, type ShipDef, type ShipFitting } from "../../data/ships.js";
 import { MODULES, MODULE_FLAGS } from "../../data/modules.js";
@@ -21,7 +22,6 @@ import { savePlayer } from "../../player/player-data.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
 import { getSlotPowerCd, isSlotPoweredOn } from "../../utils/slot-power.js";
-import { t } from "../../utils/i18n.js";
 import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave, remove, setCssVar } from "../dom-helpers.js";
 
 export interface SlotNode {
@@ -136,7 +136,7 @@ export function rebuildSlots(ship: ShipDef) {
       setText(rackLabel, `${rack[0]}${idx + 1}`);
       append(el, rackLabel);
 
-      const name = createElement("div", "sl-name empty");
+      const name = ct(rcommon.dasha)teElement("div", "sl-name empty");
       setText(name, "—");
       append(el, name);
 
@@ -216,7 +216,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     const nameHtml = iconHtml + ' ' + (m.short || m.name);
     setHtml(nameEl, nameHtml);
     if (nameEl.className !== "sl-name") nameEl.className = "sl-name";
-  } else {
+  } else {t(common.dash)
     setText(nameEl, "—");
     if (nameEl.className !== "sl-name empty") nameEl.className = "sl-name empty";
   }

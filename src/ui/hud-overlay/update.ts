@@ -42,7 +42,7 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
     setStyle(hudState.sysName!, { fontSize: sysName.length > 12 ? "7.5px" : "9px" });
   }
   const sec = sys?.security ?? 0.5;
-  const secText = `SEC ${sec.toFixed(1)}`;
+  const secText = `${t("hud.sec")} ${sec.toFixed(1)}`;
   const secCls = sec >= 0.7 ? "high" : sec >= 0.4 ? "med" : "low";
   if (hudState.secEl!.textContent !== secText) setText(hudState.secEl!, secText);
   if (hudState.secEl!.className !== secCls) hudState.secEl!.className = secCls;

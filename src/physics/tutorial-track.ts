@@ -1,6 +1,8 @@
 import { random } from "../utils/math.js";
 import { Client, type Player } from "../state.js";
 import { PlayerAccess, getState } from "../state-access.js";
+import { isLocalPlayer } from "../player-registry.js";
+import { isHeadlessServer } from "./net-input.js";
 import {
   TUTORIAL_BOOST_GATES,
   getBoostGatesForTrack,
@@ -60,7 +62,7 @@ function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false)
 
   if (isReplaying) return;
 
-  if (p === getState().player) {
+  if (isHeadlessServer() && isLocalPlayer(p)) {
     getState().pendingEffects.push({
       type: "blip",
       payload: { x: 720 + random() * 240, y: 0.06 },

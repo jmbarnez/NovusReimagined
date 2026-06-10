@@ -3,6 +3,7 @@ import "../styles/hud-lock-rail.css";
 import { getState } from "../../state-access.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { dst } from "../../utils/math.js";
+import { t as _t } from "../../utils/i18n.js";
 import { hudState } from "./state.js";
 import { queueFrameAction } from "../../sim/input.js";
 import type { Enemy, Asteroid, WreckPiece, LockSlot, AutoTarget } from "../../types/world.js";
@@ -412,7 +413,7 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
   if (el.className !== resolvedClass) el.className = resolvedClass;
 
   // Name
-  const nameText = (t.name || "Unknown").slice(0, 16);
+  const nameText = (t.name || _t("hud.unknown")).slice(0, 16);
   if (nameEl.textContent !== nameText) setText(nameEl, nameText);
 
   if (isResolved) {
@@ -469,7 +470,7 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     const sig = Math.round(targetSignalRadius(t, enemy));
     const band = d < st.wProf.range ? "OPT" : "OFF";
 
-    const spdHtml = `<span class="m-val">${speed}</span> m/s`;
+    const spdHtml = `<span class="m-val">${speed}</span> ${_t("hud.mps")}`;
     
     let distHtml = "";
     if (d < 2000) {
@@ -477,11 +478,11 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     } else {
       const km = d / 1000;
       const kmStr = (Math.round(km * 10) % 10 === 0) ? Math.round(km).toString() : km.toFixed(1);
-      distHtml = `<span class="m-val">${kmStr}</span> km ${band}`;
+      distHtml = `<span class="m-val">${kmStr}</span> ${_t("hud.km")} ${band === "OPT" ? _t("hud.opt") : _t("hud.off")}`;
     }
 
-    const sigHtml = `SIG <span class="m-val">${sig}</span>`;
-    const trsHtml = `TRS <span class="m-val">${trs}</span>`;
+    const sigHtml = `${_t("hud.sig")} <span class="m-val">${sig}</span>`;
+    const trsHtml = `${_t("hud.trs")} <span class="m-val">${trs}</span>`;
 
     if (spdMetric.innerHTML !== spdHtml) setHtml(spdMetric, spdHtml);
     if (distMetric.innerHTML !== distHtml) setHtml(distMetric, distHtml);
@@ -489,7 +490,7 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     if (trsMetric.innerHTML !== trsHtml) setHtml(trsMetric, trsHtml);
 
     // Meta label text
-    const metaText = isAst ? "ASTEROID" : isPiece ? "DEBRIS" : enemy ? enemyClassLabel(enemy.type) : "UNKNOWN";
+    const metaText = isAst ? _t("hud.asteroid") : isPiece ? _t("hud.debris") : enemy ? enemyClassLabel(enemy.type) : _t("hud.unknown");
     if (metaEl.textContent !== metaText) setText(metaEl, metaText);
 
     if (getStyleProperty(scanEl, "display") !== "none") setStyle(scanEl, { display: "none" });
@@ -510,7 +511,7 @@ export function updateLockCard(card: LockCard, slot: LockSlot, t: Enemy | Astero
     setStyle(structInner, { width: "0%" });
     setText(structLabel, "0%");
 
-    const scanText = `SCANNING...`;
+    const scanText = _t("hud.scanning");
     if (scanEl.textContent !== scanText) setText(scanEl, scanText);
     if (getStyleProperty(scanEl, "display") !== "block") setStyle(scanEl, { display: "block" });
 

@@ -131,7 +131,7 @@ export function buildStationView(st: Station): void {
   const nameEl = query("#st-name", el);
   if (nameEl) setText(nameEl, st.name);
   const metaEl = query("#st-meta", el);
-  if (metaEl) setText(metaEl, `Services: ${st.services.join(" · ")}`);
+  if (metaEl) setText(metaEl, `${t("station.services")}: ${st.services.join(" · ")}`);
   const sys = getState().GALAXY[getState().player.sysIdx];
   const sec = sys?.security ?? 0.5;
   const secColor = sec >= 0.7 ? "var(--hud-positive)" : sec >= 0.4 ? "var(--hud-accent)" : "var(--hud-danger)";
