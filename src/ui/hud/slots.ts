@@ -216,8 +216,8 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     const nameHtml = iconHtml + ' ' + (m.short || m.name);
     setHtml(nameEl, nameHtml);
     if (nameEl.className !== "sl-name") nameEl.className = "sl-name";
-  } else {t(common.dash)
-    setText(nameEl, "—");
+  } else {
+    setText(nameEl, t("common.dash"));
     if (nameEl.className !== "sl-name empty") nameEl.className = "sl-name empty";
   }
 

@@ -1,4 +1,5 @@
 import { getState, PlayerAccess } from "./state-access.js";
+import { t } from "./utils/i18n.js";
 import { addXp, addSkillXp } from "./player/player-data.js";
 import { WEAPON_SKILL, type WeaponDelivery } from "./data/skills.js";
 import { XP_PER_KILL, RESPAWN_S, PLAYER_PARTICIPATION_WINDOW_MS } from "./constants.js";

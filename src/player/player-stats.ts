@@ -3,7 +3,7 @@ import { SHIPS, ShipDef } from "../data/ships.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "../data/modules.js";
 import { WEAPON_PROFILES, WeaponProfile } from "../data/weaponProfiles.js";
 import { resolveWeaponTurret, getWeaponTurretAtSlot } from "../targeting.js";
-import { MODULE_HP_MAX, MIN_THRUST_PCT, SHIP_MASS_REF, RACK_TYPES } from "../constants.js";
+import { MODULE_HP_MAX, MIN_THRUST_PCT, SHIP_MASS_REF, RACK_TYPES, type RackId } from "../constants.js";
 import { levelForSkillXp, WEAPON_SKILL, type WeaponDelivery } from "../data/skills.js";
 import { getInstance } from "../utils/items.js";
 import { ModuleInstance } from "../types/moduleInstance.js";

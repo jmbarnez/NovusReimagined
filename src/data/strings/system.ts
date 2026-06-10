@@ -46,6 +46,7 @@ export const systemStrings: Record<Language, Record<string, string>> = {
     "system.lockCapDropped": "LOCK CAP — DROPPED TAIL",
     "system.targetNotLocked": "TARGET NOT LOCKED",
     "system.invalidTargetType": "INVALID TARGET TYPE",
+    "system.shipDestroyed": "SHIP DESTROYED — ESCAPED{penalty}",
   },
   es: {
     "system.levelUpFloat": "✦ NIVEL {level} ✦",

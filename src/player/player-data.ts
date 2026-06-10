@@ -1,5 +1,6 @@
 
 import { PlayerAccess, getState } from "../state-access.js";
+import { t } from "../utils/i18n.js";
 import type { Player } from "../state.js";
 import { SHIPS } from "../data/ships.js";
 import { SKILL_IDS, SKILL_DEF, xpForSkillLevel, levelForSkillXp, MAX_SKILL_LEVEL, type SkillId } from "../data/skills.js";

@@ -4,7 +4,7 @@ import { Client } from "../src/state.js";
 import { STRINGS } from "../src/data/strings/index.js";
 
 describe("i18n t()", () => {
-  let originalLang: string;
+  let originalLang: "en" | "es";
 
   beforeEach(() => {
     originalLang = Client.settings.language;
