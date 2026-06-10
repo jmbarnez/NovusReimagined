@@ -108,7 +108,7 @@ src/wreck/
   spawn.ts              // spawnWreck, buildPieceShapes
   pieces.ts             // WreckPiece update/despawn
   salvage.ts            // SalvagePickup logic, rollWreckSalvage
-  collection.ts         // player proximity pickup, tractor interaction
+  collection.ts           // player proximity pickup, tractor interaction
   index.ts
 ```
 
@@ -298,15 +298,15 @@ After Phases 1–4, the following root files remain. Most are small enough to ke
 | `feedback.ts` | 2 KB | Keep or move to `ui/feedback.ts` |
 | `game-loop.ts` | <1 KB | Keep |
 | `main.ts` | 4 KB | Keep (entry point) |
-| `map-discovery.ts` | 7 KB | Move to `world/map-discovery.ts` |
+| `map-discovery.ts` | 7 KB | Move to `world/map-discovery.ts` ✅ COMPLETE |
 | `physics.ts` | 3 KB | Keep (simulation tick wrapper) |
 | `pixi.ts` | 8 KB | Keep (PixiJS app init) |
 | `player-registry.ts` | 1 KB | Keep |
-| `salvager.ts` | 4 KB | Move to `player/salvager.ts` or `wreck/salvager.ts` |
+| `salvager.ts` | 4 KB | Move to `player/salvager.ts` ✅ COMPLETE |
 | `state-access.ts` | <1 KB | Keep (barrel) |
 | `state.ts` | ~3 KB (after split) | Keep |
 | `targeting.ts` | <1 KB | Keep or merge into `combat/` |
-| `tractor.ts` | 5 KB | Move to `player/tractor.ts` |
+| `tractor.ts` | 5 KB | Move to `player/tractor.ts` ✅ COMPLETE |
 | `world-gen.ts` | <1 KB | Keep |
 
 ---

@@ -45,24 +45,24 @@ export function bringToFront(win: HTMLElement) {
 
 function makeWindowHTML(id: string, title: string): string {
   const classes: Record<string, string> = {
-    cargo: "eve-window-cargo",
-    missions: "eve-window-missions",
-    skills: "eve-window-skills",
+    cargo: "window-cargo",
+    missions: "window-missions",
+    skills: "window-skills",
   };
   const cls = classes[id] || "";
-  const resetBtn = id === "map" ? `<button type="button" class="eve-win-btn eve-win-reset" aria-label="Reset view" tabindex="-1">${WIN_RESET_ICON}</button>` : "";
+  const resetBtn = id === "map" ? `<button type="button" class="win-btn win-reset" aria-label="Reset view" tabindex="-1">${WIN_RESET_ICON}</button>` : "";
   return `
-    <div class="eve-window ${cls}" id="hud-win-${id}" style="display:none;position:fixed;">
-      <div class="eve-win-head">
-        <span class="eve-win-title">${title}</span>
-        <span class="eve-win-sub"></span>
+    <div class="window ${cls}" id="hud-win-${id}" style="display:none;position:fixed;">
+      <div class="win-head">
+        <span class="win-title">${title}</span>
+        <span class="win-sub"></span>
         <span style="flex:1"></span>
-        <button type="button" class="eve-win-btn eve-win-expand" aria-label="Expand window" tabindex="-1">${WIN_EXPAND_ICON}</button>
+        <button type="button" class="win-btn win-expand" aria-label="Expand window" tabindex="-1">${WIN_EXPAND_ICON}</button>
         ${resetBtn}
-        <button type="button" class="eve-win-btn eve-win-close" aria-label="Close window" tabindex="-1">${WIN_CLOSE_ICON}</button>
+        <button type="button" class="win-btn win-close" aria-label="Close window" tabindex="-1">${WIN_CLOSE_ICON}</button>
       </div>
-      <div class="eve-win-body" id="hud-win-body-${id}"></div>
-      <div class="eve-win-foot"></div>
+      <div class="win-body" id="hud-win-body-${id}"></div>
+      <div class="win-foot"></div>
     </div>`;
 }
 
@@ -78,10 +78,10 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
     win = getElement(`hud-win-${id}`)!;
     _windows.set(id, win);
 
-    const head = win.querySelector(".eve-win-head") as HTMLElement;
-    const closeBtn = win.querySelector(".eve-win-close") as HTMLElement;
-    const expandBtn = win.querySelector(".eve-win-expand") as HTMLElement;
-    const resetBtn = win.querySelector(".eve-win-reset") as HTMLElement;
+    const head = win.querySelector(".win-head") as HTMLElement;
+    const closeBtn = win.querySelector(".win-close") as HTMLElement;
+    const expandBtn = win.querySelector(".win-expand") as HTMLElement;
+    const resetBtn = win.querySelector(".win-reset") as HTMLElement;
 
     if (resetBtn) {
       onClick(resetBtn, (ev) => {
@@ -101,7 +101,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       if (win!.classList.contains("is-expanded")) {
         collapseWindowExpand(win!, { capturePosition: true });
         const wr = win!.getBoundingClientRect();
-        const headH = (win!.querySelector(".eve-win-head") as HTMLElement | null)?.offsetHeight ?? 26;
+        const headH = (win!.querySelector(".win-head") as HTMLElement | null)?.offsetHeight ?? 26;
         setStyle(win!, { left: `${Math.max(0, me.clientX - wr.width / 2)}px`, top: `${Math.max(0, me.clientY - headH / 2)}px`, right: "auto" });
       }
       bringToFront(win!);
@@ -146,7 +146,7 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
       const expand = !win!.classList.contains("is-expanded");
       _windows.forEach((w) => {
         toggleClass(w, "is-expanded", false);
-        const btn = w.querySelector(".eve-win-expand");
+        const btn = w.querySelector(".win-expand");
         if (btn) setExpandButtonState(btn as HTMLElement, false);
         if (w.dataset.prevLeft != null) {
           setStyle(w, { left: w.dataset.prevLeft, top: w.dataset.prevTop!, width: w.dataset.prevWidth!, height: w.dataset.prevHeight! });

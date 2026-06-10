@@ -25,8 +25,8 @@ export function buildDockHeaderHTML(title: string): string {
 
 export function windowHeadButtonsHTML(): string {
   return `<span style="flex:1"></span>
-        <button type="button" class="eve-win-btn eve-win-expand" aria-label="Expand window" tabindex="-1">${WIN_EXPAND_ICON}</button>
-        <button type="button" class="eve-win-btn eve-win-close" aria-label="Close window" tabindex="-1">${WIN_CLOSE_ICON}</button>`;
+        <button type="button" class="win-btn win-expand" aria-label="Expand window" tabindex="-1">${WIN_EXPAND_ICON}</button>
+        <button type="button" class="win-btn win-close" aria-label="Close window" tabindex="-1">${WIN_CLOSE_ICON}</button>`;
 }
 
 export function setExpandButtonState(btn: HTMLElement, expanded: boolean): void {
@@ -44,7 +44,7 @@ export interface WindowExpandOptions {
 
 export function collapseWindowExpand(win: HTMLElement, options?: { capturePosition?: boolean; embedded?: boolean }): void {
   win.classList.remove("is-expanded");
-  const expandBtn = win.querySelector(".eve-win-expand") as HTMLElement | null;
+  const expandBtn = win.querySelector(".win-expand") as HTMLElement | null;
   if (expandBtn) setExpandButtonState(expandBtn, false);
 
   if (options?.embedded) {

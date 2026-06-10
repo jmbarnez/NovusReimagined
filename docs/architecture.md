@@ -130,12 +130,13 @@ src/
                           hardpoint-migrations.ts
                           refined-cargo-migration.ts
                           refinery-storage-migration.ts
+  player/salvager.ts  Salvager beam system
+  player/tractor.ts   Tractor beam system
   player-registry.ts  Player registration
   refinery/           Refinery and hub processing system
   render/             PixiJS WebGL/WebGPU gameplay rendering. All in-game visuals
                       go through Pixi; the screen `<canvas id="c">` and `canvas.ts`
                       were removed in the 2026-06-01 migration.
-  salvager.ts         Salvager beam system
   scanning/           Scanning and contact system
   server/             Server code (session management, sanitization, worker)
   sim/                Simulation system (commands, input, snapshot)
@@ -145,7 +146,6 @@ src/
   state.ts            Global state definition
   state/actions/      Server-authoritative action handlers (economy, crafting, missions, inventory)
   targeting/          Targeting system (assignment, locks, lookup, ranges)
-  tractor.ts          Tractor beam system
   tutorial/           Tutorial system with modular step data, logic, and UI overlay
                       data/              Tutorial step definitions, phases, layout, controls, helpers
                       logic/             Tutorial runtime logic (context, events, lifecycle, sync, tick)
@@ -334,3 +334,5 @@ Rules when adding or editing strings:
 - **Always add both `en` and `es` entries.** Keep the two blocks in sync (same keys, same order).
 - Use descriptive, namespaced keys: `profile.title`, `ship.offline`, `enemyMenu.orbit`.
 - For UI labels that apply to multiple contexts, prefer generic keys (e.g., `common.yes`, `common.no`) over duplicating translations.
+
+

@@ -1,16 +1,16 @@
-import { Client } from "./state.js";
-import { getState, PlayerAccess, SalvagerAccess } from "./state-access.js";
-import { MODULES, MODULE_FLAGS } from "./data/modules.js";
-import { getInstance } from "./utils/items.js";
-import type { WreckPiece, LockSlot } from "./types/world.js";
-import { dst } from "./utils/math.js";
-import { floatText } from "./utils/fx.js";
-import { t } from "./utils/i18n.js";
-import { isWreckPieceTarget } from "./targeting.js";
-import { addSkillXp } from "./player/player-data.js";
-import { damageWreckPiece } from "./wreck/index.js";
-import { forEachFittedModuleSlot, getFittedModuleDef, isModuleSlotPowered } from "./utils/module-slots.js";
-import type { AssignableRack } from "./utils/module-slots.js";
+import { Client } from "../state.js";
+import { getState, PlayerAccess, SalvagerAccess } from "../state-access.js";
+import { MODULES, MODULE_FLAGS } from "../data/modules.js";
+import { getInstance } from "../utils/items.js";
+import type { WreckPiece, LockSlot } from "../types/world.js";
+import { dst } from "../utils/math.js";
+import { floatText } from "../utils/fx.js";
+import { t } from "../utils/i18n.js";
+import { isWreckPieceTarget } from "../targeting.js";
+import { addSkillXp } from "./player-data.js";
+import { damageWreckPiece } from "../wreck/index.js";
+import { forEachFittedModuleSlot, getFittedModuleDef, isModuleSlotPowered } from "../utils/module-slots.js";
+import type { AssignableRack } from "../utils/module-slots.js";
 
 export const SALVAGE_RANGE = 350;
 const SALVAGE_DPS = 4;       // slow, deliberate beam — not a weapon

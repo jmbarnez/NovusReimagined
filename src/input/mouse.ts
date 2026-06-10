@@ -134,7 +134,7 @@ export function handleMouseMove(e: MouseEvent): void {
 
 export function handleWheel(e: WheelEvent): void {
   if (!Client.gameStarted) return;
-  if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, .eve-window")) {
+  if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, .window")) {
     if (!(Client.showMap && e.target.closest("#map-overlay"))) return;
   }
 

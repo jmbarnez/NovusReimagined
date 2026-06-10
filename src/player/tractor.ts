@@ -1,16 +1,16 @@
-import { Client } from "./state.js";
-import { getState, PlayerAccess, TractorAccess } from "./state-access.js";
-import { MODULES, MODULE_FLAGS, ModuleDef } from "./data/modules.js";
-import { getInstance } from "./utils/items.js";
-import { dst } from "./utils/math.js";
-import { floatText } from "./utils/fx.js";
-import { t } from "./utils/i18n.js";
-import { isWreckPieceTarget, isAsteroidTarget } from "./targeting.js";
-import { curSys } from "./utils/game.js";
-import { ASTEROID_DENSITY } from "./constants.js";
-import { invalidate } from "./player/player-stats.js";
-import type { Asteroid, WreckPiece, LockSlot } from "./types/world.js";
-import { findFirstPoweredModuleSlot } from "./utils/module-slots.js";
+import { Client } from "../state.js";
+import { getState, PlayerAccess, TractorAccess } from "../state-access.js";
+import { MODULES, MODULE_FLAGS, ModuleDef } from "../data/modules.js";
+import { getInstance } from "../utils/items.js";
+import { dst } from "../utils/math.js";
+import { floatText } from "../utils/fx.js";
+import { t } from "../utils/i18n.js";
+import { isWreckPieceTarget, isAsteroidTarget } from "../targeting.js";
+import { curSys } from "../utils/game.js";
+import { ASTEROID_DENSITY } from "../constants.js";
+import { invalidate } from "./player-stats.js";
+import type { Asteroid, WreckPiece, LockSlot } from "../types/world.js";
+import { findFirstPoweredModuleSlot } from "../utils/module-slots.js";
 
 export const TRACTOR_RANGE = 600;
 

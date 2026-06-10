@@ -12,7 +12,7 @@ export function settingsContentHTML(): string {
         <button class="settings-tab" data-tab="interface">${t("settings.tab.interface")}</button>
         <button class="settings-tab" data-tab="controls">${t("settings.tab.controls")}</button>
       </div>
-      <div class="eve-win-body">
+      <div class="win-body">
         <div id="settings-body">
         <div class="settings-tab-panel active" data-tab-panel="audio">
         <h3 class="accent-audio">${t("settings.tab.audio")}</h3>
@@ -141,7 +141,7 @@ export function settingsContentHTML(): string {
         </div>
         </div>
       </div>
-      <div class="eve-win-foot" id="settings-footer">
+      <div class="win-foot" id="settings-footer">
         <button id="settings-exit" class="settings-icon-btn">← ${t("common.exit")}</button>
         <button id="settings-reset" class="settings-icon-btn">⟳ ${t("settings.reset")}</button>
         <button id="settings-save" class="settings-icon-btn save">✓ ${t("common.save")}</button>
@@ -153,9 +153,9 @@ export function ensureSettingsUI() {
   const el = createElement("div");
   el.id = "settings-overlay";
   setHtml(el, `
-    <div id="settings-panel" class="eve-window">
-      <div class="eve-win-head">
-        <div class="eve-win-title">${t("settings.title")}</div>
+    <div id="settings-panel" class="window">
+      <div class="win-head">
+        <div class="win-title">${t("settings.title")}</div>
         ${windowHeadButtonsHTML()}
       </div>
       ${settingsContentHTML()}

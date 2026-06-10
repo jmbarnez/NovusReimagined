@@ -250,7 +250,7 @@ export function ensureBridgeUI() {
 export function initBridgeWindows(rootEl: HTMLElement) {
   const workspace = rootEl.querySelector(".bridge-workspace");
   if (!workspace) return;
-  const wins = Array.from(workspace.querySelectorAll(".eve-window")) as HTMLElement[];
+  const wins = Array.from(workspace.querySelectorAll(".window")) as HTMLElement[];
   const clampWindow = (win: HTMLElement) => {
     if (win.classList.contains("is-expanded")) return;
     const ws = workspace.getBoundingClientRect();
@@ -274,8 +274,8 @@ export function initBridgeWindows(rootEl: HTMLElement) {
       if (!getStyleProperty(win, "width")) setStyle(win, { width: `${r.width}px` });
       if (!getStyleProperty(win, "height")) setStyle(win, { height: `${r.height}px` });
     }
-    const head = win.querySelector(".eve-win-head");
-    const expandBtn = win.querySelector(".eve-win-expand");
+    const head = win.querySelector(".win-head");
+    const expandBtn = win.querySelector(".win-expand");
     if (!head) continue;
     const bringToFront = () => {
       Client.bridgeWindowZ += 1;
@@ -323,7 +323,7 @@ export function initBridgeWindows(rootEl: HTMLElement) {
         const expand = !win.classList.contains("is-expanded");
         wins.forEach((w) => {
           w.classList.remove("is-expanded");
-          const btn = w.querySelector(".eve-win-expand");
+          const btn = w.querySelector(".win-expand");
           if (btn) setText(btn as HTMLElement, "▢");
           if (w.dataset.prevLeft != null) {
             setPosition(w, w.dataset.prevLeft, w.dataset.prevTop!);

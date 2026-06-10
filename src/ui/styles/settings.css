@@ -62,19 +62,19 @@
 }
 
 /* Boot monitor telemetry header */
-.monitor-settings-panel .eve-win-head {
+.monitor-settings-panel .win-head {
   height: 20px;
   padding: 0 10px;
   background: color-mix(in srgb, var(--hud-bg-elevated) 55%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--hud-border-soft) 70%, transparent);
   backdrop-filter: blur(6px);
 }
-.monitor-settings-panel .eve-win-head .eve-win-title {
+.monitor-settings-panel .win-head .win-title {
   font-size: calc(9px * var(--effective-font-scale, 1));
   letter-spacing: 0.12em;
   color: var(--hud-text-dim);
 }
-.monitor-settings-panel .eve-win-head .eve-win-sub {
+.monitor-settings-panel .win-head .win-sub {
   font-size: calc(8px * var(--effective-font-scale, 1));
   color: color-mix(in srgb, var(--hud-accent) 65%, transparent);
   letter-spacing: 0.14em;

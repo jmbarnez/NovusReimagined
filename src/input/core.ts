@@ -28,7 +28,7 @@ export function getUiPointerBlockSelector(): string {
     "#wreck-overlay",
     "#pause-overlay",
     "#title-screen",
-    ".eve-window",
+    ".window",
     "#hud-bottom",
     "#hud-minimap",
     "[id^='hud-win-']",

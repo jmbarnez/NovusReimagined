@@ -46,6 +46,15 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   if (hudState.secEl!.textContent !== secText) setText(hudState.secEl!, secText);
   if (hudState.secEl!.className !== secCls) hudState.secEl!.className = secCls;
 
+  // Show/hide shield bar based on whether ship has shields
+  if (hudState.statusGroups[0]) {
+    const hasShield = st.maxShield > 0;
+    const shieldVisible = getStyleProperty(hudState.statusGroups[0], "display") !== "none";
+    if (hasShield !== shieldVisible) {
+      setStyle(hudState.statusGroups[0], { display: hasShield ? "flex" : "none" });
+    }
+  }
+
   const barData = [
     [getState().player.shield, st.maxShield],
     [getState().player.hp, st.maxHp],

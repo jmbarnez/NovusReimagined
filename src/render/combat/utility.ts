@@ -6,8 +6,8 @@ import { getState } from "../../state-access.js";
 import {
   getRenderedPlayerTurretOrigin,
 } from "../../combat/turret-origin.js";
-import { getSalvagerBeam } from "../../salvager.js";
-import { getTractorBeam } from "../../tractor.js";
+import { getSalvagerBeam } from "../../player/salvager.js";
+import { getTractorBeam } from "../../player/tractor.js";
 
 let _currentNow = 0;
 let _utilityGfx: Graphics | null = null;
@@ -253,18 +253,18 @@ function drawTractorBeam(
       if (currentDist >= 0) {
         _utilityGfx.moveTo(x1 + nx * currentDist, y1 + ny * currentDist)
           .lineTo(x1 + nx * nextDash, y1 + ny * nextDash)
-          .stroke({ color: 0x44ddff, width: 2.5 * beamScale, alpha: 0.62 * pulse, cap: "round" });
+          .stroke({ color: 0x88eeff, width: 3.5 * beamScale, alpha: 0.55 * pulse, cap: "round" });
       }
       currentDist += totalSeg;
     }
 
-    // Bright center line
+    // High intensity center line
     _utilityGfx.moveTo(x1, y1).lineTo(x2, y2)
-      .stroke({ color: 0xccf8ff, width: 1.0 * beamScale, alpha: 0.88 * pulse, cap: "round" });
+      .stroke({ color: 0xccffff, width: 1.5 * beamScale, alpha: 0.92 * pulse, cap: "round" });
 
-    // Glow at target contact point
-    const sparkR = Math.max(1, (5 + Math.sin(phase * 3.5) * 2) * 2 * beamScale);
-    _utilityGfx.circle(x2, y2, sparkR).fill({ color: 0x00b4ff, alpha: pulse * pulse * 0.45 })
-      .circle(x2, y2, sparkR * 0.4).fill({ color: 0xffffff, alpha: pulse * pulse * 0.90 });
+    // Target glow
+    const glowR = 10 * beamScale * (0.8 + 0.2 * Math.sin(phase * 5));
+    _utilityGfx.circle(x2, y2, glowR).fill({ color: 0x00ccff, alpha: 0.15 * pulse });
+    _utilityGfx.circle(x2, y2, glowR * 0.5).fill({ color: 0x88ffff, alpha: 0.35 * pulse });
   }
 }

@@ -118,7 +118,7 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
   line-height: 1;
 }
 
-.hud-dock-header .eve-win-btn {
+.hud-dock-header .win-btn {
   width: 12px;
   height: 12px;
   min-width: 12px;

@@ -39,3 +39,5 @@
 - ~~`src/tutorial.ts` (~337 lines) — monolithic tutorial runner file~~ — Split into `src/tutorial/` directory (5 files: `index.ts`, `runner.ts`, `shared.ts`, `events.ts`, `hangar-tour.ts`) with barrel re-exports
 - ~~`src/player/player-data.ts` (~497 lines) — monolithic player data + migrations + init~~ — Split into `src/player/player-factory.ts` (117 lines) and `src/player/migrations/` (3 files, 124 lines total); `player-data.ts` reduced to 276 lines
 - ~~`src/net/client-session.ts` (~622 lines) — monolithic session handler~~ — Split into 5 focused handlers: `game-fx-handler.ts` (88 lines), `snapshot-handler.ts` (88 lines), `remote-players.ts` (26 lines), `character-sync.ts` (23 lines), `chat-handler.ts` (48 lines); `client-session.ts` reduced to 319 lines
+- ~~`src/salvager.ts` (~112 lines) — root-level player concern~~ — Moved to `src/player/salvager.ts`; all importers updated (`src/physics.ts`, `src/render/combat/utility.ts`)
+- ~~`src/tractor.ts` (~151 lines) — root-level player concern~~ — Moved to `src/player/tractor.ts`; all importers updated (`src/physics.ts`, `src/render/combat/utility.ts`)

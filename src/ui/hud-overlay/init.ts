@@ -140,7 +140,7 @@ export function initHudOverlay() {
     });
   }
 
-  // Status bars injection
+  // Status bars injection (no labels — color-coded bars only)
   const bars = overlay.querySelector("#hud-status-bars")!;
   const barDefs: [string, string][] = [
     [t("hud.shield"), "shield"],
@@ -148,14 +148,13 @@ export function initHudOverlay() {
     [t("hud.structure"), "struct"],
     [t("hud.capacitor"), "cap"],
   ];
+  hudState.statusGroups = [];
   hudState.statusFills = [];
-  for (const [label, cls] of barDefs) {
+  for (const [_label, cls] of barDefs) {
     const g = createElement("div", "hud-bar-group");
-    setHtml(g, `
-      <span class="hud-bar-label">${label}</span>
-      <div class="hud-bar-track"><span class="hud-bar-fill ${cls}"></span></div>
-    `);
+    setHtml(g, `<div class="hud-bar-track"><span class="hud-bar-fill ${cls}"></span></div>`);
     append(bars, g);
+    hudState.statusGroups.push(g);
     hudState.statusFills.push(g.querySelector(".hud-bar-fill") as HTMLElement);
   }
   const boostStatus = createElement("div", "hud-boost-status ready");
@@ -271,6 +270,8 @@ export function destroyHudOverlay() {
   resetHubWindowState();
   hudState.slotNodes.clear();
   hudState.lockCards.clear();
+  hudState.statusGroups = [];
+  hudState.statusFills = [];
   if (hudState.turretCtxMenu) remove(hudState.turretCtxMenu);
   if (hudState.enemyCtxMenu) remove(hudState.enemyCtxMenu);
   hudState.turretCtxMenu = null;

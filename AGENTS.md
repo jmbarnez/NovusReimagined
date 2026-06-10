@@ -1,4 +1,4 @@
-# Star Sonata — Developer Guide
+# Novus — Developer Guide
 
 ## Core Documentation
 - **[Architecture & Conventions](docs/architecture.md)** — State management rules, Event bus, Key patterns, and Adding new content.
@@ -7,7 +7,7 @@
 ## Agent Operating Principles
 
 ### 1. Server-Authoritative Architecture
-Star Sonata uses a **server-authoritative** simulation. Whether the user is playing single-player or multiplayer, the server owns game state; the client renders and sends inputs. Never implement client-side shortcuts that bypass server validation, and never assume game logic should live only in the client. When in doubt, push state changes to the server.
+Novus uses a **server-authoritative** simulation. Whether the user is playing single-player or multiplayer, the server owns game state; the client renders and sends inputs. Never implement client-side shortcuts that bypass server validation, and never assume game logic should live only in the client. When in doubt, push state changes to the server.
 
 ### 2. Best Code Practices
 - Write clean, idiomatic TypeScript.

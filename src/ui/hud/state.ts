@@ -11,6 +11,7 @@ export const hudState = {
   ovSortKey: "dist" as "state" | "class" | "name" | "dist",
   ovSortDir: 1 as 1 | -1,
   dockPrompt: null as HTMLElement | null,
+  statusGroups: [] as HTMLElement[],
   statusFills: [] as HTMLElement[],
   boostStatus: null as HTMLElement | null,
   slotsContainer: null as HTMLElement | null,

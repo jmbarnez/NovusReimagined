@@ -65,8 +65,8 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
 
   const panel = el.id === "settings-panel" ? el : el.querySelector("#settings-panel");
   if (panel) {
-    const closeBtn = panel.querySelector(".eve-win-close") as HTMLElement | null;
-    const expandBtn = panel.querySelector(".eve-win-expand") as HTMLElement | null;
+    const closeBtn = panel.querySelector(".win-close") as HTMLElement | null;
+    const expandBtn = panel.querySelector(".win-expand") as HTMLElement | null;
     if (closeBtn) {
       bindWindowChromeButton(closeBtn);
       onClick(closeBtn, (ev) => {

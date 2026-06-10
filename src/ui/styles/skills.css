@@ -1,4 +1,4 @@
-/* ─── Skills window interior (lives inside .eve-window-skills .br-pane) ─── */
+/* ─── Skills window interior (lives inside .window-skills .br-pane) ─── */
 
 #bridge-pane-skills {
   display: flex;
