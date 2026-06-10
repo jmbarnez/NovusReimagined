@@ -53,7 +53,3 @@ export function syncPixiWaypoint(now: number): void {
     .stroke({ color: 0x55aaff, width: 1.5, alpha: 0.25 });
 }
 
-export function destroyPixiWaypoint(): void {
-  waypointGfx?.destroy();
-  waypointGfx = null;
-}

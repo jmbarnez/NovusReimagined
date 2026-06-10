@@ -172,6 +172,26 @@ export function deleteProfile(id: string): void {
   }
 }
 
+/** Remove all profiles permanently. */
+export function deleteAllProfiles(): void {
+  const profiles = getProfiles();
+  for (const p of profiles) {
+    try {
+      localStorage.removeItem(profileDataKey(p.id));
+    } catch {
+      /* ignore */
+    }
+  }
+  try {
+    localStorage.removeItem(PROFILES_INDEX_KEY);
+    localStorage.removeItem(ACTIVE_PROFILE_KEY);
+  } catch {
+    /* ignore */
+  }
+  sessionProfileId = null;
+  sessionLastTimestamp = null;
+}
+
 /** Get the currently active profile ID, or null if none is selected. */
 export function getActiveProfileId(): string | null {
   try {

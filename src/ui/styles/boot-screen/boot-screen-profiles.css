@@ -61,6 +61,79 @@
   text-transform: uppercase;
 }
 
+/* ── Button Row ── */
+.profile-button-row {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--hud-border) 40%, transparent);
+}
+
+.profile-button-row .profile-back-btn {
+  position: static;
+}
+
+.profile-actions-right {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-action-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--hud-border-soft);
+  background: rgba(10, 14, 20, 0.85);
+  backdrop-filter: blur(4px);
+  color: var(--hud-text-dim);
+  font-family: inherit;
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.profile-action-btn:hover {
+  border-color: var(--hud-text-bright);
+  color: var(--hud-text-bright);
+  background: color-mix(in srgb, var(--hud-text-bright) 8%, transparent);
+}
+
+.profile-action-btn--primary {
+  border-color: color-mix(in srgb, var(--hud-accent) 40%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-accent) 8%, var(--hud-bg-elevated));
+  color: var(--hud-text-bright);
+}
+
+.profile-action-btn--primary:hover {
+  border-color: var(--hud-accent);
+  background: color-mix(in srgb, var(--hud-accent) 16%, var(--hud-bg-elevated));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-accent) 20%, transparent);
+}
+
+.profile-action-btn--danger {
+  border-color: color-mix(in srgb, var(--hud-danger) 40%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-danger) 8%, var(--hud-bg-elevated));
+  color: color-mix(in srgb, var(--hud-danger) 80%, var(--hud-text-dim) 20%);
+}
+
+.profile-action-btn--danger:hover {
+  border-color: var(--hud-danger);
+  background: color-mix(in srgb, var(--hud-danger) 18%, var(--hud-bg-elevated));
+  color: var(--hud-danger);
+}
+
+.profile-action-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none;
+}
+
 /* ── Card Grid ── */
 .profile-grid {
   flex: 1;

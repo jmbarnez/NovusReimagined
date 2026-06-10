@@ -241,21 +241,3 @@ export function syncPixiWorldBorder(now: number, sectorOuterRadius: number = SEC
     .stroke({ color: 0x1a3048, width: 1, alpha: alpha * 0.35 * pulse });
 }
 
-export function destroyPixiEffectsOverlay(): void {
-  shockwaveGfx?.destroy();
-  borderGfx?.destroy();
-  floatCardGfx?.destroy();
-  for (const t of floatTextLabels.values()) {
-    t.parent?.removeChild(t);
-    t.destroy();
-  }
-  shockwaveGfx = null;
-  borderGfx = null;
-  floatCardGfx = null;
-  floatTextLabels.clear();
-  floatTextCache.clear();
-  floatLayer?.destroy({ children: false });
-  floatLayer = null;
-  overlayLayer?.destroy({ children: false });
-  overlayLayer = null;
-}

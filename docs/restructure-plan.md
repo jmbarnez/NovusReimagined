@@ -172,7 +172,7 @@ src/input/
 src/render/enemy/
   bake.ts               // bakeEnemyTexture, _texCache, lightDirIndex
   render.ts             // syncPixiEntities, enemy sprite sync, overlays
-  lifecycle.ts          // initPixiEntities, clearEnemyTextureCaches, refreshEntityFonts
+  index.ts              // initPixiEntities, clearEnemyTextureCaches, refreshEntityFonts
   index.ts
 ```
 

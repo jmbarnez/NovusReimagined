@@ -183,7 +183,3 @@ export function syncPixiCrosshair(): void {
   drawReticleStyle(gfx, style, sz, colorNum, lineWidth);
 }
 
-export function destroyPixiCrosshair(): void {
-  crosshairGfx?.destroy();
-  crosshairGfx = null;
-}

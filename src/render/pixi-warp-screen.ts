@@ -228,15 +228,3 @@ export function syncPixiWarpScreen(now: number): void {
   }
 }
 
-export function destroyPixiWarpScreen(): void {
-  warpLayer?.destroy({ children: true });
-  warpLayer = null;
-  overlayGfx = null;
-  streakGfx = null;
-  bloomGfx = null;
-  vigGfx = null;
-  flashGfx = null;
-  titleText = null;
-  destText = null;
-  secText = null;
-}

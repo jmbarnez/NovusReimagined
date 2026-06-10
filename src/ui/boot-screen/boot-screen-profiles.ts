@@ -8,7 +8,7 @@
 import { sfxBlip, sfxConfirm } from "../../audio/procedural.js";
 import { SHIPS } from "../../data/ships.js";
 import { getState } from "../../state-access.js";
-import { getProfiles, getActiveProfileId, activateProfile, createProfile, deleteProfile, timeAgo, formatPlayTime, type ProfileMeta } from "../../data/profiles.js";
+import { getProfiles, getActiveProfileId, activateProfile, createProfile, deleteProfile, deleteAllProfiles, timeAgo, formatPlayTime, type ProfileMeta } from "../../data/profiles.js";
 import { pushMonitorMenu } from "../monitor-nav.js";
 import { makePlayer, validatePilotName } from "../../player/player-data.js";
 import { enterSpaceMode } from "../../game-loop.js";
@@ -33,7 +33,6 @@ function buildProfileSelectionHtml(errorMessage = ""): string {
 
   return `
     <div class="profile-screen">
-      <button type="button" class="profile-back-btn" data-menu-back aria-label="${t("profile.back")}">← ${t("profile.back")}</button>
       <div class="profile-header">
         <div class="profile-title">${t("profile.title")}</div>
         <div class="profile-sub">${t("profile.subtitle")}</div>
@@ -41,11 +40,17 @@ function buildProfileSelectionHtml(errorMessage = ""): string {
       ${errorMessage ? `<div class="profile-error profile-error--banner">${escapeHtml(errorMessage)}</div>` : ""}
       <div class="profile-grid">
         ${cardsHtml}
-        <button type="button" id="profile-new" class="profile-card profile-card--new" aria-label="${t("profile.newHint")}">
-          <div class="profile-new-icon">+</div>
-          <div class="profile-new-label">${t("profile.newLink")}</div>
-          <div class="profile-new-hint">${t("profile.newHint")}</div>
-        </button>
+      </div>
+      <div class="profile-button-row">
+        <button type="button" class="profile-back-btn" data-menu-back aria-label="${t("profile.back")}">← ${t("profile.back")}</button>
+        <div class="profile-actions-right">
+          <button type="button" id="profile-delete-all" class="profile-action-btn profile-action-btn--danger" aria-label="${t("profile.deleteAllHint")}">
+            ${t("profile.deleteAll")}
+          </button>
+          <button type="button" id="profile-new-game" class="profile-action-btn profile-action-btn--primary" aria-label="${t("profile.newGameHint")}">
+            ${t("profile.newGame")}
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -72,8 +77,16 @@ function bindProfileSelectionEvents(monitor: HTMLElement): void {
     });
   });
 
-  const profileNew = monitor.querySelector("#profile-new");
-  if (profileNew) onClick(profileNew, () => {
+  const deleteAllBtn = monitor.querySelector("#profile-delete-all");
+  if (deleteAllBtn) onClick(deleteAllBtn, () => {
+    sfxBlip();
+    if (!confirm(t("profile.confirmDeleteAll"))) return;
+    deleteAllProfiles();
+    showProfileSelection();
+  });
+
+  const newGameBtn = monitor.querySelector("#profile-new-game");
+  if (newGameBtn) onClick(newGameBtn, () => {
     sfxBlip();
     showProfileCreation();
   });
@@ -128,7 +141,7 @@ async function continueSavedProfile(id: string, continueBtn: HTMLButtonElement, 
 
 function setProfileControlsDisabled(monitor: HTMLElement, disabled: boolean): void {
   monitor
-    .querySelectorAll<HTMLButtonElement>("[data-profile-continue], [data-profile-delete], #profile-new")
+    .querySelectorAll<HTMLButtonElement>("[data-profile-continue], [data-profile-delete], #profile-delete-all, #profile-new-game")
     .forEach((button) => {
       button.disabled = disabled;
     });

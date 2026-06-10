@@ -292,20 +292,3 @@ export function syncPixiTutorialGuideArrow(Wc: number, Hc: number, camxR: number
   releaseArrowAndLabel();
 }
 
-export function destroyPixiTargetArrows(): void {
-  if (!arrowsContainer) return;
-
-  for (const arrow of arrowPool) {
-    arrow.destroy();
-  }
-  arrowPool = [];
-
-  for (const text of textPool) {
-    text.destroy();
-  }
-  textPool = [];
-
-  hudOverlayLayer?.removeChild(arrowsContainer);
-  arrowsContainer.destroy();
-  arrowsContainer = null;
-}

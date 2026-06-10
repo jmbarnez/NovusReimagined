@@ -61,16 +61,16 @@ function drawPillar(
   active: boolean,
 ): void {
   const r = PYLON_R;
-  
+
   // Outer ring - steel
   gfx.circle(x, y, r);
   gfx.stroke({ color: COL.steelRim, width: 1, alpha: active ? 0.8 : 0.4 });
-  
+
   // Inner glow - cyan
   const innerR = r * 0.6;
   gfx.circle(x, y, innerR);
   gfx.fill({ color: active ? COL.cyanGlow : COL.cyanMid, alpha: active ? 0.4 : 0.2 });
-  
+
   // Core - bright cyan
   gfx.circle(x, y, innerR * 0.5);
   gfx.fill({ color: active ? 0xffffff : COL.cyan, alpha: active ? 0.9 : 0.5 });
@@ -170,13 +170,4 @@ export function syncPixiTutorialGates(now: number): void {
   }
 
   _gateRoot.visible = true;
-}
-
-export function destroyPixiTutorialGates(): void {
-  for (const bundle of _gateBundles.values()) {
-    bundle.container.destroy({ children: true });
-  }
-  _gateBundles.clear();
-  _gateRoot?.destroy();
-  _gateRoot = null;
 }

@@ -81,7 +81,3 @@ export function syncPixiLensFlare(width: number, height: number): void {
   gfx.stroke({ color: 0xffffff, width: 1, alpha: 0.04 + 0.1 * strength });
 }
 
-export function destroyPixiLensFlare(): void {
-  lensGfx?.destroy();
-  lensGfx = null;
-}

@@ -98,11 +98,3 @@ export function syncPixiStationTurrets(now: number, sys: System): void {
   }
 }
 
-export function destroyPixiStationTurrets(): void {
-  for (const g of orbitGfx.values()) g.destroy();
-  for (const g of turretGfx.values()) g.destroy();
-  orbitGfx.clear();
-  turretGfx.clear();
-  turretLayer?.destroy({ children: false });
-  turretLayer = null;
-}

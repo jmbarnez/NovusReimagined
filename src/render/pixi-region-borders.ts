@@ -69,7 +69,3 @@ export function syncPixiRegionBorders(now: number): void {
   _regionGfx.visible = true;
 }
 
-export function destroyPixiRegionBorders(): void {
-  _regionGfx?.destroy();
-  _regionGfx = null;
-}

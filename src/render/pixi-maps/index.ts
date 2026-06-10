@@ -3,4 +3,4 @@ export { invalidatePixiMapBounds, getPixiMapViewportBounds, syncMapWindowBounds 
 export { initPixiMaps } from "./init.js";
 export { syncPixiSystemMap } from "./render.js";
 export { drawPixiSystemMapCanvasOverlays } from "./overlays.js";
-export { destroyPixiMaps } from "./cleanup.js";
+

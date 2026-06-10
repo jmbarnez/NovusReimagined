@@ -139,12 +139,6 @@ export function syncPixiTutorialTrack(now: number): void {
   _trackGfx.visible = true;
 }
 
-export function destroyPixiTutorialTrack(): void {
-  _trackGfx?.destroy();
-  _trackGfx = null;
-  _chevronCache.clear();
-}
-
 /** Draw the active goal track on the system map (Pixi Graphics). */
 export function drawTutorialTracksOnMap(
   g: Graphics,

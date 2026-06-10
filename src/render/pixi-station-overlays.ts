@@ -320,15 +320,3 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
   }
 }
 
-export function destroyPixiStationOverlays(): void {
-  for (const g of stationGfx.values()) g.destroy();
-  for (const g of gateGfx.values()) g.destroy();
-  for (const t of stationLabels.values()) t.destroy();
-  for (const t of gateLabels.values()) t.destroy();
-  stationGfx.clear();
-  gateGfx.clear();
-  stationLabels.clear();
-  gateLabels.clear();
-  overlayLayer?.destroy({ children: false });
-  overlayLayer = null;
-}

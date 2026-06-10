@@ -297,16 +297,3 @@ export function syncPixiStationInterior(now: number): void {
   drawSparks(Wc, Hc, now);
 }
 
-export function destroyPixiStationInterior(): void {
-  stationLayer?.destroy({ children: true });
-  stationLayer = null;
-  staticGfx = null;
-  ringGfx = null;
-  viewportGfx = null;
-  shipGfx = null;
-  dustGfx = null;
-  sparkGfx = null;
-  _staticWc = 0;
-  _staticHc = 0;
-  _sparks = [];
-}

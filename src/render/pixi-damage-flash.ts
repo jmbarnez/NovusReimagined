@@ -45,7 +45,3 @@ export function syncPixiDamageFlash(width: number, height: number): void {
     .fill({ color: flashColor, alpha: 0 });
 }
 
-export function destroyPixiDamageFlash(): void {
-  flashGfx?.destroy();
-  flashGfx = null;
-}

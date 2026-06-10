@@ -96,11 +96,3 @@ export function getTutorialGuideTarget(): { x: number; y: number } | null {
 
   return { x: step.zone.x, y: step.zone.y };
 }
-
-export function destroyPixiTutorialMarkers() {
-  _beaconGfx?.destroy();
-  _beaconGfx = null;
-  _gatePulseGfx?.destroy();
-  _gatePulseGfx = null;
-  _lastStep = -1;
-}
