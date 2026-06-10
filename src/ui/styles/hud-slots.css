@@ -43,61 +43,105 @@
 .hud-slot.target-assigned { border-color: rgba(60,140,90,0.55); }
 
 .hud-slot.inactive-active { opacity: 0.45; filter: grayscale(0.6); }
-.hud-slot.inactive-active .sl-name { color: var(--hud-text-faint); }
-.hud-slot.inactive-active .sl-sub { color: var(--hud-text-faint); }
 
+/* Hotkey badge */
 .hud-slot .sl-badge {
   position: absolute;
   top: 2px; right: 3px;
   font-size: calc(8px * var(--effective-font-scale, 1)); font-weight: 700;
   color: #a88a3a;
   line-height: 1;
+  z-index: 2;
 }
+
+/* Rack label */
 .hud-slot .sl-rack {
   position: absolute;
   top: 2px; left: 3px;
   font-size: calc(7px * var(--effective-font-scale, 1));
   line-height: 1;
+  z-index: 2;
 }
 .hud-slot.rack-turret .sl-rack { color: #a08058; }
 .hud-slot.rack-high   .sl-rack { color: #9c9048; }
 .hud-slot.rack-med    .sl-rack { color: #4890a0; }
 .hud-slot.rack-low    .sl-rack { color: #6a7888; }
-.hud-slot .sl-name svg {
-  flex-shrink: 0;
-}
+
+/* Icon area — centered, no text */
 .hud-slot .sl-name {
   position: absolute;
-  top: 9px;
+  top: 7px;
   left: 2px; right: 2px;
-  bottom: 12px;
+  bottom: 10px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(7px * var(--effective-font-scale, 1));
-  color: var(--hud-text-dim);
-  line-height: 1.15;
   overflow: hidden;
-  white-space: normal;
-  word-break: break-word;
-  text-align: center;
-  gap: 1px;
 }
-.hud-slot .sl-name.empty { color: var(--hud-text-faint); }
+.hud-slot .sl-name svg,
+.hud-slot .sl-name .item-icon-sprite,
+.hud-slot .sl-name .item-icon-img {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.hud-slot .sl-name.empty .item-icon-img,
+.hud-slot .sl-name.empty .item-icon-sprite { opacity: 0.15; }
+
+/* Minimal status label — only critical states */
 .hud-slot .sl-sub {
   position: absolute;
   bottom: 3px; left: 3px;
-  font-size: calc(6px * var(--effective-font-scale, 1));
+  font-size: calc(5.5px * var(--effective-font-scale, 1));
+  font-weight: 700;
   color: var(--hud-text-faint);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   max-width: calc(100% - 6px);
+  z-index: 2;
 }
 .hud-slot .sl-sub.assigned { color: var(--hud-positive); }
 .hud-slot .sl-sub.on { color: var(--hud-positive); }
 .hud-slot .sl-sub.off { color: var(--hud-danger); }
+.hud-slot .sl-sub.cycling { color: #e8c06a; }
+.hud-slot .sl-sub.damaged { color: #ff8844; }
+
+/* LED status indicator */
+.hud-slot .sl-led {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(80, 80, 80, 0.5);
+  box-shadow: inset 0 0 1px rgba(0,0,0,0.5);
+  z-index: 2;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.hud-slot .sl-led.on {
+  background: #44cc66;
+  box-shadow: 0 0 3px rgba(68, 204, 102, 0.6), inset 0 0 1px rgba(0,0,0,0.3);
+}
+.hud-slot .sl-led.off {
+  background: #cc3333;
+  box-shadow: 0 0 3px rgba(204, 51, 51, 0.5), inset 0 0 1px rgba(0,0,0,0.3);
+}
+.hud-slot .sl-led.damaged {
+  background: #ff8844;
+  box-shadow: 0 0 3px rgba(255, 136, 68, 0.5), inset 0 0 1px rgba(0,0,0,0.3);
+}
+.hud-slot .sl-led.cycling {
+  background: #e8c06a;
+  box-shadow: 0 0 3px rgba(232, 192, 106, 0.5), inset 0 0 1px rgba(0,0,0,0.3);
+  animation: led-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes led-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 
 /* Heat bar */
 .hud-slot .sl-heat-track {

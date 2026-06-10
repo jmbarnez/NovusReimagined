@@ -1,15 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { _G as G } from "../src/state.js";
-import { GameClient } from "../src/net/client-session.js";
+import { handleGameEffect } from "../src/net/game-fx-handler.js";
 import type { GameEffect } from "../src/state/types/combat.js";
 
-describe("GameClient.handleGameEffect gateBoostParticles", () => {
+describe("handleGameEffect gateBoostParticles", () => {
   beforeEach(() => {
     G.particles = [];
   });
 
   it("spawns 32 particles from a gateBoostParticles effect", () => {
-    const client = new GameClient();
     const effect: GameEffect = {
       type: "gateBoostParticles",
       payload: {
@@ -21,8 +20,7 @@ describe("GameClient.handleGameEffect gateBoostParticles", () => {
       },
     };
 
-    // Access private method via unknown cast (avoiding `any` per project rules)
-    (client as unknown as { handleGameEffect(eff: GameEffect): void }).handleGameEffect(effect);
+    handleGameEffect(effect);
 
     expect(G.particles.length).toBe(32);
     for (const p of G.particles) {
@@ -34,13 +32,12 @@ describe("GameClient.handleGameEffect gateBoostParticles", () => {
   });
 
   it("uses defaults when payload fields are missing", () => {
-    const client = new GameClient();
     const effect: GameEffect = {
       type: "gateBoostParticles",
       payload: {},
     };
 
-    (client as unknown as { handleGameEffect(eff: GameEffect): void }).handleGameEffect(effect);
+    handleGameEffect(effect);
 
     expect(G.particles.length).toBe(32);
     expect(G.particles[0]!.x).toBeDefined();

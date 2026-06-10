@@ -16,7 +16,7 @@ import { onTurretContextMenu } from "./turret-menu.js";
 import { hudState, RACK_ORDER } from "./state.js";
 import { getInstance } from "../../utils/items.js";
 import { showSlotTooltip, hideSlotTooltip } from "./slotTooltip.js";
-import { iconSvg } from "../station/shared.js";
+import { itemIconHtml } from "../icons/item-icon-bake.js";
 import type { ComputedStats } from "../../player/player-stats.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
@@ -30,6 +30,7 @@ export interface SlotNode {
   heatFill: HTMLElement;
   subEl: HTMLElement;
   nameEl: HTMLElement;
+  ledEl: HTMLElement;
   hkIdx: number;
 }
 
@@ -91,11 +92,13 @@ export function rebuildSlots(ship: ShipDef) {
       append(el, rackLabel);
 
       const name = createElement("div", "sl-name empty");
-      setText(name, "—");
       append(el, name);
 
       const sub = createElement("div", "sl-sub");
       append(el, sub);
+
+      const led = createElement("span", "sl-led");
+      append(el, led);
 
       const heatTrack = createElement("div", "sl-heat-track");
       const heatFill = createElement("span", "sl-heat-fill");
@@ -118,7 +121,7 @@ export function rebuildSlots(ship: ShipDef) {
 
       append(hudState.slotsContainer, el);
       hudState.slotNodes.set(`${rack}|${idx}`, {
-        el, muzzleEl: muzzle, cdOverlay, heatFill, subEl: sub, nameEl: name, hkIdx,
+        el, muzzleEl: muzzle, cdOverlay, heatFill, subEl: sub, nameEl: name, ledEl: led, hkIdx,
       });
       hkIdx++;
     }
@@ -126,7 +129,7 @@ export function rebuildSlots(ship: ShipDef) {
 }
 
 export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx: number, st: ComputedStats, now: number) {
-  const { el, cdOverlay, heatFill, subEl, nameEl } = node;
+  const { el, cdOverlay, heatFill, subEl, nameEl, ledEl } = node;
   const r = rack as "turret" | "high" | "med" | "low";
   const uid = getState().player.fitting[r]?.[idx];
   const inst = uid ? getInstance(uid) : null;
@@ -164,16 +167,30 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
 
   if (el.className !== cls) el.className = cls;
 
-  // Name + icon (dirty-check)
+  // Icon only (dirty-check)
   if (m) {
-    const iconHtml = iconSvg(m.id, 8);
-    const nameHtml = iconHtml + ' ' + (m.short || m.name);
-    setHtml(nameEl, nameHtml);
+    const iconHtml = itemIconHtml(m.id, 18);
+    setHtml(nameEl, iconHtml);
     if (nameEl.className !== "sl-name") nameEl.className = "sl-name";
   } else {
-    setText(nameEl, t("common.dash"));
+    setHtml(nameEl, "");
     if (nameEl.className !== "sl-name empty") nameEl.className = "sl-name empty";
   }
+
+  // LED status indicator
+  let ledCls = "sl-led";
+  if (modOffline) {
+    ledCls = "sl-led off";
+  } else if (modDamaged) {
+    ledCls = "sl-led damaged";
+  } else if (isTurret && powerCd > 0) {
+    ledCls = "sl-led cycling";
+  } else if (isSlotActive) {
+    ledCls = "sl-led on";
+  } else if (m) {
+    ledCls = "sl-led off";
+  }
+  if (ledEl.className !== ledCls) ledEl.className = ledCls;
 
   // Tractor Beam strength toggle button
   const isTractor = m && MODULE_FLAGS.isTractor(m);
@@ -260,38 +277,19 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   }
   setStyle(cdOverlay, { height: cdH });
 
-  // Subtext (dirty-check)
+  // Minimal subtext — only transient/actionable states. LED handles on/off/damaged.
+  // Full stats, damage, bonuses, affixes etc. live in the hover tooltip.
   let subText = "", subCls = "sl-sub";
-  if (modOffline) {
-    subText = t("ship.offline");
-    subCls = "sl-sub off damage-offline";
-  } else if (modDamaged) {
-    subText = `${t("ship.damagedAbbr")} ${durPct}%`;
+  if (modDamaged) {
+    subText = `${durPct}%`;
     subCls = "sl-sub damaged";
   } else if (isTurret && powerCd > 0) {
     subText = isPowered ? t("ship.pwrDown") : t("ship.pwrUp");
     subCls = "sl-sub cycling";
-  } else if (isTurret && !isPowered) {
-    subText = t("ship.offline");
-    subCls = "sl-sub off";
-  } else if (isWeaponTurret) {
-    const prof = WEAPON_PROFILES[inst!.baseId] || WEAPON_PROFILES.default;
-    const cdVal = getState().player.turretCds?.[idx] || 0;
-    let cdStr = t("ship.ready");
-    if (cdVal > 0 && prof.rate > 0) {
-      const r = Math.round((1 - cdVal / prof.rate) * 100);
-      cdStr = `${Math.max(0, Math.min(100, r))}%`;
-    }
-    if (assignedId != null) {
-      const tgt = targetByLockId(assignedId);
-      subText = `→${tgt ? (tgt.name || "").slice(0, 3) : "?"} ${cdStr}`;
-      subCls = "sl-sub assigned";
-    } else {
-      subText = `${prof.rate.toFixed(2)}s ${t("ship.heatAbbr")}${Math.round(heat * 100)} ${cdStr}`;
-    }
-  } else if (m) {
-    subText = isSlotActive ? t("ship.online") : t("ship.offline");
-    subCls = isSlotActive ? "sl-sub on" : "sl-sub off";
+  } else if (isWeaponTurret && assignedId != null) {
+    const tgt = targetByLockId(assignedId);
+    subText = `→${tgt ? (tgt.name || "").slice(0, 3) : "?"}`;
+    subCls = "sl-sub assigned";
   }
   setText(subEl, subText);
   if (subEl.className !== subCls) subEl.className = subCls;

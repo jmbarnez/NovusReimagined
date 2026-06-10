@@ -162,6 +162,38 @@ src/input/
 
 **Status:** Directory created, file split into 3 modules (core.ts, bindings.ts, mouse.ts) plus barrel `index.ts`. Consumer `src/main.ts` updated. Original `input.ts` removed. Note: `sim/input.ts` remains separate as it's simulation-side frame action queuing.
 
+### 2.7 `src/player/player-data.ts` (497 lines → 276 lines) ✅ COMPLETE
+
+Extracted save-format migrations and player initialization into focused modules.
+
+```
+src/player/
+  player-data.ts                  // Player interface, save/load, migration entry point
+  player-factory.ts               // Player initialization and default state creation
+  migrations/
+    hardpoint-migrations.ts         // Hardpoint layout migration (68 lines)
+    refined-cargo-migration.ts    // Refined cargo save migration (28 lines)
+    refinery-storage-migration.ts  // Refinery storage migration (28 lines)
+```
+
+**Status:** Migrations extracted to `src/player/migrations/`, player initialization extracted to `src/player/player-factory.ts` (117 lines). All consumers updated. `player-data.ts` reduced from 497 to 276 lines. No barrel `index.ts` added (subdirectory is leaf-only, consumers import deep files).
+
+### 2.8 `src/net/client-session.ts` (622 lines → 319 lines) ✅ COMPLETE
+
+Decomposed monolithic session handler into single-concern networking modules.
+
+```
+src/net/
+  client-session.ts     // Session orchestrator only (connection, handshake, disconnect)
+  game-fx-handler.ts    // Game effect message handler (88 lines)
+  snapshot-handler.ts   // Snapshot apply orchestrator (88 lines)
+  remote-players.ts     // Remote player join/leave handlers (26 lines)
+  character-sync.ts     // Character appearance synchronization (23 lines)
+  chat-handler.ts       // Chat and typing indicator handler (48 lines)
+```
+
+**Status:** Extracted 5 handler modules from `client-session.ts`. All consumers updated. `client-session.ts` reduced from 622 to 319 lines. No barrel needed; `net/` already imports from individual files.
+
 ---
 
 ## Phase 3 — Render decomposition (medium risk, high readability)

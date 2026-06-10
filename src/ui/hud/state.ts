@@ -24,6 +24,8 @@ export const hudState = {
 
   logEntries: null as HTMLElement | null,
   logPanel: null as HTMLElement | null,
+  logBody: null as HTMLElement | null,
+  logTab: null as HTMLElement | null,
 
   xpPopup: null as HTMLElement | null,
   xpAccum: new Map<string, number>(),

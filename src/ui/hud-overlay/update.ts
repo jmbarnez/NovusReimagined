@@ -22,7 +22,7 @@ import { applyTheme } from "./theme.js";
 import { updateMapOverlayDOM } from "./map-overlay.js";
 import { maybeAutoCloseHubWindow } from "./hub-window.js";
 import { C } from "../../config/index.js";
-import { getElement, queryAll, createElement, setText, setHtml, setStyle, setPosition, getStyleProperty, toggleClass, remove } from "../dom-helpers.js";
+import { getElement, queryAll, createElement, setText, setHtml, setStyle, setPosition, getStyleProperty, toggleClass, remove, append } from "../dom-helpers.js";
 
 /* ── Update ── */
 export function updateHudOverlay(Wc: number, Hc: number, now: number) {
@@ -143,23 +143,51 @@ export function toggleScannerDock() {
   }
 }
 
+/** Show the comms log (used when new chat messages arrive). */
 export function showCommsLogPanel() {
-  if (isOpen("event-log")) return;
-  if (!hudState.logPanel) return;
+  if (isOpen("event-log")) return; // already floating and visible
+  if (!hudState.logPanel || !hudState.logTab) return;
+  const panelVisible = getStyleProperty(hudState.logPanel, "display") !== "none";
+  if (panelVisible) return; // already docked and visible
+  // Was minimized to tab (or hidden) — expand docked panel
   setStyle(hudState.logPanel, { display: "flex" });
-  openHudWindow("event-log", "COMMS LOG", hudState.logPanel, () => {
-    setStyle(hudState.logPanel!, { display: "none" });
-  });
+  setStyle(hudState.logTab, { display: "none" });
 }
 
+/** Hotkey toggle: cycles docked-expanded → docked-tab → docked-expanded.
+ *  If floating, closes the window and returns to docked-expanded. */
 export function toggleEventLogPanel() {
   if (isOpen("event-log")) {
     closeHudWindow("event-log");
     return;
   }
-  if (!hudState.logPanel) return;
-  setStyle(hudState.logPanel, { display: "flex" });
-  openHudWindow("event-log", "COMMS LOG", hudState.logPanel, () => {
-    setStyle(hudState.logPanel!, { display: "none" });
+  if (!hudState.logPanel || !hudState.logTab) return;
+  const panelVisible = getStyleProperty(hudState.logPanel, "display") !== "none";
+  if (panelVisible) {
+    // expanded → minimize to tab
+    setStyle(hudState.logPanel, { display: "none" });
+    setStyle(hudState.logTab, { display: "flex" });
+  } else {
+    // tab (or hidden) → expand
+    setStyle(hudState.logPanel, { display: "flex" });
+    setStyle(hudState.logTab, { display: "none" });
+  }
+}
+
+/** Pop the comms log out into a floating chrome window. */
+export function popOutCommsLog() {
+  if (!hudState.logBody || !hudState.logPanel || !hudState.logTab) return;
+  if (isOpen("event-log")) return;
+
+  // Hide docked UI while floating
+  setStyle(hudState.logPanel, { display: "none" });
+  setStyle(hudState.logTab, { display: "none" });
+
+  openHudWindow("event-log", "COMMS LOG", hudState.logBody, () => {
+    // Window closed: move body back to docked panel and show it
+    if (hudState.logPanel && hudState.logBody) {
+      append(hudState.logPanel, hudState.logBody);
+      setStyle(hudState.logPanel, { display: "flex" });
+    }
   });
 }

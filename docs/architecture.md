@@ -102,10 +102,34 @@ src/
   loot/               Module generation (loot drops, affixes, rarity)
   main.ts             Application entry point
   net/                Networking layer (client, session, interpolation, prediction, snapshot apply)
+                        client.ts           Main client connection and message routing
+                        client-session.ts   Session orchestrator (connection, handshake, disconnect)
+                        client-transport.ts Transport abstraction (WebSocket / relay)
+                        game-fx-handler.ts  Game effect message handler (explosions, impacts, sounds)
+                        snapshot-handler.ts Snapshot apply orchestrator
+                        snapshot-apply/     Snapshot apply subsystem (local-player, remote-players, entities, projectiles, wreck-salvage)
+                        remote-peers.ts     WebRTC peer management
+                        remote-players.ts   Remote player join/leave handlers
+                        character-sync.ts   Character appearance synchronization
+                        chat-handler.ts     Chat and typing indicator handler
+                        interpolation.ts    Entity interpolation for remote players
+                        prediction.ts       Client-side input prediction
+                        session-discovery.ts LAN / relay session discovery
   physics/            Fixed-timestep simulation (ship, npcs, projectiles, collision)
   physics.ts          Physics entry point
   pixi.ts             PixiJS initialization
   player/             Player state: data, stats, fitting, skills, abilities
+                        player-data.ts      Player interface, save/load, migration entry point
+                        player-factory.ts   Player initialization and default state creation
+                        player-stats.ts     Derived stat calculations and cache
+                        player-fitting.ts   Module fitting / unfitting logic
+                        abilities.ts        Active ship abilities
+                        boost-module.ts     Boost ability implementation
+                        init.ts             Player boot helpers
+                        migrations/         Save-format migration scripts
+                          hardpoint-migrations.ts
+                          refined-cargo-migration.ts
+                          refinery-storage-migration.ts
   player-registry.ts  Player registration
   refinery/           Refinery and hub processing system
   render/             PixiJS WebGL/WebGPU gameplay rendering. All in-game visuals

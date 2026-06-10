@@ -73,23 +73,26 @@ export function initHudOverlay() {
       <div id="hud-status-bars"></div>
       <div id="hud-slots"></div>
     </div>
-  `);
 
-  // Build detached log panel (standalone window content)
-  const logPanel = createElement("div", "");
-  logPanel.id = "hud-log-panel";
-  setHtml(logPanel, `
-    <div id="hud-log-body" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
-      <div id="hud-log-entries"></div>
-      <div id="hud-log-chat-input-row" class="hud-log-chat-input-row">
-        <span class="hud-log-chat-prefix">${t("hud.chatPrefix")}</span>
-        <input type="text" id="hud-log-chat-input" class="hud-log-chat-input" placeholder="${t("hud.chatPlaceholder")}" maxlength="128" autocomplete="off" />
-        <button type="button" id="hud-log-chat-send" class="hud-log-chat-send">SEND</button>
+    <div id="hud-log-panel">
+      <div id="hud-log-header" class="hud-dock-header">
+        <span class="hud-dock-title">${t("hud.commsLog")}</span>
+        <span style="flex:1"></span>
+        <button type="button" class="eve-win-btn hud-log-minimize" aria-label="Minimize" tabindex="-1">−</button>
+        <button type="button" class="eve-win-btn hud-log-popout" aria-label="Pop out" tabindex="-1">↗</button>
+      </div>
+      <div id="hud-log-body">
+        <div id="hud-log-entries"></div>
+        <div id="hud-log-chat-input-row" class="hud-log-chat-input-row">
+          <span class="hud-log-chat-prefix">${t("hud.chatPrefix")}</span>
+          <input type="text" id="hud-log-chat-input" class="hud-log-chat-input" placeholder="${t("hud.chatPlaceholder")}" maxlength="128" autocomplete="off" />
+          <button type="button" id="hud-log-chat-send" class="hud-log-chat-send">SEND</button>
+        </div>
       </div>
     </div>
+
+    <button type="button" id="hud-log-tab" style="display: none;">COMMS</button>
   `);
-  setStyle(logPanel, { display: "none", height: "100%" });
-  append(document.body, logPanel);
 
   // Bind references
   hudState.root = overlay;
@@ -98,14 +101,44 @@ export function initHudOverlay() {
   hudState.lockRail = overlay.querySelector("#hud-lock-rail");
   hudState.dockPrompt = overlay.querySelector("#hud-dock-prompt");
   hudState.xpPopup = overlay.querySelector("#hud-xp-popup");
-  hudState.logEntries = logPanel.querySelector("#hud-log-entries");
-  hudState.logPanel = logPanel;
+  hudState.logEntries = overlay.querySelector("#hud-log-entries");
+  hudState.logPanel = overlay.querySelector("#hud-log-panel");
+  hudState.logBody = overlay.querySelector("#hud-log-body");
+  hudState.logTab = overlay.querySelector("#hud-log-tab");
   registerLogSink(hudState.logEntries);
   flushPendingLogEntries();
   hudState.slotsContainer = overlay.querySelector("#hud-slots");
   hudState.minimapContainer = overlay.querySelector("#hud-minimap");
   initMissionsPanel(overlay.querySelector("#hud-missions") as HTMLElement);
   hudState.pickupContainer = overlay.querySelector("#hud-pickup-container");
+
+  // Comms log minimize button
+  const minimizeBtn = overlay.querySelector(".hud-log-minimize") as HTMLElement | null;
+  if (minimizeBtn && hudState.logPanel && hudState.logTab) {
+    onClick(minimizeBtn, (ev) => {
+      (ev as MouseEvent).stopPropagation();
+      setStyle(hudState.logPanel!, { display: "none" });
+      setStyle(hudState.logTab!, { display: "flex" });
+    });
+  }
+
+  // Comms log pop-out button
+  const popoutBtn = overlay.querySelector(".hud-log-popout") as HTMLElement | null;
+  if (popoutBtn && hudState.logBody) {
+    onClick(popoutBtn, (ev) => {
+      (ev as MouseEvent).stopPropagation();
+      import("./update.js").then(({ popOutCommsLog }) => popOutCommsLog());
+    });
+  }
+
+  // Comms log tab click → restore docked panel
+  if (hudState.logTab && hudState.logPanel) {
+    onClick(hudState.logTab, (ev) => {
+      (ev as MouseEvent).stopPropagation();
+      setStyle(hudState.logPanel!, { display: "flex" });
+      setStyle(hudState.logTab!, { display: "none" });
+    });
+  }
 
   // Status bars injection
   const bars = overlay.querySelector("#hud-status-bars")!;
@@ -226,11 +259,10 @@ export function destroyHudOverlay() {
     setHtml(hudState.root, "");
     hudState.root = null;
   }
-  if (hudState.logPanel) {
-    remove(hudState.logPanel);
-    hudState.logPanel = null;
-  }
   hudState.logEntries = null;
+  hudState.logPanel = null;
+  hudState.logBody = null;
+  hudState.logTab = null;
   registerLogSink(null);
   if (unsubCrossing) {
     unsubCrossing();
