@@ -1,6 +1,6 @@
 /**
  * PixiJS Asteroids & Target Locks Renderer.
- * 
+ *
  * Migrates asteroid fields and target bracket indicators to PixiJS:
  * - Asteroid Bodies: Rotated and translated polygon meshes with outline strokes.
  * - Mining Debris: Short-lived rock chunks with matching dark outlines.
@@ -9,6 +9,8 @@
  * - Selection Brackets: Glowing primary/secondary blue targeting locks.
  */
 import { Container, Graphics } from "pixi.js";
+import { AppMode } from "../state.js";
+import type { RenderSubsystem } from "./lifecycle.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import type { System, LockSlot } from "../types/world.js";
@@ -40,11 +42,14 @@ function hslInt(h: number, s: number, l: number): number {
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-export function initPixiAsteroids(parent: Container): void {
+export function initPixiAsteroids(parent?: Container): void {
   destroyPixiAsteroids();
 
+  const layer = parent ?? entityLayer;
+  if (!layer) return;
+
   _asteroidGfx = new Graphics();
-  parent.addChild(_asteroidGfx);
+  layer.addChild(_asteroidGfx);
 }
 
 export function syncPixiAsteroids(now: number, alpha: number, sys: System): void {
@@ -130,3 +135,13 @@ export function destroyPixiAsteroids(): void {
   }
 }
 
+export const asteroidsRenderer: RenderSubsystem = {
+  name: "asteroids",
+  init: initPixiAsteroids,
+  sync: (ctx) => {
+    syncPixiAsteroids(ctx.now, ctx.alpha, ctx.sys);
+  },
+  destroy: destroyPixiAsteroids,
+  modes: [AppMode.SPACE],
+  order: 160,
+};

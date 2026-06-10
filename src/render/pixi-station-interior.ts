@@ -310,3 +310,14 @@ export function destroyPixiStationInterior(): void {
   _staticHc = 0;
   _sparks = [];
 }
+
+
+export const stationInteriorRenderer: RenderSubsystem = {
+  name: "stationInterior",
+  sync: (ctx) => {
+    syncPixiStationInterior(ctx.now);
+  },
+  destroy: destroyPixiStationInterior,
+  modes: [AppMode.STATION],
+  order: 500,
+};

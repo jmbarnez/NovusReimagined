@@ -1,5 +1,6 @@
+import type { RenderSubsystem } from "./lifecycle.js";
 import { Graphics } from "pixi.js";
-import { Client } from "../state.js";
+import { Client, AppMode } from "../state.js";;
 import { getThemeColors } from "../data/settings.js";
 import { effectLayer, worldContainer } from "../pixi.js";
 
@@ -187,3 +188,14 @@ export function destroyPixiCrosshair(): void {
   crosshairGfx?.destroy();
   crosshairGfx = null;
 }
+
+
+export const crosshairRenderer: RenderSubsystem = {
+  name: "crosshair",
+  sync: (ctx) => {
+    syncPixiCrosshair();
+  },
+  destroy: destroyPixiCrosshair,
+  modes: [AppMode.SPACE],
+  order: 270,
+};

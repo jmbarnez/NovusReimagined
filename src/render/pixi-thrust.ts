@@ -1,5 +1,6 @@
 import { Sprite, Texture, ImageSource } from "pixi.js";
-import { Client, AppMode } from "../state.js";
+import { AppMode, Client } from "../state.js";
+import type { RenderSubsystem } from "./lifecycle.js";
 import { getState } from "../state-access.js";
 import type { Enemy } from "../types/world.js";
 import { SHIPS } from "../data/ships.js";
@@ -346,3 +347,26 @@ export function destroyThrust() {
   _remoteSprites.clear();
   if (_flameTex) { _flameTex.destroy(); _flameTex = null; }
 }
+
+export const thrustRenderer: RenderSubsystem = {
+  name: \ thrust\,
+  init: initThrust,
+  sync: (ctx) => {
+    syncThrust(ctx.alpha, ctx.now);
+  },
+  destroy: destroyThrust,
+  modes: [AppMode.SPACE],
+  order: 130,
+};
+
+
+export const thrustRenderer: RenderSubsystem = {
+  name: "thrust",
+  init: initThrust,
+  sync: (ctx) => {
+    syncThrust(ctx.alpha, ctx.now);
+  },
+  destroy: destroyThrust,
+  modes: [AppMode.SPACE],
+  order: 130,
+};

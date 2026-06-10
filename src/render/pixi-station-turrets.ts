@@ -106,3 +106,14 @@ export function destroyPixiStationTurrets(): void {
   turretLayer?.destroy({ children: false });
   turretLayer = null;
 }
+
+
+export const stationTurretsRenderer: RenderSubsystem = {
+  name: "stationTurrets",
+  sync: (ctx) => {
+    syncPixiStationTurrets(ctx.now, ctx.sys);
+  },
+  destroy: destroyPixiStationTurrets,
+  modes: [AppMode.SPACE],
+  order: 190,
+};

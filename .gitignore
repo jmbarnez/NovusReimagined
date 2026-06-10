@@ -20,7 +20,8 @@ coverage/
 
 # AI assistant settings and plans
 .claude/
-.devin/
+.devin/*
+!.devin/skills/
 .kilo/
 .opencode/
 .windsurf/

@@ -1,5 +1,6 @@
+import type { RenderSubsystem } from "./lifecycle.js";
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
-import { Client } from "../state.js";
+import { Client, AppMode } from "../state.js";;
 import { getState } from "../state-access.js";
 import { effectLayer } from "../pixi.js";
 import { isVisible } from "../utils/game.js";
@@ -180,3 +181,14 @@ export function destroyPixiTutorialGates(): void {
   _gateRoot?.destroy();
   _gateRoot = null;
 }
+
+
+export const tutorialGatesRenderer: RenderSubsystem = {
+  name: "tutorialGates",
+  sync: (ctx) => {
+    syncPixiTutorialGates(ctx.now);
+  },
+  destroy: destroyPixiTutorialGates,
+  modes: [AppMode.SPACE],
+  order: 350,
+};

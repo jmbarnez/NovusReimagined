@@ -49,3 +49,14 @@ export function destroyPixiDamageFlash(): void {
   flashGfx?.destroy();
   flashGfx = null;
 }
+
+
+export const damageFlashRenderer: RenderSubsystem = {
+  name: "damageFlash",
+  sync: (ctx) => {
+    syncPixiDamageFlash(ctx.width, ctx.height);
+  },
+  destroy: destroyPixiDamageFlash,
+  modes: [AppMode.SPACE],
+  order: 220,
+};

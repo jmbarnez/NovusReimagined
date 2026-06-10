@@ -1,7 +1,9 @@
+import { AppMode } from "../../state.js";
+import type { RenderSubsystem } from "../lifecycle.js";
 import { Client } from "../../state.js";
 import type { System } from "../../types/world.js";
 import { stationLayer } from "../../pixi.js";
-import { bundles, createBundle, destroyBundle } from "./cache.js";
+import { bundles, createBundle, destroyBundle, clearStationTextureCaches } from "./cache.js";
 import { LIGHT_DIRS, TAU, type Station } from "./shared.js";
 
 export function syncPixiStations(now: number, sys: System): void {
@@ -46,3 +48,13 @@ export function syncPixiStations(now: number, sys: System): void {
     if (!activeIds.has(id)) destroyBundle(id);
   }
 }
+
+export const stationsRenderer: RenderSubsystem = {
+  name: "stations",
+  sync: (ctx) => {
+    syncPixiStations(ctx.now, ctx.sys);
+  },
+  destroy: clearStationTextureCaches,
+  modes: [AppMode.SPACE],
+  order: 70,
+};

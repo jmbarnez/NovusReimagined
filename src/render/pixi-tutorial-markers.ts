@@ -1,3 +1,5 @@
+import type { RenderSubsystem } from "./lifecycle.js";
+import { AppMode } from "../state.js";
 import { Graphics } from "pixi.js";
 import { getState } from "../state-access.js";
 import { effectLayer, worldContainer } from "../pixi.js";
@@ -104,3 +106,14 @@ export function destroyPixiTutorialMarkers() {
   _gatePulseGfx = null;
   _lastStep = -1;
 }
+
+
+export const tutorialMarkersRenderer: RenderSubsystem = {
+  name: "tutorialMarkers",
+  sync: (ctx) => {
+    syncPixiTutorialMarkers(ctx.now, ctx.sys);
+  },
+  destroy: destroyPixiTutorialMarkers,
+  modes: [AppMode.SPACE],
+  order: 330,
+};

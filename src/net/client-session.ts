@@ -481,7 +481,6 @@ export class GameClient {
         sfxBlip(p.x ?? 880, p.y ?? 0.06);
         break;
       case "gateBoostParticles": {
-        console.log("[GameClient] received gateBoostParticles effect", p);
         const gateX = p.x ?? 0;
         const gateY = p.y ?? 0;
         const gateAngle = p.angle ?? 0;
@@ -509,7 +508,6 @@ export class GameClient {
             r: 1 + random() * 1,
           });
         }
-        console.log("[GameClient] spawned " + getState().particles.length + " total particles");
         break;
       }
       default:

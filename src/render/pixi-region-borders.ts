@@ -1,3 +1,5 @@
+import type { RenderSubsystem } from "./lifecycle.js";
+import { AppMode } from "../state.js";
 import { Graphics } from "pixi.js";
 import { getState } from "../state-access.js";
 import { effectLayer } from "../pixi.js";
@@ -73,3 +75,14 @@ export function destroyPixiRegionBorders(): void {
   _regionGfx?.destroy();
   _regionGfx = null;
 }
+
+
+export const regionBordersRenderer: RenderSubsystem = {
+  name: "regionBorders",
+  sync: (ctx) => {
+    syncPixiRegionBorders(ctx.now);
+  },
+  destroy: destroyPixiRegionBorders,
+  modes: [AppMode.SPACE],
+  order: 370,
+};
