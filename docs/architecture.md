@@ -99,9 +99,8 @@ src/
   game-loop.ts        Game loop entry point
   input/              Input handling system (bindings, core, mouse)
   input-hotkeys.ts    Input hotkey handling
-  loot/               Loot generation system
+  loot/               Module generation (loot drops, affixes, rarity)
   main.ts             Application entry point
-  map-discovery.ts    Map discovery system
   net/                Networking layer (client, session, interpolation, prediction, snapshot apply)
   physics/            Fixed-timestep simulation (ship, npcs, projectiles, collision)
   physics.ts          Physics entry point
@@ -120,6 +119,7 @@ src/
   state/              State management with modular accessors
   state-access.ts     State access barrel re-export
   state.ts            Global state definition
+  state/actions/      Server-authoritative action handlers (economy, crafting, missions, inventory)
   targeting/          Targeting system (assignment, locks, lookup, ranges)
   tractor.ts          Tractor beam system
   tutorial/           Tutorial system with modular step data, logic, and UI overlay
@@ -128,9 +128,13 @@ src/
                       ui/                Tutorial UI overlay (card, cutout, dimmer, highlights, visuals)
   types/              Shared structural interfaces (entities, world, lock state)
   ui/                 DOM-based overlays (station, bridge, inventory, settings)
-  ui/tutorial/        Tutorial UI overlay system
+  ui/tutorial/        Tutorial UI overlay system (compatibility shims)
   utils/              Pure utilities (math, spatial grid, FX helpers, camera, entities)
   world/              World generation and population
+                      galaxy-build.ts    Galaxy construction and sector layout
+                      hidden-sites.ts    Hidden site management and discovery
+                      map-discovery.ts   Map discovery, sector/local region visibility
+                      system-populate.ts System population (enemies, asteroids, stations)
   world-gen.ts        World generation entry point
   wreck/              Wreck system (collection, pieces, salvage, spawn)
   worker/             Off-main-thread workers (e.g. ticker)
@@ -187,6 +191,71 @@ Tutorial visual presentation:
 - **Bypass support**: Players can skip tutorial sections if they already have the required skills/loadout
 - **Snapshot state**: Tutorial progress is persisted in `TutorialSnapshot` (separate from `G.P.tutorialSnapshot`)
 - **Tour phases**: Complex UI tours (HUD, hangar, refinery) are broken into phases with panels
+
+## State Actions System (`src/state/actions/`)
+
+Server-authoritative action handlers that validate and execute player-initiated operations.
+These actions are called by `sim/commands.ts` handlers and must use state accessors to mutate state.
+
+### Economy Actions (`economy.ts`)
+
+- **`repairShipAction`** — Repair hull, structure, shield, and module durability
+- **`buyModuleAction`** — Purchase a module from station market
+- **`sellModuleAction`** — Sell an unfitted module to station market
+- **`buyAmmunitionAction`** — Purchase hybrid or missile ammunition
+- **`sellCargoResourceAction`** — Sell ore, loot, or components
+- **`setHomeSystemAction`** — Set current system as home for respawn
+
+### Crafting Actions (`crafting.ts`)
+
+- **`queueIndustryJobAction`** — Queue a refinery/hub processing job
+- **`tickIndustryQueue`** — Process industry queue on server tick
+- **`cancelIndustryJobAction`** — Cancel a queued industry job
+- **`buyBlueprintAction`** — Purchase a blueprint for crafting
+
+### Mission Actions (`missions.ts`)
+
+- **`acceptContractAction`** — Accept a station contract
+- **`acceptContractProposalAction`** — Accept a contract proposal from mission system
+- **`turnInContractAction`** — Turn in a completed contract
+- **`abandonContractAction`** — Abandon an active contract
+
+### Inventory Actions (`inventory.ts`)
+
+- **`fitModuleAction`** — Fit a module to a ship slot
+- **`unfitModuleAction`** — Remove a module from a ship slot
+- **`swapModuleAction`** — Swap modules between slots
+- **`jettisonItemAction`** — Jettison cargo/modules into space
+
+## World Generation System (`src/world/`)
+
+World construction and population subsystems.
+
+### Galaxy Construction (`galaxy-build.ts`)
+
+- Builds the galaxy structure with concentric sectors
+- Places warp gates between sectors
+- Configures sector security levels and connections
+
+### Hidden Sites (`hidden-sites.ts`)
+
+- Manages hidden site discovery and lifecycle
+- Handles site state transitions (hidden → resolved → cleared)
+- Spawns site-specific content (enemies, loot)
+
+### Map Discovery (`map-discovery.ts`)
+
+- **Sector discovery**: Track which concentric sectors are discovered
+- **Local region discovery**: Track POIs within sectors (mining belts, combat zones)
+- **Scan-based discovery**: Reveal regions via scanner cone
+- **Map bounds**: Compute visible map bounds based on discovered content
+- **Waypoint validation**: Ensure waypoints are only set in allowed areas
+
+### System Population (`system-populate.ts`)
+
+- Populates systems with asteroids, enemies, and stations
+- Generates appropriate content based on sector security
+- Handles respawn logic for dynamic entities
 
 ## State Access Rules
 
