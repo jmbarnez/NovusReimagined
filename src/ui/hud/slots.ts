@@ -136,7 +136,7 @@ export function rebuildSlots(ship: ShipDef) {
       setText(rackLabel, `${rack[0]}${idx + 1}`);
       append(el, rackLabel);
 
-      const name = ct(rcommon.dasha)teElement("div", "sl-name empty");
+      const name = createElement("div", "sl-name empty");
       setText(name, "—");
       append(el, name);
 
