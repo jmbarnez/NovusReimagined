@@ -29,6 +29,7 @@ import { tickTutorial } from "../tutorial/index.js";
 import { on } from "../events.js";
 import { transitionTo } from "../ui/transition-manager.js";
 import { drawFrame } from "./render-pass.js";
+import { refreshBackground } from "../render/pixi-background.js";
 import { dismissLoadingScreen } from "../ui/boot-screen/boot-screen-phases.js";
 import {
   gameClient,
@@ -272,6 +273,10 @@ export async function enterSpaceMode(opts: EnterSpaceModeOptions = {}) {
 
     transitionTo(AppMode.SPACE);
     Client.gameStarted = true;
+
+    // Force background re-initialization so nebula uniforms are re-applied
+    // after the renderer has had at least one frame to warm up.
+    refreshBackground();
 
     if (!hudState.logEntries) initHudOverlay();
     flushNetLogPending();

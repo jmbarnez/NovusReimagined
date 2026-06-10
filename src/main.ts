@@ -11,7 +11,7 @@ import { initHudOverlay } from "./ui/hud-overlay.js";
 import { initBackgroundStars } from "./render/background.js";
 import { initPixi, renderPixi, resizePixi, entityLayer, effectLayer, stationLayer } from "./pixi.js";
 import { onWindowResize } from "./ui/dom-helpers.js";
-import { initPixiBackground, updatePixiBackground } from "./render/pixi-background.js";
+import { initPixiBackground, updatePixiBackground, refreshBackground } from "./render/pixi-background.js";
 import { initPixiParticles } from "./render/pixi-particles.js";
 import { initPixiEntities } from "./render/enemy/index.js";
 import { initPixiPlayer } from "./render/player/index.js";
@@ -81,6 +81,9 @@ async function boot() {
       updatePixiBackground(performance.now(), 0, 0);
       if (stationLayer) initPixiCelestial(stationLayer, sys);
       renderPixi();
+      // Defer full nebula init to the first game-loop frame; some GPU drivers
+      // need at least one render before filter uniforms are fully applied.
+      refreshBackground();
     }
 
     // Reveal page and switch straight to title screen — skip loading UI during boot
