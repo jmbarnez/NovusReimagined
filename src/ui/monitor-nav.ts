@@ -51,15 +51,18 @@ export function pushMonitorMenu(html: string, onReady: (container: HTMLElement) 
   // Bind inline back buttons
   setTimeout(() => {
     const monitor = query(".monitor-center .monitor-content");
-    if (monitor) {
-      monitor.querySelectorAll("[data-menu-back]").forEach((btn) => {
-        onClick(btn, () => {
-          sfxBlip();
-          triggerRestore();
-        });
-      });
-    }
+    if (monitor) bindBackButtons(monitor);
   }, 0);
 
   return restore;
+}
+
+/** Bind back buttons inside a container to the global restore callback. */
+export function bindBackButtons(container: HTMLElement): void {
+  container.querySelectorAll("[data-menu-back]").forEach((btn) => {
+    onClick(btn, () => {
+      sfxBlip();
+      triggerRestore();
+    });
+  });
 }

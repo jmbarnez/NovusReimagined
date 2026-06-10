@@ -314,7 +314,7 @@ export function sanitizeInputFrame(value: unknown): InputFrame | null {
     mouseWorld,
     waypoint,
     navCommand: sanitizeNavCommand(value.navCommand),
-    movementControlMode: value.movementControlMode === "direct" ? "direct" : "waypoint",
+    movementControlMode: value.movementControlMode === "waypoint" ? "waypoint" : "direct",
     actions: sanitizeActions(value.actions),
   };
 }

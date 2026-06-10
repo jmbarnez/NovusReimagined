@@ -289,7 +289,7 @@ export function loadPlayer(): Player {
     p.structureHitAngle = 0;
     p.targetLock = null;
 
-    if (p.saveVersion === CURRENT_SAVE_VERSION) return p;
+
 
     if (!p.fitting) p.fitting = defaultFitting(p.shipId);
     migrateLegacyHardpointFit(p);

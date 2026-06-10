@@ -68,12 +68,22 @@ function bakeTexture(): Texture {
 export function initPixiParticles(): void {
   if (!app || !effectLayer) return;
 
+  // Clean up any orphaned container from HMR or prior destroyPixi()
+  for (let i = effectLayer.children.length - 1; i >= 0; i--) {
+    const child = effectLayer.children[i];
+    if (child.label === "particles") {
+      effectLayer.removeChild(child);
+      child.destroy({ children: true });
+    }
+  }
+
   _tex = bakeTexture();
 
   _container = new Container();
   _container.label = "particles";
   effectLayer.addChild(_container);
 
+  _pool = [];
   for (let i = 0; i < POOL_SIZE; i++) {
     const s = new Sprite(_tex);
     s.anchor.set(0.5);
@@ -88,7 +98,10 @@ export function initPixiParticles(): void {
  * after physics has already updated particle positions and pruned dead ones.
  */
 export function syncPixiParticles(): void {
-  if (!_container) return;
+  if (!_container || !_container.parent) {
+    initPixiParticles();
+    if (!_container) return;
+  }
 
   const particles = getState().particles;
   const half = TEX_SIZE / 2;

@@ -52,7 +52,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "boost-try",
     title: t("tutorial.step.boostTry.title"),
-    highlight: "#hud-status-bars",
+    highlight: "#hud-boost-status",
     objective: () => t("tutorial.step.boostTry.objective", { boostKey: tutorialKeyStyled("engineBoost") }),
     zone: { x: 0, y: 0, r: 0 },
     beaconColor: 0x55aaff,

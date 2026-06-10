@@ -87,6 +87,7 @@ function makeDeferred<T>(): { promise: Promise<T>; resolve: (value: T) => void; 
 async function flushMicrotasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+  await new Promise((r) => setTimeout(r, 10));
 }
 
 describe("profile Continue loading gate", () => {

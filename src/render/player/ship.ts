@@ -46,14 +46,27 @@ export function destroyRemotePlayerSprites(): void {
   _remotePlayerSprites.clear();
 }
 
+function removeOrphanedPlayerSprites(): void {
+  if (!entityLayer) return;
+  for (let i = entityLayer.children.length - 1; i >= 0; i--) {
+    const child = entityLayer.children[i];
+    if (child.label === "player-hull" || child.label === "player-light") {
+      entityLayer.removeChild(child);
+      child.destroy();
+    }
+  }
+}
+
 export function buildPlayerSprites(shipId: string) {
   if (!entityLayer) return;
+  removeOrphanedPlayerSprites();
   destroyPlayerSprites();
 
   _hullSprite = new Sprite(getShipTexture(shipId));
   _hullSprite.anchor.set(0.5);
   _hullSprite.scale.set(HULL_SCALE);
   _hullSprite.visible = false;
+  _hullSprite.label = "player-hull";
   entityLayer.addChild(_hullSprite);
 
   // Directional light overlay — sits directly above the hull, additive blend.
@@ -64,6 +77,7 @@ export function buildPlayerSprites(shipId: string) {
   _hullLightSprite.blendMode = "add";
   _hullLightSprite.alpha = 0.7;
   _hullLightSprite.visible = false;
+  _hullLightSprite.label = "player-light";
   entityLayer.addChild(_hullLightSprite);
 
   _currentShipId = shipId;
@@ -172,7 +186,12 @@ function syncRemotePlayers(alpha: number, now: number): void {
 }
 
 export function syncPixiPlayer(alpha: number, now: number): void {
-  if (!_hullSprite || !getState().player) return;
+  if (!getState().player) return;
+
+  if (!_hullSprite || !_hullSprite.parent) {
+    buildPlayerSprites(getState().player.shipId);
+    if (!_hullSprite) return;
+  }
 
   if (getState().player.shipId !== _currentShipId) {
     buildPlayerSprites(getState().player.shipId);

@@ -225,7 +225,7 @@ export class GameServer {
             mouseWorld: { x: 0, y: 0 },
             waypoint: null,
             navCommand: null,
-            movementControlMode: "waypoint",
+            movementControlMode: session.playerState.movementControlMode ?? "direct",
             actions: staleActions,
           },
           session.playerState,

@@ -379,6 +379,11 @@
   right: calc(var(--hud-minimap-w) + 6px) !important;
 }
 
+#hud-boost-status.hud-highlight {
+  outline: 2px solid var(--hud-accent) !important;
+  outline-offset: 3px !important;
+}
+
 @keyframes hudTutorialPulse {
   0%, 100% {
     box-shadow:
