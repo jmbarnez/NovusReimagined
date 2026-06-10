@@ -9,7 +9,8 @@ import { clearSensorLocks } from "../targeting.js";
 import { floatText } from "../utils/fx.js";
 import { t } from "../utils/i18n.js";
 import { populateSystem } from "../world-gen.js";
-
+import { stationLayer } from "../pixi.js";
+import { initPixiCelestial, destroyPixiCelestial } from "../render/celestial/index.js";
 import type { Gate } from "../types/world.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { C } from "../config/index.js";
@@ -78,6 +79,8 @@ export function warpTo(gate: Gate, p: Player = getState().player) {
     }
     if (p === getState().player) {
       emit("sector:crossed", { toIdx: gate.targetSysIdx });
+      destroyPixiCelestial();
+      if (targetSys && stationLayer) initPixiCelestial(stationLayer, targetSys);
     }
   }
   if (p === getState().player) {

@@ -12,8 +12,6 @@
  */
 import { Container, ImageSource, Sprite, Texture } from "pixi.js";
 import { getState } from "../state-access.js";
-import { AppMode } from "../state.js";
-import type { RenderSubsystem } from "./lifecycle.js";
 import { app, effectLayer, pixiDpr } from "../pixi.js";
 
 const POOL_SIZE = 512;
@@ -113,11 +111,3 @@ export function syncPixiParticles(): void {
     if (s.tint !== hex) s.tint = hex;
   }
 }
-
-export const particlesRenderer: RenderSubsystem = {
-  name: "particles",
-  init: initPixiParticles,
-  sync: syncPixiParticles,
-  modes: [AppMode.SPACE],
-  order: 50,
-};

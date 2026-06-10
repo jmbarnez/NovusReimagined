@@ -1,14 +1,12 @@
 /**
  * PixiJS Hit Effects & Lock Brackets Renderer.
- *
+ * 
  * Migrates ship shield ripple waves, hull impact sparks, and targeting brackets to PixiJS:
  * - Ship Lock Brackets: Draws red/orange/yellow brackets around targets under active scanning/locks.
  * - Shield Impact Ripples: Dynamic concentric expanding circular rings originating from the hit contact angle.
  * - Hull sparks: Fiery sparks and dispersing debris particle lines when projectiles strike hulls.
  */
 import { Container, Graphics } from "pixi.js";
-import { AppMode } from "../state.js";
-import type { RenderSubsystem } from "./lifecycle.js";
 import { getState } from "../state-access.js";
 import type { System, LockSlot } from "../types/world.js";
 import { lerp } from "../utils/math.js";
@@ -20,14 +18,11 @@ import { effectLayer } from "../pixi.js";
 let _hitGfx: Graphics | null = null;
 const _lockMap = new Map<string, LockSlot>();
 
-export function initPixiHitEffects(parent?: Container): void {
+export function initPixiHitEffects(parent: Container): void {
   destroyPixiHitEffects();
 
-  const layer = parent ?? effectLayer;
-  if (!layer) return;
-
   _hitGfx = new Graphics();
-  layer.addChild(_hitGfx);
+  parent.addChild(_hitGfx);
 }
 
 export function syncPixiHitEffects(now: number, alpha: number, sys: System): void {
@@ -89,14 +84,3 @@ export function destroyPixiHitEffects(): void {
     _hitGfx = null;
   }
 }
-
-export const hitEffectsRenderer: RenderSubsystem = {
-  name: "hitEffects",
-  init: initPixiHitEffects,
-  sync: (ctx) => {
-    syncPixiHitEffects(ctx.now, ctx.alpha, ctx.sys);
-  },
-  destroy: destroyPixiHitEffects,
-  modes: [AppMode.SPACE],
-  order: 170,
-};

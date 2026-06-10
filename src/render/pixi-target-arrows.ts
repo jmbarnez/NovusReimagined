@@ -4,9 +4,8 @@
  * Migrates Canvas 2D target arrows and tutorial guide arrows to PixiJS.
  * Includes enemy lock arrows, asteroid lock arrows, and tutorial guide arrows.
  */
-import type { RenderSubsystem } from "./lifecycle.js";
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
-import { Client, AppMode } from "../state.js";;
+import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import { hudOverlayLayer } from "../pixi.js";
 import { LOCK_RAIL_H, HUD_BOTTOM_H } from "../constants.js";
@@ -310,25 +309,3 @@ export function destroyPixiTargetArrows(): void {
   arrowsContainer.destroy();
   arrowsContainer = null;
 }
-
-
-export const targetArrowsRenderer: RenderSubsystem = {
-  name: "targetArrows",
-  sync: (ctx) => {
-    syncPixiTargetArrows(ctx.width, ctx.height, ctx.camxR, ctx.camyR, ctx.now);
-  },
-  destroy: destroyPixiTargetArrows,
-  modes: [AppMode.SPACE],
-  order: 320,
-};
-
-
-export const tutorialGuideArrowRenderer: RenderSubsystem = {
-  name: "tutorialGuideArrow",
-  sync: (ctx) => {
-    if (ctx.tutorialActive) syncPixiTutorialGuideArrow(ctx.width, ctx.height, ctx.camxR, ctx.camyR, ctx.now);
-  },
-  destroy: () => {},
-  modes: [AppMode.SPACE],
-  order: 360,
-};

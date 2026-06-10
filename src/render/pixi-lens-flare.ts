@@ -1,6 +1,5 @@
 import { Graphics } from "pixi.js";
-import { AppMode, Client } from "../state.js";
-import type { RenderSubsystem } from "./lifecycle.js";
+import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import { screenContainer, worldContainer } from "../pixi.js";
 import { getSunWorldPos } from "../utils/sun-position.js";
@@ -86,14 +85,3 @@ export function destroyPixiLensFlare(): void {
   lensGfx?.destroy();
   lensGfx = null;
 }
-
-
-export const lensFlareRenderer: RenderSubsystem = {
-  name: "lensFlare",
-  sync: (ctx) => {
-    syncPixiLensFlare(ctx.width, ctx.height);
-  },
-  destroy: destroyPixiLensFlare,
-  modes: [AppMode.SPACE],
-  order: 200,
-};

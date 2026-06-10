@@ -4,10 +4,9 @@
  * Replaces Canvas 2D minimap with GPU-accelerated PixiJS version.
  * Minimap renders to its own dedicated canvas element in the DOM.
  */
-import type { RenderSubsystem } from "./lifecycle.js";
 import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
 import { getState } from "../state-access.js";
-import { Client, AppMode } from "../state.js";;
+import { Client } from "../state.js";
 import { TAU, HUD_MINIMAP_SIZE } from "../constants.js";
 import { dst } from "../utils/math.js";
 import { curSys, liveEnemies, liveAsteroids } from "../utils/game.js";
@@ -411,14 +410,3 @@ export function syncPixiMinimap(now: number): void {
 
   mmApp.render();
 }
-
-
-export const minimapRenderer: RenderSubsystem = {
-  name: "minimap",
-  sync: (ctx) => {
-    syncPixiMinimap(ctx.now);
-  },
-  destroy: destroyPixiMinimap,
-  modes: [AppMode.SPACE],
-  order: 290,
-};

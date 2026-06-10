@@ -1,8 +1,7 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { app, effectLayer, screenContainer, worldContainer } from "../pixi.js";
 import { getState } from "../state-access.js";
-import { AppMode, Client } from "../state.js";
-import type { RenderSubsystem } from "./lifecycle.js";
+import { Client } from "../state.js";
 import { isVisible } from "../utils/game.js";
 import { getUIFont } from "./ui-font.js";
 import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
@@ -260,15 +259,3 @@ export function destroyPixiEffectsOverlay(): void {
   overlayLayer?.destroy({ children: false });
   overlayLayer = null;
 }
-
-export const effectsOverlayRenderer: RenderSubsystem = {
-  name: "effectsOverlay",
-  sync: (ctx) => {
-    syncPixiShockwaves();
-    syncPixiFloatTexts();
-    syncPixiWorldBorder(ctx.now);
-  },
-  destroy: destroyPixiEffectsOverlay,
-  modes: [AppMode.SPACE],
-  order: 230,
-};

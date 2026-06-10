@@ -2,11 +2,10 @@
  * Chat bubble and typing indicator overlays above player ships.
  * Pools Text objects to avoid per-frame GC allocations.
  */
-import type { RenderSubsystem } from "./lifecycle.js";
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { app, screenContainer, worldContainer, effectLayer } from "../pixi.js";
 import { getState } from "../state-access.js";
-import { Client, AppMode } from "../state.js";;
+import { Client } from "../state.js";
 import { isVisible } from "../utils/game.js";
 import { getUIFont } from "./ui-font.js";
 import { viewCenterX, viewCenterY, viewportW, viewportH } from "./viewport.js";
@@ -250,14 +249,3 @@ export function destroyPixiChatBubbles(): void {
   bubbleLayer?.destroy({ children: false });
   bubbleLayer = null;
 }
-
-
-export const chatBubblesRenderer: RenderSubsystem = {
-  name: "chatBubbles",
-  sync: (ctx) => {
-    syncPixiChatBubbles(ctx.now);
-  },
-  destroy: destroyPixiChatBubbles,
-  modes: [AppMode.SPACE],
-  order: 250,
-};

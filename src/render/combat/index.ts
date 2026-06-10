@@ -1,31 +1,25 @@
 import { Container, Graphics } from "pixi.js";
-import { AppMode } from "../../state.js";
-import type { RenderSubsystem } from "../lifecycle.js";
 import { syncBullets } from "./bullets.js";
 import { syncBeams } from "./beams.js";
 import { setUtilityGraphics, syncUtilityBeams } from "./utility.js";
 import type { System } from "../../types/world.js";
-import { entityLayer } from "../../pixi.js";
 
 let _bulletGfx: Graphics | null = null;
 let _beamGfx: Graphics | null = null;
 let _utilityGfx: Graphics | null = null;
 
-export function initPixiCombat(parent?: Container): void {
+export function initPixiCombat(parent: Container): void {
   destroyPixiCombat();
 
-  const layer = parent ?? entityLayer;
-  if (!layer) return;
-
   _bulletGfx = new Graphics();
-  layer.addChild(_bulletGfx);
+  parent.addChild(_bulletGfx);
 
   _beamGfx = new Graphics();
-  layer.addChild(_beamGfx);
+  parent.addChild(_beamGfx);
 
   _utilityGfx = new Graphics();
-  layer.addChild(_utilityGfx);
-
+  parent.addChild(_utilityGfx);
+  
   setUtilityGraphics(_utilityGfx);
 }
 
@@ -44,14 +38,3 @@ export function destroyPixiCombat(): void {
 }
 
 export { syncBullets, syncBeams, setUtilityGraphics, syncUtilityBeams };
-
-export const combatRenderer: RenderSubsystem = {
-  name: "combat",
-  init: initPixiCombat,
-  sync: (ctx) => {
-    syncPixiCombat(ctx.now, ctx.alpha, ctx.sys);
-  },
-  destroy: destroyPixiCombat,
-  modes: [AppMode.SPACE],
-  order: 140,
-};

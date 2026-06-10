@@ -1,13 +1,12 @@
 import { Sprite, Texture, Filter, UniformGroup } from "pixi.js";
 import { defaultFilterVert } from "pixi.js";
-import { AppMode, Client } from "../state.js";
+import { Client, AppMode } from "../state.js";
 import { getState } from "../state-access.js";
-import type { RenderSubsystem } from "./lifecycle.js";
 
 import { app } from "../pixi.js";
 
 // Fragment: screen-space directional border flashes reactive to damage direction.
-// Draws a subtle neutral vignette, overlaying thin colored screen-edge flashes
+// Draws a subtle neutral vignette, overlaying thin colored screen-edge flashes 
 // corresponding to active shield, hull, or structure damage direction.
 const FRAG = `#version 300 es
 precision mediump float;
@@ -26,49 +25,49 @@ out vec4 fragColor;
 
 float getBorderIntensity(vec2 c, float hitAngle, float hitGlow, float borderWidth) {
   if (hitGlow < 0.001) return 0.0;
-
+  
   float distToEdge = min(1.0 - abs(c.x), 1.0 - abs(c.y));
   if (distToEdge > borderWidth) return 0.0;
-
+  
   float borderFactor = smoothstep(borderWidth, 0.0, distToEdge);
-
+  
   float pixelAngle = atan(c.y, c.x);
   float angleDiff = abs(pixelAngle - hitAngle);
   if (angleDiff > 3.14159265) {
     angleDiff = 6.2831853 - angleDiff;
   }
-
+  
   float angleFactor = smoothstep(1.2, 0.0, angleDiff);
-
+  
   return borderFactor * angleFactor * hitGlow;
 }
 
 void main() {
   vec2 c = vTextureCoord * 2.0 - 1.0;
-
+  
   // 1. Subtle neutral dark vignette to frame the game
   float d = length(c);
   float baseVig = smoothstep(0.600, 0.950, d);
   float neutralAlpha = baseVig * 0.15;
-
+  
   // 2. Compute border flashes
   // Border width is 0.04 (4% of screen coords [-1, 1], so 2% of screen width/height)
-  float borderWidth = 0.04;
+  float borderWidth = 0.04; 
   float shieldIntensity = getBorderIntensity(c, uShieldAngle, uShieldGlow, borderWidth);
   float hullIntensity   = getBorderIntensity(c, uHullAngle, uHullGlow, borderWidth);
   float structIntensity = getBorderIntensity(c, uStructureAngle, uStructureGlow, borderWidth);
-
+  
   vec3 shieldColor = vec3(0.27, 0.80, 1.0) * shieldIntensity;
   vec3 hullColor   = vec3(0.93, 0.60, 0.27) * hullIntensity;
   vec3 structColor = vec3(0.93, 0.11, 0.11) * structIntensity;
-
+  
   vec3 flashColor = shieldColor + hullColor + structColor;
   float flashAlpha = max(shieldIntensity, max(hullIntensity, structIntensity)) * 0.85;
-
+  
   // 3. Composite flash on top of neutral dark vignette (premultiplied blending)
   vec3 finalRgb = flashColor; // Neutral color is (0,0,0) so neutralColor * (1.0 - flashAlpha) is 0
   float finalAlpha = flashAlpha + neutralAlpha * (1.0 - flashAlpha);
-
+  
   fragColor = vec4(finalRgb, finalAlpha);
 }
 `;
@@ -150,12 +149,3 @@ export function destroyVignette() {
   if (_sprite) { _sprite.destroy(); _sprite = null; }
   _ug = null;
 }
-
-export const vignetteRenderer: RenderSubsystem = {
-  name: "vignette",
-  init: initVignette,
-  sync: updateVignette,
-  destroy: destroyVignette,
-  modes: [AppMode.TITLE, AppMode.SPACE],
-  order: 20,
-};

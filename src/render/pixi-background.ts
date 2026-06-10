@@ -1,7 +1,6 @@
 import { getState } from "../state-access.js";
-import { AppMode, Client } from "../state.js";
+import { Client } from "../state.js";
 import type { System, Star, DustParticle } from "../types/world.js";
-import type { RenderSubsystem } from "./lifecycle.js";
 import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
 import { viewportW, viewportH } from "./viewport.js";
 import { TAU } from "../constants.js";
@@ -217,7 +216,7 @@ function updateStarLayer(
     child.x = sx; child.y = sy;
     child.alpha = Math.min(1, s.a * 0.80 * twinkle);
     if (s.hue !== undefined) {
-      const h = s.hue;
+      const h = ((s.hue + 360) % 360);
       const r = Math.round(255 * (0.85 + 0.15 * Math.cos((h - 30)  * TAU / 360)));
       const g = Math.round(255 * (0.85 + 0.15 * Math.cos((h - 150) * TAU / 360)));
       const b = Math.round(255 * (0.85 + 0.15 * Math.cos((h - 270) * TAU / 360)));
@@ -249,15 +248,3 @@ function updateDustLayer(
 
 export const initPixiBackground  = initBackground;
 export const updatePixiBackground = updateBackground;
-
-function syncBackground(ctx: import("./lifecycle.js").SyncContext): void {
-  updateBackground(ctx.now, ctx.camxR, ctx.camyR);
-}
-
-export const backgroundRenderer: RenderSubsystem = {
-  name: "background",
-  init: initBackground,
-  sync: syncBackground,
-  modes: [AppMode.TITLE, AppMode.SPACE],
-  order: 0,
-};

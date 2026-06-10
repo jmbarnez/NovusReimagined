@@ -1,5 +1,3 @@
-import type { RenderSubsystem } from "./lifecycle.js";
-import { AppMode } from "../state.js";
 import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
 import type { Planet, System } from "../types/world.js";
 import { TAU } from "../constants.js";
@@ -161,13 +159,3 @@ export function destroyPlanetSprites() {
   _sprites     = [];
   _moonEntries = [];
 }
-
-
-export const planetsRenderer: RenderSubsystem = {
-  name: "planets",
-  sync: (ctx) => {
-    syncPixiPlanets(ctx.now);
-  },
-  modes: [AppMode.SPACE],
-  order: 60,
-};

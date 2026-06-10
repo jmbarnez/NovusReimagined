@@ -1,5 +1,3 @@
-import type { RenderSubsystem } from "./lifecycle.js";
-import { AppMode } from "../state.js";
 import { Graphics } from "pixi.js";
 import { getState } from "../state-access.js";
 import { effectLayer } from "../pixi.js";
@@ -166,14 +164,3 @@ export function drawTutorialTracksOnMap(
   }
   g.stroke({ color: 0x55aaff, width: 2, alpha: 0.6 });
 }
-
-
-export const tutorialTrackRenderer: RenderSubsystem = {
-  name: "tutorialTrack",
-  sync: (ctx) => {
-    syncPixiTutorialTrack(ctx.now);
-  },
-  destroy: destroyPixiTutorialTrack,
-  modes: [AppMode.SPACE],
-  order: 340,
-};

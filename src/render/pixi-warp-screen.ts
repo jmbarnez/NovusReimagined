@@ -5,9 +5,8 @@
  * Renders into the screen-space container so the effect sits in front of
  * the playable world, mimicking the pre-migration on-screen overlay.
  */
-import type { RenderSubsystem } from "./lifecycle.js";
 import { Container, Graphics, Text } from "pixi.js";
-import { Client, AppMode } from "../state.js";;
+import { Client } from "../state.js";
 import { screenContainer } from "../pixi.js";
 import { getState } from "../state-access.js";
 import { TAU } from "../constants.js";
@@ -241,14 +240,3 @@ export function destroyPixiWarpScreen(): void {
   destText = null;
   secText = null;
 }
-
-
-export const warpScreenRenderer: RenderSubsystem = {
-  name: "warpScreen",
-  sync: (ctx) => {
-    syncPixiWarpScreen(ctx.now);
-  },
-  destroy: destroyPixiWarpScreen,
-  modes: [AppMode.SPACE],
-  order: 300,
-};
