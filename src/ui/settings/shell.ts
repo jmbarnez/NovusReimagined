@@ -40,6 +40,17 @@ export function settingsContentHTML(): string {
           <span class="settings-tip-icon" data-tip-impact="HIGH" data-tip-desc="${t("settings.tip.renderScale")}">ⓘ</span>
         </div>
         <div class="settings-row">
+          <label>${t("settings.bloom")}</label>
+          <input type="range" id="bloom-intensity" min="0.0" max="2.0" step="0.1" value="1.0">
+          <span id="bloom-intensity-val" class="settings-val">1.0x</span>
+          <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="${t("settings.tip.bloom")}">ⓘ</span>
+        </div>
+        <div class="settings-row">
+          <label>${t("settings.background")}</label>
+          <div id="detail-buttons" style="display:flex;gap:6px;"></div>
+          <span class="settings-tip-icon" data-tip-impact="MEDIUM" data-tip-desc="${t("settings.tip.background")}">ⓘ</span>
+        </div>
+        <div class="settings-row">
           <label>FPS</label>
           <select id="fps-limit" class="settings-select">
             <option value="0">Unlimited</option>
@@ -51,17 +62,6 @@ export function settingsContentHTML(): string {
             <option value="240">240 FPS</option>
           </select>
           <span class="settings-tip-icon" data-tip-impact="NONE" data-tip-desc="Limits render frames only. Simulation remains fixed-tick.">ⓘ</span>
-        </div>
-        <div class="settings-row">
-          <label>${t("settings.bloom")}</label>
-          <input type="range" id="bloom-intensity" min="0.0" max="2.0" step="0.1" value="1.0">
-          <span id="bloom-intensity-val" class="settings-val">1.0x</span>
-          <span class="settings-tip-icon" data-tip-impact="LOW" data-tip-desc="${t("settings.tip.bloom")}">ⓘ</span>
-        </div>
-        <div class="settings-row">
-          <label>${t("settings.background")}</label>
-          <div id="detail-buttons" style="display:flex;gap:6px;"></div>
-          <span class="settings-tip-icon" data-tip-impact="MEDIUM" data-tip-desc="${t("settings.tip.background")}">ⓘ</span>
         </div>
         <div class="settings-row settings-toggle-row">
           <label>${t("settings.vignette")}</label>
