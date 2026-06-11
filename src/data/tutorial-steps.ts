@@ -131,7 +131,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-academy",
     title: t("tutorial.step.flyAcademy.title"),
-    highlight: "#hud-missions",
+
     objective: () => t("tutorial.step.flyAcademy.objective", {
       mapKey: tutorialKeyStyled("map"),
       forwardKey: tutorialKeyStyled("forwardThrust"),
@@ -186,7 +186,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-mining",
     title: t("tutorial.step.flyMining.title"),
-    highlight: "#hud-missions",
+
     objective: () => t("tutorial.step.flyMining.objective", { bar1Key: tutorialBarKeyStyled(0), bar2Key: tutorialBarKeyStyled(1) }),
     zone: tutorialRegionZone("fly-mining"),
     beaconColor: 0x88ccff,
@@ -331,7 +331,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-gunnery",
     title: t("tutorial.step.flyGunnery.title"),
-    highlight: "#hud-missions",
+
     objective: () => t("tutorial.step.flyGunnery.objective", { bar1Key: tutorialBarKeyStyled(0), bar2Key: tutorialBarKeyStyled(1) }),
     zone: tutorialRegionZone("fly-gunnery"),
     beaconColor: 0xff8866,
@@ -370,7 +370,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-gate",
     title: t("tutorial.step.flyGate.title"),
-    highlight: "#hud-missions",
+
     objective: () => t("tutorial.step.flyGate.objective"),
     zone: tutorialRegionZone("fly-gate"),
     beaconColor: 0xffffff,

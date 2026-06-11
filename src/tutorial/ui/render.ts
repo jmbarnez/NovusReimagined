@@ -1,3 +1,4 @@
+import { Client } from "../../state.js";
 import { getCurrentTutorialStep, getTutorialNavProgress, getTutorialNavRemainingM, getTutorialStepObjective, TUTORIAL_STEP_COUNT } from "../data/helpers.js";
 import { getTutorialSnapshot, isCurrentStepComplete, canAdvanceTour } from "../logic/index.js";
 import { getState } from "../../state-access.js";
@@ -10,6 +11,19 @@ import { setText, setHtml, setStyle, toggleClass } from "../../ui/dom-helpers.js
 
 function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>>) {
   const snapshot = getTutorialSnapshot();
+  // Station tours only show while docked and incomplete
+  const tourComplete = step.tour?.completeKey ? snapshot[step.tour.completeKey] === true : false;
+  if (step.tour && (!Client.stationOpen || tourComplete)) {
+    if (tutorialState.tourLabelEl) {
+      setText(tutorialState.tourLabelEl, "");
+      setStyle(tutorialState.tourLabelEl, { display: "none" });
+    }
+    if (tutorialState.tourBodyEl) {
+      setText(tutorialState.tourBodyEl, "");
+      setStyle(tutorialState.tourBodyEl, { display: "none" });
+    }
+    return;
+  }
   const tour = getTourPanel(step, snapshot);
   if (tutorialState.tourLabelEl) {
     if (tour) {
