@@ -2,10 +2,6 @@
 
 A space simulation game built with TypeScript, PixiJS, and Tauri.
 
-## Overview
-
-Novus is a server-authoritative space simulation featuring real-time combat, mining, salvaging, and exploration. The game uses a modular architecture with strict state management boundaries to ensure clean separation between simulation, rendering, and UI.
-
 ## Tech Stack
 
 - **TypeScript** — Type-safe game logic
