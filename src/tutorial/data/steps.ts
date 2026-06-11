@@ -23,7 +23,6 @@ import {
   hasBypassedGunnery,
 } from "./bypass.js";
 import {
-  HUD_TOUR_PHASES,
   HANGAR_REVIEW_TOUR,
   HANGAR_COMBAT_SWAP_TOUR,
   REFINERY_TOUR,
@@ -32,21 +31,23 @@ import { isZoneStepComplete } from "./helpers.js";
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    id: "hud-tour",
-    title: t("tutorial.step.hudTour.title"),
-    objective: (snapshot) => {
-      const phase = typeof snapshot?.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-      return t("tutorial.step.hudTour.objective", { n: phase + 1, total: HUD_TOUR_PHASES.length });
-    },
+    id: "piloting-choice",
+    title: t("tutorial.step.pilotingChoice.title"),
+    objective: () => t("tutorial.step.pilotingChoice.objective", {
+      forwardKey: tutorialKeyStyled("forwardThrust"),
+      reverseKey: tutorialKeyStyled("reverseThrust"),
+      leftKey: tutorialKeyStyled("turnLeft"),
+      rightKey: tutorialKeyStyled("turnRight"),
+      settingsKey: tutorialKeyStyled("settings"),
+    }),
     zone: { x: 0, y: 0, r: 0 },
     beaconColor: 0x55aaff,
-    tour: { phases: HUD_TOUR_PHASES, phaseKey: "hudTourPhase", completeKey: "hudTourComplete" },
+    noDimmer: true,
     onEnter(ctx) {
-      ctx.snapshot.hudTourPhase = 0;
-      ctx.snapshot.hudTourComplete = false;
+      ctx.snapshot.pilotingTried = false;
     },
     isComplete(ctx) {
-      return ctx.snapshot.hudTourComplete === true;
+      return ctx.snapshot.pilotingTried === true;
     },
   },
   {

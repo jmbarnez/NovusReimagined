@@ -14,19 +14,7 @@ import { setHudHighlight, clearHudHighlight } from "./highlights.js";
 import { syncDimmerVisibility } from "./dimmer.js";
 import { getElement, query, setStyle, toggleClass } from "../../ui/dom-helpers.js";
 
-function canHighlightHudMissions(stepId?: string): boolean {
-  return stepId === "hud-tour";
-}
-
-function resolveTarget(selector: string, stepId?: string): HTMLElement | null {
-  if (selector === "#hud-missions") {
-    if (!canHighlightHudMissions(stepId)) {
-      return null;
-    }
-    if (Client.stationOpen) {
-      return getElement("hangar-missions-panel");
-    }
-  }
+function resolveTarget(selector: string): HTMLElement | null {
   return query(selector);
 }
 
@@ -92,7 +80,7 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
     if (panel) {
       selector = panel.target;
       tab = panel.tab;
-      target = resolveTarget(selector, step.id);
+      target = resolveTarget(selector);
       isStation = Client.stationOpen && !!tab;
       if (isStation && tab && !isTabActive(tab)) {
         activateStationTab(tab as StationTabId);
@@ -100,7 +88,7 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
     }
   } else if (step.highlight) {
     selector = step.highlight;
-    target = resolveTarget(selector, step.id);
+    target = resolveTarget(selector);
     isStation = Client.stationOpen && !!getElement("station-overlay")?.contains(target);
   }
 

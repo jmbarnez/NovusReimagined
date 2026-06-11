@@ -63,7 +63,6 @@ export function initTutorialOverlay(active: boolean) {
     on("ui:close-overlays", () => renderStep());
     on("tutorial:hangar-tour-change", () => renderStep());
     on("tutorial:refinery-tour-change", () => renderStep());
-    on("tutorial:hud-tour-change", () => renderStep());
     on("tutorial:complete", () => showCompleteBanner());
     on("tutorial:skip", () => hideTutorialOverlay());
     on("station:open", () => renderStep());

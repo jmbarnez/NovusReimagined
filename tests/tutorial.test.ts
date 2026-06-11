@@ -90,10 +90,10 @@ function nextAnimationFrame(): Promise<void> {
 }
 
 describe("tutorial step list", () => {
-  it("has fourteen steps with hangar fitting legs before mining and gunnery", () => {
-    expect(TUTORIAL_STEP_COUNT).toBe(14);
+  it("has thirteen steps with hangar fitting legs before mining and gunnery", () => {
+    expect(TUTORIAL_STEP_COUNT).toBe(13);
     expect(TUTORIAL_STEPS.map((s) => s.id)).toEqual([
-      "hud-tour",
+
       "boost-try",
       "fly-academy",
       "hangar-high",
@@ -807,45 +807,8 @@ describe("hud tutorial dimmer cleanup", () => {
     G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === id);
   }
 
-  it("highlights missions only during the HUD tour", () => {
-    setStep("hud-tour");
-    syncTutorialVisuals({ hudTourPhase: 5 });
 
-    const missions = document.getElementById("hud-missions")!;
-    expect(missions.classList.contains("hud-highlight")).toBe(true);
-    const dimmer = document.getElementById("hud-tour-dimmer");
-    expect(dimmer?.classList.contains("hidden")).toBe(false);
-  });
-
-  it("clears the HUD dimmer and mission highlight after the tour", () => {
-    setStep("hud-tour");
-    syncTutorialVisuals({ hudTourPhase: 0 });
-    const dimmer = document.getElementById("hud-tour-dimmer")!;
-    expect(dimmer.classList.contains("hidden")).toBe(false);
-
-    setStep("fly-academy");
-    syncTutorialVisuals({});
-
-    const missions = document.getElementById("hud-missions")!;
-    expect(missions.classList.contains("hud-highlight")).toBe(false);
-    expect(dimmer.classList.contains("hidden")).toBe(true);
-  });
-
-  it("ignores stale hud highlights when hudTourComplete is true", () => {
-    setStep("hud-tour");
-    const missions = document.getElementById("hud-missions")!;
-    missions.classList.add("hud-highlight");
-
-    const snapshot = getTutorialSnapshot();
-    snapshot.hudTourComplete = true;
-
-    expect(getActiveTutorialHighlight()).toBeNull();
-    syncTutorialVisuals({ hudTourPhase: 5, hudTourComplete: true });
-    const dimmer = document.getElementById("hud-tour-dimmer")!;
-    expect(dimmer.classList.contains("hidden")).toBe(true);
-  });
-
-  it("anchors the card to any highlighted element, not just hud-tour", () => {
+  it("anchors the card to any highlighted element", () => {
     setStep("boost-try");
     const statusBars = document.getElementById("hud-status-bars")!;
     statusBars.classList.add("hud-highlight");
@@ -904,3 +867,4 @@ describe("tutorial skip", () => {
     expect(saved.tutorial.skipped).toBe(true);
   });
 });
+

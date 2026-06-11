@@ -20,7 +20,7 @@ export interface TutorialStepReward {
 }
 
 export const TUTORIAL_STEP_REWARDS: Record<string, TutorialStepReward> = {
-  "hud-tour":         { credits: 0,   skillId: "engineering", skillXp: 0 },
+  "piloting-choice":  { credits: 0,  skillId: "engineering", skillXp: 0 },
   "boost-try":        { credits: 100, skillId: "engineering", skillXp: 0 },
   "fly-academy":      { credits: 150, skillId: "engineering", skillXp: 0 },
   "hangar-high":      { credits: 200, skillId: "engineering", skillXp: 0 },

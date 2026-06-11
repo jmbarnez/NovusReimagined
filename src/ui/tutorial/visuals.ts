@@ -5,28 +5,16 @@ import { Client } from "../../state.js";
 import { tutorialState } from "./state.js";
 import { activateStationTab, type StationTabId } from "../station/tabs.js";
 import { stationState } from "../station/shared.js";
+import { syncDimmerVisibility } from "./dimmer.js";
 import {
   setActiveHighlight,
   syncStationDimmerCutout,
   resetStationDimmer,
 } from "./tutorial-dimmer.js";
 import { setHudHighlight, clearHudHighlight } from "./highlights.js";
-import { syncDimmerVisibility } from "./dimmer.js";
 import { getElement, query, setStyle, toggleClass } from "../dom-helpers.js";
 
-function canHighlightHudMissions(stepId?: string): boolean {
-  return stepId === "hud-tour";
-}
-
-function resolveTarget(selector: string, stepId?: string): HTMLElement | null {
-  if (selector === "#hud-missions") {
-    if (!canHighlightHudMissions(stepId)) {
-      return null;
-    }
-    if (Client.stationOpen) {
-      return getElement("hangar-missions-panel");
-    }
-  }
+function resolveTarget(selector: string): HTMLElement | null {
   return query(selector);
 }
 
@@ -76,12 +64,10 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
 
   const snapshot = overrideSnapshot ?? getTutorialSnapshot();
 
-  // Side effect: ensure industry rail tab is set for refinery tutorial
   if (step.id === "industry" && Client.stationOpen) {
     stationState.indRailTab = "queue";
   }
 
-  // Determine target and context
   let target: HTMLElement | null = null;
   let selector = "";
   let tab: string | undefined;
@@ -94,7 +80,7 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
     if (panel) {
       selector = panel.target;
       tab = panel.tab;
-      target = resolveTarget(selector, step.id);
+      target = resolveTarget(selector);
       isStation = Client.stationOpen && !!tab;
       if (isStation && tab && !isTabActive(tab)) {
         activateStationTab(tab as StationTabId);
@@ -102,14 +88,13 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
     }
   } else if (step.highlight) {
     selector = step.highlight;
-    target = resolveTarget(selector, step.id);
+    target = resolveTarget(selector);
     isStation = Client.stationOpen && !!getElement("station-overlay")?.contains(target);
   }
 
   if (isStation) {
     syncStationVisuals(target);
     clearHudHighlight();
-    // Ensure HUD dimmer is hidden when station visuals are active
     const hudDimmer = tutorialState._hudDimmerEl;
     if (hudDimmer) {
       toggleClass(hudDimmer, "hidden", true);

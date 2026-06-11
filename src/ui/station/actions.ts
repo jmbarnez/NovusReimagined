@@ -5,6 +5,8 @@ import { queueFrameAction } from "../../sim/input.js";
 import { stationState } from "./shared.js";
 import { renderMarket } from "./market.js";
 import { getElement } from "../dom-helpers.js";
+import { getCurrentTutorialStep } from "../../data/tutorial.js";
+import { getTutorialSnapshot } from "../../tutorial/index.js";
 
 export type StationActionHandler = (btn: HTMLElement) => void;
 
@@ -15,8 +17,18 @@ function getRackAndIndex(btn: HTMLElement): { rack: "turret" | "high" | "med" | 
   };
 }
 
+function canUndockFromTutorial(): boolean {
+  const step = getCurrentTutorialStep(getState().player);
+  if (!step || step.id !== "industry") return true;
+  const snapshot = getTutorialSnapshot();
+  if (snapshot.refineryGuideComplete === true) return true;
+  sfxError();
+  return false;
+}
+
 export const stationActionHandlers: Record<string, StationActionHandler> = {
   undock: () => {
+    if (!canUndockFromTutorial()) return;
     sfxBlip();
     queueFrameAction({ type: "undock" });
     closeStationUi();

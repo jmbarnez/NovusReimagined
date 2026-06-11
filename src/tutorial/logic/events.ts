@@ -5,6 +5,7 @@ import { getCurrentTutorialStep, isStationHangarTabActive } from "../data/helper
 import { snapshot, setTutorialEventsBound, tutorialEventsBound } from "./snapshot.js";
 import { nowSec } from "./context.js";
 import { beginHangarReviewTour, markHangarStepComplete } from "./hangar.js";
+import { clearTutorialVisuals } from "../ui/visuals.js";
 
 export function bindTutorialEvents(): void {
   if (tutorialEventsBound) return;
@@ -41,5 +42,6 @@ export function bindTutorialEvents(): void {
     }
     snapshot.hangarTabActive = false;
     markHangarStepComplete(stepId === "hangar-turrets");
+    clearTutorialVisuals();
   });
 }

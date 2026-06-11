@@ -2,8 +2,6 @@ export {
   initTutorial,
   isCurrentStepComplete,
   getTutorialSnapshot,
-  canAdvanceHudTour,
-  advanceHudTour,
   canAdvanceRefineryTour,
   advanceRefineryTutorialPanel,
   canAdvanceTour,

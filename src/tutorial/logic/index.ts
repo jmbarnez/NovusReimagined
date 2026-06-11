@@ -9,8 +9,6 @@ export {
 } from "./lifecycle.js";
 export { tickTutorial } from "./tick.js";
 export {
-  canAdvanceHudTour,
-  advanceHudTour,
   canAdvanceRefineryTour,
   advanceRefineryTutorialPanel,
   canAdvanceTour,

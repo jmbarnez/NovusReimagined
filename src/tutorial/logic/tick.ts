@@ -22,6 +22,14 @@ export function tickTutorial(_dt: number) {
     snapshot.zoneReached = true;
   }
 
+  if (step.id === "piloting-choice") {
+    const moved = Client.keys["w"] || Client.keys["a"] || Client.keys["s"] || Client.keys["d"];
+    const waypointSet = Client.waypoint !== null;
+    if (moved || waypointSet) {
+      snapshot.pilotingTried = true;
+    }
+  }
+
   if (step.id === "boost-try") {
     if (Client.keys["boost"]) {
       snapshot.boostUsed = true;

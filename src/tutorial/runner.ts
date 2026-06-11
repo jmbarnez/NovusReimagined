@@ -83,24 +83,6 @@ export function getTutorialSnapshot(): Record<string, unknown> {
   return snapshot;
 }
 
-export function canAdvanceHudTour(): boolean {
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step || step.id !== "hud-tour") return false;
-  const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-  return phase < 5;
-}
-
-export function advanceHudTour(): void {
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step || !canAdvanceHudTour()) return;
-  const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-  snapshot.hudTourPhase = phase + 1;
-  if (snapshot.hudTourPhase === 5) {
-    snapshot.hudTourComplete = true;
-  }
-  emit("tutorial:hud-tour-change");
-}
-
 export function canAdvanceRefineryTour(): boolean {
   const step = getCurrentTutorialStep(getState().player);
   if (!step || step.id !== "industry" || !step.tour) return false;
@@ -131,12 +113,10 @@ export function advanceTour(): void {
   const phaseKey = step.tour.phaseKey;
   const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
   snapshot[phaseKey] = phase + 1;
-  if (step.id === "hud-tour" && step.tour.completeKey) {
+  if (step.tour.completeKey) {
     snapshot[step.tour.completeKey] = phase + 1 >= step.tour.phases.length - 1;
   }
-  // Emit step-specific event for backward compatibility with listeners
-  if (step.id === "hud-tour") emit("tutorial:hud-tour-change");
-  else if (step.id === "industry") emit("tutorial:refinery-tour-change");
+  if (step.id === "industry") emit("tutorial:refinery-tour-change");
   else emit("tutorial:hangar-tour-change");
 }
 
@@ -151,6 +131,14 @@ export function tickTutorial(_dt: number) {
 
   if (step.zone && ctx.inZone(step.zone)) {
     snapshot.zoneReached = true;
+  }
+
+  if (step.id === "piloting-choice") {
+    const moved = Client.keys["w"] || Client.keys["a"] || Client.keys["s"] || Client.keys["d"];
+    const waypointSet = Client.waypoint !== null;
+    if (moved || waypointSet) {
+      snapshot.pilotingTried = true;
+    }
   }
 
   if (step.id === "boost-try") {
@@ -299,8 +287,6 @@ export function completeTutorial(fromSkip: boolean) {
 
 export function skipTutorial() {
   const primeIdx = getNovusPrimeIdx();
-  // Mark tutorial as completed/skipped immediately so the state is persisted
-  // even if the player exits before the next server tick processes the warp.
   finalizeTutorialMission(true);
   PlayerAccess.setTutorialComplete();
   PlayerAccess.setTutorialSkipped();
@@ -318,4 +304,3 @@ export function skipTutorial() {
   logEvent(t("system.skipRequestedLog"), "system");
   floatText(getState().player.x, getState().player.y - 55, t("system.skipRequestedFloat"), "#66aaff");
 }
-

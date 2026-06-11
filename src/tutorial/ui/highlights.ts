@@ -1,15 +1,9 @@
 import { getCurrentTutorialStep } from "../data/helpers.js";
-import { getTutorialSnapshot } from "../logic/index.js";
 import { getState } from "../../state-access.js";
 import { tutorialState } from "./state.js";
 import { query, toggleClass } from "../../ui/dom-helpers.js";
 
 export function getActiveTutorialHighlight(): HTMLElement | null {
-  const step = getCurrentTutorialStep(getState().player);
-  if (step?.id === "hud-tour") {
-    const snapshot = getTutorialSnapshot();
-    if (snapshot.hudTourComplete === true) return null;
-  }
   return query(".tutorial-hangar-highlight, .hud-highlight");
 }
 

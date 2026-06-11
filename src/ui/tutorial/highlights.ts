@@ -8,14 +8,7 @@ export function getActiveTutorialHighlight(): HTMLElement | null {
 
 export function getCardAnchorHighlight(step: ReturnType<typeof getCurrentTutorialStep>): HTMLElement | null {
   if (!step) return null;
-  const highlighted = getActiveTutorialHighlight();
-  if (!highlighted) return null;
-  if (highlighted.classList.contains("tutorial-hangar-highlight")) return highlighted;
-  if (highlighted.classList.contains("hud-highlight")) {
-    const hudAnchoredSteps = new Set(["hud-tour"]);
-    return hudAnchoredSteps.has(step.id) ? highlighted : null;
-  }
-  return null;
+  return getActiveTutorialHighlight();
 }
 
 export function setHudHighlight(target: Element | null): void {

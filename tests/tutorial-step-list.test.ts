@@ -6,7 +6,7 @@ describe("tutorial step list", () => {
   it("has fourteen steps with hangar fitting legs before mining and gunnery", () => {
     expect(TUTORIAL_STEP_COUNT).toBe(14);
     expect(TUTORIAL_STEPS.map((s) => s.id)).toEqual([
-      "hud-tour",
+      "piloting-choice",
       "boost-try",
       "fly-academy",
       "hangar-high",

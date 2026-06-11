@@ -8,24 +8,6 @@ function hangarTourPhaseKey(stepId: string): string {
   return stepId === "hangar-turrets" ? "hangarCombatPhase" : "hangarReviewPhase";
 }
 
-export function canAdvanceHudTour(): boolean {
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step || step.id !== "hud-tour") return false;
-  const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-  return phase < 5;
-}
-
-export function advanceHudTour(): void {
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step || !canAdvanceHudTour()) return;
-  const phase = typeof snapshot.hudTourPhase === "number" ? snapshot.hudTourPhase : 0;
-  snapshot.hudTourPhase = phase + 1;
-  if (snapshot.hudTourPhase === 5) {
-    snapshot.hudTourComplete = true;
-  }
-  emit("tutorial:hud-tour-change");
-}
-
 export function canAdvanceRefineryTour(): boolean {
   const step = getCurrentTutorialStep(getState().player);
   if (!step || step.id !== "industry" || !step.tour) return false;
@@ -65,11 +47,10 @@ export function advanceTour(): void {
   const phaseKey = step.tour.phaseKey;
   const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
   snapshot[phaseKey] = phase + 1;
-  if (step.id === "hud-tour" && step.tour.completeKey) {
+  if (step.tour.completeKey) {
     snapshot[step.tour.completeKey] = phase + 1 >= step.tour.phases.length - 1;
   }
-  if (step.id === "hud-tour") emit("tutorial:hud-tour-change");
-  else if (step.id === "industry") emit("tutorial:refinery-tour-change");
+  if (step.id === "industry") emit("tutorial:refinery-tour-change");
   else emit("tutorial:hangar-tour-change");
 }
 

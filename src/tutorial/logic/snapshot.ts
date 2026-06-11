@@ -2,8 +2,7 @@
  *  Typed fields are known keys; index signature preserves dynamic access for tour phase keys.
  */
 export interface TutorialSnapshot extends Record<string, unknown> {
-  hudTourPhase?: number;
-  hudTourComplete?: boolean;
+  pilotingTried?: boolean;
   boostUsed?: boolean;
   zoneReached?: boolean;
   visitedZones?: string[];
