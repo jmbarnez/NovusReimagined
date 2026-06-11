@@ -1,5 +1,0 @@
-
-> novus@0.2.0 typecheck
-> tsc --noEmit 
-
-error TS5112: tsconfig.json is present but will not be loaded if files are specified on commandline. Use '--ignoreConfig' to skip this error.
