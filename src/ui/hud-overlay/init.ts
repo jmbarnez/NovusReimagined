@@ -78,8 +78,8 @@ export function initHudOverlay() {
       <div id="hud-log-header" class="hud-dock-header">
         <span class="hud-dock-title">${t("hud.commsLog")}</span>
         <span style="flex:1"></span>
-        <button type="button" class="eve-win-btn hud-log-minimize" aria-label="Minimize" tabindex="-1">−</button>
-        <button type="button" class="eve-win-btn hud-log-popout" aria-label="Pop out" tabindex="-1">↗</button>
+        <button type="button" class="win-btn hud-log-minimize" aria-label="Minimize" tabindex="-1">−</button>
+        <button type="button" class="win-btn hud-log-popout" aria-label="Pop out" tabindex="-1">↗</button>
       </div>
       <div id="hud-log-body">
         <div id="hud-log-entries"></div>
