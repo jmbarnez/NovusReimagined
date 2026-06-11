@@ -1,20 +1,14 @@
 /* ── Status Bars ── */
 #hud-status-bars {
   display: flex;
-  gap: 3px;
-  padding: 2px 4px;
   align-items: center;
+  padding: 2px 4px;
+  gap: 1px;
 }
 .hud-bar-group {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 2px;
-}
-.hud-bar-label {
-  font-size: calc(5.5px * var(--effective-font-scale, 1)); font-weight: 700;
-  color: var(--hud-text-dim);
-  min-width: 16px;
 }
 .hud-bar-track {
   flex: 1;
