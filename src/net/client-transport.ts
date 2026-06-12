@@ -1,6 +1,7 @@
 import type { Player } from "../state.js";
 import type { InputFrame } from "../sim/input.js";
 import { getPilotDisplayName } from "../player/player-data.js";
+import { encodeNetMessage } from "./codec.js";
 
 export function resolveSocketUrl(url: string): string {
   if (url.startsWith("ws://") || url.startsWith("wss://")) return url;
@@ -12,7 +13,8 @@ function sendWorkerMessage(worker: Worker, type: string, payload: Record<string,
 }
 
 function sendSocketMessage(socket: WebSocket, type: string, payload: Record<string, unknown>) {
-  socket.send(JSON.stringify({ type, payload }));
+  const encoded = encodeNetMessage({ type, payload });
+  socket.send(encoded as unknown as Parameters<WebSocket["send"]>[0]);
 }
 
 export function sendConnectToWorker(worker: Worker, clientId: string, characterData: Player) {

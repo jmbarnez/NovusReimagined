@@ -33,8 +33,9 @@ describe("authoritative command validation", () => {
     executeGameCommand({ type: "fitModule", payload: { rack: "high", slotIdx: 0, instanceId: "start-tu-civ-cannon" } }, p);
     expect(p.fitting.high[0]).toBe("start-tu-civ-cannon");
 
+    const originalMed0 = p.fitting.med[0];
     executeGameCommand({ type: "fitModule", payload: { rack: "med", slotIdx: 0, instanceId: "start-hi-comms" } }, p);
-    expect(p.fitting.med[0]).toBeNull();
+    expect(p.fitting.med[0]).toBe(originalMed0);
   });
 
   it("does not silently simulate an unregistered local singleton", () => {

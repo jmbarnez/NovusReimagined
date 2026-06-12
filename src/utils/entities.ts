@@ -4,28 +4,58 @@
  * and destroyed through these helpers — never by direct array push/splice.
  *
  * Every entity receives a unique numeric ID for network sync and debugging.
+ *
+ * High-churn types (bullets, particles, beams, etc.) use object pooling via
+ * src/utils/pool.ts to eliminate per-spawn GC pressure.
  */
 import { getState } from "../state-access.js";
 import type { Player } from "../state.js";
 import type { DamageProfile, WeaponDelivery } from "../data/modules.js";
 import type { Enemy, WreckPiece, SalvagePickup } from "../types/world.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
+import { createPool } from "./pool.js";
 
 let _nextId = 1;
 function generateId(): number { return _nextId++; }
 
+// ── Object pools for high-churn ephemeral entities ───────────────────────────
+
+const bulletPool = createPool<Bullet>(2048);
+const enemyBulletPool = createPool<EnemyBullet>(1024);
+const beamPool = createPool<Beam>(512);
+const particlePool = createPool<Particle>(4096);
+const shockwavePool = createPool<Shockwave>(256);
+const floatTextPool = createPool<FloatText>(512);
+const trailPool = createPool<Trail>(2048);
+const impactDecalPool = createPool<ImpactDecal>(512);
+
+/** Exposed for tests that assert pool reuse. */
+export function _getBulletPoolSize(): number { return bulletPool.size(); }
+export function _getEnemyBulletPoolSize(): number { return enemyBulletPool.size(); }
+export function _getParticlePoolSize(): number { return particlePool.size(); }
+
 export function clearSimulationEntities() {
+  bulletPool.releaseAll(getState().bullets);
   getState().bullets.length = 0;
+  enemyBulletPool.releaseAll(getState().enemyBullets);
   getState().enemyBullets.length = 0;
+  beamPool.releaseAll(getState().beams);
   getState().beams.length = 0;
+  particlePool.releaseAll(getState().particles);
   getState().particles.length = 0;
+  shockwavePool.releaseAll(getState().shockwaves);
   getState().shockwaves.length = 0;
+  floatTextPool.releaseAll(getState().floatTexts);
   getState().floatTexts.length = 0;
+  trailPool.releaseAll(getState().trails);
   getState().trails.length = 0;
   getState().wreckPieces.length = 0;
   getState().salvagePickups.length = 0;
+  impactDecalPool.releaseAll(getState().impactDecals);
   getState().impactDecals.length = 0;
 }
+
+// ── Bullets ────────────────────────────────────────────────────────────────
 
 /**
  * Bullets are fired by the player, enemies, and station turrets — owner
@@ -61,8 +91,34 @@ export interface Bullet {
 
 export function addBullet(data: Omit<Bullet, "id" | "hitChance"> & { id?: number; hitChance?: number }) {
   const { id, hitChance = 1, ...rest } = data;
-  getState().bullets.push({ id: id ?? generateId(), hitChance, age: 0, ...rest });
+  const b = bulletPool.acquire();
+  b.id = id ?? generateId();
+  b.hitChance = hitChance;
+  b.age = 0;
+  b.x = rest.x;
+  b.y = rest.y;
+  b.px = rest.px;
+  b.py = rest.py;
+  b.vx = rest.vx;
+  b.vy = rest.vy;
+  b.life = rest.life;
+  b.dmg = rest.dmg;
+  b.color = rest.color;
+  b.sz = rest.sz;
+  b.trail = rest.trail;
+  b.owner = rest.owner;
+  b.kind = rest.kind;
+  b.weaponId = rest.weaponId;
+  // Reset optional fields to prevent stale values from pooled reuse
+  b.targetId = rest.targetId ?? null;
+  b.homingTurnRate = rest.homingTurnRate;
+  b.accel = rest.accel;
+  b.maxSpeed = rest.maxSpeed;
+  b.dmgProfile = rest.dmgProfile;
+  getState().bullets.push(b);
 }
+
+// ── Enemy Bullets ──────────────────────────────────────────────────────────
 
 export interface EnemyBullet {
   id: number;
@@ -85,8 +141,28 @@ export interface EnemyBullet {
 
 export function addEnemyBullet(data: Omit<EnemyBullet, "id"> & { id?: number }) {
   const { id, ...rest } = data;
-  getState().enemyBullets.push({ id: id ?? generateId(), age: 0, ...rest });
+  const b = enemyBulletPool.acquire();
+  b.id = id ?? generateId();
+  b.age = 0;
+  b.x = rest.x;
+  b.y = rest.y;
+  b.px = rest.px;
+  b.py = rest.py;
+  b.vx = rest.vx;
+  b.vy = rest.vy;
+  b.life = rest.life;
+  b.dmg = rest.dmg;
+  b.color = rest.color;
+  b.sz = rest.sz;
+  b.trail = rest.trail;
+  // Reset optional fields
+  b.ownerFaction = rest.ownerFaction;
+  b.ownerId = rest.ownerId;
+  b.kind = rest.kind;
+  getState().enemyBullets.push(b);
 }
+
+// ── Beams ──────────────────────────────────────────────────────────────────
 
 export interface Beam {
   id: number;
@@ -100,8 +176,17 @@ export interface Beam {
 }
 
 export function addBeam({ x1, y1, x2, y2, color, width, life }: Omit<Beam, "id">) {
-  getState().beams.push({ id: generateId(), x1, y1, x2, y2, color, width, life });
+  const b = beamPool.acquire();
+  b.id = generateId();
+  b.x1 = x1; b.y1 = y1;
+  b.x2 = x2; b.y2 = y2;
+  b.color = color;
+  b.width = width;
+  b.life = life;
+  getState().beams.push(b);
 }
+
+// ── Particles ──────────────────────────────────────────────────────────────
 
 export interface Particle {
   id: number;
@@ -119,8 +204,16 @@ export interface Particle {
 export type ParticleConfig = Omit<Particle, "id">;
 
 export function addParticle(p: ParticleConfig) {
-  getState().particles.push({ id: generateId(), ...p });
+  const pt = particlePool.acquire();
+  pt.id = generateId();
+  pt.x = p.x; pt.y = p.y; pt.color = p.color;
+  pt.vx = p.vx; pt.vy = p.vy;
+  pt.r = p.r; pt.life = p.life;
+  pt.drag = p.drag; pt.decay = p.decay;
+  getState().particles.push(pt);
 }
+
+// ── Float Texts ────────────────────────────────────────────────────────────
 
 export interface FloatText {
   id: number;
@@ -136,8 +229,15 @@ export interface FloatText {
 export type FloatTextConfig = Omit<FloatText, "id">;
 
 export function addFloatText(ft: FloatTextConfig) {
-  getState().floatTexts.push({ id: generateId(), ...ft });
+  const f = floatTextPool.acquire();
+  f.id = generateId();
+  f.x = ft.x; f.y = ft.y; f.text = ft.text;
+  f.color = ft.color; f.bgColor = ft.bgColor;
+  f.life = ft.life; f.vy = ft.vy;
+  getState().floatTexts.push(f);
 }
+
+// ── Wreck Pieces & Salvage (not pooled — lower churn) ──────────────────────
 
 export type WreckPieceConfig = Partial<WreckPiece> & { x: number; y: number };
 
@@ -161,6 +261,8 @@ export function removeSalvagePickup(index: number) {
   getState().salvagePickups.splice(index, 1);
 }
 
+// ── Tick-and-cull helper ───────────────────────────────────────────────────
+
 /**
  * Iterates a list in reverse, calls perTick for each item, and splices out
  * items when perTick returns true. Reverse iteration keeps splice indices valid.
@@ -175,6 +277,8 @@ export function tickAndCull<T>(
     if (perTick(list[i], dt, i) === true) remove(i);
   }
 }
+
+// ── Shockwaves ─────────────────────────────────────────────────────────────
 
 export interface Shockwave {
   id: number;
@@ -198,8 +302,19 @@ export interface ShockwaveConfig {
 }
 
 export function addShockwave({ x, y, maxRadius, life, color, width }: ShockwaveConfig) {
-  getState().shockwaves.push({ id: generateId(), x, y, maxRadius, radius: 0, life, maxLife: life, color, width });
+  const s = shockwavePool.acquire();
+  s.id = generateId();
+  s.x = x; s.y = y;
+  s.maxRadius = maxRadius;
+  s.radius = 0;
+  s.life = life;
+  s.maxLife = life;
+  s.color = color;
+  s.width = width;
+  getState().shockwaves.push(s);
 }
+
+// ── Trails ─────────────────────────────────────────────────────────────────
 
 export interface Trail {
   id: number;
@@ -226,71 +341,133 @@ export interface TrailConfig {
 }
 
 export function addTrailSegment({ x, y, color, width, length, life = 1.0, angle, boost }: TrailConfig) {
-  getState().trails.push({ id: generateId(), x, y, color, width, length, life, maxLife: life, angle, boost });
+  const t = trailPool.acquire();
+  t.id = generateId();
+  t.x = x; t.y = y;
+  t.color = color; t.width = width;
+  t.length = length;
+  t.life = life; t.maxLife = life;
+  t.angle = angle; t.boost = boost;
+  getState().trails.push(t);
 }
 
+// ── Removal helpers (swap-and-pop + pool release) ──────────────────────────
+
 export function removeBullet(index: number) {
-  getState().bullets.splice(index, 1);
+  const arr = getState().bullets;
+  const lastIdx = arr.length - 1;
+  const dead = arr[index];
+  if (index < lastIdx) {
+    arr[index] = arr[lastIdx]!;
+  }
+  arr.length--;
+  bulletPool.release(dead);
 }
 
 export function removeEnemyBullet(index: number) {
-  getState().enemyBullets.splice(index, 1);
+  const arr = getState().enemyBullets;
+  const lastIdx = arr.length - 1;
+  const dead = arr[index];
+  if (index < lastIdx) {
+    arr[index] = arr[lastIdx]!;
+  }
+  arr.length--;
+  enemyBulletPool.release(dead);
 }
+
+// ── Update helpers (swap-and-pop compaction + pool release) ────────────────
 
 export function updateBeams(dt: number) {
   let w = 0;
-  for (let i = 0; i < getState().beams.length; i++) {
-    const b = getState().beams[i];
+  const arr = getState().beams;
+  for (let i = 0; i < arr.length; i++) {
+    const b = arr[i];
     b.life -= dt * 3;
-    if (b.life > 0) getState().beams[w++] = b;
+    if (b.life > 0) {
+      arr[w++] = b;
+    } else {
+      beamPool.release(b);
+    }
   }
-  getState().beams.length = w;
+  arr.length = w;
 }
 
 export function updateParticles(dt: number) {
   let w = 0;
-  for (let i = 0; i < getState().particles.length; i++) {
-    const p = getState().particles[i];
+  const arr = getState().particles;
+  for (let i = 0; i < arr.length; i++) {
+    const p = arr[i];
     p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt;
     const drag = p.drag ?? 0.96;
     p.vx = (p.vx || 0) * drag; p.vy = (p.vy || 0) * drag;
     p.life = (p.life ?? 0) - dt * (p.decay || 1.0);
-    if (p.life > 0) getState().particles[w++] = p;
+    if (p.life > 0) {
+      arr[w++] = p;
+    } else {
+      particlePool.release(p);
+    }
   }
-  getState().particles.length = w;
+  arr.length = w;
 }
 
 export function updateShockwaves(dt: number) {
   let w = 0;
-  for (let i = 0; i < getState().shockwaves.length; i++) {
-    const s = getState().shockwaves[i];
+  const arr = getState().shockwaves;
+  for (let i = 0; i < arr.length; i++) {
+    const s = arr[i];
     const progress = 1 - s.life / s.maxLife;
     s.radius = s.maxRadius * progress;
     s.life -= dt;
-    if (s.life > 0) getState().shockwaves[w++] = s;
+    if (s.life > 0) {
+      arr[w++] = s;
+    } else {
+      shockwavePool.release(s);
+    }
   }
-  getState().shockwaves.length = w;
+  arr.length = w;
 }
 
 export function updateFloatTexts(dt: number) {
   let w = 0;
-  for (let i = 0; i < getState().floatTexts.length; i++) {
-    const f = getState().floatTexts[i];
+  const arr = getState().floatTexts;
+  for (let i = 0; i < arr.length; i++) {
+    const f = arr[i];
     f.y -= 20 * dt;
     f.life = (f.life ?? 0) - dt;
-    if (f.life > 0) getState().floatTexts[w++] = f;
+    if (f.life > 0) {
+      arr[w++] = f;
+    } else {
+      floatTextPool.release(f);
+    }
   }
-  getState().floatTexts.length = w;
+  arr.length = w;
 }
 
 export function updateTrails(dt: number) {
   let w = 0;
-  for (let i = 0; i < getState().trails.length; i++) {
-    const t = getState().trails[i];
+  const arr = getState().trails;
+  for (let i = 0; i < arr.length; i++) {
+    const t = arr[i];
     t.life -= dt;
-    if (t.life > 0) getState().trails[w++] = t;
+    if (t.life > 0) {
+      arr[w++] = t;
+    } else {
+      trailPool.release(t);
+    }
   }
-  getState().trails.length = w;
+  arr.length = w;
+}
+
+// ── Impact Decals ──────────────────────────────────────────────────────────
+
+export interface ImpactDecal {
+  id: number;
+  x: number;
+  y: number;
+  poly: number[][];
+  color: string;
+  life: number;
+  maxLife: number;
 }
 
 export interface ImpactDecalConfig {
@@ -303,11 +480,25 @@ export interface ImpactDecalConfig {
 }
 
 export function addImpactDecal(cfg: ImpactDecalConfig) {
-  getState().impactDecals.push({ id: generateId(), ...cfg });
+  const d = impactDecalPool.acquire();
+  d.id = generateId();
+  d.x = cfg.x; d.y = cfg.y;
+  d.poly = cfg.poly;
+  d.color = cfg.color;
+  d.life = cfg.life;
+  d.maxLife = cfg.maxLife;
+  getState().impactDecals.push(d);
 }
 
 export function removeImpactDecal(index: number) {
-  getState().impactDecals.splice(index, 1);
+  const arr = getState().impactDecals;
+  const lastIdx = arr.length - 1;
+  const dead = arr[index];
+  if (index < lastIdx) {
+    arr[index] = arr[lastIdx]!;
+  }
+  arr.length--;
+  impactDecalPool.release(dead);
 }
 
 /** True when a lockable target (enemy/asteroid/wreck) is gone. Respects the

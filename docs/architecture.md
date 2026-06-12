@@ -105,6 +105,7 @@ src/
                         client.ts           Main client connection and message routing
                         client-session.ts   Session orchestrator (connection, handshake, disconnect)
                         client-transport.ts Transport abstraction (WebSocket / relay)
+                        codec.ts            Binary messagePack / JSON codec with fallback
                         game-fx-handler.ts  Game effect message handler (explosions, impacts, sounds)
                         snapshot-handler.ts Snapshot apply orchestrator
                         snapshot-apply/     Snapshot apply subsystem (local-player, remote-players, entities, projectiles, wreck-salvage)
@@ -153,7 +154,7 @@ src/
   types/              Shared structural interfaces (entities, world, lock state)
   ui/                 DOM-based overlays (station, bridge, inventory, settings)
   ui/tutorial/        Tutorial UI overlay system (compatibility shims)
-  utils/              Pure utilities (math, spatial grid, FX helpers, camera, entities)
+  utils/              Pure utilities (math, spatial grid, FX helpers, camera, entities, pool)
   world/              World generation and population
                       galaxy-build.ts    Galaxy construction and sector layout
                       hidden-sites.ts    Hidden site management and discovery
@@ -301,6 +302,81 @@ World construction and population subsystems.
 | `G.P.hubQueue`, `G.P.hubOutput`, `G.P.hubDeposit` | hub UI/HUD | `sim/commands.ts`, physics.ts | Process/smelt/collect are command-driven, ticked server-side |
 | `Client.camx/Client.camy` | render | `utils/camera.ts` | Camera update called from `physics/ship.ts` tick |
 
+## Network Serialization
+
+All WebSocket wire traffic uses `msgpackr` binary encoding through `src/net/codec.ts`.
+
+### Why msgpackr?
+- **Smaller payloads**: 20-40% smaller than JSON for snapshot/delta traffic.
+- **Faster serialization**: msgpackr is typically 2-5x faster than `JSON.stringify` for large objects.
+- **No UTF-8 overhead**: Binary frames skip the string encoding step.
+
+### Usage
+```ts
+import { encodeNetMessage, decodeNetMessage } from "./codec.js";
+
+// Send
+const bytes = encodeNetMessage({ type: "snapshot", payload: { tick, player, entities } });
+socket.send(bytes);
+
+// Receive (ArrayBuffer because binaryType = "arraybuffer")
+const envelope = decodeNetMessage(e.data);
+```
+
+### Path rules
+- **WebSocket direct** (browser ↔ server): binary msgpackr.
+- **Worker postMessage** (client ↔ server-worker): structured clone (no codec).
+- **Tauri relay** (host JS ↔ Rust bridge): JSON strings. The Rust WebSocket server (`src-tauri/src/net.rs`) currently sends/receives `Message::Text` only and the Tauri `invoke`/`emit` bridge uses `String` payloads. Full end-to-end binary on this path would require Rust-side changes to handle `Message::Binary` and pass raw bytes through the Tauri IPC layer.
+
+### Known limitations
+- The Tauri remote host path does not yet use binary WebSocket frames. This is a future optimization requiring changes to `src-tauri/src/net.rs` (handle `Message::Binary`, update `ClientEvent` payload type, and coordinate with `src/game-loop/multiplayer-host.ts`). The local single-player path is already optimal (structured clone).
+
+### Fallback
+`setUseBinaryCodec(false)` forces JSON encoding/decoding. This is useful for:
+- Debugging with network inspectors that can't read MessagePack.
+- Transition periods where the server may still send JSON.
+- Emergency rollback without reverting code.
+
+## Entity Lifecycle & Object Pooling
+
+Simulation entities with high spawn/cull rates (bullets, particles, beams, shockwaves, float texts, trails) must use object pooling.
+
+### Pool integration
+- **Creation**: `addBullet()`, `addParticle()`, etc. acquire from `ObjectPool<T>` in `src/utils/pool.ts`.
+- **Destruction**: `removeBullet()`, etc. return dead objects to their pool.
+- **Bulk clear**: `clearSimulationEntities()` releases all live objects before `arr.length = 0`.
+
+### Why pooling matters
+A single minigun volley can spawn 30+ bullets. Without pooling, that is 30+ object allocations. Over a 5-minute combat session, allocation pressure can trigger GC pauses that manifest as frame stutters. With pooling, spawn becomes a simple pop from a free list.
+
+### O(1) culling
+Reverse-iteration culling loops (e.g., `updateProjectiles`) must use swap-and-pop instead of `splice()`:
+```ts
+const dead = arr[i];
+const lastIdx = arr.length - 1;
+if (i < lastIdx) arr[i] = arr[lastIdx]!;
+arr.length--;
+pool.release(dead);
+if (i < lastIdx) i++; // process the swapped-in item
+```
+
+## Physics System Registry
+
+`src/physics.ts` delegates tick execution to a declarative `SimSystem[]` registry in `src/physics/systems.ts`.
+
+### Adding a system
+```ts
+export const SIMULATION_SYSTEMS: SimSystem[] = [
+  // ... existing systems ...
+  { id: "myFeature", category: "physics", run: updateMyFeature },
+];
+```
+
+### Benefits
+- **Discoverability**: New developers see every tick system in one list.
+- **Timing**: The registry loop can inject per-system `performance.now()` marks for the perf overlay.
+- **Testability**: Individual systems can be run in isolation by importing their `run` function.
+
 ## Internationalization (i18n)
 
 The game supports English (`en`) and Spanish (`es`). All user-facing strings must go through the translation system rather than being hardcoded.
@@ -334,5 +410,3 @@ Rules when adding or editing strings:
 - **Always add both `en` and `es` entries.** Keep the two blocks in sync (same keys, same order).
 - Use descriptive, namespaced keys: `profile.title`, `ship.offline`, `enemyMenu.orbit`.
 - For UI labels that apply to multiple contexts, prefer generic keys (e.g., `common.yes`, `common.no`) over duplicating translations.
-
-

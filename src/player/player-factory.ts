@@ -36,16 +36,17 @@ export function makePlayer(): Player {
   fit.med[0] = "start-me-ab1";
   fit.low[0] = "start-lo-dcu";
   fit.low[1] = "start-lo-battery";
-  fit.high[2] = "start-tu-civ-cannon";
-  fit.high[3] = "start-tu-civ-scanner";
+  fit.high[2] = "start-tu-civ-scanner";
+  fit.high[3] = "start-hi-comms";
   fit.med[1] = "start-me-shield";
-  fit.high[4] = "start-hi-comms";
-  fit.high[5] = "start-tu-civ-salvager";
+  // Cannon and salvager are NOT pre-fitted so tutorial hangar-turrets step
+  // can teach the player to fit them. ensurePlayerHasWeapon() adds a fallback
+  // weapon later for non-tutorial paths.
 
   return {
     shipId: 'scout',
     homeSysIdx: 0,
-    pendingHomeSpawn: false,
+    pendingHomeSpawn: true,
     x: 0, y: 0, vx: 0, vy: 0, va: 0, angle: 0, prevAngle: 0,
     px: 0, py: 0,
     hp: 100, maxHp: 100,

@@ -1,17 +1,17 @@
 /**
  * PixiJS v8 renderer.
  *
- * Layer structure (back → front):
+ * Layer structure (back -> front):
  *   pixi canvas (zIndex 0)
- *     screenContainer  — background stars/dust/nebula (screen-space, no camera)
- *     worldContainer   — all world-space content
- *       planetLayer    — baked planet sprites + animated moon graphics
- *       thrustLayer    — Phase 4+: thrust flame sprites (behind hull)
- *       entityLayer    — Phase 3+: enemies, player hull, asteroids, bullets
- *       effectLayer    — Phase 2+: particles, float texts, impact decals
- *     hudOverlayLayer  — screen-space Pixi HUD graphics rendered over the world
- *     vignetteSprite   — GPU vignette overlay (last app.stage child, over worldContainer)
- *   main canvas (zIndex 1, alpha:true) — Canvas 2D HUD + transitional world content
+ *     screenContainer  -- background stars/dust/nebula (screen-space, no camera)
+ *     worldContainer   -- all world-space content
+ *       planetLayer    -- baked planet sprites + animated moon graphics
+ *       thrustLayer    -- Phase 4+: thrust flame sprites (behind hull)
+ *       entityLayer    -- Phase 3+: enemies, player hull, asteroids, bullets
+ *       effectLayer    -- Phase 2+: particles, float texts, impact decals
+ *     hudOverlayLayer  -- screen-space Pixi HUD graphics rendered over the world
+ *     vignetteSprite   -- GPU vignette overlay (last app.stage child, over worldContainer)
+ *   main canvas (zIndex 1, alpha:true) -- Canvas 2D HUD + transitional world content
  */
 import { Application, Container, ColorMatrixFilter, Rectangle, Graphics } from "pixi.js";
 import "pixi.js/unsafe-eval";
@@ -19,6 +19,7 @@ import { Client } from "./state.js";
 import { clearShipTextureCaches, rebuildPlayerSprites } from "./render/player/index.js";
 import { clearEnemyTextureCaches } from "./render/enemy/index.js";
 import { clearStationTextureCaches } from "./render/pixi-stations.js";
+import { resizeNebulaMesh } from "./render/pixi-nebula-gpu.js";
 import { LOCK_RAIL_H } from "./constants.js";
 import { playRect, setViewportSize } from "./render/viewport.js";
 
@@ -26,11 +27,11 @@ let app: Application | null = null;
 let worldContainer: Container | null = null;
 let screenContainer: Container | null = null;
 let hudOverlayLayer: Container | null = null;
-/** Baked planet textures + animated moon Graphics — behind everything else in worldContainer. */
+/** Baked planet textures + animated moon Graphics -- behind everything else in worldContainer. */
 let planetLayer: Container | null = null;
-/** Phase 3 (background): baked stations — rendered behind thrust and entity layers. */
+/** Phase 3 (background): baked stations -- rendered behind thrust and entity layers. */
 let stationLayer: Container | null = null;
-/** Phase 4+: thrust flame sprites — rendered behind entityLayer. */
+/** Phase 4+: thrust flame sprites -- rendered behind entityLayer. */
 let thrustLayer: Container | null = null;
 /** Phase 3+: enemies, player hull, asteroids, bullets. */
 let entityLayer: Container | null = null;
@@ -39,7 +40,7 @@ let effectLayer: Container | null = null;
 /** Cinematic colour grade applied to worldContainer (attached by the background renderer). */
 let worldGradeFilter: ColorMatrixFilter | null = null;
 let _pixiReady = false;
-/** Physical pixels per CSS pixel — set during initPixi, used by texture bakers. */
+/** Physical pixels per CSS pixel -- set during initPixi, used by texture bakers. */
 let pixiDpr = 1;
 
 export { app, worldContainer, screenContainer, hudOverlayLayer, planetLayer, stationLayer, thrustLayer, entityLayer, effectLayer, worldGradeFilter, _pixiReady, pixiDpr };
@@ -70,7 +71,7 @@ export async function initPixi(): Promise<Application> {
     // Snap sprite positions to whole pixels at render time. Without this, any
     // fractional camera/world position causes texture sampling to interpolate
     // across texel boundaries, producing the "ship never looks perfectly sharp"
-    // softness even when standing still. roundPixels affects position only —
+    // softness even when standing still. roundPixels affects position only --
     // rotation stays smooth.
     roundPixels: true,
     background: "#000000",
@@ -132,7 +133,7 @@ export async function initPixi(): Promise<Application> {
   entityLayer.label = "entities";
   // Bold edge look is baked into each sprite's texture (thick dark stroke as
   // the first pass). A layer-level OutlineFilter was tried, but Pixi computes
-  // its filter render-texture from the layer's full content bounds — at low
+  // its filter render-texture from the layer's full content bounds -- at low
   // zoom that exceeds GPU texture limits and sprites get clipped.
   worldContainer.addChild(entityLayer);
 
@@ -140,7 +141,7 @@ export async function initPixi(): Promise<Application> {
   effectLayer.label = "effects";
   worldContainer.addChild(effectLayer);
 
-  // Colour-grade filter — created here, attached/detached and tuned per-system
+  // Colour-grade filter -- created here, attached/detached and tuned per-system
   // by the background renderer based on the colorGrading setting. filterArea is
   // pinned to the viewport so PixiJS skips a per-frame getBounds() on the world.
   worldGradeFilter = new ColorMatrixFilter();
@@ -158,18 +159,27 @@ export function resizePixi() {
   pixiDpr = Math.min(window.devicePixelRatio || 1, cap);
 
   const rect = playRect();
-  app.renderer.resize(rect.width, rect.height);
-  app.renderer.resolution = pixiDpr;
+  // Atomic resize: pass resolution in the same call so PixiJS updates both
+  // the backing texture size and the CSS dimensions consistently.
+  app.renderer.resize(rect.width, rect.height, pixiDpr);
   setViewportSize(rect.width, rect.height);
 
   const pixiCanvas = app.canvas as HTMLCanvasElement;
   if (pixiCanvas) {
     pixiCanvas.style.top = `${rect.top}px`;
+    // Explicit fallback: ensure CSS dimensions match the logical viewport even
+    // if autoDensity behaves unexpectedly (e.g. after a DPR change).
+    pixiCanvas.style.width = `${rect.width}px`;
+    pixiCanvas.style.height = `${rect.height}px`;
   }
 
   if (worldContainer) {
     worldContainer.filterArea = new Rectangle(0, 0, rect.width, rect.height);
   }
+
+  // Keep the GPU nebula mesh in sync so it doesn't lag one frame behind.
+  resizeNebulaMesh();
+
   // If DPR changed, invalidate all baked textures so they re-render at the new resolution.
   if (pixiDpr !== oldDpr) {
     clearShipTextureCaches();

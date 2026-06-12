@@ -3,7 +3,7 @@ import { getState } from "../state-access.js";
 import { savePlayer } from "../player/player-data.js";
 import { updatePerfOverlay } from "../render/perf-overlay.js";
 import { initHudOverlay, destroyHudOverlay } from "../ui/hud-overlay.js";
-import { destroyPixi } from "../pixi.js";
+import { destroyPixi, resizePixi } from "../pixi.js";
 import { destroyPixiChatBubbles } from "../render/pixi-chat-bubbles.js";
 import { TICK_DT, MAX_CATCH } from "../constants.js";
 import { deinitInput } from "../input/index.js";
@@ -236,7 +236,7 @@ export function initGameLoop() {
       return;
     }
     if (tick !== currentTick) {
-      netLog(`tick sync ${currentTick} → ${tick}`);
+      netLog(`tick sync ${currentTick} -> ${tick}`);
       currentTick = tick;
     }
     if (resetPrediction) {
@@ -273,6 +273,10 @@ export async function enterSpaceMode(opts: EnterSpaceModeOptions = {}) {
 
     transitionTo(AppMode.SPACE);
     Client.gameStarted = true;
+
+    // Resize the Pixi canvas immediately so the viewport and background
+    // are correct before the first gameplay frame renders.
+    resizePixi();
 
     // Force background re-initialization so nebula uniforms are re-applied
     // after the renderer has had at least one frame to warm up.

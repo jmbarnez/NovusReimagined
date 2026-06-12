@@ -43,7 +43,12 @@ Use the event bus for cross-system communication instead of direct imports or ti
 Treat state objects as immutable. Replace rather than mutate. This prevents subtle reactivity and render bugs, especially when diffing or syncing state across client and server.
 
 ### 7. Frame Budget / Hot Path Awareness
-This is a WebGL/WebGPU-rendered game. Avoid allocations, heavy loops, or unnecessary object creation inside the render and update loops. Consider object pooling for frequently spawned and destroyed entities (projectiles, particles, wreckage).
+This is a WebGL/WebGPU-rendered game. Avoid allocations, heavy loops, or unnecessary object creation inside the render and update loops.
+
+**Mandatory performance patterns:**
+- **Object pooling**: Any new simulation entity type with >50 spawn/cull events per second must use `ObjectPool<T>` via `src/utils/pool.ts` and integrate with `src/utils/entities.ts` lifecycle helpers. Do not allocate new objects per spawn.
+- **Binary network codec**: All new WebSocket message types must encode through `src/net/codec.ts` (`encodeNetMessage` / `decodeNetMessage`). Do not call `JSON.stringify` directly on socket payloads.
+- **System registry**: Any new physics subsystem must be registered in `src/physics/systems.ts` rather than hardcoded into `src/physics.ts`.
 
 ### 8. UI vs. Simulation Separation
 Keep HUD and UI logic decoupled from combat, docking, and economy simulation. The client renders state; it does not decide outcomes. Presentation code should never mutate simulation state directly.
@@ -96,7 +101,30 @@ Always import and use the dedicated interfaces from `src/types/world.ts` or `src
 - **`ModuleDef`**: Immutable configuration for a ship module catalog entry.
 - **`ModuleInstance`**: An instantiated module instance in a container or slot with durability and affixes.
 
-### 4. Verification Checklists
+### 4. Performance Patterns
+
+#### Object Pooling
+Simulation entities that spawn and die rapidly (bullets, particles, beams, shockwaves, float texts, trails) must use the `ObjectPool<T>` abstraction in `src/utils/pool.ts`. Integration rules:
+- `addBullet()`, `addParticle()`, etc. must `pool.acquire()` instead of allocating new objects.
+- `removeBullet()`, `removeEnemyBullet()`, etc. must return dead objects to their pool.
+- `clearSimulationEntities()` must release all live objects to pools before clearing arrays.
+- Culling loops must use O(1) swap-and-pop rather than `splice()`.
+
+#### Network Serialization
+WebSocket messages use `msgpackr` binary encoding via `src/net/codec.ts`:
+- Client send: `encodeNetMessage({ type, payload })` in `src/net/client-transport.ts`.
+- Client receive: `decodeNetMessage(e.data)` in `src/net/client-session.ts`.
+- A `USE_BINARY_CODEC` flag (controlled by `setUseBinaryCodec()`) provides an instant JSON fallback.
+- Worker `postMessage` paths keep structured clone (do not use the codec for workers).
+- Tauri relay paths keep JSON because the Rust bridge expects strings.
+
+#### Physics System Registry
+`src/physics.ts` delegates to a declarative `SimSystem[]` registry in `src/physics/systems.ts`:
+- Every tick system has an `id`, `category`, and `run(dt)` function.
+- New systems are appended to the registry array; order equals execution order.
+- Per-system timing marks feed into `src/render/perf-telemetry.ts`.
+
+### 5. Verification Checklists
 - Before concluding a code change, always run:
   ```bash
   npm run typecheck
