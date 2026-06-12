@@ -11,7 +11,7 @@ export function positionCardForStep(): void {
   if (!tutorialState.root || !tutorialState.cardEl || !tutorialState.layerEl || tutorialState.cardEl.hidden) return;
   const step = getCurrentTutorialStep(getState().player);
   const layerRect = getBounds(tutorialState.layerEl);
-  const target = getCardAnchorHighlight(step);
+  const target = step?.noCardAnchor ? null : getCardAnchorHighlight(step);
   const cardRect = getBounds(tutorialState.cardEl);
   const margin = 16;
   const safeW = Math.max(1, layerRect.width - cardRect.width - margin * 2);

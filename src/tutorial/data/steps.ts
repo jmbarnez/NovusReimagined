@@ -160,6 +160,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "mining",
     title: t("tutorial.step.mining.title"),
     highlight: "#hud-slots",
+    noDimmer: true,
+    noCardAnchor: true,
     objective: () => t("tutorial.step.mining.objective", { bar1Key: tutorialBarKeyStyled(0) }),
     zone: tutorialRegionZone("mining"),
     beaconColor: 0xaa88ff,
@@ -176,7 +178,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "fly-station",
     title: t("tutorial.step.flyStation.title"),
-    highlight: "#hud-dock-prompt",
     objective: () => t("tutorial.step.flyStation.objective"),
     zone: tutorialRegionZone("fly-station"),
     beaconColor: 0x88ff88,
