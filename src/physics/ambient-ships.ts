@@ -1,5 +1,5 @@
 import { type Player } from "../state.js";
-import { getState } from "../state-access.js";
+import { getState, WorldAccess } from "../state-access.js";
 import { C } from "../config/index.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { randomShipName, randomHailLine } from "../data/faction-comms.js";
@@ -301,7 +301,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
 
           _miningLaserHum -= dt;
           if (_miningLaserHum <= 0) {
-            getState().pendingEffects.push({
+            WorldAccess.queueEffect({
               type: "industrialBeam",
               payload: { delivery: "mining", x: asteroid.x, y: asteroid.y },
             });

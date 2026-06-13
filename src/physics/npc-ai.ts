@@ -1,5 +1,5 @@
 import { Client, type Player } from "../state.js";
-import { getState } from "../state-access.js";
+import { getState, WorldAccess } from "../state-access.js";
 import { SHIPS } from "../data/ships.js";
 import { MODULES } from "../data/modules.js";
 import { WEAPON_PROFILES } from "../data/weaponProfiles.js";
@@ -137,7 +137,7 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
           const beamDist = fireDist;
           const bX2 = origin.x + Math.cos(shootAng) * beamDist;
           const bY2 = origin.y + Math.sin(shootAng) * beamDist;
-          getState().pendingEffects.push({
+          WorldAccess.queueEffect({
             type: "weaponFire",
             payload: { delivery: "beam", typeId: baseId, vol: 0.7, x: origin.x, y: origin.y },
           });
@@ -148,7 +148,7 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
             const perp = Math.abs((getState().player.x - origin.x) * Math.sin(shootAng) - (getState().player.y - origin.y) * Math.cos(shootAng));
             if (perp < Math.min(hitR * 0.6 + C.ENEMIES.AI.HIT_CHECK_RADIUS, C.ENEMIES.AI.BEAM_HIT_RADIUS_CAP)) {
               damagePlayer(Math.max(1, Math.floor(wProf.dmg * (e.weaponMult ?? 1.0))), origin.x, origin.y);
-              getState().pendingEffects.push({
+              WorldAccess.queueEffect({
                 type: "impact",
                 payload: { x: bX2, y: bY2, color: wProf.color, delivery: "beam" },
               });
@@ -158,7 +158,7 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
             const perp = Math.abs((target.x - origin.x) * Math.sin(shootAng) - (target.y - origin.y) * Math.cos(shootAng));
             if (perp < Math.min(hitR * 0.6 + C.ENEMIES.AI.HIT_CHECK_RADIUS, C.ENEMIES.AI.BEAM_HIT_RADIUS_CAP)) {
               damageEnemy(target as Enemy, Math.max(1, Math.floor(wProf.dmg * (e.weaponMult ?? 1.0))), bX2, bY2, undefined, "beam");
-              getState().pendingEffects.push({
+              WorldAccess.queueEffect({
                 type: "impact",
                 payload: { x: bX2, y: bY2, color: wProf.color, delivery: "beam" },
               });
@@ -168,7 +168,7 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
           if (getState().enemyBullets.length < 200) {
             const bSpd = wProf.spd || 800;
             const bLife = (wProf.range * 1.1) / bSpd;
-            getState().pendingEffects.push({
+            WorldAccess.queueEffect({
               type: "weaponFire",
               payload: { delivery: "projectile", typeId: baseId, vol: 0.8, x: origin.x, y: origin.y },
             });
@@ -215,7 +215,7 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
 
     if ((target as unknown) === getState().player) {
       e.targetingPlayer = true;
-      getState().pendingEffects.push({
+      WorldAccess.queueEffect({
         type: "hostileLocking",
         payload: { x: e.x, y: e.y },
       });
@@ -256,7 +256,7 @@ export function processNpcBehavior(e: Enemy, dt: number, d: number, detectionRan
         e._npcHasLock = true;
         if (isPlayer) {
           e.hasLockOnPlayer = true;
-          getState().pendingEffects.push({
+          WorldAccess.queueEffect({
             type: "hostileLock",
             payload: { x: e.x, y: e.y },
           });
@@ -340,7 +340,7 @@ export function triggerAttackWarningPulse(allEnemies: Enemy[], dt: number, _p?: 
   if (lockedCount > 0 && closestLocked) {
     _attackPulseTimer -= dt;
     if (_attackPulseTimer <= 0) {
-      getState().pendingEffects.push({
+      WorldAccess.queueEffect({
         type: "underAttackPulse",
         payload: { count: lockedCount, x: closestLocked.x, y: closestLocked.y },
       });

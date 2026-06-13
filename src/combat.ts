@@ -1,4 +1,4 @@
-import { getState, PlayerAccess } from "./state-access.js";
+import { getState, PlayerAccess, WorldAccess } from "./state-access.js";
 import { t } from "./utils/i18n.js";
 import { addXp, addSkillXp } from "./player/player-data.js";
 import { WEAPON_SKILL, type WeaponDelivery } from "./data/skills.js";
@@ -71,7 +71,7 @@ export function killEnemy(e: Enemy) {
   const exScale = e.type === "raider" ? C.COMBAT.EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.EXPLOSION_SCALE.pirate : C.COMBAT.EXPLOSION_SCALE.default;
   const exTier: "small" | "medium" | "large" = e.type === "raider" ? "large" : e.type === "pirate" ? "medium" : "small";
   spawnExplosion(e.x, e.y, "#ff4422", exScale, exTier);
-  getState().pendingEffects.push({
+  WorldAccess.queueEffect({
     type: "explosion",
     payload: {
       x: e.x,

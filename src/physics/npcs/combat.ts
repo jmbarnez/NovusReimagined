@@ -1,6 +1,6 @@
 import { random, rayCircleSurfaceHit } from "../../utils/math.js";
 import { Client, isGameplayPaused, type Player } from "../../state.js";
-import { MiningAccess, PlayerAccess, getState } from "../../state-access.js";
+import { MiningAccess, PlayerAccess, getState, WorldAccess } from "../../state-access.js";
 import { getStats } from "../../player/player-stats.js";
 import { spawnImpactFlash, spawnMiningSparks } from "../../utils/fx.js";
 import { removeEnemyBullet } from "../../utils/entities.js";
@@ -175,7 +175,7 @@ export function updateEnemyBullets(dt: number, sysIdx: number) {
 
     if (astHit && astHitT === earliestT) {
       spawnImpactFlash(astHitX, astHitY, b.color || "#ff6644");
-      getState().pendingEffects.push({
+      WorldAccess.queueEffect({
         type: "impact",
         payload: { x: astHitX, y: astHitY, color: b.color || "#ff6644", delivery: b.kind || "projectile" },
       });
@@ -187,7 +187,7 @@ export function updateEnemyBullets(dt: number, sysIdx: number) {
       const variance = 0.5 + random() * 0.7;
       const finalDmg = Math.max(1, Math.floor((b.dmg || (2 + random() * 2)) * variance));
       damagePlayer(finalDmg, b.x, b.y, {}, hitPlayer);
-      getState().pendingEffects.push({
+      WorldAccess.queueEffect({
         type: "impact",
         payload: { x: b.x, y: b.y, color: b.color || "#ff6644", delivery: b.kind || "projectile" },
       });
@@ -199,7 +199,7 @@ export function updateEnemyBullets(dt: number, sysIdx: number) {
       const variance = 0.5 + random() * 0.7;
       const finalDmg = Math.max(1, Math.floor((b.dmg || (2 + random() * 2)) * variance));
       damageEnemy(hitNpc, finalDmg, npcHitX, npcHitY, undefined, b.kind || "projectile");
-      getState().pendingEffects.push({
+      WorldAccess.queueEffect({
         type: "impact",
         payload: { x: npcHitX, y: npcHitY, color: b.color || "#ff6644", delivery: b.kind || "projectile" },
       });
@@ -267,7 +267,7 @@ export function updateMining(dt: number, p: Player) {
     if (p === getState().player) {
       _miningHumTimer -= dt;
       if (_miningHumTimer <= 0) {
-        getState().pendingEffects.push({
+        WorldAccess.queueEffect({
           type: "industrialBeam",
           payload: { delivery: "mining", x: surface.x, y: surface.y },
         });
@@ -291,7 +291,7 @@ export function updateMining(dt: number, p: Player) {
       showDamageNumber(surface.x, surface.y, Math.round(result.dmg), "mining");
     }
     if (p === getState().player) {
-      getState().pendingEffects.push({
+      WorldAccess.queueEffect({
         type: "impact",
         payload: { x: surface.x, y: surface.y, color: "#ff8822", delivery: "mining" },
       });

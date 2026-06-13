@@ -1,5 +1,6 @@
 import { _G, type GameState, type Player } from "../../state.js";
 import { installLocalPlayer, LOCAL_PLAYER_ID } from "../../player-registry.js";
+import type { GameEffect } from "../../state/types/combat.js";
 
 // ─── World accessors ─────────────────────────────────────────────────────────
 
@@ -53,5 +54,15 @@ export const WorldAccess = {
     asteroid.hp = 0;
     asteroid.respawnTimer = respawnTimer;
     return true;
+  },
+
+  /** Queue a visual/audio effect for the current frame. */
+  queueEffect(effect: GameEffect) {
+    _G.pendingEffects.push(effect);
+  },
+
+  /** Clear all pending effects (consumed by renderer / network sync). */
+  clearEffects() {
+    _G.pendingEffects.length = 0;
   },
 };

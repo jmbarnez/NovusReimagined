@@ -1,5 +1,5 @@
 import type { Player } from "../state.js";
-import { PlayerAccess } from "../state-access.js";
+import { PlayerAccess, WorldAccess } from "../state-access.js";
 import { RESPAWN_S } from "../constants.js";
 import { C } from "../config/index.js";
 import { addXp, addSkillXp } from "../player/player-data.js";
@@ -9,7 +9,7 @@ import { removeSensorLock } from "../targeting.js";
 import { logEvent } from "../feedback.js";
 import { t } from "../utils/i18n.js";
 import { progressMissions } from "../data/missions.js";
-import { getState } from "../state-access.js";
+
 import { spawnWreck } from "../wreck/index.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { addSalvagePickup } from "../utils/entities.js";
@@ -48,7 +48,7 @@ export function killEnemy(e: Enemy) {
   const exScale = e.type === "raider" ? C.COMBAT.EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.EXPLOSION_SCALE.pirate : C.COMBAT.EXPLOSION_SCALE.default;
   const exTier: "small" | "medium" | "large" = e.type === "raider" ? "large" : e.type === "pirate" ? "medium" : "small";
   spawnExplosion(e.x, e.y, "#ff4422", exScale, exTier);
-  getState().pendingEffects.push({
+  WorldAccess.queueEffect({
     type: "explosion",
     payload: {
       x: e.x,

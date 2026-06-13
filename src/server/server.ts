@@ -250,7 +250,7 @@ export class GameServer {
           effects: effects
         }
       });
-      getState().pendingEffects.length = 0;
+      WorldAccess.clearEffects();
     }
 
     if (this.currentTick % 3 === 0) {

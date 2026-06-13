@@ -1,6 +1,6 @@
 import { random } from "../utils/math.js";
 import { Client, type Player } from "../state.js";
-import { PlayerAccess, getState } from "../state-access.js";
+import { PlayerAccess, getState, WorldAccess } from "../state-access.js";
 import { isLocalPlayer } from "../player-registry.js";
 import { isHeadlessServer } from "./net-input.js";
 import {
@@ -64,11 +64,11 @@ function applyGateBoost(gate: TutorialBoostGate, p: Player, isReplaying = false)
 
   const shouldQueue = isHeadlessServer() && isLocalPlayer(p);
   if (shouldQueue) {
-    getState().pendingEffects.push({
+    WorldAccess.queueEffect({
       type: "blip",
       payload: { x: 720 + random() * 240, y: 0.06 },
     });
-    getState().pendingEffects.push({
+    WorldAccess.queueEffect({
       type: "gateBoostParticles",
       payload: {
         gateId: gate.id,

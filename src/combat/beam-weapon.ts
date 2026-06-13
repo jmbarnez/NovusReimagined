@@ -1,6 +1,6 @@
 import { liveEnemies, curSys } from "../utils/game.js";
 import { spawnBeam, spawnBeamImpactSubtle, spawnParticles } from "../utils/fx.js";
-import { getState } from "../state-access.js";
+import { WorldAccess } from "../state-access.js";
 import type { WeaponDelivery } from "../data/skills.js";
 import type { DamageProfile } from "../data/modules.js";
 import type { WeaponProfile } from "../data/weaponProfiles.js";
@@ -59,14 +59,14 @@ export function fireBeamWeapon(
   if (hitEnemy) {
     damageEnemy(hitEnemy, finalDmg, ex2, ey2, p, delivery, dmgProfile);
     spawnBeamImpactSubtle(ex2, ey2, wProf.color);
-    getState().pendingEffects.push({
+    WorldAccess.queueEffect({
       type: "impact",
       payload: { x: ex2, y: ey2, color: wProf.color, delivery: "beam" },
     });
   } else if (hitAsteroid) {
     damageAsteroid(hitAsteroid, finalDmg, ex2, ey2, p);
     spawnBeamImpactSubtle(ex2, ey2, wProf.color);
-    getState().pendingEffects.push({
+    WorldAccess.queueEffect({
       type: "impact",
       payload: { x: ex2, y: ey2, color: wProf.color, delivery: "beam" },
     });

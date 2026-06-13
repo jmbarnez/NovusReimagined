@@ -1,5 +1,5 @@
 
-import { PlayerAccess, getState } from "../state-access.js";
+import { PlayerAccess, getState, WorldAccess } from "../state-access.js";
 import { getStats } from "../player/player-stats.js";
 import { showDamageNumber } from "../combat/damage-display.js";
 import { damageEnemy, damageAsteroid } from "../combat.js";
@@ -148,7 +148,7 @@ export function updateProjectiles(dt: number) {
         if (isMining) {
           damageAsteroid(astTarget.data, b.dmg, hitX, hitY);
         }
-        getState().pendingEffects.push({
+        WorldAccess.queueEffect({
           type: "impact",
           payload: {
             x: hitX,
@@ -162,7 +162,7 @@ export function updateProjectiles(dt: number) {
       } else if (enemyTarget && enemyTarget.data) {
         spawnImpactFlash(b.x, b.y, b.color || "#ff4422");
         if (b.owner === getState().player) {
-          getState().pendingEffects.push({
+          WorldAccess.queueEffect({
             type: "impact",
             payload: {
               x: b.x,

@@ -278,14 +278,14 @@ export function drawMiningLaserGpu(
   addDisc(endX, endY, 9, [1.0, 0.62, 0.10], 0.38 * flicker);
   addDisc(endX, endY, 3.7, [1.0, 0.96, 0.72], 0.82 * flicker);
 
-  const backA = Math.atan2(-hitNy, -hitNx);
+  const sparkA = Math.atan2(hitNy, hitNx);
   for (let s = 0; s < 10; s++) {
     const seed = s * 12.9898;
     const gate = 0.5 + 0.5 * Math.sin((phase || 0) * (2.6 + s * 0.37) + seed);
     if (gate < 0.42) continue;
     const spread = (0.32 + gate * 0.92) * (s % 2 === 0 ? 1 : -1);
     const jitter = Math.sin((phase || 0) * (1.7 + s * 0.18) + seed) * 0.22;
-    const angle = backA + spread + jitter;
+    const angle = sparkA + spread + jitter;
     const len = 5 + gate * (10 + (s % 4) * 2.2);
     const sx = endX + Math.cos(angle) * 1.5;
     const sy = endY + Math.sin(angle) * 1.5;

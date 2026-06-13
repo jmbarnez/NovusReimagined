@@ -1,6 +1,6 @@
 import type { Player } from "../state.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
-import { PlayerAccess, getState } from "../state-access.js";
+import { PlayerAccess, WorldAccess } from "../state-access.js";
 import { dst, random, angleDiff } from "../utils/math.js";
 import { ensureAmmoDefaults } from "../player/player-data.js";
 import { getStats, getWeaponProfileForSlot, weaponSkillBonus } from "../player/player-stats.js";
@@ -136,7 +136,7 @@ export function playerShoot(slotIdx: number, targetEnemy: Enemy | Asteroid | Wre
   const muzzleIntensity = turretMod.weaponDelivery === "missile" ? C.COMBAT.MUZZLE_FLASH.missileIntensity : turretMod.weaponDelivery === "projectile" && wProf.dmg >= C.COMBAT.MUZZLE_FLASH.heavyProjectileDmgThreshold ? C.COMBAT.MUZZLE_FLASH.heavyProjectileIntensity : C.COMBAT.MUZZLE_FLASH.defaultIntensity;
 
   spawnMuzzleFlash(origin.x, origin.y, angle, wProf.color, muzzleIntensity);
-  getState().pendingEffects.push({
+  WorldAccess.queueEffect({
     type: "weaponFire",
     payload: {
       delivery: turretMod.weaponDelivery!,

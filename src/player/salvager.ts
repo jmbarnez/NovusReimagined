@@ -1,5 +1,5 @@
 import { Client } from "../state.js";
-import { getState, PlayerAccess, SalvagerAccess } from "../state-access.js";
+import { getState, PlayerAccess, SalvagerAccess, WorldAccess } from "../state-access.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { getInstance } from "../utils/items.js";
 import type { WreckPiece, LockSlot } from "../types/world.js";
@@ -92,7 +92,7 @@ export function updateSalvager(dt: number) {
   // Throttled beam hum
   _beamSfxTimer -= dt;
   if (_beamSfxTimer <= 0) {
-    getState().pendingEffects.push({
+    WorldAccess.queueEffect({
       type: "industrialBeam",
       payload: { delivery: "salvage", x: piece.x, y: piece.y },
     });

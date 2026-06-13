@@ -1,5 +1,5 @@
 import { Client, type Player } from "../state.js";
-import { PlayerAccess, getState } from "../state-access.js";
+import { PlayerAccess, getState, WorldAccess } from "../state-access.js";
 import { floatText, spawnImpactFlash, spawnParticles } from "../utils/fx.js";
 import { respawnPlayer } from "../utils/game.js";
 import { MODULE_DAMAGE_CHANCE, MODULE_DAMAGE_RATIO, RACK_TYPES } from "../constants.js";
@@ -41,7 +41,7 @@ export function showDamageNumber(x: number, y: number, amount: number | string, 
   const jitterX = (Math.random() - 0.5) * 18;
   const jitterY = (Math.random() - 0.5) * 8;
 
-  getState().pendingEffects.push({
+  WorldAccess.queueEffect({
     type: "floatText" as const,
     payload: {
       x: x + jitterX,
@@ -116,7 +116,7 @@ export function damagePlayer(
     PlayerAccess.setShieldHitAngle(Math.atan2(sourceY - p.y, sourceX - p.x), p);
     if (isLocalPlayer) {
       PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.35));
-      getState().pendingEffects.push({
+      WorldAccess.queueEffect({
         type: "shieldImpact",
         payload: { vol: Math.min(1, rawDmg / 20) },
       });
@@ -165,7 +165,7 @@ export function damagePlayer(
   }
 
   if (isLocalPlayer && (displayType === "hull" || displayType === "structure")) {
-    getState().pendingEffects.push({
+    WorldAccess.queueEffect({
       type: "hullImpact",
       payload: { vol: Math.min(1, rawDmg / 15) },
     });
