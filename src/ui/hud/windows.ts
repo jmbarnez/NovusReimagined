@@ -43,6 +43,39 @@ export function bringToFront(win: HTMLElement) {
   setStyle(win, { zIndex: String(Client.bridgeWindowZ) });
 }
 
+export function expandHudWindow(id: string): void {
+  const win = _windows.get(id);
+  if (!win) return;
+  if (win.classList.contains("is-expanded")) {
+    bringToFront(win);
+    return;
+  }
+  _windows.forEach((w) => {
+    if (w.classList.contains("is-expanded")) {
+      collapseWindowExpand(w, { capturePosition: true });
+    }
+  });
+  emitWindowLayoutChanged();
+  const leftVal = getStyleProperty(win, "left");
+  const widthVal = getStyleProperty(win, "width");
+  if (!leftVal || !widthVal) {
+    const wr = win.getBoundingClientRect();
+    if (!leftVal) { setStyle(win, { left: `${wr.left}px`, right: "auto" }); }
+    if (!getStyleProperty(win, "top")) setStyle(win, { top: `${wr.top}px` });
+    if (!widthVal) setStyle(win, { width: `${wr.width}px` });
+    if (!getStyleProperty(win, "height")) setStyle(win, { height: `${wr.height}px` });
+  }
+  win.dataset.prevLeft = getStyleProperty(win, "left");
+  win.dataset.prevTop = getStyleProperty(win, "top");
+  win.dataset.prevWidth = getStyleProperty(win, "width");
+  win.dataset.prevHeight = getStyleProperty(win, "height");
+  toggleClass(win, "is-expanded", true);
+  const expandBtn = win.querySelector(".win-expand") as HTMLElement | null;
+  if (expandBtn) setExpandButtonState(expandBtn, true);
+  bringToFront(win);
+  emitWindowLayoutChanged();
+}
+
 function makeWindowHTML(id: string, title: string): string {
   const classes: Record<string, string> = {
     cargo: "window-cargo",

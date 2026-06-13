@@ -94,5 +94,27 @@ export function drawObjects(
 
       setMapLabel(`station:${sSys.idx}:${s.id}`, s.name, "bold", p.x, p.y + size + 10, alpha * 0.9, rgbaToHex(theme.positive));
     }
+
+    // Planets (circles with optional rings)
+    for (const planet of sSys.planets) {
+      const isCurrentSys = sSys.idx === player.sysIdx;
+      const inRange = inPassiveRange(planet.x, planet.y);
+      let alpha = passiveContactOpacity(planet.x, planet.y, player.x, player.y, now, planet.radius * 2);
+      if (isCurrentSys) {
+        alpha = Math.max(0.82, alpha);
+      } else if (!inRange || alpha < 0.14) {
+        continue;
+      }
+      const p = toMap(planet.x, planet.y);
+      const size = Math.max(5, planet.radius * scale);
+
+      pixiMapState.objectGfx.circle(p.x, p.y, size);
+      pixiMapState.objectGfx.fill({ color: rgbaToHex(theme.shield), alpha: Math.max(0.5, alpha) });
+
+      if (planet.hasRing) {
+        pixiMapState.objectGfx.ellipse(p.x, p.y, size * 1.85, size * 0.72);
+        pixiMapState.objectGfx.stroke({ color: rgbaToHex(theme.accent), width: 1, alpha: alpha * 0.55 });
+      }
+    }
   }
 }

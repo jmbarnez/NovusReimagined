@@ -1,9 +1,10 @@
 import "../styles/hud-base.css";
 import "../styles/pilot-terminal.css";
 import "../styles/hud-logs.css";
-import { buildDockHeaderHTML } from "../hud/window-chrome.js";
+import { h, render } from "preact";
 import { t } from "../../utils/i18n.js";
-import { createElement, setHtml, append, setText, onClick } from "../dom-helpers.js";
+import { createElement, append, setText } from "../dom-helpers.js";
+import { PilotTerminalView } from "./layout-view.js";
 
 export interface PilotTerminalOverlay {
   root: HTMLElement;
@@ -33,42 +34,19 @@ export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions):
   overlay.id = options.id;
   overlay.className = `pilot-terminal-overlay${options.embedded ? " pilot-terminal-overlay--embedded" : ""}`;
 
-  setHtml(overlay, `
-    <div class="pilot-terminal-corners" aria-hidden="true">
-      <div class="pt-corner tl"></div>
-      <div class="pt-corner tr"></div>
-      <div class="pt-corner bl"></div>
-      <div class="pt-corner br"></div>
-    </div>
-    <header class="pilot-terminal-header">
-      <span class="pilot-terminal-title">${options.title}</span>
-      ${options.subtitle ? `<span class="pilot-terminal-subtitle">${options.subtitle}</span>` : ""}
-    </header>
-    <div class="pilot-terminal-body">
-      <section class="pilot-terminal-dashboard" aria-label="Dashboard">
-        <span class="pilot-terminal-dashboard-label">${t("pilotTerminal.pilotInterface")}</span>
-        <div class="pilot-terminal-status-line" data-pilot-status></div>
-        <div class="pilot-terminal-dashboard-main" data-pilot-dashboard>
-          ${options.dashboardHtml ?? ""}
-        </div>
-        ${
-          options.showAbort
-            ? `<div class="pilot-terminal-actions">
-                <button type="button" class="btn-pilot-danger" data-pilot-abort>${options.abortLabel ?? t("pilotTerminal.abort")}</button>
-              </div>`
-            : ""
-        }
-      </section>
-      ${
-        showConsole
-          ? `<section class="pilot-terminal-console-wrap" aria-label="${t("pilotTerminal.systemConsole")}">
-              <div class="hud-dock-header">${buildDockHeaderHTML(t("pilotTerminal.systemConsole"))}</div>
-              <div class="pilot-terminal-console-entries" data-pilot-console></div>
-            </section>`
-          : ""
-      }
-    </div>
-  `);
+  render(
+    h(PilotTerminalView, {
+      title: options.title,
+      subtitle: options.subtitle,
+      embedded: options.embedded,
+      dashboardHtml: options.dashboardHtml,
+      showConsole,
+      showAbort: options.showAbort === true,
+      abortLabel: options.abortLabel ?? t("pilotTerminal.abort"),
+      onAbort: options.onAbort,
+    }),
+    overlay
+  );
 
   append(options.mount ?? document.body, overlay);
 
@@ -76,11 +54,11 @@ export function createPilotTerminalOverlay(options: CreatePilotTerminalOptions):
   const dashboardMain = overlay.querySelector("[data-pilot-dashboard]") as HTMLElement;
   const consoleEntries = overlay.querySelector("[data-pilot-console]") as HTMLElement | null;
 
-  const abortBtn = overlay.querySelector("[data-pilot-abort]") as HTMLButtonElement | null;
-  if (abortBtn) onClick(abortBtn, () => options.onAbort?.());
-
   const originalRemove = overlay.remove.bind(overlay);
-  const remove = () => originalRemove();
+  const remove = () => {
+    render(null, overlay);
+    originalRemove();
+  };
 
   return {
     root: overlay,

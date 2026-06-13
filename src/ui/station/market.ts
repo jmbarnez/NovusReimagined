@@ -97,5 +97,5 @@ export function renderMarket() {
   </div>`;
 
   const content = stationState.mktTab === "modules" ? modRows : stationState.mktTab === "ammo" ? ammoRows : resRows;
-  setHtml(div, controls + `<div class="mkt-list">${content}</div>`);
+  setHtml(div, controls + `<div class="mkt-scroll"><div class="mkt-list">${content}</div></div>`);
 }

@@ -451,27 +451,6 @@ export function populateSystem(sys: System) {
     buildConcentricSystemEntities(sys, f);
   }
 
-  if (!isConcentric) {
-    const planetCount = isTutorial ? 1 : ri(f, C.WORLD.PLANETS.countMin, C.WORLD.PLANETS.countMax);
-    for (let i = 0; i < planetCount; i++) {
-      const ang = isTutorial ? -Math.PI / 2 : rf(f, 0, TAU);
-      const rad = isTutorial
-        ? rf(f, 2200, 2800)
-        : rf(f, SECTOR_PLANET_ORBIT.lo, Math.min(SECTOR_PLANET_ORBIT.hi, SECTOR_OUTER_RADIUS - 100));
-      const x = Math.round(Math.cos(ang) * rad);
-      const y = Math.round(Math.sin(ang) * rad);
-      sys.planets.push({
-        x,
-        y,
-        radius: rf(f, C.WORLD.PLANETS.radiusMin, C.WORLD.PLANETS.radiusMax),
-        hue: ri(f, 0, C.WORLD.PLANETS.hueMax), sat: ri(f, C.WORLD.PLANETS.satMin, C.WORLD.PLANETS.satMax), lit: ri(f, C.WORLD.PLANETS.litMin, C.WORLD.PLANETS.litMax),
-        hasRing: f() > C.WORLD.PLANETS.ringChance, ringTilt: rf(f, C.WORLD.PLANETS.ringTiltMin, C.WORLD.PLANETS.ringTiltMax),
-        moons: 0,
-        _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.planetMultiplier),
-      });
-    }
-  }
-
   // ── Asteroid generation ──
   if (isTutorial) {
     buildTutorialAsteroids(sys, danger);

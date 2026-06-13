@@ -207,33 +207,38 @@ export function renderHangar() {
     </aside>`;
 
   setHtml(div, `
-  <h3>Ship Status</h3>
-  <div class="row"><span class="lbl">Active Ship</span><span class="val" style="font-weight:600">${ship.name}</span><span class="stag">${ship.role}</span></div>
-  <div class="row"><span class="lbl">Hull / Structure / Shield</span><span class="val">${Math.round(getState().player.hp)}/${st.maxHp} · ${Math.round(getState().player.structure)}/${st.maxStructure} · ${Math.round(getState().player.shield)}/${st.maxShield}</span></div>
-  <div class="row"><span class="lbl">Ammunition</span><span class="val">HYB ${getState().player.ammo?.hybrid ?? 0}  ·  MSL ${getState().player.ammo?.missile ?? 0}</span></div>
-  ${Client.activeStation?.services.includes("repair") && needsRepair ? `<div class="row"><span class="lbl">Repair & Recharge</span><button class="btn" data-action="repair">Repair All (${repCost}¢)</button></div>` : ""}
-  <div class="row"><span class="lbl">Home Station</span><span class="val">${getState().GALAXY[getState().player.homeSysIdx ?? 0]?.name || "HOME BASE ALPHA"}${getState().player.homeSysIdx === getState().player.sysIdx ? " (current)" : ""}</span>${getState().player.homeSysIdx !== getState().player.sysIdx ? `<button class="btn" data-action="setHome">Set as Home</button>` : ""}</div>
-
-  <div class="st-fitting-container" style="margin-top:16px;">
-    <div class="st-hangar-sidebar">
-      <aside id="hangar-stats-panel">
-        <h3>Ship Statistics</h3>
-        <div class="st-stats-grid" id="hangar-stats-grid">${buildStatHtml(st, pst)}</div>
-        <div id="hangar-stats-warn" style="margin-top:16px; font-size:10px; color:var(--hud-text-faint); line-height:1.4;">
-          ${pgOv ? `<div class="al">⚠ Powergrid overloaded! Stats penalized.</div>` : ""}
-          ${cpuOv ? `<div class="al">⚠ CPU overloaded! Active modules disabled.</div>` : ""}
-          <span>Hover slots to preview changes.</span>
-        </div>
-      </aside>
-      ${contractBox}
+  <div class="hangar-layout">
+    <div class="hangar-header">
+      <h3>Ship Status</h3>
+      <div class="row"><span class="lbl">Active Ship</span><span class="val" style="font-weight:600">${ship.name}</span><span class="stag">${ship.role}</span></div>
+      <div class="row"><span class="lbl">Hull / Structure / Shield</span><span class="val">${Math.round(getState().player.hp)}/${st.maxHp} · ${Math.round(getState().player.structure)}/${st.maxStructure} · ${Math.round(getState().player.shield)}/${st.maxShield}</span></div>
+      <div class="row"><span class="lbl">Ammunition</span><span class="val">HYB ${getState().player.ammo?.hybrid ?? 0}  ·  MSL ${getState().player.ammo?.missile ?? 0}</span></div>
+      ${Client.activeStation?.services.includes("repair") && needsRepair ? `<div class="row"><span class="lbl">Repair & Recharge</span><button class="btn" data-action="repair">Repair All (${repCost}¢)</button></div>` : ""}
+      <div class="row"><span class="lbl">Home Station</span><span class="val">${getState().GALAXY[getState().player.homeSysIdx ?? 0]?.name || "HOME BASE ALPHA"}${getState().player.homeSysIdx === getState().player.sysIdx ? " (current)" : ""}</span>${getState().player.homeSysIdx !== getState().player.sysIdx ? `<button class="btn" data-action="setHome">Set as Home</button>` : ""}</div>
     </div>
-    <main>
-      <div id="hangar-fitting-panel">
-        <h3>Active Fitting</h3>
-        ${racks}
+    <div class="st-fitting-container hangar-body" style="margin-top:16px;">
+      <div class="st-hangar-sidebar">
+        <aside id="hangar-stats-panel">
+          <h3>Ship Statistics</h3>
+          <div class="st-stats-grid" id="hangar-stats-grid">${buildStatHtml(st, pst)}</div>
+          <div id="hangar-stats-warn" style="margin-top:16px; font-size:10px; color:var(--hud-text-faint); line-height:1.4;">
+            ${pgOv ? `<div class="al">⚠ Powergrid overloaded! Stats penalized.</div>` : ""}
+            ${cpuOv ? `<div class="al">⚠ CPU overloaded! Active modules disabled.</div>` : ""}
+            <span>Hover slots to preview changes.</span>
+          </div>
+        </aside>
+        ${contractBox}
       </div>
-      <h3>Cargo</h3>
-      <div id="hangar-pane-cargo"></div>
-    </main>
+      <div class="hangar-main">
+        <div id="hangar-fitting-panel">
+          <h3>Active Fitting</h3>
+          ${racks}
+        </div>
+        <div class="hangar-cargo-area">
+          <h3>Cargo</h3>
+          <div id="hangar-pane-cargo"></div>
+        </div>
+      </div>
+    </div>
   </div>`);
 }

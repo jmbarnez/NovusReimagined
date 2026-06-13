@@ -8,7 +8,7 @@ import {
   canWarpThroughGate,
   isTutorialExitGateRevealed,
 } from "../src/data/tutorial.js";
-import { TUTORIAL_GATE, TUTORIAL_LOCAL_REGIONS } from "../src/data/tutorial-layout.js";
+import { TUTORIAL_GATE, TUTORIAL_LOCAL_REGIONS, TUTORIAL_START_PLANET } from "../src/data/tutorial-layout.js";
 import type { Gate } from "../src/types/world.js";
 import { getNovusPrimeIdx } from "../src/world/galaxy-build.js";
 import { tickTutorial } from "../src/tutorial/index.js";
@@ -177,5 +177,13 @@ describe("tutorial exit gate", () => {
     expect(localReturnGates).toHaveLength(remoteRegionCount);
     expect(localReturnGates.some((gate) => gate.id === "gate-sys-0-return-tut-flight")).toBe(false);
     expect(tutorialGates.some((gate) => gate.targetSysIdx === primeIdx && Math.hypot(gate.x + 500, gate.y) < 200)).toBe(false);
+  });
+
+  it("tutorial system has exactly one planet at the start planet location", () => {
+    const tutorialSys = G.GALAXY[0]!;
+    expect(tutorialSys.planets).toHaveLength(1);
+    const planet = tutorialSys.planets[0]!;
+    expect(planet.x).toBe(TUTORIAL_START_PLANET.x);
+    expect(planet.y).toBe(TUTORIAL_START_PLANET.y);
   });
 });

@@ -187,3 +187,40 @@
   padding: 16px 0;
   text-align: center;
 }
+
+/* ── Market Panel Layout ── */
+#panel-market.panel.active {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mkt-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
+}
+
+.mkt-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mkt-scroll::-webkit-scrollbar-track {
+  background: var(--hud-scrollbar-track);
+}
+
+.mkt-scroll::-webkit-scrollbar-thumb {
+  background: var(--hud-scrollbar-thumb);
+  border-radius: 999px;
+}
+
+.mkt-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--hud-scrollbar-thumb-hover);
+}
+
+.mkt-scroll .mkt-list {
+  margin-bottom: 0;
+}

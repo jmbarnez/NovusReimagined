@@ -60,9 +60,11 @@ export function renderContracts() {
   }).join("");
 
   setHtml(div, `
-    <div class="ct-section-head">Active Contracts <span class="ct-cap">${activeCount} / ${MAX_ACTIVE_CONTRACTS}</span></div>
-    ${active.length ? activeRows : `<div class="ct-empty">No active contracts.</div>`}
-    <div class="ct-section-head">Available</div>
-    ${stationState._stationContracts.length ? availableRows : `<div class="ct-empty">No contracts available.</div>`}
+    <div class="ct-scroll">
+      <div class="ct-section-head">Active Contracts <span class="ct-cap">${activeCount} / ${MAX_ACTIVE_CONTRACTS}</span></div>
+      ${active.length ? activeRows : `<div class="ct-empty">No active contracts.</div>`}
+      <div class="ct-section-head">Available</div>
+      ${stationState._stationContracts.length ? availableRows : `<div class="ct-empty">No contracts available.</div>`}
+    </div>
   `);
 }

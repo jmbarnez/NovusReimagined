@@ -56,8 +56,9 @@ export async function openStationUi(st: Station): Promise<void> {
     await ensureStationInterface(st);
     const contentEl = document.getElementById("station-overlay");
     if (contentEl instanceof HTMLElement) {
-      const { openHudWindow } = await import("../ui/hud/windows.js");
+      const { openHudWindow, expandHudWindow } = await import("../ui/hud/windows.js");
       openHudWindow("station", st.name, contentEl, onStationWindowClose);
+      expandHudWindow("station");
     }
     const hud = document.getElementById("hud-overlay");
     if (hud instanceof HTMLElement) hud.style.display = "none";

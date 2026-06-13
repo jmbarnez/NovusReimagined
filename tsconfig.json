@@ -14,8 +14,10 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": false,
     "sourceMap": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "vite.config.js", "tests/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "vite.config.js", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

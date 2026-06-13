@@ -69,8 +69,7 @@
   min-height: 0;
   height: 100%;
   padding: 12px 14px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   flex-direction: column;
   gap: 4px;
   overscroll-behavior: contain;
@@ -207,4 +206,31 @@
   color: var(--hud-text-faint);
   padding: 8px 0;
   text-align: center;
+}
+
+/* ── Contracts Scroll Container ── */
+.ct-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
+}
+
+.ct-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ct-scroll::-webkit-scrollbar-track {
+  background: var(--hud-scrollbar-track);
+}
+
+.ct-scroll::-webkit-scrollbar-thumb {
+  background: var(--hud-scrollbar-thumb);
+  border-radius: 999px;
+}
+
+.ct-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--hud-scrollbar-thumb-hover);
 }
