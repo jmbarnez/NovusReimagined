@@ -2,7 +2,7 @@
  * PixiJS Asteroids & Target Locks Renderer.
  * 
  * Migrates asteroid fields and target bracket indicators to PixiJS:
- * - Asteroid Bodies: Rotated and translated polygon meshes with outline strokes.
+ * - Asteroid Bodies: Cached procedural sprites with clipped rocky silhouettes.
  * - Mining Debris: Short-lived rock chunks with matching dark outlines.
  * - Surface Lighting: Sun-relative baked light buckets without screen-space shadows.
  * - Health Bars: Dynamic resource bars fading in under damaged rocks.
@@ -131,16 +131,25 @@ function bakeAsteroidTexture(a: Asteroid, lightDir: number): Texture {
   }
 
   cx.globalCompositeOperation = "screen";
-  for (let i = 0; i < 7; i++) {
-    const seed = `${a.id}:vein:${i}`;
-    const y = (hashUnit(seed) - 0.5) * radius * 1.35;
-    const wobble = (hashUnit(`${seed}:w`) - 0.5) * radius * 0.22;
-    cx.strokeStyle = hslStr(hue + 22, Math.min(100, sat + 28), 56, 0.10);
-    cx.lineWidth = Math.max(0.7, radius * (0.008 + hashUnit(`${seed}:lw`) * 0.01));
+  for (let i = 0; i < 24; i++) {
+    const seed = `${a.id}:fleck:${i}`;
+    const ang = hashUnit(seed) * TAU;
+    const dist = Math.sqrt(hashUnit(`${seed}:d`)) * radius * 0.86;
+    const fleckR = radius * (0.011 + hashUnit(`${seed}:r`) * 0.026);
+    const x = Math.cos(ang) * dist;
+    const y = Math.sin(ang) * dist;
+    cx.fillStyle = hslStr(hue + 18, Math.min(100, sat + 22), 48 + hashUnit(`${seed}:l`) * 10, 0.09);
     cx.beginPath();
-    cx.moveTo(-radius * 0.72, y);
-    cx.quadraticCurveTo(-radius * 0.12, y + wobble, radius * 0.74, y - wobble * 0.7);
-    cx.stroke();
+    cx.ellipse(
+      x,
+      y,
+      fleckR * (0.8 + hashUnit(`${seed}:sx`) * 1.25),
+      fleckR * (0.55 + hashUnit(`${seed}:sy`) * 0.8),
+      hashUnit(`${seed}:rot`) * TAU,
+      0,
+      TAU,
+    );
+    cx.fill();
   }
   cx.globalCompositeOperation = "source-over";
 

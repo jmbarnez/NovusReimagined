@@ -123,8 +123,12 @@ function buildFilter(): Filter {
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
+export function isNebulaMeshReady(parent: Container): boolean {
+  return !!(_sprite?.parent === parent && _filter && _ug);
+}
+
 export function initNebulaMesh(parent: Container) {
-  if (_sprite?.parent === parent) return;
+  if (isNebulaMeshReady(parent)) return;
   if (_sprite) {
     _sprite.destroy();
     _sprite = null;

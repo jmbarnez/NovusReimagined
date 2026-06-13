@@ -36,6 +36,7 @@
 - ~~`src/state-access.ts` (~897 lines) — monolithic state accessors file~~ — Split into 7 domain-specific modules under `src/state/access/` and replaced with a barrel re-export file
 - ~~`src/ui/hud/ship-panel.ts` (~677 lines) — monolithic HUD ship stats/turrets panel file~~ — Split into 6 domain-specific modules under `src/ui/hud/ship-panel/` and replaced with a barrel re-export file
 - ~~`src/ui/settings.ts` (~535 lines) — monolithic settings panel file~~ — Split into 5 domain-specific modules under `src/ui/settings/` and replaced with a barrel re-export file
+- ~~`src/ui/inventory/overlays.ts` (~531 lines) — monolithic inventory overlays file~~ — Split into `src/ui/inventory/overlays/` directory (8 files: `types.ts`, `elements.ts`, `toast.ts`, `hover.ts`, `position.ts`, `info-html.ts`, `ctx-html.ts`, `update.ts`) with barrel re-exports
 - ~~`src/ui/hud/targeting.ts` (~541 lines) — monolithic HUD lock rail / targeting panel file~~ — Split into `src/ui/hud/targeting/` directory (5 files: `types.ts`, `icon.ts`, `create.ts`, `update-card.ts`, `rail.ts`) with barrel re-exports
 - ~~`src/tutorial.ts` (~337 lines) — monolithic tutorial runner file~~ — Split into `src/tutorial/` directory (5 files: `index.ts`, `runner.ts`, `shared.ts`, `events.ts`, `hangar-tour.ts`) with barrel re-exports
 - ~~`src/player/player-data.ts` (~497 lines) — monolithic player data + migrations + init~~ — Split into `src/player/player-factory.ts` (117 lines) and `src/player/migrations/` (3 files, 124 lines total); `player-data.ts` reduced to 276 lines

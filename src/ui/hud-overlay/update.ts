@@ -7,7 +7,7 @@ import { t } from "../../utils/i18n.js";
 import { updateBridgeOverview } from "../bridge.js";
 import { updateMissionsPanel } from "../hud-missions.js";
 import { attachInventoryListeners } from "../inventory/index.js";
-import { hideInvHoverTip } from "../inventory/overlays.js";
+import { hideInvHoverTip } from "../inventory/overlays/index.js";
 import { renderSkillsContent, initSkillsInteractions } from "../skills.js";
 import { toggleHudWindow, isOpen, getHudWindow, closeHudWindow, openHudWindow } from "../hud/windows.js";
 import { updateMapSurveyUi } from "../map-survey.js";

@@ -28,7 +28,7 @@ import {
   updateInvOverlays,
   type InventoryOverlayHandlers,
   type ContextFitAction,
-} from "./overlays.js";
+} from "./overlays/index.js";
 
 export {
   INVENTORY_PANE_IDS,
