@@ -5,6 +5,10 @@ import { hudState } from "./state.js";
 
 export function initPixiHUD(): void {
   if (!hudOverlayLayer) return;
+  if (hudState.hudContainer?.parent) return;
+  if (hudState.hudContainer) {
+    hudState.hudContainer.destroy({ children: true });
+  }
 
   hudState.hudContainer = new Container();
   hudState.hudContainer.label = "hud-core";

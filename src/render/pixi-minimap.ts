@@ -35,6 +35,7 @@ let cachedThemeAccent = 0xffcc44;
 let cachedThemeHull = 0xee9944;
 let cachedThemeTextBright = 0xcfe0f5;
 let lastMinimapRenderMs = 0;
+let mmInitInFlight = false;
 
 function getMinimapFrameMs(): number {
   const fpsLimit = Client.settings?.fpsLimit ?? 0;
@@ -78,7 +79,16 @@ function syncThemeColors(): void {
 export function initPixiMinimap(): void {
   const container = document.getElementById("hud-minimap");
   if (!container) return;
+  if (mmApp && mmContainer && mmCanvas) {
+    if (!mmCanvas.isConnected) {
+      container.innerHTML = "";
+      container.appendChild(mmCanvas);
+    }
+    return;
+  }
+  if (mmInitInFlight) return;
 
+  mmInitInFlight = true;
   mmApp = new Application();
   mmApp.init({
     width: HUD_MINIMAP_SIZE,
@@ -88,6 +98,7 @@ export function initPixiMinimap(): void {
     antialias: Client.settings?.antialias ?? false,
     autoStart: false,
   }).then(() => {
+    mmInitInFlight = false;
     const appInstance = mmApp;
     // `appInstance.canvas` is a getter that dereferences `appInstance.renderer`;
     // checking it directly throws when the renderer failed to initialize. Guard
@@ -111,6 +122,7 @@ export function initPixiMinimap(): void {
     // Mask removed: all drawing is already clipped to the circle by range checks
     // and the background circle bounds, so stencil testing per blip is unnecessary.
   }).catch((err) => {
+    mmInitInFlight = false;
     // Minimap is non-critical HUD chrome — degrade gracefully if its renderer
     // fails to initialize rather than crashing boot with an unhandled rejection.
     console.warn("Pixi minimap failed to initialize:", err);

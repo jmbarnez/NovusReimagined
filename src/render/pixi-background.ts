@@ -30,6 +30,15 @@ export let midStarContainer:  Container | null = null;
 export let nearStarContainer: Container | null = null;
 export let dustContainer:     Container | null = null;
 
+export function isPixiBackgroundReady(): boolean {
+  return !!(
+    farStarContainer?.parent &&
+    midStarContainer?.parent &&
+    nearStarContainer?.parent &&
+    dustContainer?.parent
+  );
+}
+
 // ── Background star texture ────────────────────────────────────────────────
 function bakeStarTexture(): Texture {
   const S = 96;
@@ -125,6 +134,12 @@ export function refreshBackground() {
 // ── Init ───────────────────────────────────────────────────────────────────
 export function initBackground() {
   if (!screenContainer) return;
+  if (isPixiBackgroundReady()) return;
+
+  farStarContainer?.destroy({ children: true });
+  midStarContainer?.destroy({ children: true });
+  nearStarContainer?.destroy({ children: true });
+  dustContainer?.destroy({ children: true });
 
   // GPU nebula mesh at z-index 0 (back of screenContainer)
   initNebulaMesh(screenContainer);

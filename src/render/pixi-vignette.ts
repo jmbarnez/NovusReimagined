@@ -78,6 +78,11 @@ let _cachedW = 0, _cachedH = 0;
 
 export function initVignette() {
   if (!app) return;
+  if (_sprite?.parent && _ug) return;
+  if (_sprite) {
+    _sprite.destroy();
+    _sprite = null;
+  }
 
   _ug = new UniformGroup({
     uShieldGlow:     { value: 0, type: "f32" },

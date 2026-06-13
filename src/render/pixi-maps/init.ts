@@ -3,8 +3,38 @@ import { app } from "../../pixi.js";
 import { pixiMapState } from "./state.js";
 import { invalidatePixiMapBounds } from "./viewport.js";
 
+let listenersBound = false;
+
+function resetStalePixiMapState(): void {
+  pixiMapState.positioningContainer?.destroy({ children: true });
+  pixiMapState.bgGfx = null;
+  pixiMapState.gridGfx = null;
+  pixiMapState.starGfx = null;
+  pixiMapState.sectorGfx = null;
+  pixiMapState.objectGfx = null;
+  pixiMapState.waypointGfx = null;
+  pixiMapState.playerGfx = null;
+  pixiMapState.vignetteGfx = null;
+  pixiMapState.labelContainer = null;
+  pixiMapState.mapMask = null;
+  pixiMapState.positioningContainer = null;
+  pixiMapState.overlayGfx = null;
+  pixiMapState.mapContainer = null;
+  pixiMapState.cachedMapBounds = null;
+  pixiMapState.mapBoundsDirty = true;
+  pixiMapState._lastLabelFontKey = "";
+  pixiMapState._nameStyle = null;
+  pixiMapState._smallStyle = null;
+  pixiMapState._boldStyle = null;
+  pixiMapState._labelStyleVariantCache.clear();
+  pixiMapState._mapLabelPool.clear();
+  pixiMapState._activeMapLabelKeys.clear();
+}
+
 export function initPixiMaps(): void {
   if (!app) return;
+  if (pixiMapState.positioningContainer?.parent) return;
+  resetStalePixiMapState();
 
   // Positioning container: handles screen placement and masking
   pixiMapState.positioningContainer = new Container();
@@ -62,6 +92,9 @@ export function initPixiMaps(): void {
   pixiMapState.overlayGfx = new Graphics();
   pixiMapState.mapContainer.addChild(pixiMapState.overlayGfx);
 
-  window.addEventListener("resize", invalidatePixiMapBounds);
-  window.addEventListener("hud:window-layout", invalidatePixiMapBounds);
+  if (!listenersBound) {
+    window.addEventListener("resize", invalidatePixiMapBounds);
+    window.addEventListener("hud:window-layout", invalidatePixiMapBounds);
+    listenersBound = true;
+  }
 }

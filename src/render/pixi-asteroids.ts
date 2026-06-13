@@ -4,7 +4,7 @@
  * Migrates asteroid fields and target bracket indicators to PixiJS:
  * - Asteroid Bodies: Rotated and translated polygon meshes with outline strokes.
  * - Mining Debris: Short-lived rock chunks with matching dark outlines.
- * - Drop Shadows: 3D perspective shadows offset below the asteroid planes.
+ * - Surface Lighting: Sun-relative baked light buckets without screen-space shadows.
  * - Health Bars: Dynamic resource bars fading in under damaged rocks.
  * - Selection Brackets: Glowing primary/secondary blue targeting locks.
  */
@@ -18,9 +18,11 @@ import { asteroidDebrisList } from "../utils/mining.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
 import { PixiGeometryBufferPool } from "./pixi-geometry-buffer-pool.js";
 import { entityLayer } from "../pixi.js";
+import { getSunWorldPos } from "../utils/sun-position.js";
 
 const TAU = Math.PI * 2;
 const ASTEROID_TEX_SCALE = 3;
+const ASTEROID_LIGHT_DIRS = 16;
 
 /** Shared thin dark outline for rocky bodies (asteroids + mining debris). */
 const ROCK_OUTLINE = { color: 0x080604, width: 1.5, alpha: 0.92 } as const;
@@ -55,13 +57,19 @@ function hashUnit(seed: string): number {
   return ((h >>> 0) % 100000) / 100000;
 }
 
-function makeAsteroidTextureKey(a: Asteroid): string {
+function lightBucket(localLightAngle: number): number {
+  const unit = (((localLightAngle % TAU) + TAU) % TAU) / TAU;
+  return Math.round(unit * ASTEROID_LIGHT_DIRS) % ASTEROID_LIGHT_DIRS;
+}
+
+function makeAsteroidTextureKey(a: Asteroid, lightDir: number): string {
   return [
     a.id,
     Math.round(a.radius),
     Math.round(a.tintHue ?? 30),
     Math.round(a.tintSat ?? 13),
     a.shape.length,
+    lightDir,
   ].join("|");
 }
 
@@ -76,7 +84,7 @@ function drawAsteroidPath(cx: CanvasRenderingContext2D, a: Asteroid, radius: num
   cx.closePath();
 }
 
-function bakeAsteroidTexture(a: Asteroid): Texture {
+function bakeAsteroidTexture(a: Asteroid, lightDir: number): Texture {
   const radius = Math.max(4, a.radius);
   const padding = radius * 0.44;
   const texSize = Math.ceil((radius + padding) * 2);
@@ -89,21 +97,9 @@ function bakeAsteroidTexture(a: Asteroid): Texture {
 
   const hue = a.tintHue ?? 30;
   const sat = a.tintSat ?? 13;
-  const lightAngle = -0.78 + hashUnit(`${a.id}:light`) * 0.22;
+  const lightAngle = (lightDir / ASTEROID_LIGHT_DIRS) * TAU;
   const lightX = Math.cos(lightAngle);
   const lightY = Math.sin(lightAngle);
-
-  const shadow = cx.createRadialGradient(radius * 0.12, radius * 0.16, 0, radius * 0.12, radius * 0.16, radius * 1.28);
-  shadow.addColorStop(0, "rgba(0,0,0,0.36)");
-  shadow.addColorStop(0.56, "rgba(0,0,0,0.12)");
-  shadow.addColorStop(1, "rgba(0,0,0,0)");
-  cx.save();
-  cx.scale(1.08, 0.84);
-  cx.fillStyle = shadow;
-  cx.beginPath();
-  cx.arc(0, 0, radius * 1.22, 0, TAU);
-  cx.fill();
-  cx.restore();
 
   cx.save();
   drawAsteroidPath(cx, a, radius);
@@ -184,25 +180,27 @@ function bakeAsteroidTexture(a: Asteroid): Texture {
   });
 }
 
-function getAsteroidTexture(a: Asteroid): Texture {
-  const key = makeAsteroidTextureKey(a);
+function getAsteroidTexture(a: Asteroid, localLightAngle: number): Texture {
+  const dir = lightBucket(localLightAngle);
+  const key = makeAsteroidTextureKey(a, dir);
   let texture = _asteroidTextureCache.get(key);
   if (!texture) {
-    texture = bakeAsteroidTexture(a);
+    texture = bakeAsteroidTexture(a, dir);
     _asteroidTextureCache.set(key, texture);
   }
   return texture;
 }
 
-function syncAsteroidBodySprite(a: Asteroid, spin: number, hp: number): void {
+function syncAsteroidBodySprite(a: Asteroid, spin: number, hp: number, localLightAngle: number): void {
   if (!_asteroidSpriteLayer) return;
   let sprite = _asteroidSprites.get(a.id);
   if (!sprite) {
-    sprite = new Sprite(getAsteroidTexture(a));
+    sprite = new Sprite(getAsteroidTexture(a, localLightAngle));
     sprite.anchor.set(0.5);
     _asteroidSpriteLayer.addChild(sprite);
     _asteroidSprites.set(a.id, sprite);
   }
+  sprite.texture = getAsteroidTexture(a, localLightAngle);
   sprite.visible = true;
   sprite.x = a.x;
   sprite.y = a.y;
@@ -253,6 +251,7 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
   const asteroids = sys?._liveAsteroids ?? [];
   const isMultiplayer = Client.multiplayerRole !== "none";
   const activeIds = new Set<string>();
+  const sun = getSunWorldPos(sys);
 
   for (const a of asteroids) {
       if (!isVisible(a.x, a.y, a.radius + 14)) continue;
@@ -260,7 +259,8 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
 
       const hp = a.hp / Math.max(1, a.maxHp);
       const iSpin = isMultiplayer ? a.spinAngle : lerp(a.prevSpin, a.spinAngle, alpha);
-      syncAsteroidBodySprite(a, iSpin, hp);
+      const sunDir = Math.atan2(sun.y - a.y, sun.x - a.x);
+      syncAsteroidBodySprite(a, iSpin, hp, sunDir - iSpin);
 
       // 3. Render health bars below damaged asteroids
       if (hp < 1) {

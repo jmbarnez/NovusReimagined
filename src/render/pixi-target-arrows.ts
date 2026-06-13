@@ -32,6 +32,14 @@ const edgesScratch = new Float64Array(4);
 
 export function initPixiTargetArrows(): void {
   if (!hudOverlayLayer) return;
+  if (arrowsContainer?.parent) return;
+  if (arrowsContainer) {
+    arrowsContainer.destroy({ children: true });
+  }
+  arrowsContainer = null;
+  arrowPool = [];
+  textPool = [];
+  poolIndex = 0;
 
   arrowsContainer = new Container();
   arrowsContainer.label = "target-arrows";
@@ -291,4 +299,3 @@ export function syncPixiTutorialGuideArrow(Wc: number, Hc: number, camxR: number
   arrow.fill({ color: 0xffdd44, alpha: pulse * 0.85 });
   releaseArrowAndLabel();
 }
-

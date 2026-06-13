@@ -124,6 +124,11 @@ function buildFilter(): Filter {
 // ── Public API ─────────────────────────────────────────────────────────────
 
 export function initNebulaMesh(parent: Container) {
+  if (_sprite?.parent === parent) return;
+  if (_sprite) {
+    _sprite.destroy();
+    _sprite = null;
+  }
   _filter = buildFilter();
   _sprite = new Sprite(Texture.EMPTY);
   _sprite.filters = [_filter];
