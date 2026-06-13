@@ -1,23 +1,11 @@
-import { Container, Sprite, Texture, ImageSource, Graphics, Filter, UniformGroup } from "pixi.js";
-import { defaultFilterVert } from "pixi.js";
+import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
 import type { Planet, System } from "../types/world.js";
 import { TAU } from "../constants.js";
 import { getSunWorldPos } from "../utils/sun-position.js";
 import { mkRng } from "../utils/math.js";
 
-interface PlanetLightUniforms {
-  uLightDir: Float32Array;
-  uAtmosphere: Float32Array;
-  uDiscRadius: number;
-  uSpecular: number;
-  uRelief: number;
-  [key: string]: Float32Array | number;
-}
-
 type PlanetEntry = {
   sprite: Sprite;
-  planet: Planet;
-  uniforms: UniformGroup;
 };
 
 type MoonEntry = {
@@ -28,68 +16,6 @@ type MoonEntry = {
 
 let _planetEntries: PlanetEntry[] = [];
 let _moonEntries: MoonEntry[] = [];
-
-const PLANET_LIGHT_FRAG = `#version 300 es
-precision mediump float;
-
-in vec2 vTextureCoord;
-uniform sampler2D uSampler;
-
-uniform vec2 uLightDir;
-uniform vec3 uAtmosphere;
-uniform float uDiscRadius;
-uniform float uSpecular;
-uniform float uRelief;
-
-out vec4 fragColor;
-
-float luminance(vec3 c) {
-  return dot(c, vec3(0.2126, 0.7152, 0.0722));
-}
-
-void main() {
-  vec4 base = texture(uSampler, vTextureCoord);
-  if (base.a < 0.001) {
-    fragColor = vec4(0.0);
-    return;
-  }
-
-  vec2 local = vTextureCoord - vec2(0.5);
-  float sphereDist = length(local) / max(uDiscRadius, 0.001);
-
-  if (sphereDist > 1.0) {
-    fragColor = base;
-    return;
-  }
-
-  vec2 nxy = local / uDiscRadius;
-  float nz = sqrt(max(0.0, 1.0 - dot(nxy, nxy)));
-  vec3 normal = normalize(vec3(nxy, nz));
-  vec3 light = normalize(vec3(normalize(uLightDir) * 0.93, 0.36));
-  vec3 view = vec3(0.0, 0.0, 1.0);
-
-  float ndl = dot(normal, light);
-  float day = smoothstep(-0.18, 0.96, ndl);
-  float terminator = smoothstep(-0.16, 0.18, ndl);
-  float limb = pow(clamp(1.0 - nz, 0.0, 1.0), 1.7);
-
-  float reliefSample = luminance(base.rgb);
-  float relief = mix(1.0 - uRelief, 1.0 + uRelief, reliefSample);
-  float shade = (0.16 + day * 0.92) * relief;
-  vec3 color = base.rgb * shade;
-
-  vec3 halfVec = normalize(light + view);
-  float spec = pow(max(dot(normal, halfVec), 0.0), 42.0) * uSpecular * day;
-  color += vec3(1.0, 0.92, 0.78) * spec;
-
-  float blueRim = limb * smoothstep(-0.30, 0.35, ndl);
-  float nightRim = limb * (1.0 - terminator) * 0.42;
-  color += uAtmosphere * (blueRim * 0.34 + nightRim * 0.18);
-  color *= 1.0 - limb * 0.30;
-
-  fragColor = vec4(color, base.a);
-}
-`;
 
 function hslStr(h: number, s: number, l: number, a = 1): string {
   return `hsla(${((h % 360) + 360) % 360},${Math.max(0, Math.min(100, s))}%,${Math.max(0, Math.min(100, l))}%,${a})`;
@@ -103,33 +29,6 @@ function hslInt(h: number, s: number, l: number): number {
   return (f(0) << 16) | (f(8) << 8) | f(4);
 }
 
-function hslRgbFloat(h: number, s: number, l: number): Float32Array {
-  h = ((h % 360) + 360) % 360; s /= 100; l /= 100;
-  const k = (n: number) => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  return new Float32Array([f(0), f(8), f(4)]);
-}
-
-function createPlanetLightFilter(p: Planet): UniformGroup {
-  const uniforms = new UniformGroup({
-    uLightDir:    { value: new Float32Array([1, 0]), type: "vec2<f32>" },
-    uAtmosphere:  { value: hslRgbFloat(p.hue + 18, Math.min(100, p.sat + 30), Math.min(92, p.lit + 38)), type: "vec3<f32>" },
-    uDiscRadius:  { value: p.radius / Math.max(128, Math.ceil(p.radius * 5)), type: "f32" },
-    uSpecular:    { value: p.sat < 45 ? 0.18 : 0.08, type: "f32" },
-    uRelief:      { value: 0.10, type: "f32" },
-  });
-  return uniforms;
-}
-
-function makePlanetFilter(uniforms: UniformGroup): Filter {
-  return Filter.from({
-    gl: { vertex: defaultFilterVert, fragment: PLANET_LIGHT_FRAG, name: "planet-runtime-light" },
-    resources: { uPlanetLight: uniforms },
-    blendMode: "normal",
-  });
-}
-
 function bakePlanet(p: Planet, sys: System): Texture {
   const texSize = Math.max(128, Math.ceil(p.radius * 5));
   const half = texSize / 2;
@@ -138,11 +37,15 @@ function bakePlanet(p: Planet, sys: System): Texture {
   const cx = c.getContext("2d")!;
   const rng = mkRng(`${sys.id}:planet:${Math.round(p.x)}:${Math.round(p.y)}:${p.radius}`);
   const r = p.radius;
+  const sun = getSunWorldPos(sys);
+  const lightAngle = Math.atan2(sun.y - p.y, sun.x - p.x);
+  const lightX = Math.cos(lightAngle);
+  const lightY = Math.sin(lightAngle);
 
   cx.save();
   cx.translate(half, half);
 
-  // Procedural atmosphere and albedo are baked; direction-sensitive lighting is shader-driven.
+  // Keep atmosphere and lighting planet-local so it cannot drift with filter bounds.
   const glow = cx.createRadialGradient(0, 0, r * 0.55, 0, 0, r * 1.45);
   glow.addColorStop(0, hslStr(p.hue, Math.min(100, p.sat + 18), p.lit + 18, 0.12));
   glow.addColorStop(1, "transparent");
@@ -191,6 +94,43 @@ function bakePlanet(p: Planet, sys: System): Texture {
     cx.ellipse(Math.cos(a) * d, Math.sin(a) * d, spotR * 1.8, spotR, rng() * TAU, 0, TAU);
     cx.fill();
   }
+
+  const dayLight = cx.createLinearGradient(-lightX * r, -lightY * r, lightX * r, lightY * r);
+  dayLight.addColorStop(0, "rgba(255,246,224,0.22)");
+  dayLight.addColorStop(0.38, "rgba(255,246,224,0.10)");
+  dayLight.addColorStop(0.72, "rgba(255,246,224,0)");
+  cx.fillStyle = dayLight;
+  cx.fillRect(-r, -r, r * 2, r * 2);
+
+  const nightShade = cx.createLinearGradient(lightX * r, lightY * r, -lightX * r, -lightY * r);
+  nightShade.addColorStop(0, "rgba(0,0,0,0)");
+  nightShade.addColorStop(0.46, "rgba(0,0,0,0.05)");
+  nightShade.addColorStop(0.78, "rgba(0,0,0,0.44)");
+  nightShade.addColorStop(1, "rgba(0,0,0,0.68)");
+  cx.fillStyle = nightShade;
+  cx.fillRect(-r, -r, r * 2, r * 2);
+
+  const limb = cx.createRadialGradient(lightX * r * 0.12, lightY * r * 0.12, r * 0.66, 0, 0, r * 1.05);
+  limb.addColorStop(0, "rgba(0,0,0,0)");
+  limb.addColorStop(0.72, "rgba(0,0,0,0)");
+  limb.addColorStop(0.93, hslStr(p.hue + 18, Math.min(100, p.sat + 34), Math.min(92, p.lit + 42), 0.16));
+  limb.addColorStop(1, hslStr(p.hue + 18, Math.min(100, p.sat + 34), Math.min(92, p.lit + 48), 0.26));
+  cx.globalCompositeOperation = "lighter";
+  cx.fillStyle = limb;
+  cx.beginPath();
+  cx.arc(0, 0, r * 1.02, 0, TAU);
+  cx.fill();
+  cx.globalCompositeOperation = "source-over";
+
+  const highlightX = lightX * r * 0.34;
+  const highlightY = lightY * r * 0.34;
+  const glint = cx.createRadialGradient(highlightX, highlightY, 0, highlightX, highlightY, r * 0.38);
+  glint.addColorStop(0, "rgba(255,250,232,0.14)");
+  glint.addColorStop(1, "rgba(255,250,232,0)");
+  cx.fillStyle = glint;
+  cx.beginPath();
+  cx.arc(0, 0, r, 0, TAU);
+  cx.fill();
   cx.restore();
 
   if (p.hasRing) {
@@ -218,13 +158,11 @@ export function initPlanetSprites(parent: Container, sys: System) {
 
   for (const p of sys.planets) {
     const sprite = new Sprite(bakePlanet(p, sys));
-    const uniforms = createPlanetLightFilter(p);
     sprite.anchor.set(0.5);
     sprite.x = p.x;
     sprite.y = p.y;
-    sprite.filters = [makePlanetFilter(uniforms)];
     parent.addChild(sprite);
-    _planetEntries.push({ sprite, planet: p, uniforms });
+    _planetEntries.push({ sprite });
 
     for (let m = 0; m < (p.moons || 0); m++) {
       const moonR = Math.max(1.5, p.radius * 0.13);
@@ -242,19 +180,7 @@ export function initPlanetSprites(parent: Container, sys: System) {
   }
 }
 
-export function syncPixiPlanets(now: number, sys?: System) {
-  if (sys) {
-    const sun = getSunWorldPos(sys);
-    for (const e of _planetEntries) {
-      const lx = sun.x - e.planet.x;
-      const ly = sun.y - e.planet.y;
-      const len = Math.hypot(lx, ly) || 1;
-      const uniforms = e.uniforms.uniforms as unknown as PlanetLightUniforms;
-      uniforms.uLightDir[0] = lx / len;
-      uniforms.uLightDir[1] = ly / len;
-    }
-  }
-
+export function syncPixiPlanets(now: number, _sys?: System) {
   for (const e of _moonEntries) {
     const ma = (e.moonIdx / e.totalMoons) * TAU + now * 0.0003 * (e.moonIdx + 1);
     const mr = e.radius * 1.85 + e.moonIdx * 28;

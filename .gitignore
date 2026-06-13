@@ -29,3 +29,5 @@ coverage/
 # Temporary and generated files
 tmp*.js
 *.tmp
+
+.devinignore

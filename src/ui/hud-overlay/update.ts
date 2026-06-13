@@ -13,7 +13,7 @@ import { toggleHudWindow, isOpen, getHudWindow, closeHudWindow, openHudWindow } 
 import { updateMapSurveyUi } from "../map-survey.js";
 import { hudState } from "../hud/state.js";
 import { updateSlots } from "../hud/slots.js";
-import { updateLockRail } from "../hud/targeting.js";
+import { updateLockRail } from "../hud/targeting/index.js";
 import { updateDockPrompt, updateHudOverviewPanel } from "../hud/overview.js";
 import { updateShipPanelLive, buildShipPanelShell, attachShipPanelListeners } from "../hud/ship-panel/index.js";
 import { updateTractorDial } from "../hud/tractor-dial.js";

@@ -1,5 +1,5 @@
 import type { SlotNode } from "./slots.js";
-import type { LockCard } from "./targeting.js";
+import type { LockCard } from "./targeting/index.js";
 
 export const hudState = {
   root: null as HTMLElement | null,
