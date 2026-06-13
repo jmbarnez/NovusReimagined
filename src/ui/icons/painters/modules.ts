@@ -2,577 +2,601 @@ import type { IconPaintCtx, IconPainter } from "./shared.js";
 import {
   drawSpecular,
   drawEmissiveGlow,
-  fillPolygon,
-  tintGradient,
-  hullGradient,
-  copperGradient,
   COL,
-  RACK_COLORS,
-  fillRoundRect,
   energyRgb,
   energyHex,
   drawOctPlatform,
   drawSlotChassis,
   drawRailBarrels,
+  hullGradient,
+  copperGradient,
+  tintGradient,
+  RACK_COLORS,
 } from "./shared.js";
 
-function beginTurret(ctx: IconPaintCtx): void {
-  if (!ctx.rack) ctx.rack = "turret";
-  drawOctPlatform(ctx, ctx.half, ctx.half);
-}
+// ═════════════════════════════════════════════════════════════════════════════
+//  Module Icon Schema — data-driven Canvas rendering
+// ═════════════════════════════════════════════════════════════════════════════
 
-function paintDualRail(ctx: IconPaintCtx): void {
-  beginTurret(ctx);
-  drawRailBarrels(ctx, ctx.half + 1, 17);
-  drawSpecular(ctx, 2, -6, 16);
-}
+type ColorSpec =
+  | string
+  | "accent" | "energy" | "energyRgb"
+  | "hullDark" | "hullMid" | "hullLite" | "hullEdge"
+  | "amber" | "amberHex" | "green" | "cyan" | "cyanHex" | "hazard" | "purple"
+  | { grad: "hull" | "copper" | "tint"; y0: number; y1: number };
 
-function paintGauss(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  beginTurret(ctx);
-  cx.fillStyle = hullGradient(cx, half, half - 5, half + 5);
-  cx.fillRect(half - 4, half - 5, 22, 10);
-  cx.strokeStyle = COL.hullEdge;
-  cx.strokeRect(half - 4, half - 5, 22, 10);
-  cx.fillStyle = copperGradient(cx, half, half - 6, half + 6);
-  cx.fillRect(half - 8, half - 6, 7, 12);
-  cx.strokeStyle = energyHex(ctx);
-  cx.lineWidth = 1.4;
-  cx.beginPath();
-  cx.moveTo(half + 2, half);
-  cx.lineTo(half + 20, half);
-  cx.stroke();
-  drawEmissiveGlow(cx, half + 16, half, 6, energyRgb(ctx), 0.55);
-}
+type PathSeg =
+  | { type: "move"; x: number; y: number }
+  | { type: "line"; x: number; y: number }
+  | { type: "quad"; cpx: number; cpy: number; x: number; y: number }
+  | { type: "arc"; x: number; y: number; r: number; start: number; end: number }
+  | { type: "close" };
 
-function paintBeamEmitter(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  beginTurret(ctx);
-  cx.fillStyle = copperGradient(cx, half + 8, half - 6, half + 6);
-  cx.beginPath();
-  cx.moveTo(half - 2, half - 7);
-  cx.lineTo(half + 20, half);
-  cx.lineTo(half - 2, half + 7);
-  cx.closePath();
-  cx.fill();
-  cx.strokeStyle = COL.hullEdge;
-  cx.stroke();
-  drawEmissiveGlow(cx, half + 14, half, 9, energyRgb(ctx), 0.6);
-  cx.strokeStyle = energyHex(ctx);
-  cx.lineWidth = 1.2;
-  cx.beginPath();
-  cx.moveTo(half + 4, half);
-  cx.lineTo(half + 22, half);
-  cx.stroke();
-}
+type DrawCmd =
+  | { type: "chassis"; kind: "turret" | "slot"; w?: number; h?: number }
+  | { type: "rect"; x: number; y: number; w: number; h: number; fill?: ColorSpec; stroke?: ColorSpec; lineWidth?: number }
+  | { type: "path"; segments: PathSeg[]; fill?: ColorSpec; stroke?: ColorSpec; lineWidth?: number }
+  | { type: "line"; x1: number; y1: number; x2: number; y2: number; stroke: ColorSpec; lineWidth?: number }
+  | { type: "arc"; x: number; y: number; r: number; start: number; end: number; fill?: ColorSpec; stroke?: ColorSpec; lineWidth?: number }
+  | { type: "ellipse"; x: number; y: number; rx: number; ry: number; rotate: number; start: number; end: number; stroke?: ColorSpec; lineWidth?: number }
+  | { type: "glow"; x: number; y: number; r: number; rgb: string; alpha?: number }
+  | { type: "rail"; x: number; len: number }
+  | { type: "specular"; ox?: number; oy?: number; r?: number }
+  | { type: "loop"; count: number; dy?: number; commands: DrawCmd[] };
 
-function paintStrip(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  beginTurret(ctx);
-  cx.strokeStyle = energyHex(ctx);
-  cx.lineWidth = 1.1;
-  for (let i = -2; i <= 2; i++) {
-    cx.beginPath();
-    cx.moveTo(half - 1, half + i * 3.5);
-    cx.lineTo(half + 20, half);
-    cx.stroke();
+function resolveColor(spec: ColorSpec, ctx: IconPaintCtx): string | CanvasGradient {
+  if (typeof spec === "string") {
+    switch (spec) {
+      case "accent": return ctx.accent;
+      case "energy": return energyHex(ctx);
+      case "energyRgb": return energyRgb(ctx);
+      case "hullDark": return COL.hullDark;
+      case "hullMid": return COL.hullMid;
+      case "hullLite": return COL.hullLite;
+      case "hullEdge": return COL.hullEdge;
+      case "amber": return COL.amber;
+      case "amberHex": return COL.amberHex;
+      case "green": return COL.green;
+      case "cyan": return COL.cyan;
+      case "cyanHex": return COL.cyanHex;
+      case "hazard": return COL.hazard;
+      case "purple": return COL.purple;
+      default: return spec;
+    }
   }
-  drawEmissiveGlow(cx, half + 15, half, 7, energyRgb(ctx), 0.45);
-}
-
-function paintMissileRack(ctx: IconPaintCtx): void {
   const { cx, half } = ctx;
-  beginTurret(ctx);
-  for (let i = 0; i < 3; i++) {
-    const y = half - 9 + i * 9;
-    cx.fillStyle = hullGradient(cx, half + 10, y, y + 5);
-    cx.beginPath();
-    cx.moveTo(half + 3, y);
-    cx.lineTo(half + 18, y + 2.5);
-    cx.lineTo(half + 3, y + 5);
-    cx.closePath();
-    cx.fill();
-    cx.strokeStyle = COL.hullEdge;
-    cx.stroke();
-  }
-  drawEmissiveGlow(cx, half + 14, half, 6, COL.amber, 0.4);
+  if (spec.grad === "hull") return hullGradient(cx, half, spec.y0, spec.y1);
+  if (spec.grad === "copper") return copperGradient(cx, half, spec.y0, spec.y1);
+  return tintGradient(ctx.accent, spec.y0, spec.y1, cx, half);
 }
 
-function paintMiner(ctx: IconPaintCtx): void {
+function applyDy(cmd: DrawCmd, offset: number): DrawCmd {
+  const add = (v: number) => v + offset;
+  if (cmd.type === "rect") return { ...cmd, y: add(cmd.y) };
+  if (cmd.type === "arc") return { ...cmd, y: add(cmd.y) };
+  if (cmd.type === "ellipse") return { ...cmd, y: add(cmd.y) };
+  if (cmd.type === "glow") return { ...cmd, y: add(cmd.y) };
+  if (cmd.type === "line") return { ...cmd, y1: add(cmd.y1), y2: add(cmd.y2) };
+  if (cmd.type === "path")
+    return {
+      ...cmd,
+      segments: cmd.segments.map((s) =>
+        s.type === "move" ? { ...s, y: add(s.y) }
+        : s.type === "line" ? { ...s, y: add(s.y) }
+        : s.type === "quad" ? { ...s, cpy: add(s.cpy), y: add(s.y) }
+        : s.type === "arc" ? { ...s, y: add(s.y) }
+        : s
+      ),
+    };
+  return cmd;
+}
+
+function renderCmd(ctx: IconPaintCtx, cmd: DrawCmd): void {
   const { cx, half } = ctx;
-  beginTurret(ctx);
-  drawEmissiveGlow(cx, half + 14, half, 11, COL.green, 0.5);
-  cx.strokeStyle = "#55ff99";
-  cx.lineWidth = 2;
-  cx.beginPath();
-  cx.moveTo(half + 2, half);
-  cx.lineTo(half + 22, half);
-  cx.stroke();
-  cx.fillStyle = "#3dcc66";
-  cx.beginPath();
-  cx.arc(half + 22, half, 3, 0, Math.PI * 2);
-  cx.fill();
-  cx.strokeStyle = "rgba(255,255,255,0.35)";
-  cx.lineWidth = 0.8;
-  cx.beginPath();
-  cx.moveTo(half + 18, half - 5);
-  cx.lineTo(half + 22, half);
-  cx.lineTo(half + 18, half + 5);
-  cx.stroke();
-}
-
-function paintSalvager(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  beginTurret(ctx);
-  cx.strokeStyle = "#b898ff";
-  cx.lineWidth = 1.4;
-  for (let i = -1; i <= 1; i++) {
-    cx.beginPath();
-    cx.moveTo(half + 3, half + i * 5);
-    cx.quadraticCurveTo(half + 12, half + i * 1.5, half + 20, half + i * 7);
-    cx.stroke();
-  }
-  drawEmissiveGlow(cx, half + 14, half, 8, "160,120,255", 0.45);
-}
-
-function paintTractor(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  beginTurret(ctx);
-  cx.strokeStyle = energyHex(ctx);
-  cx.lineWidth = 1.3;
-  cx.setLineDash([4, 3]);
-  cx.beginPath();
-  cx.moveTo(half + 5, half - 11);
-  cx.lineTo(half + 18, half);
-  cx.lineTo(half + 5, half + 11);
-  cx.stroke();
-  cx.setLineDash([]);
-  drawEmissiveGlow(cx, half + 16, half, 7, energyRgb(ctx), 0.42);
-}
-
-function paintScanner(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  beginTurret(ctx);
-  cx.strokeStyle = energyHex(ctx);
-  cx.lineWidth = 1;
-  for (let r = 5; r <= 15; r += 5) {
-    cx.beginPath();
-    cx.arc(half + 2, half, r, -0.55, 0.55);
-    cx.stroke();
-  }
-  drawEmissiveGlow(cx, half + 10, half, 9, energyRgb(ctx), 0.38);
-}
-
-function paintHiCruise(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  drawSlotChassis(ctx, 12, 26);
-  cx.fillStyle = hullGradient(cx, half, half - 14, half + 10);
-  cx.fillRect(half - 3, half - 14, 6, 20);
-  cx.strokeStyle = COL.hullEdge;
-  cx.strokeRect(half - 3, half - 14, 6, 20);
-  cx.beginPath();
-  cx.moveTo(half - 5, half - 14);
-  cx.lineTo(half, half - 20);
-  cx.lineTo(half + 5, half - 14);
-  cx.fill();
-  cx.strokeStyle = "#ff6644";
-  cx.lineWidth = 1.2;
-  cx.beginPath();
-  cx.moveTo(half - 7, half + 6);
-  cx.lineTo(half - 11, half + 14);
-  cx.moveTo(half + 7, half + 6);
-  cx.lineTo(half + 11, half + 14);
-  cx.stroke();
-  drawEmissiveGlow(cx, half, half - 10, 6, COL.amber, 0.45);
-}
-
-function paintHiNos(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 20, 22);
-  cx.strokeStyle = accent;
-  cx.lineWidth = 2;
-  cx.beginPath();
-  cx.arc(half, half + 1, 12, 0, Math.PI * 1.35);
-  cx.stroke();
-  cx.fillStyle = COL.hazard;
-  cx.beginPath();
-  cx.arc(half, half + 1, 4, 0, Math.PI * 2);
-  cx.fill();
-  drawEmissiveGlow(cx, half, half + 1, 11, COL.amber, 0.5);
-}
-
-function paintHiSalv(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  drawSlotChassis(ctx, 20, 22);
-  cx.strokeStyle = "#b898ff";
-  cx.lineWidth = 1.5;
-  for (let i = -1; i <= 1; i++) {
-    cx.beginPath();
-    cx.moveTo(half - 8, half + 4 + i * 4);
-    cx.quadraticCurveTo(half, half - 2 + i * 2, half + 8, half + 4 + i * 4);
-    cx.stroke();
-  }
-  drawEmissiveGlow(cx, half, half, 9, "160,120,255", 0.4);
-}
-
-function paintHiComms(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 18, 24);
-  cx.strokeStyle = accent;
-  cx.lineWidth = 1.2;
-  cx.beginPath();
-  cx.moveTo(half, half + 10);
-  cx.lineTo(half, half - 8);
-  cx.stroke();
-  cx.beginPath();
-  cx.moveTo(half - 9, half - 8);
-  cx.quadraticCurveTo(half, half - 18, half + 9, half - 8);
-  cx.stroke();
-  for (let i = 1; i <= 2; i++) {
-    cx.beginPath();
-    cx.arc(half, half - 8, 5 * i, Math.PI * 1.08, Math.PI * 1.92);
-    cx.stroke();
-  }
-}
-
-function paintHiLink(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 18, 24);
-  cx.strokeStyle = accent;
-  cx.lineWidth = 1.4;
-  cx.beginPath();
-  cx.moveTo(half, half + 12);
-  cx.lineTo(half, half - 6);
-  cx.moveTo(half, half - 6);
-  cx.lineTo(half - 7, half - 14);
-  cx.moveTo(half, half - 6);
-  cx.lineTo(half + 7, half - 14);
-  cx.stroke();
-  cx.setLineDash([3, 2]);
-  cx.beginPath();
-  cx.arc(half, half + 6, 9, Math.PI, 0);
-  cx.stroke();
-  cx.setLineDash([]);
-}
-
-function paintCipherAnalyzer(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 26, 20);
-  cx.fillStyle = COL.hullDark;
-  cx.fillRect(half - 11, half - 7, 22, 14);
-  cx.strokeStyle = accent;
-  cx.strokeRect(half - 11, half - 7, 22, 14);
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 5; col++) {
-      if ((row + col) % 2 === 0) {
-        cx.fillStyle = energyHex(ctx);
-        cx.fillRect(half - 9 + col * 4, half - 5 + row * 4, 2.5, 2.5);
+  switch (cmd.type) {
+    case "chassis":
+      if (cmd.kind === "turret") {
+        if (!ctx.rack) ctx.rack = "turret";
+        drawOctPlatform(ctx, half, half);
+      } else {
+        drawSlotChassis(ctx, cmd.w ?? 20, cmd.h ?? 20);
       }
+      return;
+    case "rail": drawRailBarrels(ctx, cmd.x, cmd.len); return;
+    case "specular": drawSpecular(ctx, cmd.ox, cmd.oy, cmd.r); return;
+    case "glow": drawEmissiveGlow(cx, cmd.x, cmd.y, cmd.r, cmd.rgb, cmd.alpha ?? 0.55); return;
+    case "loop": {
+      for (let i = 0; i < cmd.count; i++) {
+        const off = i * (cmd.dy ?? 0);
+        for (const c of cmd.commands) renderCmd(ctx, applyDy(c, off));
+      }
+      return;
+    }
+    case "rect": {
+      if (cmd.fill) { cx.fillStyle = resolveColor(cmd.fill, ctx); cx.fillRect(cmd.x, cmd.y, cmd.w, cmd.h); }
+      if (cmd.stroke) { cx.strokeStyle = resolveColor(cmd.stroke, ctx); cx.lineWidth = cmd.lineWidth ?? 1; cx.strokeRect(cmd.x, cmd.y, cmd.w, cmd.h); }
+      return;
+    }
+    case "line": {
+      cx.strokeStyle = resolveColor(cmd.stroke, ctx); cx.lineWidth = cmd.lineWidth ?? 1;
+      cx.beginPath(); cx.moveTo(cmd.x1, cmd.y1); cx.lineTo(cmd.x2, cmd.y2); cx.stroke();
+      return;
+    }
+    case "arc": {
+      cx.beginPath(); cx.arc(cmd.x, cmd.y, cmd.r, cmd.start, cmd.end);
+      if (cmd.fill) { cx.fillStyle = resolveColor(cmd.fill, ctx); cx.fill(); }
+      if (cmd.stroke) { cx.strokeStyle = resolveColor(cmd.stroke, ctx); cx.lineWidth = cmd.lineWidth ?? 1; cx.stroke(); }
+      return;
+    }
+    case "ellipse": {
+      cx.beginPath(); cx.ellipse(cmd.x, cmd.y, cmd.rx, cmd.ry, cmd.rotate, cmd.start, cmd.end);
+      if (cmd.stroke) { cx.strokeStyle = resolveColor(cmd.stroke, ctx); cx.lineWidth = cmd.lineWidth ?? 1; cx.stroke(); }
+      return;
+    }
+    case "path": {
+      cx.beginPath();
+      for (const s of cmd.segments) {
+        switch (s.type) {
+          case "move": cx.moveTo(s.x, s.y); break;
+          case "line": cx.lineTo(s.x, s.y); break;
+          case "quad": cx.quadraticCurveTo(s.cpx, s.cpy, s.x, s.y); break;
+          case "arc": cx.arc(s.x, s.y, s.r, s.start, s.end); break;
+          case "close": cx.closePath(); break;
+        }
+      }
+      if (cmd.fill) { cx.fillStyle = resolveColor(cmd.fill, ctx); cx.fill(); }
+      if (cmd.stroke) { cx.strokeStyle = resolveColor(cmd.stroke, ctx); cx.lineWidth = cmd.lineWidth ?? 1; cx.stroke(); }
+      return;
     }
   }
 }
 
-function paintScannerArray(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  drawSlotChassis(ctx, 22, 22);
-  cx.fillStyle = COL.hullLite;
-  cx.fillRect(half - 14, half - 2, 5, 4);
-  cx.fillRect(half - 14, half + 5, 5, 4);
-  cx.strokeStyle = energyHex(ctx);
-  cx.lineWidth = 1;
-  for (let r = 4; r <= 12; r += 4) {
-    cx.beginPath();
-    cx.arc(half + 2, half + 1, r, -0.6, 0.6);
-    cx.stroke();
-  }
+type SchemaFn = (h: number) => DrawCmd[];
+function build(fn: SchemaFn): IconPainter {
+  return (ctx) => { for (const cmd of fn(ctx.half)) renderCmd(ctx, cmd); };
 }
 
-function paintAb(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 20, 18);
-  cx.fillStyle = hullGradient(cx, half, half - 5, half + 5);
-  cx.fillRect(half - 8, half - 5, 12, 10);
-  cx.fillStyle = COL.amberHex;
-  cx.beginPath();
-  cx.moveTo(half + 6, half - 3);
-  cx.lineTo(half + 16, half);
-  cx.lineTo(half + 6, half + 3);
-  cx.closePath();
-  cx.fill();
-  drawEmissiveGlow(cx, half + 12, half, 5, COL.amber, 0.5);
-}
+// ── Turret weapons ─────────────────────────────────────────────────────────
 
-function paintMwd(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 22, 18);
-  cx.fillStyle = tintGradient(accent, half - 8, half + 8, cx, half);
-  cx.beginPath();
-  cx.moveTo(half - 6, half - 4);
-  cx.lineTo(half + 12, half);
-  cx.lineTo(half - 6, half + 4);
-  cx.closePath();
-  cx.fill();
-  cx.beginPath();
-  cx.moveTo(half - 12, half - 5);
-  cx.lineTo(half - 2, half);
-  cx.lineTo(half - 12, half + 5);
-  cx.fill();
-  drawEmissiveGlow(cx, half + 8, half, 8, COL.cyan, 0.45);
-}
+const dualRail = build((h) => [
+  { type: "chassis", kind: "turret" },
+  { type: "rail", x: h + 1, len: 17 },
+  { type: "specular", ox: 2, oy: -6, r: 16 },
+]);
 
-function paintShield(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 18, 22);
-  cx.strokeStyle = accent;
-  cx.lineWidth = 2;
-  cx.beginPath();
-  cx.moveTo(half, half - 14);
-  cx.lineTo(half + 13, half - 6);
-  cx.lineTo(half + 13, half + 5);
-  cx.quadraticCurveTo(half, half + 17, half - 13, half + 5);
-  cx.lineTo(half - 13, half - 6);
-  cx.closePath();
-  cx.stroke();
-  cx.fillStyle = "rgba(56,160,240,0.18)";
-  cx.fill();
-  drawEmissiveGlow(cx, half, half + 2, 12, "56,180,255", 0.3);
-}
+const gauss = build((h) => [
+  { type: "chassis", kind: "turret" },
+  { type: "rect", x: h - 4, y: h - 5, w: 22, h: 10, fill: { grad: "hull", y0: h - 5, y1: h + 5 }, stroke: "hullEdge" },
+  { type: "rect", x: h - 8, y: h - 6, w: 7, h: 12, fill: { grad: "copper", y0: h - 6, y1: h + 6 } },
+  { type: "line", x1: h + 2, y1: h, x2: h + 20, y2: h, stroke: "energy", lineWidth: 1.4 },
+  { type: "glow", x: h + 16, y: h, r: 6, rgb: "energyRgb", alpha: 0.55 },
+]);
 
-function paintCapacitor(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 20, 20);
-  cx.strokeStyle = accent;
-  cx.lineWidth = 2.5;
-  cx.beginPath();
-  cx.arc(half, half + 1, 11, 0.35, Math.PI * 1.65);
-  cx.stroke();
-  cx.fillStyle = accent;
-  cx.beginPath();
-  cx.arc(half, half + 1, 4, 0, Math.PI * 2);
-  cx.fill();
-  drawEmissiveGlow(cx, half, half + 1, 9, COL.cyan, 0.4);
-}
+const beam = build((h) => [
+  { type: "chassis", kind: "turret" },
+  {
+    type: "path",
+    segments: [
+      { type: "move", x: h - 2, y: h - 7 },
+      { type: "line", x: h + 20, y: h },
+      { type: "line", x: h - 2, y: h + 7 },
+      { type: "close" },
+    ],
+    fill: { grad: "copper", y0: h - 6, y1: h + 6 },
+    stroke: "hullEdge",
+  },
+  { type: "glow", x: h + 14, y: h, r: 9, rgb: "energyRgb", alpha: 0.6 },
+  { type: "line", x1: h + 4, y1: h, x2: h + 22, y2: h, stroke: "energy", lineWidth: 1.2 },
+]);
 
-function paintSignalMed(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 22, 18);
-  cx.strokeStyle = accent;
-  cx.lineWidth = 1.3;
-  cx.beginPath();
-  cx.moveTo(half - 10, half + 5);
-  cx.lineTo(half - 3, half - 7);
-  cx.lineTo(half + 3, half + 3);
-  cx.lineTo(half + 10, half - 8);
-  cx.stroke();
-  drawEmissiveGlow(cx, half, half, 8, COL.cyan, 0.35);
-}
+const strip = build((h) => [
+  { type: "chassis", kind: "turret" },
+  { type: "loop", count: 5, dy: 3.5, commands: [
+    { type: "line", x1: h - 1, y1: h, x2: h + 20, y2: h, stroke: "energy", lineWidth: 1.1 },
+  ]},
+  { type: "glow", x: h + 15, y: h, r: 7, rgb: "energyRgb", alpha: 0.45 },
+]);
 
-function paintMedTractor(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  drawSlotChassis(ctx, 20, 20);
-  cx.strokeStyle = energyHex(ctx);
-  cx.lineWidth = 1.3;
-  cx.setLineDash([3, 2]);
-  cx.beginPath();
-  cx.moveTo(half - 6, half - 8);
-  cx.lineTo(half + 8, half);
-  cx.lineTo(half - 6, half + 8);
-  cx.stroke();
-  cx.setLineDash([]);
-}
+const missile = build((h) => [
+  { type: "chassis", kind: "turret" },
+  { type: "path", segments: [
+    { type: "move", x: h + 3, y: h - 9 },
+    { type: "line", x: h + 18, y: h - 6.5 },
+    { type: "line", x: h + 3, y: h - 4 },
+    { type: "close" },
+  ], fill: { grad: "hull", y0: h - 9, y1: h - 4 }, stroke: "hullEdge" },
+  { type: "path", segments: [
+    { type: "move", x: h + 3, y: h },
+    { type: "line", x: h + 18, y: h + 2.5 },
+    { type: "line", x: h + 3, y: h + 5 },
+    { type: "close" },
+  ], fill: { grad: "hull", y0: h, y1: h + 5 }, stroke: "hullEdge" },
+  { type: "path", segments: [
+    { type: "move", x: h + 3, y: h + 9 },
+    { type: "line", x: h + 18, y: h + 11.5 },
+    { type: "line", x: h + 3, y: h + 14 },
+    { type: "close" },
+  ], fill: { grad: "hull", y0: h + 9, y1: h + 14 }, stroke: "hullEdge" },
+  { type: "glow", x: h + 14, y: h, r: 6, rgb: COL.amber, alpha: 0.4 },
+]);
 
-function paintGyro(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 22, 18);
-  cx.strokeStyle = accent;
-  cx.lineWidth = 1.2;
-  cx.beginPath();
-  cx.ellipse(half, half + 1, 13, 5, 0, 0, Math.PI * 2);
-  cx.stroke();
-  cx.beginPath();
-  cx.ellipse(half, half + 1, 13, 5, Math.PI / 3, 0, Math.PI * 2);
-  cx.stroke();
-  cx.fillStyle = accent;
-  cx.beginPath();
-  cx.arc(half, half + 1, 2.5, 0, Math.PI * 2);
-  cx.fill();
-}
+const miner = build((h) => [
+  { type: "chassis", kind: "turret" },
+  { type: "glow", x: h + 14, y: h, r: 11, rgb: COL.green, alpha: 0.5 },
+  { type: "line", x1: h + 2, y1: h, x2: h + 22, y2: h, stroke: "#55ff99", lineWidth: 2 },
+  { type: "arc", x: h + 22, y: h, r: 3, start: 0, end: Math.PI * 2, fill: "#3dcc66" },
+  { type: "path", segments: [
+    { type: "move", x: h + 18, y: h - 5 },
+    { type: "line", x: h + 22, y: h },
+    { type: "line", x: h + 18, y: h + 5 },
+  ], stroke: "rgba(255,255,255,0.35)", lineWidth: 0.8 },
+]);
 
-function paintDcu(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 24, 18);
-  for (let i = 0; i < 3; i++) {
-    cx.fillStyle = tintGradient(accent, half - 6 + i * 6, half + 4, cx, half);
-    cx.fillRect(half - 10, half - 6 + i * 5, 20, 3.5);
-    cx.strokeStyle = COL.hullEdge;
-    cx.strokeRect(half - 10, half - 6 + i * 5, 20, 3.5);
-  }
-}
+const salvager = build((h) => [
+  { type: "chassis", kind: "turret" },
+  { type: "path", segments: [{ type: "move", x: h + 3, y: h - 5 }, { type: "quad", cpx: h + 12, cpy: h - 1.5, x: h + 20, y: h - 7 }], stroke: "#b898ff", lineWidth: 1.4 },
+  { type: "path", segments: [{ type: "move", x: h + 3, y: h }, { type: "quad", cpx: h + 12, cpy: h, x: h + 20, y: h }], stroke: "#b898ff", lineWidth: 1.4 },
+  { type: "path", segments: [{ type: "move", x: h + 3, y: h + 5 }, { type: "quad", cpx: h + 12, cpy: h + 1.5, x: h + 20, y: h + 7 }], stroke: "#b898ff", lineWidth: 1.4 },
+  { type: "glow", x: h + 14, y: h, r: 8, rgb: "160,120,255", alpha: 0.45 },
+]);
 
-function paintBattery(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 18, 22);
-  cx.fillStyle = tintGradient(accent, half - 8, half + 8, cx, half);
-  cx.fillRect(half - 8, half - 6, 16, 12);
-  cx.fillRect(half - 3, half - 10, 6, 4);
-  cx.strokeStyle = "#44ff88";
-  cx.lineWidth = 1.2;
-  cx.beginPath();
-  cx.moveTo(half - 3, half);
-  cx.lineTo(half + 2, half - 3);
-  cx.lineTo(half + 2, half + 3);
-  cx.stroke();
-}
+const tractor = build((h) => [
+  { type: "chassis", kind: "turret" },
+  { type: "path", segments: [
+    { type: "move", x: h + 5, y: h - 11 },
+    { type: "line", x: h + 18, y: h },
+    { type: "line", x: h + 5, y: h + 11 },
+  ], stroke: "energy", lineWidth: 1.3 },
+  { type: "glow", x: h + 16, y: h, r: 7, rgb: "energyRgb", alpha: 0.42 },
+]);
 
-function paintNano(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 22, 18);
-  cx.fillStyle = accent;
-  cx.beginPath();
-  cx.arc(half, half, 2.5, 0, Math.PI * 2);
-  cx.fill();
-  const nodes: [number, number][] = [[half - 9, half - 5], [half + 9, half - 5], [half - 9, half + 5], [half + 9, half + 5]];
-  cx.strokeStyle = accent;
-  cx.lineWidth = 0.9;
-  for (const [x, y] of nodes) {
-    cx.beginPath();
-    cx.arc(x, y, 2, 0, Math.PI * 2);
-    cx.fill();
-    cx.moveTo(half, half);
-    cx.lineTo(x, y);
-    cx.stroke();
-  }
-}
+const scanner = build((h) => [
+  { type: "chassis", kind: "turret" },
+  { type: "arc", x: h + 2, y: h, r: 5, start: -0.55, end: 0.55, stroke: "energy", lineWidth: 1 },
+  { type: "arc", x: h + 2, y: h, r: 10, start: -0.55, end: 0.55, stroke: "energy", lineWidth: 1 },
+  { type: "arc", x: h + 2, y: h, r: 15, start: -0.55, end: 0.55, stroke: "energy", lineWidth: 1 },
+  { type: "glow", x: h + 10, y: h, r: 9, rgb: "energyRgb", alpha: 0.38 },
+]);
 
-function paintDataRecovery(ctx: IconPaintCtx): void {
-  paintNano(ctx);
-  const { cx, half } = ctx;
-  cx.strokeStyle = COL.cyanHex;
-  cx.lineWidth = 1;
-  cx.strokeRect(half - 7, half - 5, 14, 10);
-}
+// ── High slot modules ────────────────────────────────────────────────────────
 
-function paintHull(ctx: IconPaintCtx): void {
-  const { cx, half } = ctx;
-  drawSlotChassis(ctx, 26, 14);
-  cx.strokeStyle = COL.hullEdge;
-  cx.lineWidth = 1;
-  cx.beginPath();
-  cx.moveTo(half - 10, half - 1);
-  cx.lineTo(half + 10, half - 1);
-  cx.moveTo(half - 10, half + 2);
-  cx.lineTo(half + 10, half + 2);
-  cx.stroke();
-}
+const cruise = build((h) => [
+  { type: "chassis", kind: "slot", w: 12, h: 26 },
+  { type: "rect", x: h - 3, y: h - 14, w: 6, h: 20, fill: { grad: "hull", y0: h - 14, y1: h + 10 }, stroke: "hullEdge" },
+  { type: "path", segments: [
+    { type: "move", x: h - 5, y: h - 14 },
+    { type: "line", x: h, y: h - 20 },
+    { type: "line", x: h + 5, y: h - 14 },
+  ], fill: { grad: "hull", y0: h - 20, y1: h - 14 } },
+  { type: "line", x1: h - 7, y1: h + 6, x2: h - 11, y2: h + 14, stroke: "#ff6644", lineWidth: 1.2 },
+  { type: "line", x1: h + 7, y1: h + 6, x2: h + 11, y2: h + 14, stroke: "#ff6644", lineWidth: 1.2 },
+  { type: "glow", x: h, y: h - 10, r: 6, rgb: COL.amber, alpha: 0.45 },
+]);
 
-function paintDeadspace(ctx: IconPaintCtx): void {
-  const { cx, half, accent } = ctx;
-  drawSlotChassis(ctx, 22, 22);
-  const pts: [number, number][] = [];
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
-    pts.push([half + Math.cos(a) * 11, half + Math.sin(a) * 11]);
-  }
-  fillPolygon(cx, pts, tintGradient(accent, half - 11, half + 11, cx, half), accent, 0.8);
-}
+const nos = build((h) => [
+  { type: "chassis", kind: "slot", w: 20, h: 22 },
+  { type: "arc", x: h, y: h + 1, r: 12, start: 0, end: Math.PI * 1.35, stroke: "accent", lineWidth: 2 },
+  { type: "arc", x: h, y: h + 1, r: 4, start: 0, end: Math.PI * 2, fill: "hazard" },
+  { type: "glow", x: h, y: h + 1, r: 11, rgb: COL.amber, alpha: 0.5 },
+]);
+
+const hiSalv = build((h) => [
+  { type: "chassis", kind: "slot", w: 20, h: 22 },
+  { type: "path", segments: [{ type: "move", x: h - 8, y: h }, { type: "quad", cpx: h, cpy: h - 2, x: h + 8, y: h }], stroke: "#b898ff", lineWidth: 1.5 },
+  { type: "path", segments: [{ type: "move", x: h - 8, y: h + 4 }, { type: "quad", cpx: h, cpy: h, x: h + 8, y: h + 4 }], stroke: "#b898ff", lineWidth: 1.5 },
+  { type: "path", segments: [{ type: "move", x: h - 8, y: h + 8 }, { type: "quad", cpx: h, cpy: h + 4, x: h + 8, y: h + 8 }], stroke: "#b898ff", lineWidth: 1.5 },
+  { type: "glow", x: h, y: h, r: 9, rgb: "160,120,255", alpha: 0.4 },
+]);
+
+const comms = build((h) => [
+  { type: "chassis", kind: "slot", w: 18, h: 24 },
+  { type: "line", x1: h, y1: h + 10, x2: h, y2: h - 8, stroke: "accent", lineWidth: 1.2 },
+  { type: "path", segments: [{ type: "move", x: h - 9, y: h - 8 }, { type: "quad", cpx: h, cpy: h - 18, x: h + 9, y: h - 8 }], stroke: "accent", lineWidth: 1.2 },
+  { type: "arc", x: h, y: h - 8, r: 5, start: Math.PI * 1.08, end: Math.PI * 1.92, stroke: "accent", lineWidth: 1.2 },
+  { type: "arc", x: h, y: h - 8, r: 10, start: Math.PI * 1.08, end: Math.PI * 1.92, stroke: "accent", lineWidth: 1.2 },
+]);
+
+const link = build((h) => [
+  { type: "chassis", kind: "slot", w: 18, h: 24 },
+  { type: "line", x1: h, y1: h + 12, x2: h, y2: h - 6, stroke: "accent", lineWidth: 1.4 },
+  { type: "line", x1: h, y1: h - 6, x2: h - 7, y2: h - 14, stroke: "accent", lineWidth: 1.4 },
+  { type: "line", x1: h, y1: h - 6, x2: h + 7, y2: h - 14, stroke: "accent", lineWidth: 1.4 },
+  { type: "arc", x: h, y: h + 6, r: 9, start: Math.PI, end: 0, stroke: "accent", lineWidth: 1.4 },
+]);
+
+const cipher = build((h) => [
+  { type: "chassis", kind: "slot", w: 26, h: 20 },
+  { type: "rect", x: h - 11, y: h - 7, w: 22, h: 14, fill: "hullDark", stroke: "accent" },
+  { type: "rect", x: h - 9,  y: h - 5, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h - 5,  y: h - 5, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h - 1,  y: h - 5, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h + 3,  y: h - 5, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h + 7,  y: h - 5, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h - 7,  y: h - 1, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h - 3,  y: h - 1, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h + 1,  y: h - 1, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h + 5,  y: h - 1, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h + 9,  y: h - 1, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h - 9,  y: h + 3, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h - 5,  y: h + 3, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h - 1,  y: h + 3, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h + 3,  y: h + 3, w: 2.5, h: 2.5, fill: "energy" },
+  { type: "rect", x: h + 7,  y: h + 3, w: 2.5, h: 2.5, fill: "energy" },
+]);
+
+const scannerArray = build((h) => [
+  { type: "chassis", kind: "slot", w: 22, h: 22 },
+  { type: "rect", x: h - 14, y: h - 2, w: 5, h: 4, fill: "hullLite" },
+  { type: "rect", x: h - 14, y: h + 5, w: 5, h: 4, fill: "hullLite" },
+  { type: "arc", x: h + 2, y: h + 1, r: 4, start: -0.6, end: 0.6, stroke: "energy", lineWidth: 1 },
+  { type: "arc", x: h + 2, y: h + 1, r: 8, start: -0.6, end: 0.6, stroke: "energy", lineWidth: 1 },
+  { type: "arc", x: h + 2, y: h + 1, r: 12, start: -0.6, end: 0.6, stroke: "energy", lineWidth: 1 },
+]);
+
+// ── Med slot modules ─────────────────────────────────────────────────────────
+
+const ab = build((h) => [
+  { type: "chassis", kind: "slot", w: 20, h: 18 },
+  { type: "rect", x: h - 8, y: h - 5, w: 12, h: 10, fill: { grad: "hull", y0: h - 5, y1: h + 5 } },
+  { type: "path", segments: [
+    { type: "move", x: h + 6, y: h - 3 },
+    { type: "line", x: h + 16, y: h },
+    { type: "line", x: h + 6, y: h + 3 },
+    { type: "close" },
+  ], fill: "amberHex" },
+  { type: "glow", x: h + 12, y: h, r: 5, rgb: COL.amber, alpha: 0.5 },
+]);
+
+const mwd = build((h) => [
+  { type: "chassis", kind: "slot", w: 22, h: 18 },
+  { type: "path", segments: [
+    { type: "move", x: h - 6, y: h - 4 },
+    { type: "line", x: h + 12, y: h },
+    { type: "line", x: h - 6, y: h + 4 },
+    { type: "close" },
+  ], fill: { grad: "tint", y0: h - 8, y1: h + 8 } },
+  { type: "path", segments: [
+    { type: "move", x: h - 12, y: h - 5 },
+    { type: "line", x: h - 2, y: h },
+    { type: "line", x: h - 12, y: h + 5 },
+    { type: "close" },
+  ], fill: "accent" },
+  { type: "glow", x: h + 8, y: h, r: 8, rgb: COL.cyan, alpha: 0.45 },
+]);
+
+const shield = build((h) => [
+  { type: "chassis", kind: "slot", w: 18, h: 22 },
+  { type: "path", segments: [
+    { type: "move", x: h, y: h - 14 },
+    { type: "line", x: h + 13, y: h - 6 },
+    { type: "line", x: h + 13, y: h + 5 },
+    { type: "quad", cpx: h, cpy: h + 17, x: h - 13, y: h + 5 },
+    { type: "line", x: h - 13, y: h - 6 },
+    { type: "close" },
+  ], stroke: "accent", lineWidth: 2, fill: "rgba(56,160,240,0.18)" },
+  { type: "glow", x: h, y: h + 2, r: 12, rgb: "56,180,255", alpha: 0.3 },
+]);
+
+const capacitor = build((h) => [
+  { type: "chassis", kind: "slot", w: 20, h: 20 },
+  { type: "arc", x: h, y: h + 1, r: 11, start: 0.35, end: Math.PI * 1.65, stroke: "accent", lineWidth: 2.5 },
+  { type: "arc", x: h, y: h + 1, r: 4, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "glow", x: h, y: h + 1, r: 9, rgb: COL.cyan, alpha: 0.4 },
+]);
+
+const signalMed = build((h) => [
+  { type: "chassis", kind: "slot", w: 22, h: 18 },
+  { type: "path", segments: [
+    { type: "move", x: h - 10, y: h + 5 },
+    { type: "line", x: h - 3, y: h - 7 },
+    { type: "line", x: h + 3, y: h + 3 },
+    { type: "line", x: h + 10, y: h - 8 },
+  ], stroke: "accent", lineWidth: 1.3 },
+  { type: "glow", x: h, y: h, r: 8, rgb: COL.cyan, alpha: 0.35 },
+]);
+
+const medTractor = build((h) => [
+  { type: "chassis", kind: "slot", w: 20, h: 20 },
+  { type: "path", segments: [
+    { type: "move", x: h - 6, y: h - 8 },
+    { type: "line", x: h + 8, y: h },
+    { type: "line", x: h - 6, y: h + 8 },
+  ], stroke: "energy", lineWidth: 1.3 },
+]);
+
+const gyro = build((h) => [
+  { type: "chassis", kind: "slot", w: 22, h: 18 },
+  { type: "ellipse", x: h, y: h + 1, rx: 13, ry: 5, rotate: 0, start: 0, end: Math.PI * 2, stroke: "accent", lineWidth: 1.2 },
+  { type: "ellipse", x: h, y: h + 1, rx: 13, ry: 5, rotate: Math.PI / 3, start: 0, end: Math.PI * 2, stroke: "accent", lineWidth: 1.2 },
+  { type: "arc", x: h, y: h + 1, r: 2.5, start: 0, end: Math.PI * 2, fill: "accent" },
+]);
+
+const dcu = build((h) => [
+  { type: "chassis", kind: "slot", w: 24, h: 18 },
+  { type: "rect", x: h - 10, y: h - 6, w: 20, h: 3.5, fill: { grad: "tint", y0: h - 6, y1: h - 2.5 }, stroke: "hullEdge" },
+  { type: "rect", x: h - 10, y: h - 1, w: 20, h: 3.5, fill: { grad: "tint", y0: h - 1, y1: h + 2.5 }, stroke: "hullEdge" },
+  { type: "rect", x: h - 10, y: h + 4, w: 20, h: 3.5, fill: { grad: "tint", y0: h + 4, y1: h + 7.5 }, stroke: "hullEdge" },
+]);
+
+const battery = build((h) => [
+  { type: "chassis", kind: "slot", w: 18, h: 22 },
+  { type: "rect", x: h - 8, y: h - 6, w: 16, h: 12, fill: { grad: "tint", y0: h - 8, y1: h + 8 } },
+  { type: "rect", x: h - 3, y: h - 10, w: 6, h: 4, fill: { grad: "tint", y0: h - 10, y1: h - 6 } },
+  { type: "path", segments: [
+    { type: "move", x: h - 3, y: h },
+    { type: "line", x: h + 2, y: h - 3 },
+    { type: "line", x: h + 2, y: h + 3 },
+  ], stroke: "#44ff88", lineWidth: 1.2 },
+]);
+
+const nano = build((h) => [
+  { type: "chassis", kind: "slot", w: 22, h: 18 },
+  { type: "arc", x: h, y: h, r: 2.5, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "arc", x: h - 9, y: h - 5, r: 2, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "arc", x: h + 9, y: h - 5, r: 2, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "arc", x: h - 9, y: h + 5, r: 2, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "arc", x: h + 9, y: h + 5, r: 2, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "line", x1: h, y1: h, x2: h - 9, y2: h - 5, stroke: "accent", lineWidth: 0.9 },
+  { type: "line", x1: h, y1: h, x2: h + 9, y2: h - 5, stroke: "accent", lineWidth: 0.9 },
+  { type: "line", x1: h, y1: h, x2: h - 9, y2: h + 5, stroke: "accent", lineWidth: 0.9 },
+  { type: "line", x1: h, y1: h, x2: h + 9, y2: h + 5, stroke: "accent", lineWidth: 0.9 },
+]);
+
+const dataRecovery = build((h) => [
+  { type: "chassis", kind: "slot", w: 22, h: 18 },
+  { type: "arc", x: h, y: h, r: 2.5, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "arc", x: h - 9, y: h - 5, r: 2, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "arc", x: h + 9, y: h - 5, r: 2, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "arc", x: h - 9, y: h + 5, r: 2, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "arc", x: h + 9, y: h + 5, r: 2, start: 0, end: Math.PI * 2, fill: "accent" },
+  { type: "line", x1: h, y1: h, x2: h - 9, y2: h - 5, stroke: "accent", lineWidth: 0.9 },
+  { type: "line", x1: h, y1: h, x2: h + 9, y2: h - 5, stroke: "accent", lineWidth: 0.9 },
+  { type: "line", x1: h, y1: h, x2: h - 9, y2: h + 5, stroke: "accent", lineWidth: 0.9 },
+  { type: "line", x1: h, y1: h, x2: h + 9, y2: h + 5, stroke: "accent", lineWidth: 0.9 },
+  { type: "rect", x: h - 7, y: h - 5, w: 14, h: 10, stroke: "cyanHex", lineWidth: 1 },
+]);
+
+const hull = build((h) => [
+  { type: "chassis", kind: "slot", w: 26, h: 14 },
+  { type: "line", x1: h - 10, y1: h - 1, x2: h + 10, y2: h - 1, stroke: "hullEdge", lineWidth: 1 },
+  { type: "line", x1: h - 10, y1: h + 2, x2: h + 10, y2: h + 2, stroke: "hullEdge", lineWidth: 1 },
+]);
+
+const deadspace = build((h) => [
+  { type: "chassis", kind: "slot", w: 22, h: 22 },
+  { type: "path", segments: [
+    { type: "move", x: h + 11, y: h + 1 },
+    { type: "line", x: h + 5.5, y: h + 10.5 },
+    { type: "line", x: h - 5.5, y: h + 10.5 },
+    { type: "line", x: h - 11, y: h + 1 },
+    { type: "line", x: h - 5.5, y: h - 8.5 },
+    { type: "line", x: h + 5.5, y: h - 8.5 },
+    { type: "close" },
+  ], fill: { grad: "tint", y0: h - 11, y1: h + 11 }, stroke: "accent", lineWidth: 0.8 },
+]);
+
+// ── Rack fallbacks ───────────────────────────────────────────────────────────
 
 function paintRackFallback(rack: keyof typeof RACK_COLORS): IconPainter {
-  return (ctx: IconPaintCtx) => {
-    ctx.rack = rack;
-    drawSlotChassis(ctx, 20, 20);
+  return (ctx) => {
     const { cx, half } = ctx;
-    cx.fillStyle = RACK_COLORS[rack];
-    cx.font = "bold 11px sans-serif";
+    drawSlotChassis(ctx, 26, 22);
+    cx.fillStyle = "#c8d0e0";
+    cx.font = "bold 13px sans-serif";
     cx.textAlign = "center";
     cx.textBaseline = "middle";
-    const ch = rack === "turret" ? "T" : rack === "high" ? "H" : rack === "med" ? "M" : "L";
-    cx.fillText(ch, half, half + 1);
+    const label = rack === "turret" ? "T" : rack === "high" ? "H" : rack === "med" ? "M" : rack === "low" ? "L" : "?";
+    cx.fillText(label, half, half + 1);
   };
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+//  Public API
+// ═════════════════════════════════════════════════════════════════════════════
+
 export const MODULE_PAINTERS: Record<string, IconPainter> = {
-  "dual-rail": paintDualRail,
-  gauss: paintGauss,
-  beam: paintBeamEmitter,
-  strip: paintStrip,
-  missile: paintMissileRack,
-  miner: paintMiner,
-  salvager: paintSalvager,
-  tractor: paintTractor,
-  scanner: paintScanner,
-  "scanner-array": paintScannerArray,
-  cruise: paintHiCruise,
-  nos: paintHiNos,
-  "hi-salv": paintHiSalv,
-  comms: paintHiComms,
-  link: paintHiLink,
-  cipher: paintCipherAnalyzer,
-  ab: paintAb,
-  mwd: paintMwd,
-  shield: paintShield,
-  capacitor: paintCapacitor,
-  signal: paintSignalMed,
-  "med-tract": paintMedTractor,
-  gyro: paintGyro,
-  dcu: paintDcu,
-  battery: paintBattery,
-  nano: paintNano,
-  "data-recovery": paintDataRecovery,
-  hull: paintHull,
-  deadspace: paintDeadspace,
-  sentry: paintDualRail,
-  mite: paintBeamEmitter,
+  "dual-rail": dualRail,
+  gauss,
+  beam,
+  strip,
+  missile,
+  miner,
+  salvager,
+  tractor,
+  scanner,
+  cruise,
+  nos,
+  "hi-salv": hiSalv,
+  comms,
+  link,
+  cipher,
+  "scanner-array": scannerArray,
+  ab,
+  mwd,
+  shield,
+  capacitor,
+  "signal": signalMed,
+  "med-tract": medTractor,
+  gyro,
+  dcu,
+  battery,
+  nano,
+  "data-recovery": dataRecovery,
+  hull,
+  deadspace,
+  sentry: paintRackFallback("turret"),
+  mite: paintRackFallback("turret"),
   "__rack-turret": paintRackFallback("turret"),
   "__rack-high": paintRackFallback("high"),
-  "__rack-med": paintRackFallback("med"),
+  "__rack-medium": paintRackFallback("med"),
   "__rack-low": paintRackFallback("low"),
 };
 
 export type ModuleFamily =
-  | "dual-rail" | "gauss" | "beam" | "strip" | "missile"
-  | "miner" | "salvager" | "tractor" | "scanner" | "scanner-array"
-  | "cruise" | "nos" | "hi-salv" | "comms" | "link" | "cipher"
-  | "ab" | "mwd" | "shield" | "capacitor" | "signal" | "med-tract"
-  | "gyro" | "dcu" | "battery" | "nano" | "data-recovery" | "hull" | "deadspace"
-  | "sentry" | "mite"
-  | "__rack-turret" | "__rack-high" | "__rack-med" | "__rack-low";
+  | "dual-rail"
+  | "gauss"
+  | "beam"
+  | "strip"
+  | "missile"
+  | "miner"
+  | "salvager"
+  | "tractor"
+  | "scanner"
+  | "cruise"
+  | "nos"
+  | "hi-salv"
+  | "comms"
+  | "link"
+  | "cipher"
+  | "scanner-array"
+  | "ab"
+  | "mwd"
+  | "shield"
+  | "capacitor"
+  | "signal"
+  | "med-tract"
+  | "gyro"
+  | "dcu"
+  | "battery"
+  | "nano"
+  | "data-recovery"
+  | "hull"
+  | "deadspace"
+  | "sentry"
+  | "mite";
 
 export function resolveModuleFamily(id: string): ModuleFamily {
-  const lower = id.toLowerCase();
-  if (lower.includes("sentry")) return "sentry";
-  if (lower.includes("mite")) return "mite";
-  if (lower.includes("cannon") || lower.includes("neutron")) return "dual-rail";
-  if (lower.includes("gauss")) return "gauss";
-  if (lower.includes("ion") || lower.includes("pulse")) return "beam";
-  if (lower.includes("strip")) return "strip";
-  if (lower.includes("missile")) return "missile";
-  if (lower.includes("miner")) return "miner";
-  if (lower.includes("salv") && (lower.startsWith("hi-") || lower.includes("hi-salv"))) return "hi-salv";
-  if (lower.includes("salv")) return "salvager";
-  if (lower === "me-tract") return "med-tract";
-  if (lower.includes("tractor")) return "tractor";
-  if (lower.includes("scanner-array")) return "scanner-array";
-  if (lower.includes("scanner") || lower.includes("scan")) return "scanner";
-  if (lower.includes("cipher")) return "cipher";
-  if (lower.includes("cruise")) return "cruise";
-  if (lower.includes("nos")) return "nos";
-  if (lower.includes("comms")) return "comms";
-  if (lower.includes("link")) return "link";
-  if (lower.includes("ab1") || lower.includes("-ab")) return "ab";
-  if (lower.includes("mwd")) return "mwd";
-  if (lower.includes("shield")) return "shield";
-  if (lower.includes("-cap") || lower.endsWith("cap")) return "capacitor";
-  if (lower.includes("signal") || lower.includes("spectrum") || lower.includes("noise-injector")) return "signal";
-  if (lower.includes("data-recovery")) return "data-recovery";
-  if (lower.includes("gyro")) return "gyro";
-  if (lower.includes("dcu")) return "dcu";
-  if (lower.includes("battery")) return "battery";
-  if (lower.includes("nano")) return "nano";
-  if (lower.includes("deadspace")) return "deadspace";
-  if (lower.includes("hull")) return "hull";
-  if (lower.startsWith("tu-") || lower.includes("turret")) return "__rack-turret";
-  if (lower.startsWith("hi-")) return "__rack-high";
-  if (lower.startsWith("me-")) return "__rack-med";
-  if (lower.startsWith("lo-")) return "__rack-low";
-  return "__rack-turret";
+  if (id.includes("sentry")) return "sentry";
+  if (id.includes("mite")) return "mite";
+  if (id.includes("cannon") || id.includes("neutron")) return "dual-rail";
+  if (id.includes("gauss")) return "gauss";
+  if (id.includes("ion") || id.includes("pulse")) return "beam";
+  if (id.includes("strip")) return "strip";
+  if (id.includes("missile")) return "missile";
+  if (id.includes("miner")) return "miner";
+  if (id.includes("salvager")) return "salvager";
+  if (id.includes("tractor") && id.startsWith("tu-")) return "tractor";
+  if (id.includes("scanner") && id.startsWith("tu-")) return "scanner";
+  if (id.includes("cruise")) return "cruise";
+  if (id.includes("nos")) return "nos";
+  if (id.includes("salv") && id.startsWith("hi-")) return "hi-salv";
+  if (id.includes("comms")) return "comms";
+  if (id.includes("link")) return "link";
+  if (id.includes("cipher")) return "cipher";
+  if (id.includes("scanner-array")) return "scanner-array";
+  if (id.includes("ab") && id.startsWith("me-")) return "ab";
+  if (id.includes("mwd")) return "mwd";
+  if (id.includes("shield")) return "shield";
+  if (id.includes("cap")) return "capacitor";
+  if (id.includes("signal") || id.includes("spectrum") || id.includes("noise")) return "signal";
+  if (id.includes("tract") && id.startsWith("me-")) return "med-tract";
+  if (id.includes("gyro")) return "gyro";
+  if (id.includes("dcu")) return "dcu";
+  if (id.includes("battery")) return "battery";
+  if (id.includes("nano")) return "nano";
+  if (id.includes("data-recovery")) return "data-recovery";
+  if (id.includes("hull")) return "hull";
+  if (id.includes("deadspace")) return "deadspace";
+  const rack = id.startsWith("tu-") ? "turret" : id.startsWith("hi-") ? "high" : id.startsWith("me-") ? "medium" : id.startsWith("lo-") ? "low" : "turret";
+  return `__rack-${rack}` as ModuleFamily;
 }
