@@ -1,5 +1,4 @@
-import type { Player } from "../../state.js";
-import { getState } from "../../state-access.js";
+import { _G, type Player } from "../../state.js";
 import { addWreckPiece, addSalvagePickup } from "../../utils/entities.js";
 import { showPickupToast } from "../../feedback.js";
 import { sfxItemPickup, sfxCreditPickup } from "../../audio/procedural.js";
@@ -7,8 +6,8 @@ import type { SnapshotEntityMaps } from "./entity-maps.js";
 import { toSalvageKind } from "./converters.js";
 
 export function applyWreckSnapshots(maps: SnapshotEntityMaps): void {
-  for (let i = getState().wreckPieces.length - 1; i >= 0; i--) {
-    const wp = getState().wreckPieces[i];
+  for (let i = _G.wreckPieces.length - 1; i >= 0; i--) {
+    const wp = _G.wreckPieces[i];
     const snapEnt = maps.wrecks.get(wp.id);
     if (snapEnt) {
       wp.x = snapEnt.x;
@@ -20,7 +19,7 @@ export function applyWreckSnapshots(maps: SnapshotEntityMaps): void {
       wp.maxHp = snapEnt.maxHp || 10;
       maps.wrecks.delete(wp.id);
     } else {
-      getState().wreckPieces.splice(i, 1);
+      _G.wreckPieces.splice(i, 1);
     }
   }
 
@@ -49,8 +48,8 @@ export function applyWreckSnapshots(maps: SnapshotEntityMaps): void {
 }
 
 export function applySalvageSnapshots(maps: SnapshotEntityMaps, p: Player | null): void {
-  for (let i = getState().salvagePickups.length - 1; i >= 0; i--) {
-    const sp = getState().salvagePickups[i];
+  for (let i = _G.salvagePickups.length - 1; i >= 0; i--) {
+    const sp = _G.salvagePickups[i];
     const snapEnt = maps.salvages.get(sp.id);
     if (snapEnt) {
       sp.x = snapEnt.x;
@@ -71,7 +70,7 @@ export function applySalvageSnapshots(maps: SnapshotEntityMaps, p: Player | null
           sfxItemPickup(sp.kind, sp.x, sp.y);
         }
       }
-      getState().salvagePickups.splice(i, 1);
+      _G.salvagePickups.splice(i, 1);
     }
   }
 

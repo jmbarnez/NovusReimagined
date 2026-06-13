@@ -1,4 +1,4 @@
-import { getState } from "../state-access.js";
+import { getState, WorldAccess } from "../state-access.js";
 import { SHIPS, ShipDef } from "../data/ships.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "../data/modules.js";
 import { WEAPON_PROFILES, WeaponProfile } from "../data/weaponProfiles.js";
@@ -57,7 +57,7 @@ import { invalidateInstanceCache } from "../utils/items.js";
 
 export function invalidate(p?: Player) {
   if (!p || p === getState().player) {
-    getState()._statsCache = null;
+    WorldAccess.clearStatsCache();
   }
   invalidateInstanceCache();
 }
@@ -65,7 +65,7 @@ export function invalidate(p?: Player) {
 export function getStats(p?: Player): ComputedStats {
   const targetPlayer = p ?? getState().player;
   if (targetPlayer === getState().player) {
-    return getState()._statsCache || (getState()._statsCache = computeStats(undefined, targetPlayer));
+    return WorldAccess.getStatsCache() || (WorldAccess.setStatsCache(computeStats(undefined, targetPlayer)), WorldAccess.getStatsCache())!;
   }
   return computeStats(undefined, targetPlayer);
 }

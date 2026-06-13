@@ -8,7 +8,7 @@
  * High-churn types (bullets, particles, beams, etc.) use object pooling via
  * src/utils/pool.ts to eliminate per-spawn GC pressure.
  */
-import { getState } from "../state-access.js";
+import { _G } from "../state.js";
 import type { Player } from "../state.js";
 import type { DamageProfile, WeaponDelivery } from "../data/modules.js";
 import type { Enemy, WreckPiece, SalvagePickup } from "../types/world.js";
@@ -35,24 +35,24 @@ export function _getEnemyBulletPoolSize(): number { return enemyBulletPool.size(
 export function _getParticlePoolSize(): number { return particlePool.size(); }
 
 export function clearSimulationEntities() {
-  bulletPool.releaseAll(getState().bullets);
-  getState().bullets.length = 0;
-  enemyBulletPool.releaseAll(getState().enemyBullets);
-  getState().enemyBullets.length = 0;
-  beamPool.releaseAll(getState().beams);
-  getState().beams.length = 0;
-  particlePool.releaseAll(getState().particles);
-  getState().particles.length = 0;
-  shockwavePool.releaseAll(getState().shockwaves);
-  getState().shockwaves.length = 0;
-  floatTextPool.releaseAll(getState().floatTexts);
-  getState().floatTexts.length = 0;
-  trailPool.releaseAll(getState().trails);
-  getState().trails.length = 0;
-  getState().wreckPieces.length = 0;
-  getState().salvagePickups.length = 0;
-  impactDecalPool.releaseAll(getState().impactDecals);
-  getState().impactDecals.length = 0;
+  bulletPool.releaseAll(_G.bullets);
+  _G.bullets.length = 0;
+  enemyBulletPool.releaseAll(_G.enemyBullets);
+  _G.enemyBullets.length = 0;
+  beamPool.releaseAll(_G.beams);
+  _G.beams.length = 0;
+  particlePool.releaseAll(_G.particles);
+  _G.particles.length = 0;
+  shockwavePool.releaseAll(_G.shockwaves);
+  _G.shockwaves.length = 0;
+  floatTextPool.releaseAll(_G.floatTexts);
+  _G.floatTexts.length = 0;
+  trailPool.releaseAll(_G.trails);
+  _G.trails.length = 0;
+  _G.wreckPieces.length = 0;
+  _G.salvagePickups.length = 0;
+  impactDecalPool.releaseAll(_G.impactDecals);
+  _G.impactDecals.length = 0;
 }
 
 // ── Bullets ────────────────────────────────────────────────────────────────
@@ -115,7 +115,7 @@ export function addBullet(data: Omit<Bullet, "id" | "hitChance"> & { id?: number
   b.accel = rest.accel;
   b.maxSpeed = rest.maxSpeed;
   b.dmgProfile = rest.dmgProfile;
-  getState().bullets.push(b);
+  _G.bullets.push(b);
 }
 
 // ── Enemy Bullets ──────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ export function addEnemyBullet(data: Omit<EnemyBullet, "id"> & { id?: number }) 
   b.ownerFaction = rest.ownerFaction;
   b.ownerId = rest.ownerId;
   b.kind = rest.kind;
-  getState().enemyBullets.push(b);
+  _G.enemyBullets.push(b);
 }
 
 // ── Beams ──────────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ export function addBeam({ x1, y1, x2, y2, color, width, life }: Omit<Beam, "id">
   b.color = color;
   b.width = width;
   b.life = life;
-  getState().beams.push(b);
+  _G.beams.push(b);
 }
 
 // ── Particles ──────────────────────────────────────────────────────────────
@@ -210,7 +210,7 @@ export function addParticle(p: ParticleConfig) {
   pt.vx = p.vx; pt.vy = p.vy;
   pt.r = p.r; pt.life = p.life;
   pt.drag = p.drag; pt.decay = p.decay;
-  getState().particles.push(pt);
+  _G.particles.push(pt);
 }
 
 // ── Float Texts ────────────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ export function addFloatText(ft: FloatTextConfig) {
   f.x = ft.x; f.y = ft.y; f.text = ft.text;
   f.color = ft.color; f.bgColor = ft.bgColor;
   f.life = ft.life; f.vy = ft.vy;
-  getState().floatTexts.push(f);
+  _G.floatTexts.push(f);
 }
 
 // ── Wreck Pieces & Salvage (not pooled — lower churn) ──────────────────────
@@ -243,22 +243,22 @@ export type WreckPieceConfig = Partial<WreckPiece> & { x: number; y: number };
 
 export function addWreckPiece(piece: WreckPieceConfig) {
   if (!piece.id) piece.id = `piece-${generateId()}`;
-  getState().wreckPieces.push(piece as WreckPiece);
+  _G.wreckPieces.push(piece as WreckPiece);
 }
 
 export function removeWreckPiece(index: number) {
-  getState().wreckPieces.splice(index, 1);
+  _G.wreckPieces.splice(index, 1);
 }
 
 export type SalvagePickupConfig = Partial<SalvagePickup> & { x: number; y: number; kind: SalvagePickup["kind"]; payload: string; instance?: ModuleInstance };
 
 export function addSalvagePickup(pickup: SalvagePickupConfig) {
   if (!pickup.id) pickup.id = `salv-${generateId()}`;
-  getState().salvagePickups.push(pickup as SalvagePickup);
+  _G.salvagePickups.push(pickup as SalvagePickup);
 }
 
 export function removeSalvagePickup(index: number) {
-  getState().salvagePickups.splice(index, 1);
+  _G.salvagePickups.splice(index, 1);
 }
 
 // ── Tick-and-cull helper ───────────────────────────────────────────────────
@@ -311,7 +311,7 @@ export function addShockwave({ x, y, maxRadius, life, color, width }: ShockwaveC
   s.maxLife = life;
   s.color = color;
   s.width = width;
-  getState().shockwaves.push(s);
+  _G.shockwaves.push(s);
 }
 
 // ── Trails ─────────────────────────────────────────────────────────────────
@@ -348,13 +348,13 @@ export function addTrailSegment({ x, y, color, width, length, life = 1.0, angle,
   t.length = length;
   t.life = life; t.maxLife = life;
   t.angle = angle; t.boost = boost;
-  getState().trails.push(t);
+  _G.trails.push(t);
 }
 
 // ── Removal helpers (swap-and-pop + pool release) ──────────────────────────
 
 export function removeBullet(index: number) {
-  const arr = getState().bullets;
+  const arr = _G.bullets;
   const lastIdx = arr.length - 1;
   const dead = arr[index];
   if (index < lastIdx) {
@@ -365,7 +365,7 @@ export function removeBullet(index: number) {
 }
 
 export function removeEnemyBullet(index: number) {
-  const arr = getState().enemyBullets;
+  const arr = _G.enemyBullets;
   const lastIdx = arr.length - 1;
   const dead = arr[index];
   if (index < lastIdx) {
@@ -379,7 +379,7 @@ export function removeEnemyBullet(index: number) {
 
 export function updateBeams(dt: number) {
   let w = 0;
-  const arr = getState().beams;
+  const arr = _G.beams;
   for (let i = 0; i < arr.length; i++) {
     const b = arr[i];
     b.life -= dt * 3;
@@ -394,7 +394,7 @@ export function updateBeams(dt: number) {
 
 export function updateParticles(dt: number) {
   let w = 0;
-  const arr = getState().particles;
+  const arr = _G.particles;
   for (let i = 0; i < arr.length; i++) {
     const p = arr[i];
     p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt;
@@ -412,7 +412,7 @@ export function updateParticles(dt: number) {
 
 export function updateShockwaves(dt: number) {
   let w = 0;
-  const arr = getState().shockwaves;
+  const arr = _G.shockwaves;
   for (let i = 0; i < arr.length; i++) {
     const s = arr[i];
     const progress = 1 - s.life / s.maxLife;
@@ -429,7 +429,7 @@ export function updateShockwaves(dt: number) {
 
 export function updateFloatTexts(dt: number) {
   let w = 0;
-  const arr = getState().floatTexts;
+  const arr = _G.floatTexts;
   for (let i = 0; i < arr.length; i++) {
     const f = arr[i];
     f.y -= 20 * dt;
@@ -445,7 +445,7 @@ export function updateFloatTexts(dt: number) {
 
 export function updateTrails(dt: number) {
   let w = 0;
-  const arr = getState().trails;
+  const arr = _G.trails;
   for (let i = 0; i < arr.length; i++) {
     const t = arr[i];
     t.life -= dt;
@@ -487,11 +487,11 @@ export function addImpactDecal(cfg: ImpactDecalConfig) {
   d.color = cfg.color;
   d.life = cfg.life;
   d.maxLife = cfg.maxLife;
-  getState().impactDecals.push(d);
+  _G.impactDecals.push(d);
 }
 
 export function removeImpactDecal(index: number) {
-  const arr = getState().impactDecals;
+  const arr = _G.impactDecals;
   const lastIdx = arr.length - 1;
   const dead = arr[index];
   if (index < lastIdx) {

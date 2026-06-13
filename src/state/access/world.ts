@@ -1,6 +1,7 @@
 import { _G, type GameState, type Player } from "../../state.js";
 import { installLocalPlayer, LOCAL_PLAYER_ID } from "../../player-registry.js";
 import type { GameEffect } from "../../state/types/combat.js";
+import type { ComputedStats } from "../../player/player-stats.js";
 
 // ─── World accessors ─────────────────────────────────────────────────────────
 
@@ -64,5 +65,20 @@ export const WorldAccess = {
   /** Clear all pending effects (consumed by renderer / network sync). */
   clearEffects() {
     _G.pendingEffects.length = 0;
+  },
+
+  /** Set or clear the cached computed-stats snapshot. */
+  setStatsCache(stats: ComputedStats | null) {
+    _G._statsCache = stats;
+  },
+
+  /** Clear the cached computed-stats snapshot. */
+  clearStatsCache() {
+    _G._statsCache = null;
+  },
+
+  /** Get the cached computed-stats snapshot. */
+  getStatsCache(): ComputedStats | null {
+    return _G._statsCache;
   },
 };

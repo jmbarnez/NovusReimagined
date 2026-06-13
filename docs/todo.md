@@ -2,7 +2,7 @@
 
 ## Known Architectural Debt
 
-- [ ] `G` is a global mutable singleton — writes are now fully encapsulated via `PlayerAccess`/`WorldAccess`/`MiningAccess`/`SalvagerAccess`, but reads remain direct
+- [ ] `G` is a global mutable singleton — writes are now fully encapsulated via `PlayerAccess`/`WorldAccess`/`MiningAccess`/`SalvagerAccess`; `getState()` no longer exposes mutation paths (`pendingEffects`, `_statsCache`, entity arrays all migrated to accessors or direct `_G` in canonical lifecycle modules)
 - [ ] Test coverage is minimal (math, entities, player-stats only)
 - [ ] `tsconfig.json` uses `strict: true` but `noUncheckedIndexedAccess: false`. Enabling the latter is a follow-up cleanup
 - [ ] `audio/procedural.ts` uses `_master!` non-null assertions — init order should be restructured

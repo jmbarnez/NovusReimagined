@@ -33,7 +33,6 @@ export interface ReadOnlyState {
   STARS_NEAR: GameState["STARS_NEAR"];
   DUST: GameState["DUST"];
   GALAXY: GameState["GALAXY"];
-  _statsCache: GameState["_statsCache"];
   pendingEffects: GameState["pendingEffects"];
 }
 
@@ -67,8 +66,6 @@ export function getState(): ReadOnlyState {
     STARS_NEAR: G.STARS_NEAR,
     DUST: G.DUST,
     GALAXY: G.GALAXY,
-    get _statsCache() { return G._statsCache; },
-    set _statsCache(value) { G._statsCache = value; },
     pendingEffects: G.pendingEffects,
   };
 }

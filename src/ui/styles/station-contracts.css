@@ -66,10 +66,15 @@
 }
 
 #panel-contracts {
-  padding: 16px 20px;
+  min-height: 0;
+  height: 100%;
+  padding: 12px 14px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex-direction: column;
   gap: 4px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .ct-section-head {

@@ -60,7 +60,6 @@ export function initHudOverlay() {
     <span id="hud-sec"></span>
     <div id="hud-lock-rail"></div>
     <div id="hud-dock-prompt"></div>
-    <div id="hud-xp-popup"></div>
     <div id="hud-pickup-container"></div>
     <div id="hud-crossing-banner" class="hud-crossing-banner" style="display: none;"></div>
 
@@ -100,7 +99,13 @@ export function initHudOverlay() {
   hudState.secEl = overlay.querySelector("#hud-sec");
   hudState.lockRail = overlay.querySelector("#hud-lock-rail");
   hudState.dockPrompt = overlay.querySelector("#hud-dock-prompt");
-  hudState.xpPopup = overlay.querySelector("#hud-xp-popup");
+  let xpPopup = getElement("hud-xp-popup");
+  if (!xpPopup) {
+    xpPopup = createElement("div");
+    xpPopup.id = "hud-xp-popup";
+    append(document.body, xpPopup);
+  }
+  hudState.xpPopup = xpPopup;
   hudState.logEntries = overlay.querySelector("#hud-log-entries");
   hudState.logPanel = overlay.querySelector("#hud-log-panel");
   hudState.logBody = overlay.querySelector("#hud-log-body");
@@ -276,6 +281,8 @@ export function destroyHudOverlay() {
   if (hudState.enemyCtxMenu) remove(hudState.enemyCtxMenu);
   hudState.turretCtxMenu = null;
   hudState.enemyCtxMenu = null;
+  if (hudState.xpPopup) remove(hudState.xpPopup);
+  hudState.xpPopup = null;
   const slotTooltip = getElement("hud-slot-tooltip");
   if (slotTooltip) remove(slotTooltip);
   for (const el of queryAll('[id^="hud-win-"]')) remove(el);
