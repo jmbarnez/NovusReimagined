@@ -84,7 +84,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       radius: 110,
       hue: 200, sat: 50, lit: 25,
       hasRing: true, ringTilt: 0.3,
-      moons: 2,
+      moons: 0,
       _orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
     });
   } else if (idx === 2) {
@@ -124,7 +124,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       radius: 70,
       hue: 25, sat: 40, lit: 20,
       hasRing: false, ringTilt: 0,
-      moons: 1,
+      moons: 0,
       _orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
     });
   } else if (idx === 3) {
@@ -154,7 +154,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       radius: 95,
       hue: 180, sat: 45, lit: 20,
       hasRing: true, ringTilt: -0.2,
-      moons: 2,
+      moons: 0,
       _orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
     });
   } else if (idx === 4) {
@@ -184,7 +184,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       radius: 120,
       hue: 280, sat: 50, lit: 15,
       hasRing: true, ringTilt: 0.45,
-      moons: 3,
+      moons: 0,
       _orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
     });
   }
@@ -221,7 +221,7 @@ function ensureTutorialPlanets(sys: System) {
     lit: 34,
     hasRing: true,
     ringTilt: 0.28,
-    moons: 1,
+    moons: 0,
     _orbitSpeed: 0,
   });
 }
@@ -466,7 +466,7 @@ export function populateSystem(sys: System) {
         radius: rf(f, C.WORLD.PLANETS.radiusMin, C.WORLD.PLANETS.radiusMax),
         hue: ri(f, 0, C.WORLD.PLANETS.hueMax), sat: ri(f, C.WORLD.PLANETS.satMin, C.WORLD.PLANETS.satMax), lit: ri(f, C.WORLD.PLANETS.litMin, C.WORLD.PLANETS.litMax),
         hasRing: f() > C.WORLD.PLANETS.ringChance, ringTilt: rf(f, C.WORLD.PLANETS.ringTiltMin, C.WORLD.PLANETS.ringTiltMax),
-        moons: ri(f, 0, C.WORLD.PLANETS.moonsMax),
+        moons: 0,
         _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.planetMultiplier),
       });
     }

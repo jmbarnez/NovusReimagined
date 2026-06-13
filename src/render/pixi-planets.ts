@@ -1,4 +1,4 @@
-import { Container, Sprite, Texture, ImageSource, Graphics } from "pixi.js";
+import { Container, Sprite, Texture, ImageSource } from "pixi.js";
 import type { Planet, System } from "../types/world.js";
 import { TAU } from "../constants.js";
 import { getSunWorldPos } from "../utils/sun-position.js";
@@ -8,25 +8,10 @@ type PlanetEntry = {
   sprite: Sprite;
 };
 
-type MoonEntry = {
-  gfx: Graphics;
-  px: number; py: number; radius: number;
-  moonIdx: number; totalMoons: number;
-};
-
 let _planetEntries: PlanetEntry[] = [];
-let _moonEntries: MoonEntry[] = [];
 
 function hslStr(h: number, s: number, l: number, a = 1): string {
   return `hsla(${((h % 360) + 360) % 360},${Math.max(0, Math.min(100, s))}%,${Math.max(0, Math.min(100, l))}%,${a})`;
-}
-
-function hslInt(h: number, s: number, l: number): number {
-  h = ((h % 360) + 360) % 360; s /= 100; l /= 100;
-  const k = (n: number) => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => Math.round((l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))) * 255);
-  return (f(0) << 16) | (f(8) << 8) | f(4);
 }
 
 function bakePlanet(p: Planet, sys: System): Texture {
@@ -163,35 +148,14 @@ export function initPlanetSprites(parent: Container, sys: System) {
     sprite.y = p.y;
     parent.addChild(sprite);
     _planetEntries.push({ sprite });
-
-    for (let m = 0; m < (p.moons || 0); m++) {
-      const moonR = Math.max(1.5, p.radius * 0.13);
-      const gfx = new Graphics();
-      gfx.circle(0, 0, moonR);
-      gfx.fill({ color: hslInt((p.hue + 80) % 360, 20, 48) });
-      // Seed an initial position at the planet centre. Without this the moon sits
-      // at world (0,0) until the first syncPixiPlanets — which never runs in title
-      // mode, leaving a stray dot in the screen's top-left corner.
-      gfx.x = p.x;
-      gfx.y = p.y;
-      parent.addChild(gfx);
-      _moonEntries.push({ gfx, px: p.x, py: p.y, radius: p.radius, moonIdx: m, totalMoons: p.moons });
-    }
   }
 }
 
-export function syncPixiPlanets(now: number, _sys?: System) {
-  for (const e of _moonEntries) {
-    const ma = (e.moonIdx / e.totalMoons) * TAU + now * 0.0003 * (e.moonIdx + 1);
-    const mr = e.radius * 1.85 + e.moonIdx * 28;
-    e.gfx.x = e.px + Math.cos(ma) * mr;
-    e.gfx.y = e.py + Math.sin(ma) * mr * 0.55;
-  }
+export function syncPixiPlanets(_now: number, _sys?: System) {
+  // Planet textures are static after baking; no orbiting moon sprites are rendered.
 }
 
 export function destroyPlanetSprites() {
   for (const e of _planetEntries) e.sprite.destroy({ texture: true });
-  for (const e of _moonEntries)  e.gfx.destroy();
   _planetEntries = [];
-  _moonEntries = [];
 }

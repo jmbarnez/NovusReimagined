@@ -76,7 +76,7 @@ export const WORLD = {
     ringChance: 0.5,
     ringTiltMin: 0.15,
     ringTiltMax: 0.55,
-    moonsMax: 3,
+      moonsMax: 0,
   },
   GATES: {
     radius: 30,
