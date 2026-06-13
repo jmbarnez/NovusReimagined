@@ -297,6 +297,34 @@ export function syncPixiMinimap(now: number): void {
       }
     }
 
+    // Planets
+    for (const planet of sys.planets) {
+      const dist = dst(player.x, player.y, planet.x, planet.y);
+      const alwaysShow = player.tutorial?.active && sys.idx === 0;
+      if (!alwaysShow && dist > range) continue;
+      let px = mmX + (planet.x - player.x) * scale;
+      let py = mmY + (planet.y - player.y) * scale;
+      if (alwaysShow && dist > range) {
+        const clamped = clampMinimapBlip(px, py, mmX, mmY, maxRadarR - 4);
+        px = clamped.x;
+        py = clamped.y;
+      }
+      const drawPlanet = (opacity: number) => {
+        const radius = alwaysShow && dist > range ? 3.4 : Math.max(3.2, Math.min(5.4, planet.radius * scale));
+        g.circle(px, py, radius);
+        g.fill({ color: cachedThemeShield, alpha: opacity * 0.70 });
+        if (planet.hasRing) {
+          g.ellipse(px, py, radius * 1.85, radius * 0.72);
+          g.stroke({ color: cachedThemeAccent, width: 1, alpha: opacity * 0.55 });
+        }
+      };
+      if (alwaysShow && dist > range) {
+        drawPlanet(0.78);
+      } else {
+        drawPassiveBlip(px, py, planet.radius * 2.5, drawPlanet);
+      }
+    }
+
     // Sun
     const sun = getSunWorldPos(sys);
     const sunDist = dst(player.x, player.y, sun.x, sun.y);

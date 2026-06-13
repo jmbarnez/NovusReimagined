@@ -20,6 +20,7 @@ import { clearShipTextureCaches, rebuildPlayerSprites } from "./render/player/in
 import { clearEnemyTextureCaches } from "./render/enemy/index.js";
 import { clearStationTextureCaches } from "./render/pixi-stations.js";
 import { resizeNebulaMesh } from "./render/pixi-nebula-gpu.js";
+import { destroyLensFlare } from "./render/pixi-lens-flare.js";
 import { LOCK_RAIL_H } from "./constants.js";
 import { playRect, setViewportSize } from "./render/viewport.js";
 
@@ -202,6 +203,7 @@ export function syncColorGrading(enabled: boolean) {
 }
 
 export function destroyPixi() {
+  destroyLensFlare();
   if (app) {
     app.destroy(true, { children: true, texture: false });
   }

@@ -5,6 +5,7 @@ import {
   TUTORIAL_STATION,
   TUTORIAL_BELT_CENTER,
   TUTORIAL_GATE,
+  TUTORIAL_START_PLANET,
   TUTORIAL_LOCAL_REGIONS,
 } from "../data/tutorial-layout.js";
 import { TAU } from "../constants.js";
@@ -205,6 +206,26 @@ function buildTutorialStations(sys: System) {
   });
 }
 
+function ensureTutorialPlanets(sys: System) {
+  const alreadyHasStartPlanet = sys.planets.some((planet) =>
+    Math.hypot(planet.x - TUTORIAL_START_PLANET.x, planet.y - TUTORIAL_START_PLANET.y) < 16,
+  );
+  if (alreadyHasStartPlanet) return;
+
+  sys.planets.push({
+    x: TUTORIAL_START_PLANET.x,
+    y: TUTORIAL_START_PLANET.y,
+    radius: 170,
+    hue: 205,
+    sat: 58,
+    lit: 34,
+    hasRing: true,
+    ringTilt: 0.28,
+    moons: 1,
+    _orbitSpeed: 0,
+  });
+}
+
 function spawnAsteroidCluster(
   sys: System,
   cx: number,
@@ -331,7 +352,10 @@ function asteroidDisplayName(composition: OreComposition): string {
 }
 
 export function populateSystem(sys: System) {
-  if (sys._ready) return;
+  if (sys._ready) {
+    if (sys.idx === 0) ensureTutorialPlanets(sys);
+    return;
+  }
   sys._ready = true;
 
   const f = mkRng(sys.id + "-pop");
@@ -422,6 +446,7 @@ export function populateSystem(sys: System) {
 
   if (isTutorial) {
     buildTutorialStations(sys);
+    ensureTutorialPlanets(sys);
   } else if (isConcentric) {
     buildConcentricSystemEntities(sys, f);
   }

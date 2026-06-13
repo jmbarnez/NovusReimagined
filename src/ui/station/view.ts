@@ -128,16 +128,8 @@ export function buildStationView(st: Station): void {
   bindStationTutorialEvents();
   bindStationRefreshEvents();
 
-  const nameEl = query("#st-name", el);
-  if (nameEl) setText(nameEl, st.name);
   const metaEl = query("#st-meta", el);
   if (metaEl) setText(metaEl, `${t("station.services")}: ${st.services.join(" · ")}`);
-  const sys = getState().GALAXY[getState().player.sysIdx];
-  const sec = sys?.security ?? 0.5;
-  const secColor = sec >= 0.7 ? "var(--hud-positive)" : sec >= 0.4 ? "var(--hud-accent)" : "var(--hud-danger)";
-  const secLabel = sec >= 0.7 ? t("station.highSec") : sec >= 0.4 ? t("station.midSec") : t("station.lowSec");
-  const secBadgeEl = query("#st-sec-badge", el);
-  if (secBadgeEl) setHtml(secBadgeEl, `<span style="color:${secColor}">●</span> ${secLabel} ${sec.toFixed(1)}`);
 
   el.querySelectorAll(".st-tab").forEach((btn) => {
     const tab = (btn as HTMLElement).dataset.tab;
@@ -150,9 +142,12 @@ export function buildStationView(st: Station): void {
   el.querySelectorAll(".panel").forEach((panel) => toggleClass(panel, "active", false));
 
   const preferredTab = preferredTutorialStationTab(st);
+  const defaultTab: StationTabId | null = st.services.includes("industry") ? "industry" : null;
   const first = preferredTab
     ? query(`.st-tab[data-tab="${preferredTab}"]:not([disabled])`, el)
-    : query(".st-tab:not([disabled])", el);
+    : defaultTab
+      ? query(`.st-tab[data-tab="${defaultTab}"]:not([disabled])`, el)
+      : query(".st-tab:not([disabled])", el);
   if (first) {
     stationState.activeTab = (first as HTMLElement).dataset.tab as StationTabId;
     activateStationTab(stationState.activeTab, el);

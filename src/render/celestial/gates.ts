@@ -12,7 +12,7 @@ import {
   layoutWorldLabelCard,
 } from "../world-label-card.js";
 import { isVisible } from "../../utils/game.js";
-import { shouldShowWarpGate } from "../../data/tutorial.js";
+import { shouldShowWarpGate, isTutorialExitGate, canWarpThroughGate } from "../../data/tutorial.js";
 import { gateStableId, gateWorldLabel } from "../../utils/warp-gates.js";
 import { addParticle } from "../../utils/entities.js";
 
@@ -86,7 +86,23 @@ const TEMP_COLORS: GateColorPalette = {
   sparkSecondary: 0xf5b7ff,
 };
 
-function gateColorPalette(g: Gate): GateColorPalette {
+const LOCKED_COLORS: GateColorPalette = {
+  hullMajor: 0xff4444,
+  hullMinor: 0x662222,
+  coreOuter: 0x441111,
+  coreMid: 0xcc3333,
+  coreInner: 0xff6666,
+  ringOuter: 0xff5555,
+  ringInner: 0xcc4444,
+  rim: 0xff8888,
+  sparkPrimary: 0xffaaaa,
+  sparkSecondary: 0xff4444,
+};
+
+function gateColorPalette(g: Gate, player?: import("../../state.js").Player): GateColorPalette {
+  if (player && isTutorialExitGate(g, player.sysIdx ?? 0) && !canWarpThroughGate(g, player.sysIdx ?? 0, player)) {
+    return LOCKED_COLORS;
+  }
   switch (g.fxProfile) {
     case "tutorial-return":
       return RETURN_COLORS;
@@ -177,8 +193,9 @@ export function syncGateSprites(now: number, sys: System): void {
   for (let i = 0; i < sys.gates.length; i++) {
     const g = sys.gates[i]!;
     const b = _gateBundles[i]!;
-    const isGateVisible = shouldShowWarpGate(g, sys.idx, getState().player) && isVisible(g.x, g.y, g.radius * 2.5);
-    const palette = gateColorPalette(g);
+    const player = getState().player;
+    const isGateVisible = shouldShowWarpGate(g, sys.idx, player) && isVisible(g.x, g.y, g.radius * 2.5);
+    const palette = gateColorPalette(g, player);
     const gateId = gateStableId(g);
     const gateHint = Client.warpGateHint && Client.warpGateHint.gateId === gateId ? Client.warpGateHint : null;
     b.container.x = g.x;
@@ -204,7 +221,6 @@ export function syncGateSprites(now: number, sys: System): void {
         }
       }
 
-      const player = getState().player;
       const isTemp = g.isTemporary ?? false;
       const isCharging = state === "charging";
       const chargeBoost = isCharging ? charge : 0;

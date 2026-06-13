@@ -6,7 +6,8 @@ import { stationState } from "./shared.js";
 import { bindStationDomEvents } from "./events.js";
 import { stationActionHandlers } from "./actions.js";
 import { t } from "../../utils/i18n.js";
-import { getElement, createElement, setHtml, setStyle, append } from "../dom-helpers.js";
+import { closeHudWindow } from "../hud/windows.js";
+import { getElement, createElement, setHtml, append } from "../dom-helpers.js";
 
 function onStationAction(e: Event): void {
   const target = e.target as HTMLElement | null;
@@ -23,40 +24,32 @@ export function ensureStationUI(): void {
   const el = createElement("div");
   el.id = "station-overlay";
   setHtml(el, `
-    <div id="st-ui">
-      <aside id="st-sidebar">
-        <div id="st-station-info">
-          <div id="st-name"></div>
-          <div id="st-meta"></div>
-          <div id="st-sec-badge"></div>
-        </div>
-        <div id="st-wallet">
-          <div id="st-cr"></div>
-        </div>
-        <nav id="st-tabs">
-          <button class="st-tab" data-tab="hangar">${t("station.hangar")}</button>
-          <button class="st-tab" data-tab="market">${t("station.market")}</button>
-          <button class="st-tab" data-tab="industry">${t("station.industry")}</button>
-          <button class="st-tab" data-tab="fabrication">${t("station.fabrication")}</button>
-          <button class="st-tab" data-tab="contracts">${t("station.contracts")}</button>
-        </nav>
-        <button id="st-undock" data-action="undock">${t("station.undock")} <kbd class="st-kbd" id="st-undock-key"></kbd></button>
-      </aside>
-      <main id="st-body">
-        <div class="panel" id="panel-hangar"></div>
-        <div class="panel" id="panel-market"></div>
-        <div class="panel panel--tool" id="panel-industry"></div>
-        <div class="panel panel--tool" id="panel-fabrication"></div>
-        <div class="panel" id="panel-contracts"></div>
-      </main>
+    <div class="st-win-head">
+      <span class="st-win-meta" id="st-meta"></span>
+      <span class="st-win-wallet"><span id="st-cr"></span></span>
+      <button id="st-undock" data-action="undock">${t("station.undock")} <kbd class="st-kbd" id="st-undock-key"></kbd></button>
     </div>
+    <nav id="st-tabs">
+      <button class="st-tab" data-tab="hangar">${t("station.hangar")}</button>
+      <button class="st-tab" data-tab="market">${t("station.market")}</button>
+      <button class="st-tab" data-tab="industry">${t("station.industry")}</button>
+      <button class="st-tab" data-tab="fabrication">${t("station.fabrication")}</button>
+      <button class="st-tab" data-tab="contracts">${t("station.contracts")}</button>
+    </nav>
+    <main id="st-body">
+      <div class="panel" id="panel-hangar"></div>
+      <div class="panel" id="panel-market"></div>
+      <div class="panel panel--tool" id="panel-industry"></div>
+      <div class="panel panel--tool" id="panel-fabrication"></div>
+      <div class="panel" id="panel-contracts"></div>
+    </main>
     <div id="st-dimmer"></div>`);
   append(document.body, el);
 
   bindStationDomEvents(el, onStationAction);
 
   on("ui:close-overlays", () => {
-    setStyle(el, { display: "none" });
+    closeHudWindow("station");
     stationState.previewFitting = null;
     Client.stationOpen = false;
     Client.activeStation = null;

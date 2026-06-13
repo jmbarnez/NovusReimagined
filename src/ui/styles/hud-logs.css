@@ -64,7 +64,7 @@
 #hud-log-entries::-webkit-scrollbar-thumb { background: var(--hud-scrollbar-thumb); border-radius: 999px; }
 #hud-log-entries::-webkit-scrollbar-thumb:hover { background: var(--hud-scrollbar-thumb-hover); }
 
-.log-entry { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
+.log-entry { white-space: pre-wrap; overflow: visible; word-break: break-word; user-select: text; margin-bottom: 1px; font-size: calc(7.5px * var(--effective-font-scale, 1)); line-height: 11px; }
 .log-entry.log-info    { color: #8aa4c0; }
 .log-entry.log-combat  { color: #cc8866; }
 .log-entry.log-loot    { color: #66cc88; }
@@ -73,6 +73,10 @@
 .log-entry.log-chat,
 .log-entry.log-chat-self { color: #7ec8ff; }
 .log-entry.log-chat-system { color: #b6c4d5; }
+.log-entry.log-net-err { color: #ff6666; }
+.log-entry.log-net-ok  { color: #66cc88; }
+.log-entry.log-net-warn { color: #e8c06a; }
+.log-entry.log-net     { color: #8aa4c0; }
 
 .hud-log-chat-input-row {
   display: flex;

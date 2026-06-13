@@ -173,7 +173,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   timeMark("player");
   syncPixiTrails();
   timeMark("trails");
-  syncPixiPlanets(now);
+  syncPixiPlanets(now, sys);
   timeMark("planets");
   syncPixiCelestial(now, alpha, sys);
   timeMark("celestial");

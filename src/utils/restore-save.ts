@@ -90,7 +90,7 @@ export function initGameSession(player: Player, opts: InitGameSessionOpts = {}):
   const sysIdx = player.sysIdx || 0;
   if (!getState().GALAXY[sysIdx]) PlayerAccess.setSysIdx(0);
   const sys = getState().GALAXY[player.sysIdx];
-  if (sys && !sys._ready) populateSystem(sys);
+  if (sys) populateSystem(sys);
 
   if (opts.spawnNearStationIfRedirected && redirected) {
     spawnNearFirstStation(player, getState().GALAXY, player.sysIdx);

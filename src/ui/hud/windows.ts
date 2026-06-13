@@ -48,6 +48,7 @@ function makeWindowHTML(id: string, title: string): string {
     cargo: "window-cargo",
     missions: "window-missions",
     skills: "window-skills",
+    station: "window-station",
   };
   const cls = classes[id] || "";
   const resetBtn = id === "map" ? `<button type="button" class="win-btn win-reset" aria-label="Reset view" tabindex="-1">${WIN_RESET_ICON}</button>` : "";

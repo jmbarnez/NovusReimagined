@@ -1,13 +1,14 @@
 import { Client } from "../../state.js";
 import type { System } from "../../types/world.js";
 import { stationLayer } from "../../pixi.js";
+import { getSunWorldPos } from "../../utils/sun-position.js";
 import { bundles, createBundle, destroyBundle } from "./cache.js";
 import { LIGHT_DIRS, TAU, type Station } from "./shared.js";
 
 export function syncPixiStations(now: number, sys: System): void {
   if (!stationLayer) return;
   const stations: Station[] = sys?.stations ?? [];
-  const sunDir = sys?.sunDir ?? 0;
+  const sun = getSunWorldPos(sys);
   const lightOn = Client.settings?.directionalLighting !== false;
 
   const activeIds = new Set<string>();
@@ -31,6 +32,7 @@ export function syncPixiStations(now: number, sys: System): void {
     }
 
     if (lightOn && b.lightTex.length) {
+      const sunDir = Math.atan2(sun.y - st.y, sun.x - st.x);
       let di = Math.round(((sunDir - st.spin) / TAU) * LIGHT_DIRS) % LIGHT_DIRS;
       if (di < 0) di += LIGHT_DIRS;
       b.light.texture = b.lightTex[di];

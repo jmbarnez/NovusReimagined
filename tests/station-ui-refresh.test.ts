@@ -182,22 +182,22 @@ describe("station UI snapshot refresh", () => {
   it("switches live station panels when clicking Refining and Fabrication", () => {
     openTestStation();
 
-    expect(document.getElementById("panel-hangar")?.classList.contains("active")).toBe(true);
-    expect(document.getElementById("panel-industry")?.classList.contains("active")).toBe(false);
-
-    clickStationTab("industry");
-
-    expect(document.querySelector('.st-tab[data-tab="industry"]')?.classList.contains("active")).toBe(true);
     expect(document.getElementById("panel-industry")?.classList.contains("active")).toBe(true);
     expect(document.getElementById("panel-hangar")?.classList.contains("active")).toBe(false);
     expect(document.getElementById("panel-industry")?.textContent).toContain("Station Refining");
     expect(document.getElementById("panel-industry")?.textContent).toContain("Ore In");
 
+    clickStationTab("hangar");
+
+    expect(document.querySelector('.st-tab[data-tab="hangar"]')?.classList.contains("active")).toBe(true);
+    expect(document.getElementById("panel-hangar")?.classList.contains("active")).toBe(true);
+    expect(document.getElementById("panel-industry")?.classList.contains("active")).toBe(false);
+
     clickStationTab("fabrication");
 
     expect(document.querySelector('.st-tab[data-tab="fabrication"]')?.classList.contains("active")).toBe(true);
     expect(document.getElementById("panel-fabrication")?.classList.contains("active")).toBe(true);
-    expect(document.getElementById("panel-industry")?.classList.contains("active")).toBe(false);
+    expect(document.getElementById("panel-hangar")?.classList.contains("active")).toBe(false);
     expect(document.getElementById("panel-fabrication")?.textContent).toContain("Station Fabrication");
   });
 });

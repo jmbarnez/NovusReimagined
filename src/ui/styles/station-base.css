@@ -1,115 +1,93 @@
-/* ── Station Overlay ── */
+/* ── Station Window Content ── */
 #station-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  width: calc(100vw / var(--ui-scale));
-  height: calc(100vh / var(--ui-scale));
-  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
   font-family: var(--font-family);
-  transform: scale(var(--ui-scale));
-  transform-origin: top left;
+  overflow: hidden;
   isolation: isolate;
   scrollbar-width: thin;
   scrollbar-color: var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);
 }
 
-/* ── Main Grid ── */
-#st-ui {
-  position: relative;
-  display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
-  grid-template-rows: 1fr;
-  width: 100vw;
-  height: 100vh;
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--hud-shield) 10%, transparent), transparent 28%),
-    color-mix(in srgb, var(--hud-bg-deep) 90%, transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  overflow: hidden;
-}
-
-/* ── Sidebar ── */
-#st-sidebar {
+/* ── Header ── */
+.st-win-head {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 14px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--hud-bg-panel) 74%, transparent), color-mix(in srgb, var(--hud-bg-deep) 78%, transparent));
-  border-right: 1px solid color-mix(in srgb, var(--hud-border) 32%, transparent);
-  box-shadow: inset -1px 0 0 color-mix(in srgb, white 4%, transparent);
-}
-
-#st-station-info {
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--hud-border-soft);
-  padding-bottom: 12px;
-}
-
-#st-name {
-  font-size: calc(13px * var(--effective-font-scale, 1));
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--hud-text-bright);
-  text-transform: uppercase;
-  margin-bottom: 4px;
-  text-shadow: 0 0 8px color-mix(in srgb, var(--hud-shield) 25%, transparent);
+  flex-shrink: 0;
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  background: color-mix(in srgb, var(--hud-bg-deep) 50%, transparent);
 }
 
 #st-meta {
-  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-faint);
-  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-#st-sec-badge {
-  margin-top: 8px;
-  font-size: calc(10px * var(--effective-font-scale, 1));
-  letter-spacing: 0.06em;
-  color: var(--hud-text-faint);
-}
-
-#st-wallet {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: calc(11px * var(--effective-font-scale, 1));
-}
-
-#st-cr {
+.st-win-wallet {
   color: var(--hud-positive);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
-#st-sp {
-  color: var(--hud-arcane);
+#st-undock {
+  padding: 3px 8px;
+  background: color-mix(in srgb, var(--hud-positive) 12%, var(--hud-bg-deep));
+  color: var(--hud-positive);
+  border: 1px solid color-mix(in srgb, var(--hud-positive) 30%, transparent);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
-/* ── Tabs (vertical sidebar) ── */
+#st-undock:hover {
+  background: color-mix(in srgb, var(--hud-positive) 20%, var(--hud-bg-deep));
+  color: color-mix(in srgb, var(--hud-positive) 85%, white);
+  border-color: color-mix(in srgb, var(--hud-positive) 50%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--hud-positive) 20%, transparent);
+}
+
+/* ── Tabs (horizontal) ── */
 #st-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
+  gap: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--hud-border-soft);
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--hud-bg-deep) 60%, transparent);
+  overflow-x: auto;
 }
 
 .st-tab {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 5px 10px;
   background: transparent;
   color: var(--hud-text-faint);
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   font-family: inherit;
-  font-size: calc(11px * var(--effective-font-scale, 1));
+  font-size: calc(10px * var(--effective-font-scale, 1));
   letter-spacing: 0.04em;
   text-transform: uppercase;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
-
 
 .st-tab:hover:not(:disabled) {
   color: var(--hud-text-main);
@@ -148,46 +126,13 @@
   box-shadow: 0 0 12px color-mix(in srgb, var(--hud-arcane) 15%, transparent);
 }
 
-/* ── Undock Button ── */
-#st-undock {
-  padding: 10px 14px;
-  background: color-mix(in srgb, var(--hud-positive) 12%, var(--hud-bg-deep));
-  color: var(--hud-positive);
-  border: 1px solid color-mix(in srgb, var(--hud-positive) 30%, transparent);
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: calc(11px * var(--effective-font-scale, 1));
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-
-#st-undock:hover {
-  background: color-mix(in srgb, var(--hud-positive) 20%, var(--hud-bg-deep));
-  color: color-mix(in srgb, var(--hud-positive) 85%, white);
-  border-color: color-mix(in srgb, var(--hud-positive) 50%, transparent);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--hud-positive) 20%, transparent);
-}
-
-.st-kbd {
-  font-size: calc(9px * var(--effective-font-scale, 1));
-  padding: 1px 5px;
-  background: color-mix(in srgb, black 40%, transparent);
-  border: 1px solid var(--hud-border-soft);
-  border-radius: 2px;
-  color: var(--hud-text-dim);
-  font-family: inherit;
-  letter-spacing: 0.04em;
-  margin-left: 6px;
-}
-
 /* ── Main Content Area ── */
 #st-body {
+  flex: 1;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  padding: 16px 18px 18px;
+  padding: 8px 10px;
   display: grid;
 }
 
@@ -196,7 +141,6 @@
   min-width: 0;
   min-height: 0;
   width: 100%;
-  max-width: 1080px;
   overflow-y: auto;
 }
 .panel.active {
@@ -210,7 +154,7 @@
 }
 
 /* ── Scanline overlay ── */
-#st-ui::after {
+#station-overlay::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -225,8 +169,48 @@
   z-index: 1;
 }
 
-#st-sidebar, #st-body {
+/* ── Dimmer ── */
+#st-dimmer {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
+
+#st-dimmer .tutorial-dimmer-segment {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+#st-dimmer.active {
+  display: block;
+}
+
+.tutorial-hangar-highlight {
   position: relative;
+  z-index: 20 !important;
+  outline: 2px solid var(--hud-accent);
+  outline-offset: 4px;
+  filter: brightness(1.08);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--hud-accent) 22%, transparent),
+    0 0 20px color-mix(in srgb, var(--hud-accent) 38%, transparent);
+  animation: tutorialHangarPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tutorialHangarPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--hud-accent) 18%, transparent),
+      0 0 14px color-mix(in srgb, var(--hud-accent) 30%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--hud-accent) 28%, transparent),
+      0 0 22px color-mix(in srgb, var(--hud-accent) 42%, transparent);
+  }
 }
 
 /* ── Typography & Utilities ── */
@@ -360,46 +344,14 @@ h4 {
   margin-bottom: 6px;
 }
 
-/* ── Hangar Tutorial Highlight ── */
-#st-dimmer {
-  display: none;
-  position: absolute;
-  inset: 0;
-  z-index: 25;
-  pointer-events: none;
-}
-
-#st-dimmer .tutorial-dimmer-segment {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.65);
-  pointer-events: none;
-}
-
-#st-dimmer.active {
-  display: block;
-}
-
-.tutorial-hangar-highlight {
-  position: relative;
-  z-index: 20 !important;
-  outline: 2px solid var(--hud-accent);
-  outline-offset: 4px;
-  filter: brightness(1.08);
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--hud-accent) 22%, transparent),
-    0 0 20px color-mix(in srgb, var(--hud-accent) 38%, transparent);
-  animation: tutorialHangarPulse 1.4s ease-in-out infinite;
-}
-
-@keyframes tutorialHangarPulse {
-  0%, 100% {
-    box-shadow:
-      0 0 0 2px color-mix(in srgb, var(--hud-accent) 18%, transparent),
-      0 0 14px color-mix(in srgb, var(--hud-accent) 30%, transparent);
-  }
-  50% {
-    box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--hud-accent) 28%, transparent),
-      0 0 22px color-mix(in srgb, var(--hud-accent) 42%, transparent);
-  }
+.st-kbd {
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  padding: 1px 5px;
+  background: color-mix(in srgb, black 40%, transparent);
+  border: 1px solid var(--hud-border-soft);
+  border-radius: 2px;
+  color: var(--hud-text-dim);
+  font-family: inherit;
+  letter-spacing: 0.04em;
+  margin-left: 6px;
 }

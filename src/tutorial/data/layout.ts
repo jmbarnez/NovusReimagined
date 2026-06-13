@@ -1,7 +1,6 @@
 /** Single source of truth for S.T.A.R.T tutorial sector layout. */
 
 import { C } from "../../config/index.js";
-import { SUN_WORLD_DIST } from "../../utils/sun-position.js";
 import {
   resolveTutorialGateHint,
   type TutorialGateHintKey,
@@ -9,6 +8,7 @@ import {
 import { t } from "../../utils/i18n.js";
 
 export const TUTORIAL_SUN_DIR = Math.PI;
+const TUTORIAL_SUN_DIST = 2850;
 
 export const TUTORIAL_SECTOR = {
   x: 0,
@@ -27,8 +27,8 @@ const TUTORIAL_SPAWN_SIDE = 320;
 
 export function getTutorialSunWorldPos(): { x: number; y: number } {
   return {
-    x: Math.cos(TUTORIAL_SUN_DIR) * SUN_WORLD_DIST,
-    y: Math.sin(TUTORIAL_SUN_DIR) * SUN_WORLD_DIST,
+    x: Math.cos(TUTORIAL_SUN_DIR) * TUTORIAL_SUN_DIST,
+    y: Math.sin(TUTORIAL_SUN_DIR) * TUTORIAL_SUN_DIST,
   };
 }
 
@@ -44,7 +44,7 @@ export const TUTORIAL_SPAWN = (() => {
 export function shouldRelocateTutorialStart(x: number, y: number): boolean {
   if (Math.hypot(x, y) < 320) return true;
   const sun = getTutorialSunWorldPos();
-  if (Math.hypot(x - sun.x, y - sun.y) < 1100) return true;
+  if (Math.hypot(x - sun.x, y - sun.y) < 400) return true;
   if (x > 450) return true;
   if (x < TUTORIAL_SPAWN.x - 450) return true;
   return false;
@@ -52,12 +52,13 @@ export function shouldRelocateTutorialStart(x: number, y: number): boolean {
 
 export const TUTORIAL_FLIGHT_DECK = { x: -1650, y: -140 } as const;
 export const TUTORIAL_FLIGHT_DECK_R = 200;
+export const TUTORIAL_START_PLANET = { x: -2480, y: -650 } as const;
 export const TUTORIAL_BELT_CENTER = { x: 2800, y: 0 } as const;
 export const TUTORIAL_MINING_ZONE_R = Math.max(620, C.WORLD.SECTOR.beltSpread.hi + 80);
 export const TUTORIAL_GUNNERY_CENTER = { x: 2200, y: 1600 } as const;
 export const TUTORIAL_TRAINING_SITE_X = 2000;
 export const TUTORIAL_TRAINING_SITE_Y = 2900;
-export const TUTORIAL_GATE = { x: 3600, y: -1000 } as const;
+export const TUTORIAL_GATE = { x: -1400, y: -900 } as const;
 
 export interface TutorialLocalRegion {
   id: string;

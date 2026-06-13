@@ -35,16 +35,30 @@ export function getDockableStation(p: Player = getState().player, stationId?: st
   return stations.find((st) => !st.isProcessingHub && dst(p.x, p.y, st.x, st.y) < st.radius * 2) ?? null;
 }
 
+function onStationWindowClose(): void {
+  Client.stationOpen = false;
+  Client.activeStation = null;
+  Client.skillsOpen = false;
+  if (typeof document !== "undefined") {
+    const hud = document.getElementById("hud-overlay");
+    if (hud instanceof HTMLElement) hud.style.display = "block";
+    const canvas = app?.canvas as HTMLCanvasElement | undefined;
+    if (canvas instanceof HTMLElement) canvas.style.cursor = "none";
+  }
+  emit("station:close");
+}
+
 export async function openStationUi(st: Station): Promise<void> {
   Client.stationOpen = true;
   Client.activeStation = st;
   Client.mouse.lmb = false;
   if (typeof document !== "undefined") {
     await ensureStationInterface(st);
-  }
-  if (typeof document !== "undefined") {
-    const stationOverlay = document.getElementById("station-overlay");
-    if (stationOverlay instanceof HTMLElement) stationOverlay.style.display = "flex";
+    const contentEl = document.getElementById("station-overlay");
+    if (contentEl instanceof HTMLElement) {
+      const { openHudWindow } = await import("../ui/hud/windows.js");
+      openHudWindow("station", st.name, contentEl, onStationWindowClose);
+    }
     const hud = document.getElementById("hud-overlay");
     if (hud instanceof HTMLElement) hud.style.display = "none";
     const canvas = app?.canvas as HTMLCanvasElement | undefined;
@@ -55,18 +69,14 @@ export async function openStationUi(st: Station): Promise<void> {
 }
 
 export function closeStationUi(): void {
-  Client.stationOpen = false;
-  Client.activeStation = null;
-  Client.skillsOpen = false;
   if (typeof document !== "undefined") {
-    const stationOverlay = document.getElementById("station-overlay");
-    if (stationOverlay instanceof HTMLElement) stationOverlay.style.display = "none";
-    const hud = document.getElementById("hud-overlay");
-    if (hud instanceof HTMLElement) hud.style.display = "block";
-    const canvas = app?.canvas as HTMLCanvasElement | undefined;
-    if (canvas instanceof HTMLElement) canvas.style.cursor = "none";
+    void import("../ui/hud/windows.js")
+      .then(({ closeHudWindow }) => closeHudWindow("station"))
+      .catch(() => {
+        // ignore
+      });
   }
-  emit("station:close");
+  onStationWindowClose();
 }
 
 export function closeStation() {

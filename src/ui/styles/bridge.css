@@ -8,6 +8,7 @@
 .window-cargo{left:calc(50% - 320px);top:calc(50% - 260px);width:640px;height:520px;min-width:360px;min-height:260px;}
 .window-skills{left:8px;top:30px;width:370px;height:calc(80vh - 60px);min-width:260px;}
 .window-missions{right:8px;top:60px;width:360px;height:360px;min-width:220px;}
+.window-station{left:calc(50% - 420px);top:calc(50% - 280px);width:840px;height:560px;min-width:560px;min-height:360px;}
 .window.is-expanded{left:0!important;top:0!important;right:auto!important;width:100%!important;height:100%!important;resize:none;border-width:2px;border-color:var(--hud-border-accent);}
 .window.is-expanded .win-head{cursor:default;background:var(--hud-bg-panel);}
 .window.is-dragging{cursor:grabbing;}
