@@ -1,0 +1,302 @@
+#panel-industry,
+#panel-fabrication {
+  padding: 0;
+  height: 100%;
+}
+
+.ind-shell {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  padding: 12px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #b47a3c 4%, transparent), transparent 26%),
+    color-mix(in srgb, var(--hud-bg-deep) 18%, transparent);
+}
+
+.ind-hero,
+.ind-refinery-header,
+.ind-stage-tabs,
+.ind-stockband,
+.ind-stage-panel,
+.ind-catalog,
+.ind-focus-card,
+.ind-queue-panel,
+.ind-details-empty {
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-window) 86%, transparent);
+}
+
+.ind-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.95fr);
+  gap: 16px;
+  padding: 16px 18px;
+  min-height: 120px;
+}
+
+.ind-refinery-header {
+  padding: 8px 12px;
+}
+
+.ind-refinery-header-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.ind-refinery-header-copy {
+  min-width: 0;
+}
+
+.ind-refinery-title {
+  margin: 0;
+  font-size: calc(17px * var(--effective-font-scale, 1));
+  color: var(--hud-text-bright);
+}
+
+.ind-refinery-body {
+  margin: 2px 0 0;
+  max-width: 56ch;
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  line-height: 1.3;
+  color: var(--hud-text-main);
+}
+
+.ind-refinery-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.ind-status-chip {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 54%, transparent);
+  color: var(--hud-text-faint);
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ind-status-chip b {
+  color: var(--hud-text-bright);
+  font-size: calc(10px * var(--effective-font-scale, 1));
+}
+
+.ind-overline {
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #d3a56d;
+  margin-bottom: 6px;
+}
+
+.ind-hero-title {
+  margin: 0;
+  font-size: calc(24px * var(--effective-font-scale, 1));
+  color: var(--hud-text-bright);
+}
+
+.ind-hero-body {
+  margin: 8px 0 0;
+  max-width: 62ch;
+  font-size: calc(11px * var(--effective-font-scale, 1));
+  line-height: 1.55;
+  color: var(--hud-text-main);
+}
+
+.ind-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+.ind-metric {
+  min-height: 54px;
+  padding: 10px 12px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 62%, transparent);
+}
+
+.ind-metric-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--hud-text-faint);
+}
+
+.ind-metric strong {
+  font-size: calc(17px * var(--effective-font-scale, 1));
+  color: var(--hud-text-bright);
+  font-weight: 700;
+}
+
+.ind-stage-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.ind-stage-tabs--compact {
+  grid-template-columns: repeat(3, minmax(0, max-content));
+  justify-content: start;
+  padding: 5px;
+  gap: 5px;
+}
+
+.ind-stage-tabs--compact .ind-stage-btn {
+  min-width: 92px;
+  min-height: 30px;
+  padding: 5px 10px;
+  text-align: center;
+}
+
+.ind-stage-tabs--compact .ind-stage-btn small {
+  display: none;
+}
+
+.ind-stage-empty {
+  padding: 12px;
+  border: 1px dashed color-mix(in srgb, #d3a56d 24%, var(--hud-border-soft));
+  background: color-mix(in srgb, var(--hud-bg-deep) 42%, transparent);
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  line-height: 1.45;
+  color: var(--hud-text-main);
+}
+
+.ind-stage-empty::before {
+  content: "Waiting";
+  display: block;
+  margin-bottom: 5px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #d3a56d;
+}
+
+.ind-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+}
+
+.ind-workspace--with-rail {
+  grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.9fr);
+  align-items: stretch;
+}
+
+.ind-stage-column {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ind-stage-panel {
+  height: 100%;
+  padding: 6px;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ind-stage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.ind-stage-grid--dock {
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+  padding-right: 4px;
+}
+
+.ind-stage-surface {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(320px, 1.25fr) minmax(200px, 0.72fr);
+  gap: 12px;
+  overflow: hidden;
+}
+
+.ind-stage-machine,
+.ind-stage-dock {
+  min-height: 0;
+}
+
+.ind-stage-machine {
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.ind-stage-dock {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--hud-border) 30%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--hud-bg-elevated) 84%, transparent), color-mix(in srgb, var(--hud-bg-deep) 88%, transparent));
+  border-radius: 6px;
+  overflow: auto;
+}
+
+.ind-stage-dock-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ind-workspace--assembly {
+  grid-template-columns: 300px minmax(0, 1fr);
+}
+
+.ind-details-empty {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  color: var(--hud-text-faint);
+  text-align: center;
+  font-size: calc(11px * var(--effective-font-scale, 1));
+}
+
+.ind-empty-icon {
+  font-size: calc(34px * var(--effective-font-scale, 1));
+  opacity: 0.14;
+}
+
+.ind-empty-list {
+  padding: 16px 10px;
+  color: var(--hud-text-faint);
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  text-align: center;
+}
+
+.ind-bottom-bar {
+  display: none;
+  gap: 0;
+}

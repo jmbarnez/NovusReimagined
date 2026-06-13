@@ -1,0 +1,39 @@
+.ind-bottom-popover {
+  display: none;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid var(--hud-border-soft);
+  border-bottom: 0;
+  background: color-mix(in srgb, var(--hud-bg-deep) 62%, transparent);
+}
+
+.ind-bottom-popover.is-open {
+  display: block;
+}
+
+.ind-bottom-strip {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 54%, transparent);
+}
+
+.ind-bottom-icon {
+  line-height: 1;
+}
+
+.ind-bottom-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--hud-accent) 55%, transparent);
+  color: var(--hud-text-bright);
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  font-weight: 700;
+}

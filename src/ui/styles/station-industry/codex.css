@@ -1,0 +1,108 @@
+.ind-codex-band {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ind-codex-title {
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  letter-spacing: 0;
+  color: var(--hud-text-faint);
+  text-transform: uppercase;
+}
+
+.ind-codex-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.ind-codex-chip {
+  padding: 9px 10px;
+  display: grid;
+  gap: 4px;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ind-accent, #8c64a8) 60%, transparent);
+}
+
+.ind-codex-chip--dossier {
+  gap: 8px;
+  padding: 11px 12px;
+}
+
+.ind-codex-chip--dossier.active {
+  border-color: color-mix(in srgb, #d3a56d 42%, var(--hud-border));
+  background: color-mix(in srgb, var(--ind-accent, #24180b) 14%, var(--hud-bg-elevated));
+}
+
+.ind-codex-chip-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.ind-codex-chip-meta {
+  text-align: right;
+}
+
+.ind-codex-chip-meta b,
+.ind-codex-chip-meta small {
+  display: block;
+}
+
+.ind-codex-chip-meta b {
+  font-size: calc(11px * var(--effective-font-scale, 1));
+  color: var(--hud-text-bright);
+}
+
+.ind-codex-chip-meta small {
+  margin-top: 3px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  color: var(--hud-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ind-codex-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ind-codex-chip-grid div {
+  padding: 8px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-deep) 58%, transparent);
+}
+
+.ind-codex-chip-grid span,
+.ind-codex-chip-grid strong {
+  display: block;
+}
+
+.ind-codex-chip-grid span {
+  margin-bottom: 4px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hud-text-faint);
+}
+
+.ind-codex-chip-grid strong {
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  color: var(--hud-text-bright);
+}
+
+.ind-codex-chip strong {
+  font-size: calc(10px * var(--effective-font-scale, 1));
+}
+
+.ind-codex-chip span {
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  color: var(--hud-text-faint);
+}
+
+.ind-codex-chip small {
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  color: #caa16a;
+}

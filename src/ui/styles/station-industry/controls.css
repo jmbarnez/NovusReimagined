@@ -1,0 +1,258 @@
+.ind-stage-btn,
+.ind-tab-btn,
+.ind-catalog-card,
+.ind-btn,
+.ind-alloy-btn,
+.ind-queue-cancel {
+  font-family: var(--font-family);
+}
+
+.ind-stage-btn,
+.ind-tab-btn {
+  padding: 8px 10px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 54%, transparent);
+  color: var(--hud-text-main);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ind-stage-btn span,
+.ind-stage-btn small,
+.ind-tab-btn span,
+.ind-tab-btn small {
+  display: block;
+}
+
+.ind-stage-btn span,
+.ind-tab-btn span {
+  font-size: calc(11px * var(--effective-font-scale, 1));
+  font-weight: 700;
+}
+
+.ind-stage-btn small,
+.ind-tab-btn small {
+  margin-top: 4px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  color: var(--hud-text-faint);
+}
+
+.ind-stage-btn:hover,
+.ind-stage-btn.active,
+.ind-tab-btn:hover,
+.ind-tab-btn.active {
+  border-color: color-mix(in srgb, #d3a56d 60%, var(--hud-border));
+  background: color-mix(in srgb, #b47a3c 10%, var(--hud-bg-elevated));
+}
+
+.ind-qty-wrap,
+.ind-heat-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--hud-text-faint);
+}
+
+.ind-qty-input,
+.ind-search-input,
+.ind-sort-sel,
+.ind-qty-sel,
+.ind-storage-select,
+.ind-heat-select {
+  border: 1px solid var(--hud-border-soft);
+  background: var(--hud-bg-deep);
+  color: var(--hud-text-main);
+  font-family: var(--font-family);
+  outline: none;
+  padding: 7px 10px;
+  font-size: calc(10px * var(--effective-font-scale, 1));
+}
+
+.ind-search-input:focus,
+.ind-sort-sel:focus,
+.ind-qty-sel:focus,
+.ind-storage-select:focus,
+.ind-heat-select:focus,
+.ind-qty-input:focus {
+  border-color: color-mix(in srgb, #d3a56d 55%, var(--hud-border));
+}
+
+.ind-btn {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, #d3a56d 42%, var(--hud-border));
+  border-top: 1px solid color-mix(in srgb, #e0bb86 35%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, #b47a3c 20%, var(--hud-bg-elevated)), color-mix(in srgb, #6e4b24 18%, var(--hud-bg-deep)));
+  color: var(--hud-text-bright);
+  font-size: calc(11px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.ind-btn--primary {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #e0bb86 24%, transparent);
+}
+
+.ind-btn--ghost {
+  min-height: 28px;
+  padding: 0 10px;
+  border-color: var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 44%, transparent);
+  color: var(--hud-text-main);
+  font-size: calc(10px * var(--effective-font-scale, 1));
+}
+
+.ind-btn--ghost:hover {
+  border-color: color-mix(in srgb, #d3a56d 38%, var(--hud-border));
+  color: var(--hud-text-bright);
+}
+
+.ind-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ind-alloy-more-toggle {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 48%, transparent);
+  color: var(--hud-text-main);
+  font-family: var(--font-family);
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.ind-alloy-more-toggle:hover {
+  border-color: color-mix(in srgb, #d3a56d 45%, var(--hud-border));
+  color: var(--hud-text-bright);
+}
+
+.ind-alloy-btn {
+  padding: 7px 8px;
+  text-align: left;
+  border: 1px solid color-mix(in srgb, #b8863b 40%, var(--hud-border));
+  background: color-mix(in srgb, #24180b 70%, var(--hud-bg-elevated));
+  color: var(--hud-text-main);
+  cursor: pointer;
+}
+
+.ind-alloy-btn span,
+.ind-alloy-btn small {
+  display: block;
+}
+
+.ind-alloy-btn span {
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  color: var(--hud-text-bright);
+}
+
+.ind-alloy-btn small {
+  margin-top: 6px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  color: var(--hud-text-faint);
+}
+
+.ind-alloy-btn em {
+  display: block;
+  margin-top: 8px;
+  font-style: normal;
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  color: var(--hud-text-faint);
+}
+
+.ind-alloy-btn-top b {
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  color: var(--hud-text-bright);
+}
+
+.ind-alloy-btn--custom {
+  border-color: color-mix(in srgb, #8c64a8 46%, var(--hud-border));
+  background: color-mix(in srgb, #211427 68%, var(--hud-bg-elevated));
+}
+
+.ind-search-input {
+  min-width: 220px;
+}
+
+.ind-catalog-card {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-elevated) 60%, transparent);
+  color: var(--hud-text-main);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ind-catalog-card:hover,
+.ind-catalog-card.active {
+  border-color: color-mix(in srgb, #d3a56d 50%, var(--hud-border));
+  background: color-mix(in srgb, #b47a3c 10%, var(--hud-bg-elevated));
+}
+
+.ind-catalog-card.locked {
+  opacity: 0.58;
+}
+
+.ind-catalog-card-head,
+.ind-catalog-title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.ind-queue-cancel {
+  width: 20px;
+  height: 20px;
+  border: 1px solid color-mix(in srgb, var(--hud-danger) 35%, var(--hud-border));
+  background: color-mix(in srgb, var(--hud-danger) 10%, var(--hud-bg-deep));
+  color: var(--hud-danger);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ind-storage-select {
+  min-width: 148px;
+}
+
+.ind-bottom-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--hud-border-soft);
+  background: color-mix(in srgb, var(--hud-bg-deep) 48%, transparent);
+  color: var(--hud-text-main);
+  font-family: var(--font-family);
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ind-bottom-btn.active {
+  border-color: color-mix(in srgb, #d3a56d 60%, var(--hud-border));
+  background: color-mix(in srgb, #b47a3c 10%, var(--hud-bg-elevated));
+  color: var(--hud-text-bright);
+}
+
+.ind-bottom-btn.pulse {
+  animation: indRailPulse 0.9s ease 1;
+}

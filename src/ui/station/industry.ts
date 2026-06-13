@@ -1,4 +1,4 @@
-import "../styles/station-industry.css";
+import "../styles/station-industry/index.css";
 import { getState } from "../../state-access.js";
 import { getCargoMixedOreInputs } from "../../refinery/index.js";
 import { RECIPES } from "../../data/industryRecipes.js";
@@ -107,7 +107,6 @@ export function renderIndustry(container?: HTMLElement) {
     <div class="ind-shell ind-shell--refinery">
       ${renderOverview()}
       ${renderStageTabs()}
-      ${renderManifestBand()}
       <div class="ind-workspace ind-workspace--with-rail">
         <main class="ind-stage-column">${stageHtml}</main>
         ${renderRightRail()}
