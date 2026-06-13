@@ -1,7 +1,8 @@
 import { Container, Graphics } from "pixi.js";
 import { syncBullets } from "./bullets.js";
 import { syncBeams } from "./beams.js";
-import { setUtilityGraphics, syncUtilityBeams } from "./utility.js";
+import { initUtilityBeams, setUtilityGraphics, syncUtilityBeams } from "./utility.js";
+import { destroyMiningLaserGpu } from "./mining-laser-gpu.js";
 import type { System } from "../../types/world.js";
 
 let _bulletGfx: Graphics | null = null;
@@ -20,6 +21,7 @@ export function initPixiCombat(parent: Container): void {
   _utilityGfx = new Graphics();
   parent.addChild(_utilityGfx);
   
+  initUtilityBeams(parent);
   setUtilityGraphics(_utilityGfx);
 }
 
@@ -35,6 +37,7 @@ export function destroyPixiCombat(): void {
   if (_bulletGfx) { _bulletGfx.destroy(); _bulletGfx = null; }
   if (_beamGfx) { _beamGfx.destroy(); _beamGfx = null; }
   if (_utilityGfx) { _utilityGfx.destroy(); _utilityGfx = null; }
+  destroyMiningLaserGpu();
 }
 
 export { syncBullets, syncBeams, setUtilityGraphics, syncUtilityBeams };

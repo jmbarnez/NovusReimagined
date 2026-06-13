@@ -8,6 +8,12 @@ import {
 } from "../../combat/turret-origin.js";
 import { getSalvagerBeam } from "../../player/salvager.js";
 import { getTractorBeam } from "../../player/tractor.js";
+import {
+  beginMiningLaserGpuFrame,
+  drawMiningLaserGpu,
+  endMiningLaserGpuFrame,
+  initMiningLaserGpu,
+} from "./mining-laser-gpu.js";
 
 let _currentNow = 0;
 let _utilityGfx: Graphics | null = null;
@@ -16,10 +22,15 @@ export function setUtilityGraphics(gfx: Graphics): void {
   _utilityGfx = gfx;
 }
 
+export function initUtilityBeams(parent: import("pixi.js").Container): void {
+  initMiningLaserGpu(parent);
+}
+
 export function syncUtilityBeams(now: number, alpha: number): void {
   if (!_utilityGfx) return;
   _utilityGfx.clear();
   _currentNow = now;
+  beginMiningLaserGpuFrame(now);
 
   const state = getState();
   const beamOrigin = state.player ? getRenderedPlayerTurretOrigin(alpha, state.player) : null;
@@ -95,6 +106,7 @@ export function syncUtilityBeams(now: number, alpha: number): void {
       }
     }
   }
+  endMiningLaserGpuFrame();
 }
 
 function drawMiningLaser(
@@ -107,53 +119,7 @@ function drawMiningLaser(
   hitNy: number,
   hitR: number
 ) {
-  if (!_utilityGfx) return;
-  const pulse = 0.82 + 0.18 * Math.sin(_currentNow * 0.022);
-  const hittingAsteroid = hitR > 0;
-  let endX = x2, endY = y2;
-  if (hittingAsteroid) {
-    const osc = Math.sin(phase || 0) * 3.5;
-    endX += -hitNy * osc;
-    endY += hitNx * osc;
-  }
-
-  // Outer glow
-  _utilityGfx.moveTo(x1, y1).lineTo(endX, endY)
-    .stroke({ color: 0xffdc28, width: 10, alpha: 0.28 * pulse, cap: "round" });
-
-  // Core saturated laser
-  _utilityGfx.moveTo(x1, y1).lineTo(endX, endY)
-    .stroke({ color: 0xffe650, width: 4.5, alpha: 0.65 * pulse, cap: "round" });
-
-  // High intensity center line
-  _utilityGfx.moveTo(x1, y1).lineTo(endX, endY)
-    .stroke({ color: 0xffffb4, width: 1.8, alpha: 0.95 * pulse, cap: "round" });
-
-  // Contact point — intensified weld pool + denser micro-sparks
-  if (hittingAsteroid) {
-    const flicker = 0.72 + 0.28 * (0.5 + 0.5 * Math.sin((phase || 0) * 3.2));
-    const backA = Math.atan2(-hitNy, -hitNx);
-
-    _utilityGfx.circle(endX, endY, 12).fill({ color: 0xffa020, alpha: flicker * 0.38 });
-    _utilityGfx.circle(endX, endY, 7).fill({ color: 0xffcc44, alpha: flicker * 0.60 });
-    _utilityGfx.circle(endX, endY, 3).fill({ color: 0xffffff, alpha: flicker * 0.95 });
-    _utilityGfx.circle(endX, endY, 15).fill({ color: 0xff8800, alpha: flicker * 0.15 });
-    _utilityGfx.circle(endX, endY, 9).stroke({ color: 0xffe090, width: 1.3, alpha: flicker * 0.50 });
-
-    for (let s = 0; s < 6; s++) {
-      const gate = 0.5 + 0.5 * Math.sin((phase || 0) * (3.5 + s * 0.9) + s * 1.9);
-      if (gate < 0.5) continue;
-      const side = s % 2 === 0 ? 1 : -1;
-      const sa = backA + side * (0.4 + gate * 0.6) + Math.sin((phase || 0) * (2 + s)) * 0.35;
-      const len = 5 + gate * 16;
-      _utilityGfx.moveTo(endX, endY)
-        .lineTo(endX + Math.cos(sa) * len, endY + Math.sin(sa) * len)
-        .stroke({ color: 0xffe8a0, width: 0.85, alpha: gate * 0.80, cap: "round" });
-    }
-  } else {
-    // Fade point
-    _utilityGfx.circle(endX, endY, 8).fill({ color: 0xffe650, alpha: pulse * 0.3 * pulse });
-  }
+  drawMiningLaserGpu(x1, y1, x2, y2, phase, hitNx, hitNy, hitR);
 }
 
 function drawSalvagerBeam(x1: number, y1: number, x2: number, y2: number, phase: number) {
