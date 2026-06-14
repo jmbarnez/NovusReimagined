@@ -1,12 +1,12 @@
 /* ── System Map Overlay ── */
 #hud-win-map {
-  background: transparent;
+  background: var(--hud-bg-deep);
 }
 
-/* The map body hosts a Pixi canvas. Remove the bridge-window dark wash so the
-   map renders at full brightness instead of being dimmed by the body bg. */
+/* The map body hosts a Pixi canvas. Use an opaque background so the game
+   world behind the map window is fully hidden. */
 #hud-win-body-map {
-  background: transparent;
+  background: var(--hud-bg-deep);
 }
 
 .map-overlay {

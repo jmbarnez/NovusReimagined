@@ -12,9 +12,8 @@ function getTooltipEl(): HTMLElement {
   if (!el) {
     el = createElement("div", "hud-glass-panel");
     el.id = TOOLTIP_EL_ID;
-    setStyle(el, { display: "none", position: "absolute", pointerEvents: "none", zIndex: "100" });
-    const overlay = getElement("hud-overlay");
-    if (overlay) append(overlay, el);
+    setStyle(el, { display: "none", position: "fixed", pointerEvents: "none", zIndex: "9200" });
+    append(document.body, el);
   }
   return el;
 }

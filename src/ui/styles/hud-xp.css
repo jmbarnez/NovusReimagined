@@ -15,7 +15,7 @@
   gap: 3px;
   pointer-events: none;
   opacity: 0;
-  z-index: 620;
+  z-index: 9200;
   font-size: calc(11px * var(--effective-font-scale, 1));
   box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }

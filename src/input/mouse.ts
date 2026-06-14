@@ -78,7 +78,7 @@ export function handleMouseDown(e: MouseEvent): void {
   }
   if (e.button === 2) {
     if (isBlockedByUi(e.target, getUiPointerBlockSelector())) return;
-    
+
     let enemyClicked = null;
     if (!Client.stationOpen && !Client.bridgeOpen) {
       const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
@@ -116,7 +116,7 @@ export function handleMouseUp(e: MouseEvent): void {
 export function handleMouseMove(e: MouseEvent): void {
   Client.mouse.x = e.clientX;
   Client.mouse.y = e.clientY;
-  
+
   // Map drag
   if (Client.mapDragging) {
     const dx = e.clientX - Client.mapDragLastSx;
@@ -126,7 +126,7 @@ export function handleMouseMove(e: MouseEvent): void {
     Client.mapDragLastSx = e.clientX;
     Client.mapDragLastSy = e.clientY;
   }
-  
+
   if (Client.mouse.rmb && Client.settings.movementControlMode === "waypoint") {
     Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
   }
@@ -135,16 +135,43 @@ export function handleMouseMove(e: MouseEvent): void {
 export function handleWheel(e: WheelEvent): void {
   if (!Client.gameStarted) return;
   if (e.target instanceof Element && e.target.closest("#station-overlay, #bridge-overlay, #settings-overlay, #wreck-overlay, #hud-overlay, .window")) {
-    if (!(Client.showMap && e.target.closest("#map-overlay"))) return;
+    // Allow wheel over the entire map window when the map is open
+    if (Client.showMap && e.target.closest("#hud-win-map")) {
+      // fall through to map zoom
+    } else if (!(Client.showMap && e.target.closest("#map-overlay"))) {
+      return;
+    }
   }
 
   // Map zoom when map is open
   if (Client.showMap) {
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    Client.mapZoom = Math.max(0.2, Math.min(3.0, Client.mapZoom * delta));
+    const oldZoom = Client.mapZoom || 1.0;
+    const step = e.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.max(0.2, Math.min(3.0, oldZoom * step));
+
+    // Zoom toward cursor
+    const win = document.getElementById("hud-win-map");
+    if (win && oldZoom > 0 && Number.isFinite(oldZoom)) {
+      const rect = win.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+
+      const panX1 = Client.mapPanX + cx * (1 - oldZoom);
+      const panY1 = Client.mapPanY + cy * (1 - oldZoom);
+
+      const panX2 = mx - (mx - panX1) * newZoom / oldZoom;
+      const panY2 = my - (my - panY1) * newZoom / oldZoom;
+
+      Client.mapPanX = panX2 - cx * (1 - newZoom);
+      Client.mapPanY = panY2 - cy * (1 - newZoom);
+    }
+
+    Client.mapZoom = newZoom;
     return;
   }
-  
+
   // World zoom
   const delta = e.deltaY > 0 ? 0.9 : 1.1;
   Client.zoom = Math.max(0.5, Math.min(2.0, Client.zoom * delta));

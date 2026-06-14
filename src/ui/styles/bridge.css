@@ -28,14 +28,18 @@
 .win-foot{flex-shrink:0;min-height:4px;background:color-mix(in srgb, var(--hud-bg-elevated) 45%, transparent);border-top:1px solid var(--hud-border-soft);position:relative;z-index:2;}
 
 /* The map window is the only bridge window that draws real content (Pixi) into its body.
-   Disable the frosted-glass blur and the body wash on the map so the world behind it stays
-   sharp and the map renders at full brightness. Other windows (Overview, Skills, Missions,
-   Cargo) keep their backdrop-filter and body wash. */
-#hud-win-map,
+   Make it fully opaque so the game world behind it is hidden. */
+#hud-win-map {
+  background: var(--hud-bg-deep);
+}
+#hud-win-map::before {
+  display: none;
+}
 #hud-win-map .win-head,
 #hud-win-map .win-body {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  background: var(--hud-bg-deep);
 }
 .ov-meta{font-size: calc(9px * var(--effective-font-scale, 1));color:var(--hud-text-dim);margin:0 0 6px;letter-spacing:0.02em;text-align:right;}
 .ov-wrap{overflow-x:auto;overflow-y:auto;max-height:none;border:1px solid var(--hud-border-soft);background:color-mix(in srgb, var(--hud-bg-deep) 65%, transparent);scrollbar-width:thin;scrollbar-color:var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);}
@@ -137,6 +141,6 @@
 .inv-credits-value{font-size: calc(12px * var(--effective-font-scale, 1));font-weight:900;letter-spacing:0.5px;}
 
 /* Context menu */
-.inv-ctx{position:fixed;z-index:300;background:var(--hud-bg-window);border:1px solid var(--hud-border);box-shadow:0 6px 24px rgba(0,0,0,0.5);min-width:120px;padding:2px 0;border-radius:2px;}
+.inv-ctx{position:fixed;z-index:9200;background:var(--hud-bg-window);border:1px solid var(--hud-border);box-shadow:0 6px 24px rgba(0,0,0,0.5);min-width:120px;padding:2px 0;border-radius:2px;}
 .inv-ctx-item{padding:5px 10px;font-size: calc(10px * var(--effective-font-scale, 1));color:var(--hud-text-main);cursor:pointer;user-select:none;}
 .inv-ctx-item:hover{background:color-mix(in srgb, var(--hud-accent) 15%, transparent);color:var(--hud-text-bright);}

@@ -30,8 +30,7 @@ export function computeSystemMapTransform(Wc: number, Hc: number): SystemMapTran
   const sys = curSys(getState().player);
   if (!sys) return null;
   const { mnX, mnY, mxX, myY } = computeMapBounds(sys);
-  let scale = Math.min((Wc - 300) / (mxX - mnX || 1), (Hc - 130) / (myY - mnY || 1), 0.95);
-  scale *= Client.mapZoom;
+  const scale = Math.min((Wc - 300) / (mxX - mnX || 1), (Hc - 130) / (myY - mnY || 1), 0.95);
   const centerMx = (getState().player ? getState().player.x : (mnX + mxX) / 2) + Client.mapPanX;
   const centerMy = (getState().player ? getState().player.y : (mnY + myY) / 2) + Client.mapPanY;
   return {
