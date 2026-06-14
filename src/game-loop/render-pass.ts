@@ -4,7 +4,7 @@ import type { System } from "../types/world.js";
 import { syncPixiStationInterior } from "../render/pixi-station-interior.js";
 import { drawPerfOverlay } from "../render/perf-overlay.js";
 import { updateHudOverlay } from "../ui/hud-overlay.js";
-import { updateTutorialOverlay } from "../ui/tutorial/index.js";
+import { updateTutorialOverlay } from "../tutorial/ui/index.js";
 import { renderPixi, worldContainer } from "../pixi.js";
 import { updatePixiBackground } from "../render/pixi-background.js";
 import { getPixiMapViewportBounds, invalidatePixiMapBounds } from "../render/pixi-maps.js";

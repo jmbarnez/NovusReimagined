@@ -12,10 +12,10 @@ import { ModuleRarity } from "../data/moduleRarity.js";
 import { getInstance } from "./items.js";
 import { clearSimulationEntities } from "./entities.js";
 import { initTutorial } from "../tutorial/index.js";
-import { initTutorialOverlay } from "../ui/tutorial-overlay.js";
+import { initTutorialOverlay } from "../tutorial/ui/index.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 import { spawnNearFirstStation, setupPlayerSpawn } from "./player-spawn.js";
-import { hideTutorialOverlay } from "../ui/tutorial-overlay.js";
+import { hideTutorialOverlay } from "../tutorial/ui/index.js";
 import { netLog } from "../ui/net-console.js";
 
 function redirectCompletedTutorialPlayer(): boolean {
