@@ -150,10 +150,10 @@ src/
   tutorial/           Tutorial system with modular step data, logic, and UI overlay
                       data/              Tutorial step definitions, phases, layout, controls, helpers
                       logic/             Tutorial runtime logic (context, events, lifecycle, sync, tick)
-                      ui/                Tutorial UI overlay (card, cutout, dimmer, highlights, visuals)
+                      ui/                Tutorial UI overlay (setup, card, spotlight, visuals, render, lifecycle, frame-loop)
   types/              Shared structural interfaces (entities, world, lock state)
   ui/                 DOM-based overlays (station, bridge, inventory, settings)
-  ui/tutorial/        Tutorial UI overlay system (compatibility shims)
+  tutorial/ui/        Tutorial UI overlay system (setup, card, spotlight, visuals, render, lifecycle, frame-loop)
   utils/              Pure utilities (math, spatial grid, FX helpers, camera, entities, pool)
   world/              World generation and population
                       galaxy-build.ts    Galaxy construction and sector layout

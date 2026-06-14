@@ -9,10 +9,12 @@ import {
   setActiveHighlight,
   syncStationDimmerCutout,
   resetStationDimmer,
-} from "./cutout.js";
-import { setHudHighlight, clearHudHighlight } from "./highlights.js";
-import { syncDimmerVisibility } from "./dimmer.js";
-import { getElement, query, setStyle, toggleClass } from "../../ui/dom-helpers.js";
+  setHudHighlight,
+  clearHudHighlight,
+  syncHudDimmerVisibility,
+  clearHudDimmer,
+} from "./spotlight.js";
+import { getElement, query } from "../../ui/dom-helpers.js";
 
 function resolveTarget(selector: string): HTMLElement | null {
   return query(selector);
@@ -36,7 +38,7 @@ function isTourComplete(step: { tour?: { completeKey: string } }, snapshot: Reco
 function syncStationVisuals(target: HTMLElement | null): void {
   if (target) {
     const stDimmer = getElement("st-dimmer");
-    if (stDimmer) toggleClass(stDimmer, "active", true);
+    if (stDimmer) stDimmer.classList.add("active");
     setActiveHighlight(target);
     syncStationDimmerCutout(target);
   } else {
@@ -45,18 +47,19 @@ function syncStationVisuals(target: HTMLElement | null): void {
   }
 }
 
-function syncHudVisuals(target: HTMLElement | null): void {
+function syncHudVisuals(target: HTMLElement | null, showDimmer: boolean): void {
   setHudHighlight(target);
-  syncDimmerVisibility();
+  syncHudDimmerVisibility(target, showDimmer);
 }
 
 export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>): void {
-  if (!tutorialState.visible || !getState().player?.tutorial?.active) {
+  const player = getState().player;
+  if (!tutorialState.visible || !player?.tutorial?.active) {
     clearTutorialVisuals();
     return;
   }
 
-  const step = getCurrentTutorialStep(getState().player);
+  const step = getCurrentTutorialStep(player);
   if (!step) {
     clearTutorialVisuals();
     return;
@@ -64,46 +67,38 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
 
   const snapshot = overrideSnapshot ?? getTutorialSnapshot();
 
-  if (step.id === "industry" && Client.stationOpen) {
+  if (step.id === "industry" && Client.stationOpen && stationState.indRailTab !== "queue") {
     stationState.indRailTab = "queue";
   }
 
   let target: HTMLElement | null = null;
-  let selector = "";
   let tab: string | undefined;
   let isStation = false;
-  let phase = 0;
 
   if (step.tour && !isTourComplete(step, snapshot)) {
-    phase = getTourPhase(step, snapshot);
+    const phase = getTourPhase(step, snapshot);
     const panel = step.tour.phases[phase];
     if (panel) {
-      selector = panel.target;
       tab = panel.tab;
-      target = resolveTarget(selector);
+      target = resolveTarget(panel.target);
       isStation = Client.stationOpen && !!tab;
       if (isStation && tab && !isTabActive(tab)) {
         activateStationTab(tab as StationTabId);
       }
     }
   } else if (step.highlight) {
-    selector = step.highlight;
-    target = resolveTarget(selector);
+    target = resolveTarget(step.highlight);
     isStation = Client.stationOpen && !!getElement("station-overlay")?.contains(target);
   }
+
+  const showDimmer = target !== null && !step.noDimmer;
 
   if (isStation) {
     syncStationVisuals(target);
     clearHudHighlight();
-    const hudDimmer = tutorialState._hudDimmerEl;
-    if (hudDimmer) {
-      toggleClass(hudDimmer, "hidden", true);
-      setStyle(hudDimmer, { display: "none" });
-    }
-    tutorialState._hudDimmerVisible = false;
-    tutorialState._lastDimmerCutoutKey = "";
+    clearHudDimmer();
   } else {
-    syncHudVisuals(target);
+    syncHudVisuals(target, showDimmer);
     resetStationDimmer();
   }
 
@@ -116,11 +111,5 @@ export function clearTutorialVisuals(): void {
   setActiveHighlight(null);
   resetStationDimmer();
   clearHudHighlight();
-  const hudDimmer = tutorialState._hudDimmerEl;
-  if (hudDimmer) {
-    toggleClass(hudDimmer, "hidden", true);
-    setStyle(hudDimmer, { display: "none" });
-  }
-  tutorialState._hudDimmerVisible = false;
-  tutorialState._lastDimmerCutoutKey = "";
+  clearHudDimmer();
 }

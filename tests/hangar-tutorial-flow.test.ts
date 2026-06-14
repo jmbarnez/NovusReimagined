@@ -4,7 +4,7 @@ import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { TUTORIAL_STEPS } from "../src/data/tutorial.js";
 import { initTutorial, getTutorialSnapshot } from "../src/tutorial/index.js";
-import { initTutorialOverlay } from "../src/tutorial/ui/init.js";
+import { initTutorialOverlay } from "../src/tutorial/ui/setup.js";
 import { tutorialState } from "../src/tutorial/ui/state.js";
 import { renderStep } from "../src/tutorial/ui/render.js";
 import { emit } from "../src/events.js";

@@ -9,9 +9,7 @@ import { getTourPanel } from "../data/helpers.js";
 import { syncTutorialVisuals } from "./visuals.js";
 import { setText, setHtml, setStyle, toggleClass } from "../../ui/dom-helpers.js";
 
-function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>>) {
-  const snapshot = getTutorialSnapshot();
-  // Station tours only show while docked and incomplete
+function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>>, snapshot: Record<string, unknown>) {
   const tourComplete = step.tour?.completeKey ? snapshot[step.tour.completeKey] === true : false;
   if (step.tour && (!Client.stationOpen || tourComplete)) {
     if (tutorialState.tourLabelEl) {
@@ -45,10 +43,8 @@ function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep
   }
 }
 
-export function updateReadyState() {
+export function updateReadyState(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>> | null, ready: boolean) {
   if (!tutorialState.cardEl || !shouldShowTutorialLayer()) return;
-  const step = getCurrentTutorialStep(getState().player);
-  const ready = isCurrentStepComplete();
   const tourAdvance = canAdvanceTour();
   toggleClass(tutorialState.cardEl, "tutorial-card--ready", ready);
   if (tutorialState.tourNextBtn) {
@@ -70,17 +66,16 @@ export function updateReadyState() {
   tutorialState.lastReady = ready;
 }
 
-export function updateNavProgress() {
-  if (!shouldShowTutorialLayer()) return;
-  const step = getCurrentTutorialStep(getState().player);
-  if (!tutorialState.navProgressEl) return;
+export function updateNavProgress(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>> | null) {
+  if (!shouldShowTutorialLayer() || !tutorialState.navProgressEl) return;
   if (!step?.nav) {
     tutorialState.navProgressEl.hidden = true;
     return;
   }
   tutorialState.navProgressEl.hidden = false;
-  const progress = getTutorialNavProgress(step, getState().player) ?? 0;
-  const remaining = getTutorialNavRemainingM(step, getState().player);
+  const player = getState().player;
+  const progress = getTutorialNavProgress(step, player) ?? 0;
+  const remaining = getTutorialNavRemainingM(step, player);
   if (tutorialState.navProgressFillEl) setStyle(tutorialState.navProgressFillEl, { width: `${Math.round(progress * 100)}%` });
   if (tutorialState.navProgressLabelEl) {
     setText(tutorialState.navProgressLabelEl, remaining != null
@@ -89,13 +84,9 @@ export function updateNavProgress() {
   }
 }
 
-export function updateObjectiveText() {
-  if (!tutorialState.objectiveEl || !shouldShowTutorialLayer()) return;
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step) return;
-  const snapshot = getTutorialSnapshot();
-  const html = getTutorialStepObjective(step, snapshot);
-  setHtml(tutorialState.objectiveEl, html);
+export function updateObjectiveText(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>> | null, snapshot: Record<string, unknown>) {
+  if (!tutorialState.objectiveEl || !shouldShowTutorialLayer() || !step) return;
+  setHtml(tutorialState.objectiveEl, getTutorialStepObjective(step, snapshot));
 }
 
 export function renderStep() {
@@ -117,7 +108,7 @@ export function renderStep() {
   if (tutorialState.counterEl) setText(tutorialState.counterEl, t("tutorial.stepCounter", { n: getState().player.tutorial.step + 1, total: TUTORIAL_STEP_COUNT }));
   if (tutorialState.titleEl) setText(tutorialState.titleEl, step.title);
   if (tutorialState.objectiveEl) setHtml(tutorialState.objectiveEl, getTutorialStepObjective(step, snapshot));
-  syncTourCopy(step);
+  syncTourCopy(step, snapshot);
   tutorialState.lastReady = false;
 
   if (!shouldShowTutorialLayer()) {
@@ -128,7 +119,9 @@ export function renderStep() {
 
   setStyle(tutorialState.root, { display: "block" });
   syncTutorialVisuals();
-  updateReadyState();
-  updateNavProgress();
+  const ready = isCurrentStepComplete();
+  updateReadyState(step, ready);
+  updateNavProgress(step);
+  updateObjectiveText(step, snapshot);
   positionCardForStep();
 }

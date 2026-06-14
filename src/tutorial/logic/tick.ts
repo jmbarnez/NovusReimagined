@@ -8,65 +8,44 @@ import { snapshot } from "./snapshot.js";
 import { buildCtx, nowSec } from "./context.js";
 import { completeTutorial } from "./lifecycle.js";
 import { beginHangarReviewTour, markHangarStepComplete } from "./hangar.js";
+import type { TutorialStep } from "../types.js";
 
-export function tickTutorial(_dt: number) {
-  if (!getState().player?.tutorial?.active) return;
+// ── Step-specific tick handlers ─────────────────────────────────────────────
 
-  const step = getCurrentTutorialStep(getState().player);
-  if (!step) return;
-
-  const ctx = buildCtx();
-  const now = nowSec();
-
-  if (step.zone && ctx.inZone(step.zone)) {
-    snapshot.zoneReached = true;
-  }
-
-  if (step.id === "piloting-choice") {
+const STEP_HANDLERS: Record<string, (step: TutorialStep, now: number) => void | boolean> = {
+  "piloting-choice"() {
     const moved = Client.keys["w"] || Client.keys["a"] || Client.keys["s"] || Client.keys["d"];
-    const waypointSet = Client.waypoint !== null;
-    if (moved || waypointSet) {
-      snapshot.pilotingTried = true;
-    }
-  }
+    if (moved || Client.waypoint !== null) snapshot.pilotingTried = true;
+  },
 
-  if (step.id === "boost-try") {
-    if (Client.keys["boost"]) {
-      snapshot.boostUsed = true;
-    }
-  }
+  "boost-try"() {
+    if (Client.keys["boost"]) snapshot.boostUsed = true;
+  },
 
-  if (step.id === "fly-academy") {
-    const visited = (snapshot.visitedZones as string[] | undefined) ?? [];
+  "fly-academy"() {
+    const visited: string[] = (snapshot.visitedZones as string[] | undefined) ?? [];
     for (const reg of TUTORIAL_LOCAL_REGIONS) {
       if (visited.includes(reg.id)) continue;
-      if (ctx.inZone({ x: reg.x, y: reg.y, r: reg.r })) {
+      const dx = getState().player.x - reg.x;
+      const dy = getState().player.y - reg.y;
+      if (dx * dx + dy * dy < reg.r * reg.r) {
         visited.push(reg.id);
         snapshot.visitedZones = visited;
         logEvent(t("system.enteringRegion", { name: reg.name }), "system");
       }
     }
-  }
+  },
 
-  if (step.id === "fly-gate" || step.id === "graduation") {
-    setTutorialGatePulse(0.6 + 0.4 * Math.sin(now * 4));
-  }
-
-  if (step.id === "graduation" && step.isComplete(ctx)) {
-    completeTutorial(false);
-    return;
-  }
-
-  if (step.id === "hangar-high") {
+  "hangar-high"(_step, now) {
     if (!Client.stationOpen) {
       snapshot.hangarTabActive = false;
       markHangarStepComplete(false);
     } else if (isStationHangarTabActive()) {
       beginHangarReviewTour(now);
     }
-  }
+  },
 
-  if (step.id === "hangar-turrets") {
+  "hangar-turrets"(_step, now) {
     if (!Client.stationOpen) {
       snapshot.hangarTabActive = false;
       markHangarStepComplete(true);
@@ -78,17 +57,52 @@ export function tickTutorial(_dt: number) {
       }
       snapshot.hangarReviewStarted = true;
     }
-  }
+  },
 
-  if (step.id === "industry") {
+  "industry"() {
     if (!Client.stationOpen) {
       snapshot.industryTabActive = false;
-    } else {
-      const industryTabActive = document.getElementById("panel-industry")?.classList.contains("active") ?? false;
-      snapshot.industryTabActive = industryTabActive;
-      if (industryTabActive) {
-        snapshot.refineryGuideStarted = true;
-      }
+      return;
+    }
+    const active = document.getElementById("panel-industry")?.classList.contains("active") ?? false;
+    snapshot.industryTabActive = active;
+    if (active) snapshot.refineryGuideStarted = true;
+  },
+};
+
+// ── Public entry point ─────────────────────────────────────────────────────
+
+export function tickTutorial(_dt: number) {
+  const player = getState().player;
+  if (!player?.tutorial?.active) return;
+
+  const step = getCurrentTutorialStep(player);
+  if (!step) return;
+
+  // Shared zone-reached latch (avoids creating a full TutorialCtx unless needed)
+  if (step.zone) {
+    const dx = player.x - step.zone.x;
+    const dy = player.y - step.zone.y;
+    if (dx * dx + dy * dy < step.zone.r * step.zone.r) {
+      snapshot.zoneReached = true;
     }
   }
+
+  // Gate pulse for specific steps
+  if (step.id === "fly-gate" || step.id === "graduation") {
+    setTutorialGatePulse(0.6 + 0.4 * Math.sin(nowSec() * 4));
+  }
+
+  // Auto-complete graduation when criteria are met
+  if (step.id === "graduation") {
+    const ctx = buildCtx();
+    if (step.isComplete(ctx)) {
+      completeTutorial(false);
+      return;
+    }
+  }
+
+  // Run step-specific handler if one exists
+  const handler = STEP_HANDLERS[step.id];
+  if (handler) handler(step, nowSec());
 }

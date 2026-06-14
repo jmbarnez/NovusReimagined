@@ -1,12 +1,37 @@
 import { getState } from "../../state-access.js";
-import { buildTutorialCtx } from "../data/helpers.js";
+import { dst } from "../../utils/math.js";
 import { snapshot } from "./snapshot.js";
+import type { TutorialCtx, TutorialZone } from "../types.js";
 
 export function nowSec(): number {
   return Date.now() / 1000;
 }
 
-export function buildCtx() {
+// Reuse a single TutorialCtx object to avoid allocations in the frame loop.
+let _ctx: TutorialCtx | null = null;
+
+export function buildCtx(): TutorialCtx {
+  const now = nowSec();
   const p = getState().player;
-  return buildTutorialCtx(nowSec(), p.tutorial.stepEnteredAt ?? nowSec(), snapshot, p);
+  const stepEnteredAt = p.tutorial.stepEnteredAt ?? now;
+  if (!_ctx) {
+    _ctx = {
+      player: p,
+      now,
+      stepEnteredAt,
+      snapshot,
+      distToZone(zone: TutorialZone) {
+        return dst(this.player.x, this.player.y, zone.x, zone.y);
+      },
+      inZone(zone: TutorialZone) {
+        return dst(this.player.x, this.player.y, zone.x, zone.y) < zone.r;
+      },
+    };
+    return _ctx;
+  }
+  _ctx.player = p;
+  _ctx.now = now;
+  _ctx.stepEnteredAt = stepEnteredAt;
+  _ctx.snapshot = snapshot;
+  return _ctx;
 }

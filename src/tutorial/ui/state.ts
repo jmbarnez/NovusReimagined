@@ -1,4 +1,8 @@
-/** Mutable shared state for the tutorial overlay system. */
+/** Mutable shared state for the tutorial overlay system.
+ *  Keep this object minimal — only DOM element references and the
+ *  public `visible` flag.  All internal caches live as module-level
+ *  private variables in the files that use them.
+ */
 export const tutorialState = {
   layerEl: null as HTMLElement | null,
   root: null as HTMLElement | null,
@@ -19,15 +23,6 @@ export const tutorialState = {
   visible: false,
   showCompleteBannerActive: false,
   lastReady: false,
-  _activeHudHighlightEl: null as Element | null,
-  _hudDimmerEl: null as HTMLElement | null,
-  _hudDimmerVisible: false,
-  _hudDimmerHideTimer: null as number | null,
-  _lastDimmerCutoutKey: "",
-  _lastTutorialOverlayUpdateMs: 0,
-  _lastCardPositionUpdateMs: 0,
-  _overlayInactiveCleaned: false,
-  _overlayHiddenCleaned: false,
 };
 
 export const TUTORIAL_OVERLAY_MIN_UPDATE_MS = 1000 / 30;

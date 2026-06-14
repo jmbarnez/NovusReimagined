@@ -3,7 +3,7 @@ import { getState } from "../../state-access.js";
 import { Client } from "../../state.js";
 import { viewportW, viewportH } from "../../render/viewport.js";
 import { tutorialState } from "./state.js";
-import { getCardAnchorHighlight } from "./highlights.js";
+import { getCardAnchorHighlight } from "./spotlight.js";
 import { getHudXpPopup } from "../../ui/hud-elements.js";
 import { getBounds, setStyle, toggleClass } from "../../ui/dom-helpers.js";
 import { isCurrentStepComplete } from "../logic/index.js";
@@ -12,7 +12,7 @@ export function positionCardForStep(): void {
   if (!tutorialState.root || !tutorialState.cardEl || !tutorialState.layerEl || tutorialState.cardEl.hidden) return;
   const step = getCurrentTutorialStep(getState().player);
   const layerRect = getBounds(tutorialState.layerEl);
-  const target = step?.noCardAnchor ? null : getCardAnchorHighlight(step);
+  const target = step?.noCardAnchor ? null : getCardAnchorHighlight();
   const cardRect = getBounds(tutorialState.cardEl);
   const margin = 16;
   const safeW = Math.max(1, layerRect.width - cardRect.width - margin * 2);

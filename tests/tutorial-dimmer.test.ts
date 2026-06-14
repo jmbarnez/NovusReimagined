@@ -3,7 +3,7 @@ import { _G as G, Client } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { TUTORIAL_STEPS, getCurrentTutorialStep } from "../src/data/tutorial.js";
-import { getCardAnchorHighlight } from "../src/tutorial/ui/highlights.js";
+import { getCardAnchorHighlight } from "../src/tutorial/ui/spotlight.js";
 import { clearTutorialVisuals } from "../src/tutorial/ui/visuals.js";
 import { tutorialState } from "../src/tutorial/ui/state.js";
 
@@ -14,11 +14,6 @@ describe("hud tutorial dimmer cleanup", () => {
     tutorialState.visible = true;
     Client.stationOpen = false;
     clearTutorialVisuals();
-    tutorialState._hudDimmerEl = null;
-    tutorialState._hudDimmerVisible = false;
-    tutorialState._hudDimmerHideTimer = null;
-    tutorialState._lastDimmerCutoutKey = "";
-    tutorialState._activeHudHighlightEl = null;
     document.body.innerHTML = "";
     const overlay = document.createElement("div");
     overlay.id = "hud-overlay";
@@ -58,6 +53,6 @@ describe("hud tutorial dimmer cleanup", () => {
     statusBars.classList.add("hud-highlight");
 
     const step = getCurrentTutorialStep(G.P);
-    expect(getCardAnchorHighlight(step)).toBe(statusBars);
+    expect(getCardAnchorHighlight()).toBe(statusBars);
   });
 });
