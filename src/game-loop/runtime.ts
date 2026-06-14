@@ -31,6 +31,7 @@ import { transitionTo } from "../ui/transition-manager.js";
 import { drawFrame } from "./render-pass.js";
 import { dismissLoadingScreen } from "../ui/boot-screen/boot-screen-phases.js";
 import { ensureGameplayRenderSystems } from "../render/gameplay-render-systems.js";
+import { destroyGameplayPixiRenderSystems } from "../render/pixi-render-systems.js";
 import {
   gameClient,
   ensureGameplayConnected,
@@ -278,6 +279,12 @@ export async function enterSpaceMode(opts: EnterSpaceModeOptions = {}) {
     // detached. Rebuild missing render systems before the first gameplay frame.
     await ensureGameplayRenderSystems();
 
+    const player = getState().player;
+    const sys = getState().GALAXY[player.sysIdx] ?? getState().GALAXY[0];
+    if (!sys) {
+      throw new Error(`No renderable system after save restore (sysIdx=${String(player.sysIdx)})`);
+    }
+
     if (!hudState.logEntries) initHudOverlay();
     flushNetLogPending();
     showSpaceHud();
@@ -329,6 +336,7 @@ export function stopGameLoop() {
   destroyHudOverlay();
   destroyChat();
   destroyPixiChatBubbles();
+  destroyGameplayPixiRenderSystems();
   destroyPixi();
 }
 

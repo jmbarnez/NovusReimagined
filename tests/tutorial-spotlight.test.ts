@@ -130,6 +130,21 @@ describe("station tutorial spotlight", () => {
     expect(secondSlot.classList.contains("tutorial-hangar-highlight")).toBe(true);
   });
 
+  it("uses an inset border highlight that cannot be clipped by overflow:hidden ancestors", () => {
+    const el = document.createElement("div");
+    el.classList.add("tutorial-hangar-highlight");
+    document.body.appendChild(el);
+
+    const style = window.getComputedStyle(el);
+    // The old buggy style used outline with a 4px offset; the fix removes it.
+    expect(style.outlineStyle).toBe("none");
+    expect(style.outlineOffset).toBe("0");
+    // Border is drawn with a CSS variable so JSDOM reports the resolved shorthand.
+    expect(style.border).not.toBe("");
+
+    el.remove();
+  });
+
   it("cuts the station dimmer around the highlighted refinery target", () => {
     Client.stationOpen = true;
     Client.activeStation = {

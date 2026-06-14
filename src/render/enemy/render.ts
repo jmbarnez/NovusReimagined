@@ -1,7 +1,7 @@
 /**
  * Enemy sprite rendering and sync.
  */
-import { Sprite, Graphics, Text, Texture } from "pixi.js";
+import { Sprite, Graphics, Text, Texture, type ContainerChild } from "pixi.js";
 import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
 import type { Enemy, LockSlot } from "../../types/world.js";
@@ -44,6 +44,12 @@ interface EnemyBundle {
 export const _bundles = new Map<string, EnemyBundle>();
 const _lockMap = new Map<string, LockSlot>();
 const _activeEnemyIds = new Set<string>();
+
+function destroyDisplayObject(obj: ContainerChild): void {
+  const parent = obj.parent;
+  if (parent && !parent.destroyed) parent.removeChild(obj);
+  if (!obj.destroyed) obj.destroy();
+}
 
 function createBundle(e: { id: string; type: string; name: string; level?: number; hp: number }): EnemyBundle {
   const hull = new Sprite(getEnemyTexture(e.type));
@@ -94,17 +100,25 @@ function createBundle(e: { id: string; type: string; name: string; level?: numbe
 function destroyBundle(id: string) {
   const b = _bundles.get(id);
   if (!b) return;
-  entityLayer!.removeChild(b.hull);   b.hull.destroy();
-  entityLayer!.removeChild(b.hullLight); b.hullLight.destroy();
-  effectLayer!.removeChild(b.hpBar);  b.hpBar.destroy();
-  effectLayer!.removeChild(b.shieldBar); b.shieldBar.destroy();
-  effectLayer!.removeChild(b.structureBar); b.structureBar.destroy();
-  effectLayer!.removeChild(b.nameText); b.nameText.destroy();
-  effectLayer!.removeChild(b.levelBg); b.levelBg.destroy();
-  effectLayer!.removeChild(b.levelText); b.levelText.destroy();
-  effectLayer!.removeChild(b.indicator); b.indicator.destroy();
-  effectLayer!.removeChild(b.speechText); b.speechText.destroy();
+  destroyDisplayObject(b.hull);
+  destroyDisplayObject(b.hullLight);
+  destroyDisplayObject(b.hpBar);
+  destroyDisplayObject(b.shieldBar);
+  destroyDisplayObject(b.structureBar);
+  destroyDisplayObject(b.nameText);
+  destroyDisplayObject(b.levelBg);
+  destroyDisplayObject(b.levelText);
+  destroyDisplayObject(b.indicator);
+  destroyDisplayObject(b.speechText);
   _bundles.delete(id);
+}
+
+export function destroyPixiEntityBundles(): void {
+  for (const id of Array.from(_bundles.keys())) {
+    destroyBundle(id);
+  }
+  _lockMap.clear();
+  _activeEnemyIds.clear();
 }
 
 function hideBundleVisuals(b: EnemyBundle): void {

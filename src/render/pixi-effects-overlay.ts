@@ -71,6 +71,39 @@ export function refreshEffectsOverlayFonts(): void {
   }
 }
 
+export function destroyEffectsOverlay(): void {
+  for (const text of floatTextLabels.values()) {
+    const parent = text.parent;
+    if (parent && !parent.destroyed) parent.removeChild(text);
+    if (!text.destroyed) text.destroy();
+  }
+  for (const text of _floatTextPool) {
+    const parent = text.parent;
+    if (parent && !parent.destroyed) parent.removeChild(text);
+    if (!text.destroyed) text.destroy();
+  }
+  floatTextLabels.clear();
+  floatTextCache.clear();
+  _floatTextKeepSet.clear();
+  _floatTextPool.length = 0;
+
+  if (overlayLayer) {
+    const parent = overlayLayer.parent;
+    if (parent && !parent.destroyed) parent.removeChild(overlayLayer);
+    if (!overlayLayer.destroyed) overlayLayer.destroy({ children: true });
+  }
+  if (floatLayer) {
+    const parent = floatLayer.parent;
+    if (parent && !parent.destroyed) parent.removeChild(floatLayer);
+    if (!floatLayer.destroyed) floatLayer.destroy({ children: true });
+  }
+  overlayLayer = null;
+  shockwaveGfx = null;
+  borderGfx = null;
+  floatCardGfx = null;
+  floatLayer = null;
+}
+
 const _hexCache = new Map<string, number>();
 function hexStringToNumber(hex: string): number {
   const hit = _hexCache.get(hex);
@@ -240,4 +273,3 @@ export function syncPixiWorldBorder(now: number, sectorOuterRadius: number = SEC
   g.circle(0, 0, sectorOuterRadius - 120)
     .stroke({ color: 0x1a3048, width: 1, alpha: alpha * 0.35 * pulse });
 }
-

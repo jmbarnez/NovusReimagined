@@ -5,8 +5,10 @@ import { invalidatePixiMapBounds } from "./viewport.js";
 
 let listenersBound = false;
 
-function resetStalePixiMapState(): void {
-  pixiMapState.positioningContainer?.destroy({ children: true });
+export function destroyPixiMaps(): void {
+  if (pixiMapState.positioningContainer && !pixiMapState.positioningContainer.destroyed) {
+    pixiMapState.positioningContainer.destroy({ children: true });
+  }
   pixiMapState.bgGfx = null;
   pixiMapState.gridGfx = null;
   pixiMapState.starGfx = null;
@@ -34,7 +36,7 @@ function resetStalePixiMapState(): void {
 export function initPixiMaps(): void {
   if (!app) return;
   if (pixiMapState.positioningContainer?.parent) return;
-  resetStalePixiMapState();
+  destroyPixiMaps();
 
   // Positioning container: handles screen placement and masking
   pixiMapState.positioningContainer = new Container();

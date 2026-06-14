@@ -5,8 +5,7 @@ import { TextStyle } from "pixi.js";
 import { getUIFont } from "../ui-font.js";
 import { Client } from "../../state.js";
 import { clearEnemyTextureCaches as clearTextures } from "./bake.js";
-import { entityLayer, effectLayer } from "../../pixi.js";
-import { _bundles } from "./render.js";
+import { _bundles, destroyPixiEntityBundles } from "./render.js";
 
 // ─── Text styles ─────────────────────────────────────────────────────────────
 // Shared name style — mutating its fontFamily updates every live enemy name/level labels.
@@ -48,15 +47,29 @@ export function clearEnemyTextureCachesAndBundles(): void {
 function destroyBundle(id: string) {
   const b = _bundles.get(id);
   if (!b) return;
-  entityLayer!.removeChild(b.hull);   b.hull.destroy();
-  entityLayer!.removeChild(b.hullLight); b.hullLight.destroy();
-  effectLayer!.removeChild(b.hpBar);  b.hpBar.destroy();
-  effectLayer!.removeChild(b.shieldBar); b.shieldBar.destroy();
-  effectLayer!.removeChild(b.structureBar); b.structureBar.destroy();
-  effectLayer!.removeChild(b.nameText); b.nameText.destroy();
-  effectLayer!.removeChild(b.levelBg); b.levelBg.destroy();
-  effectLayer!.removeChild(b.levelText); b.levelText.destroy();
-  effectLayer!.removeChild(b.indicator); b.indicator.destroy();
-  effectLayer!.removeChild(b.speechText); b.speechText.destroy();
+  if (b.hull.parent && !b.hull.parent.destroyed) b.hull.parent.removeChild(b.hull);
+  if (b.hullLight.parent && !b.hullLight.parent.destroyed) b.hullLight.parent.removeChild(b.hullLight);
+  if (b.hpBar.parent && !b.hpBar.parent.destroyed) b.hpBar.parent.removeChild(b.hpBar);
+  if (b.shieldBar.parent && !b.shieldBar.parent.destroyed) b.shieldBar.parent.removeChild(b.shieldBar);
+  if (b.structureBar.parent && !b.structureBar.parent.destroyed) b.structureBar.parent.removeChild(b.structureBar);
+  if (b.nameText.parent && !b.nameText.parent.destroyed) b.nameText.parent.removeChild(b.nameText);
+  if (b.levelBg.parent && !b.levelBg.parent.destroyed) b.levelBg.parent.removeChild(b.levelBg);
+  if (b.levelText.parent && !b.levelText.parent.destroyed) b.levelText.parent.removeChild(b.levelText);
+  if (b.indicator.parent && !b.indicator.parent.destroyed) b.indicator.parent.removeChild(b.indicator);
+  if (b.speechText.parent && !b.speechText.parent.destroyed) b.speechText.parent.removeChild(b.speechText);
+  if (!b.hull.destroyed) b.hull.destroy();
+  if (!b.hullLight.destroyed) b.hullLight.destroy();
+  if (!b.hpBar.destroyed) b.hpBar.destroy();
+  if (!b.shieldBar.destroyed) b.shieldBar.destroy();
+  if (!b.structureBar.destroyed) b.structureBar.destroy();
+  if (!b.nameText.destroyed) b.nameText.destroy();
+  if (!b.levelBg.destroyed) b.levelBg.destroy();
+  if (!b.levelText.destroyed) b.levelText.destroy();
+  if (!b.indicator.destroyed) b.indicator.destroy();
+  if (!b.speechText.destroyed) b.speechText.destroy();
   _bundles.delete(id);
+}
+
+export function destroyPixiEntities(): void {
+  destroyPixiEntityBundles();
 }

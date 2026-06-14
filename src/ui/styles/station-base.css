@@ -201,28 +201,29 @@
   display: block;
 }
 
+/* Inset border + glow so the highlight is never clipped by ancestor overflow:hidden */
 .tutorial-hangar-highlight {
   position: relative;
-  z-index: 20 !important;
-  outline: 2px solid var(--hud-accent);
-  outline-offset: 4px;
+  z-index: 26 !important;
+  outline: none;
+  border: 2px solid var(--hud-accent);
   filter: brightness(1.08);
   box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--hud-accent) 22%, transparent),
-    0 0 20px color-mix(in srgb, var(--hud-accent) 38%, transparent);
-  animation: tutorialHangarPulse 1.4s ease-in-out infinite;
+    inset 0 0 0 2px color-mix(in srgb, var(--hud-accent) 22%, transparent),
+    inset 0 0 20px color-mix(in srgb, var(--hud-accent) 38%, transparent);
+  animation: tutorialHangarPulseInset 1.4s ease-in-out infinite;
 }
 
-@keyframes tutorialHangarPulse {
+@keyframes tutorialHangarPulseInset {
   0%, 100% {
     box-shadow:
-      0 0 0 2px color-mix(in srgb, var(--hud-accent) 18%, transparent),
-      0 0 14px color-mix(in srgb, var(--hud-accent) 30%, transparent);
+      inset 0 0 0 2px color-mix(in srgb, var(--hud-accent) 18%, transparent),
+      inset 0 0 14px color-mix(in srgb, var(--hud-accent) 30%, transparent);
   }
   50% {
     box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--hud-accent) 28%, transparent),
-      0 0 22px color-mix(in srgb, var(--hud-accent) 42%, transparent);
+      inset 0 0 0 4px color-mix(in srgb, var(--hud-accent) 28%, transparent),
+      inset 0 0 22px color-mix(in srgb, var(--hud-accent) 42%, transparent);
   }
 }
 
@@ -313,8 +314,8 @@ h4 {
 }
 
 .btn-buy:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--hud-positive) 20%, var(--hud-bg-deep));
-  color: color-mix(in srgb, var(--hud-positive) 80%, white);
+  background: color-mix(in srgb, var(--hud-positive) 18%, var(--hud-bg-deep));
+  border-color: color-mix(in srgb, var(--hud-positive) 50%, transparent);
 }
 
 .btn-sell {
@@ -324,47 +325,32 @@ h4 {
 }
 
 .btn-sell:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--hud-danger) 20%, var(--hud-bg-deep));
-  color: color-mix(in srgb, var(--hud-danger) 80%, white);
-}
-
-.btn-train {
-  background: color-mix(in srgb, var(--hud-arcane) 10%, var(--hud-bg-deep));
-  color: var(--hud-arcane);
-  border-color: color-mix(in srgb, var(--hud-arcane) 30%, transparent);
-}
-
-.btn-train:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--hud-arcane) 20%, var(--hud-bg-deep));
-  color: color-mix(in srgb, var(--hud-arcane) 80%, white);
-}
-
-.mitem {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--hud-border-soft);
-  margin-bottom: 4px;
-}
-
-.nm {
-  font-size: calc(12px * var(--effective-font-scale, 1));
-  color: var(--hud-text-main);
-  margin-bottom: 4px;
-}
-
-.dc {
-  font-size: calc(10px * var(--effective-font-scale, 1));
-  color: var(--hud-text-faint);
-  margin-bottom: 6px;
+  background: color-mix(in srgb, var(--hud-danger) 18%, var(--hud-bg-deep));
+  border-color: color-mix(in srgb, var(--hud-danger) 50%, transparent);
 }
 
 .st-kbd {
-  font-size: calc(9px * var(--effective-font-scale, 1));
-  padding: 1px 5px;
-  background: color-mix(in srgb, black 40%, transparent);
-  border: 1px solid var(--hud-border-soft);
-  border-radius: 2px;
-  color: var(--hud-text-dim);
   font-family: inherit;
-  letter-spacing: 0.04em;
-  margin-left: 6px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);
+  border: 1px solid var(--hud-border-soft);
+  color: var(--hud-text-dim);
+  margin-left: 4px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .st-win-head {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  #st-tabs {
+    flex-wrap: wrap;
+  }
+  .st-tab {
+    padding: 4px 8px;
+    font-size: calc(9px * var(--effective-font-scale, 1));
+  }
 }

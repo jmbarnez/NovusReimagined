@@ -77,6 +77,19 @@ export function initPixiTargetArrows(): void {
   }
 }
 
+export function destroyPixiTargetArrows(): void {
+  if (arrowsContainer) {
+    const parent = arrowsContainer.parent;
+    if (parent && !parent.destroyed) parent.removeChild(arrowsContainer);
+    if (!arrowsContainer.destroyed) arrowsContainer.destroy({ children: true });
+  }
+  arrowsContainer = null;
+  arrowPool = [];
+  textPool = [];
+  poolIndex = 0;
+  labelStyle = null;
+}
+
 export function refreshTargetArrowFonts(): void {
   const font = getUIFont();
   const scale = Client.settings?.fontScale ?? 1.0;

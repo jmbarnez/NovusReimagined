@@ -9,20 +9,12 @@ import { SpatialGrid } from "./utils/spatial.js";
 import { initGameLoop } from "./game-loop.js";
 import { initHudOverlay } from "./ui/hud-overlay.js";
 import { initBackgroundStars } from "./render/background.js";
-import { initPixi, renderPixi, resizePixi, entityLayer, effectLayer, stationLayer } from "./pixi.js";
+import { initPixi, renderPixi, resizePixi, stationLayer } from "./pixi.js";
 import { onWindowResize } from "./ui/dom-helpers.js";
-import { initPixiBackground, updatePixiBackground, refreshBackground } from "./render/pixi-background.js";
-import { initPixiParticles } from "./render/pixi-particles.js";
-import { initPixiEntities } from "./render/enemy/index.js";
-import { initPixiPlayer } from "./render/player/index.js";
-import { initPixiCombat } from "./render/combat/index.js";
-import { initPixiEffects } from "./render/fx/index.js";
-import { initVignette } from "./render/pixi-vignette.js";
-import { initPixiHUD } from "./render/pixi-hud-core.js";
-import { initPixiTargetArrows } from "./render/pixi-target-arrows.js";
-import { initPixiMaps } from "./render/pixi-maps.js";
-import { initPixiMinimap } from "./render/pixi-minimap.js";
+import { updatePixiBackground, refreshBackground } from "./render/pixi-background.js";
 import { initPixiCelestial } from "./render/celestial/index.js";
+import { initFoundationalPixiRenderSystems, initGameplayPixiRenderSystems } from "./render/pixi-render-systems.js";
+import { installPerfDevtools } from "./render/perf-devtools.js";
 
 let _cleanupResizeListener: (() => void) | null = null;
 
@@ -67,12 +59,12 @@ async function boot() {
 
     // 4. Rendering Engines
     await initPixi();
+    installPerfDevtools();
     // Register window input handlers only after the Pixi renderer exists. Doing
     // this earlier let window events (e.g. blur) fire mid-init and touch the
     // not-yet-ready renderer, crashing boot.
     initInput();
-    initPixiBackground();
-    initVignette();
+    initFoundationalPixiRenderSystems();
 
     // Pre-render space background so the cockpit window shows stars/nebula
     // immediately instead of black during boot.
@@ -96,15 +88,7 @@ async function boot() {
     // Manually add the class to show buttons and hide loading elements
     loadingEl?.classList.add("ld-title-mode");
 
-    initPixiParticles();
-    initPixiEntities();
-    initPixiPlayer();
-    if (entityLayer) initPixiCombat(entityLayer);
-    if (effectLayer) initPixiEffects(effectLayer);
-    initPixiHUD();
-    initPixiTargetArrows();
-    initPixiMinimap();
-    initPixiMaps();
+    initGameplayPixiRenderSystems();
     _cleanupResizeListener = onWindowResize(resizePixi);
 
     // 5. Start unified animation loop (in TITLE mode)

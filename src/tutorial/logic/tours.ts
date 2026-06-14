@@ -48,7 +48,7 @@ export function advanceTour(): void {
   const phase = typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
   snapshot[phaseKey] = phase + 1;
   if (step.tour.completeKey) {
-    snapshot[step.tour.completeKey] = phase + 1 >= step.tour.phases.length - 1;
+    snapshot[step.tour.completeKey] = phase + 1 >= step.tour.phases.length;
   }
   if (step.id === "industry") emit("tutorial:refinery-tour-change");
   else emit("tutorial:hangar-tour-change");

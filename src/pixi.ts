@@ -55,6 +55,38 @@ export function renderPixi() {
   app.render();
 }
 
+export function isPixiRendererUsable(): boolean {
+  if (!app || !_pixiReady || !app.renderer || !app.stage || app.stage.destroyed) return false;
+  const canvas = app.canvas as HTMLCanvasElement | undefined;
+  if (!canvas || !document.body.contains(canvas)) return false;
+  return !!(
+    screenContainer
+    && !screenContainer.destroyed
+    && screenContainer.parent === app.stage
+    && worldContainer
+    && !worldContainer.destroyed
+    && worldContainer.parent === app.stage
+    && hudOverlayLayer
+    && !hudOverlayLayer.destroyed
+    && hudOverlayLayer.parent === app.stage
+    && planetLayer
+    && !planetLayer.destroyed
+    && planetLayer.parent === worldContainer
+    && stationLayer
+    && !stationLayer.destroyed
+    && stationLayer.parent === worldContainer
+    && thrustLayer
+    && !thrustLayer.destroyed
+    && thrustLayer.parent === worldContainer
+    && entityLayer
+    && !entityLayer.destroyed
+    && entityLayer.parent === worldContainer
+    && effectLayer
+    && !effectLayer.destroyed
+    && effectLayer.parent === worldContainer
+  );
+}
+
 export async function initPixi(): Promise<Application> {
   const application = new Application();
   app = application;
@@ -95,6 +127,10 @@ export async function initPixi(): Promise<Application> {
 
   // Insert the PixiJS canvas behind the HUD canvas (#c, zIndex 1).
   const pixiCanvas = application.canvas as HTMLCanvasElement;
+  document.querySelectorAll<HTMLCanvasElement>('canvas[data-novus-pixi-canvas="true"]').forEach((canvas) => {
+    if (canvas !== pixiCanvas) canvas.remove();
+  });
+  pixiCanvas.dataset.novusPixiCanvas = "true";
   pixiCanvas.style.position = "fixed";
   pixiCanvas.style.top = `${rect.top}px`;
   pixiCanvas.style.left = "0";

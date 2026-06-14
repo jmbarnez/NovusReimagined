@@ -7,6 +7,7 @@
 - [ ] `tsconfig.json` uses `strict: true` but `noUncheckedIndexedAccess: false`. Enabling the latter is a follow-up cleanup
 - [ ] `audio/procedural.ts` uses `_master!` non-null assertions — init order should be restructured
 - [ ] Economy commands currently rely on snapshot-state confirmation only (no explicit per-command ACK/ERR reason channel to UI)
+- [ ] Rendering pipeline lifecycle is scattered across Pixi modules — centralize renderer/system ownership, reset/destroy hooks, and layer validity checks before deeper GPU/frame-budget optimization
 
 ## Resolved Debt Items
 

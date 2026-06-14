@@ -1,42 +1,14 @@
 import { Client, AppMode } from "../state.js";
 import { getState } from "../state-access.js";
 import type { System } from "../types/world.js";
-import { syncPixiWarpScreen } from "../render/pixi-warp-screen.js";
-import { syncPixiPlanets } from "../render/pixi-planets.js";
-import { syncPixiCelestial } from "../render/celestial/index.js";
-import { syncPixiCombat } from "../render/combat/index.js";
-import { syncPixiEffects } from "../render/fx/index.js";
-import { syncPixiAsteroids } from "../render/pixi-asteroids.js";
-import { syncPixiHitEffects } from "../render/pixi-hit-effects.js";
-import { updateVignette } from "../render/pixi-vignette.js";
-import { syncThrust } from "../render/pixi-thrust.js";
 import { syncPixiStationInterior } from "../render/pixi-station-interior.js";
 import { drawPerfOverlay } from "../render/perf-overlay.js";
 import { updateHudOverlay } from "../ui/hud-overlay.js";
 import { updateTutorialOverlay } from "../ui/tutorial/index.js";
 import { renderPixi, worldContainer } from "../pixi.js";
 import { updatePixiBackground } from "../render/pixi-background.js";
-import { syncPixiParticles } from "../render/pixi-particles.js";
-import { syncPixiEntities } from "../render/enemy/index.js";
-import { syncPixiPlayer, syncPixiTrails } from "../render/player/index.js";
-import { syncPixiStations } from "../render/pixi-stations.js";
-import { syncPixiTutorialMarkers } from "../render/pixi-tutorial-markers.js";
-import { syncPixiRegionBorders } from "../render/pixi-region-borders.js";
-import { syncPixiTutorialTrack } from "../render/pixi-tutorial-track.js";
-import { syncPixiTutorialGates } from "../render/pixi-tutorial-gates.js";
-import { syncPixiStationOverlays } from "../render/pixi-station-overlays.js";
-import { syncPixiLensFlare } from "../render/pixi-lens-flare.js";
-import { syncPixiStationTurrets } from "../render/pixi-station-turrets.js";
-import { syncPixiWaypoint } from "../render/pixi-waypoint.js";
-import { syncPixiDamageFlash } from "../render/pixi-damage-flash.js";
-import { syncPixiShockwaves, syncPixiFloatTexts, syncPixiWorldBorder } from "../render/pixi-effects-overlay.js";
-import { syncPixiChatBubbles } from "../render/pixi-chat-bubbles.js";
-import { syncPixiHUD } from "../render/pixi-hud-core.js";
-import { syncPixiTargetArrows, syncPixiTutorialGuideArrow } from "../render/pixi-target-arrows.js";
-import { drawPixiSystemMapCanvasOverlays, getPixiMapViewportBounds, invalidatePixiMapBounds, syncPixiSystemMap } from "../render/pixi-maps.js";
-import { syncPixiMinimap } from "../render/pixi-minimap.js";
+import { getPixiMapViewportBounds, invalidatePixiMapBounds } from "../render/pixi-maps.js";
 import { isOpen } from "../ui/hud/windows.js";
-import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
 import { curSys, updateViewportBounds } from "../utils/game.js";
 import { rebuildSpatialGrid } from "../utils/spatial.js";
 import { dst } from "../utils/math.js";
@@ -46,8 +18,9 @@ import { updateCamera } from "../utils/camera.js";
 import { setWorldView } from "../render/world-text.js";
 import { viewCenterX, viewCenterY, viewportW, viewportH, viewportLeft, viewportTop } from "../render/viewport.js";
 import { updateIndustryProgress } from "../ui/station/industry.js";
-import { syncPixiCrosshair } from "../render/pixi-crosshair.js";
 import { recordRenderTimings, type PerfTimingMark } from "../render/perf-telemetry.js";
+import { runSpaceFrameSystems } from "../render/space-frame-systems.js";
+import type { SpaceFrameSystemId } from "../render/space-frame-system-order.js";
 
 // Cached damage flash gradients (keyed by color, invalidated on viewport resize)
 
@@ -63,6 +36,10 @@ function timeMark(label: string): void {
   if (typeof performance !== "undefined") {
     _timingMarks.push({ label, atMs: performance.now() });
   }
+}
+
+function markFrameSystem(id: SpaceFrameSystemId): void {
+  timeMark(id);
 }
 
 function timeFlush(): void {
@@ -161,59 +138,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
     }
   }
 
-  updatePixiBackground(now, camxR, camyR);
-  timeMark("bg");
-  syncPixiParticles();
-  timeMark("particles");
-  syncPixiStations(now, sys);
-  timeMark("stations");
-  syncPixiEntities(alpha, now);
-  timeMark("entities");
-  syncPixiPlayer(alpha, now);
-  timeMark("player");
-  syncPixiTrails();
-  timeMark("trails");
-  syncPixiPlanets(now, sys);
-  timeMark("planets");
-  syncPixiCelestial(now, alpha, sys);
-  timeMark("celestial");
-  syncPixiCombat(now, alpha, sys);
-  timeMark("combat");
-  syncPixiEffects(now, alpha, frameDt, sys);
-  timeMark("effects");
-  syncPixiAsteroids(now, alpha, sys);
-  timeMark("asteroids");
-  syncPixiHitEffects(now, alpha, sys);
-  timeMark("hiteffects");
   const tutorialActive = player?.tutorial?.active;
-  if (tutorialActive) syncPixiTutorialMarkers(now, sys);
-  timeMark("tutmarkers");
-  syncPixiRegionBorders(now);
-  timeMark("borders");
-  if (tutorialActive) syncPixiTutorialTrack(now);
-  timeMark("tuttrack");
-  syncPixiTutorialGates(now);
-  timeMark("tutgates");
-  syncPixiStationOverlays(now, sys);
-  timeMark("stoverlays");
-  syncPixiStationTurrets(now, sys);
-  timeMark("stturrets");
-  if (Client.settings?.lensFlare) syncPixiLensFlare(width, height);
-  timeMark("lensflare");
-  syncPixiWaypoint(now);
-  timeMark("waypoint");
-  syncPixiDamageFlash(width, height);
-  timeMark("dmgflash");
-  syncPixiShockwaves();
-  timeMark("shockwaves");
-  syncPixiFloatTexts();
-  timeMark("floattexts");
-  syncPixiChatBubbles(now);
-  timeMark("chat");
-  syncPixiWorldBorder(now, SECTOR_OUTER_RADIUS);
-  timeMark("worldborder");
-  syncPixiCrosshair();
-  timeMark("crosshair");
 
   // Cached DOM reads: only look up the element when map window open-state changes
   const mapOpen = isOpen("map");
@@ -223,38 +148,19 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
     invalidatePixiMapBounds();
   }
   const mapBounds = _cachedMapWinBody ? getPixiMapViewportBounds(width, height) : null;
-  if (mapBounds) {
-    syncPixiSystemMap(mapBounds.width, mapBounds.height, now);
-  }
-  timeMark("map");
-
-  syncThrust(alpha, now);
-  timeMark("thrust");
-  syncPixiHUD(width, height, now);
-  timeMark("hud");
-  syncPixiTargetArrows(width, height, camxR, camyR, now);
-  timeMark("tarrows");
-  if (tutorialActive) syncPixiTutorialGuideArrow(width, height, camxR, camyR, now);
-  timeMark("guidearrow");
-  if (Client.settings?.vignetteEnabled) updateVignette();
-  timeMark("vignette");
-  renderPixi();
-  timeMark("renderPixi");
-
-  // Canvas 2D map overlays sit above Pixi and are clipped to the map window body.
-  if (mapBounds) {
-    drawPixiSystemMapCanvasOverlays(mapBounds.width, mapBounds.height, now);
-  }
-  timeMark("mapoverlays");
-
-  // Minimap (always visible during gameplay)
-  syncPixiMinimap(now);
-  timeMark("minimap");
-
-  if (player && ((player.warpTargetIdx ?? -1) >= 0 || (player.warpCooldown ?? 0) > 2.0)) {
-    syncPixiWarpScreen(now);
-  }
-  timeMark("warpscreen");
+  runSpaceFrameSystems({
+    now,
+    alpha,
+    frameDt,
+    width,
+    height,
+    sys,
+    player,
+    camxR,
+    camyR,
+    tutorialActive: tutorialActive === true,
+    mapBounds,
+  }, markFrameSystem);
 
   if (Client.stationOpen && Client.activeStation) {
     const station = Client.activeStation;

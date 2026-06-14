@@ -9,7 +9,7 @@ import { screenContainer, planetLayer, worldGradeFilter } from "../pixi.js";
 import { initPlanetSprites } from "./pixi-planets.js";
 
 import {
-  initNebulaMesh, updateNebulaMesh, setNebulaSystem, resizeNebulaMesh, isNebulaMeshReady,
+  initNebulaMesh, updateNebulaMesh, setNebulaSystem, resizeNebulaMesh, isNebulaMeshReady, destroyNebulaMesh,
 } from "./pixi-nebula-gpu.js";
 
 
@@ -129,6 +129,25 @@ function spawnDustSprites() {
 
 export function refreshBackground() {
   currentSysIdx = -1;
+}
+
+export function destroyPixiBackground(): void {
+  farStarContainer?.destroy({ children: true });
+  midStarContainer?.destroy({ children: true });
+  nearStarContainer?.destroy({ children: true });
+  dustContainer?.destroy({ children: true });
+  farStarContainer = null;
+  midStarContainer = null;
+  nearStarContainer = null;
+  dustContainer = null;
+  starTexture?.destroy(true);
+  _dustTex?.destroy(true);
+  starTexture = null;
+  _dustTex = null;
+  currentSysIdx = -1;
+  _lastWc = 0;
+  _lastHc = 0;
+  destroyNebulaMesh();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────

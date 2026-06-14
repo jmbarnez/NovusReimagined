@@ -6,4 +6,5 @@ declare module "*.css" {
 
 interface Window {
   webkitAudioContext?: typeof AudioContext;
+  novusPerf?: import("./render/perf-devtools.js").NovusPerfDevtools;
 }

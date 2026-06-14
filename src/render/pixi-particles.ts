@@ -93,6 +93,18 @@ export function initPixiParticles(): void {
   }
 }
 
+export function destroyPixiParticles(): void {
+  if (_container) {
+    const parent = _container.parent;
+    if (parent && !parent.destroyed) parent.removeChild(_container);
+    if (!_container.destroyed) _container.destroy({ children: true });
+  }
+  _container = null;
+  _pool = [];
+  if (_tex && !_tex.destroyed) _tex.destroy(true);
+  _tex = null;
+}
+
 /**
  * Sync sprite pool with getState().particles. Call once per rendered frame,
  * after physics has already updated particle positions and pruned dead ones.

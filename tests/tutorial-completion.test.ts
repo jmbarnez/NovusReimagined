@@ -13,7 +13,7 @@ import {
 } from "../src/data/tutorial.js";
 import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R } from "../src/data/tutorial-layout.js";
 import { hasTutorialCombatLoadout } from "../src/data/tutorial.js";
-import { getTutorialSnapshot, tickTutorial, canAdvanceTour } from "../src/tutorial/index.js";
+import { getTutorialSnapshot, tickTutorial, canAdvanceTour, advanceTour, initTutorial } from "../src/tutorial/index.js";
 import type { Enemy } from "../src/types/world.js";
 import { stepById, ctxAt, makeSys } from "./tutorial-helpers.js";
 
@@ -230,6 +230,37 @@ describe("canAdvanceTour", () => {
 
   it("returns false for industry before docking", () => {
     G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "industry");
+    expect(canAdvanceTour()).toBe(false);
+  });
+});
+
+describe("advanceTour", () => {
+  beforeEach(() => {
+    installTestPlayer(makePlayer());
+    G.P.tutorial.active = true;
+    Client.stationOpen = false;
+  });
+
+  it("does not mark hangar review complete until the last phase is finished", () => {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+    Client.stationOpen = true;
+    initTutorial();
+
+    const snapshot = getTutorialSnapshot();
+    expect(snapshot.hangarReviewPhase).toBe(0);
+    expect(snapshot.hangarReviewComplete).toBe(false);
+
+    // Advance through phases 0-4
+    for (let i = 0; i < 5; i++) {
+      advanceTour();
+      expect(snapshot.hangarReviewPhase).toBe(i + 1);
+    }
+
+    // After entering the last phase (undock), review should NOT be complete
+    expect(snapshot.hangarReviewPhase).toBe(5);
+    expect(snapshot.hangarReviewComplete).toBe(false);
+
+    // Cannot advance past the last phase
     expect(canAdvanceTour()).toBe(false);
   });
 });

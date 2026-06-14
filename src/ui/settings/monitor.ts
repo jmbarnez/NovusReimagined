@@ -1,8 +1,9 @@
+import { h, render } from "preact";
 import { sfxBlip } from "../../audio/procedural.js";
 import { t } from "../../utils/i18n.js";
-import { settingsContentHTML } from "./shell.js";
 import { attachSettingsListeners } from "./listeners.js";
 import { renderSettings } from "./render.js";
+import { SettingsPanelView } from "./shell-view.js";
 import { getElement, query, createElement, setHtml, setText, append, onClick } from "../dom-helpers.js";
 
 let _savedMonitorContent: string | null = null;
@@ -17,17 +18,19 @@ export function openSettingsOnBootMonitor(restoreFn: () => void): void {
   _savedMonitorContent = monitor.innerHTML;
   monitor.classList.add("monitor-settings-open");
 
-  const panel = createElement("div", "window monitor-settings-panel");
-  panel.id = "settings-panel";
-  setHtml(panel, `
-    <div class="win-head">
-      <span class="win-title">${t("boot.settingsPanelTitle")}</span>
-      <span class="win-sub">${t("boot.settingsPanelSubtitle")}</span>
-    </div>
-    ${settingsContentHTML()}`);
-
   setHtml(monitor, "");
-  append(monitor, panel);
+  render(
+    h(SettingsPanelView, {
+      title: t("boot.settingsPanelTitle"),
+      subtitle: t("boot.settingsPanelSubtitle"),
+      className: "window monitor-settings-panel",
+      showChromeButtons: false,
+    }),
+    monitor,
+  );
+
+  const panel = monitor.querySelector("#settings-panel") as HTMLElement | null;
+  if (!panel) return;
 
   const bubble = createElement("div");
   bubble.id = "settings-tooltip-bubble";
@@ -58,6 +61,7 @@ export function toggleSettingsMonitor(): void {
     monitor.classList.remove("monitor-settings-open");
     const bubble = getElement("settings-tooltip-bubble");
     if (bubble) bubble.remove();
+    render(null, monitor);
 
     if (_savedMonitorContent) {
       setHtml(monitor, _savedMonitorContent);

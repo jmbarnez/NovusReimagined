@@ -106,3 +106,23 @@ export function ensurePixiHUDReady(): boolean {
   if (!isHudContainerAttachedToCurrentLayer()) initPixiHUD();
   return isHudContainerAttachedToCurrentLayer();
 }
+
+export function destroyPixiHUD(): void {
+  destroyStaleHudContainer();
+  hudState.hudContainer = null;
+  hudState.horizonLine = null;
+  hudState.speedArcBg = null;
+  hudState.speedArcFill = null;
+  hudState.shieldArcBg = null;
+  hudState.shieldArcFill = null;
+  hudState.driftVectors = null;
+  hudState.warningBanner = null;
+  hudState.targetLabel = null;
+  hudState.speedLabel = null;
+  hudState.shieldLabel = null;
+  hudState.speedStyle = null;
+  hudState.shieldStyle = null;
+  hudState.warningStyle = null;
+  hudState.targetStyle = null;
+  resetPixiHudFrameCache();
+}

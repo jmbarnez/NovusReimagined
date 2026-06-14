@@ -9,7 +9,7 @@ import { renderMarket } from "./market.js";
 import { renderContracts } from "./contracts.js";
 import { renderFabrication, renderIndustry } from "./industry.js";
 import { mountInventoryInPane, resetInventoryUI } from "../inventory/index.js";
-import { syncTutorialVisuals, clearTutorialVisuals } from "../tutorial/visuals.js";
+import { syncTutorialVisuals, clearTutorialVisuals } from "../../tutorial/ui/visuals.js";
 import { activateStationTab, type StationTabId } from "./tabs.js";
 import { t } from "../../utils/i18n.js";
 import { getState } from "../../state-access.js";

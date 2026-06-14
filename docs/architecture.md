@@ -360,6 +360,15 @@ pool.release(dead);
 if (i < lastIdx) i++; // process the swapped-in item
 ```
 
+## Render System Registries
+
+Pixi initialization and frame rendering are registry-driven:
+- `src/render/pixi-render-systems.ts` owns Pixi system init/destroy ordering.
+- `src/render/space-frame-system-order.ts` owns per-frame render timing order.
+- `src/render/space-frame-systems.ts` maps each timed frame section to its render sync function.
+
+When adding a gameplay render subsystem, add the init/destroy lifecycle to `pixi-render-systems.ts`, add the per-frame section id to `SPACE_FRAME_SYSTEM_IDS`, map the id in `space-frame-systems.ts`, and add matching `perf.section.<id>` strings. Render systems must read server-owned state and update presentation objects only; simulation outcomes stay in physics/server-owned code.
+
 ## Physics System Registry
 
 `src/physics.ts` delegates tick execution to a declarative `SimSystem[]` registry in `src/physics/systems.ts`.

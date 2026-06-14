@@ -130,6 +130,23 @@ export function initPixiMinimap(): void {
   });
 }
 
+export function destroyPixiMinimap(): void {
+  mmInitInFlight = false;
+  if (mmCanvas?.parentElement) {
+    mmCanvas.parentElement.removeChild(mmCanvas);
+  }
+  if (mmApp) {
+    mmApp.destroy(true, { children: true, texture: false });
+  }
+  mmApp = null;
+  mmContainer = null;
+  mmCanvas = null;
+  mmGfx = null;
+  mmSweepGfx = null;
+  cachedThemeKey = "";
+  lastMinimapRenderMs = 0;
+}
+
 const MINIMAP_MAX_FPS = 16; // cap minimap to ~16 FPS to save frame budget
 const MINIMAP_MIN_FRAME_MS = 1000 / MINIMAP_MAX_FPS;
 
