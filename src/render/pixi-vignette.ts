@@ -2,6 +2,7 @@ import { Sprite, Texture, Filter, UniformGroup } from "pixi.js";
 import { defaultFilterVert } from "pixi.js";
 import { Client, AppMode } from "../state.js";
 import { getState } from "../state-access.js";
+import { STAGE_LAYER_Z } from "./pixi-z-order.js";
 
 import { app } from "../pixi.js";
 
@@ -100,6 +101,7 @@ export function initVignette() {
   });
 
   _sprite = new Sprite(Texture.EMPTY);
+  _sprite.zIndex = STAGE_LAYER_Z.VIGNETTE;
   _sprite.filters = [filter];
   _sprite.eventMode = "none";
   app.stage.addChild(_sprite);  // last child → renders on top of everything PixiJS draws

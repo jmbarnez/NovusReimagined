@@ -1,6 +1,7 @@
 import { Client } from "../state.js";
 import { queueFrameAction } from "../sim/input.js";
 import { showEnemyCtxMenu } from "../ui/hud/enemy-menu.js";
+import { showZoomIndicator } from "../ui/hud/zoom-indicator.js";
 import { curSys } from "../utils/game.js";
 import { dst } from "../utils/math.js";
 import { gateStableId } from "../utils/warp-gates.js";
@@ -169,12 +170,15 @@ export function handleWheel(e: WheelEvent): void {
     }
 
     Client.mapZoom = newZoom;
+    showZoomIndicator(newZoom, e.clientX, e.clientY);
     return;
   }
 
   // World zoom
   const delta = e.deltaY > 0 ? 0.9 : 1.1;
-  Client.zoom = Math.max(0.5, Math.min(2.0, Client.zoom * delta));
+  const newWorldZoom = Math.max(0.5, Math.min(2.0, Client.zoom * delta));
+  Client.zoom = newWorldZoom;
+  showZoomIndicator(newWorldZoom, e.clientX, e.clientY);
 }
 
 export function handleContextMenu(e: Event): void {

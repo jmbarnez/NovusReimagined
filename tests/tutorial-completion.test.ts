@@ -193,6 +193,7 @@ describe("hangar-turrets step completion", () => {
     Client.stationOpen = false;
     expect(hangar.isComplete(buildTutorialCtx(0, 0, {
       hangarReviewStarted: true,
+      hangarReviewComplete: true,
     }, G.P))).toBe(true);
   });
 });

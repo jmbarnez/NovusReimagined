@@ -4,6 +4,7 @@ import { syncBeams } from "./beams.js";
 import { initUtilityBeams, setUtilityGraphics, syncUtilityBeams } from "./utility.js";
 import { destroyMiningLaserGpu } from "./mining-laser-gpu.js";
 import type { System } from "../../types/world.js";
+import { WORLD_LAYER_Z } from "../pixi-z-order.js";
 
 let _bulletGfx: Graphics | null = null;
 let _beamGfx: Graphics | null = null;
@@ -15,6 +16,7 @@ export function initPixiCombat(parent: Container): void {
 
   _weaponLayer = new Container();
   _weaponLayer.label = "weapon-fire-under-hulls";
+  _weaponLayer.zIndex = WORLD_LAYER_Z.PLANETS + 1;
   parent.addChildAt(_weaponLayer, 0);
 
   _bulletGfx = new Graphics();

@@ -15,6 +15,7 @@ import { curSys } from "../utils/game.js";
 import { ensureLockQueue } from "../targeting.js";
 import { getUIFont } from "./ui-font.js";
 import { getTutorialGuideTarget } from "./pixi-tutorial-markers.js";
+import { HUD_LAYER_Z } from "./pixi-z-order.js";
 
 let arrowsContainer: Container | null = null;
 
@@ -52,6 +53,7 @@ export function initPixiTargetArrows(): void {
 
   arrowsContainer = new Container();
   arrowsContainer.label = "target-arrows";
+  arrowsContainer.zIndex = HUD_LAYER_Z.TARGET_ARROWS;
   hudOverlayLayer.addChild(arrowsContainer);
 
   // Initialize arrow pool

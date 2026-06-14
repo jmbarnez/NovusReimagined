@@ -23,6 +23,7 @@ import { resizeNebulaMesh } from "./render/pixi-nebula-gpu.js";
 import { destroyLensFlare } from "./render/pixi-lens-flare.js";
 import { LOCK_RAIL_H } from "./constants.js";
 import { playRect, setViewportSize } from "./render/viewport.js";
+import { configureStageLayerOrder, configureWorldLayerOrder } from "./render/pixi-z-order.js";
 
 let app: Application | null = null;
 let worldContainer: Container | null = null;
@@ -153,6 +154,8 @@ export async function initPixi(): Promise<Application> {
   hudOverlayLayer.label = "hud-overlay";
   application.stage.addChild(hudOverlayLayer);
 
+  configureStageLayerOrder(application.stage, screenContainer, worldContainer, hudOverlayLayer);
+
   // Named sub-layers so phase migrations land in the right draw order.
   planetLayer = new Container();
   planetLayer.label = "planets";
@@ -177,6 +180,8 @@ export async function initPixi(): Promise<Application> {
   effectLayer = new Container();
   effectLayer.label = "effects";
   worldContainer.addChild(effectLayer);
+
+  configureWorldLayerOrder(planetLayer, stationLayer, thrustLayer, entityLayer, effectLayer);
 
   // Colour-grade filter -- created here, attached/detached and tuned per-system
   // by the background renderer based on the colorGrading setting. filterArea is

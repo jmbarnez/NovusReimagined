@@ -9,6 +9,7 @@ import { Client } from "../state.js";
 import { isVisible } from "../utils/game.js";
 import { getUIFont } from "./ui-font.js";
 import { viewCenterX, viewCenterY, viewportW, viewportH } from "./viewport.js";
+import { FLOAT_LAYER_Z, STAGE_LAYER_Z } from "./pixi-z-order.js";
 
 const BUBBLE_OFFSET_Y = -40;
 const TYPING_OFFSET_Y = -55;
@@ -61,8 +62,13 @@ function ensureBubbleLayer(): Container | null {
   if (!bubbleLayer) {
     bubbleLayer = new Container();
     bubbleLayer.label = "chat-bubbles";
+    bubbleLayer.sortableChildren = true;
+    bubbleLayer.zIndex = STAGE_LAYER_Z.FLOAT_TEXT + 1;
     root.addChild(bubbleLayer);
   } else if (!bubbleLayer.parent) {
+    root.addChild(bubbleLayer);
+  } else if (bubbleLayer.parent !== root) {
+    bubbleLayer.removeFromParent();
     root.addChild(bubbleLayer);
   }
   return bubbleLayer;
@@ -74,6 +80,7 @@ function ensureBubbleCards(): Graphics | null {
   if (!bubbleCardGfx) {
     bubbleCardGfx = new Graphics();
     bubbleCardGfx.label = "chat-bubble-cards";
+    bubbleCardGfx.zIndex = FLOAT_LAYER_Z.CARDS;
     layer.addChild(bubbleCardGfx);
   }
   return bubbleCardGfx;
@@ -171,6 +178,7 @@ export function syncPixiChatBubbles(now: number): void {
     let t = bubbleTexts.get(netId);
     if (!t) {
       t = getPooledBubble();
+      t.zIndex = FLOAT_LAYER_Z.TEXT;
       layer.addChild(t);
       bubbleTexts.set(netId, t);
     } else if (t.parent !== layer) {
@@ -207,6 +215,7 @@ export function syncPixiChatBubbles(now: number): void {
     let t = typingTexts.get(netId);
     if (!t) {
       t = getPooledTyping();
+      t.zIndex = FLOAT_LAYER_Z.TEXT + 1;
       layer.addChild(t);
       typingTexts.set(netId, t);
     } else if (t.parent !== layer) {

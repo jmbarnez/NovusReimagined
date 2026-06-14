@@ -6,6 +6,7 @@ import { isVisible } from "../utils/game.js";
 import { getUIFont } from "./ui-font.js";
 import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
 import { viewCenterX, viewCenterY, viewportW, viewportH } from "./viewport.js";
+import { EFFECT_LAYER_Z, FLOAT_LAYER_Z, STAGE_LAYER_Z } from "./pixi-z-order.js";
 
 let overlayLayer: Container | null = null;
 let shockwaveGfx: Graphics | null = null;
@@ -119,6 +120,7 @@ function ensureLayer(): Container | null {
   if (!overlayLayer) {
     overlayLayer = new Container();
     overlayLayer.label = "effects-overlay";
+    overlayLayer.zIndex = EFFECT_LAYER_Z.OVERLAY;
     root.addChild(overlayLayer);
   } else if (!overlayLayer.parent) {
     root.addChild(overlayLayer);
@@ -154,6 +156,7 @@ function ensureFloatCards(): Graphics | null {
   if (!floatCardGfx) {
     floatCardGfx = new Graphics();
     floatCardGfx.label = "float-text-cards";
+    floatCardGfx.zIndex = FLOAT_LAYER_Z.CARDS;
     layer.addChild(floatCardGfx);
   }
   return floatCardGfx;
@@ -165,8 +168,11 @@ function ensureFloatLayer(): Container | null {
   if (!floatLayer) {
     floatLayer = new Container();
     floatLayer.label = "float-text-overlay";
+    floatLayer.zIndex = STAGE_LAYER_Z.FLOAT_TEXT;
+    floatLayer.sortableChildren = true;
     root.addChild(floatLayer);
-  } else if (!floatLayer.parent) {
+  } else if (floatLayer.parent !== root) {
+    floatLayer.removeFromParent();
     root.addChild(floatLayer);
   }
   return floatLayer;
@@ -206,6 +212,7 @@ export function syncPixiFloatTexts(): void {
     let t = floatTextLabels.get(f.id);
     if (!t) {
       t = getPooledFloatText();
+      t.zIndex = FLOAT_LAYER_Z.TEXT;
       layer.addChild(t);
       floatTextLabels.set(f.id, t);
       floatTextCache.set(f.id, { text: "", fill: "", strokeWidth: -1 });

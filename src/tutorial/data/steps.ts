@@ -19,8 +19,6 @@ import {
   hasCombatLoadout,
   hasBypassedMining,
   hasBypassedIndustry,
-  hasBypassedHangarTurrets,
-  hasBypassedGunnery,
 } from "./bypass.js";
 import {
   HANGAR_REVIEW_TOUR,
@@ -239,8 +237,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
           ...(ctx.player.hubDeposit.materials ?? []),
         ].reduce((sum, stack) => sum + stack.volumeM3, 0)
           + (ctx.player.hubOutput.materials ?? []).reduce((sum, stack) => sum + stack.volumeM3, 0)) > 0;
-      return (guideReady && didRefineryWork)
-        || hasBypassedHangarTurrets(ctx.player);
+      return guideReady && didRefineryWork;
     },
   },
   {
@@ -266,12 +263,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       ctx.snapshot.hangarTabActive = false;
     },
     isComplete(ctx) {
-      if (ctx.snapshot.hangarReviewComplete === true) return true;
-      if (hasCombatLoadout(ctx.player) && !Client.stationOpen) return true;
-      return (ctx.snapshot.hangarReviewStarted === true
-        && hasCombatLoadout(ctx.player)
-        && !Client.stationOpen)
-        || hasBypassedGunnery(ctx.player);
+      return ctx.snapshot.hangarReviewComplete === true
+        && hasCombatLoadout(ctx.player);
     },
   },
   {
@@ -287,8 +280,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       ctx.snapshot.trackProgressTotal = track ? trackTotalArcLength(track) : 0;
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("fly-gunnery"))
-        || hasBypassedGunnery(ctx.player);
+      return isZoneStepComplete(ctx, tutorialRegionZone("fly-gunnery"));
     },
   },
   {
@@ -304,7 +296,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       ctx.snapshot.dummyCount = countAliveTargetDummiesInZone(zone, ctx.player);
     },
     isComplete(ctx) {
-      if (ctx.player.kills > 0 || ctx.player.sysIdx !== 0) return true;
+      if (ctx.player.kills > 0) return true;
       const zone = tutorialRegionZone("gunnery");
       if (!ctx.inZone(zone)) return false;
       const startCount = ctx.snapshot.dummyCount as number ?? 0;
@@ -324,8 +316,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       ctx.snapshot.trackProgressTotal = track ? trackTotalArcLength(track) : 0;
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("fly-gate"))
-        || ctx.player.sysIdx !== 0;
+      return isZoneStepComplete(ctx, tutorialRegionZone("fly-gate"));
     },
   },
   {

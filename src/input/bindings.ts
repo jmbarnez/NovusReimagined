@@ -14,6 +14,14 @@ import { dst } from "../utils/math.js";
 import { gateStableId } from "../utils/warp-gates.js";
 import type { Enemy } from "../types/world.js";
 import { setCursorLock, getCanvasElement, isBlockedByUi, getUiPointerBlockSelector } from "./core.js";
+import { getCurrentTutorialStep } from "../data/tutorial.js";
+import { isCurrentStepComplete } from "../tutorial/index.js";
+
+function isTutorialUndockBlocked(): boolean {
+  const step = getCurrentTutorialStep(getState().player);
+  if (!step || (step.id !== "industry" && step.id !== "hangar-turrets")) return false;
+  return !isCurrentStepComplete();
+}
 
 export function handleKeyDown(e: KeyboardEvent): void {
   const k = e.key.toLowerCase();
@@ -51,6 +59,7 @@ export function handleKeyDown(e: KeyboardEvent): void {
     if (pauseOverlay && pauseOverlay.style.display === "flex") { closePauseMenu(); return; }
     if (Client.showMap) { closeMapWindow(); return; }
     if (Client.stationOpen) {
+      if (isTutorialUndockBlocked()) return;
       queueFrameAction({ type: "undock" });
       closeStationUi();
       return;
@@ -93,6 +102,7 @@ export function handleKeyDown(e: KeyboardEvent): void {
 
   if (e.code === keybinds.dock) {
     if (Client.stationOpen) {
+      if (isTutorialUndockBlocked()) return;
       queueFrameAction({ type: "undock" });
       closeStationUi();
     } else {

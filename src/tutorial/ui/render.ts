@@ -1,5 +1,5 @@
 import { Client } from "../../state.js";
-import { getCurrentTutorialStep, getTutorialNavProgress, getTutorialNavRemainingM, getTutorialStepObjective, TUTORIAL_STEP_COUNT } from "../data/helpers.js";
+import { getCurrentTutorialStep, getTutorialNavProgress, getTutorialNavRemainingM, getTutorialStepObjective, hasActiveTourPanel, TUTORIAL_STEP_COUNT } from "../data/helpers.js";
 import { getTutorialSnapshot, isCurrentStepComplete, canAdvanceTour } from "../logic/index.js";
 import { getState } from "../../state-access.js";
 import { t } from "../../utils/i18n.js";
@@ -88,7 +88,12 @@ export function updateNavProgress(step: NonNullable<ReturnType<typeof getCurrent
 
 export function updateObjectiveText(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>> | null, snapshot: Record<string, unknown>) {
   if (!tutorialState.objectiveEl || !shouldShowTutorialLayer() || !step) return;
+  if (hasActiveTourPanel(step, snapshot)) {
+    setStyle(tutorialState.objectiveEl, { display: "none" });
+    return;
+  }
   setHtml(tutorialState.objectiveEl, getTutorialStepObjective(step, snapshot));
+  setStyle(tutorialState.objectiveEl, { display: "block" });
 }
 
 export function renderStep() {
@@ -109,7 +114,14 @@ export function renderStep() {
   if (tutorialState.confirmEl) tutorialState.confirmEl.hidden = true;
   if (tutorialState.counterEl) setText(tutorialState.counterEl, t("tutorial.stepCounter", { n: getState().player.tutorial.step + 1, total: TUTORIAL_STEP_COUNT }));
   if (tutorialState.titleEl) setText(tutorialState.titleEl, step.title);
-  if (tutorialState.objectiveEl) setHtml(tutorialState.objectiveEl, getTutorialStepObjective(step, snapshot));
+  if (tutorialState.objectiveEl) {
+    if (hasActiveTourPanel(step, snapshot)) {
+      setStyle(tutorialState.objectiveEl, { display: "none" });
+    } else {
+      setHtml(tutorialState.objectiveEl, getTutorialStepObjective(step, snapshot));
+      setStyle(tutorialState.objectiveEl, { display: "block" });
+    }
+  }
   syncTourCopy(step, snapshot);
   tutorialState.lastReady = false;
 

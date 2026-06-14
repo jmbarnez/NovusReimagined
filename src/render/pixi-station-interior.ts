@@ -14,6 +14,7 @@ import { getState } from "../state-access.js";
 import { TAU } from "../constants.js";
 import { SHIPS } from "../data/ships.js";
 import { viewportW, viewportH } from "./viewport.js";
+import { SCREEN_LAYER_Z } from "./pixi-z-order.js";
 
 interface InteriorDust {
   x: number;
@@ -68,6 +69,7 @@ function ensureLayer(): Container | null {
   stationLayer = new Container();
   stationLayer.label = "station-interior";
   stationLayer.eventMode = "none";
+  stationLayer.zIndex = SCREEN_LAYER_Z.STATION_INTERIOR;
   screenContainer.addChild(stationLayer);
 
   staticGfx = new Graphics();
@@ -296,4 +298,3 @@ export function syncPixiStationInterior(now: number): void {
   drawDust(Wc, Hc);
   drawSparks(Wc, Hc, now);
 }
-

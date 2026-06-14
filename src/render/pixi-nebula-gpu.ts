@@ -4,6 +4,7 @@ import { defaultFilterVert } from "pixi.js";
 import { NOISE_GLSL } from "./shaders/noise.glsl.js";
 import { mkRng } from "../utils/math.js";
 import { viewportW, viewportH } from "./viewport.js";
+import { SCREEN_LAYER_Z } from "./pixi-z-order.js";
 
 interface NebulaUniforms {
   uTime: number;
@@ -136,6 +137,7 @@ export function initNebulaMesh(parent: Container) {
   _filter = buildFilter();
   _sprite = new Sprite(Texture.EMPTY);
   _sprite.filters = [_filter];
+  _sprite.zIndex = SCREEN_LAYER_Z.NEBULA;
   resizeNebulaMesh();
   parent.addChildAt(_sprite, 0);   // behind everything else in screenContainer
 }

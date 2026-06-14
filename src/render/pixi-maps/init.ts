@@ -2,6 +2,7 @@ import { Container, Graphics } from "pixi.js";
 import { app } from "../../pixi.js";
 import { pixiMapState } from "./state.js";
 import { invalidatePixiMapBounds } from "./viewport.js";
+import { configureMapLayerOrder, MAP_LAYER_Z } from "../pixi-z-order.js";
 
 let listenersBound = false;
 
@@ -48,6 +49,10 @@ export function initPixiMaps(): void {
   pixiMapState.mapContainer = new Container();
   pixiMapState.mapContainer.label = "map-content";
   pixiMapState.positioningContainer.addChild(pixiMapState.mapContainer);
+  pixiMapState.positioningContainer.sortableChildren = true;
+  pixiMapState.mapContainer.sortableChildren = true;
+
+  configureMapLayerOrder(pixiMapState.positioningContainer, pixiMapState.mapContainer);
 
   // Mask for clipping to window bounds (in positioningContainer space)
   pixiMapState.mapMask = new Graphics();
@@ -56,42 +61,52 @@ export function initPixiMaps(): void {
 
   // Background — in positioningContainer so zoom/pan don't affect it
   pixiMapState.bgGfx = new Graphics();
+  pixiMapState.bgGfx.zIndex = MAP_LAYER_Z.BACKGROUND;
   pixiMapState.positioningContainer.addChildAt(pixiMapState.bgGfx, 0);
 
   // Grid
   pixiMapState.gridGfx = new Graphics();
+  pixiMapState.gridGfx.zIndex = MAP_LAYER_Z.GRID;
   pixiMapState.mapContainer.addChild(pixiMapState.gridGfx);
 
   // Sectors/boundaries
   pixiMapState.sectorGfx = new Graphics();
+  pixiMapState.sectorGfx.zIndex = MAP_LAYER_Z.SECTORS;
   pixiMapState.mapContainer.addChild(pixiMapState.sectorGfx);
 
   // Star
   pixiMapState.starGfx = new Graphics();
+  pixiMapState.starGfx.zIndex = MAP_LAYER_Z.STAR;
   pixiMapState.mapContainer.addChild(pixiMapState.starGfx);
 
   // Objects (asteroids, enemies, gates, stations)
   pixiMapState.objectGfx = new Graphics();
+  pixiMapState.objectGfx.zIndex = MAP_LAYER_Z.OBJECTS;
   pixiMapState.mapContainer.addChild(pixiMapState.objectGfx);
 
   // Waypoint
   pixiMapState.waypointGfx = new Graphics();
+  pixiMapState.waypointGfx.zIndex = MAP_LAYER_Z.WAYPOINT;
   pixiMapState.mapContainer.addChild(pixiMapState.waypointGfx);
 
   // Player
   pixiMapState.playerGfx = new Graphics();
+  pixiMapState.playerGfx.zIndex = MAP_LAYER_Z.PLAYER;
   pixiMapState.mapContainer.addChild(pixiMapState.playerGfx);
 
   // Vignette
   pixiMapState.vignetteGfx = new Graphics();
+  pixiMapState.vignetteGfx.zIndex = MAP_LAYER_Z.VIGNETTE;
   pixiMapState.mapContainer.addChild(pixiMapState.vignetteGfx);
 
   // Labels container
   pixiMapState.labelContainer = new Container();
+  pixiMapState.labelContainer.zIndex = MAP_LAYER_Z.LABELS;
   pixiMapState.mapContainer.addChild(pixiMapState.labelContainer);
 
   // Dynamic overlays (radar sweep, survey cone, tutorial tracks)
   pixiMapState.overlayGfx = new Graphics();
+  pixiMapState.overlayGfx.zIndex = MAP_LAYER_Z.OVERLAYS;
   pixiMapState.mapContainer.addChild(pixiMapState.overlayGfx);
 
   if (!listenersBound) {

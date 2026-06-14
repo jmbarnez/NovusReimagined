@@ -2,6 +2,7 @@ import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { hudOverlayLayer } from "../../pixi.js";
 import { getUIFont } from "../ui-font.js";
 import { hudState } from "./state.js";
+import { HUD_LAYER_Z } from "../pixi-z-order.js";
 
 function isHudContainerAttachedToCurrentLayer(): boolean {
   return !!hudOverlayLayer
@@ -40,6 +41,7 @@ export function initPixiHUD(): void {
 
   hudState.hudContainer = new Container();
   hudState.hudContainer.label = "hud-core";
+  hudState.hudContainer.zIndex = HUD_LAYER_Z.CORE;
   hudOverlayLayer.addChild(hudState.hudContainer);
 
   hudState.horizonLine = new Graphics();

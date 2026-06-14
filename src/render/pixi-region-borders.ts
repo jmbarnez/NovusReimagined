@@ -4,6 +4,7 @@ import { effectLayer } from "../pixi.js";
 import { isVisible } from "../utils/game.js";
 import { getCurrentTutorialStep } from "../data/tutorial.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
+import { EFFECT_LAYER_Z } from "./pixi-z-order.js";
 
 const TAU = Math.PI * 2;
 
@@ -43,6 +44,7 @@ export function initPixiRegionBorders(): void {
   if (_regionGfx || !effectLayer) return;
   _regionGfx = new Graphics();
   _regionGfx.label = "tutorial-region-borders";
+  _regionGfx.zIndex = EFFECT_LAYER_Z.OVERLAY + 10;
   effectLayer.addChild(_regionGfx);
 }
 
@@ -68,4 +70,3 @@ export function syncPixiRegionBorders(now: number): void {
   }
   _regionGfx.visible = true;
 }
-

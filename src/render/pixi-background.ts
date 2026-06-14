@@ -11,6 +11,7 @@ import { initPlanetSprites } from "./pixi-planets.js";
 import {
   initNebulaMesh, updateNebulaMesh, setNebulaSystem, resizeNebulaMesh, isNebulaMeshReady, destroyNebulaMesh,
 } from "./pixi-nebula-gpu.js";
+import { SCREEN_LAYER_Z } from "./pixi-z-order.js";
 
 
 const WRAP_FAR           = 6000;
@@ -165,12 +166,16 @@ export function initBackground() {
 
   // Star containers
   farStarContainer  = new Container();
+  farStarContainer.zIndex = SCREEN_LAYER_Z.FAR_STARS;
   screenContainer.addChild(farStarContainer);
   midStarContainer  = new Container();
+  midStarContainer.zIndex = SCREEN_LAYER_Z.MID_STARS;
   screenContainer.addChild(midStarContainer);
   nearStarContainer = new Container();
+  nearStarContainer.zIndex = SCREEN_LAYER_Z.NEAR_STARS;
   screenContainer.addChild(nearStarContainer);
   dustContainer     = new Container();
+  dustContainer.zIndex = SCREEN_LAYER_Z.DUST;
   screenContainer.addChild(dustContainer);
 
   spawnStarSprites();

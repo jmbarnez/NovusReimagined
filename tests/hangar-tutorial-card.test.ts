@@ -66,7 +66,7 @@ describe("hangar tutorial card", () => {
 
     const objective = tutorialState.objectiveEl;
     expect(objective).not.toBeNull();
-    expect(objective!.innerHTML).toBeTruthy();
+    expect(objective!.style.display).toBe("none");
 
     // Tour label and body should be visible for a station tour
     const tourLabel = tutorialState.tourLabelEl;

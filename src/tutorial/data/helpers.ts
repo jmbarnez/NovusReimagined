@@ -1,4 +1,4 @@
-import { type Player } from "../../state.js";
+import { Client, type Player } from "../../state.js";
 import { dst } from "../../utils/math.js";
 import { getNovusPrimeIdx } from "../../world/galaxy-build.js";
 import { flattenStorageMaterials } from "../../refinery/index.js";
@@ -72,6 +72,15 @@ export function getTourPanel(
   const panel = step.tour.phases[phase];
   if (!panel) return null;
   return { label: panel.label, body: panel.body, index: phase + 1, total: step.tour.phases.length };
+}
+
+export function hasActiveTourPanel(step: TutorialStep | null, snapshot: Record<string, unknown> = {}): boolean {
+  if (!step?.tour) return false;
+  const phase = typeof snapshot[step.tour.phaseKey] === "number" ? snapshot[step.tour.phaseKey] as number : 0;
+  const panel = step.tour.phases[phase] as { tab?: string } | undefined;
+  if (!panel) return false;
+  if (panel.tab && !Client.stationOpen) return false;
+  return true;
 }
 
 export function isStationHangarTabActive(): boolean {

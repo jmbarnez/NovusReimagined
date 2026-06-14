@@ -13,6 +13,7 @@ import { TAU } from "../constants.js";
 import { mulberry32 } from "../utils/math.js";
 import { viewportW, viewportH } from "./viewport.js";
 import { getUIFont } from "./ui-font.js";
+import { SCREEN_LAYER_Z } from "./pixi-z-order.js";
 
 const PRE_WARP_DURATION = 4.8;
 const POST_WARP_DURATION = 0.5;
@@ -58,6 +59,7 @@ function ensureLayer(): Container | null {
   warpLayer = new Container();
   warpLayer.label = "warp-screen";
   warpLayer.eventMode = "none";
+  warpLayer.zIndex = SCREEN_LAYER_Z.WARP_SCREEN;
   screenContainer.addChild(warpLayer);
 
   overlayGfx = new Graphics();
@@ -227,4 +229,3 @@ export function syncPixiWarpScreen(now: number): void {
     secText.visible = false;
   }
 }
-

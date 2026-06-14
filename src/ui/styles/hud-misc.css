@@ -640,3 +640,28 @@
   min-height: 380px;
   min-width: 700px;
 }
+
+/* ── Zoom Indicator (cursor-follow badge) ── */
+.zoom-indicator {
+  position: fixed;
+  z-index: 300;
+  padding: 2px 8px;
+  background: var(--hud-bg-deep);
+  border: 1px solid var(--hud-border-soft);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-family), sans-serif;
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--hud-text-bright);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+  transform: translateY(0);
+}
+
+.zoom-indicator.fading {
+  opacity: 0;
+  transform: translateY(-6px);
+}
