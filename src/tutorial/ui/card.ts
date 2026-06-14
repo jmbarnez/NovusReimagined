@@ -78,10 +78,12 @@ export function syncTutorialLayerBounds() {
   setStyle(tutorialState.layerEl, { display: show ? "block" : "none" });
   if (!show) return;
   toggleClass(tutorialState.layerEl, "tutorial-layer--over-station", Client.stationOpen);
+  const zIndex = Client.stationOpen ? String(Math.max(290, Client.bridgeWindowZ + 1)) : "";
   setStyle(tutorialState.layerEl, {
     left: "0px",
     top: "0px",
     width: `${viewportW()}px`,
     height: `${viewportH()}px`,
+    zIndex,
   });
 }

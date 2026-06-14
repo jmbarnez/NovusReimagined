@@ -1,6 +1,6 @@
 /**
  * PixiJS Minimap Renderer
- * 
+ *
  * Replaces Canvas 2D minimap with GPU-accelerated PixiJS version.
  * Minimap renders to its own dedicated canvas element in the DOM.
  */
@@ -252,7 +252,12 @@ export function syncPixiMinimap(now: number): void {
       g.lineTo(px + Math.cos(baseAng + 0.5) * half, py + Math.sin(baseAng + 0.5) * half);
       g.lineTo(px + Math.cos(baseAng - 0.5) * half, py + Math.sin(baseAng - 0.5) * half);
       g.closePath();
-      g.fill({ color: cachedThemeDanger, alpha: opacity });
+      const color = e.faction === "neutral"
+        ? 0x999999
+        : e.faction === "player" || e.faction === "friendly"
+          ? cachedThemeShield
+          : cachedThemeDanger;
+      g.fill({ color, alpha: opacity });
     });
   }
 

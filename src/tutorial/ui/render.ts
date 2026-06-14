@@ -10,8 +10,10 @@ import { syncTutorialVisuals } from "./visuals.js";
 import { setText, setHtml, setStyle, toggleClass } from "../../ui/dom-helpers.js";
 
 function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep>>, snapshot: Record<string, unknown>) {
-  const tourComplete = step.tour?.completeKey ? snapshot[step.tour.completeKey] === true : false;
-  if (step.tour && (!Client.stationOpen || tourComplete)) {
+  const phaseKey = step.tour?.phaseKey;
+  const phase = phaseKey && typeof snapshot[phaseKey] === "number" ? snapshot[phaseKey] as number : 0;
+  const panel = step.tour?.phases?.[phase] as { tab?: string } | undefined;
+  if (!step.tour || !panel || (panel.tab && !Client.stationOpen)) {
     if (tutorialState.tourLabelEl) {
       setText(tutorialState.tourLabelEl, "");
       setStyle(tutorialState.tourLabelEl, { display: "none" });

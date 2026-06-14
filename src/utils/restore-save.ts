@@ -112,6 +112,7 @@ export function initGameSession(player: Player, opts: InitGameSessionOpts = {}):
 
   Client.camx = player.x;
   Client.camy = player.y;
+  Client.bridgeWindowZ = 220;
 
   if (opts.tutorialOverlay ?? player.tutorial.active) {
     initTutorial();

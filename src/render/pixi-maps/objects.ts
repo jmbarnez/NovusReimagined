@@ -53,7 +53,12 @@ export function drawObjects(
       pixiMapState.objectGfx.lineTo(p.x + Math.cos(angle + Math.PI + 0.5) * size * 0.7, p.y + Math.sin(angle + Math.PI + 0.5) * size * 0.7);
       pixiMapState.objectGfx.lineTo(p.x + Math.cos(angle + Math.PI - 0.5) * size * 0.7, p.y + Math.sin(angle + Math.PI - 0.5) * size * 0.7);
       pixiMapState.objectGfx.closePath();
-      pixiMapState.objectGfx.fill({ color: rgbaToHex(theme.danger), alpha: Math.max(0.5, alpha) });
+      const color = e.faction === "neutral"
+        ? 0x999999
+        : e.faction === "player" || e.faction === "friendly"
+          ? rgbaToHex(theme.shield)
+          : rgbaToHex(theme.danger);
+      pixiMapState.objectGfx.fill({ color, alpha: Math.max(0.5, alpha) });
     }
 
     // Gates (diamonds)

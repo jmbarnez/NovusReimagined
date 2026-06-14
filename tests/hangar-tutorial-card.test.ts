@@ -8,6 +8,7 @@ import { initTutorialOverlay } from "../src/tutorial/ui/setup.js";
 import { tutorialState } from "../src/tutorial/ui/state.js";
 import { renderStep } from "../src/tutorial/ui/render.js";
 import { emit } from "../src/events.js";
+import { advanceTour, canAdvanceTour } from "../src/tutorial/logic/index.js";
 
 describe("hangar tutorial card", () => {
   beforeEach(() => {
@@ -22,6 +23,7 @@ describe("hangar tutorial card", () => {
           <div class="window window-station">
             <div id="station-overlay">
               <button class="st-tab active" data-tab="hangar"></button>
+              <button id="st-undock">Undock</button>
               <div id="panel-hangar" class="panel active">
                 <div id="hangar-pane-cargo"></div>
                 <div id="hangar-fitting-panel"></div>
@@ -87,5 +89,61 @@ describe("hangar tutorial card", () => {
 
     expect(tutorialState.tourNextBtn).not.toBeNull();
     expect(tutorialState.tourNextBtn!.hidden).toBe(false);
+  });
+
+  it("sets tutorial layer z-index above high bridgeWindowZ when docked", () => {
+    initTutorial();
+    initTutorialOverlay(true);
+
+    Client.stationOpen = true;
+    Client.bridgeWindowZ = 500;
+    emit("station:open", { station: { id: "test", name: "Test", x: 0, y: 0, radius: 100, spin: 0, isHome: false, services: ["market", "repair"], safeRadius: 200, turrets: [] } });
+    renderStep();
+
+    const layer = tutorialState.layerEl;
+    expect(layer).not.toBeNull();
+    const zIndex = parseInt(layer!.style.zIndex, 10);
+    expect(zIndex).toBeGreaterThan(Client.bridgeWindowZ);
+    expect(zIndex).toBeGreaterThanOrEqual(290);
+  });
+
+  it("renders the undock tour panel after advancing through all phases", () => {
+    initTutorial();
+    initTutorialOverlay(true);
+
+    Client.stationOpen = true;
+    emit("station:open", { station: { id: "test", name: "Test", x: 0, y: 0, radius: 100, spin: 0, isHome: false, services: ["market", "repair"], safeRadius: 200, turrets: [] } });
+    renderStep();
+
+    const snapshot = getTutorialSnapshot();
+    expect(snapshot.hangarReviewPhase).toBe(0);
+
+    // Advance through phases 0 → 1 → 2 → 3 → 4 → 5 (undock)
+    for (let i = 0; i < 5; i++) {
+      expect(canAdvanceTour()).toBe(true);
+      advanceTour();
+      renderStep();
+      expect(snapshot.hangarReviewPhase).toBe(i + 1);
+    }
+
+    // We should now be on phase 5 (undock)
+    expect(snapshot.hangarReviewPhase).toBe(5);
+    expect(snapshot.hangarReviewComplete).toBe(true);
+    expect(canAdvanceTour()).toBe(false);
+
+    // Card should still be visible
+    expect(tutorialState.cardEl!.hidden).toBe(false);
+
+    // Tour label should show the undock panel content
+    expect(tutorialState.tourLabelEl!.style.display).toBe("block");
+    expect(tutorialState.tourLabelEl!.textContent).toMatch(/Undock/);
+
+    // Tour body should show the undock panel content
+    expect(tutorialState.tourBodyEl!.style.display).toBe("block");
+    expect(tutorialState.tourBodyEl!.textContent).toMatch(/undock/i);
+
+    // On the final phase, the tour next button hides and the main next button shows
+    expect(tutorialState.tourNextBtn!.hidden).toBe(true);
+    expect(tutorialState.nextBtn!.hidden).toBe(false);
   });
 });
