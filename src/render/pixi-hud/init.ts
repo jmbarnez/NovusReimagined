@@ -3,12 +3,40 @@ import { hudOverlayLayer } from "../../pixi.js";
 import { getUIFont } from "../ui-font.js";
 import { hudState } from "./state.js";
 
-export function initPixiHUD(): void {
-  if (!hudOverlayLayer) return;
-  if (hudState.hudContainer?.parent) return;
-  if (hudState.hudContainer) {
+function isHudContainerAttachedToCurrentLayer(): boolean {
+  return !!hudOverlayLayer
+    && !!hudState.hudContainer
+    && !hudState.hudContainer.destroyed
+    && hudState.hudContainer.parent === hudOverlayLayer;
+}
+
+function resetPixiHudFrameCache(): void {
+  hudState.lastZoom = Number.NaN;
+  hudState.lastPlayerAngle = Number.NaN;
+  hudState.lastIsCritical = false;
+  hudState.lastBoostFx = false;
+  hudState.lastBoostPulse = -1;
+  hudState.lastSpdPct = -1;
+  hudState.lastShieldFrac = -1;
+  hudState.lastDriftAngle = Number.NaN;
+  hudState.lastDriftSpeed = -1;
+  hudState.lastDriftVisible = false;
+}
+
+function destroyStaleHudContainer(): void {
+  if (!hudState.hudContainer) return;
+  const parent = hudState.hudContainer.parent;
+  if (parent && !parent.destroyed) parent.removeChild(hudState.hudContainer);
+  if (!hudState.hudContainer.destroyed) {
     hudState.hudContainer.destroy({ children: true });
   }
+}
+
+export function initPixiHUD(): void {
+  if (!hudOverlayLayer) return;
+  if (isHudContainerAttachedToCurrentLayer()) return;
+  destroyStaleHudContainer();
+  resetPixiHudFrameCache();
 
   hudState.hudContainer = new Container();
   hudState.hudContainer.label = "hud-core";
@@ -72,4 +100,9 @@ export function initPixiHUD(): void {
   hudState.targetLabel.anchor.set(0, 0.5);
   hudState.targetLabel.visible = false;
   hudState.hudContainer.addChild(hudState.targetLabel);
+}
+
+export function ensurePixiHUDReady(): boolean {
+  if (!isHudContainerAttachedToCurrentLayer()) initPixiHUD();
+  return isHudContainerAttachedToCurrentLayer();
 }

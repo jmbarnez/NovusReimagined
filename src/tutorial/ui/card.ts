@@ -6,6 +6,7 @@ import { tutorialState } from "./state.js";
 import { getCardAnchorHighlight } from "./highlights.js";
 import { getHudXpPopup } from "../../ui/hud-elements.js";
 import { getBounds, setStyle, toggleClass } from "../../ui/dom-helpers.js";
+import { isCurrentStepComplete } from "../logic/index.js";
 
 export function positionCardForStep(): void {
   if (!tutorialState.root || !tutorialState.cardEl || !tutorialState.layerEl || tutorialState.cardEl.hidden) return;
@@ -67,7 +68,7 @@ export function shouldShowTutorialLayer(): boolean {
   if (xpPopupObscuresTutorial()) return false;
   const stepId = getCurrentTutorialStep(getState().player)?.id;
   const stationRelevantStep = stepId === "industry" || stepId === "hangar-high" || stepId === "hangar-turrets";
-  if (Client.stationOpen && !stationRelevantStep) return false;
+  if (Client.stationOpen && !stationRelevantStep && !isCurrentStepComplete()) return false;
   return true;
 }
 

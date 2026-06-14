@@ -32,6 +32,10 @@ const DIRECT_IDLE_KEYS: InputFrame["keys"] = { space: false, w: false, a: false,
 const DIRECT_FORWARD_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: false, warp: false };
 const DIRECT_BOOST_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false };
 
+function removeIonBoostModule(p: Player): void {
+  p.fitting.med = p.fitting.med.map((uid) => uid === "start-me-ab1" ? null : uid);
+}
+
 describe("GameServer movement input", () => {
   let server: GameServer;
 
@@ -149,6 +153,7 @@ describe("GameServer movement input", () => {
     const p = session.playerState;
     p.angle = 0;
     p.energy = 100;
+    removeIonBoostModule(p);
 
     server.handleClientInput("boost-client", directFrame(1, DIRECT_FORWARD_KEYS));
     tick(1 / 60);
@@ -176,6 +181,7 @@ describe("GameServer movement input", () => {
     const p = session.playerState;
     p.angle = 0;
     p.energy = 100;
+    removeIonBoostModule(p);
     server.handleClientInput("ion-boost-client", directFrame(1, DIRECT_BOOST_KEYS));
     tick(1 / 60);
     const baseBoostVx = p.vx;
@@ -205,6 +211,7 @@ describe("GameServer movement input", () => {
     const p = session.playerState;
     p.angle = 0;
     p.energy = 100;
+    removeIonBoostModule(p);
     server.handleClientInput("offline-boost-client", directFrame(1, DIRECT_BOOST_KEYS));
     tick(1 / 60);
     const baseBoostVx = p.vx;

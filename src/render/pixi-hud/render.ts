@@ -6,6 +6,7 @@ import { displayPlayerAngle } from "../display-orientation.js";
 import { C } from "../../config/index.js";
 import { getIonBoostModuleState } from "../../player/boost-module.js";
 import { hudState } from "./state.js";
+import { ensurePixiHUDReady } from "./init.js";
 import { CRITICAL_GLITCH_CHANCE, CRITICAL_GLITCH_MAX_OFFSET } from "./constants.js";
 import { updateHorizon } from "./horizon.js";
 import { updateSpeedArc, updateShieldArc } from "./arcs.js";
@@ -13,6 +14,7 @@ import { updateSpeedLabel, updateShieldLabel, updateWarningBanner, updateTargetL
 import { updateDriftVectors } from "./drift.js";
 
 export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
+  if (!ensurePixiHUDReady()) return;
   if (!hudState.hudContainer) return;
 
   const state = getState();

@@ -30,11 +30,20 @@ let labelStyle: TextStyle | null = null;
 // Edge calculation scratch array
 const edgesScratch = new Float64Array(4);
 
+function isArrowsContainerAttachedToCurrentLayer(): boolean {
+  return !!hudOverlayLayer
+    && !!arrowsContainer
+    && !arrowsContainer.destroyed
+    && arrowsContainer.parent === hudOverlayLayer;
+}
+
 export function initPixiTargetArrows(): void {
   if (!hudOverlayLayer) return;
-  if (arrowsContainer?.parent) return;
+  if (isArrowsContainerAttachedToCurrentLayer()) return;
   if (arrowsContainer) {
-    arrowsContainer.destroy({ children: true });
+    const parent = arrowsContainer.parent;
+    if (parent && !parent.destroyed) parent.removeChild(arrowsContainer);
+    if (!arrowsContainer.destroyed) arrowsContainer.destroy({ children: true });
   }
   arrowsContainer = null;
   arrowPool = [];
@@ -188,6 +197,7 @@ function drawArrow(
 }
 
 export function syncPixiTargetArrows(Wc: number, Hc: number, camxR: number, camyR: number, now: number): void {
+  if (!isArrowsContainerAttachedToCurrentLayer()) initPixiTargetArrows();
   if (!arrowsContainer) return;
 
   const sys = curSys();
@@ -255,6 +265,7 @@ export function syncPixiTargetArrows(Wc: number, Hc: number, camxR: number, camy
 }
 
 export function syncPixiTutorialGuideArrow(Wc: number, Hc: number, camxR: number, camyR: number, now: number): void {
+  if (!isArrowsContainerAttachedToCurrentLayer()) initPixiTargetArrows();
   if (!arrowsContainer) return;
 
   const state = getState();

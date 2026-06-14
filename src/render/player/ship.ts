@@ -29,19 +29,40 @@ interface RemotePlayerSprites {
 
 const _remotePlayerSprites = new Map<string, RemotePlayerSprites>();
 
+function destroySprite(sprite: Sprite): void {
+  const parent = sprite.parent;
+  if (parent && !parent.destroyed) parent.removeChild(sprite);
+  if (!sprite.destroyed) sprite.destroy();
+}
+
+function isSpriteAttachedToEntityLayer(sprite: Sprite | null): boolean {
+  return !!entityLayer
+    && !!sprite
+    && !sprite.destroyed
+    && sprite.parent === entityLayer;
+}
+
+function isLocalPlayerSpriteBundleReady(): boolean {
+  return isSpriteAttachedToEntityLayer(_hullSprite)
+    && isSpriteAttachedToEntityLayer(_hullLightSprite);
+}
+
+function isRemotePlayerSpriteBundleReady(bundle: RemotePlayerSprites): boolean {
+  return isSpriteAttachedToEntityLayer(bundle.hull)
+    && isSpriteAttachedToEntityLayer(bundle.light);
+}
+
 export function destroyPlayerSprites() {
-  if (_hullSprite) { entityLayer?.removeChild(_hullSprite); _hullSprite.destroy(); _hullSprite = null; }
-  if (_hullLightSprite) { entityLayer?.removeChild(_hullLightSprite); _hullLightSprite.destroy(); _hullLightSprite = null; }
+  if (_hullSprite) { destroySprite(_hullSprite); _hullSprite = null; }
+  if (_hullLightSprite) { destroySprite(_hullLightSprite); _hullLightSprite = null; }
   _shipLightTex = [];
   _currentShipId = "";
 }
 
 export function destroyRemotePlayerSprites(): void {
   for (const bundle of _remotePlayerSprites.values()) {
-    entityLayer?.removeChild(bundle.hull);
-    entityLayer?.removeChild(bundle.light);
-    bundle.hull.destroy();
-    bundle.light.destroy();
+    destroySprite(bundle.hull);
+    destroySprite(bundle.light);
   }
   _remotePlayerSprites.clear();
 }
@@ -106,13 +127,11 @@ function createRemotePlayerSprites(shipId: string): RemotePlayerSprites | null {
 
 function getRemotePlayerSprites(netId: string, shipId: string): RemotePlayerSprites | null {
   const existing = _remotePlayerSprites.get(netId);
-  if (existing?.shipId === shipId) return existing;
+  if (existing?.shipId === shipId && isRemotePlayerSpriteBundleReady(existing)) return existing;
 
   if (existing) {
-    entityLayer?.removeChild(existing.hull);
-    entityLayer?.removeChild(existing.light);
-    existing.hull.destroy();
-    existing.light.destroy();
+    destroySprite(existing.hull);
+    destroySprite(existing.light);
     _remotePlayerSprites.delete(netId);
   }
 
@@ -177,72 +196,73 @@ function syncRemotePlayers(alpha: number, now: number): void {
 
   for (const [netId, bundle] of _remotePlayerSprites) {
     if (activeRemoteIds.has(netId)) continue;
-    entityLayer?.removeChild(bundle.hull);
-    entityLayer?.removeChild(bundle.light);
-    bundle.hull.destroy();
-    bundle.light.destroy();
+    destroySprite(bundle.hull);
+    destroySprite(bundle.light);
     _remotePlayerSprites.delete(netId);
   }
 }
 
 export function syncPixiPlayer(alpha: number, now: number): void {
-  if (!getState().player) return;
+  const player = getState().player;
+  if (!player) return;
 
-  if (!_hullSprite || !_hullSprite.parent) {
-    buildPlayerSprites(getState().player.shipId);
-    if (!_hullSprite) return;
+  if (!isLocalPlayerSpriteBundleReady()) {
+    buildPlayerSprites(player.shipId);
+    if (!_hullSprite || !_hullLightSprite) return;
   }
 
-  if (getState().player.shipId !== _currentShipId) {
-    buildPlayerSprites(getState().player.shipId);
+  if (player.shipId !== _currentShipId) {
+    buildPlayerSprites(player.shipId);
     return;
   }
 
-  const ix = lerp(getState().player.px, getState().player.x, alpha);
-  const iy = lerp(getState().player.py, getState().player.y, alpha);
-  const ia = lerp(getState().player.prevAngle, getState().player.angle, alpha);
+  const hullSprite = _hullSprite;
+  const hullLightSprite = _hullLightSprite;
+  if (!hullSprite || !hullLightSprite) return;
+
+  const ix = lerp(player.px, player.x, alpha);
+  const iy = lerp(player.py, player.y, alpha);
+  const ia = lerp(player.prevAngle, player.angle, alpha);
 
   // Invincibility blink
-  if (getState().player.invincible > 0 && Math.floor(now / 75) % 2 === 0) {
-    _hullSprite.visible = false;
-    if (_hullLightSprite) _hullLightSprite.visible = false;
+  if (player.invincible > 0 && Math.floor(now / 75) % 2 === 0) {
+    hullSprite.visible = false;
+    hullLightSprite.visible = false;
     syncRemotePlayers(alpha, now);
     return;
   }
-  _hullSprite.visible = true;
+  hullSprite.visible = true;
 
   // LOD: prevent the ship from shrinking below a minimum on-screen size
   const lodScale = Math.max(Client.zoom, 0.55);
-  _hullSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
+  hullSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
 
   // Banking tilt
-  const angle = displayShipAngle(ia, getState().player.vx, getState().player.vy);
+  const angle = displayShipAngle(ia, player.vx, player.vy);
 
-  _hullSprite.x = ix;
-  _hullSprite.y = iy;
-  _hullSprite.rotation = angle;
+  hullSprite.x = ix;
+  hullSprite.y = iy;
+  hullSprite.rotation = angle;
 
   // Directional light overlay — texture picked by local sun direction.
-  if (_hullLightSprite) {
-    _hullLightSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
-    if (Client.settings?.directionalLighting !== false && _shipLightTex.length) {
-      const sys = getState().GALAXY?.[getState().player?.sysIdx ?? 0];
-      const _sd = sys?.sunDir ?? 0;
-      const sunDir = Math.atan2(Math.sin(_sd) * 3500 - iy, Math.cos(_sd) * 3500 - ix);
-      let di = Math.round(((sunDir - angle) / TAU) * LIGHT_DIRS) % LIGHT_DIRS;
-      if (di < 0) di += LIGHT_DIRS;
-      _hullLightSprite.texture = _shipLightTex[di];
-      _hullLightSprite.x = ix;
-      _hullLightSprite.y = iy;
-      _hullLightSprite.rotation = angle;
-      _hullLightSprite.visible = true;
+  hullLightSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
+  if (Client.settings?.directionalLighting !== false && _shipLightTex.length) {
+    const sys = getState().GALAXY?.[player.sysIdx ?? 0];
+    const _sd = sys?.sunDir ?? 0;
+    const sunDir = Math.atan2(Math.sin(_sd) * 3500 - iy, Math.cos(_sd) * 3500 - ix);
+    let di = Math.round(((sunDir - angle) / TAU) * LIGHT_DIRS) % LIGHT_DIRS;
+    if (di < 0) di += LIGHT_DIRS;
+    hullLightSprite.texture = _shipLightTex[di];
+    hullLightSprite.x = ix;
+    hullLightSprite.y = iy;
+    hullLightSprite.rotation = angle;
+    hullLightSprite.visible = true;
 
-      // Dynamic nebula lighting
-      const density = getNebulaDensity(ix, iy);
-      _hullLightSprite.alpha = 0.45 + density * 1.8;
-    } else {
-      _hullLightSprite.visible = false;
-    }
+    // Dynamic nebula lighting
+    const density = getNebulaDensity(ix, iy);
+    hullLightSprite.alpha = 0.45 + density * 1.8;
+  } else {
+    hullLightSprite.visible = false;
   }
 
   syncRemotePlayers(alpha, now);

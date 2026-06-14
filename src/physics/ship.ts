@@ -177,18 +177,11 @@ export function updateShip(dt: number, _p?: Player) {
   }
   if (anyStateChanged) invalidate(p);
 
-  let thrustScale = st.thrustScale;
-  let turnRate = st.turnRate;
   let mainThrust = st.mainThrust;
+  const turnRate = st.turnRate;
   let drag = st.dragPerSec;
   const boostModule = getIonBoostModuleState(p, cargoMap);
   const abOn = boostModule.online;
-  if (boostModule.fitted && !boostModule.online) {
-    thrustScale = st.baseThrustScale ?? st.thrustScale;
-    turnRate = st.baseTurnRate ?? st.turnRate;
-    // Derive base main thrust without the ion boost module thrustScale multiplier.
-    mainThrust = st.mainThrust * ((st.baseThrustScale || 1) / (st.thrustScale || 1));
-  }
 
   // Active-ability movement boosts (Overdrive, etc.)
   const mult = activeMovementMultipliers();

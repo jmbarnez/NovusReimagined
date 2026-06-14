@@ -1,7 +1,7 @@
 import type { Keybinds } from "./data/settings.js";
 
 export function isOverviewToggleHotkey(code: string, keybinds: Keybinds): boolean {
-  return code === keybinds.overview;
+  return code === keybinds.overview || code === "KeyP";
 }
 
 export function isEventLogToggleHotkey(
@@ -10,5 +10,5 @@ export function isEventLogToggleHotkey(
   modifiers: { ctrlKey: boolean; metaKey: boolean; altKey: boolean },
 ): boolean {
   if (modifiers.ctrlKey || modifiers.metaKey || modifiers.altKey) return false;
-  return code === keybinds.eventLog;
+  return code === keybinds.eventLog || code === "KeyC";
 }

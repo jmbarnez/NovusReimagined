@@ -28,12 +28,16 @@ function createGhost(sourceCell: HTMLElement): HTMLElement {
   return ghost;
 }
 
-function getCellUnderPointer(clientX: number, clientY: number): HTMLElement | null {
+function getCellUnderPointer(clientX: number, clientY: number, fallbackTarget?: EventTarget | null): HTMLElement | null {
   const ghost = activeDrag?.ghost;
   if (ghost) setStyle(ghost, { display: "none" });
   const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
   if (ghost) setStyle(ghost, { display: "" });
-  return el?.closest(".inv-grid-cell") as HTMLElement | null;
+  const hitCell = el?.closest(".inv-grid-cell") as HTMLElement | null;
+  if (hitCell) return hitCell;
+  return fallbackTarget instanceof HTMLElement
+    ? fallbackTarget.closest(".inv-grid-cell") as HTMLElement | null
+    : null;
 }
 
 function computeVisualIndex(pane: HTMLElement, clientX: number, clientY: number): number {
@@ -112,7 +116,7 @@ onWindowPointerMove((e: Event) => {
   if (!activeDrag) return;
   setPosition(activeDrag.ghost, `${ev.clientX - activeDrag.ghost.offsetWidth / 2}px`, `${ev.clientY - activeDrag.ghost.offsetHeight / 2}px`);
 
-  const target = getCellUnderPointer(ev.clientX, ev.clientY);
+  const target = getCellUnderPointer(ev.clientX, ev.clientY, ev.target);
   clearDragOver();
   if (target) target.classList.add("is-drag-over");
 });
@@ -121,7 +125,7 @@ onWindowPointerUp((e: Event) => {
   const ev = e as PointerEvent;
   if (!activeDrag) return;
 
-  const target = getCellUnderPointer(ev.clientX, ev.clientY);
+  const target = getCellUnderPointer(ev.clientX, ev.clientY, ev.target);
   if (target) {
     const targetSlotStr = target.dataset.slot;
     if (targetSlotStr !== undefined) {

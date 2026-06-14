@@ -7,6 +7,10 @@ import { PlayerAccess } from "../src/state-access.js";
 import { getStats, invalidate } from "../src/player/player-stats.js";
 import { C } from "../src/config/index.js";
 
+function removeIonBoostModule(): void {
+  G.P.fitting.med = G.P.fitting.med.map((uid) => uid === "start-me-ab1" ? null : uid);
+}
+
 describe("ship physics", () => {
   beforeEach(() => {
     installTestPlayer(makePlayer());
@@ -37,6 +41,8 @@ describe("ship physics", () => {
   });
 
   it("boost speed cap clamps when gate boost has expired", () => {
+    removeIonBoostModule();
+    invalidate(G.P);
     const st = getStats(G.P);
     const boostedCap = (st.maxSpeed || 0) * C.PHYSICS.SHIP.boostBaseSpeedMult;
     expect(boostedCap).toBeGreaterThan(0);

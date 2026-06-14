@@ -107,6 +107,10 @@ export function openHudWindow(id: string, title: string, contentEl: HTMLElement 
     _closeCallbacks.delete(id);
   }
   let win = _windows.get(id);
+  if (win && !win.isConnected) {
+    _windows.delete(id);
+    win = undefined;
+  }
   if (!win) {
     insertHTML(document.body, "beforeend", makeWindowHTML(id, title));
     win = getElement(`hud-win-${id}`)!;
