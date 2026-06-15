@@ -6,7 +6,7 @@ import { setTutorialGatePulse, getCurrentTutorialStep, isStationHangarTabActive 
 import { TUTORIAL_LOCAL_REGIONS } from "../data/layout.js";
 import { snapshot } from "./snapshot.js";
 import { buildCtx, nowSec } from "./context.js";
-import { completeTutorial } from "./lifecycle.js";
+import { advanceStep, completeTutorial } from "./lifecycle.js";
 import { beginHangarReviewTour, markHangarStepComplete } from "./hangar.js";
 import type { TutorialStep } from "../types.js";
 
@@ -105,4 +105,9 @@ export function tickTutorial(_dt: number) {
   // Run step-specific handler if one exists
   const handler = STEP_HANDLERS[step.id];
   if (handler) handler(step, nowSec());
+
+  // Hangar review should flow directly into flight once the player undocks.
+  if (step.id === "hangar-high" && step.isComplete(buildCtx())) {
+    advanceStep();
+  }
 }

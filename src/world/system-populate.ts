@@ -433,7 +433,6 @@ export function populateSystem(sys: System) {
       _orbitSpeed: orbitSpeedFor(devGateX, devGateY, f, C.WORLD.ORBITS.gateMultiplier),
       activationRadius: devActivationRadius,
       fxProfile: "temporary",
-      isTemporary: true,
     });
   }
 

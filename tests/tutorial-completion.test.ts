@@ -141,6 +141,21 @@ describe("hangar-high step completion", () => {
     }, G.P))).toBe(true);
   });
 
+  it("auto-advances to fly-mining immediately after hangar-high completes on undock", () => {
+    const hangarIdx = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+    const flyMiningIdx = TUTORIAL_STEPS.findIndex((s) => s.id === "fly-mining");
+    G.P.tutorial.step = hangarIdx;
+    initTutorial();
+
+    Client.stationOpen = true;
+    tickTutorial(0.016);
+    expect(G.P.tutorial.step).toBe(hangarIdx);
+
+    Client.stationOpen = false;
+    tickTutorial(0.016);
+    expect(G.P.tutorial.step).toBe(flyMiningIdx);
+  });
+
   it("defines hangar review panels for fitting, high slot, cargo, stats, training mission, and undock", () => {
     const step = stepById("hangar-high");
     expect(step.tour?.phases.length).toBe(6);

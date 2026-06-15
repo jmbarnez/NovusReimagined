@@ -209,4 +209,20 @@ describe("station tutorial spotlight", () => {
     syncTutorialVisuals({ refineryGuidePhase: 4 });
     expect(stationState.indRailTab).toBe("queue");
   });
+
+  it("clears spotlight overlays when the current tutorial step is complete", () => {
+    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+    Client.stationOpen = false;
+    document.body.innerHTML = `
+      <div id="hud-dock-prompt"></div>
+      <div id="hud-dimmer"></div>
+    `;
+
+    syncTutorialVisuals({ hangarReviewStarted: true, hangarReviewComplete: true });
+
+    const target = document.getElementById("hud-dock-prompt")!;
+    const dimmer = document.getElementById("hud-dimmer")!;
+    expect(target.classList.contains("tutorial-hangar-highlight")).toBe(false);
+    expect(dimmer.classList.contains("active")).toBe(false);
+  });
 });

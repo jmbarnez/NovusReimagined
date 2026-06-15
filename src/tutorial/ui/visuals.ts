@@ -1,5 +1,5 @@
 import { getCurrentTutorialStep } from "../data/helpers.js";
-import { getTutorialSnapshot } from "../logic/index.js";
+import { getTutorialSnapshot, isCurrentStepComplete } from "../logic/index.js";
 import { getState } from "../../state-access.js";
 import { Client } from "../../state.js";
 import { tutorialState } from "./state.js";
@@ -61,6 +61,13 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
 
   const step = getCurrentTutorialStep(player);
   if (!step) {
+    clearTutorialVisuals();
+    return;
+  }
+
+  // Once a step is complete, keep the card but remove spotlight dimmers/highlights
+  // so players can move freely (e.g. after undocking from hangar tour).
+  if (isCurrentStepComplete()) {
     clearTutorialVisuals();
     return;
   }
