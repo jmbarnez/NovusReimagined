@@ -22,7 +22,10 @@ export function asteroidMatterMassKg(rawMass: number, composition: OreCompositio
 }
 
 export function processJobDuration(massKg: number): number {
-  return C.HUB.ASTEROID_PROCESS_BASE + massKg / Math.max(1, C.HUB.ASTEROID_PROCESS_PER_MASS * 16);
+  // Refinery masses are tracked in kilograms; normalize to line mass units so jobs
+  // progress on a practical timescale instead of appearing stalled for minutes.
+  const normalizedMass = Math.max(0, massKg) / 1000;
+  return C.HUB.ASTEROID_PROCESS_BASE + normalizedMass / Math.max(1, C.HUB.ASTEROID_PROCESS_PER_MASS * 16);
 }
 
 export function refinementHeatMode(mode?: RefiningHeatMode): RefiningHeatMode {

@@ -32,7 +32,6 @@ import {
   renderHeatSelect,
   renderRefineryStockEmpty,
   selectedHeatMode,
-  selectedProcessQty,
   stageMeta,
 } from "../industry/model/index.js";
 
@@ -47,7 +46,7 @@ export function renderProcessStage(): string {
   const selectedSlot = mixed.find((slot) => String(slot.index) === selectedSourceId) ?? null;
   const cards = mixed.map((slot, idx) => {
     const isSelected = String(slot.index) === selectedSourceId;
-    const qty = selectedProcessQty(slot.index, slot.qty);
+    const qty = slot.qty;
     const heatMode = selectedHeatMode(`cargo-${slot.index}`);
     const sourceMassKg = estimateMixedOreCargoMassKg(qty, slot.composition);
     const preview = processMixedSource({
@@ -105,15 +104,15 @@ export function renderProcessStage(): string {
             <div class="ind-action-tray ind-action-tray--process">
               <div class="ind-action-tray-copy">
                 <span>Run</span>
-                <strong>Batch, route, heat, start.</strong>
+                <strong>Full stack, route, heat, start.</strong>
               </div>
               ${renderRunRoute(["Cargo", "Stock", "Queue"])}
               <div class="ind-action-tray-grid">
                 <div class="ind-action-step" data-step="01">
-                  <label class="ind-qty-wrap">
-                    <span>Batch</span>
-                    <input type="number" class="ind-qty-input" data-cargo-index="${slot.index}" min="1" max="${slot.qty}" value="${qty}">
-                  </label>
+                  <div class="ind-feed-stats">
+                    <div><span>Batch</span><strong>${slot.qty}</strong></div>
+                    <div><span>Mass</span><strong>${formatMass(sourceMassKg)}</strong></div>
+                  </div>
                 </div>
                 <div class="ind-action-step" data-step="02">
                   <label class="ind-heat-control">
@@ -127,7 +126,7 @@ export function renderProcessStage(): string {
                   ${renderHeatSelect(`cargo-${slot.index}`)}
                 </div>
                 <div class="ind-action-step ind-action-step--button" data-step="04">
-                  <button class="ind-btn ind-btn--primary" data-action="processMixedCargo" data-cargo-index="${slot.index}">Start</button>
+                  <button class="ind-btn ind-btn--primary" data-action="processMixedCargo" data-cargo-index="${slot.index}">Start Full Batch</button>
                 </div>
               </div>
             </div>
@@ -170,4 +169,3 @@ export function renderProcessStage(): string {
     </section>
   `;
 }
-

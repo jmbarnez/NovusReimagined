@@ -210,12 +210,24 @@ export function renderHubQueueSection(): string {
                 : job.kind === "debris"
                   ? "Salvage"
                   : "Asteroid";
+          const route = job.kind === "processMixed"
+            ? "Cargo -> Processed tank"
+            : job.kind === "separateStock"
+              ? "Processed tank -> Ore bins"
+              : job.kind === "alloyStock"
+                ? "Processed tank -> Alloy reservoir"
+                : job.kind === "debris"
+                  ? "Wreck bay -> Salvage store"
+                  : "Asteroid ring -> Processed tank";
+          const detail = job.kind === "processMixed"
+            ? `${Math.max(1, Math.round(job.sourceQty ?? 0))} chunk${Math.round(job.sourceQty ?? 0) === 1 ? "" : "s"}`
+            : `${Math.max(1, Math.round(job.mass)).toLocaleString()} kg`;
           return `
             <div class="ind-queue-job ind-queue-job--${job.kind}${isReady ? " ready" : ""}">
               <div class="ind-queue-job-head">
                 <div class="ind-queue-job-main">
                   <span class="ind-queue-job-kind">${label}</span>
-                  <div class="ind-queue-job-name">${job.kind === "processMixed" ? "Ore to stock" : job.kind === "separateStock" ? "Split stock" : job.kind === "alloyStock" ? "Blend stock" : job.kind === "debris" ? "Recover salvage" : "Process asteroid"}</div>
+                  <div class="ind-queue-job-name">${route}</div>
                 </div>
                 <div class="ind-queue-job-state">
                   <b class="ind-queue-job-status">${isReady ? "Ready" : "Running"}</b>
@@ -225,7 +237,7 @@ export function renderHubQueueSection(): string {
               <div class="ind-queue-progress-track"><div class="ind-queue-progress-fill" style="width:${pct}%"></div></div>
               <div class="ind-queue-job-footer">
                 <span class="ind-queue-pct">${pct}%</span>
-                <span class="ind-queue-job-meta">${Math.max(1, Math.round(job.duration))}s line</span>
+                <span class="ind-queue-job-meta">${detail} · ${Math.max(1, Math.round(job.duration))}s line</span>
               </div>
             </div>
           `;
@@ -274,4 +286,3 @@ export function renderAssemblyQueueSection(): string {
     </section>
   `;
 }
-

@@ -10,8 +10,8 @@ import {
   canAffordRecipe,
   currentStage,
   formatTime,
+  groupRefineryMaterials,
   selectedHeatMode,
-  selectedProcessQty,
   type RefiningStage,
 } from "./industry/model/index.js";
 import {
@@ -31,6 +31,50 @@ import { getElement, setHtml, setText, setStyle } from "../dom-helpers.js";
 
 let lastIndustryContainer: HTMLElement | null = null;
 let lastFabricationContainer: HTMLElement | null = null;
+
+function defaultProcessTargetStorageId(cargoIndex: number): string | null {
+  const key = String(cargoIndex);
+  const explicit = stationState.indProcessTarget[key];
+  if (explicit) return explicit;
+  const fallback = (getState().player.refineryStorage ?? []).find((unit) => unit.kind === "processed" || unit.kind === "intake");
+  if (!fallback) return null;
+  stationState.indProcessTarget[key] = fallback.id;
+  return fallback.id;
+}
+
+function defaultAlloyTargetStorageId(materialId: string): string | null {
+  const explicit = stationState.indAlloyTargetStorage[materialId];
+  if (explicit) return explicit;
+  const fallback = (getState().player.refineryStorage ?? []).find((unit) => unit.kind === "alloy");
+  if (!fallback) return null;
+  stationState.indAlloyTargetStorage[materialId] = fallback.id;
+  return fallback.id;
+}
+
+function syncRefineryFlowDefaults(): void {
+  const mixed = getCargoMixedOreInputs(getState().player);
+  const selectedProcessSource = mixed.some((slot) => String(slot.index) === stationState.indProcessSource)
+    ? stationState.indProcessSource
+    : (mixed[0] ? String(mixed[0].index) : null);
+  stationState.indProcessSource = selectedProcessSource;
+  if (selectedProcessSource != null) {
+    const slot = mixed.find((entry) => String(entry.index) === selectedProcessSource);
+    if (slot) {
+      stationState.indProcessQty[selectedProcessSource] = slot.qty;
+      defaultProcessTargetStorageId(slot.index);
+    }
+  }
+
+  const splitCandidates = groupRefineryMaterials("processed").filter((entry) => Object.keys(entry.composition).length > 1);
+  stationState.indSeparateSource = splitCandidates.some((entry) => entry.representativeId === stationState.indSeparateSource)
+    ? stationState.indSeparateSource
+    : (splitCandidates[0]?.representativeId ?? null);
+
+  const alloyCandidates = groupRefineryMaterials("processed");
+  for (const material of alloyCandidates) {
+    defaultAlloyTargetStorageId(material.representativeId);
+  }
+}
 
 function pulseRefineryRail(tab: typeof stationState.indRailTab): void {
   stationState.indRailTab = tab;
@@ -97,6 +141,7 @@ export function renderIndustry(container?: HTMLElement) {
   const div = resolvePanelContainer("panel-industry", lastIndustryContainer, container);
   if (!div) return;
   lastIndustryContainer = div;
+  syncRefineryFlowDefaults();
 
   let stageHtml = "";
   if (currentStage() === "process") stageHtml = renderProcessStage();
@@ -209,14 +254,20 @@ export function handleIndustryAction(action: string, btn: HTMLElement): boolean 
   if (action === "processMixedCargo") {
     const cargoIndex = parseInt(btn.dataset.cargoIndex ?? "", 10);
     const slot = getCargoMixedOreInputs(getState().player).find((entry) => entry.index === cargoIndex);
-    const qty = selectedProcessQty(cargoIndex, slot?.qty ?? 1);
+    if (!slot) {
+      sfxError();
+      return true;
+    }
+    const qty = slot.qty;
+    const targetStorageId = defaultProcessTargetStorageId(cargoIndex);
+    stationState.indProcessQty[String(cargoIndex)] = qty;
     queueFrameAction({
       type: "processHubMixedOre",
       payload: {
         cargoIndex,
         qty,
         heatMode: selectedHeatMode(`cargo-${cargoIndex}`),
-        targetStorageId: stationState.indProcessTarget[String(cargoIndex)] ?? null,
+        targetStorageId,
       },
     });
     stationState.indProcessSource = String(cargoIndex);
@@ -225,7 +276,10 @@ export function handleIndustryAction(action: string, btn: HTMLElement): boolean 
     return true;
   }
   if (action === "separateStock") {
-    const materialId = btn.dataset.materialId || "";
+    const materialId = btn.dataset.materialId
+      || stationState.indSeparateSource
+      || groupRefineryMaterials("processed").find((entry) => Object.keys(entry.composition).length > 1)?.representativeId
+      || "";
     if (!materialId) return true;
     stationState.indSeparateSource = materialId;
     queueFrameAction({
@@ -237,8 +291,11 @@ export function handleIndustryAction(action: string, btn: HTMLElement): boolean 
     return true;
   }
   if (action === "alloyStock") {
-    const materialId = btn.dataset.materialId || "";
+    const materialId = btn.dataset.materialId
+      || groupRefineryMaterials("processed")[0]?.representativeId
+      || "";
     if (!materialId) return true;
+    const targetStorageId = defaultAlloyTargetStorageId(materialId);
     queueFrameAction({
       type: "alloyHubMaterial",
       payload: {
@@ -246,7 +303,7 @@ export function handleIndustryAction(action: string, btn: HTMLElement): boolean 
         sourceMaterialIds: stationState.indAlloySelections[materialId] ?? [],
         targetAlloyFamilyId: btn.dataset.alloyFamilyId || null,
         heatMode: selectedHeatMode(materialId),
-        targetStorageId: stationState.indAlloyTargetStorage[materialId] ?? null,
+        targetStorageId,
       },
     });
     sfxConfirm();
@@ -285,14 +342,6 @@ export function handleIndustryFieldEvent(target: EventTarget | null): boolean {
   }
   if (el.id === "ind-qty-sel") {
     stationState.craftQty = parseInt((el as HTMLSelectElement).value, 10) || 1;
-    rerenderStationProduction(el);
-    return true;
-  }
-  if (el.classList.contains("ind-qty-input")) {
-    const input = el as HTMLInputElement;
-    const cargoIndex = input.dataset.cargoIndex ?? "";
-    const qty = parseInt(input.value, 10);
-    stationState.indProcessQty[cargoIndex] = Number.isFinite(qty) ? qty : 1;
     rerenderStationProduction(el);
     return true;
   }

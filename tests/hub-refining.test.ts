@@ -51,6 +51,18 @@ describe("hub refining pipeline", () => {
     expect(tankB?.entries[0]?.composition.iron).toBeCloseTo(0.7, 2);
   });
 
+  it("uses practical queue durations for mixed ore jobs", () => {
+    G.P.mixedOreCargo = [
+      { name: "Quick queue check", qty: 4, richness: 2, composition: { iron: 0.7, nickel: 0.3 } },
+    ];
+
+    const result = processMixedOreCargo(0, 4, "stable", G.P);
+    expect(result.success).toBe(true);
+    const queued = G.P.hubQueue[0];
+    expect(queued).toBeTruthy();
+    expect(queued?.duration ?? 0).toBeLessThan(60);
+  });
+
   it("separates processed stock into simpler streams", () => {
     PlayerAccess.addRefineryStorageMaterial({
       id: "mat-seed",

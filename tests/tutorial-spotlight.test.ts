@@ -100,15 +100,17 @@ describe("station tutorial spotlight", () => {
     }
   });
 
-  it("restores the current hangar target highlight after station tab changes", () => {
+  it("locks station tabs to the active tutorial tour target", () => {
     const root = document.getElementById("station-overlay")!;
     const target = document.getElementById("hangar-pane-cargo")!;
 
     syncTutorialVisuals({ hangarReviewPhase: 0 });
     expect(target.classList.contains("tutorial-hangar-highlight")).toBe(true);
 
-    activateStationTab("market", root);
-    expect(document.getElementById("panel-market")?.classList.contains("active")).toBe(true);
+    const switched = activateStationTab("market", root);
+    expect(switched).toBe(false);
+    expect(document.getElementById("panel-market")?.classList.contains("active")).toBe(false);
+    expect(document.getElementById("panel-hangar")?.classList.contains("active")).toBe(true);
 
     syncTutorialVisuals({ hangarReviewPhase: 0 });
 

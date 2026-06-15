@@ -193,8 +193,9 @@ describe("station refining panel", () => {
     expect(route?.textContent).toContain("Cargo");
     expect(route?.textContent).toContain("Queue");
     expect(steps?.length).toBe(4);
+    expect(panel?.textContent).toContain("Full stack");
+    expect(panel?.textContent).toContain("Start Full Batch");
     expect(panel?.textContent).toContain("Use");
-    expect(panel?.textContent).toContain("Start");
   });
 
   it("uses the compact refinery header and rail instead of the old top manifest", () => {
@@ -346,7 +347,8 @@ describe("station refining panel", () => {
     const panel = document.getElementById("panel-industry");
     expect(panel?.textContent).toContain("Queue");
     expect(panel?.textContent).toContain("Process");
-    expect(panel?.textContent).toContain("Ore to stock");
+    expect(panel?.textContent).toContain("Cargo -> Processed tank");
+    expect(panel?.textContent).toContain("chunk");
     expect(panel?.textContent).toContain("Running");
   });
 
