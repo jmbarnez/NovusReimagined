@@ -151,6 +151,10 @@ describe("hangar-high step completion", () => {
     tickTutorial(0.016);
     expect(G.P.tutorial.step).toBe(hangarIdx);
 
+    // Simulate that the player has already entered the hangar review flow.
+    const snapshot = getTutorialSnapshot();
+    snapshot.hangarReviewStarted = true;
+
     Client.stationOpen = false;
     tickTutorial(0.016);
     expect(G.P.tutorial.step).toBe(flyMiningIdx);
