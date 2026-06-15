@@ -23,8 +23,9 @@ vi.mock("../src/pixi.js", () => ({
 describe("pixi z-ordering", () => {
   it("sets stable stage and world z-indices", async () => {
     const mod = await import("../src/pixi.js");
+    expect(mod.app).not.toBeNull();
 
-    const st = mod.app.stage as Container;
+    const st = mod.app!.stage as Container;
     const sc = mod.screenContainer as Container;
     const wo = mod.worldContainer as Container;
     const hd = mod.hudOverlayLayer as Container;

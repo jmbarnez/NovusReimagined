@@ -27,19 +27,26 @@
 .win-body{flex:1;min-height:0;overflow:hidden;padding:0;background:color-mix(in srgb, var(--hud-bg-deep) 35%, transparent);display:flex;flex-direction:column;position:relative;z-index:2;}
 .win-foot{flex-shrink:0;min-height:4px;background:color-mix(in srgb, var(--hud-bg-elevated) 45%, transparent);border-top:1px solid var(--hud-border-soft);position:relative;z-index:2;}
 
-/* The map window is the only bridge window that draws real content (Pixi) into its body.
-   Make it fully opaque so the game world behind it is hidden. */
+/* The map window draws its content on the shared Pixi canvas behind DOM.
+   Keep the map body transparent so map layers are visible, while disabling
+   frosted effects that would blur or wash out the map. */
 #hud-win-map {
-  background: var(--hud-bg-deep);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 #hud-win-map::before {
   display: none;
 }
-#hud-win-map .win-head,
-#hud-win-map .win-body {
+#hud-win-map .win-head {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   background: var(--hud-bg-deep);
+}
+#hud-win-map .win-body {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: transparent;
 }
 .ov-meta{font-size: calc(9px * var(--effective-font-scale, 1));color:var(--hud-text-dim);margin:0 0 6px;letter-spacing:0.02em;text-align:right;}
 .ov-wrap{overflow-x:auto;overflow-y:auto;max-height:none;border:1px solid var(--hud-border-soft);background:color-mix(in srgb, var(--hud-bg-deep) 65%, transparent);scrollbar-width:thin;scrollbar-color:var(--hud-scrollbar-thumb) var(--hud-scrollbar-track);}

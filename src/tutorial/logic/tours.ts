@@ -32,7 +32,9 @@ export function advanceTour(): void {
   const tour = resolveTour();
   if (!tour || tour.phase >= tour.maxPhase) return;
   snapshot[tour.phaseKey] = tour.phase + 1;
-  if (tour.completeKey) {
+  // Hangar tours must only complete once the player actually undocks.
+  const shouldAutoCompleteTour = tour.step.id === "industry";
+  if (tour.completeKey && shouldAutoCompleteTour) {
     snapshot[tour.completeKey] = tour.phase + 1 >= tour.maxPhase;
   }
   emit(tour.step.id === "industry" ? "tutorial:refinery-tour-change" : "tutorial:hangar-tour-change");

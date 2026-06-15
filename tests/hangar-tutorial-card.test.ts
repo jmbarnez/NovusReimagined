@@ -128,7 +128,7 @@ describe("hangar tutorial card", () => {
 
     // We should now be on phase 5 (undock)
     expect(snapshot.hangarReviewPhase).toBe(5);
-    expect(snapshot.hangarReviewComplete).toBe(true);
+    expect(snapshot.hangarReviewComplete).toBe(false);
     expect(canAdvanceTour()).toBe(false);
 
     // Card should still be visible
@@ -142,8 +142,8 @@ describe("hangar tutorial card", () => {
     expect(tutorialState.tourBodyEl!.style.display).toBe("block");
     expect(tutorialState.tourBodyEl!.textContent).toMatch(/undock/i);
 
-    // On the final phase, the tour next button hides and the main next button shows
+    // On the final phase, both buttons are hidden until undock marks completion.
     expect(tutorialState.tourNextBtn!.hidden).toBe(true);
-    expect(tutorialState.nextBtn!.hidden).toBe(false);
+    expect(tutorialState.nextBtn!.hidden).toBe(true);
   });
 });

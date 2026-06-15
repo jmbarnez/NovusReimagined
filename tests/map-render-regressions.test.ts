@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { readFileSync } from "node:fs";
 import { Client, _G as G } from "../src/state.js";
 import { handleWheel } from "../src/input/mouse.js";
 import { computeSystemMapTransform } from "../src/ui/map-survey.js";
@@ -11,8 +10,11 @@ vi.mock("../src/ui/hud/zoom-indicator.js", () => ({
   showZoomIndicator: () => {},
 }));
 
-function readSource(relativePath: string): string {
-  return readFileSync(new URL(relativePath, import.meta.url), "utf8");
+async function readSource(relativePath: string): Promise<string> {
+  const moduleName = "node:fs";
+  const fsModule = await import(moduleName);
+  const readFileSyncFn = (fsModule as { readFileSync: (path: URL | string, encoding: string) => string }).readFileSync;
+  return readFileSyncFn(new URL(relativePath, import.meta.url), "utf8");
 }
 
 function stubSystem(idx: number): System {
@@ -126,23 +128,26 @@ describe("map render regressions", () => {
     expect(transformAtTwo!.scale).toBeCloseTo(transformAtOne!.scale);
   });
 
-  it("keeps high-priority map-related UI layers above bridge windows", () => {
-    const turretMenuCss = readSource("../src/ui/styles/hud-turret-menu.css");
-    const xpCss = readSource("../src/ui/styles/hud-xp.css");
-    const bridgeCss = readSource("../src/ui/styles/bridge.css");
+  it("keeps high-priority map-related UI layers above bridge windows", async () => {
+    const turretMenuCss = await readSource("../src/ui/styles/hud-turret-menu.css");
+    const xpCss = await readSource("../src/ui/styles/hud-xp.css");
+    const bridgeCss = await readSource("../src/ui/styles/bridge.css");
 
     expect(turretMenuCss).toMatch(/#turret-ctx-menu\s*\{[\s\S]*?z-index:\s*9200;/);
     expect(xpCss).toMatch(/#hud-xp-popup\s*\{[\s\S]*?z-index:\s*9200;/);
     expect(bridgeCss).toMatch(/\.inv-ctx\s*\{[\s\S]*?z-index:\s*9200;/);
   });
 
-  it("keeps map window backgrounds opaque and hub tooltip fixed over windows", () => {
-    const mapOverlayCss = readSource("../src/ui/styles/map-overlay.css");
-    const bridgeCss = readSource("../src/ui/styles/bridge.css");
-    const hubTooltipTs = readSource("../src/ui/hud/hub-tooltip.ts");
+  it("keeps map window body transparent for Pixi map visibility and hub tooltip fixed over windows", async () => {
+    const mapOverlayCss = await readSource("../src/ui/styles/map-overlay.css");
+    const bridgeCss = await readSource("../src/ui/styles/bridge.css");
+    const hubTooltipTs = await readSource("../src/ui/hud/hub-tooltip.ts");
 
-    expect(mapOverlayCss).toMatch(/#hud-win-map\s*\{[\s\S]*?background:\s*var\(--hud-bg-deep\);/);
-    expect(mapOverlayCss).toMatch(/#hud-win-body-map\s*\{[\s\S]*?background:\s*var\(--hud-bg-deep\);/);
+    expect(mapOverlayCss).toMatch(/#hud-win-map\s*\{[\s\S]*?background:\s*transparent;/);
+    expect(mapOverlayCss).toMatch(/#hud-win-body-map\s*\{[\s\S]*?background:\s*transparent;/);
+    expect(bridgeCss).toMatch(/#hud-win-map\s*\{[\s\S]*?background:\s*transparent;/);
+    expect(bridgeCss).toMatch(/#hud-win-map \.win-body\s*\{[\s\S]*?background:\s*transparent;/);
+    expect(bridgeCss).toMatch(/#hud-win-map \.win-head\s*\{[\s\S]*?background:\s*var\(--hud-bg-deep\);/);
     expect(bridgeCss).toMatch(/#hud-win-map::before\s*\{[\s\S]*?display:\s*none;/);
     expect(hubTooltipTs).toMatch(/position:\s*"fixed"/);
     expect(hubTooltipTs).toMatch(/zIndex:\s*"9200"/);

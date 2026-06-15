@@ -1,12 +1,12 @@
 /* ── System Map Overlay ── */
 #hud-win-map {
-  background: var(--hud-bg-deep);
+  background: transparent;
 }
 
-/* The map body hosts a Pixi canvas. Use an opaque background so the game
-   world behind the map window is fully hidden. */
+/* The map body sits above the shared Pixi canvas. Keep it transparent so
+   map content remains visible; map backdrop is drawn by Pixi bgGfx. */
 #hud-win-body-map {
-  background: var(--hud-bg-deep);
+  background: transparent;
 }
 
 .map-overlay {

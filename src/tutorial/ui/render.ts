@@ -36,7 +36,7 @@ function syncTourCopy(step: NonNullable<ReturnType<typeof getCurrentTutorialStep
   }
   if (tutorialState.tourBodyEl) {
     if (tour && tour.body) {
-      setText(tutorialState.tourBodyEl, tour.body);
+      setHtml(tutorialState.tourBodyEl, tour.body);
       setStyle(tutorialState.tourBodyEl, { display: "block" });
     } else {
       setText(tutorialState.tourBodyEl, "");

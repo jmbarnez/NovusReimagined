@@ -257,9 +257,9 @@ describe("advanceTour", () => {
       expect(snapshot.hangarReviewPhase).toBe(i + 1);
     }
 
-    // After entering the last phase (undock), the tour is marked complete
+    // After entering the last phase (undock), the tour remains incomplete until undock.
     expect(snapshot.hangarReviewPhase).toBe(5);
-    expect(snapshot.hangarReviewComplete).toBe(true);
+    expect(snapshot.hangarReviewComplete).toBe(false);
 
     // Cannot advance past the last phase
     expect(canAdvanceTour()).toBe(false);
