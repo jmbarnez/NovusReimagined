@@ -7,6 +7,7 @@ import {
   TUTORIAL_GATE,
   TUTORIAL_START_PLANET,
   TUTORIAL_LOCAL_REGIONS,
+  TUTORIAL_SPAWN,
 } from "../data/tutorial-layout.js";
 import { TAU } from "../constants.js";
 import { C } from "../config/index.js";
@@ -283,60 +284,31 @@ function spawnAsteroidCluster(
 
 function buildTutorialAsteroids(sys: System, danger: number) {
   // Ensure tutorial zone asteroids only contain iron ore for the mining tutorial
-  const f = mkRng(sys.id + "-tut-belts");
-  const ironOnly = { iron: 1 };
-  for (let c = 0; c < 3; c++) {
-    const ang = (c / 3) * TAU + rf(f, -0.3, 0.3);
-    const dist = rf(f, 200, 350);
-    const cx = Math.round(TUTORIAL_BELT_CENTER.x + Math.cos(ang) * dist);
-    const cy = Math.round(TUTORIAL_BELT_CENTER.y + Math.sin(ang) * dist);
-    spawnAsteroidCluster(
-      sys,
-      cx,
-      cy,
-      `belt-${c}`,
-      mkRng(sys.id + `-belt-${c}`),
-      danger,
-      { min: 3, max: 4 },
-      ironOnly,
-    );
+  const commonWeights = C.WORLD.ORE.commonWeights;
+  const beltClusters = [
+    { cx: TUTORIAL_BELT_CENTER.x, cy: TUTORIAL_BELT_CENTER.y, count: { min: 8, max: 12 } },
+    { cx: TUTORIAL_BELT_CENTER.x + 600, cy: TUTORIAL_BELT_CENTER.y + 200, count: { min: 5, max: 8 } },
+    { cx: TUTORIAL_BELT_CENTER.x - 400, cy: TUTORIAL_BELT_CENTER.y - 300, count: { min: 5, max: 8 } },
+  ];
+
+  for (const cluster of beltClusters) {
+    spawnAsteroidCluster(sys, cluster.cx, cluster.cy, `belt-${cluster.cx}`, mkRng(sys.id + "belt"), danger, cluster.count, commonWeights);
   }
 }
 
-function randomAsteroidComposition(template: OreComposition, f: () => number): OreComposition {
-  const entries = Object.entries(normalizeComposition(template))
-    .filter(([, weight]) => weight > 0)
-    .sort((a, b) => b[1] - a[1]);
-  if (!entries.length) return { iron: 1 };
-  if (entries.length === 1) return { [entries[0][0]]: 1 };
-
-  const selected = new Set<string>();
-  const maxOres = Math.min(5, entries.length);
-  const minCount = entries.length > 2 ? 2 : 1;
-  const targetCount = Math.min(maxOres, minCount + Math.floor(Math.pow(f(), 0.72) * Math.max(1, maxOres - minCount + 1)));
-  while (selected.size < targetCount) {
-    const roll = f();
-    let cum = 0;
-    let picked = entries[entries.length - 1][0];
-    for (const [key, weight] of entries) {
-      cum += weight;
-      if (roll <= cum) {
-        picked = key;
-        break;
-      }
-    }
-    selected.add(picked);
+function randomAsteroidComposition(weights: OreComposition, f: () => number): OreComposition {
+  const composition: Record<string, number> = {};
+  let total = 0;
+  for (const [key, weight] of Object.entries(weights)) {
+    const w = typeof weight === "number" ? weight : 0;
+    if (w <= 0) continue;
+    const variance = rf(f, 0.85, 1.15);
+    const value = w * variance;
+    composition[key] = value;
+    total += value;
   }
-
-  const composition: OreComposition = {};
-  for (const [key, weight] of entries) {
-    if (selected.has(key)) {
-      composition[key] = weight * (0.75 + f() * 0.7);
-      continue;
-    }
-    if (weight >= 0.03 && f() < 0.55) {
-      composition[key] = weight * (0.04 + f() * 0.1);
-    }
+  for (const key of Object.keys(composition)) {
+    composition[key] /= total;
   }
   return normalizeComposition(composition);
 }
@@ -438,6 +410,31 @@ export function populateSystem(sys: System) {
         fxProfile: "tutorial-return",
       });
     }
+
+    // Dev convenience: warp gate from spawn straight to the Academy.
+    const devGateX = Math.round(TUTORIAL_SPAWN.x);
+    const devGateY = Math.round(TUTORIAL_SPAWN.y);
+    const devActivationRadius = C.WORLD.GATES.radius * (C.WORLD.GATES.activationRadiusMult ?? 2.0);
+    sys.gates.push({
+      id: `gate-${sys.id}-dev-spawn-to-station`,
+      x: devGateX,
+      y: devGateY,
+      px: devGateX,
+      py: devGateY,
+      target: {
+        kind: "local",
+        x: TUTORIAL_STATION.x,
+        y: TUTORIAL_STATION.y,
+        label: "Academy",
+      },
+      radius: C.WORLD.GATES.radius,
+      spin: rf(f, 0.004, 0.012),
+      angle: Math.atan2(TUTORIAL_STATION.y - devGateY, TUTORIAL_STATION.x - devGateX),
+      _orbitSpeed: orbitSpeedFor(devGateX, devGateY, f, C.WORLD.ORBITS.gateMultiplier),
+      activationRadius: devActivationRadius,
+      fxProfile: "temporary",
+      isTemporary: true,
+    });
   }
 
   // ── Station & Planet generation ──
