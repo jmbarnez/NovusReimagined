@@ -46,6 +46,7 @@ export interface TutorialStep {
   tour?: TutorialTour;
   noDimmer?: boolean;
   noCardAnchor?: boolean;
+  autoAdvanceOnComplete?: boolean;
   isComplete: (ctx: TutorialCtx) => boolean;
   onEnter?: (ctx: TutorialCtx) => void;
   onComplete?: (ctx: TutorialCtx) => void;

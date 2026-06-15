@@ -101,6 +101,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     },
     zone: tutorialRegionZone("hangar-high"),
     beaconColor: 0x88ff88,
+    autoAdvanceOnComplete: true,
     tour: { phases: HANGAR_REVIEW_TOUR, phaseKey: "hangarReviewPhase", completeKey: "hangarReviewComplete" },
     onEnter(ctx) {
       ctx.snapshot.minerInHigh = isModuleFitted("tu-civilian-miner", "high", ctx.player);

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Client, AppMode } from "../src/state.js";
 import { createLocalInputFrame } from "../src/sim/input.js";
-import { handleMouseDown, handleMouseUp, handleMouseMove, handleContextMenu } from "../src/input/mouse.js";
+import { handleMouseDown, handleMouseUp, handleMouseMove, handleContextMenu, handleWindowBlur } from "../src/input/mouse.js";
 import { handleKeyDown, handleKeyUp } from "../src/input/bindings.js";
 import { initSettings } from "../src/ui/settings/state.js";
 import { makePlayer } from "../src/player/player-data.js";
@@ -10,6 +10,7 @@ import { WorldAccess, getState } from "../src/state-access.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { SpatialGrid } from "../src/utils/spatial.js";
 import { C } from "../src/config/index.js";
+import * as proceduralAudio from "../src/audio/procedural.js";
 
 describe("new game client input", () => {
   beforeEach(() => {
@@ -101,5 +102,18 @@ describe("new game client input", () => {
 
     expect(frame.waypoint).toEqual({ x: 500, y: 0 });
     expect(frame.movementControlMode).toBe("waypoint");
+  });
+
+  it("stops engine nodes and clears held movement input on window blur", () => {
+    Client.keys["w"] = true;
+    Client.keys["boost"] = true;
+    Client.mouse.lmb = true;
+    const stopEngineNodesSpy = vi.spyOn(proceduralAudio, "stopEngineNodes").mockImplementation(() => {});
+    handleWindowBlur();
+    expect(stopEngineNodesSpy).toHaveBeenCalledTimes(1);
+    expect(Client.keys["w"]).toBe(false);
+    expect(Client.keys["boost"]).toBe(false);
+    expect(Client.mouse.lmb).toBe(false);
+    stopEngineNodesSpy.mockRestore();
   });
 });

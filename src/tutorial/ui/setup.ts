@@ -12,6 +12,16 @@ import { renderStep } from "./render.js";
 import { hideTutorialOverlay, showCompleteBanner } from "./lifecycle.js";
 import { getElement, createElement, append, setHtml, onClick, onKeydown } from "../../ui/dom-helpers.js";
 
+const RENDER_REFRESH_EVENTS = [
+  "tutorial:step-change",
+  "tutorial:step-complete",
+  "ui:close-overlays",
+  "tutorial:hangar-tour-change",
+  "tutorial:refinery-tour-change",
+  "station:open",
+  "station:close",
+] as const;
+
 function buildTutorialDom(): HTMLElement | null {
   tutorialState.layerEl = getElement("world-tutorial-layer");
   if (!tutorialState.layerEl) return null;
@@ -74,30 +84,26 @@ function buildTutorialDom(): HTMLElement | null {
   return tutorialState.root;
 }
 
-function bindTutorialEvents(): void {
-  if (!tutorialState.root) return;
-
-  onClick(tutorialState.root, () => {
-    if (tutorialState.layerEl) bringToFront(tutorialState.layerEl);
-  });
-
-  const skipBtn = tutorialState.root.querySelector(".tutorial-skip-btn");
+function bindSkipControls(root: HTMLElement): void {
+  const skipBtn = root.querySelector(".tutorial-skip-btn");
   if (skipBtn) onClick(skipBtn, () => {
     if (tutorialState.confirmEl) tutorialState.confirmEl.hidden = false;
   });
 
-  const confirmNoBtn = tutorialState.root.querySelector(".tutorial-confirm-no");
+  const confirmNoBtn = root.querySelector(".tutorial-confirm-no");
   if (confirmNoBtn) onClick(confirmNoBtn, () => {
     if (tutorialState.confirmEl) tutorialState.confirmEl.hidden = true;
   });
 
-  const confirmYesBtn = tutorialState.root.querySelector(".tutorial-confirm-yes");
+  const confirmYesBtn = root.querySelector(".tutorial-confirm-yes");
   if (confirmYesBtn) onClick(confirmYesBtn, () => {
     if (tutorialState.confirmEl) tutorialState.confirmEl.hidden = true;
     skipTutorial();
     hideTutorialOverlay();
   });
+}
 
+function bindAdvanceControls(): void {
   if (tutorialState.tourNextBtn) onClick(tutorialState.tourNextBtn, () => {
     advanceTour();
     renderStep();
@@ -107,7 +113,9 @@ function bindTutorialEvents(): void {
     advanceStep();
     renderStep();
   });
+}
 
+function bindEnterShortcut(): void {
   onKeydown(document, (e) => {
     const ke = e as KeyboardEvent;
     if (ke.key === "Enter" && tutorialState.visible) {
@@ -119,16 +127,28 @@ function bindTutorialEvents(): void {
       }
     }
   });
+}
 
-  on("tutorial:step-change", () => renderStep());
-  on("tutorial:step-complete", () => renderStep());
-  on("ui:close-overlays", () => renderStep());
-  on("tutorial:hangar-tour-change", () => renderStep());
-  on("tutorial:refinery-tour-change", () => renderStep());
+function bindRenderRefreshEvents(): void {
+  for (const eventName of RENDER_REFRESH_EVENTS) {
+    on(eventName, () => renderStep());
+  }
+}
+
+function bindTutorialEvents(): void {
+  if (!tutorialState.root) return;
+
+  onClick(tutorialState.root, () => {
+    if (tutorialState.layerEl) bringToFront(tutorialState.layerEl);
+  });
+
+  bindSkipControls(tutorialState.root);
+  bindAdvanceControls();
+  bindEnterShortcut();
+  bindRenderRefreshEvents();
+
   on("tutorial:complete", () => showCompleteBanner());
   on("tutorial:skip", () => hideTutorialOverlay());
-  on("station:open", () => renderStep());
-  on("station:close", () => renderStep());
 }
 
 export function initTutorialOverlay(active: boolean) {

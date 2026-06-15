@@ -6,6 +6,7 @@ import { curSys } from "../utils/game.js";
 import { dst } from "../utils/math.js";
 import { gateStableId } from "../utils/warp-gates.js";
 import { clearNav, getState } from "../state-access.js";
+import { stopEngineNodes } from "../audio/procedural.js";
 import { getCanvasElement, isBlockedByUi, getUiPointerBlockSelector, setCursorLock, clearAllInputState } from "./core.js";
 
 let _audioStarted = false;
@@ -188,6 +189,7 @@ export function handleContextMenu(e: Event): void {
 
 export function handleWindowBlur(): void {
   clearAllInputState();
+  stopEngineNodes();
   const canvas = getCanvasElement();
   if (!canvas) return;
   setCursorLock(true, canvas);

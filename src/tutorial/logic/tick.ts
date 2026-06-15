@@ -106,8 +106,8 @@ export function tickTutorial(_dt: number) {
   const handler = STEP_HANDLERS[step.id];
   if (handler) handler(step, nowSec());
 
-  // Hangar review should flow directly into flight once the player undocks.
-  if (step.id === "hangar-high" && step.isComplete(buildCtx())) {
+  // Optional per-step auto-advance for guided flows that should not pause on Next.
+  if (step.autoAdvanceOnComplete && step.isComplete(buildCtx())) {
     advanceStep();
   }
 }
