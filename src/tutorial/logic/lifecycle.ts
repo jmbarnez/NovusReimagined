@@ -17,14 +17,14 @@ import {
   TUTORIAL_STEP_COUNT,
   getCurrentTutorialStep,
   setTutorialGatePulse,
-} from "../data/index.js";
+} from "../data/internal.js";
 import {
   ensureTutorialMission,
   grantTutorialStepReward,
   finalizeTutorialMission,
 } from "../data/mission.js";
 import { syncTutorialMissionProgress } from "../../data/missions.js";
-import { snapshot, setSnapshot } from "./snapshot.js";
+import { getSnapshot, resetSnapshot } from "./snapshot.js";
 import { buildCtx, nowSec } from "./context.js";
 import { syncTutorialStateToServer } from "./sync.js";
 import { bindTutorialEvents } from "./events.js";
@@ -42,13 +42,13 @@ export function initTutorial() {
       py: TUTORIAL_SPAWN.y,
     });
   }
-  setSnapshot({});
+  resetSnapshot();
   if (!getState().player.tutorial.stepEnteredAt) {
     PlayerAccess.setTutorialStepEnteredAt(nowSec());
   }
   const step = TUTORIAL_STEPS[getState().player.tutorial.step];
   step?.onEnter?.(buildCtx());
-  if (step?.id === "fly-gate" || step?.id === "graduation") setTutorialGatePulse(1);
+  if (step?.gatePulse) setTutorialGatePulse(1);
   ensureTutorialMission();
   syncTutorialMissionProgress(getState().player);
   emit("tutorial:step-change", { step: getState().player.tutorial.step });
@@ -63,25 +63,24 @@ export function isCurrentStepComplete(): boolean {
 }
 
 export function getTutorialSnapshot(): Record<string, unknown> {
-  return snapshot;
+  return getSnapshot();
 }
 
 export function goBackStep() {
   const stepIdx = getState().player.tutorial.step;
   if (stepIdx <= 0) return;
 
-  const leavingGraduation = TUTORIAL_STEPS[stepIdx]?.id === "graduation"
-    || TUTORIAL_STEPS[stepIdx]?.id === "fly-gate";
+  const leavingGraduation = TUTORIAL_STEPS[stepIdx]?.gatePulse === true;
   const prevIdx = stepIdx - 1;
 
   PlayerAccess.setTutorialStep(prevIdx);
   PlayerAccess.setTutorialStepEnteredAt(nowSec());
-  setSnapshot({});
+  resetSnapshot();
   resetTutorialTrackState(getState().player);
   const prev = TUTORIAL_STEPS[prevIdx];
   prev.onEnter?.(buildCtx());
 
-  if (prev.id === "fly-gate" || prev.id === "graduation") setTutorialGatePulse(1);
+  if (prev.gatePulse) setTutorialGatePulse(1);
   else if (leavingGraduation) setTutorialGatePulse(0);
 
   emit("tutorial:step-change", { step: prevIdx });
@@ -112,18 +111,18 @@ export function advanceStep() {
   emit("tutorial:step-complete", { step: stepIdx, id: step.id });
 
   const nextIdx = stepIdx + 1;
-  if (nextIdx >= TUTORIAL_STEP_COUNT) {
+  if (step.completesTutorialOnComplete || nextIdx >= TUTORIAL_STEP_COUNT) {
     completeTutorial(false);
     return;
   }
 
   PlayerAccess.setTutorialStep(nextIdx);
   PlayerAccess.setTutorialStepEnteredAt(nowSec());
-  setSnapshot({});
+  resetSnapshot();
   resetTutorialTrackState(getState().player);
   const next = TUTORIAL_STEPS[nextIdx];
   next.onEnter?.(buildCtx());
-  if (next.id === "fly-gate" || next.id === "graduation") setTutorialGatePulse(1);
+  if (next.gatePulse) setTutorialGatePulse(1);
   syncTutorialMissionProgress(getState().player);
   emit("tutorial:step-change", { step: nextIdx });
   savePlayer();

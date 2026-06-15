@@ -74,7 +74,7 @@ export function syncTutorialVisuals(overrideSnapshot?: Record<string, unknown>):
 
   const snapshot = overrideSnapshot ?? getTutorialSnapshot();
 
-  if (step.id === "industry" && Client.stationOpen && stationState.indRailTab !== "queue") {
+  if (step.forceIndustryQueueRail && Client.stationOpen && stationState.indRailTab !== "queue") {
     stationState.indRailTab = "queue";
   }
 

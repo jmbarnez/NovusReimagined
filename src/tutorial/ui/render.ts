@@ -54,7 +54,7 @@ export function updateReadyState(step: NonNullable<ReturnType<typeof getCurrentT
   }
   if (tutorialState.nextBtn) {
     tutorialState.nextBtn.hidden = !ready;
-    setText(tutorialState.nextBtn, step?.id === "graduation" ? t("tutorial.graduate") : t("tutorial.next"));
+    setText(tutorialState.nextBtn, t(step?.nextButtonTextKey ?? "tutorial.next"));
   }
   if (tutorialState.statusEl) {
     tutorialState.statusEl.hidden = !ready;

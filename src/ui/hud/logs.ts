@@ -44,6 +44,7 @@ function renderLogHistory(sink: HTMLElement): void {
 }
 
 function appendLogEntryDirect(sink: HTMLElement, entryData: LogEntry): void {
+  const wasNearBottom = sink.scrollHeight - sink.scrollTop <= sink.clientHeight + 10;
   const entry = createElement("div", `log-entry log-${entryData.type}`);
   setText(entry, entryData.prefix ? `[${entryData.time}] ${entryData.prefix} ${entryData.msg}` : `[${entryData.time}] ${entryData.msg}`);
   append(sink, entry);
@@ -52,8 +53,7 @@ function appendLogEntryDirect(sink: HTMLElement, entryData: LogEntry): void {
     if (sink.firstChild) remove(sink.firstChild as HTMLElement);
   }
 
-  const isNearBottom = sink.scrollHeight - sink.scrollTop <= sink.clientHeight + 10;
-  if (isNearBottom) {
+  if (wasNearBottom) {
     sink.scrollTop = sink.scrollHeight;
   }
 }

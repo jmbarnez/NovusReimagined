@@ -1,6 +1,6 @@
 import { getState } from "../../state-access.js";
 import { dst } from "../../utils/math.js";
-import { snapshot } from "./snapshot.js";
+import { getSnapshot, patchSnapshot } from "./snapshot.js";
 import type { TutorialCtx, TutorialZone } from "../types.js";
 
 export function nowSec(): number {
@@ -19,7 +19,11 @@ export function buildCtx(): TutorialCtx {
       player: p,
       now,
       stepEnteredAt,
-      snapshot,
+      snapshot: getSnapshot(),
+      patchSnapshot,
+      setSnapshotField(key, value) {
+        patchSnapshot({ [key]: value });
+      },
       distToZone(zone: TutorialZone) {
         return dst(this.player.x, this.player.y, zone.x, zone.y);
       },
@@ -32,6 +36,8 @@ export function buildCtx(): TutorialCtx {
   _ctx.player = p;
   _ctx.now = now;
   _ctx.stepEnteredAt = stepEnteredAt;
-  _ctx.snapshot = snapshot;
+  _ctx.snapshot = getSnapshot();
+  _ctx.patchSnapshot = patchSnapshot;
+  _ctx.setSnapshotField = (key, value) => patchSnapshot({ [key]: value });
   return _ctx;
 }

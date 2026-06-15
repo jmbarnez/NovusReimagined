@@ -23,5 +23,11 @@ export {
 } from "./hangar.js";
 export { bindTutorialEvents } from "./events.js";
 export { syncTutorialStateToServer } from "./sync.js";
-export { snapshot, setSnapshot, setTutorialEventsBound, tutorialEventsBound } from "./snapshot.js";
+export {
+  getSnapshot,
+  resetSnapshot,
+  patchSnapshot,
+  isTutorialEventsBound,
+  setTutorialEventsBound,
+} from "./snapshot.js";
 export { buildCtx, nowSec } from "./context.js";

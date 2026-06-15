@@ -4,7 +4,7 @@ import { logEvent } from "../../feedback.js";
 import { t } from "../../utils/i18n.js";
 import { setTutorialGatePulse, getCurrentTutorialStep, isStationHangarTabActive } from "../data/helpers.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/layout.js";
-import { snapshot } from "./snapshot.js";
+import { getSnapshot, patchSnapshot } from "./snapshot.js";
 import { buildCtx, nowSec } from "./context.js";
 import { advanceStep, completeTutorial } from "./lifecycle.js";
 import { beginHangarReviewTour, markHangarStepComplete } from "./hangar.js";
@@ -15,14 +15,15 @@ import type { TutorialStep } from "../types.js";
 const STEP_HANDLERS: Record<string, (step: TutorialStep, now: number) => void | boolean> = {
   "piloting-choice"() {
     const moved = Client.keys["w"] || Client.keys["a"] || Client.keys["s"] || Client.keys["d"];
-    if (moved || Client.waypoint !== null) snapshot.pilotingTried = true;
+    if (moved || Client.waypoint !== null) patchSnapshot({ pilotingTried: true });
   },
 
   "boost-try"() {
-    if (Client.keys["boost"]) snapshot.boostUsed = true;
+    if (Client.keys["boost"]) patchSnapshot({ boostUsed: true });
   },
 
   "fly-academy"() {
+    const snapshot = getSnapshot();
     const visited: string[] = (snapshot.visitedZones as string[] | undefined) ?? [];
     for (const reg of TUTORIAL_LOCAL_REGIONS) {
       if (visited.includes(reg.id)) continue;
@@ -30,7 +31,7 @@ const STEP_HANDLERS: Record<string, (step: TutorialStep, now: number) => void | 
       const dy = getState().player.y - reg.y;
       if (dx * dx + dy * dy < reg.r * reg.r) {
         visited.push(reg.id);
-        snapshot.visitedZones = visited;
+        patchSnapshot({ visitedZones: visited });
         logEvent(t("system.enteringRegion", { name: reg.name }), "system");
       }
     }
@@ -38,7 +39,7 @@ const STEP_HANDLERS: Record<string, (step: TutorialStep, now: number) => void | 
 
   "hangar-high"(_step, now) {
     if (!Client.stationOpen) {
-      snapshot.hangarTabActive = false;
+      patchSnapshot({ hangarTabActive: false });
       markHangarStepComplete(false);
     } else if (isStationHangarTabActive()) {
       beginHangarReviewTour(now);
@@ -46,27 +47,30 @@ const STEP_HANDLERS: Record<string, (step: TutorialStep, now: number) => void | 
   },
 
   "hangar-turrets"(_step, now) {
+    const snapshot = getSnapshot();
     if (!Client.stationOpen) {
-      snapshot.hangarTabActive = false;
+      patchSnapshot({ hangarTabActive: false });
       markHangarStepComplete(true);
     } else if (isStationHangarTabActive()) {
       if (!snapshot.hangarTabActive) {
-        snapshot.hangarTabActive = true;
-        snapshot.hangarCombatPhase = 0;
-        snapshot.hangarCombatPhaseAt = now;
+        patchSnapshot({
+          hangarTabActive: true,
+          hangarCombatPhase: 0,
+          hangarCombatPhaseAt: now,
+        });
       }
-      snapshot.hangarReviewStarted = true;
+      patchSnapshot({ hangarReviewStarted: true });
     }
   },
 
   "industry"() {
     if (!Client.stationOpen) {
-      snapshot.industryTabActive = false;
+      patchSnapshot({ industryTabActive: false });
       return;
     }
     const active = document.getElementById("panel-industry")?.classList.contains("active") ?? false;
-    snapshot.industryTabActive = active;
-    if (active) snapshot.refineryGuideStarted = true;
+    patchSnapshot({ industryTabActive: active });
+    if (active) patchSnapshot({ refineryGuideStarted: true });
   },
 };
 
@@ -84,17 +88,17 @@ export function tickTutorial(_dt: number) {
     const dx = player.x - step.zone.x;
     const dy = player.y - step.zone.y;
     if (dx * dx + dy * dy < step.zone.r * step.zone.r) {
-      snapshot.zoneReached = true;
+      patchSnapshot({ zoneReached: true });
     }
   }
 
   // Gate pulse for specific steps
-  if (step.id === "fly-gate" || step.id === "graduation") {
+  if (step.gatePulse) {
     setTutorialGatePulse(0.6 + 0.4 * Math.sin(nowSec() * 4));
   }
 
-  // Auto-complete graduation when criteria are met
-  if (step.id === "graduation") {
+  // Auto-complete designated terminal steps when criteria are met.
+  if (step.completesTutorialOnComplete) {
     const ctx = buildCtx();
     if (step.isComplete(ctx)) {
       completeTutorial(false);

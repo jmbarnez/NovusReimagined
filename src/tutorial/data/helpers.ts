@@ -8,7 +8,7 @@ import {
   trackTotalArcLength,
   trackArcLengthProgress,
 } from "./layout.js";
-import type { TutorialZone, TutorialStep, TutorialCtx } from "../types.js";
+import type { TutorialZone, TutorialStep, TutorialCtx, TutorialSnapshot } from "../types.js";
 import { TUTORIAL_STEPS } from "./steps.js";
 
 export function buildTutorialCtx(
@@ -17,11 +17,18 @@ export function buildTutorialCtx(
   snapshot: Record<string, unknown>,
   player: Player,
 ): TutorialCtx {
+  const patchSnapshot = (next: Partial<TutorialSnapshot>) => {
+    Object.assign(snapshot, next);
+  };
   return {
     player,
     now,
     stepEnteredAt,
     snapshot,
+    patchSnapshot,
+    setSnapshotField(key, value) {
+      snapshot[key] = value;
+    },
     distToZone(zone) {
       return dst(player.x, player.y, zone.x, zone.y);
     },
@@ -56,7 +63,7 @@ function totalRefineryMaterialVolume(player: TutorialCtx["player"]): number {
 
 export function initTrackProgress(ctx: TutorialCtx, trackId: string): void {
   const track = getTutorialTrackById(trackId);
-  ctx.snapshot.trackProgressTotal = track ? trackTotalArcLength(track) : 0;
+  ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
 }
 
 export function getTutorialStepObjective(step: TutorialStep, snapshot: Record<string, unknown> = {}): string {
@@ -83,6 +90,10 @@ export function hasActiveTourPanel(step: TutorialStep | null, snapshot: Record<s
   return true;
 }
 
+export function isStationTourStep(step: TutorialStep | null): boolean {
+  return step?.stationTourGroup === "hangar" || step?.stationTourGroup === "industry";
+}
+
 export function isStationHangarTabActive(): boolean {
   if (!document.getElementById("station-overlay")) return false;
   return document.getElementById("panel-hangar")?.classList.contains("active") ?? false;
@@ -104,13 +115,13 @@ export function isTutorialExitGateRevealed(p: Player): boolean {
   if (p.sysIdx !== 0) return true;
   if (!p.tutorial?.active) return true;
   const step = getCurrentTutorialStep(p);
-  return step?.id === "fly-gate" || step?.id === "graduation";
+  return step?.revealsTutorialExitGate === true;
 }
 
 export function canWarpThroughTutorialExitGate(p: Player): boolean {
   if (!isTutorialExitGateRevealed(p)) return false;
   if (!p.tutorial?.active) return true;
-  return getCurrentTutorialStep(p)?.id === "graduation";
+  return getCurrentTutorialStep(p)?.allowsTutorialExitWarp === true;
 }
 
 export function shouldShowWarpGate(_g: Gate, _sysIdx: number, _p: Player): boolean {

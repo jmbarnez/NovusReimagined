@@ -168,7 +168,9 @@ describe("tutorial exit gate", () => {
     if (primeIdx < 0) return;
     const tutorialGates = G.GALAXY[0]?.gates ?? [];
     const graduationGates = tutorialGates.filter((gate) => gate.targetSysIdx === primeIdx);
-    const localReturnGates = tutorialGates.filter((gate) => gate.targetSysIdx === undefined);
+    const localReturnGates = tutorialGates.filter((gate) =>
+      gate.targetSysIdx === undefined && (gate.id ?? "").startsWith("gate-sys-0-return-"),
+    );
     const remoteRegionCount = TUTORIAL_LOCAL_REGIONS.filter((reg) => reg.id !== "tut-flight" && Math.hypot(reg.x, reg.y) >= 1).length;
 
     expect(graduationGates).toHaveLength(1);

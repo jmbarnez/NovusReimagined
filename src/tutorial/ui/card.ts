@@ -1,4 +1,4 @@
-import { getCurrentTutorialStep } from "../data/helpers.js";
+import { getCurrentTutorialStep, isStationTourStep } from "../data/helpers.js";
 import { getState } from "../../state-access.js";
 import { Client } from "../../state.js";
 import { viewportW, viewportH } from "../../render/viewport.js";
@@ -66,8 +66,7 @@ export function shouldShowTutorialLayer(): boolean {
   if (tutorialState.showCompleteBannerActive) return true;
   if (!tutorialState.visible || !getState().player?.tutorial?.active) return false;
   if (xpPopupObscuresTutorial()) return false;
-  const stepId = getCurrentTutorialStep(getState().player)?.id;
-  const stationRelevantStep = stepId === "industry" || stepId === "hangar-high" || stepId === "hangar-turrets";
+  const stationRelevantStep = isStationTourStep(getCurrentTutorialStep(getState().player));
   if (Client.stationOpen && !stationRelevantStep && !isCurrentStepComplete()) return false;
   return true;
 }

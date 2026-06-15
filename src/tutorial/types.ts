@@ -6,11 +6,40 @@ export interface TutorialZone {
   r: number;
 }
 
+export interface TutorialSnapshot extends Record<string, unknown> {
+  pilotingTried?: boolean;
+  boostUsed?: boolean;
+  zoneReached?: boolean;
+  visitedZones?: string[];
+  trackProgressTotal?: number;
+  minerInHigh?: boolean;
+  hangarReviewPhase?: number;
+  hangarReviewPhaseAt?: number;
+  hangarReviewStarted?: boolean;
+  hangarReviewComplete?: boolean;
+  hangarTabActive?: boolean;
+  hangarCombatPhase?: number;
+  hangarCombatPhaseAt?: number;
+  ore?: number;
+  dummyCount?: number;
+  craftQueue?: number;
+  hubQueue?: number;
+  materialVolume?: number;
+  refineryMaterialVolume?: number;
+  refineryGuidePhase?: number;
+  refineryGuideStarted?: boolean;
+  refineryGuideComplete?: boolean;
+  industryTabActive?: boolean;
+  sysIdx?: number;
+}
+
 export interface TutorialCtx {
   player: Player;
   now: number;
   stepEnteredAt: number;
-  snapshot: Record<string, unknown>;
+  snapshot: TutorialSnapshot;
+  patchSnapshot: (next: Partial<TutorialSnapshot>) => void;
+  setSnapshotField: <K extends keyof TutorialSnapshot>(key: K, value: TutorialSnapshot[K]) => void;
   distToZone: (zone: TutorialZone) => number;
   inZone: (zone: TutorialZone) => boolean;
 }
@@ -44,9 +73,17 @@ export interface TutorialStep {
   nav?: TutorialNavTarget;
   highlight?: string;
   tour?: TutorialTour;
+  stationTourGroup?: "hangar" | "industry";
   noDimmer?: boolean;
   noCardAnchor?: boolean;
+  forceIndustryQueueRail?: boolean;
   autoAdvanceOnComplete?: boolean;
+  autoCompleteTourOnLastPhase?: boolean;
+  gatePulse?: boolean;
+  revealsTutorialExitGate?: boolean;
+  allowsTutorialExitWarp?: boolean;
+  nextButtonTextKey?: "tutorial.next" | "tutorial.graduate";
+  completesTutorialOnComplete?: boolean;
   isComplete: (ctx: TutorialCtx) => boolean;
   onEnter?: (ctx: TutorialCtx) => void;
   onComplete?: (ctx: TutorialCtx) => void;
