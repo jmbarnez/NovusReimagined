@@ -206,7 +206,7 @@ function buildTutorialStations(sys: System) {
     spin: 0.003,
     isHome: false,
     services: ["market", "industry", "repair"],
-    safeRadius: 800,
+    safeRadius: 350,
     turrets: [],
     structureType: "standard",
     _orbitSpeed: orbitSpeedFor(stationX, stationY, mkRng(sys.id + "-academy-prime-station"), C.WORLD.ORBITS.stationMultiplier * 0.08),
