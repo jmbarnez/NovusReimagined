@@ -35,3 +35,4 @@ tmp*.js
 # Generated icon atlas
 public/assets/icons/atlas.png
 src/data/icon-atlas.manifest.json
+.vite/
