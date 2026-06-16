@@ -114,13 +114,6 @@ export interface Planet {
   ringTilt: number;
   moons: number;
   _orbitSpeed?: number;
-  _gradCache?: {
-    glow: CanvasGradient;
-    base: CanvasGradient;
-    rim: CanvasGradient;
-    shadow: CanvasGradient;
-    atm: CanvasGradient;
-  };
 }
 
 // ── NPCs and asteroids ───────────────────────────────────────────────────
@@ -197,11 +190,6 @@ export interface Enemy {
   shieldHitAngle?: number;
   structureHitGlow?: number;
 
-  // Render scratch state — cached label text metrics, keyed on (name,level)
-  _labelKey?: string;
-  _nameW?: number;
-  _lvlW?: number;
-
   // Temporary module instances stored on the fitting at spawn time
   _tempInstances?: import("./moduleInstance.js").ModuleInstance[];
 
@@ -253,28 +241,6 @@ export interface Asteroid {
   spawnX?: number;
   spawnY?: number;
   _orbitSpeed?: number;
-}
-
-// ── Background silhouettes (gas giants / derelicts) ──────────────────────
-
-export interface Silhouette {
-  kind: "giant" | "derelict";
-  x: number;
-  y: number;
-  r: number;
-  baseHue: number;
-  sat: number;
-  lit: number;
-  hue: number;
-  tilt: number;
-  hasRing: boolean;
-  ringTilt: number;
-  seed: number;
-  _gradCache?: {
-    bg: CanvasGradient;
-    lg: CanvasGradient;
-    rg?: CanvasGradient;
-  };
 }
 
 // ── Hidden Sites ─────────────────────────────────────────────────────────
@@ -363,18 +329,6 @@ export interface System {
   _enemyMap?: Map<string, Enemy>;
   _asteroidMap?: Map<string, Asteroid>;
 
-  // Background / nebula state (lazily populated by render/background.ts)
-  _nebulaSeed?: number;
-  _nebulaBlobs?: unknown[];
-  _ambientTraders?: { x: number; y: number }[];
-  _silhouettes?: Silhouette[];
-  _starGradCache?: {
-    haze: CanvasGradient;
-    bloom: CanvasGradient;
-    photo: CanvasGradient;
-    gg: CanvasGradient;
-    chromo: CanvasGradient;
-  };
 }
 
 // ── Background scenery ───────────────────────────────────────────────────
