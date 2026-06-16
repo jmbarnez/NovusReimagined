@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { _G as G, Client } from "../src/state.js";;
+import { _G as G, Client } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import {
@@ -27,11 +27,10 @@ describe("tutorial tracks", () => {
     ]);
   });
 
-  it("spawn sits on approach lane outside the belt", () => {
-    expect(TUTORIAL_SPAWN.x).toBeGreaterThan(2000);
+  it("spawn sits on approach lane inside the massive belt", () => {
     const sun = getTutorialSunWorldPos();
-    expect(sun.x).toBe(0);
-    expect(Math.hypot(TUTORIAL_SPAWN.x - sun.x, TUTORIAL_SPAWN.y - sun.y)).toBeGreaterThan(600);
+    const spawnDist = Math.hypot(TUTORIAL_SPAWN.x - sun.x, TUTORIAL_SPAWN.y - sun.y);
+    expect(spawnDist).toBeGreaterThan(5000);
     expect(shouldRelocateTutorialStart(TUTORIAL_SPAWN.x, TUTORIAL_SPAWN.y)).toBe(false);
     expect(shouldRelocateTutorialStart(0, 0)).toBe(true);
     expect(shouldRelocateTutorialStart(sun.x + 500, sun.y)).toBe(true);

@@ -69,7 +69,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       rightKey: tutorialKeyStyled("turnRight"),
       brakeKey: tutorialKeyStyled("brake"),
     }),
-    zone: tutorialRegionZone("tut-flight"),
+    zone: tutorialRegionZone("tut-hub"),
     beaconColor: 0x55aaff,
     nav: { trackId: "approach", label: t("world.location.academy"), targetX: 0, targetY: 0 },
     completesTutorialOnComplete: true,
@@ -78,7 +78,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("tut-flight"))
+      return isZoneStepComplete(ctx, tutorialRegionZone("tut-hub"))
         || hasBypassedMining(ctx.player);
     },
   },
@@ -176,7 +176,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     id: "fly-station",
     title: t("tutorial.step.flyStation.title"),
     objective: () => t("tutorial.step.flyStation.objective"),
-    zone: tutorialRegionZone("tut-return"),
+    zone: tutorialRegionZone("tut-hub"),
     beaconColor: 0x88ff88,
     nav: { trackId: "spoke-mining-return", label: t("world.location.academy"), targetX: 0, targetY: 0 },
     onEnter(ctx) {
@@ -184,7 +184,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("tut-return"))
+      return isZoneStepComplete(ctx, tutorialRegionZone("tut-hub"))
         || Client.stationOpen
         || hasBypassedIndustry(ctx.player);
     },
@@ -201,7 +201,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       }
       return t("tutorial.step.industry.objective", { dockKey: tutorialKeyStyled("dock") });
     },
-    zone: tutorialRegionZone("tut-industry"),
+    zone: tutorialRegionZone("tut-hub"),
     beaconColor: 0x88ff88,
     stationTourGroup: "industry",
     forceIndustryQueueRail: true,

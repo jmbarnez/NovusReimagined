@@ -52,14 +52,13 @@ describe("tutorial warp gates", () => {
       gate.targetSysIdx === undefined && (gate.id ?? "").startsWith("gate-sys-0-return-"),
     );
     const remoteRegionCount = TUTORIAL_LOCAL_REGIONS.filter((reg) =>
-      reg.id !== "tut-flight" && Math.hypot(reg.x - TUTORIAL_STATION.x, reg.y - TUTORIAL_STATION.y) >= 1,
+      Math.hypot(reg.x - TUTORIAL_STATION.x, reg.y - TUTORIAL_STATION.y) >= 1,
     ).length;
 
     expect(graduationGates).toHaveLength(1);
     expect(graduationGates[0]?.x).toBe(TUTORIAL_GATE.x);
     expect(graduationGates[0]?.y).toBe(TUTORIAL_GATE.y);
     expect(localReturnGates).toHaveLength(remoteRegionCount);
-    expect(localReturnGates.some((gate) => gate.id === "gate-sys-0-return-tut-flight")).toBe(false);
     expect(tutorialGates.some((gate) => gate.targetSysIdx === primeIdx && Math.hypot(gate.x + 500, gate.y) < 200)).toBe(false);
   });
 
@@ -68,7 +67,7 @@ describe("tutorial warp gates", () => {
     expect(tutorialSys.planets).toHaveLength(1);
     const planet = tutorialSys.planets[0];
     expect(planet.x).toBe(-2200);
-    expect(planet.y).toBe(-500);
+    expect(planet.y).toBe(0);
   });
 
   it("does not generate a return gate from Novus Prime to the tutorial system", () => {

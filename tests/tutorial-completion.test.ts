@@ -45,7 +45,7 @@ describe("fly-mining step completion", () => {
     G.P.x = TUTORIAL_BELT_CENTER.x;
     G.P.y = TUTORIAL_BELT_CENTER.y;
     expect(flyMining.isComplete(ctxAt(G.P.x, G.P.y))).toBe(true);
-    expect(TUTORIAL_MINING_ZONE_R).toBe(600);
+    expect(TUTORIAL_MINING_ZONE_R).toBe(3000);
   });
 
   it("stays complete after leaving zone when zoneReached is latched", () => {

@@ -290,12 +290,12 @@ function spawnAsteroidCluster(
 }
 
 function buildTutorialAsteroids(sys: System, danger: number) {
-  // Thin asteroid belt ring around the star for the tutorial
+  // Massive asteroid belt ring around the star for the tutorial (stress-test culling)
   const commonWeights = C.WORLD.ORE.commonWeights;
   const f = mkRng(sys.id + "belt");
   const ringR = TUTORIAL_BELT_RING_RADIUS;
   const halfThick = TUTORIAL_BELT_THICKNESS / 2;
-  const count = ri(f, 22, 32);
+  const count = ri(f, 400, 600);
 
   for (let i = 0; i < count; i++) {
     const angle = rf(f, 0, TAU);

@@ -1,15 +1,14 @@
 import { t } from "../../utils/i18n.js";
 
 export const TUTORIAL_SUN_DIR = { x: 1, y: 0 } as const;
-export const TUTORIAL_SECTOR = { x: 0, y: 0, radius: 6000, ring: 0 } as const;
+export const TUTORIAL_SECTOR = { x: 0, y: 0, radius: 12000, ring: 0 } as const;
 
 /** Station (orbital outpost near the planet). */
-export const TUTORIAL_STATION = { x: -1550, y: -850 } as const;
+export const TUTORIAL_STATION = { x: -1800, y: 0 } as const;
 export const TUTORIAL_HUB = TUTORIAL_STATION;
-export const TUTORIAL_APPROACH_TARGET = TUTORIAL_STATION;
 
-/** Spawn on the opposite side of the belt from the station. */
-export const TUTORIAL_SPAWN = { x: 4800, y: 0 } as const;
+/** Spawn further from the sun in the same direction as the station. */
+export const TUTORIAL_SPAWN = { x: -5500, y: 0 } as const;
 
 export function getTutorialSunWorldPos() {
   return { x: 0, y: 0 };
@@ -21,22 +20,21 @@ export function shouldRelocateTutorialStart(x: number, y: number) {
   return d < 600;
 }
 
-export const TUTORIAL_FLIGHT_DECK = { x: -200, y: -100 } as const;
-export const TUTORIAL_FLIGHT_DECK_R = 200;
-export const TUTORIAL_START_PLANET = { x: -2200, y: -500 } as const;
-/** Thick asteroid belt ring far from the star. */
-export const TUTORIAL_BELT_RING_CENTER = { x: 0, y: 4800 } as const;
-export const TUTORIAL_BELT_RING_RADIUS = 3000;
-export const TUTORIAL_BELT_THICKNESS = 2000;
+export const TUTORIAL_START_PLANET = { x: -2200, y: 0 } as const;
 
-/** Mining waypoint — a specific point on the ring for nav/track targets. */
-export const TUTORIAL_BELT_CENTER = { x: 0, y: 4800 } as const;
-export const TUTORIAL_MINING_ZONE_R = 600;
+/** Massive asteroid belt ring around the star for stress-testing culling. */
+export const TUTORIAL_BELT_RING_CENTER = { x: 0, y: 0 } as const;
+export const TUTORIAL_BELT_RING_RADIUS = 5000;
+export const TUTORIAL_BELT_THICKNESS = 10000;
+
+/** Mining waypoint — centered in the belt along the station direction. */
+export const TUTORIAL_BELT_CENTER = { x: -4000, y: 0 } as const;
+export const TUTORIAL_MINING_ZONE_R = 3000;
 export const TUTORIAL_GUNNERY_CENTER = { x: 4000, y: 2000 } as const;
 export const TUTORIAL_TRAINING_SITE_X = 4000;
 export const TUTORIAL_TRAINING_SITE_Y = 2000;
 
-export const TUTORIAL_GATE = { x: 2600, y: 200 } as const;
+export const TUTORIAL_GATE = { x: 3500, y: 0 } as const;
 
 export interface TutorialLocalRegion {
   id: string;
@@ -48,13 +46,10 @@ export interface TutorialLocalRegion {
 }
 
 export const TUTORIAL_LOCAL_REGIONS: TutorialLocalRegion[] = [
-  { id: "tut-flight", name: t("world.region.flightDeck"), x: TUTORIAL_HUB.x, y: TUTORIAL_HUB.y, r: 280, stepId: "fly-academy" },
-  { id: "tut-mining", name: t("world.region.miningRange"), x: TUTORIAL_BELT_CENTER.x, y: TUTORIAL_BELT_CENTER.y, r: TUTORIAL_MINING_ZONE_R, stepId: "targeting" },
-  { id: "tut-industry", name: t("world.region.industryBench"), x: TUTORIAL_STATION.x + 420, y: TUTORIAL_STATION.y + 120, r: 280, stepId: "industry" },
-  { id: "tut-gunnery", name: t("world.region.gunneryBay"), x: TUTORIAL_GUNNERY_CENTER.x, y: TUTORIAL_GUNNERY_CENTER.y, r: 160, stepId: "gunnery" },
   { id: "tut-hub", name: t("world.location.academy"), x: TUTORIAL_HUB.x, y: TUTORIAL_HUB.y, r: 280, stepId: "hangar-high" },
-  { id: "tut-return", name: t("world.location.academy"), x: TUTORIAL_HUB.x, y: TUTORIAL_HUB.y, r: 280, stepId: "fly-station" },
-  { id: "tut-gate", name: t("world.region.gateRange"), x: 2300, y: 200, r: 400, stepId: "fly-gate" },
+  { id: "tut-mining", name: t("world.region.miningRange"), x: TUTORIAL_BELT_CENTER.x, y: TUTORIAL_BELT_CENTER.y, r: TUTORIAL_MINING_ZONE_R, stepId: "targeting" },
+  { id: "tut-gunnery", name: t("world.region.gunneryBay"), x: TUTORIAL_GUNNERY_CENTER.x, y: TUTORIAL_GUNNERY_CENTER.y, r: 160, stepId: "gunnery" },
+  { id: "tut-gate", name: t("world.region.gateRange"), x: TUTORIAL_GATE.x, y: TUTORIAL_GATE.y, r: 400, stepId: "fly-gate" },
 ];
 
 export interface TutorialTrackSegment {
@@ -67,31 +62,19 @@ export interface TutorialTrackSegment {
 export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
   {
     id: "approach",
-    points: [
-      TUTORIAL_SPAWN,
-      { x: 2400, y: 0 },
-      TUTORIAL_STATION,
-    ],
+    points: [TUTORIAL_SPAWN, TUTORIAL_STATION],
     halfWidth: 120,
     activeForSteps: ["fly-academy"],
   },
   {
     id: "spoke-mining",
-    points: [
-      TUTORIAL_STATION,
-      { x: 2400, y: 0 },
-      TUTORIAL_BELT_CENTER,
-    ],
+    points: [TUTORIAL_STATION, TUTORIAL_BELT_CENTER],
     halfWidth: 110,
     activeForSteps: ["fly-mining"],
   },
   {
     id: "spoke-mining-return",
-    points: [
-      TUTORIAL_BELT_CENTER,
-      { x: 2400, y: 0 },
-      TUTORIAL_STATION,
-    ],
+    points: [TUTORIAL_BELT_CENTER, TUTORIAL_STATION],
     halfWidth: 110,
     activeForSteps: ["fly-station"],
   },
@@ -99,7 +82,6 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
     id: "spoke-gunnery",
     points: [
       TUTORIAL_STATION,
-      { x: 2400, y: 0 },
       { x: TUTORIAL_TRAINING_SITE_X, y: TUTORIAL_TRAINING_SITE_Y },
     ],
     halfWidth: 120,
@@ -107,11 +89,7 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
   },
   {
     id: "spoke-gate",
-    points: [
-      TUTORIAL_STATION,
-      { x: 2400, y: 0 },
-      TUTORIAL_GATE,
-    ],
+    points: [TUTORIAL_STATION, TUTORIAL_GATE],
     halfWidth: 120,
     activeForSteps: ["fly-gate"],
   },
