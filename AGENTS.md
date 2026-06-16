@@ -16,7 +16,6 @@ Novus uses a **server-authoritative** simulation. Whether the user is playing si
 - Avoid duplication; refactor shared logic into well-named utilities.
 - Write or update tests for any non-trivial change.
 - Leave the codebase cleaner than you found it.
-- **File editing**: Always use the `write` tool instead of `edit`. Before modifying a file, read it first to get the current content, then rewrite the entire file with your changes. This avoids stale content conflicts and ensures clean diffs.
 - **Pixi-only rendering**: All in-game rendering goes through PixiJS. The legacy `<canvas id="c">` and `src/canvas.ts` were removed in the canvas-to-Pixi migration (see `docs/audit-2026-06-01.md`); `src/canvas.js` no longer exists. New code must not import from `canvas.js`, acquire a `CanvasRenderingContext2D`, or call `getElementById("c")`. `tests/canvas-2d-ban.test.ts` enforces this.
 
 ### 3. Self-Criticism & Review
