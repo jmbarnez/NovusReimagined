@@ -69,7 +69,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       rightKey: tutorialKeyStyled("turnRight"),
       brakeKey: tutorialKeyStyled("brake"),
     }),
-    zone: tutorialRegionZone("fly-academy"),
+    zone: tutorialRegionZone("tut-flight"),
     beaconColor: 0x55aaff,
     nav: { trackId: "approach", label: t("world.location.academy"), targetX: 0, targetY: 0 },
     completesTutorialOnComplete: true,
@@ -78,7 +78,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("fly-academy"))
+      return isZoneStepComplete(ctx, tutorialRegionZone("tut-flight"))
         || hasBypassedMining(ctx.player);
     },
   },
@@ -94,7 +94,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       }
       return t("tutorial.step.hangarHigh.objective", { dockKey: tutorialKeyStyled("dock") });
     },
-    zone: tutorialRegionZone("hangar-high"),
+    zone: tutorialRegionZone("tut-hub"),
     beaconColor: 0x88ff88,
     stationTourGroup: "hangar",
     autoAdvanceOnComplete: true,
@@ -120,7 +120,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.flyMining.title"),
 
     objective: () => t("tutorial.step.flyMining.objective", { bar1Key: tutorialBarKeyStyled(0), bar2Key: tutorialBarKeyStyled(1) }),
-    zone: tutorialRegionZone("fly-mining"),
+    zone: tutorialRegionZone("tut-mining"),
     beaconColor: 0x88ccff,
     nav: { trackId: "spoke-mining", label: t("world.region.miningRange"), targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
     onEnter(ctx) {
@@ -128,7 +128,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("fly-mining"))
+      return isZoneStepComplete(ctx, tutorialRegionZone("tut-mining"))
         || hasBypassedMining(ctx.player);
     },
   },
@@ -146,7 +146,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       const lockAction = `<span class="tutorial-keybind">${lockActionText}</span>`;
       return t(key, { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake"), lockAction });
     },
-    zone: tutorialRegionZone("targeting"),
+    zone: tutorialRegionZone("tut-mining"),
     beaconColor: 0x88ccff,
     isComplete(ctx) {
       return hasLockOnAsteroid(ctx.player)
@@ -160,7 +160,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     noDimmer: true,
     noCardAnchor: true,
     objective: () => t("tutorial.step.mining.objective", { bar1Key: tutorialBarKeyStyled(0) }),
-    zone: tutorialRegionZone("mining"),
+    zone: tutorialRegionZone("tut-mining"),
     beaconColor: 0xaa88ff,
     nav: { trackId: "spoke-mining", label: t("world.region.miningRange"), targetX: TUTORIAL_BELT_CENTER.x, targetY: TUTORIAL_BELT_CENTER.y },
     onEnter(ctx) {
@@ -176,7 +176,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     id: "fly-station",
     title: t("tutorial.step.flyStation.title"),
     objective: () => t("tutorial.step.flyStation.objective"),
-    zone: tutorialRegionZone("fly-station"),
+    zone: tutorialRegionZone("tut-return"),
     beaconColor: 0x88ff88,
     nav: { trackId: "spoke-mining-return", label: t("world.location.academy"), targetX: 0, targetY: 0 },
     onEnter(ctx) {
@@ -184,7 +184,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("fly-station"))
+      return isZoneStepComplete(ctx, tutorialRegionZone("tut-return"))
         || Client.stationOpen
         || hasBypassedIndustry(ctx.player);
     },
@@ -201,7 +201,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       }
       return t("tutorial.step.industry.objective", { dockKey: tutorialKeyStyled("dock") });
     },
-    zone: tutorialRegionZone("industry"),
+    zone: tutorialRegionZone("tut-industry"),
     beaconColor: 0x88ff88,
     stationTourGroup: "industry",
     forceIndustryQueueRail: true,
@@ -215,35 +215,17 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
       ].reduce((sum, stack) => sum + stack.volumeM3, 0)
         + (ctx.player.hubOutput.materials ?? []).reduce((sum, stack) => sum + stack.volumeM3, 0);
       ctx.patchSnapshot({
-        craftQueue: ctx.player.craftQueue.length,
-        hubQueue: ctx.player.hubQueue.length,
-        materialVolume,
-        refineryMaterialVolume,
+        craftQueue: ctx.player.hubQueue.length,
+        craftStorage: materialVolume + refineryMaterialVolume,
         refineryGuidePhase: 0,
-        refineryGuideStarted: false,
+        refineryGuidePhaseAt: ctx.now,
         refineryGuideComplete: false,
-        industryTabActive: false,
       });
     },
     isComplete(ctx) {
-      const guideReady = (ctx.snapshot.refineryGuidePhase as number ?? 0) >= 4;
-      const didRefineryWork = ctx.player.craftQueue.length > (ctx.snapshot.craftQueue as number ?? 0)
-        || ctx.player.hubQueue.length > (ctx.snapshot.hubQueue as number ?? 0)
-        || (ctx.player.bulkMaterialsCargo ?? []).reduce((sum, stack) => sum + stack.volumeM3, 0) > (ctx.snapshot.materialVolume as number ?? 0)
-        || ([
-          ...flattenStorageMaterials(ctx.player.refineryStorage),
-          ...(ctx.player.hubDeposit.materials ?? []),
-        ].reduce((sum, stack) => sum + stack.volumeM3, 0)
-          + (ctx.player.hubOutput.materials ?? []).reduce((sum, stack) => sum + stack.volumeM3, 0)) > (ctx.snapshot.refineryMaterialVolume as number ?? 0)
-        || ctx.player.craftQueue.length > 0
-        || ctx.player.hubQueue.length > 0
-        || (ctx.player.bulkMaterialsCargo ?? []).reduce((sum, stack) => sum + stack.volumeM3, 0) > 0
-        || ([
-          ...flattenStorageMaterials(ctx.player.refineryStorage),
-          ...(ctx.player.hubDeposit.materials ?? []),
-        ].reduce((sum, stack) => sum + stack.volumeM3, 0)
-          + (ctx.player.hubOutput.materials ?? []).reduce((sum, stack) => sum + stack.volumeM3, 0)) > 0;
-      return guideReady && didRefineryWork;
+      if (ctx.snapshot.refineryGuideComplete === true) return true;
+      return (Client.stationOpen && (ctx.player.hubQueue?.length ?? 0) > 0)
+        || hasBypassedIndustry(ctx.player);
     },
   },
 ];

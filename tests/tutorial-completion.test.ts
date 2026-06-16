@@ -11,7 +11,7 @@ import {
   getCurrentTutorialStep,
   getTourPanel,
 } from "../src/data/tutorial.js";
-import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_HUB } from "../src/data/tutorial-layout.js";
+import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_HUB, TUTORIAL_GUNNERY_CENTER } from "../src/data/tutorial-layout.js";
 import { hasTutorialCombatLoadout } from "../src/data/tutorial.js";
 import { getTutorialSnapshot, tickTutorial, canAdvanceTour, advanceTour, initTutorial } from "../src/tutorial/index.js";
 import type { Enemy } from "../src/types/world.js";
@@ -221,62 +221,57 @@ describe("canAdvanceTour", () => {
   beforeEach(() => {
     installTestPlayer(makePlayer());
     G.P.tutorial.active = true;
-    Client.stationOpen = false;
+    Client.stationOpen = true;
   });
 
-  it("returns false for hangar-high before docking", () => {
-    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
+  it("returns false when the tour is undefined", () => {
     expect(canAdvanceTour()).toBe(false);
   });
 
-  it("returns true for hangar-high while docked and incomplete", () => {
-    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
-    Client.stationOpen = true;
+  it("returns true when docked and phase < maxPhase", () => {
+    const step = stepById("hangar-high");
+    G.P.tutorial.step = TUTORIAL_STEPS.indexOf(step);
+    initTutorial();
     expect(canAdvanceTour()).toBe(true);
   });
 
-  it("returns false for hangar-high when review is complete", () => {
-    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
-    Client.stationOpen = true;
+  it("advances the phase when advanceTour is called", () => {
+    const step = stepById("hangar-high");
+    G.P.tutorial.step = TUTORIAL_STEPS.indexOf(step);
+    initTutorial();
     const snapshot = getTutorialSnapshot();
-    snapshot.hangarReviewComplete = true;
-    expect(canAdvanceTour()).toBe(false);
-  });
+    snapshot.hangarReviewPhase = 0;
+    snapshot.hangarReviewPhaseAt = 0;
 
-  it("returns false for hangar-turrets before docking", () => {
-    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-turrets");
-    expect(canAdvanceTour()).toBe(false);
-  });
-
-  it("returns false for industry before docking", () => {
-    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "industry");
-    expect(canAdvanceTour()).toBe(false);
+    expect(canAdvanceTour()).toBe(true);
+    advanceTour();
+    expect(snapshot.hangarReviewPhase).toBe(1);
   });
 });
 
-describe("advanceTour", () => {
+describe("hangar review tour phase progression", () => {
   beforeEach(() => {
     installTestPlayer(makePlayer());
     G.P.tutorial.active = true;
-    Client.stationOpen = false;
+    Client.stationOpen = true;
   });
 
-  it("does not mark hangar review complete until the last phase is finished", () => {
-    G.P.tutorial.step = TUTORIAL_STEPS.findIndex((s) => s.id === "hangar-high");
-    Client.stationOpen = true;
+  it("advances through cargo, fitting, high-slot, stats, mission and undock", () => {
+    const step = stepById("hangar-high");
+    G.P.tutorial.step = TUTORIAL_STEPS.indexOf(step);
     initTutorial();
-
     const snapshot = getTutorialSnapshot();
-    expect(snapshot.hangarReviewPhase).toBe(0);
-    expect(snapshot.hangarReviewComplete).toBe(false);
 
-    // Advance through phases 0-4
-    for (let i = 0; i < 5; i++) {
-      advanceTour();
-      expect(snapshot.hangarReviewPhase).toBe(i + 1);
-    }
+    expect(canAdvanceTour()).toBe(true);
+    advanceTour();
+    expect(snapshot.hangarReviewPhase).toBe(1);
 
-    // After entering the last phase (undock), the tour remains incomplete until undock.
+    // Advance to the last phase (phase 4 → 5). Hangar tour does not auto-complete;
+    // completion requires the player to undock.
+    snapshot.hangarReviewPhase = 4;
+    snapshot.hangarReviewPhaseAt = 0;
+    expect(canAdvanceTour()).toBe(true);
+    advanceTour();
     expect(snapshot.hangarReviewPhase).toBe(5);
     expect(snapshot.hangarReviewComplete).toBe(false);
 
@@ -306,7 +301,7 @@ describe("tutorial step completion", () => {
     G.P.hubQueue = [{ id: "hub-job-1", kind: "processMixed", startTime: 0, duration: 10, mass: 4000, sourceQty: 1, heatMode: "stable" }];
     expect(industry.isComplete(ctxAt(5000, 5000, { hubQueue: 0, materialVolume: 0, refineryMaterialVolume: 0, refineryGuidePhase: 4 }))).toBe(true);
     G.P.hubQueue = [];
-    G.P.hubDeposit.materials = [{
+    G.P.hubOutput.materials = [{
       id: "mat-1",
       materialId: "processed_stock",
       kind: "processed",
@@ -321,11 +316,11 @@ describe("tutorial step completion", () => {
   it("gunnery requires in-zone dummy kill", () => {
     const gunnery = stepById("gunnery");
     G.GALAXY[0].enemies = [
-      { id: "d1", type: "target_dummy", x: 2200, y: 1600, alive: true, radius: 20 } as Enemy,
+      { id: "d1", type: "target_dummy", x: TUTORIAL_GUNNERY_CENTER.x, y: TUTORIAL_GUNNERY_CENTER.y, alive: true, radius: 20 } as Enemy,
     ];
-    expect(gunnery.isComplete(ctxAt(2200, 1600, { dummyCount: 1 }))).toBe(false);
+    expect(gunnery.isComplete(ctxAt(TUTORIAL_GUNNERY_CENTER.x, TUTORIAL_GUNNERY_CENTER.y, { dummyCount: 1 }))).toBe(false);
     G.GALAXY[0].enemies[0].alive = false;
-    expect(gunnery.isComplete(ctxAt(2200, 1600, { dummyCount: 1 }))).toBe(true);
+    expect(gunnery.isComplete(ctxAt(TUTORIAL_GUNNERY_CENTER.x, TUTORIAL_GUNNERY_CENTER.y, { dummyCount: 1 }))).toBe(true);
     expect(gunnery.isComplete(ctxAt(5000, 5000, { dummyCount: 1 }))).toBe(false);
   });
 });

@@ -31,7 +31,7 @@ export const COMBAT_TRACK_STEPS: TutorialStep[] = [
       }
       return t("tutorial.step.hangarTurrets.objective", { dockKey: tutorialKeyStyled("dock") });
     },
-    zone: tutorialRegionZone("hangar-turrets"),
+    zone: tutorialRegionZone("tut-hub"),
     beaconColor: 0xff8866,
     stationTourGroup: "hangar",
     tour: { phases: HANGAR_COMBAT_SWAP_TOUR, phaseKey: "hangarCombatPhase", completeKey: "hangarReviewComplete" },
@@ -54,7 +54,7 @@ export const COMBAT_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.flyGunnery.title"),
 
     objective: () => t("tutorial.step.flyGunnery.objective", { bar1Key: tutorialBarKeyStyled(0), bar2Key: tutorialBarKeyStyled(1) }),
-    zone: tutorialRegionZone("fly-gunnery"),
+    zone: tutorialRegionZone("tut-gunnery"),
     beaconColor: 0xff8866,
     nav: { trackId: "spoke-gunnery", label: t("world.region.gunneryBay"), targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
     onEnter(ctx) {
@@ -62,7 +62,7 @@ export const COMBAT_TRACK_STEPS: TutorialStep[] = [
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("fly-gunnery"));
+      return isZoneStepComplete(ctx, tutorialRegionZone("tut-gunnery"));
     },
   },
   {
@@ -70,16 +70,16 @@ export const COMBAT_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.gunnery.title"),
     highlight: "#hud-slots",
     objective: () => t("tutorial.step.gunnery.objective", { bar1Key: tutorialBarKeyStyled(0) }),
-    zone: tutorialRegionZone("gunnery"),
+    zone: tutorialRegionZone("tut-gunnery"),
     beaconColor: 0xff8866,
     nav: { trackId: "spoke-gunnery", label: t("world.region.gunneryBay"), targetX: TUTORIAL_GUNNERY_CENTER.x, targetY: TUTORIAL_GUNNERY_CENTER.y },
     onEnter(ctx) {
-      const zone = tutorialRegionZone("gunnery");
+      const zone = tutorialRegionZone("tut-gunnery");
       ctx.patchSnapshot({ dummyCount: countAliveTargetDummiesInZone(zone, ctx.player) });
     },
     isComplete(ctx) {
       if (ctx.player.kills > 0) return true;
-      const zone = tutorialRegionZone("gunnery");
+      const zone = tutorialRegionZone("tut-gunnery");
       if (!ctx.inZone(zone)) return false;
       const startCount = ctx.snapshot.dummyCount as number ?? 0;
       return (startCount > 0 && countAliveTargetDummiesInZone(zone, ctx.player) < startCount);
@@ -90,7 +90,7 @@ export const COMBAT_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.flyGate.title"),
 
     objective: () => t("tutorial.step.flyGate.objective"),
-    zone: tutorialRegionZone("fly-gate"),
+    zone: tutorialRegionZone("tut-gate"),
     beaconColor: 0xffffff,
     gatePulse: true,
     revealsTutorialExitGate: true,
@@ -100,7 +100,7 @@ export const COMBAT_TRACK_STEPS: TutorialStep[] = [
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
     },
     isComplete(ctx) {
-      return isZoneStepComplete(ctx, tutorialRegionZone("fly-gate"));
+      return isZoneStepComplete(ctx, tutorialRegionZone("tut-gate"));
     },
   },
   {
@@ -108,7 +108,7 @@ export const COMBAT_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.graduation.title"),
     highlight: "#hud-dock-prompt",
     objective: () => t("tutorial.step.graduation.objective", { dockKey: tutorialKeyStyled("dock") }),
-    zone: tutorialRegionZone("graduation"),
+    zone: tutorialRegionZone("tut-hub"),
     beaconColor: 0xffffff,
     gatePulse: true,
     revealsTutorialExitGate: true,

@@ -127,8 +127,12 @@ export function syncPixiTutorialTrack(now: number): void {
 
   const activeStep = getCurrentTutorialStep(getState().player);
   const trackId = activeStep?.nav?.trackId;
+  if (!trackId) {
+    _trackGfx.visible = false;
+    return;
+  }
   const track = getTutorialTrackForNav(trackId);
-  if (!track || !trackId) {
+  if (!track) {
     _trackGfx.visible = false;
     return;
   }

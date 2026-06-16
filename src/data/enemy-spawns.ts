@@ -10,7 +10,7 @@ export interface SpawnZone {
 export const ENEMY_SPAWNS: Record<string, SpawnZone[]> = {
   "sys-0": [
     {
-      x: 2200, y: 1600, radius: 160,
+      x: 4000, y: 2000, radius: 160,
       enemies: [{ type: "target_dummy", count: 3, level: 1 }],
       name: "Target Range",
       respawnSeconds: 15,

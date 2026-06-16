@@ -34,7 +34,7 @@ describe("tutorial tracks", () => {
     expect(Math.hypot(TUTORIAL_SPAWN.x - sun.x, TUTORIAL_SPAWN.y - sun.y)).toBeGreaterThan(600);
     expect(shouldRelocateTutorialStart(TUTORIAL_SPAWN.x, TUTORIAL_SPAWN.y)).toBe(false);
     expect(shouldRelocateTutorialStart(0, 0)).toBe(true);
-    expect(shouldRelocateTutorialStart(-2000, 0)).toBe(true);
+    expect(shouldRelocateTutorialStart(sun.x + 500, sun.y)).toBe(true);
     expect(shouldRelocateTutorialStart(sun.x + 200, sun.y)).toBe(true);
     const approach = getTutorialTrackById("approach")!;
     const prox = distToTrack(approach, TUTORIAL_SPAWN.x, TUTORIAL_SPAWN.y);
