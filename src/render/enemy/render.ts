@@ -12,6 +12,7 @@ import { isVisible } from "../../utils/game.js";
 import { hasCommsEquipment } from "../../player/player-stats.js";
 import { getEnemyTexture, getEnemyLightTextures, lightDirIndex } from "./bake.js";
 import { _nameStyle, _levelStyle, _speechStyle } from "./lifecycle.js";
+import { getSunWorldPos } from "../../utils/sun-position.js";
 
 const TAU = Math.PI * 2;
 
@@ -170,9 +171,9 @@ export function syncPixiEntities(alpha: number, now: number): void {
   const lod = Client.zoom < 0.4;
   const useFixedTickInterpolation = Client.multiplayerRole === "none";
   const lightOn = !lod && Client.settings?.directionalLighting !== false;
-  const _sd = sys?.sunDir ?? 0;
-  const sunWorldX = Math.cos(_sd) * 3500;
-  const sunWorldY = Math.sin(_sd) * 3500;
+  const sunPos = getSunWorldPos(sys);
+  const sunWorldX = sunPos.x;
+  const sunWorldY = sunPos.y;
 
   // Build lock lookup (primary + queue)
   _lockMap.clear();

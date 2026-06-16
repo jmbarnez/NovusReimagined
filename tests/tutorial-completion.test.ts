@@ -11,7 +11,7 @@ import {
   getCurrentTutorialStep,
   getTourPanel,
 } from "../src/data/tutorial.js";
-import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R } from "../src/data/tutorial-layout.js";
+import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_HUB } from "../src/data/tutorial-layout.js";
 import { hasTutorialCombatLoadout } from "../src/data/tutorial.js";
 import { getTutorialSnapshot, tickTutorial, canAdvanceTour, advanceTour, initTutorial } from "../src/tutorial/index.js";
 import type { Enemy } from "../src/types/world.js";
@@ -25,8 +25,8 @@ describe("fly-academy step completion", () => {
 
   it("requires reaching the academy hub zone", () => {
     const flyAcademy = stepById("fly-academy");
-    G.P.x = 0;
-    G.P.y = 0;
+    G.P.x = TUTORIAL_HUB.x;
+    G.P.y = TUTORIAL_HUB.y;
     expect(flyAcademy.isComplete(buildTutorialCtx(0, 0, {}, G.P))).toBe(true);
     G.P.x = TUTORIAL_SPAWN.x;
     G.P.y = TUTORIAL_SPAWN.y;
@@ -43,19 +43,19 @@ describe("fly-mining step completion", () => {
   it("completes near an asteroid offset from belt center", () => {
     const flyMining = stepById("fly-mining");
     G.P.x = TUTORIAL_BELT_CENTER.x;
-    G.P.y = 400;
+    G.P.y = TUTORIAL_BELT_CENTER.y;
     expect(flyMining.isComplete(ctxAt(G.P.x, G.P.y))).toBe(true);
-    expect(TUTORIAL_MINING_ZONE_R).toBeGreaterThanOrEqual(620);
+    expect(TUTORIAL_MINING_ZONE_R).toBe(600);
   });
 
   it("stays complete after leaving zone when zoneReached is latched", () => {
     const flyMining = stepById("fly-mining");
     const zone = flyMining.zone;
     G.P.x = TUTORIAL_BELT_CENTER.x;
-    G.P.y = 0;
+    G.P.y = TUTORIAL_BELT_CENTER.y;
     expect(flyMining.isComplete(ctxAt(G.P.x, G.P.y, { zoneReached: true }))).toBe(true);
-    G.P.x = TUTORIAL_BELT_CENTER.x + zone.r + 200;
-    G.P.y = 0;
+    G.P.x = TUTORIAL_BELT_CENTER.x;
+    G.P.y = TUTORIAL_BELT_CENTER.y + zone.r + 200;
     expect(flyMining.isComplete(ctxAt(G.P.x, G.P.y, { zoneReached: true }))).toBe(true);
     expect(flyMining.isComplete(ctxAt(G.P.x, G.P.y, {}))).toBe(false);
   });
@@ -65,7 +65,7 @@ describe("fly-mining step completion", () => {
     expect(isZoneStepComplete(ctxAt(5000, 5000, {}), zone)).toBe(false);
     expect(isZoneStepComplete(ctxAt(5000, 5000, { zoneReached: true }), zone)).toBe(true);
     G.P.x = TUTORIAL_BELT_CENTER.x;
-    G.P.y = 0;
+    G.P.y = TUTORIAL_BELT_CENTER.y;
     expect(isZoneStepComplete(ctxAt(G.P.x, G.P.y, {}), zone)).toBe(true);
   });
 

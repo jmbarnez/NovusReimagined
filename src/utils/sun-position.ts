@@ -3,11 +3,12 @@ import type { System } from "../types/world.js";
 /** Matches `SUN_DIST` in render/pixi-celestial.ts — distant star anchor in world space. */
 export const SUN_WORLD_DIST = 3500;
 
-export function getSunWorldPos(sys: Pick<System, "sunDir"> | null | undefined): { x: number; y: number } {
+export function getSunWorldPos(sys: Pick<System, "sunDir" | "sunDist"> | null | undefined): { x: number; y: number } {
   const dir = sys?.sunDir ?? 0;
+  const dist = typeof sys?.sunDist === "number" ? sys.sunDist : SUN_WORLD_DIST;
   return {
-    x: Math.cos(dir) * SUN_WORLD_DIST,
-    y: Math.sin(dir) * SUN_WORLD_DIST,
+    x: Math.cos(dir) * dist,
+    y: Math.sin(dir) * dist,
   };
 }
 

@@ -7,8 +7,8 @@ import {
 } from "./controls.js";
 import { t } from "../../utils/i18n.js";
 
-export const TUTORIAL_SUN_DIR = Math.PI;
-const TUTORIAL_SUN_DIST = 2850;
+export const TUTORIAL_SUN_DIR = 0;
+const TUTORIAL_SUN_DIST = 0;
 
 export const TUTORIAL_SECTOR = {
   x: 0,
@@ -18,12 +18,12 @@ export const TUTORIAL_SECTOR = {
   security: 1.0,
 } as const;
 
-export const TUTORIAL_STATION = { x: 0, y: 0 } as const;
-export const TUTORIAL_HUB = { x: 0, y: 0 } as const;
+export const TUTORIAL_STATION = { x: -1550, y: -850 } as const;
+export const TUTORIAL_HUB = TUTORIAL_STATION;
 export const TUTORIAL_APPROACH_TARGET = TUTORIAL_STATION;
 
-const TUTORIAL_SPAWN_DIST_FROM_HUB = 2300;
-const TUTORIAL_SPAWN_SIDE = 320;
+const TUTORIAL_SPAWN_DIST_FROM_HUB = 2500;
+const TUTORIAL_SPAWN_SIDE = 0;
 
 export function getTutorialSunWorldPos(): { x: number; y: number } {
   return {
@@ -42,23 +42,27 @@ export const TUTORIAL_SPAWN = (() => {
 })();
 
 export function shouldRelocateTutorialStart(x: number, y: number): boolean {
-  if (Math.hypot(x, y) < 320) return true;
+  if (Math.hypot(x - TUTORIAL_SPAWN.x, y - TUTORIAL_SPAWN.y) > 900) return true;
   const sun = getTutorialSunWorldPos();
   if (Math.hypot(x - sun.x, y - sun.y) < 400) return true;
-  if (x > 450) return true;
-  if (x < TUTORIAL_SPAWN.x - 450) return true;
   return false;
 }
 
-export const TUTORIAL_FLIGHT_DECK = { x: -1650, y: -140 } as const;
+export const TUTORIAL_FLIGHT_DECK = { x: -200, y: -100 } as const;
 export const TUTORIAL_FLIGHT_DECK_R = 200;
-export const TUTORIAL_START_PLANET = { x: -2480, y: -650 } as const;
-export const TUTORIAL_BELT_CENTER = { x: 2800, y: 0 } as const;
-export const TUTORIAL_MINING_ZONE_R = Math.max(620, C.WORLD.SECTOR.beltSpread.hi + 80);
+export const TUTORIAL_START_PLANET = { x: -2200, y: -500 } as const;
+/** Thin asteroid belt ring around the star (centered on sun). */
+export const TUTORIAL_BELT_RING_CENTER = { x: 0, y: 0 } as const;
+export const TUTORIAL_BELT_RING_RADIUS = 1800;
+export const TUTORIAL_BELT_THICKNESS = 200;
+
+/** Mining waypoint — a specific point on the ring for nav/track targets. */
+export const TUTORIAL_BELT_CENTER = { x: 0, y: 1800 } as const;
+export const TUTORIAL_MINING_ZONE_R = 600;
 export const TUTORIAL_GUNNERY_CENTER = { x: 2200, y: 1600 } as const;
 export const TUTORIAL_TRAINING_SITE_X = 2000;
 export const TUTORIAL_TRAINING_SITE_Y = 2900;
-export const TUTORIAL_GATE = { x: -1400, y: -900 } as const;
+export const TUTORIAL_GATE = { x: 2300, y: 200 } as const;
 
 export interface TutorialLocalRegion {
   id: string;
@@ -71,8 +75,8 @@ export interface TutorialLocalRegion {
 
 export const TUTORIAL_LOCAL_REGIONS: TutorialLocalRegion[] = [
   { id: "tut-flight", name: t("world.region.flightDeck"), x: TUTORIAL_FLIGHT_DECK.x, y: TUTORIAL_FLIGHT_DECK.y, r: TUTORIAL_FLIGHT_DECK_R, stepId: "fly-academy" },
-  { id: "tut-mining", name: t("world.region.miningRange"), x: 2800, y: 0, r: TUTORIAL_MINING_ZONE_R, stepId: "targeting" },
-  { id: "tut-industry", name: t("world.region.industryBench"), x: 0, y: 0, r: 280, stepId: "industry" },
+  { id: "tut-mining", name: t("world.region.miningRange"), x: TUTORIAL_BELT_CENTER.x, y: TUTORIAL_BELT_CENTER.y, r: TUTORIAL_MINING_ZONE_R, stepId: "targeting" },
+  { id: "tut-industry", name: t("world.region.industryBench"), x: TUTORIAL_STATION.x + 420, y: TUTORIAL_STATION.y + 120, r: 280, stepId: "industry" },
   { id: "tut-gunnery", name: t("world.region.gunneryBay"), x: 2200, y: 1600, r: 160, stepId: "gunnery" },
 ];
 
@@ -164,7 +168,7 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
     points: [
       TUTORIAL_SPAWN,
       TUTORIAL_FLIGHT_DECK,
-      HUB,
+      TUTORIAL_STATION,
     ],
     halfWidth: 120,
     activeForSteps: ["fly-academy"],
@@ -317,79 +321,6 @@ function pointAtArcLength(track: TutorialTrackSegment, arcLen: number): { x: num
     acc += segLen;
   }
   return track.points[track.points.length - 1];
-}
-
-function buildEvenBoostGatesForTrackRange(
-  trackId: string,
-  count: number,
-  strength: number,
-  halfWidth = 108,
-  range?: { startArc?: number; endArc?: number; marginArc?: number },
-): TutorialBoostGate[] {
-  const track = getTutorialTrackById(trackId);
-  if (!track) return [];
-
-  const total = trackTotalArcLength(track);
-  if (total <= 0) return [];
-
-  const startArc = Math.max(0, Math.min(total, range?.startArc ?? 0));
-  const endArc = Math.max(0, Math.min(total, range?.endArc ?? total));
-  const marginArc = Math.max(0, range?.marginArc ?? 80);
-
-  const usableStart = Math.min(endArc, startArc + marginArc);
-  const usableEnd = Math.max(startArc, endArc - marginArc);
-  if (usableEnd <= usableStart + 1) return [];
-
-  const step = (usableEnd - usableStart) / (count + 1);
-  const gates: TutorialBoostGate[] = [];
-  for (let i = 0; i < count; i++) {
-    const arc = usableStart + step * (i + 1);
-    const pt = pointAtArcLength(track, arc);
-    const angle = tangentAtArcLength(track, arc);
-    gates.push({
-      id: `${trackId}-gate-${i}`,
-      x: pt.x,
-      y: pt.y,
-      angle,
-      halfWidth,
-      strength,
-      trackId,
-      cooldownS: 4,
-      pillarHeight: 150,
-    });
-  }
-  return gates;
-}
-
-export const TUTORIAL_BOOST_GATES: TutorialBoostGate[] = [
-  ...buildEvenBoostGatesForTrackRange("approach", 4, 200, 108, {
-    startArc: segmentLength(TUTORIAL_SPAWN.x, TUTORIAL_SPAWN.y, TUTORIAL_FLIGHT_DECK.x, TUTORIAL_FLIGHT_DECK.y),
-  }),
-  ...buildEvenBoostGatesForTrackRange("spoke-mining", 4, 180, 108, {
-    endArc: segmentLength(HUB.x, HUB.y, TUTORIAL_BELT_CENTER.x, TUTORIAL_BELT_CENTER.y) - 500,
-    marginArc: 340,
-  }),
-  ...buildEvenBoostGatesForTrackRange("spoke-gunnery", 4, 180, 108, { marginArc: 340 }),
-  ...buildEvenBoostGatesForTrackRange("spoke-gate", 4, 190, 108, { marginArc: 340 }),
-];
-
-export function getBoostGatesForTrack(trackId: string | undefined): TutorialBoostGate[] {
-  if (!trackId) return [];
-  const resolved = trackId === "spoke-mining-return" ? "spoke-mining" : trackId;
-  return TUTORIAL_BOOST_GATES.filter((g) => g.trackId === resolved);
-}
-
-export function getBoostPadsForTrack(trackId: string | undefined): TutorialBoostGate[] {
-  return getBoostGatesForTrack(trackId);
-}
-
-export function getBoostGatesForStep(stepId: string): TutorialBoostGate[] {
-  const track = TUTORIAL_TRACKS.find((t) => t.activeForSteps.includes(stepId));
-  return track ? getBoostGatesForTrack(track.id) : [];
-}
-
-export function getBoostPadsForStep(stepId: string): TutorialBoostGate[] {
-  return getBoostGatesForStep(stepId);
 }
 
 export function snapToTrackCenterline(track: TutorialTrackSegment, px: number, py: number): { x: number; y: number } {

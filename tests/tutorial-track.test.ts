@@ -4,7 +4,6 @@ import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import {
   TUTORIAL_TRACKS,
-  TUTORIAL_BOOST_GATES,
   TUTORIAL_SPAWN,
   trackTotalArcLength,
   trackArcLengthProgress,
@@ -15,7 +14,6 @@ import {
   shouldRelocateTutorialStart,
 } from "../src/data/tutorial-layout.js";
 import { canModifyFitting } from "../src/utils/fitting-gate.js";
-import { detectGateCrossing, getBoostGatesForTrack } from "../src/data/tutorial-layout.js";
 import { updateTutorialTrack } from "../src/physics/tutorial-track.js";
 
 describe("tutorial tracks", () => {
@@ -29,15 +27,14 @@ describe("tutorial tracks", () => {
     ]);
   });
 
-  it("spawn sits on approach lane opposite the sun", () => {
-    expect(TUTORIAL_SPAWN.x).toBeLessThan(-1800);
-    expect(TUTORIAL_SPAWN.x).toBeGreaterThan(-2800);
+  it("spawn sits on approach lane outside the belt", () => {
+    expect(TUTORIAL_SPAWN.x).toBeGreaterThan(2000);
     const sun = getTutorialSunWorldPos();
-    expect(sun.x).toBeLessThan(TUTORIAL_SPAWN.x);
+    expect(sun.x).toBe(0);
     expect(Math.hypot(TUTORIAL_SPAWN.x - sun.x, TUTORIAL_SPAWN.y - sun.y)).toBeGreaterThan(600);
     expect(shouldRelocateTutorialStart(TUTORIAL_SPAWN.x, TUTORIAL_SPAWN.y)).toBe(false);
     expect(shouldRelocateTutorialStart(0, 0)).toBe(true);
-    expect(shouldRelocateTutorialStart(2800, 0)).toBe(true);
+    expect(shouldRelocateTutorialStart(-2000, 0)).toBe(true);
     expect(shouldRelocateTutorialStart(sun.x + 200, sun.y)).toBe(true);
     const approach = getTutorialTrackById("approach")!;
     const prox = distToTrack(approach, TUTORIAL_SPAWN.x, TUTORIAL_SPAWN.y);
@@ -48,7 +45,8 @@ describe("tutorial tracks", () => {
   it("arc length progress increases toward track end", () => {
     const approach = getTutorialTrackById("approach")!;
     const start = trackArcLengthProgress(approach, TUTORIAL_SPAWN.x, TUTORIAL_SPAWN.y);
-    const end = trackArcLengthProgress(approach, 0, 0);
+    const station = approach.points[approach.points.length - 1];
+    const end = trackArcLengthProgress(approach, station.x, station.y);
     expect(start).toBeLessThan(0.15);
     expect(end).toBeGreaterThan(0.85);
   });
@@ -66,39 +64,6 @@ describe("tutorial tracks", () => {
     expect(getActiveTutorialTracks("industry")).toEqual([]);
     expect(getActiveTutorialTracks("fly-gunnery").map((t) => t.id)).toEqual(["spoke-gunnery"]);
   });
-
-  it("detectGateCrossing requires passing between pillars with forward speed", () => {
-    const gate = getBoostGatesForTrack("approach")[0]!;
-    const nx = Math.cos(gate.angle);
-    const ny = Math.sin(gate.angle);
-    expect(detectGateCrossing(gate, gate.x, gate.y, gate.x - nx * 30, gate.y - ny * 30, nx * 40, ny * 40)).toBe(true);
-    expect(detectGateCrossing(gate, gate.x, gate.y, gate.x - nx * 30, gate.y - ny * 30, 0, 0)).toBe(false);
-    const wide = gate.halfWidth * 1.5;
-    const px = Math.cos(gate.angle + Math.PI / 2);
-    const py = Math.sin(gate.angle + Math.PI / 2);
-    expect(detectGateCrossing(
-      gate,
-      gate.x + px * wide,
-      gate.y + py * wide,
-      gate.x + px * wide - nx * 30,
-      gate.y + py * wide - ny * 30,
-      nx * 40,
-      ny * 40,
-    )).toBe(false);
-  });
-
-  it("keeps boost gates centered and aligned on their guide tracks", () => {
-    for (const gate of TUTORIAL_BOOST_GATES) {
-      const track = getTutorialTrackById(gate.trackId)!;
-      const prox = distToTrack(track, gate.x, gate.y);
-      const angleDelta = Math.atan2(Math.sin(gate.angle - prox.tangentAngle), Math.cos(gate.angle - prox.tangentAngle));
-      expect(prox.dist).toBeLessThan(1);
-      expect(Math.abs(angleDelta)).toBeLessThan(0.001);
-      if (gate.trackId !== "approach") {
-        expect(prox.arcLength).toBeGreaterThan(300);
-      }
-    }
-  });
 });
 
 describe("gate boost particles", () => {
@@ -108,81 +73,13 @@ describe("gate boost particles", () => {
     G.pendingEffects = [];
   });
 
-  it("queues gateBoostParticles effect when local player crosses a boost gate", () => {
-    (globalThis as { IS_SERVER?: boolean }).IS_SERVER = true;
-    try {
-      const gate = getBoostGatesForTrack("approach")[0]!;
-      const nx = Math.cos(gate.angle);
-      const ny = Math.sin(gate.angle);
-
-      // Place player behind gate, moving forward through it
-      G.P.px = gate.x - nx * 30;
-      G.P.py = gate.y - ny * 30;
-      G.P.x = gate.x + nx * 10;
-      G.P.y = gate.y + ny * 10;
-      G.P.vx = nx * 40;
-      G.P.vy = ny * 40;
-      G.P.sysIdx = 0;
-
-      updateTutorialTrack(0.016, G.P);
-
-      const effects = G.pendingEffects.filter((e) => e.type === "gateBoostParticles");
-      expect(effects).toHaveLength(1);
-      expect(effects[0]!.payload).toMatchObject({
-        gateId: gate.id,
-        x: gate.x,
-        y: gate.y,
-        angle: gate.angle,
-        halfWidth: gate.halfWidth,
-        isForward: true,
-      });
-    } finally {
-      (globalThis as { IS_SERVER?: boolean }).IS_SERVER = false;
-    }
-  });
-
-  it("queues gateBoostParticles with isForward false for backward crossing", () => {
-    (globalThis as { IS_SERVER?: boolean }).IS_SERVER = true;
-    try {
-      const gate = getBoostGatesForTrack("approach")[0]!;
-      const nx = Math.cos(gate.angle);
-      const ny = Math.sin(gate.angle);
-
-      // Place player in front of gate, moving backward through it
-      G.P.px = gate.x + nx * 30;
-      G.P.py = gate.y + ny * 30;
-      G.P.x = gate.x - nx * 10;
-      G.P.y = gate.y - ny * 10;
-      G.P.vx = -nx * 40;
-      G.P.vy = -ny * 40;
-      G.P.sysIdx = 0;
-
-      updateTutorialTrack(0.016, G.P);
-
-      const effects = G.pendingEffects.filter((e) => e.type === "gateBoostParticles");
-      expect(effects).toHaveLength(1);
-      expect(effects[0]!.payload?.isForward).toBe(false);
-    } finally {
-      (globalThis as { IS_SERVER?: boolean }).IS_SERVER = false;
-    }
-  });
-
-  it("does not queue effects during client-side prediction", () => {
-    (globalThis as { IS_SERVER?: boolean }).IS_SERVER = false;
-    const gate = getBoostGatesForTrack("approach")[0]!;
-    const nx = Math.cos(gate.angle);
-    const ny = Math.sin(gate.angle);
-
-    G.P.px = gate.x - nx * 30;
-    G.P.py = gate.y - ny * 30;
-    G.P.x = gate.x + nx * 10;
-    G.P.y = gate.y + ny * 10;
-    G.P.vx = nx * 40;
-    G.P.vy = ny * 40;
+  it("no longer queues effects after boost gates were removed", () => {
     G.P.sysIdx = 0;
-
+    G.P.x = 0;
+    G.P.y = 0;
+    G.P.vx = 100;
+    G.P.vy = 0;
     updateTutorialTrack(0.016, G.P);
-
     const effects = G.pendingEffects.filter((e) => e.type === "gateBoostParticles");
     expect(effects).toHaveLength(0);
   });

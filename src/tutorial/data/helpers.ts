@@ -27,7 +27,7 @@ export function buildTutorialCtx(
     snapshot,
     patchSnapshot,
     setSnapshotField(key, value) {
-      snapshot[key] = value;
+      (snapshot as TutorialSnapshot)[key] = value;
     },
     distToZone(zone) {
       return dst(player.x, player.y, zone.x, zone.y);

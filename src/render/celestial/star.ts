@@ -5,9 +5,6 @@ import { Container, Sprite, Graphics, Texture, ImageSource } from "pixi.js";
 import { Client } from "../../state.js";
 import { pixiDpr } from "../../pixi.js";
 
-/** Distance from world origin to the system star, in world units. */
-export const SUN_DIST = 3500;
-
 export const STAR_CONFIG: Record<string, {
   radius: number;
   coreColor: string;
@@ -188,15 +185,15 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${rgb},${alpha})`;
 }
 
-export function initStarSprites(parent: Container, sunDir: number, starClass: string): void {
+export function initStarSprites(parent: Container, sunDir: number, sunDist: number, starClass: string): void {
   const cfg = getStarCfg(starClass);
   const r = cfg.radius;
 
   // Bake textures
   bakeStarTextures(starClass);
 
-  const sunX = Math.cos(sunDir) * SUN_DIST;
-  const sunY = Math.sin(sunDir) * SUN_DIST;
+  const sunX = Math.cos(sunDir) * sunDist;
+  const sunY = Math.sin(sunDir) * sunDist;
 
   // Star Container & Sprites
   _starContainer = new Container();
@@ -247,16 +244,18 @@ export function initStarSprites(parent: Container, sunDir: number, starClass: st
   _starContainer.addChild(_starChromoSprite);
 }
 
-export function syncStarSprites(now: number, sunDir: number, starClass: string, visible: boolean): void {
+export function syncStarSprites(now: number, sunDir: number, sunDist: number, starClass: string, visible: boolean): void {
   if (!_starContainer) return;
 
   const cfg = getStarCfg(starClass);
   const r = cfg.radius;
 
-  const sunX = Math.cos(sunDir) * SUN_DIST;
-  const sunY = Math.sin(sunDir) * SUN_DIST;
+  const sunX = Math.cos(sunDir) * sunDist;
+  const sunY = Math.sin(sunDir) * sunDist;
 
   _starContainer.visible = visible;
+  _starContainer.x = sunX;
+  _starContainer.y = sunY;
 
   if (visible) {
     const pulse = (1 + 0.06 * Math.sin(now * 0.0006)) * (Client.settings?.bloomIntensity ?? 1.0);

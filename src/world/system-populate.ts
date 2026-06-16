@@ -3,6 +3,9 @@ import { buildEnemyFromSpawn } from "../utils/spawn.js";
 import { ENEMY_SPAWNS } from "../data/enemy-spawns.js";
 import {
   TUTORIAL_STATION,
+  TUTORIAL_BELT_RING_CENTER,
+  TUTORIAL_BELT_RING_RADIUS,
+  TUTORIAL_BELT_THICKNESS,
   TUTORIAL_BELT_CENTER,
   TUTORIAL_GATE,
   TUTORIAL_START_PLANET,
@@ -192,18 +195,21 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
 }
 
 function buildTutorialStations(sys: System) {
+  const stationX = TUTORIAL_STATION.x;
+  const stationY = TUTORIAL_STATION.y;
   sys.stations.push({
-    id: `station-${sys.id}-academy`,
-    name: "S.T.A.R.T Academy",
-    x: TUTORIAL_STATION.x,
-    y: TUTORIAL_STATION.y,
-    radius: C.WORLD.STATIONS.otherRadius,
+    id: `station-${sys.id}-academy-prime`,
+    name: "Academy Prime Station",
+    x: stationX,
+    y: stationY,
+    radius: 25,
     spin: 0.003,
     isHome: false,
     services: ["market", "industry", "repair"],
     safeRadius: 800,
     turrets: [],
-    structureType: "home",
+    structureType: "standard",
+    _orbitSpeed: orbitSpeedFor(stationX, stationY, mkRng(sys.id + "-academy-prime-station"), C.WORLD.ORBITS.stationMultiplier * 0.08),
   });
 }
 
@@ -214,16 +220,17 @@ function ensureTutorialPlanets(sys: System) {
   if (alreadyHasStartPlanet) return;
 
   sys.planets.push({
+    name: "Academy Prime",
     x: TUTORIAL_START_PLANET.x,
     y: TUTORIAL_START_PLANET.y,
-    radius: 170,
+    radius: 510,
     hue: 205,
     sat: 58,
     lit: 34,
     hasRing: true,
     ringTilt: 0.28,
     moons: 0,
-    _orbitSpeed: 0,
+    _orbitSpeed: orbitSpeedFor(TUTORIAL_START_PLANET.x, TUTORIAL_START_PLANET.y, mkRng(sys.id + "-academy-prime"), C.WORLD.ORBITS.planetMultiplier * 0.08),
   });
 }
 
@@ -283,16 +290,43 @@ function spawnAsteroidCluster(
 }
 
 function buildTutorialAsteroids(sys: System, danger: number) {
-  // Ensure tutorial zone asteroids only contain iron ore for the mining tutorial
+  // Thin asteroid belt ring around the star for the tutorial
   const commonWeights = C.WORLD.ORE.commonWeights;
-  const beltClusters = [
-    { cx: TUTORIAL_BELT_CENTER.x, cy: TUTORIAL_BELT_CENTER.y, count: { min: 8, max: 12 } },
-    { cx: TUTORIAL_BELT_CENTER.x + 600, cy: TUTORIAL_BELT_CENTER.y + 200, count: { min: 5, max: 8 } },
-    { cx: TUTORIAL_BELT_CENTER.x - 400, cy: TUTORIAL_BELT_CENTER.y - 300, count: { min: 5, max: 8 } },
-  ];
+  const f = mkRng(sys.id + "belt");
+  const ringR = TUTORIAL_BELT_RING_RADIUS;
+  const halfThick = TUTORIAL_BELT_THICKNESS / 2;
+  const count = ri(f, 22, 32);
 
-  for (const cluster of beltClusters) {
-    spawnAsteroidCluster(sys, cluster.cx, cluster.cy, `belt-${cluster.cx}`, mkRng(sys.id + "belt"), danger, cluster.count, commonWeights);
+  for (let i = 0; i < count; i++) {
+    const angle = rf(f, 0, TAU);
+    const radius = ringR + rf(f, -halfThick, halfThick);
+    const x = Math.round(TUTORIAL_BELT_RING_CENTER.x + Math.cos(angle) * radius);
+    const y = Math.round(TUTORIAL_BELT_RING_CENTER.y + Math.sin(angle) * radius);
+    const maxHp = Math.floor(rf(f, C.WORLD.ASTEROIDS.hpMin, C.WORLD.ASTEROIDS.hpMax) * (1 + danger * C.WORLD.ASTEROIDS.hpDangerMultiplier));
+    const rad = rf(f, C.WORLD.ASTEROIDS.radiusMin, C.WORLD.ASTEROIDS.radiusMax);
+    const composition = randomAsteroidComposition(commonWeights, f);
+    const astName = asteroidDisplayName(composition);
+    const sAngle = rf(f, 0, TAU);
+    const sVel = rf(f, C.WORLD.ASTEROIDS.spinVelMin, C.WORLD.ASTEROIDS.spinVelMax);
+    rf(f, 0, TAU); // keep PRNG stream aligned
+    sys.asteroids.push({
+      id: `ast-${sys.id}-belt-${i}`,
+      x, y,
+      px: x, py: y, vx: 0, vy: 0,
+      radius: rad,
+      shape: makeAstShape(mkRng(sys.id + `belt${i}`)),
+      hp: maxHp, maxHp,
+      composition,
+      name: astName,
+      richness: 1 + danger * C.WORLD.ASTEROIDS.richnessDangerMultiplier,
+      depleted: false, respawnTimer: 0,
+      spinAngle: sAngle,
+      spinVel: sVel,
+      prevSpin: sAngle,
+      tintHue: Math.round(rf(f, C.WORLD.ASTEROIDS.tintHueMin, C.WORLD.ASTEROIDS.tintHueMax)),
+      tintSat: Math.round(rf(f, C.WORLD.ASTEROIDS.tintSatMin, C.WORLD.ASTEROIDS.tintSatMax)),
+      _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.asteroidMultiplier),
+    });
   }
 }
 

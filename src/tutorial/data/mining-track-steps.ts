@@ -72,13 +72,13 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     zone: tutorialRegionZone("fly-academy"),
     beaconColor: 0x55aaff,
     nav: { trackId: "approach", label: t("world.location.academy"), targetX: 0, targetY: 0 },
+    completesTutorialOnComplete: true,
     onEnter(ctx) {
       const track = getTutorialTrackById("approach");
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
     },
     isComplete(ctx) {
       return isZoneStepComplete(ctx, tutorialRegionZone("fly-academy"))
-        || Client.stationOpen
         || hasBypassedMining(ctx.player);
     },
   },

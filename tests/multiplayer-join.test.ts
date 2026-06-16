@@ -112,6 +112,7 @@ describe("connectToRemote", () => {
     restored.pilotName = "Restored Pilot";
     restored.x = 321;
     restored.y = 654;
+    restored.tutorial.active = false;
     localStorage.setItem(SAVE_KEY, JSON.stringify(restored));
 
     expect(restoreGameFromSave()).toBe(true);
@@ -143,6 +144,7 @@ describe("connectToRemote", () => {
     restored.pilotName = "Retry Pilot";
     restored.x = 777;
     restored.y = 888;
+    restored.tutorial.active = false;
     localStorage.setItem(SAVE_KEY, JSON.stringify(restored));
 
     expect(restoreGameFromSave()).toBe(true);

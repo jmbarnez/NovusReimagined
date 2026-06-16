@@ -17,7 +17,7 @@ export function drawGenericBody(cx: CanvasRenderingContext2D, half: number, st: 
 
   // 1. Clean outer ring
   {
-    const ringR = R * 1.05;
+    const ringR = R * 0.78;
     const ringW = 10 * S;
 
     cx.save();
@@ -48,7 +48,7 @@ export function drawGenericBody(cx: CanvasRenderingContext2D, half: number, st: 
 
   // 2. Minimal green status slits
   {
-    const ringR = R * 1.05;
+    const ringR = R * 0.78;
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * TAU;
       const slitA = a - 0.04;
@@ -63,8 +63,8 @@ export function drawGenericBody(cx: CanvasRenderingContext2D, half: number, st: 
 
   // 3. Three clean struts
   {
-    const hubR = R * 0.48;
-    const ringInner = R * 1.05 - 5 * S;
+    const hubR = R * 0.55;
+    const ringInner = R * 0.78 - 5 * S;
     for (let i = 0; i < 3; i++) {
       const a = (i / 3) * TAU + Math.PI / 6;
       const c = Math.cos(a), s = Math.sin(a);
@@ -83,7 +83,7 @@ export function drawGenericBody(cx: CanvasRenderingContext2D, half: number, st: 
 
   // 4. Sleek central hub
   {
-    const hubR = R * 0.48;
+    const hubR = R * 0.55;
 
     cx.save();
     cx.shadowColor = "rgba(0,0,0,0.45)";

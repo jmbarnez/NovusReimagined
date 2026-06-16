@@ -1,11 +1,9 @@
 import { mkRng, rf, ri } from "../utils/math.js";
-import {
-  TUTORIAL_SECTOR,
-  TUTORIAL_SUN_DIR,
-} from "../data/tutorial-layout.js";
+import { TUTORIAL_SECTOR } from "../data/tutorial-layout.js";
 import { TAU } from "../constants.js";
 import { C } from "../config/index.js";
 import type { System } from "../types/world.js";
+import { SUN_WORLD_DIST } from "../utils/sun-position.js";
 
 export { TUTORIAL_SECTOR } from "../data/tutorial-layout.js";
 
@@ -64,8 +62,9 @@ function makeGalaxySystem(
 ): System {
   const visRng = mkRng(`sys-vis-${idx}`);
   const archetype = pickArchetype(visRng, ring);
-  const starClass = pickStarClass(visRng, ring);
-  const sunDir = idx === 0 ? TUTORIAL_SUN_DIR : visRng() * TAU;
+  const starClass = idx === 0 ? "B" : pickStarClass(visRng, ring);
+  const sunDir = idx === 0 ? 0 : visRng() * TAU;
+  const sunDist = idx === 0 ? 0 : SUN_WORLD_DIST;
   const tintRGB = tintFor(starClass);
   return {
     idx, id: `sys-${idx}`,
@@ -87,6 +86,7 @@ function makeGalaxySystem(
     archetype,
     starClass,
     sunDir,
+    sunDist,
     tintRGB,
     flareTint: 0,
     flareTimer: rf(visRng, 18, 55),

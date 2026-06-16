@@ -10,6 +10,7 @@ import { isVisible } from "../../utils/game.js";
 import { getNebulaDensity } from "../pixi-background.js";
 import { displayShipAngle } from "../display-orientation.js";
 import { getShipTexture, getShipLightTextures, getDotTexture } from "./bake.js";
+import { getSunWorldPos } from "../../utils/sun-position.js";
 
 const TAU = Math.PI * 2;
 const HULL_SCALE = 1.0;
@@ -178,8 +179,8 @@ function syncRemotePlayers(alpha: number, now: number): void {
     bundle.light.scale.set(HULL_SCALE * lodScale / Client.zoom);
     if (Client.settings?.directionalLighting !== false && bundle.lightTex.length) {
       const sys = state.GALAXY?.[remote.sysIdx ?? 0];
-      const sunSeed = sys?.sunDir ?? 0;
-      const sunDir = Math.atan2(Math.sin(sunSeed) * 3500 - iy, Math.cos(sunSeed) * 3500 - ix);
+      const sunPos = getSunWorldPos(sys);
+      const sunDir = Math.atan2(sunPos.y - iy, sunPos.x - ix);
       let lightIdx = Math.round(((sunDir - ia) / TAU) * LIGHT_DIRS) % LIGHT_DIRS;
       if (lightIdx < 0) lightIdx += LIGHT_DIRS;
       bundle.light.texture = bundle.lightTex[lightIdx];
@@ -248,8 +249,8 @@ export function syncPixiPlayer(alpha: number, now: number): void {
   hullLightSprite.scale.set(HULL_SCALE * lodScale / Client.zoom);
   if (Client.settings?.directionalLighting !== false && _shipLightTex.length) {
     const sys = getState().GALAXY?.[player.sysIdx ?? 0];
-    const _sd = sys?.sunDir ?? 0;
-    const sunDir = Math.atan2(Math.sin(_sd) * 3500 - iy, Math.cos(_sd) * 3500 - ix);
+    const sunPos = getSunWorldPos(sys);
+    const sunDir = Math.atan2(sunPos.y - iy, sunPos.x - ix);
     let di = Math.round(((sunDir - angle) / TAU) * LIGHT_DIRS) % LIGHT_DIRS;
     if (di < 0) di += LIGHT_DIRS;
     hullLightSprite.texture = _shipLightTex[di];

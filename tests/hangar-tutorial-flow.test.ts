@@ -3,6 +3,7 @@ import { _G as G, Client } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { TUTORIAL_STEPS } from "../src/data/tutorial.js";
+import { TUTORIAL_HUB } from "../src/data/tutorial-layout.js";
 import { initTutorial, getTutorialSnapshot } from "../src/tutorial/index.js";
 import { initTutorialOverlay } from "../src/tutorial/ui/setup.js";
 import { tutorialState } from "../src/tutorial/ui/state.js";
@@ -51,12 +52,16 @@ describe("hangar tutorial docked flow", () => {
     initTutorial();
     initTutorialOverlay(true);
 
+    // Place player in the fly-academy zone so the step is complete
+    G.P.x = TUTORIAL_HUB.x;
+    G.P.y = TUTORIAL_HUB.y;
+
     // Dock during fly-academy
     Client.stationOpen = true;
     emit("station:open", { station: { id: "test", name: "Test", x: 0, y: 0, radius: 100, spin: 0, isHome: false, services: ["market", "repair"], safeRadius: 200, turrets: [] } });
     renderStep();
 
-    // fly-academy now shows the card when docked because the step is complete
+    // fly-academy shows the card when in-zone and docked
     expect(tutorialState.root!.style.display).toBe("block");
 
     // Now advance to hangar-high (as if user pressed Next while undocked, then redocked)

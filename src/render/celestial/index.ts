@@ -8,7 +8,6 @@ import {
   initStarSprites,
   syncStarSprites,
   destroyStarSprites,
-  SUN_DIST,
   STAR_CONFIG,
   getStarCfg,
   hexToRgb,
@@ -25,8 +24,9 @@ import {
   syncBorderSprites,
   destroyBorderSprites,
 } from "./border.js";
+import { getSunWorldPos, SUN_WORLD_DIST } from "../../utils/sun-position.js";
 
-export { SUN_DIST, STAR_CONFIG, getStarCfg, hexToRgb, shadeHex } from "./star.js";
+export { STAR_CONFIG, getStarCfg, hexToRgb, shadeHex } from "./star.js";
 
 export function refreshCelestialFonts() {
   refreshWorldLabelTextStyle();
@@ -39,8 +39,9 @@ export function initPixiCelestial(parent: Container, sys: System): void {
 
   const starClass = sys.starClass ?? "G";
   const sunDir = sys.sunDir ?? 0;
+  const sunDist = typeof sys.sunDist === "number" ? sys.sunDist : SUN_WORLD_DIST;
 
-  initStarSprites(parent, sunDir, starClass);
+  initStarSprites(parent, sunDir, sunDist, starClass);
   initGateSprites(sys);
   initBorderSprites();
 }
@@ -48,13 +49,13 @@ export function initPixiCelestial(parent: Container, sys: System): void {
 export function syncPixiCelestial(now: number, alpha: number, sys: System): void {
   const starClass = sys.starClass ?? "G";
   const sunDir = sys.sunDir ?? 0;
+  const sunDist = typeof sys.sunDist === "number" ? sys.sunDist : SUN_WORLD_DIST;
   const r = STAR_CONFIG[starClass]?.radius ?? 250;
 
-  const sunX = Math.cos(sunDir) * SUN_DIST;
-  const sunY = Math.sin(sunDir) * SUN_DIST;
-  const visible = isVisible(sunX, sunY, r * 3.5);
+  const sunPos = getSunWorldPos(sys);
+  const visible = isVisible(sunPos.x, sunPos.y, r * 3.5);
 
-  syncStarSprites(now, sunDir, starClass, visible);
+  syncStarSprites(now, sunDir, sunDist, starClass, visible);
   syncGateSprites(now, sys);
   syncBorderSprites(sys);
 }

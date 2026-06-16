@@ -8,8 +8,11 @@ import type { Player } from "../state.js";
 export type MissionType = "bounty" | "mining" | "delivery" | "salvage" | "tutorial";
 
 export const TUTORIAL_MISSION_ID = "mc_academy_training";
-export const TUTORIAL_ACADEMY_STATION_ID = "station-sys-0-academy";
+export const TUTORIAL_ACADEMY_STATION_ID = "station-sys-0-academy-prime";
 export const TUTORIAL_GRADUATION_REWARD = 2500;
+const ACADEMY_PROGRAM_MINING_ID = "mc_academy_program_mining";
+const ACADEMY_PROGRAM_REFINING_ID = "mc_academy_program_refining";
+const ACADEMY_PROGRAM_GUNNERY_ID = "mc_academy_program_gunnery";
 
 export interface MissionContract {
   id: string;
@@ -134,7 +137,48 @@ function makeSalvage(stationId: string, sysIdx: number, ring: number): MissionCo
   };
 }
 
+function makeAcademyProgramContracts(stationId: string, sysIdx: number): MissionContract[] {
+  return [
+    {
+      id: ACADEMY_PROGRAM_MINING_ID,
+      type: "mining",
+      title: "Academy Program: Mining Fundamentals",
+      description: "Mine 30 units of Iron Ore in the outer belt and return to Academy Prime Station.",
+      reward: 750,
+      stationId,
+      sysIdx,
+      objective: { type: "mining", target: "iron", required: 30, current: 0 },
+      status: "available",
+    },
+    {
+      id: ACADEMY_PROGRAM_REFINING_ID,
+      type: "delivery",
+      title: "Academy Program: Refining Fundamentals",
+      description: "Deliver 20 units of Iron Ore to Academy Prime Station for refinery intake drills.",
+      reward: 820,
+      stationId,
+      sysIdx,
+      objective: { type: "delivery", target: "iron", required: 20, current: 0 },
+      status: "available",
+    },
+    {
+      id: ACADEMY_PROGRAM_GUNNERY_ID,
+      type: "bounty",
+      title: "Academy Program: Gunnery Drills",
+      description: "Destroy 3 target dummies in the training range.",
+      reward: 980,
+      stationId,
+      sysIdx,
+      objective: { type: "bounty", target: "target_dummy", required: 3, current: 0 },
+      status: "available",
+    },
+  ];
+}
+
 export function generateContractsForStation(station: Station, sysIdx: number, ring: number): MissionContract[] {
+  if (station.id === TUTORIAL_ACADEMY_STATION_ID) {
+    return makeAcademyProgramContracts(station.id, sysIdx);
+  }
   const contracts: MissionContract[] = [];
   if (ring <= 1) {
     contracts.push(makeMining(station.id, sysIdx, ring));

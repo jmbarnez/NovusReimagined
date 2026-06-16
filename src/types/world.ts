@@ -103,6 +103,7 @@ export interface Gate {
 }
 
 export interface Planet {
+  name?: string;
   x: number;
   y: number;
   radius: number;
@@ -351,6 +352,7 @@ export interface System {
   archetype?: string;
   starClass?: string;
   sunDir?: number;
+  sunDist?: number;
   tintRGB?: [number, number, number];
   flareTint?: number;
   flareTimer?: number;
