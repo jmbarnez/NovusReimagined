@@ -27,8 +27,9 @@ import {
 } from "./migrations/hardpoint-migrations.js";
 import { migrateLegacyRefinedCargo } from "./migrations/refined-cargo-migration.js";
 import { migrateRefineryStorage } from "./migrations/refinery-storage-migration.js";
+import { TUTORIAL_SPAWN } from "../data/tutorial-layout.js";
 
-const CURRENT_SAVE_VERSION = 1;
+const CURRENT_SAVE_VERSION = 2;
 
 export function defaultFitting(shipId: string): Record<string, (string | null)[]> {
   const s = SHIPS[shipId];
@@ -205,6 +206,13 @@ export function loadPlayer(): Player {
     p.skills = Object.fromEntries(SKILL_IDS.map(id => [id, levelForSkillXp(p.skillXp[id] || 0)]));
     // Skill points were removed — strip the field from old saves.
     if ("skillPoints" in (p as object)) delete (p as { skillPoints?: number }).skillPoints;
+    // Relocate active tutorial players with stale positions after the layout refactor.
+    if ((p.saveVersion ?? 0) < 2 && p.sysIdx === 0 && p.tutorial?.active) {
+      p.x = TUTORIAL_SPAWN.x;
+      p.y = TUTORIAL_SPAWN.y;
+      p.px = TUTORIAL_SPAWN.x;
+      p.py = TUTORIAL_SPAWN.y;
+    }
     p.saveVersion = CURRENT_SAVE_VERSION;
     return p;
   } catch {

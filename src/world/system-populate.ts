@@ -295,7 +295,7 @@ function buildTutorialAsteroids(sys: System, danger: number) {
   const f = mkRng(sys.id + "belt");
   const ringR = TUTORIAL_BELT_RING_RADIUS;
   const halfThick = TUTORIAL_BELT_THICKNESS / 2;
-  const count = ri(f, 400, 600);
+  const count = ri(f, C.WORLD.TUTORIAL.belt.asteroidCountMin, C.WORLD.TUTORIAL.belt.asteroidCountMax);
 
   for (let i = 0; i < count; i++) {
     const angle = rf(f, 0, TAU);

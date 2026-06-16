@@ -1,14 +1,17 @@
 import { t } from "../../utils/i18n.js";
+import { C } from "../../config/index.js";
+
+const T = C.WORLD.TUTORIAL;
 
 export const TUTORIAL_SUN_DIR = { x: 1, y: 0 } as const;
-export const TUTORIAL_SECTOR = { x: 0, y: 0, radius: 12000, ring: 0 } as const;
+export const TUTORIAL_SECTOR = { x: 0, y: 0, radius: T.sectorRadius, ring: 0 } as const;
 
 /** Station (orbital outpost near the planet). */
-export const TUTORIAL_STATION = { x: -1800, y: 0 } as const;
+export const TUTORIAL_STATION = { x: T.station.x, y: T.station.y } as const;
 export const TUTORIAL_HUB = TUTORIAL_STATION;
 
 /** Spawn further from the sun in the same direction as the station. */
-export const TUTORIAL_SPAWN = { x: -5500, y: 0 } as const;
+export const TUTORIAL_SPAWN = { x: T.spawn.x, y: T.spawn.y } as const;
 
 export function getTutorialSunWorldPos() {
   return { x: 0, y: 0 };
@@ -20,21 +23,21 @@ export function shouldRelocateTutorialStart(x: number, y: number) {
   return d < 600;
 }
 
-export const TUTORIAL_START_PLANET = { x: -2200, y: 0 } as const;
+export const TUTORIAL_START_PLANET = { x: T.planet.x, y: T.planet.y } as const;
 
-/** Massive asteroid belt ring around the star for stress-testing culling. */
-export const TUTORIAL_BELT_RING_CENTER = { x: 0, y: 0 } as const;
-export const TUTORIAL_BELT_RING_RADIUS = 5000;
-export const TUTORIAL_BELT_THICKNESS = 10000;
+/** Massive asteroid belt ring around the star for the tutorial (stress-test culling). */
+export const TUTORIAL_BELT_RING_CENTER = { x: T.belt.ringCenter.x, y: T.belt.ringCenter.y } as const;
+export const TUTORIAL_BELT_RING_RADIUS = T.belt.ringRadius;
+export const TUTORIAL_BELT_THICKNESS = T.belt.thickness;
 
 /** Mining waypoint — centered in the belt along the station direction. */
-export const TUTORIAL_BELT_CENTER = { x: -4000, y: 0 } as const;
-export const TUTORIAL_MINING_ZONE_R = 3000;
-export const TUTORIAL_GUNNERY_CENTER = { x: 4000, y: 2000 } as const;
-export const TUTORIAL_TRAINING_SITE_X = 4000;
-export const TUTORIAL_TRAINING_SITE_Y = 2000;
+export const TUTORIAL_BELT_CENTER = { x: TUTORIAL_BELT_RING_CENTER.x - TUTORIAL_BELT_RING_RADIUS, y: 0 } as const;
+export const TUTORIAL_MINING_ZONE_R = T.miningZoneR;
+export const TUTORIAL_GUNNERY_CENTER = { x: T.gunnery.x, y: T.gunnery.y } as const;
+export const TUTORIAL_TRAINING_SITE_X = T.gunnery.x;
+export const TUTORIAL_TRAINING_SITE_Y = T.gunnery.y;
 
-export const TUTORIAL_GATE = { x: 3500, y: 0 } as const;
+export const TUTORIAL_GATE = { x: T.gate.x, y: T.gate.y } as const;
 
 export interface TutorialLocalRegion {
   id: string;

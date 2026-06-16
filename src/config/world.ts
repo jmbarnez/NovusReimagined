@@ -14,6 +14,23 @@ export const WORLD = {
     gateOrbit: { lo: 1450, hi: 1900 },
     planetOrbit: { lo: 1800, hi: 2750 },
   },
+  /** START system (tutorial) — tweak everything here. */
+  TUTORIAL: {
+    station: { x: -1800, y: 0 },
+    spawn: { x: -5500, y: 0 },
+    planet: { x: -2200, y: 0 },
+    gate: { x: 3500, y: 0 },
+    gunnery: { x: 4000, y: 2000 },
+    sectorRadius: 12000,
+    belt: {
+      ringCenter: { x: 0, y: 0 },
+      ringRadius: 5000,
+      thickness: 2000,
+      asteroidCountMin: 400,
+      asteroidCountMax: 600,
+    },
+    miningZoneR: 3000,
+  },
   ORE: {
     commonWeights: { iron: 0.55, nickel: 0.18, silicate: 0.17, carbon: 0.06, crystal: 0.03, exotic: 0.01 },
     crystalWeights: { iron: 0.10, nickel: 0.05, silicate: 0.12, carbon: 0.03, crystal: 0.67, exotic: 0.03 },

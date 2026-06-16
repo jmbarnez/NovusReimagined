@@ -6,7 +6,7 @@ import {
   AMMO_START_MISSILE,
 } from "../constants.js";
 
-const CURRENT_SAVE_VERSION = 1;
+const CURRENT_SAVE_VERSION = 2;
 import { ModuleRarity } from "../data/moduleRarity.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { createTutorialMission } from "../data/missions.js";
