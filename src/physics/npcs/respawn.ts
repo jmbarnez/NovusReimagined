@@ -1,5 +1,6 @@
 import { random } from "../../utils/math.js";
 import { getState } from "../../state-access.js";
+import { getAiState } from "./ai-state.js";
 
 export function updateEnemyRespawns(dt: number, sysIdx: number) {
   const sys = getState().GALAXY[sysIdx];
@@ -18,8 +19,13 @@ export function updateEnemyRespawns(dt: number, sysIdx: number) {
     e.vx = 0;
     e.vy = 0;
     e.angle = random() * Math.PI * 2;
-    e.targetingPlayer = false;
-    e.hasLockOnPlayer = false;
-    e.lockOnTimer = 0;
+    const ai = getAiState(e.id);
+    ai.targetingPlayer = false;
+    ai.hasLockOnPlayer = false;
+    ai.lockOnTimer = 0;
+    ai._npcTarget = null;
+    ai._npcLockTimer = 0;
+    ai._npcHasLock = false;
+    ai._orbitDir = undefined;
   }
 }

@@ -13,6 +13,7 @@ import type { Enemy } from "../../types/enemy.js";
 import type { Asteroid } from "../../types/asteroid.js";
 import { type SpatialGrid, type SpatialQueryResult } from "../../utils/spatial.js";
 import { processNpcBehavior, triggerAttackWarningPulse } from "../npc-ai.js";
+import { getAiState } from "./ai-state.js";
 
 const _qOut: SpatialQueryResult<Enemy>[] = [];
 const _astOut: SpatialQueryResult<Asteroid>[] = [];
@@ -137,8 +138,9 @@ export function updateNpcs(dt: number, sysIdx: number, localPlayer: Player | nul
         ? Math.hypot(localPlayer.x - e.x, localPlayer.y - e.y)
         : Infinity;
     let detectionRange = e.aggroRange || C.ENEMIES.AI.DETECTION.baseAggroRange;
-    if (e.hasLockOnPlayer) detectionRange *= C.ENEMIES.AI.DETECTION.lockOnMultiplier;
-    else if (e.targetingPlayer) detectionRange *= C.ENEMIES.AI.DETECTION.lockingMultiplier;
+    const ai = getAiState(e.id);
+    if (ai.hasLockOnPlayer) detectionRange *= C.ENEMIES.AI.DETECTION.lockOnMultiplier;
+    else if (ai.targetingPlayer) detectionRange *= C.ENEMIES.AI.DETECTION.lockingMultiplier;
 
     processNpcBehavior(e, dt, distanceToPlayer, detectionRange);
     spawnNpcTrail(e);

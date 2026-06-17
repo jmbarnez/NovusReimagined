@@ -13,6 +13,8 @@ import { C } from "./config/index.js";
 import type { Enemy } from "./types/enemy.js";
 import type { BulletOwner } from "./utils/entities.js";
 import { triggerShieldHit, triggerStructureHit, removeVisualState } from "./render/entity-visuals.js";
+import { removeAiState } from "./physics/npcs/ai-state.js";
+import { removeTaskState } from "./physics/npcs/task-state.js";
 
 export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner?: BulletOwner, weaponKind?: WeaponDelivery | string | null) {
   if (dmg <= 0) return;
@@ -68,6 +70,8 @@ export function killEnemy(e: Enemy) {
   removeSensorLock(e.id);
   e.alive = false;
   removeVisualState(e.id);
+  removeAiState(e.id);
+  removeTaskState(e.id);
   e.respawnTimer = RESPAWN_S;
   const exScale = e.type === "raider" ? C.COMBAT.EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.EXPLOSION_SCALE.pirate : C.COMBAT.EXPLOSION_SCALE.default;
   const exTier: "small" | "medium" | "large" = e.type === "raider" ? "large" : e.type === "pirate" ? "medium" : "small";

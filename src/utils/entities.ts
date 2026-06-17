@@ -16,6 +16,8 @@ import type { WreckPiece, SalvagePickup } from "../types/system.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import { createPool } from "./pool.js";
 import { clearVisualState, removeVisualState } from "../render/entity-visuals.js";
+import { clearAiState } from "../physics/npcs/ai-state.js";
+import { clearTaskState } from "../physics/npcs/task-state.js";
 
 let _nextId = 1;
 function generateId(): number { return _nextId++; }
@@ -56,6 +58,8 @@ export function clearSimulationEntities() {
   impactDecalPool.releaseAll(_G.impactDecals);
   _G.impactDecals.length = 0;
   clearVisualState();
+  clearAiState();
+  clearTaskState();
 }
 
 // ── Bullets ────────────────────────────────────────────────────────────────

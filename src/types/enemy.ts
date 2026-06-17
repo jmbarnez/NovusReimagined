@@ -63,18 +63,8 @@ export interface EnemyCombat {
   weaponMult?: number;
   resists?: ResistProfile;
   _lastHitByPlayer?: Player;
-}
-
-export interface EnemyAI {
-  targetingPlayer?: boolean;
-  hasLockOnPlayer?: boolean;
-  lockOnTimer?: number;
-  _orbitDir?: 1 | -1;
   _lastPlayerHitAt?: number;
   _lastPlayerHitKind?: "projectile" | "beam" | "missile";
-  _npcTarget?: Enemy | Player | null;
-  _npcLockTimer?: number;
-  _npcHasLock?: boolean;
 }
 
 export interface EnemyFaction {
@@ -84,22 +74,11 @@ export interface EnemyFaction {
   _speech?: { text: string; until: number };
 }
 
-export interface EnemyTask {
-  _task?: "transit-in" | "goto-station" | "dwell" | "mine" | "patrol" | "engage" | "depart";
-  _taskTimer?: number;
-  _wpX?: number;
-  _wpY?: number;
-  _exitGateIdx?: number;
-  _mineTargetId?: string;
-}
-
 export interface Enemy extends
   EnemyIdentity,
   EnemyPhysics,
   EnemyCombat,
-  EnemyAI,
-  EnemyFaction,
-  EnemyTask
+  EnemyFaction
 {
   // Temporary module instances stored on the fitting at spawn time
   _tempInstances?: ModuleInstance[];

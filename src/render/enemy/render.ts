@@ -14,6 +14,7 @@ import { hasCommsEquipment } from "../../player/player-stats.js";
 import { getEnemyTexture, getEnemyLightTextures, lightDirIndex } from "./bake.js";
 import { _nameStyle, _levelStyle, _speechStyle } from "./lifecycle.js";
 import { getSunWorldPos } from "../../utils/sun-position.js";
+import { getAiState } from "../../physics/npcs/ai-state.js";
 
 const TAU = Math.PI * 2;
 
@@ -356,15 +357,20 @@ export function syncPixiEntities(alpha: number, now: number): void {
       }
       b.indicator.x = ix; b.indicator.y = iy - 40;
       b.indicator.alpha = 0.5 + Math.sin(now / 150) * 0.4;
-    } else if (!lod && e.hasLockOnPlayer) {
-      const key = "locked";
-      if (b.lastLockKey !== key) { rebuildIndicator(b.indicator, 0xff4444); b.lastLockKey = key; }
-      b.indicator.x = ix; b.indicator.y = iy - 40; b.indicator.alpha = 1;
-    } else if (!lod && e.targetingPlayer && (e.lockOnTimer ?? 0) > 0) {
-      const key = "targeting";
-      if (b.lastLockKey !== key) { rebuildIndicator(b.indicator, 0xffcc44); b.lastLockKey = key; }
-      b.indicator.x = ix; b.indicator.y = iy - 40;
-      b.indicator.alpha = Math.floor(now / 200) % 2 === 0 ? 1 : 0;
+    } else if (!lod) {
+      const ai = getAiState(e.id);
+      if (ai.hasLockOnPlayer) {
+        const key = "locked";
+        if (b.lastLockKey !== key) { rebuildIndicator(b.indicator, 0xff4444); b.lastLockKey = key; }
+        b.indicator.x = ix; b.indicator.y = iy - 40; b.indicator.alpha = 1;
+      } else if (ai.targetingPlayer && ai.lockOnTimer > 0) {
+        const key = "targeting";
+        if (b.lastLockKey !== key) { rebuildIndicator(b.indicator, 0xffcc44); b.lastLockKey = key; }
+        b.indicator.x = ix; b.indicator.y = iy - 40;
+        b.indicator.alpha = Math.floor(now / 200) % 2 === 0 ? 1 : 0;
+      } else {
+        if (b.lastLockKey !== "none") { b.indicator.clear(); b.lastLockKey = "none"; }
+      }
     } else {
       if (b.lastLockKey !== "none") { b.indicator.clear(); b.lastLockKey = "none"; }
       b.indicator.alpha = 0;

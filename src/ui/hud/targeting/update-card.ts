@@ -18,6 +18,7 @@ import type { LockSlot, AutoTarget } from "../../../types/combat.js";
 import type { ComputedStats } from "../../../player/player-stats.js";
 import { drawLiveTargetIcon } from "./icon.js";
 import type { LockCard } from "./types.js";
+import { getAiState } from "../../../physics/npcs/ai-state.js";
 
 function targetSignalRadius(t: Enemy | Asteroid | WreckPiece | AutoTarget, enemy: Enemy | null): number {
   if (enemy) return enemy.sigRadius || 30;
@@ -53,7 +54,8 @@ export function updateLockCard(
   const isAssigned = getState().player._assignTargetId === t.id;
 
   // Toggle resolved class with advanced retro context classes
-  const targetLockClass = enemy && enemy.hasLockOnPlayer ? " target-locked" : enemy && enemy.targetingPlayer ? " target-targeting" : "";
+  const ai = enemy ? getAiState(enemy.id) : null;
+  const targetLockClass = ai && ai.hasLockOnPlayer ? " target-locked" : ai && ai.targetingPlayer ? " target-targeting" : "";
   const enemyClass = isEnemy ? ` enemy${targetLockClass}` : "";
   const resolvedClass = `lock-card${isPrimary ? " primary" : ""}${isAssigned ? " assigned" : ""}${isAst ? " asteroid" : ""}${isPiece ? " wreck" : ""}${isGate ? " gate" : ""}${isResolved ? " resolved" : ""}${enemyClass}`;
   if (el.className !== resolvedClass) el.className = resolvedClass;
@@ -74,10 +76,10 @@ export function updateLockCard(
       if (levelEl.textContent !== lvlText) setText(levelEl, lvlText);
 
       // Targeting indicator
-      if (enemy.hasLockOnPlayer) {
+      if (ai && ai.hasLockOnPlayer) {
         setText(targetIndEl, "▼");
         setStyle(targetIndEl, { color: "var(--hud-danger)", display: "block" });
-      } else if (enemy.targetingPlayer) {
+      } else if (ai && ai.targetingPlayer) {
         setText(targetIndEl, "▽");
         setStyle(targetIndEl, { color: "var(--hud-accent)", display: "block" });
       } else {

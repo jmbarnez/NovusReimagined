@@ -13,6 +13,7 @@ import { isEventLogToggleHotkey, isOverviewToggleHotkey } from "../input-hotkeys
 import { dst } from "../utils/math.js";
 import { gateStableId } from "../utils/warp-gates.js";
 import type { Enemy } from "../types/enemy.js";
+import { forEachAiState } from "../physics/npcs/ai-state.js";
 import { setCursorLock, getCanvasElement, isBlockedByUi, getUiPointerBlockSelector } from "./core.js";
 import { getCurrentTutorialStep } from "../data/tutorial.js";
 import { isCurrentStepComplete } from "../tutorial/index.js";
@@ -107,7 +108,9 @@ export function handleKeyDown(e: KeyboardEvent): void {
       closeStationUi();
     } else {
       const sys = curSys();
-      if (sys && sys._liveEnemies?.some((e: Enemy) => e.hasLockOnPlayer)) return;
+      let anyLocked = false;
+      forEachAiState((_id, s) => { if (s.hasLockOnPlayer) anyLocked = true; });
+      if (sys && anyLocked) return;
       if (sys) {
         // Processing hub intercept — opens window instead of docking
         let handledByHub = false;

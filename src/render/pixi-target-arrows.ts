@@ -16,6 +16,7 @@ import { ensureLockQueue } from "../targeting.js";
 import { getUIFont } from "./ui-font.js";
 import { getTutorialGuideTarget } from "./pixi-tutorial-markers.js";
 import { HUD_LAYER_Z } from "./pixi-z-order.js";
+import { getAiState } from "../physics/npcs/ai-state.js";
 
 let arrowsContainer: Container | null = null;
 
@@ -243,9 +244,10 @@ export function syncPixiTargetArrows(Wc: number, Hc: number, camxR: number, camy
   // Enemy arrows
   for (const e of sys.enemies) {
     if (!e.alive) continue;
+    const ai = getAiState(e.id);
     const youLocked = lockedIds.has(e.id);
-    const theyLocked = !!e.hasLockOnPlayer;
-    const theyLocking = !!e.targetingPlayer && !theyLocked;
+    const theyLocked = ai.hasLockOnPlayer;
+    const theyLocking = ai.targetingPlayer && !theyLocked;
     if (!youLocked && !theyLocked && !theyLocking) continue;
 
     const pos = edgePos(e.x, e.y, Wc, Hc, cx, cy, camxR, camyR, zoom, mL, mR, mT, mB);

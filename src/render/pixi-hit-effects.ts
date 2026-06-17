@@ -16,6 +16,7 @@ import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock
 import { drawShipHitGlows } from "./pixi-hit-impact-draw.js";
 import { effectLayer } from "../pixi.js";
 import { getVisualState } from "./entity-visuals.js";
+import { getAiState } from "../physics/npcs/ai-state.js";
 
 let _hitGfx: Graphics | null = null;
 const _lockMap = new Map<string, LockSlot>();
@@ -52,9 +53,10 @@ export function syncPixiHitEffects(now: number, alpha: number, sys: System): voi
       // Lock Brackets
       const slot = _lockMap.get(e.id);
       if (slot) {
+        const ai = getAiState(e.id);
         drawTargetLockBrackets(
           _hitGfx, ix, iy, e.sigRadius ?? 18, slot, e.id === primaryId, now, "enemy",
-          { hasLockOnPlayer: e.hasLockOnPlayer, targetingPlayer: e.targetingPlayer },
+          { hasLockOnPlayer: ai.hasLockOnPlayer, targetingPlayer: ai.targetingPlayer },
         );
         if (e.id === selectedId) {
           drawSelectedTargetIndicator(_hitGfx, ix, iy, e.sigRadius ?? 18, now);

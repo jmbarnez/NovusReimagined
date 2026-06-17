@@ -15,6 +15,8 @@ import { SHIPS } from "../data/ships.js";
 import { isHostile } from "../combat/factions.js";
 import { pickHostileTarget } from "./npc-ai.js";
 import { fireTurretsAt } from "../combat/enemy-turrets.js";
+import { getAiState } from "./npcs/ai-state.js";
+import { getTaskState, removeTaskState } from "./npcs/task-state.js";
 
 let _spawnCooldown = 5.0; // Start spawn check soon after startup
 
@@ -56,11 +58,6 @@ export function buildFactionShip(sys: System, type: string, gate: Gate, exitGate
     fitting: buildEnemyFitting(type, level, Math.random),
     level,
     faction: "neutral",
-    _task: "transit-in",
-    _taskTimer: 0,
-    _wpX: gate.x + (Math.random() - 0.5) * 120,
-    _wpY: gate.y + (Math.random() - 0.5) * 120,
-    _exitGateIdx: exitGateIdx,
     hailable: true,
     commsRange: 600,
   };
@@ -68,6 +65,14 @@ export function buildFactionShip(sys: System, type: string, gate: Gate, exitGate
   if (e.fitting.turret) {
     e.turretCds = new Array(e.fitting.turret.length).fill(0);
   }
+
+  // Initialize task state for the new ambient ship
+  const ts = getTaskState(e.id);
+  ts.task = "transit-in";
+  ts.taskTimer = 0;
+  ts.wpX = gate.x + (Math.random() - 0.5) * 120;
+  ts.wpY = gate.y + (Math.random() - 0.5) * 120;
+  ts.exitGateIdx = exitGateIdx;
 
   return e;
 }
@@ -84,7 +89,8 @@ export function updateAmbientDirector(dt: number) {
   for (const e of sys.enemies) {
     if (e.alive && e.faction === "neutral") {
       totalNeutralCount++;
-      if (e._task === "transit-in" || e._task === "depart") {
+      const ts = getTaskState(e.id);
+      if (ts.task === "transit-in" || ts.task === "depart") {
         transitingCount++;
       } else {
         activityCount++;
@@ -122,6 +128,8 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
   const sys = getState().GALAXY[0];
   if (!sys) return;
 
+  const ts = getTaskState(e.id);
+
   // 1. Check dialogue speech bubble timers
   if (e._speech && performance.now() > e._speech.until) {
     e._speech = undefined;
@@ -156,53 +164,54 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
   if (closestHostile && closestHostileDist < detectionRange) {
     if (isCombatShip) {
       // Combat ships engage the hostile
-      if (e._task !== "engage") {
-        e._task = "engage";
-        e._npcTarget = closestHostile;
-        e._npcLockTimer = 0;
-        e._npcHasLock = false;
+      if (ts.task !== "engage") {
+        ts.task = "engage";
+        const ai = getAiState(e.id);
+        ai._npcTarget = closestHostile;
+        ai._npcLockTimer = 0;
+        ai._npcHasLock = false;
       }
     } else {
       // Non-combat ships flee and immediately head to depart
-      if (e._task !== "depart") {
-        e._task = "depart";
-        const exitGate = sys.gates[e._exitGateIdx ?? 0] || sys.gates[0];
+      if (ts.task !== "depart") {
+        ts.task = "depart";
+        const exitGate = sys.gates[ts.exitGateIdx ?? 0] || sys.gates[0];
         if (exitGate) {
-          e._wpX = exitGate.x;
-          e._wpY = exitGate.y;
+          ts.wpX = exitGate.x;
+          ts.wpY = exitGate.y;
         }
       }
     }
   }
 
   // 3. FSM State updates
-  switch (e._task) {
+  switch (ts.task) {
     case "transit-in": {
       // Ship has spawned and is flying slightly away from gate entry point
-      const dx = e._wpX! - e.x;
-      const dy = e._wpY! - e.y;
+      const dx = ts.wpX! - e.x;
+      const dy = ts.wpY! - e.y;
       const dist = Math.hypot(dx, dy);
       if (dist < 40) {
         // Transition to primary task depending on ship type
         if (e.type === "faction_hauler") {
-          e._task = "goto-station";
+          ts.task = "goto-station";
           const station = sys.stations[0];
           if (station) {
-            e._wpX = station.x;
-            e._wpY = station.y;
+            ts.wpX = station.x;
+            ts.wpY = station.y;
           } else {
-            e._task = "patrol";
-            pickRandomPatrolWp(e);
+            ts.task = "patrol";
+            pickRandomPatrolWp(ts);
           }
         } else if (e.type === "faction_miner") {
-          e._task = "mine";
-          e._taskTimer = 25.0 + Math.random() * 15.0; // Mine for 25-40s
-          pickAsteroidTarget(e);
+          ts.task = "mine";
+          ts.taskTimer = 25.0 + Math.random() * 15.0; // Mine for 25-40s
+          pickAsteroidTarget(e, ts);
         } else {
           // Patrol for combat/scout types
-          e._task = "patrol";
-          e._taskTimer = 30.0 + Math.random() * 20.0;
-          pickRandomPatrolWp(e);
+          ts.task = "patrol";
+          ts.taskTimer = 30.0 + Math.random() * 20.0;
+          pickRandomPatrolWp(ts);
         }
       }
       break;
@@ -216,63 +225,63 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
         const dist = Math.hypot(dx, dy);
         const dockLimit = station.radius + 80;
         if (dist < dockLimit) {
-          e._task = "dwell";
-          e._taskTimer = 10.0 + Math.random() * 10.0; // Stay docked for 10-20s
+          ts.task = "dwell";
+          ts.taskTimer = 10.0 + Math.random() * 10.0; // Stay docked for 10-20s
           e.vx = 0;
           e.vy = 0;
         } else {
-          e._wpX = station.x;
-          e._wpY = station.y;
+          ts.wpX = station.x;
+          ts.wpY = station.y;
         }
       } else {
-        e._task = "patrol";
-        pickRandomPatrolWp(e);
+        ts.task = "patrol";
+        pickRandomPatrolWp(ts);
       }
       break;
     }
 
     case "dwell": {
       // Just wait at station
-      e._taskTimer = (e._taskTimer || 0) - dt;
+      ts.taskTimer -= dt;
       e.vx *= 0.9;
       e.vy *= 0.9;
-      if (e._taskTimer <= 0) {
-        e._task = "depart";
-        const exitGate = sys.gates[e._exitGateIdx ?? 0] || sys.gates[0];
+      if (ts.taskTimer <= 0) {
+        ts.task = "depart";
+        const exitGate = sys.gates[ts.exitGateIdx ?? 0] || sys.gates[0];
         if (exitGate) {
-          e._wpX = exitGate.x;
-          e._wpY = exitGate.y;
+          ts.wpX = exitGate.x;
+          ts.wpY = exitGate.y;
         }
       }
       return; // Skip standard movement steering
     }
 
     case "mine": {
-      e._taskTimer = (e._taskTimer || 0) - dt;
-      if (e._taskTimer <= 0) {
-        e._task = "depart";
-        const exitGate = sys.gates[e._exitGateIdx ?? 0] || sys.gates[0];
+      ts.taskTimer -= dt;
+      if (ts.taskTimer <= 0) {
+        ts.task = "depart";
+        const exitGate = sys.gates[ts.exitGateIdx ?? 0] || sys.gates[0];
         if (exitGate) {
-          e._wpX = exitGate.x;
-          e._wpY = exitGate.y;
+          ts.wpX = exitGate.x;
+          ts.wpY = exitGate.y;
         }
         return;
       }
 
       // Check mining asteroid target validity
       let asteroid: Asteroid | null = null;
-      if (e._mineTargetId) {
-        asteroid = sys.asteroids.find(a => a.id === e._mineTargetId) || null;
+      if (ts.mineTargetId) {
+        asteroid = sys.asteroids.find(a => a.id === ts.mineTargetId) || null;
         if (asteroid && (asteroid.depleted || asteroid.hp <= 0)) {
           asteroid = null;
-          e._mineTargetId = undefined;
+          ts.mineTargetId = undefined;
         }
       }
 
       if (!asteroid) {
-        pickAsteroidTarget(e);
-        if (e._mineTargetId) {
-          asteroid = sys.asteroids.find(a => a.id === e._mineTargetId) || null;
+        pickAsteroidTarget(e, ts);
+        if (ts.mineTargetId) {
+          asteroid = sys.asteroids.find(a => a.id === ts.mineTargetId) || null;
         }
       }
 
@@ -284,8 +293,8 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
 
         if (dist > mineRange) {
           // Move towards asteroid
-          e._wpX = asteroid.x;
-          e._wpY = asteroid.y;
+          ts.wpX = asteroid.x;
+          ts.wpY = asteroid.y;
         } else {
           // Slow down and fire mining beam!
           e.vx *= 0.95;
@@ -314,36 +323,37 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
         }
       } else {
         // No asteroid left to mine, transition to patrol
-        e._task = "patrol";
-        e._taskTimer = 15.0;
-        pickRandomPatrolWp(e);
+        ts.task = "patrol";
+        ts.taskTimer = 15.0;
+        pickRandomPatrolWp(ts);
       }
       break;
     }
 
     case "patrol": {
-      e._taskTimer = (e._taskTimer || 0) - dt;
-      const dx = e._wpX! - e.x;
-      const dy = e._wpY! - e.y;
+      ts.taskTimer -= dt;
+      const dx = ts.wpX! - e.x;
+      const dy = ts.wpY! - e.y;
       const dist = Math.hypot(dx, dy);
 
-      if (dist < 50 || e._taskTimer <= 0) {
-        if (e._taskTimer <= 0) {
-          e._task = "depart";
-          const exitGate = sys.gates[e._exitGateIdx ?? 0] || sys.gates[0];
+      if (dist < 50 || ts.taskTimer <= 0) {
+        if (ts.taskTimer <= 0) {
+          ts.task = "depart";
+          const exitGate = sys.gates[ts.exitGateIdx ?? 0] || sys.gates[0];
           if (exitGate) {
-            e._wpX = exitGate.x;
-            e._wpY = exitGate.y;
+            ts.wpX = exitGate.x;
+            ts.wpY = exitGate.y;
           }
         } else {
-          pickRandomPatrolWp(e);
+          pickRandomPatrolWp(ts);
         }
       }
       break;
     }
 
     case "engage": {
-      let combatTarget = e._npcTarget;
+      const ai = getAiState(e.id);
+      let combatTarget = ai._npcTarget;
       if (combatTarget) {
         if ((combatTarget as unknown) === getState().player) {
           if (getState().player.hp <= 0) combatTarget = null;
@@ -353,20 +363,20 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
       }
 
       if (!combatTarget) {
-        e._task = "patrol";
-        e._taskTimer = 20.0;
-        e._npcTarget = null;
-        pickRandomPatrolWp(e);
+        ts.task = "patrol";
+        ts.taskTimer = 20.0;
+        ai._npcTarget = null;
+        pickRandomPatrolWp(ts);
         return;
       }
 
       const dist = Math.hypot(combatTarget.x - e.x, combatTarget.y - e.y);
       if (dist > detectionRange * 1.5) {
         // Lost target due to distance
-        e._task = "patrol";
-        e._taskTimer = 20.0;
-        e._npcTarget = null;
-        pickRandomPatrolWp(e);
+        ts.task = "patrol";
+        ts.taskTimer = 20.0;
+        ai._npcTarget = null;
+        pickRandomPatrolWp(ts);
         return;
       }
 
@@ -377,9 +387,9 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
         C.ENEMIES.AI.LOCK_ON.baseTime - (shipDef.lockBonusTicks || 0) * C.ENEMIES.AI.LOCK_ON.perBonusTickReduction
       );
 
-      e._npcLockTimer = (e._npcLockTimer || 0) + dt;
-      if (e._npcLockTimer >= lockTimeRequired) {
-        e._npcHasLock = true;
+      ai._npcLockTimer = ai._npcLockTimer + dt;
+      if (ai._npcLockTimer >= lockTimeRequired) {
+        ai._npcHasLock = true;
       }
 
       const targetAngle = Math.atan2(combatTarget.y - e.y, combatTarget.x - e.x);
@@ -392,14 +402,14 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
         e.vy += Math.sin(e.angle) * e.speed * 0.9 * dt;
       }
 
-      if (e._npcHasLock) {
+      if (ai._npcHasLock) {
         fireTurretsAt(e, combatTarget, dt, detectionRange);
       }
       return; // Handled movement/combat completely
     }
 
     case "depart": {
-      const exitGate = sys.gates[e._exitGateIdx ?? 0] || sys.gates[0];
+      const exitGate = sys.gates[ts.exitGateIdx ?? 0] || sys.gates[0];
       if (exitGate) {
         const dx = exitGate.x - e.x;
         const dy = exitGate.y - e.y;
@@ -411,26 +421,28 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
           // Filter out of enemies
           sys.enemies = sys.enemies.filter(item => item.id !== e.id);
           if (sys._enemyMap) sys._enemyMap.delete(e.id);
+          removeTaskState(e.id);
           return;
         } else {
-          e._wpX = exitGate.x;
-          e._wpY = exitGate.y;
+          ts.wpX = exitGate.x;
+          ts.wpY = exitGate.y;
         }
       } else {
         // Fallback despawn
         e.alive = false;
         sys.enemies = sys.enemies.filter(item => item.id !== e.id);
         if (sys._enemyMap) sys._enemyMap.delete(e.id);
+        removeTaskState(e.id);
         return;
       }
       break;
     }
   }
 
-  // 4. Standard steering towards waypoint (_wpX, _wpY)
-  if (e._wpX !== undefined && e._wpY !== undefined) {
-    const dx = e._wpX - e.x;
-    const dy = e._wpY - e.y;
+  // 4. Standard steering towards waypoint (wpX, wpY)
+  if (ts.wpX !== undefined && ts.wpY !== undefined) {
+    const dx = ts.wpX - e.x;
+    const dy = ts.wpY - e.y;
     const dist = Math.hypot(dx, dy);
 
     if (dist > 30) {
@@ -443,7 +455,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
   }
 }
 
-function pickAsteroidTarget(e: Enemy) {
+function pickAsteroidTarget(e: Enemy, ts: { mineTargetId: string | undefined }) {
   const sys = getState().GALAXY[0];
   if (!sys || !sys.asteroids) return;
 
@@ -461,11 +473,11 @@ function pickAsteroidTarget(e: Enemy) {
   }
 
   if (closestAst) {
-    e._mineTargetId = closestAst.id;
+    ts.mineTargetId = closestAst.id;
   }
 }
 
-function pickRandomPatrolWp(e: Enemy) {
+function pickRandomPatrolWp(ts: { wpX: number | undefined; wpY: number | undefined }) {
   const sys = getState().GALAXY[0];
   if (!sys) return;
 
@@ -477,6 +489,6 @@ function pickRandomPatrolWp(e: Enemy) {
   const ang = Math.random() * Math.PI * 2;
   const dist = 300 + Math.random() * 800;
 
-  e._wpX = sx + Math.cos(ang) * dist;
-  e._wpY = sy + Math.sin(ang) * dist;
+  ts.wpX = sx + Math.cos(ang) * dist;
+  ts.wpY = sy + Math.sin(ang) * dist;
 }

@@ -8,6 +8,7 @@ import { computeLinearInterceptAngle, pickHostileTarget, processNpcBehavior, isP
 import { fireTurretsAt } from "../src/combat/enemy-turrets.js";
 import { getEnemyTurretOrigin } from "../src/combat/turret-origin.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
+import { getAiState } from "../src/physics/npcs/ai-state.js";
 import type { Enemy } from "../src/types/enemy.js";
 import type { Player } from "../src/state.js";
 
@@ -61,8 +62,9 @@ describe("processNpcBehavior", () => {
     const e = makeHostileNearPlayer(150);
     e.aggroRange = 310;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
-    expect(e.targetingPlayer).toBe(true);
-    expect(e._npcTarget).toBe(G.P);
+    const ai = getAiState(e.id);
+    expect(ai.targetingPlayer).toBe(true);
+    expect(ai._npcTarget).toBe(G.P);
   });
 
   it("does not target the player when faction is neutral (until provoked)", () => {
@@ -70,7 +72,8 @@ describe("processNpcBehavior", () => {
     e.faction = "neutral";
     e.aggroRange = 310;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
-    expect(e.targetingPlayer).toBeFalsy();
+    const ai = getAiState(e.id);
+    expect(ai.targetingPlayer).toBeFalsy();
   });
 
   it("sets explicit hostile faction on spawned enemies", () => {
@@ -82,7 +85,8 @@ describe("processNpcBehavior", () => {
     const e = makeHostileNearPlayer(150);
     e.aggroRange = 310;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
-    const stalePlayer = e._npcTarget;
+    let ai = getAiState(e.id);
+    const stalePlayer = ai._npcTarget;
     expect(stalePlayer).toBe(G.P);
 
     const replacement = makePlayer();
@@ -93,21 +97,24 @@ describe("processNpcBehavior", () => {
 
     expect(isPlayerRef(stalePlayer)).toBe(true);
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
-    expect(e._npcTarget).toBe(G.P);
-    expect(e.targetingPlayer).toBe(true);
+    ai = getAiState(e.id);
+    expect(ai._npcTarget).toBe(G.P);
+    expect(ai.targetingPlayer).toBe(true);
   });
 
   it("keeps targeting when hull is breached but structure remains", () => {
     const e = makeHostileNearPlayer(150);
     e.aggroRange = 310;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
-    expect(e.targetingPlayer).toBe(true);
+    let ai = getAiState(e.id);
+    expect(ai.targetingPlayer).toBe(true);
 
     G.P.hp = 0;
     G.P.structure = 50;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
-    expect(e.targetingPlayer).toBe(true);
-    expect(e._npcTarget).toBe(G.P);
+    ai = getAiState(e.id);
+    expect(ai.targetingPlayer).toBe(true);
+    expect(ai._npcTarget).toBe(G.P);
   });
 
   it("drops targeting only when structure is destroyed", () => {
@@ -118,8 +125,9 @@ describe("processNpcBehavior", () => {
     G.P.hp = 0;
     G.P.structure = 0;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
-    expect(e.targetingPlayer).toBeFalsy();
-    expect(e._npcTarget).toBeNull();
+    const ai = getAiState(e.id);
+    expect(ai.targetingPlayer).toBeFalsy();
+    expect(ai._npcTarget).toBeNull();
   });
 
   it("retaliates when provoked even with neutral faction (via pickHostileTarget)", () => {

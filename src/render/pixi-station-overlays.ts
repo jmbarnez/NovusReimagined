@@ -11,6 +11,7 @@ import { getUIFont } from "./ui-font.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { gateChargeRadius, gateStableId } from "../utils/warp-gates.js";
 import { t } from "../utils/i18n.js";
+import { forEachAiState } from "../physics/npcs/ai-state.js";
 
 const TAU = Math.PI * 2;
 
@@ -127,7 +128,8 @@ function drawStationOverlay(g: Graphics, st: Station, sysSecurity: number, now: 
   const dockR = st.radius * 2;
   const interactR = st.isProcessingHub ? ((st.collectRadius ?? 220) + 80) : dockR;
   const inRange = dst(player.x, player.y, st.x, st.y) < interactR;
-  const locked = Boolean((getState() as unknown as { _liveEnemies?: Array<{ hasLockOnPlayer?: boolean }> })._liveEnemies?.some(e => e?.hasLockOnPlayer));
+  let locked = false;
+  forEachAiState((_id, s) => { if (s.hasLockOnPlayer) locked = true; });
 
   // Safe zone
   const safeR = st.safeRadius ?? (st.isHome ? 900 : 675);
@@ -223,7 +225,8 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
       layer.addChild(gfx);
       stationGfx.set(st.id, gfx);
     }
-    const locked = Boolean((getState() as unknown as { _liveEnemies?: Array<{ hasLockOnPlayer?: boolean }> })._liveEnemies?.some(e => e?.hasLockOnPlayer));
+    let locked = false;
+  forEachAiState((_id, s) => { if (s.hasLockOnPlayer) locked = true; });
     drawStationOverlay(gfx, st, sys.security ?? 0.5, now);
 
     if (dst(getState().player.x, getState().player.y, st.x, st.y) < st.radius * 2.5) {

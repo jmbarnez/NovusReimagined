@@ -13,6 +13,7 @@ import { on } from "../events.js";
 import type { Enemy } from "../types/enemy.js";
 import type { Asteroid } from "../types/asteroid.js";
 import { t } from "../utils/i18n.js";
+import { getAiState } from "../physics/npcs/ai-state.js";
 import { gateDestinationName, gateStableId } from "../utils/warp-gates.js";
 import { getElement, query, createElement, setHtml, setText, setStyle, toggleClass, append, getStyleProperty, setPosition, onMouseDown, onClick, onWindowMouseMove, onWindowMouseUp, onWindowResize } from "./dom-helpers.js";
 
@@ -67,8 +68,9 @@ export function buildLocalOverviewRows(): OverviewRow[] {
     let status = "";
     if (slot?.resolving) status += `<span class="ov-plock ov-scanning">${t("bridge.scan")}</span>`;
     else if (slot && !slot.resolving) status += `<span class="ov-plock${getState().player.targetLock?.id === e.id ? " ov-primary" : ""}">${getState().player.targetLock?.id === e.id ? t("bridge.lockPrimary") : t("bridge.lock")}</span>`;
-    if (e.hasLockOnPlayer) status += `<span class="ov-threat ov-threat-locked" title="${t("bridge.hasLockedYou")}">◉</span>`;
-    else if (e.targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="${t("bridge.lockingYou")}">▲</span>`;
+    const ai = getAiState(e.id);
+    if (ai.hasLockOnPlayer) status += `<span class="ov-threat ov-threat-locked" title="${t("bridge.hasLockedYou")}">◉</span>`;
+    else if (ai.targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="${t("bridge.lockingYou")}">▲</span>`;
     if (!status) status = "—";
     rows.push({
       kind: e.faction === "neutral" ? "neutral" : "hostile",
