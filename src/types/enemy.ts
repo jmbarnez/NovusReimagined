@@ -71,7 +71,6 @@ export interface EnemyFaction {
   faction?: "hostile" | "neutral" | "player" | "friendly";
   hailable?: boolean;
   commsRange?: number;
-  _speech?: { text: string; until: number };
 }
 
 export interface Enemy extends

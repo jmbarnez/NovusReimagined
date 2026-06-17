@@ -14,6 +14,7 @@ import { initPixiCelestial, destroyPixiCelestial } from "../render/celestial/ind
 import { clearVisualState } from "../render/entity-visuals.js";
 import { clearAiState } from "../physics/npcs/ai-state.js";
 import { clearTaskState } from "../physics/npcs/task-state.js";
+import { clearNpcSpeech } from "../render/npc-speech.js";
 import type { Gate } from "../types/station.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { C } from "../config/index.js";
@@ -86,6 +87,7 @@ export function warpTo(gate: Gate, p: Player = getState().player) {
       clearVisualState();
       clearAiState();
       clearTaskState();
+      clearNpcSpeech();
       if (targetSys && stationLayer) initPixiCelestial(stationLayer, targetSys);
     }
   }

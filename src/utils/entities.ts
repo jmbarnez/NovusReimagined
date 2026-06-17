@@ -18,6 +18,7 @@ import { createPool } from "./pool.js";
 import { clearVisualState, removeVisualState } from "../render/entity-visuals.js";
 import { clearAiState } from "../physics/npcs/ai-state.js";
 import { clearTaskState } from "../physics/npcs/task-state.js";
+import { clearNpcSpeech } from "../render/npc-speech.js";
 
 let _nextId = 1;
 function generateId(): number { return _nextId++; }
@@ -60,6 +61,7 @@ export function clearSimulationEntities() {
   clearVisualState();
   clearAiState();
   clearTaskState();
+  clearNpcSpeech();
 }
 
 // ── Bullets ────────────────────────────────────────────────────────────────

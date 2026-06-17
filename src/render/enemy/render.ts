@@ -15,6 +15,7 @@ import { getEnemyTexture, getEnemyLightTextures, lightDirIndex } from "./bake.js
 import { _nameStyle, _levelStyle, _speechStyle } from "./lifecycle.js";
 import { getSunWorldPos } from "../../utils/sun-position.js";
 import { getAiState } from "../../physics/npcs/ai-state.js";
+import { getNpcSpeech } from "../npc-speech.js";
 
 const TAU = Math.PI * 2;
 
@@ -336,8 +337,9 @@ export function syncPixiEntities(alpha: number, now: number): void {
     }
 
     // Dialogue/Speech bubble display
-    if (e._speech && now < e._speech.until) {
-      b.speechText.text = e._speech.text;
+    const speech = getNpcSpeech(e.id);
+    if (speech && now < speech.until) {
+      b.speechText.text = speech.text;
       b.speechText.x = Math.round(ix);
       b.speechText.y = Math.round(iy - 50);
       b.speechText.alpha = 1;

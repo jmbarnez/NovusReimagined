@@ -7,6 +7,7 @@ import { formatDistance } from "../../utils/format.js";
 import { hasCommsEquipment } from "../../player/player-stats.js";
 import { randomHailLine } from "../../data/faction-comms.js";
 import { t } from "../../utils/i18n.js";
+import { setNpcSpeech } from "../../render/npc-speech.js";
 import { setHtml, setStyle, setPosition, onClick } from "../dom-helpers.js";
 
 let activeEnemyId: string | null = null;
@@ -112,13 +113,8 @@ export function onEnemyCtxItemClick(e: Event) {
       queueFrameAction({ type: "requestSensorLock", payload: { id: activeEnemyId } });
     }
   } else if (action === "hail") {
-    const sys = getState().GALAXY[getState().player.sysIdx];
-    const enemy = sys?.enemies?.find((x) => x.id === activeEnemyId);
-    if (enemy) {
-      enemy._speech = {
-        text: randomHailLine(),
-        until: performance.now() + 4000,
-      };
+    if (activeEnemyId) {
+      setNpcSpeech(activeEnemyId, randomHailLine(), 4000);
     }
   } else if (action === "stop") {
     clearNav();

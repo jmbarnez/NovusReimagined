@@ -130,12 +130,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
 
   const ts = getTaskState(e.id);
 
-  // 1. Check dialogue speech bubble timers
-  if (e._speech && performance.now() > e._speech.until) {
-    e._speech = undefined;
-  }
-
-  // 2. Scan for hostiles nearby to trigger alert or combat
+  // 1. Scan for hostiles nearby to trigger alert or combat
   const detectionRange = e.aggroRange || 300;
   let closestHostile: Enemy | Player | null = null;
   let closestHostileDist = Infinity;

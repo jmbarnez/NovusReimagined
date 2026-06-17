@@ -16,6 +16,7 @@ import { addSalvagePickup } from "../utils/entities.js";
 import { removeVisualState } from "../render/entity-visuals.js";
 import { removeAiState } from "../physics/npcs/ai-state.js";
 import { removeTaskState } from "../physics/npcs/task-state.js";
+import { removeNpcSpeech } from "../render/npc-speech.js";
 import type { Enemy } from "../types/enemy.js";
 
 const TUTORIAL_ENEMY_TYPES = new Set(["target_dummy", "training_drone"]);
@@ -50,6 +51,7 @@ export function killEnemy(e: Enemy) {
   removeVisualState(e.id);
   removeAiState(e.id);
   removeTaskState(e.id);
+  removeNpcSpeech(e.id);
   e.respawnTimer = RESPAWN_S;
   const exScale = e.type === "raider" ? C.COMBAT.EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.EXPLOSION_SCALE.pirate : C.COMBAT.EXPLOSION_SCALE.default;
   const exTier: "small" | "medium" | "large" = e.type === "raider" ? "large" : e.type === "pirate" ? "medium" : "small";
