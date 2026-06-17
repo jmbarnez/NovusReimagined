@@ -55,24 +55,40 @@ export interface StationTurret {
   muzzleFlash?: number;
 }
 
-export interface Station {
+export interface StationIdentity {
   id: string;
   name: string;
+  isHome: boolean;
+  services: string[];
+}
+
+export interface StationPhysics {
   x: number;
   y: number;
   radius: number;
   spin: number;
-  isHome: boolean;
-  services: string[];
+  _orbitSpeed?: number;
+}
+
+export interface StationSecurity {
   safeRadius: number;
   turrets: StationTurret[];
+}
+
+export interface StationServices {
   structureType?: "standard" | "home" | "industrial";
   isProcessingHub?: boolean;
   collectRadius?: number;
   dropZoneOffset?: { dx?: number; dy?: number; x?: number; y?: number };
   dropZoneRadius?: number;
-  _orbitSpeed?: number;
 }
+
+export interface Station extends
+  StationIdentity,
+  StationPhysics,
+  StationSecurity,
+  StationServices
+{}
 
 export type GateFxProfile = "sector" | "tutorial-return" | "temporary";
 
@@ -235,8 +251,12 @@ export interface AsteroidCrystal {
   rot: number;
 }
 
-export interface Asteroid {
+export interface AsteroidIdentity {
   id: string;
+  name?: string;
+}
+
+export interface AsteroidPhysics {
   x: number;
   y: number;
   px: number;
@@ -244,26 +264,46 @@ export interface Asteroid {
   vx: number;
   vy: number;
   radius: number;
-  shape: number[][];
+  spawnX?: number;
+  spawnY?: number;
+  _orbitSpeed?: number;
+}
+
+export interface AsteroidDurability {
   hp: number;
   maxHp: number;
-  composition: Record<string, number>;
-  richness: number;
   depleted: boolean;
   respawnTimer: number;
+}
+
+export interface AsteroidComposition {
+  composition: Record<string, number>;
+  richness: number;
+}
+
+export interface AsteroidVisual {
+  shape: number[][];
   spinAngle: number;
   spinVel: number;
   prevSpin: number;
   tintHue: number;
   tintSat: number;
-  name?: string;
+}
+
+export interface AsteroidCrystals {
   hasCrystals?: boolean;
   crystalHue?: number;
   crystals?: AsteroidCrystal[];
-  spawnX?: number;
-  spawnY?: number;
-  _orbitSpeed?: number;
 }
+
+export interface Asteroid extends
+  AsteroidIdentity,
+  AsteroidPhysics,
+  AsteroidDurability,
+  AsteroidComposition,
+  AsteroidVisual,
+  AsteroidCrystals
+{}
 
 // ── Hidden Sites ─────────────────────────────────────────────────────────
 

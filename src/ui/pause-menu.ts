@@ -4,7 +4,6 @@ import { Client, AppMode } from "../state.js";
 import { savePlayer } from "../player/player-data.js";
 import { sfxBlip, sfxConfirm } from "../audio/procedural.js";
 import { openSettings } from "./settings/index.js";
-import { t } from "../utils/i18n.js";
 import { on } from "../events.js";
 import { getElement, createElement, setStyle, append, getStyleProperty } from "./dom-helpers.js";
 import { PauseMenuView } from "./pause-menu-view.js";
@@ -37,7 +36,6 @@ export function initPauseMenu() {
       },
       onExit: () => {
         sfxBlip();
-        if (!confirm(t("pause.confirmExit"))) return;
         savePlayer();
         window.location.reload();
       },
