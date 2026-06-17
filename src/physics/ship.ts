@@ -13,6 +13,7 @@ import { getIonBoostModuleState } from "../player/boost-module.js";
 import { computeShipNavForces } from "./ship-nav.js";
 import { processModuleCapDrain, computeBoostState } from "./ship-modules.js";
 import { resolveSolidCollisions } from "./collisions.js";
+import { getPlayerInput } from "../player/input-state.js";
 
 let _cargoMap = new Map<string, ModuleInstance>();
 const EXHAUST_MIN_SPEED = 8;
@@ -21,8 +22,9 @@ export function updateShip(dt: number, _p?: Player) {
   const p = _p ?? getState().player;
   if (!p) return;
   const isLocalPresentation = p === getState().player && !isHeadlessServer();
-  const inputKeys = p.inputKeys ?? (isLocalPresentation ? Client.keys : { space: false, w: false, a: false, s: false, d: false, boost: false });
-  const inputMouseWorld = p.inputMouseWorld ?? (isLocalPresentation ? Client.mouseWorld : null);
+  const inputState = getPlayerInput(p.netId ?? p.shipId);
+  const inputKeys = inputState.keys;
+  const inputMouseWorld = inputState.mouseWorld;
   const uiBlocksInput = isLocalPresentation && (Client.stationOpen || Client.bridgeOpen || Client.settingsOpen);
   const st = getStats(p);
 

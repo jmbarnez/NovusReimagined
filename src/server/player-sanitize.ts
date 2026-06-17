@@ -3,6 +3,7 @@ import { SHIPS } from "../data/ships.js";
 import { RACK_TYPES } from "../constants.js";
 import { resolvePlayerSpawn } from "../utils/player-spawn.js";
 import { getHardpointRack, mergeLegacyTurretSlotsIntoHigh } from "../utils/hardpoints.js";
+import { resetPlayerInput } from "../player/input-state.js";
 import type { Player } from "../state.js";
 import type { System } from "../types/system.js";
 import type { ShipDef } from "../data/ships.js";
@@ -151,8 +152,7 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
   p.vy = 0;
   p.va = 0;
   p.netInputFrame = null;
-  p.inputKeys = null;
-  p.inputMouseWorld = null;
+  resetPlayerInput(p.netId ?? p.shipId);
   p.waypoint = null;
   p.navCommand = null;
 
@@ -242,8 +242,7 @@ export function createDurableCharacterSync(source: Player): Player {
   const p = clone(source);
   delete p.netId;
   p.netInputFrame = null;
-  p.inputKeys = null;
-  p.inputMouseWorld = null;
+  resetPlayerInput(p.netId ?? p.shipId);
   p.vx = 0;
   p.vy = 0;
   p.va = 0;

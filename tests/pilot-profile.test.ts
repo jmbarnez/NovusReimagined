@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { validatePilotName, loadPlayer, makePlayer } from "../src/player/player-data.js";
+import { getPlayerInputKeys } from "../src/player/input-state.js";
 import { SAVE_KEY } from "../src/constants.js";
 import { WorldAccess } from "../src/state-access.js";
 
@@ -52,8 +53,6 @@ describe("loadPlayer pilotName migration", () => {
   it("clears transient input state from loaded saves", () => {
     const base = makePlayer();
     base.pilotName = "Waypoint Test";
-    base.inputKeys = { space: true, w: false, a: true, s: false, d: true, boost: true, warp: false };
-    base.inputMouseWorld = { x: 123, y: 456 };
     base.waypoint = { x: 1000, y: 2000 };
     base.navCommand = { mode: "orbit", targetId: "station-1", rangePx: 500, dir: 1 };
     base.netInputFrame = {
@@ -69,8 +68,7 @@ describe("loadPlayer pilotName migration", () => {
     const p = loadPlayer();
 
     expect(p.pilotName).toBe("Waypoint Test");
-    expect(p.inputKeys).toBeNull();
-    expect(p.inputMouseWorld).toBeNull();
+    expect(getPlayerInputKeys(p.netId ?? p.shipId)).toEqual({ space: false, w: false, a: false, s: false, d: false, boost: false, warp: false });
     expect(p.waypoint).toBeNull();
     expect(p.navCommand).toBeNull();
     expect(p.netInputFrame).toBeNull();

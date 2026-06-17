@@ -55,8 +55,6 @@ export function makePlayer(): Player {
     targetLock: null,
     lockQueue: [],
     fireControlSlot: 0,
-    inputKeys: null,
-    inputMouseWorld: null,
     waypoint: null,
     navCommand: null,
     netInputFrame: null,

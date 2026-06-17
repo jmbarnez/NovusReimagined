@@ -9,7 +9,7 @@ import { canWarpThroughGate } from "../data/tutorial.js";
 import { C } from "../config/index.js";
 import { gateChargeRadius, gateStableId } from "../utils/warp-gates.js";
 import { beginWarpThroughGate } from "./warp-exec.js";
-
+import { getPlayerInputKeys } from "../player/input-state.js";
 
 function createTemporaryGate(sysIdx: number, x: number, y: number, fromIdx: number): void {
   const sys = getState().GALAXY[sysIdx];
@@ -84,7 +84,7 @@ export function updateGateActivation(dt: number, p: Player): void {
     if (gate.chargeProgress === undefined) gate.chargeProgress = 0;
 
     const activationRadius = gateChargeRadius(gate);
-    const playerHoldingWarp = p.inputKeys?.warp === true;
+    const playerHoldingWarp = getPlayerInputKeys(p.netId ?? p.shipId).warp === true;
     const isHoldingWarp = playerHoldingWarp || (isLocalPlayer && Client.keys["warp"] === true);
     const dist = Math.hypot(p.x - gate.x, p.y - gate.y);
     const inRange = dist < activationRadius;

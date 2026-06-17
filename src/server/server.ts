@@ -6,6 +6,7 @@ import { createSnapshot, diffSnapshots, type WorldSnapshot } from "../sim/snapsh
 import { PlayerAccess, WorldAccess } from "../state-access.js";
 import { sanitizeInputFrame, type InputFrame } from "../sim/input.js";
 import { bindPlayerNetInput } from "../physics/net-input.js";
+import { getPlayerInput } from "../player/input-state.js";
 import { buildGalaxy, populateSystem } from "../world-gen.js";
 import { resolvePlayerSpawn, needsSpawnResolution } from "../utils/player-spawn.js";
 import { SpatialGrid } from "../utils/spatial.js";
@@ -211,9 +212,10 @@ export class GameServer {
       session.playerState.netInputFrame = frame ?? null;
       bindPlayerNetInput(session.playerState, frame);
       if (session.playerState === getState().player) {
-        Client.keys[" "] = !!session.playerState.inputKeys?.space;
-        Client.mouseWorld.x = session.playerState.inputMouseWorld?.x ?? session.playerState.x + Math.cos(session.playerState.angle) * 200;
-        Client.mouseWorld.y = session.playerState.inputMouseWorld?.y ?? session.playerState.y + Math.sin(session.playerState.angle) * 200;
+        const input = getPlayerInput(session.playerState.netId ?? session.playerState.shipId);
+        Client.keys[" "] = input.keys.space;
+        Client.mouseWorld.x = input.mouseWorld.x;
+        Client.mouseWorld.y = input.mouseWorld.y;
         Client.waypoint = session.playerState.waypoint ?? null;
         Client.navCommand = session.playerState.navCommand ?? null;
       }

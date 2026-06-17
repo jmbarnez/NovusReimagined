@@ -331,8 +331,10 @@ export function queueFrameAction(command: GameCommand, opts?: { replaceByType?: 
   pendingFrameActions.push(command);
 }
 
+import { setPlayerInput } from "../player/input-state.js";
+
 export function applyInputFrameToPlayer(frame: InputFrame, p: Player): void {
-  p.inputKeys = {
+  setPlayerInput(p.netId ?? p.shipId, {
     space: frame.keys.space,
     w: frame.keys.w,
     a: frame.keys.a,
@@ -340,8 +342,7 @@ export function applyInputFrameToPlayer(frame: InputFrame, p: Player): void {
     d: frame.keys.d,
     boost: frame.keys.boost,
     warp: frame.keys.warp,
-  };
-  p.inputMouseWorld = { x: frame.mouseWorld.x, y: frame.mouseWorld.y };
+  }, { x: frame.mouseWorld.x, y: frame.mouseWorld.y });
   p.movementControlMode = frame.movementControlMode;
   p.waypoint = frame.waypoint;
   p.navCommand = frame.navCommand;

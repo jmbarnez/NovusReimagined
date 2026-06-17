@@ -7,6 +7,7 @@ import type { WeaponProfile } from "../data/weaponProfiles.js";
 import type { Enemy } from "../types/enemy.js";
 import type { Asteroid } from "../types/asteroid.js";
 import type { WreckPiece } from "../types/system.js";
+import { getPlayerInputMouseWorld } from "../player/input-state.js";
 
 export function aimDeviationCone(baseScatter: number, distScatter: number, capRad: number, dist: number, accuracy: number): number {
   const totalScatter = (baseScatter + distScatter) / Math.max(0.1, accuracy);
@@ -29,7 +30,7 @@ export function calculatePredictiveAimAngle(
   p: Player,
 ): number {
   if (!actualTarget) {
-    const mouse = p.inputMouseWorld ?? { x: p.x + Math.cos(p.angle) * 200, y: p.y + Math.sin(p.angle) * 200 };
+    const mouse = getPlayerInputMouseWorld(p.netId ?? p.shipId) ?? { x: p.x + Math.cos(p.angle) * 200, y: p.y + Math.sin(p.angle) * 200 };
     return aimAngle(p.x, p.y, mouse.x, mouse.y);
   }
 

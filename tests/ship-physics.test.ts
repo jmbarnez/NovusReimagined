@@ -5,6 +5,7 @@ import { installTestPlayer } from "../src/player-registry.js";
 import { updateShip } from "../src/physics/ship.js";
 import { PlayerAccess } from "../src/state-access.js";
 import { getStats, invalidate } from "../src/player/player-stats.js";
+import { setPlayerInput } from "../src/player/input-state.js";
 import { C } from "../src/config/index.js";
 
 function removeIonBoostModule(): void {
@@ -29,7 +30,7 @@ describe("ship physics", () => {
     PlayerAccess.updatePhysics({ vx: boostedCap + 50, vy: 0 }, G.P);
 
     // Enable boost input and thrust
-    G.P.inputKeys = { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false };
+    setPlayerInput(G.P.netId ?? G.P.shipId, { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false }, { x: 0, y: 0 });
     PlayerAccess.setEnergy(100, G.P);
     PlayerAccess.setGateBoostRemaining(1.5, G.P);
 
@@ -49,7 +50,7 @@ describe("ship physics", () => {
     // Set velocity above boosted cap without gate boost
     PlayerAccess.updatePhysics({ vx: boostedCap + 50, vy: 0 }, G.P);
 
-    G.P.inputKeys = { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false };
+    setPlayerInput(G.P.netId ?? G.P.shipId, { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false }, { x: 0, y: 0 });
     PlayerAccess.setEnergy(100, G.P);
     PlayerAccess.setGateBoostRemaining(0, G.P);
 

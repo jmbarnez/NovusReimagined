@@ -5,6 +5,7 @@ import { setActiveRng, mkRng } from "../utils/math.js";
 import type { InputFrame } from "./input.js";
 import { isLocalPlayer } from "../player-registry.js";
 import { executeGameCommand } from "./commands.js";
+import { setPlayerInput } from "../player/input-state.js";
 
 export class Simulation {
   public simTick = 0;
@@ -28,7 +29,7 @@ export class Simulation {
   public applyInput(frame: InputFrame, p: Player) {
     if (!p) return;
     p.netInputFrame = frame;
-    p.inputKeys = {
+    setPlayerInput(p.netId ?? p.shipId, {
       space: frame.keys.space,
       w: frame.keys.w,
       a: frame.keys.a,
@@ -36,8 +37,7 @@ export class Simulation {
       d: frame.keys.d,
       boost: frame.keys.boost,
       warp: frame.keys.warp,
-    };
-    p.inputMouseWorld = { x: frame.mouseWorld.x, y: frame.mouseWorld.y };
+    }, { x: frame.mouseWorld.x, y: frame.mouseWorld.y });
     p.movementControlMode = frame.movementControlMode;
     p.waypoint = frame.waypoint;
     p.navCommand = frame.navCommand;
