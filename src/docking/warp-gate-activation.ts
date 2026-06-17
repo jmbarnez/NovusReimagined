@@ -4,7 +4,7 @@ import { addParticle } from "../utils/entities.js";
 import { random } from "../utils/math.js";
 import { allActivePlayers, curSys } from "../utils/game.js";
 import { initGateSprites } from "../render/celestial/gates.js";
-import type { Gate } from "../types/world.js";
+import type { Gate } from "../types/station.js";
 import { canWarpThroughGate } from "../data/tutorial.js";
 import { C } from "../config/index.js";
 import { gateChargeRadius, gateStableId } from "../utils/warp-gates.js";

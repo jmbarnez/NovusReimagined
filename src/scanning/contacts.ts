@@ -2,7 +2,7 @@ import type { Player } from "../state.js";
 import { PlayerAccess } from "../state-access.js";
 import { curSys } from "../utils/game.js";
 import { dst } from "../utils/math.js";
-import type { HiddenSite, SignatureContact, SignatureStrengthLabel } from "../types/world.js";
+import type { HiddenSite, SignatureContact, SignatureStrengthLabel } from "../types/system.js";
 import { angularDistanceDeg, bearingToPointDeg, isInScanCone, normalizeAngleDeg } from "./geometry.js";
 
 const DETECT_PROGRESS = 0.16;

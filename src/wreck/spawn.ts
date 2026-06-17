@@ -1,4 +1,4 @@
-import type { Enemy } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import {
   addParticle,

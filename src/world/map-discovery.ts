@@ -7,7 +7,7 @@ import { isInScanCone, bearingToPointDeg } from "../scanning/index.js";
 import { populateSystem } from "../world-gen.js";
 import { curSys } from "../utils/game.js";
 import { TUTORIAL_LOCAL_REGIONS, TUTORIAL_SECTOR } from "../data/tutorial-layout.js";
-import type { System } from "../types/world.js";
+import type { System } from "../types/system.js";
 
 export type LocalRegionDef = {
   id: string;

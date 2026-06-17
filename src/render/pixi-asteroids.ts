@@ -11,7 +11,9 @@
 import { Container, Graphics, ImageSource, Sprite, Texture } from "pixi.js";
 import { Client } from "../state.js";
 import { getState } from "../state-access.js";
-import type { Asteroid, System, LockSlot } from "../types/world.js";
+import type { Asteroid } from "../types/asteroid.js";
+import type { System } from "../types/system.js";
+import type { LockSlot } from "../types/combat.js";
 import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
 import { asteroidDebrisList } from "../utils/mining.js";

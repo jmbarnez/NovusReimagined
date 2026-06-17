@@ -1,5 +1,6 @@
 import type { Player } from "../state.js";
-import type { Asteroid, System } from "../types/world.js";
+import type { Asteroid } from "../types/asteroid.js";
+import type { System } from "../types/system.js";
 import { TUTORIAL_SPAWN, shouldRelocateTutorialStart } from "../data/tutorial-layout.js";
 
 export interface SpawnCoords {

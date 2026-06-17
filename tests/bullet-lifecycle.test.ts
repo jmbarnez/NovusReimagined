@@ -8,7 +8,7 @@ import { updateEnemyBullets } from "../src/physics/npcs/combat.js";
 import { updateProjectiles } from "../src/physics/combat-physics.js";
 import { SpatialGrid } from "../src/utils/spatial.js";
 import { WorldAccess } from "../src/state-access.js";
-import type { Enemy } from "../src/types/world.js";
+import type { Enemy } from "../src/types/enemy.js";
 
 describe("bullet spawn immunity", () => {
   beforeEach(() => {

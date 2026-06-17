@@ -3,7 +3,7 @@ import { PixiGeometryBufferPool } from "../pixi-geometry-buffer-pool.js";
 import { setPolyBuffers, syncWrecks } from "./wrecks.js";
 import { refreshPickupFonts, syncPickups, destroyPickups } from "./pickups.js";
 import { setPolyBuffers as setDecalPolyBuffers, syncDecals } from "./decals.js";
-import type { System } from "../../types/world.js";
+import type { System } from "../../types/system.js";
 
 let _wreckGfx: Graphics | null = null;
 let _pickupGfx: Graphics | null = null;

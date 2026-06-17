@@ -1,6 +1,6 @@
 import { _G, type Player } from "../../../state.js";
 import type { ModuleInstance } from "../../../types/moduleInstance.js";
-import type { LockSlot } from "../../../types/world.js";
+import type { LockSlot } from "../../../types/combat.js";
 
 export const playerFittingAccess = {
   setFittingSlot(rack: string, idx: number, uid: string | null, p: Player = _G.P) {

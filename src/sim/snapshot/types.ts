@@ -1,4 +1,4 @@
-import type { AutoTarget, LockSlot } from "../../types/world.js";
+import type { AutoTarget, LockSlot } from "../../types/combat.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 import type { MissionContract } from "../../data/missions.js";
 import type { ModuleInstance } from "../../types/moduleInstance.js";

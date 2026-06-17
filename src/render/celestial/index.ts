@@ -1,6 +1,6 @@
 import { Container } from "pixi.js";
 import { getState } from "../../state-access.js";
-import type { System } from "../../types/world.js";
+import type { System } from "../../types/system.js";
 import { stationLayer } from "../../pixi.js";
 import { refreshWorldLabelTextStyle } from "../world-label-card.js";
 import { isVisible } from "../../utils/game.js";

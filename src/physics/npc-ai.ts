@@ -4,7 +4,7 @@ import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { C } from "../config/index.js";
 import type { EngagementProfile } from "../config/enemies.js";
-import type { Enemy } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
 import { angleDiff } from "../utils/math.js";
 import { isHostile } from "../combat/factions.js";
 import { processAmbientBehavior } from "./ambient-ships.js";

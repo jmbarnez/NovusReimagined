@@ -4,7 +4,7 @@ import { C } from "../config/index.js";
 import type { Player } from "../state.js";
 import type { ModuleDef } from "../data/modules.js";
 import type { WeaponProfile } from "../data/weaponProfiles.js";
-import type { Enemy } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
 
 /**
  * Combined turret hit quality in [0,1]: full at/inside optimal with zero

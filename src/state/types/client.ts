@@ -1,5 +1,5 @@
 import type { Settings } from "../../data/settings.js";
-import type { Gate, GateFxProfile, Station } from "../../types/world.js";
+import type { Gate, GateFxProfile, Station } from "../../types/station.js";
 
 export enum AppMode {
   TITLE = "TITLE",

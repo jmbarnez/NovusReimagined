@@ -1,4 +1,4 @@
-import type { System } from "../types/world.js";
+import type { System } from "../types/system.js";
 
 /** Matches `SUN_DIST` in render/pixi-celestial.ts — distant star anchor in world space. */
 export const SUN_WORLD_DIST = 3500;

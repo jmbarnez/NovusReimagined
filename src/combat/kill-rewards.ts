@@ -13,7 +13,7 @@ import { progressMissions } from "../data/missions.js";
 import { spawnWreck } from "../wreck/index.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { addSalvagePickup } from "../utils/entities.js";
-import type { Enemy } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
 
 const TUTORIAL_ENEMY_TYPES = new Set(["target_dummy", "training_drone"]);
 

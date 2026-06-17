@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makePlayer } from "../src/player/player-data.js";
-import type { Gate } from "../src/types/world.js";
+import type { Gate } from "../src/types/station.js";
 import { didCrossGateAperture, gateActivationRadius } from "../src/utils/warp-gates.js";
 
 function makeGate(): Gate {

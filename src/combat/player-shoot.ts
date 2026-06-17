@@ -19,7 +19,9 @@ import { fireBeamWeapon } from "./beam-weapon.js";
 import { fireMissile } from "./missile.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import type { WeaponProfile } from "../data/weaponProfiles.js";
-import type { Enemy, Asteroid, WreckPiece } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
+import type { Asteroid } from "../types/asteroid.js";
+import type { WreckPiece } from "../types/system.js";
 
 let _lastNotInArcWarn = 0;
 const NOT_INARC_COOLDOWN_MS = 800;

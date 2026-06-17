@@ -2,7 +2,9 @@
  * Player-vs-solid collision resolution (asteroids, enemies, wreck pieces).
  */
 import type { Player } from "../state.js";
-import type { Asteroid, Enemy, WreckPiece } from "../types/world.js";
+import type { Asteroid } from "../types/asteroid.js";
+import type { Enemy } from "../types/enemy.js";
+import type { WreckPiece } from "../types/system.js";
 import type { SpatialQueryResult } from "../utils/spatial.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import {

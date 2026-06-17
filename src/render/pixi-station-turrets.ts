@@ -1,7 +1,8 @@
 import { Container, Graphics } from "pixi.js";
 import { effectLayer, worldContainer } from "../pixi.js";
 import { getState } from "../state-access.js";
-import type { System, StationTurret } from "../types/world.js";
+import type { System } from "../types/system.js";
+import type { StationTurret } from "../types/station.js";
 import { isVisible } from "../utils/game.js";
 
 let turretLayer: Container | null = null;

@@ -3,7 +3,7 @@
  * Enemies use hostile orange/red/yellow; asteroids & wrecks use neutral blue.
  */
 import type { Graphics } from "pixi.js";
-import type { LockSlot } from "../types/world.js";
+import type { LockSlot } from "../types/combat.js";
 
 export type LockBracketTargetKind = "enemy" | "neutral";
 

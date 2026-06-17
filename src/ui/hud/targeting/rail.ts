@@ -1,6 +1,6 @@
 import { getState } from "../../../state-access.js";
 import { targetByLockId, ensureLockQueue } from "../../../targeting.js";
-import type { LockSlot } from "../../../types/world.js";
+import type { LockSlot } from "../../../types/combat.js";
 import type { ComputedStats } from "../../../player/player-stats.js";
 import { hudState } from "../state.js";
 import type { LockCard } from "./types.js";

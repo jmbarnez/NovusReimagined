@@ -9,7 +9,9 @@ import { isWreckPieceTarget, isAsteroidTarget } from "../targeting.js";
 import { curSys } from "../utils/game.js";
 import { ASTEROID_DENSITY } from "../constants.js";
 import { invalidate } from "./player-stats.js";
-import type { Asteroid, WreckPiece, LockSlot } from "../types/world.js";
+import type { Asteroid } from "../types/asteroid.js";
+import type { WreckPiece } from "../types/system.js";
+import type { LockSlot } from "../types/combat.js";
 import { findFirstPoweredModuleSlot } from "../utils/module-slots.js";
 
 export const TRACTOR_RANGE = 600;

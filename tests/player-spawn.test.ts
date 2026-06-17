@@ -7,7 +7,7 @@ import {
   spawnNearFirstStation,
 } from "../src/utils/player-spawn.js";
 import { TUTORIAL_SPAWN } from "../src/data/tutorial-layout.js";
-import type { System } from "../src/types/world.js";
+import type { System } from "../src/types/system.js";
 
 describe("player-spawn", () => {
   it("needsSpawnResolution when pendingHomeSpawn is set", () => {

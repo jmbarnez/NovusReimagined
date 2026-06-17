@@ -1,6 +1,6 @@
 import { Client } from "../state.js";
 import type { Player } from "../state.js";
-import type { System } from "../types/world.js";
+import type { System } from "../types/system.js";
 import { renderPixi } from "../pixi.js";
 import { updatePixiBackground } from "./pixi-background.js";
 import { syncPixiParticles } from "./pixi-particles.js";

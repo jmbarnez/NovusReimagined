@@ -18,14 +18,8 @@ import type {
   FloatText,
   Trail,
 } from "./utils/entities.js";
-import type {
-  Star,
-  DustParticle,
-  Station,
-  System,
-  WreckPiece,
-  SalvagePickup,
-} from "./types/world.js";
+import type { Star, DustParticle, System, WreckPiece, SalvagePickup } from "./types/system.js";
+import type { Station } from "./types/station.js";
 import { DEFAULT_SETTINGS } from "./data/settings.js";
 import type { Settings } from "./data/settings.js";
 import type { ComputedStats } from "./player/player-stats.js";

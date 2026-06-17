@@ -4,7 +4,8 @@
 import { Sprite, Graphics, Text, Texture, type ContainerChild } from "pixi.js";
 import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
-import type { Enemy, LockSlot } from "../../types/world.js";
+import type { Enemy } from "../../types/enemy.js";
+import type { LockSlot } from "../../types/combat.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
 import { entityLayer, effectLayer } from "../../pixi.js";
 import { lerp } from "../../utils/math.js";

@@ -2,7 +2,7 @@ import { getState } from "../state-access.js";
 import { emit } from "../events.js";
 import { logEvent } from "../feedback.js";
 import { t } from "../utils/i18n.js";
-import type { Station } from "../types/world.js";
+import type { Station } from "../types/station.js";
 import type { Player } from "../state.js";
 
 export type MissionType = "bounty" | "mining" | "delivery" | "salvage" | "tutorial";

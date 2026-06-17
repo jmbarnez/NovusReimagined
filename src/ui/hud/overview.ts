@@ -1,6 +1,6 @@
 import "../styles/hud-overview.css";
 import { getState } from "../../state-access.js";
-import type { System } from "../../types/world.js";
+import type { System } from "../../types/system.js";
 import { GATE_RANGE } from "../../constants.js";
 import { dst } from "../../utils/math.js";
 import { buildLocalOverviewRows } from "../bridge.js";

@@ -2,7 +2,8 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { _G as G, Client } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { updateGateActivation } from "../src/docking/warp.js";
-import type { Gate, System } from "../src/types/world.js";
+import type { Gate } from "../src/types/station.js";
+import type { System } from "../src/types/system.js";
 
 function isPreWarpVisualActive(warpTargetIdx: number | undefined, warpCooldown: number | undefined): boolean {
   return (warpTargetIdx ?? -1) >= 0 || ((warpCooldown ?? 0) > 2.0 && (warpCooldown ?? 0) <= 4.8);

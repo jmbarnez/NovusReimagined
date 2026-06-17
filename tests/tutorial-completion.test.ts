@@ -14,7 +14,7 @@ import {
 import { TUTORIAL_SPAWN, TUTORIAL_BELT_CENTER, TUTORIAL_MINING_ZONE_R, TUTORIAL_HUB, TUTORIAL_GUNNERY_CENTER } from "../src/data/tutorial-layout.js";
 import { hasTutorialCombatLoadout } from "../src/data/tutorial.js";
 import { getTutorialSnapshot, tickTutorial, canAdvanceTour, advanceTour, initTutorial } from "../src/tutorial/index.js";
-import type { Enemy } from "../src/types/world.js";
+import type { Enemy } from "../src/types/enemy.js";
 import { stepById, ctxAt, makeSys } from "./tutorial-helpers.js";
 
 describe("fly-academy step completion", () => {

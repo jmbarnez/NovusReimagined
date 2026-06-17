@@ -1,7 +1,7 @@
 import type { Player } from "../state.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import { addSkillXp } from "../player/player-data.js";
-import type { HiddenSite } from "../types/world.js";
+import type { HiddenSite } from "../types/system.js";
 
 export interface DecryptionReward {
   credits: number;

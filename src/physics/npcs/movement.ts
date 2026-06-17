@@ -9,7 +9,8 @@ import {
   ENEMY_MIN_DIST_NONHOME_STATION,
 } from "../../constants.js";
 import { C } from "../../config/index.js";
-import type { Enemy, Asteroid } from "../../types/world.js";
+import type { Enemy } from "../../types/enemy.js";
+import type { Asteroid } from "../../types/asteroid.js";
 import { decayHitGlows } from "../../combat/hit-impact.js";
 import { type SpatialGrid, type SpatialQueryResult } from "../../utils/spatial.js";
 import { processNpcBehavior, triggerAttackWarningPulse } from "../npc-ai.js";

@@ -1,5 +1,6 @@
-import type { Gate, System } from "../types/world.js";
-import type { AutoTarget } from "../types/world.js";
+import type { Gate } from "../types/station.js";
+import type { System } from "../types/system.js";
+import type { AutoTarget } from "../types/combat.js";
 import type { Player } from "../state.js";
 import { C } from "../config/index.js";
 import { getState } from "../state-access.js";

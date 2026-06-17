@@ -1,5 +1,6 @@
 import { Container, Sprite, Texture, ImageSource } from "pixi.js";
-import type { Planet, System } from "../types/world.js";
+import type { Planet } from "../types/station.js";
+import type { System } from "../types/system.js";
 import { TAU } from "../constants.js";
 import { getSunWorldPos } from "../utils/sun-position.js";
 import { mkRng } from "../utils/math.js";

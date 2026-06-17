@@ -4,7 +4,9 @@ import { aimAngle } from "../utils/math.js";
 import { computeLinearInterceptAngle } from "../physics/npc-ai.js";
 import { C } from "../config/index.js";
 import type { WeaponProfile } from "../data/weaponProfiles.js";
-import type { Enemy, Asteroid, WreckPiece } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
+import type { Asteroid } from "../types/asteroid.js";
+import type { WreckPiece } from "../types/system.js";
 
 export function aimDeviationCone(baseScatter: number, distScatter: number, capRad: number, dist: number, accuracy: number): number {
   const totalScatter = (baseScatter + distScatter) / Math.max(0.1, accuracy);

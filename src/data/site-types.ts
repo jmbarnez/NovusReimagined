@@ -1,4 +1,4 @@
-import type { HiddenSiteFamily } from "../types/world.js";
+import type { HiddenSiteFamily } from "../types/system.js";
 
 export interface SiteRewardEntry {
   kind:

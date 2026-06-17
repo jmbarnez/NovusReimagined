@@ -1,6 +1,6 @@
 import { C } from "../config/index.js";
 import { WEAPON_PROFILES } from "../data/weaponProfiles.js";
-import type { Enemy } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
 
 export function enemyClassLabel(type: string): string {
   return ({ rat: "MITE", rat_drone: "MITE", drone: "DSENT", pirate: "HAC", raider: "BLITZ" } as Record<string, string>)[type] || "UNK";

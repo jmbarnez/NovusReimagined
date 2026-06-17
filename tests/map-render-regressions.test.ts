@@ -4,7 +4,7 @@ import { handleWheel } from "../src/input/mouse.js";
 import { computeSystemMapTransform } from "../src/ui/map-survey.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
-import type { System } from "../src/types/world.js";
+import type { System } from "../src/types/system.js";
 
 vi.mock("../src/ui/hud/zoom-indicator.js", () => ({
   showZoomIndicator: () => {},

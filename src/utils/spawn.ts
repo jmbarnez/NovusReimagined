@@ -6,7 +6,8 @@ import { ModuleRarity } from "../data/moduleRarity.js";
 import { generateModuleInstance } from "../loot/generateModule.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import type { SpawnZone } from "../data/enemy-spawns.js";
-import type { System, Enemy, EnemyFitting } from "../types/world.js";
+import type { System } from "../types/system.js";
+import type { Enemy, EnemyFitting } from "../types/enemy.js";
 
 function makeStockInstance(baseId: string): ModuleInstance {
   return {

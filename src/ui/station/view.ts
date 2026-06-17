@@ -2,7 +2,7 @@ import { Client, type Player } from "../../state.js";
 import { fmtKey } from "../../utils/format.js";
 import { getCurrentTutorialStep } from "../../data/tutorial.js";
 import { getTutorialSnapshot } from "../../tutorial/index.js";
-import type { Station } from "../../types/world.js";
+import type { Station } from "../../types/station.js";
 import { stationState } from "./shared.js";
 import { renderHangar } from "./hangar.js";
 import { renderMarket } from "./market.js";

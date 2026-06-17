@@ -1,7 +1,9 @@
 import { _G as G, Client } from "../src/state.js";
 import { TUTORIAL_STEPS } from "../src/data/tutorial.js";
 import { buildTutorialCtx } from "../src/data/tutorial.js";
-import type { System, Enemy, Station } from "../src/types/world.js";
+import type { System } from "../src/types/system.js";
+import type { Enemy } from "../src/types/enemy.js";
+import type { Station } from "../src/types/station.js";
 
 export function stepById(id: string) {
   const step = TUTORIAL_STEPS.find((s) => s.id === id);

@@ -13,7 +13,7 @@ import { populateSystem } from "../src/world-gen.js";
 import { initTutorial } from "../src/tutorial/index.js";
 import { tick } from "../src/physics.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../src/data/tutorial.js";
-import type { Gate } from "../src/types/world.js";
+import type { Gate } from "../src/types/station.js";
 
 describe("tutorial warp gates", () => {
   beforeEach(() => {

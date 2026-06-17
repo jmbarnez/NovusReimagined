@@ -1,5 +1,5 @@
 import { getState } from "../../state-access.js";
-import type { Station } from "../../types/world.js";
+import type { Station } from "../../types/station.js";
 import { dst } from "../../utils/math.js";
 import { curSys } from "../../utils/game.js";
 import { sfxBlip } from "../../audio/procedural.js";

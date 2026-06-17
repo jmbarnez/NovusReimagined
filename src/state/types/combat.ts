@@ -1,8 +1,8 @@
 import type { Bullet, EnemyBullet, Beam, Particle, Shockwave, FloatText, Trail } from "../../utils/entities.js";
-import type { WreckPiece, SalvagePickup } from "../../types/world.js";
+import type { WreckPiece, SalvagePickup } from "../../types/system.js";
 import type { ComputedStats } from "../../player/player-stats.js";
 import type { SpatialGrid } from "../../utils/spatial.js";
-import type { System, Star, DustParticle } from "../../types/world.js";
+import type { System, Star, DustParticle } from "../../types/system.js";
 import type { MiningLaserState, SalvagerState, TractorState } from "./player.js";
 
 export interface ActiveScanTarget {

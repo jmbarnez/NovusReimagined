@@ -11,7 +11,10 @@ import {
   computeEnemyLevel,
 } from "../../../targeting.js";
 import { isGateLockId } from "../../../utils/warp-gates.js";
-import type { Enemy, Asteroid, WreckPiece, LockSlot, AutoTarget } from "../../../types/world.js";
+import type { Enemy } from "../../../types/enemy.js";
+import type { Asteroid } from "../../../types/asteroid.js";
+import type { WreckPiece } from "../../../types/system.js";
+import type { LockSlot, AutoTarget } from "../../../types/combat.js";
 import type { ComputedStats } from "../../../player/player-stats.js";
 import { drawLiveTargetIcon } from "./icon.js";
 import type { LockCard } from "./types.js";

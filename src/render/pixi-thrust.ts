@@ -1,7 +1,7 @@
 import { Sprite, Texture, ImageSource } from "pixi.js";
 import { Client, AppMode } from "../state.js";
 import { getState } from "../state-access.js";
-import type { Enemy } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
 import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { thrustLayer } from "../pixi.js";

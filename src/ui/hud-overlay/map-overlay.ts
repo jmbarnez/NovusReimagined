@@ -1,6 +1,6 @@
 import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
-import type { System } from "../../types/world.js";
+import type { System } from "../../types/system.js";
 import { shouldShowWarpGate } from "../../data/tutorial.js";
 import { t } from "../../utils/i18n.js";
 import { openHudWindow, isOpen, closeHudWindow, getHudWindow } from "../hud/windows.js";

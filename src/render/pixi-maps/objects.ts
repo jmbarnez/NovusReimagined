@@ -7,7 +7,7 @@ import { getPassiveScanRangePx } from "../../targeting.js";
 import { SHIPS } from "../../data/ships.js";
 import { passiveContactOpacity } from "../../ui/map-survey.js";
 import { systemsVisibleOnMap } from "../../world/map-discovery.js";
-import type { System } from "../../types/world.js";
+import type { System } from "../../types/system.js";
 import { pixiMapState } from "./state.js";
 import { rgbaToHex } from "./utils.js";
 import { setMapLabel } from "./labels.js";
@@ -63,7 +63,7 @@ export function drawObjects(
 
     // Gates (diamonds)
     for (const g of sSys.gates) {
-      if (!shouldShowWarpGate(g as unknown as import("../../types/world.js").Gate, sSys.idx, getState().player)) continue;
+      if (!shouldShowWarpGate(g as unknown as import("../../types/station.js").Gate, sSys.idx, getState().player)) continue;
       const alwaysShowTutorialGate = sSys.idx === 0 && player.sysIdx === 0;
       if (!alwaysShowTutorialGate && !inPassiveRange(g.x, g.y)) continue;
       const p = toMap(g.x, g.y);

@@ -8,7 +8,7 @@ import { buildStationView } from "../src/ui/station/view.js";
 import { Client, _G as G } from "../src/state.js";
 import { TUTORIAL_STEPS } from "../src/data/tutorial.js";
 import { emit } from "../src/events.js";
-import type { Station } from "../src/types/world.js";
+import type { Station } from "../src/types/station.js";
 import { PlayerAccess } from "../src/state-access.js";
 import { closeHubWindow, resetHubWindowState, toggleHubWindow } from "../src/ui/hud-overlay/hub-window.js";
 

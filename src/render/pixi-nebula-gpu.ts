@@ -1,5 +1,5 @@
 import { Container, Sprite, Texture, Filter, UniformGroup } from "pixi.js";
-import type { System } from "../types/world.js";
+import type { System } from "../types/system.js";
 import { defaultFilterVert } from "pixi.js";
 import { NOISE_GLSL } from "./shaders/noise.glsl.js";
 import { mkRng } from "../utils/math.js";

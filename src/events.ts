@@ -2,9 +2,9 @@
  * Lightweight typed event bus for cross-module communication.
  */
 
-import type { Station } from "./types/world.js";
+import type { Station } from "./types/station.js";
 import type { AppMode } from "./state.js";
-import type { Gate } from "./types/world.js";
+import type { Gate } from "./types/station.js";
 
 export interface EventMap {
   "simulation:clear": void;

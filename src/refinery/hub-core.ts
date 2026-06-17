@@ -1,6 +1,6 @@
 import type { Player } from "../state.js";
 import { curSys } from "../utils/game.js";
-import type { Station } from "../types/world.js";
+import type { Station } from "../types/station.js";
 
 export function getHub(p: Player): Station | null {
   const sys = curSys(p);

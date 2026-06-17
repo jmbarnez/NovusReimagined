@@ -5,7 +5,10 @@ import { C } from "../config/index.js";
 import type { ModuleDef } from "../data/modules.js";
 import type { WeaponProfile } from "../data/weaponProfiles.js";
 import type { Player } from "../state.js";
-import type { Enemy, Asteroid, WreckPiece, AutoTarget } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
+import type { Asteroid } from "../types/asteroid.js";
+import type { WreckPiece } from "../types/system.js";
+import type { AutoTarget } from "../types/combat.js";
 import { isGateLockId } from "../utils/warp-gates.js";
 
 /**

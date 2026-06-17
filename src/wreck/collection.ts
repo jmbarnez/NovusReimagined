@@ -1,4 +1,4 @@
-import type { SalvagePickup } from "../types/world.js";
+import type { SalvagePickup } from "../types/system.js";
 import { getState, PlayerAccess } from "../state-access.js";
 import { dst } from "../utils/math.js";
 import { showPickupToast } from "../feedback.js";

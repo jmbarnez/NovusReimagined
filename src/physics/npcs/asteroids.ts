@@ -11,7 +11,8 @@ import {
   ENEMY_MASS,
   COLLISION_RESTITUTION,
 } from "../../constants.js";
-import type { Enemy, Asteroid } from "../../types/world.js";
+import type { Enemy } from "../../types/enemy.js";
+import type { Asteroid } from "../../types/asteroid.js";
 import { rebuildSpatialGrid, type SpatialQueryResult } from "../../utils/spatial.js";
 
 const _asteroidQuery: SpatialQueryResult<Asteroid>[] = [];

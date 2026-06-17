@@ -1,6 +1,9 @@
 import { getState } from "../state-access.js";
 import { curSys } from "../utils/game.js";
-import type { Asteroid, Enemy, WreckPiece, AutoTarget } from "../types/world.js";
+import type { Asteroid } from "../types/asteroid.js";
+import type { Enemy } from "../types/enemy.js";
+import type { WreckPiece } from "../types/system.js";
+import type { AutoTarget } from "../types/combat.js";
 import type { Player } from "../state.js";
 import { sortedCompositionEntries } from "../utils/ore-naming.js";
 import { ORE } from "../data/resources.js";

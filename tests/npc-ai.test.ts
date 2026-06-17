@@ -8,7 +8,7 @@ import { computeLinearInterceptAngle, pickHostileTarget, processNpcBehavior, isP
 import { fireTurretsAt } from "../src/combat/enemy-turrets.js";
 import { getEnemyTurretOrigin } from "../src/combat/turret-origin.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
-import type { Enemy } from "../src/types/world.js";
+import type { Enemy } from "../src/types/enemy.js";
 import type { Player } from "../src/state.js";
 
 function makeHostileNearPlayer(dist = 150): Enemy {

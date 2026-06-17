@@ -4,7 +4,7 @@
 import { Graphics, Sprite, Texture, Text, TextStyle } from "pixi.js";
 import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
-import type { SalvagePickup } from "../../types/world.js";
+import type { SalvagePickup } from "../../types/system.js";
 import { effectLayer } from "../../pixi.js";
 import { isVisible } from "../../utils/game.js";
 import { getUIFont } from "../ui-font.js";

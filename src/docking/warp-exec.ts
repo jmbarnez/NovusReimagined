@@ -11,7 +11,7 @@ import { t } from "../utils/i18n.js";
 import { populateSystem } from "../world-gen.js";
 import { stationLayer } from "../pixi.js";
 import { initPixiCelestial, destroyPixiCelestial } from "../render/celestial/index.js";
-import type { Gate } from "../types/world.js";
+import type { Gate } from "../types/station.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { C } from "../config/index.js";
 

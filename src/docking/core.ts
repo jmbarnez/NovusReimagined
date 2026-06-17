@@ -1,7 +1,7 @@
 import { Client, type Player } from "../state.js";
 import { emit } from "../events.js";
 import { app } from "../pixi.js";
-import type { Station } from "../types/world.js";
+import type { Station } from "../types/station.js";
 import { dst } from "../utils/math.js";
 import { curSys } from "../utils/game.js";
 import { getState } from "../state-access.js";

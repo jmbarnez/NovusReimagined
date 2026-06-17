@@ -1,5 +1,5 @@
 import type { ModuleInstance } from "../types/moduleInstance.js";
-import type { WreckPiece, WreckSalvageEntry } from "../types/world.js";
+import type { WreckPiece, WreckSalvageEntry } from "../types/system.js";
 import { C } from "../config/index.js";
 import { addParticle, addSalvagePickup, addShockwave, removeWreckPiece } from "../utils/entities.js";
 import { generateModuleInstance } from "../loot/generateModule.js";

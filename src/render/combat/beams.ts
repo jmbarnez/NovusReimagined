@@ -3,7 +3,7 @@
  */
 import { Graphics } from "pixi.js";
 import { getState } from "../../state-access.js";
-import type { System } from "../../types/world.js";
+import type { System } from "../../types/system.js";
 import {
   getRenderedPlayerTurretOrigin,
   getRenderedEnemyTurretOrigin,

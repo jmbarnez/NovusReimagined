@@ -1,7 +1,7 @@
 import { random } from "../utils/math.js";
 import { spawnHitImpactVisuals } from "./hit-impact.js";
 import { destroyAsteroid } from "../utils/mining.js";
-import type { Asteroid } from "../types/world.js";
+import type { Asteroid } from "../types/asteroid.js";
 import type { Player } from "../state.js";
 import { getState } from "../state-access.js";
 

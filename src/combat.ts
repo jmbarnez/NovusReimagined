@@ -10,7 +10,7 @@ import { progressMissions } from "./data/missions.js";
 import { showDamageNumber } from "./combat/damage-display.js";
 import { spawnWreck } from "./wreck/index.js";
 import { C } from "./config/index.js";
-import type { Enemy } from "./types/world.js";
+import type { Enemy } from "./types/enemy.js";
 import type { BulletOwner } from "./utils/entities.js";
 
 export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner?: BulletOwner, weaponKind?: WeaponDelivery | string | null) {

@@ -3,7 +3,8 @@ import type { HubJob, HubOutput, HubDeposit } from "./hub.js";
 import type { ModuleInstance } from "../../types/moduleInstance.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 import type { MissionContract } from "../../data/missions.js";
-import type { SignatureContact, AutoTarget, LockSlot } from "../../types/world.js";
+import type { SignatureContact } from "../../types/system.js";
+import type { AutoTarget, LockSlot } from "../../types/combat.js";
 import type { ActiveScanTarget } from "./combat.js";
 
 export interface MiningLaserState {

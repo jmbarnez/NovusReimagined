@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { resolveLockBracketStyle } from "../src/render/pixi-lock-brackets.js";
-import type { LockSlot } from "../src/types/world.js";
+import type { LockSlot } from "../src/types/combat.js";
 
 const slot = (resolving: boolean): LockSlot => ({ id: "t1", resolving, acc: 0 });
 

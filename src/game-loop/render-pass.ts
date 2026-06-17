@@ -1,6 +1,6 @@
 import { Client, AppMode } from "../state.js";
 import { getState } from "../state-access.js";
-import type { System } from "../types/world.js";
+import type { System } from "../types/system.js";
 import { syncPixiStationInterior } from "../render/pixi-station-interior.js";
 import { drawPerfOverlay } from "../render/perf-overlay.js";
 import { updateHudOverlay } from "../ui/hud-overlay.js";

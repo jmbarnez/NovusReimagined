@@ -4,7 +4,7 @@ import { addSalvagePickup, addShockwave } from "./entities.js";
 import { logEvent } from "../feedback.js";
 import { t } from "../utils/i18n.js";
 import { sfxShipExplosion } from "../audio/procedural.js";
-import type { Asteroid } from "../types/world.js";
+import type { Asteroid } from "../types/asteroid.js";
 import { generateOreName, normalizeComposition, oreColorForComposition, sortedCompositionEntries } from "./ore-naming.js";
 
 export interface HarvestResult {

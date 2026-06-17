@@ -16,7 +16,7 @@ import { TAU } from "../constants.js";
 import { C } from "../config/index.js";
 import { ORE } from "../data/resources.js";
 import { getState } from "../state-access.js";
-import type { System } from "../types/world.js";
+import type { System } from "../types/system.js";
 import { getNovusPrimeIdx } from "./galaxy-build.js";
 import { buildTutorialHiddenSite, seedHiddenSites } from "./hidden-sites.js";
 import { normalizeComposition, sortedCompositionEntries, type OreComposition } from "../utils/ore-naming.js";

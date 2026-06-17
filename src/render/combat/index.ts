@@ -3,7 +3,7 @@ import { syncBullets } from "./bullets.js";
 import { syncBeams } from "./beams.js";
 import { initUtilityBeams, setUtilityGraphics, syncUtilityBeams } from "./utility.js";
 import { destroyMiningLaserGpu } from "./mining-laser-gpu.js";
-import type { System } from "../../types/world.js";
+import type { System } from "../../types/system.js";
 import { WORLD_LAYER_Z } from "../pixi-z-order.js";
 
 let _bulletGfx: Graphics | null = null;

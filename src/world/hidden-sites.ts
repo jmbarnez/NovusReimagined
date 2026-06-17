@@ -10,7 +10,7 @@ import { TAU } from "../constants.js";
 import { C } from "../config/index.js";
 
 import { PlayerAccess, getState } from "../state-access.js";
-import type { HiddenSite, System } from "../types/world.js";
+import type { HiddenSite, System } from "../types/system.js";
 
 const SECTOR_OUTER_RADIUS = C.WORLD.SECTOR.outerRadius;
 const SECTOR_BELT_CENTER = C.WORLD.SECTOR.beltCenter;

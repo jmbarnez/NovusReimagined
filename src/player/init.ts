@@ -1,4 +1,4 @@
-import { Asteroid } from "../types/world.js";
+import type { Asteroid } from "../types/asteroid.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import { validateFitting } from "./player-fitting.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";

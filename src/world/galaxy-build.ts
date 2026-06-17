@@ -2,7 +2,7 @@ import { mkRng, rf, ri } from "../utils/math.js";
 import { TUTORIAL_SECTOR } from "../data/tutorial-layout.js";
 import { TAU } from "../constants.js";
 import { C } from "../config/index.js";
-import type { System } from "../types/world.js";
+import type { System } from "../types/system.js";
 import { SUN_WORLD_DIST } from "../utils/sun-position.js";
 
 export { TUTORIAL_SECTOR } from "../data/tutorial-layout.js";

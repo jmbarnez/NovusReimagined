@@ -6,7 +6,7 @@ import { getStats } from "../player/player-stats.js";
 import { logEvent } from "../feedback.js";
 import { t } from "../utils/i18n.js";
 import { rollWreckSalvage } from "../wreck/index.js";
-import type { WreckSalvageEntry } from "../types/world.js";
+import type { WreckSalvageEntry } from "../types/system.js";
 import { normalizeComposition } from "../utils/ore-naming.js";
 import { processMixedSource, separateMaterial, alloyMaterial } from "./processing.js";
 import { materialLabelForComposition } from "./composition.js";

@@ -10,7 +10,7 @@ import { computeScaledWeaponProfile } from "../src/player/player-stats.js";
 import { MODULES } from "../src/data/modules.js";
 import { SHIPS } from "../src/data/ships.js";
 import { WEAPON_PROFILES } from "../src/data/weaponProfiles.js";
-import type { Enemy } from "../src/types/world.js";
+import type { Enemy } from "../src/types/enemy.js";
 
 const noResist = { em: 0, therm: 0, kin: 0, exp: 0 };
 

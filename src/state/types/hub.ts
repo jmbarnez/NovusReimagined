@@ -1,6 +1,6 @@
 import type { BulkMaterialStack } from "./materials.js";
 import type { ModuleInstance } from "../../types/moduleInstance.js";
-import type { WreckSalvageEntry } from "../../types/world.js";
+import type { WreckSalvageEntry } from "../../types/system.js";
 
 export interface HubDepositItem {
   id: string;

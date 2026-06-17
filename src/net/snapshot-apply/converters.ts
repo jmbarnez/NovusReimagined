@@ -1,6 +1,6 @@
 import type { DamageProfile, WeaponDelivery } from "../../data/modules.js";
 import type { EntitySnapshot } from "../../sim/snapshot.js";
-import type { SalvagePickup } from "../../types/world.js";
+import type { SalvagePickup } from "../../types/system.js";
 
 export function toWeaponDelivery(kind: EntitySnapshot["kind"]): WeaponDelivery | null {
   return kind === "projectile" || kind === "beam" || kind === "missile" ? kind : null;

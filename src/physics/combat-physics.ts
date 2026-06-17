@@ -9,7 +9,8 @@ import { floatText } from "../utils/fx.js";
 import { removeBullet, updateBeams, updateParticles, updateShockwaves, updateFloatTexts, isTargetDestroyed } from "../utils/entities.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import type { SpatialQueryResult } from "../utils/spatial.js";
-import type { Enemy, Asteroid } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
+import type { Asteroid } from "../types/asteroid.js";
 import type { Player } from "../state.js";
 
 export function updateCombat(dt: number, p: Player = getState().player, opts?: { lockPredictionOnly?: boolean }) {

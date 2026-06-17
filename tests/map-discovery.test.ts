@@ -14,7 +14,7 @@ import { computeSystemMapTransform } from "../src/ui/map-survey.js";
 import { Client } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
-import type { System } from "../src/types/world.js";
+import type { System } from "../src/types/system.js";
 
 function stubConcentricSys(idx: number): System {
   return {

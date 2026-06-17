@@ -1,5 +1,8 @@
 import { ENEMY_DEFS } from "../../../data/enemies.js";
-import type { Enemy, Asteroid, WreckPiece, AutoTarget } from "../../../types/world.js";
+import type { Enemy } from "../../../types/enemy.js";
+import type { Asteroid } from "../../../types/asteroid.js";
+import type { WreckPiece } from "../../../types/system.js";
+import type { AutoTarget } from "../../../types/combat.js";
 import { isAsteroidTarget, isWreckPieceTarget } from "../../../targeting.js";
 import { isGateLockId } from "../../../utils/warp-gates.js";
 

@@ -4,7 +4,8 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
-import type { Gate, System } from "../../types/world.js";
+import type { Gate } from "../../types/station.js";
+import type { System } from "../../types/system.js";
 import { stationLayer, effectLayer } from "../../pixi.js";
 import {
   formatWorldLabelText,

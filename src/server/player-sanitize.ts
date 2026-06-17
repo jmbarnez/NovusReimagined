@@ -4,7 +4,7 @@ import { RACK_TYPES } from "../constants.js";
 import { resolvePlayerSpawn } from "../utils/player-spawn.js";
 import { getHardpointRack, mergeLegacyTurretSlotsIntoHigh } from "../utils/hardpoints.js";
 import type { Player } from "../state.js";
-import type { System } from "../types/world.js";
+import type { System } from "../types/system.js";
 import type { ShipDef } from "../data/ships.js";
 
 const MAX_ABS_COORD = 1_000_000;

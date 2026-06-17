@@ -9,7 +9,7 @@ import { tutorialState } from "../src/tutorial/ui/state.js";
 import { renderStep } from "../src/tutorial/ui/render.js";
 import { emit } from "../src/events.js";
 import { ensureStationUI, buildStationView, renderStationView } from "../src/ui/station/index.js";
-import type { Station } from "../src/types/world.js";
+import type { Station } from "../src/types/station.js";
 
 const TEST_STATION: Station = {
   id: "test-station",

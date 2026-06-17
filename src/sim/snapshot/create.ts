@@ -1,6 +1,6 @@
 import type { GameState, Player } from "../../state.js";
 import { getStats } from "../../player/player-stats.js";
-import type { AutoTarget } from "../../types/world.js";
+import type { AutoTarget } from "../../types/combat.js";
 import type { EntitySnapshot, TargetLockSnapshot, WorldSnapshot } from "./types.js";
 import { quantizeSnapshotNumber as q } from "./helpers.js";
 

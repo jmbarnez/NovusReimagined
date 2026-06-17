@@ -10,7 +10,7 @@ import { logEvent } from "../feedback.js";
 import { t } from "../utils/i18n.js";
 import { addSkillXp } from "../player/player-data.js";
 import { levelForSkillXp } from "../data/skills.js";
-import type { HiddenSite, SignatureClassification } from "../types/world.js";
+import type { HiddenSite, SignatureClassification } from "../types/system.js";
 import { isHeadlessServer } from "../physics/net-input.js";
 import {
   applyProgressCap,

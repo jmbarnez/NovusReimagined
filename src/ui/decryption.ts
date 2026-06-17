@@ -5,7 +5,7 @@ import { queueFrameAction } from "../sim/input.js";
 import { openHudWindow, closeHudWindow, isOpen } from "./hud/windows.js";
 import { curSys } from "../utils/game.js";
 import { dst, mulberry32 } from "../utils/math.js";
-import type { HiddenSite } from "../types/world.js";
+import type { HiddenSite } from "../types/system.js";
 import { getStats } from "../player/player-stats.js";
 import { sfxBlip, sfxConfirm, sfxError } from "../audio/procedural.js";
 import { logEvent } from "../feedback.js";

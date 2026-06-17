@@ -8,7 +8,8 @@
  */
 import { Container, Graphics } from "pixi.js";
 import { getState } from "../state-access.js";
-import type { System, LockSlot } from "../types/world.js";
+import type { System } from "../types/system.js";
+import type { LockSlot } from "../types/combat.js";
 import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";

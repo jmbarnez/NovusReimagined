@@ -11,7 +11,8 @@
 import { _G } from "../state.js";
 import type { Player } from "../state.js";
 import type { DamageProfile, WeaponDelivery } from "../data/modules.js";
-import type { Enemy, WreckPiece, SalvagePickup } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
+import type { WreckPiece, SalvagePickup } from "../types/system.js";
 import type { ModuleInstance } from "../types/moduleInstance.js";
 import { createPool } from "./pool.js";
 

@@ -5,7 +5,7 @@ import { killEnemy } from "./kill-rewards.js";
 import type { DamageProfile } from "../data/modules.js";
 import type { WeaponDelivery } from "../data/skills.js";
 import type { BulletOwner } from "../utils/entities.js";
-import type { Enemy } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
 import { isPlayerRef } from "../physics/npc-ai.js";
 
 export function damageEnemy(

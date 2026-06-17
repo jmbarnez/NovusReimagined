@@ -2,7 +2,8 @@ import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
 import { dst } from "../../utils/math.js";
 import { fmtDuration, hasHubOutput } from "../../refinery/index.js";
-import type { System, Station } from "../../types/world.js";
+import type { System } from "../../types/system.js";
+import type { Station } from "../../types/station.js";
 import { getElement, createElement, append, setHtml, setStyle, setPosition } from "../dom-helpers.js";
 
 const TOOLTIP_EL_ID = "hud-hub-tooltip";

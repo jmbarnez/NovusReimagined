@@ -13,7 +13,9 @@ import { MODULE_HP_MAX, RACK_TYPES, LOCK_RAIL_H, HUD_SIDE_W, HUD_BOTTOM_H } from
 import { emit } from "../events.js";
 import { clearSimulationEntities } from "./entities.js";
 import { playerHardpointRack } from "./hardpoints.js";
-import type { System, Enemy, Asteroid } from "../types/world.js";
+import type { System } from "../types/system.js";
+import type { Enemy } from "../types/enemy.js";
+import type { Asteroid } from "../types/asteroid.js";
 
 function playableSize(): { width: number; height: number } {
   if (typeof window === "undefined") return { width: 1, height: 1 };

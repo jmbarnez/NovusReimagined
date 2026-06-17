@@ -21,7 +21,7 @@ export function initPixiTutorialMarkers() {
   effectLayer.addChild(_beaconGfx);
 }
 
-export function syncPixiTutorialMarkers(now: number, sys: import("../types/world.js").System) {
+export function syncPixiTutorialMarkers(now: number, sys: import("../types/system.js").System) {
   if (!_beaconGfx) initPixiTutorialMarkers();
   if (!_beaconGfx) return;
 

@@ -1,6 +1,6 @@
 import { C } from "../config/index.js";
 import type { DamageProfile } from "../data/modules.js";
-import type { ResistProfile } from "../types/world.js";
+import type { ResistProfile } from "../types/enemy.js";
 
 /** Normalize a damage-type split to fractions summing to 1, or null if untyped. */
 export function normalizeProfile(p?: DamageProfile | null): ResistProfile | null {

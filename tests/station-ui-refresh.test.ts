@@ -6,7 +6,7 @@ import { ensureStationUI } from "../src/ui/station/shell.js";
 import { buildStationView } from "../src/ui/station/view.js";
 import { stationState } from "../src/ui/station/shared.js";
 import type { MissionContract } from "../src/data/missions.js";
-import type { Station } from "../src/types/world.js";
+import type { Station } from "../src/types/station.js";
 
 const TEST_STATION: Station = {
   id: "station-test",

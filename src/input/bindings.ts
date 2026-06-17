@@ -12,7 +12,7 @@ import { queueFrameAction } from "../sim/input.js";
 import { isEventLogToggleHotkey, isOverviewToggleHotkey } from "../input-hotkeys.js";
 import { dst } from "../utils/math.js";
 import { gateStableId } from "../utils/warp-gates.js";
-import type { Enemy } from "../types/world.js";
+import type { Enemy } from "../types/enemy.js";
 import { setCursorLock, getCanvasElement, isBlockedByUi, getUiPointerBlockSelector } from "./core.js";
 import { getCurrentTutorialStep } from "../data/tutorial.js";
 import { isCurrentStepComplete } from "../tutorial/index.js";

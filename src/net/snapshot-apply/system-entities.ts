@@ -1,4 +1,6 @@
-import type { System, Enemy, Asteroid } from "../../types/world.js";
+import type { System } from "../../types/system.js";
+import type { Enemy } from "../../types/enemy.js";
+import type { Asteroid } from "../../types/asteroid.js";
 import type { SnapshotEntityMaps } from "./entity-maps.js";
 
 export function applyEnemySnapshots(sys: System, maps: SnapshotEntityMaps): void {

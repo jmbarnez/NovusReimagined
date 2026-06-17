@@ -2,7 +2,7 @@ import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
 import { curSys } from "../../utils/game.js";
 import { computeDiscoveredMapBounds } from "../../world/map-discovery.js";
-import type { System } from "../../types/world.js";
+import type { System } from "../../types/system.js";
 import type { SystemMapTransform } from "./types.js";
 
 export function resetMapPan(): void {

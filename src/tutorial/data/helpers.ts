@@ -2,7 +2,7 @@ import { Client, type Player } from "../../state.js";
 import { dst } from "../../utils/math.js";
 import { getNovusPrimeIdx } from "../../world/galaxy-build.js";
 import { flattenStorageMaterials } from "../../refinery/index.js";
-import type { Gate } from "../../types/world.js";
+import type { Gate } from "../../types/station.js";
 import {
   getTutorialTrackById,
   trackTotalArcLength,
