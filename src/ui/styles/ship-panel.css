@@ -125,17 +125,16 @@
   transition: width 0.15s ease-out;
 }
 .sp-stats-grid .st-bar-fill.shield {
-  background: linear-gradient(90deg, var(--hud-shield), color-mix(in srgb, var(--hud-shield) 55%, #000));
+  background: var(--hud-shield);
 }
 .sp-stats-grid .st-bar-fill.hull {
-  background: linear-gradient(90deg, var(--hud-hull), color-mix(in srgb, var(--hud-hull) 55%, #000));
+  background: var(--hud-hull);
 }
 .sp-stats-grid .st-bar-fill.struct {
-  background: linear-gradient(90deg, var(--hud-danger), color-mix(in srgb, var(--hud-danger) 55%, #000));
+  background: var(--hud-danger);
 }
 .sp-stats-grid .st-bar-fill.cap {
-  background: linear-gradient(90deg, var(--hud-cap), color-mix(in srgb, var(--hud-cap) 55%, #000));
-  box-shadow: 0 0 6px rgba(255, 200, 50, 0.2);
+  background: var(--hud-cap);
 }
 .sp-stats-grid .delta {
   font-size: calc(9px * var(--effective-font-scale, 1));
@@ -147,17 +146,14 @@
 .sp-stats-grid .delta.pos {
   color: var(--hud-positive);
   background: color-mix(in srgb, var(--hud-positive) 15%, transparent);
-  text-shadow: 0 0 6px color-mix(in srgb, var(--hud-positive) 40%, transparent);
 }
 .sp-stats-grid .delta.neg {
   color: var(--hud-danger);
   background: color-mix(in srgb, var(--hud-danger) 15%, transparent);
-  text-shadow: 0 0 6px color-mix(in srgb, var(--hud-danger) 40%, transparent);
 }
 /* Highlight overload warn */
 .sp-stats-grid .val.overload {
   color: var(--hud-danger);
-  text-shadow: 0 0 8px color-mix(in srgb, var(--hud-danger) 40%, transparent);
 }
 
 /* Turret Cards */
@@ -179,7 +175,6 @@
 }
 .sp-turret-card.turret-selected {
   border-color: var(--hud-accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--hud-accent) 20%, transparent);
 }
 .sp-turret-card.empty {
   border-style: dashed;
@@ -298,7 +293,6 @@
 }
 .sp-turret-card .tc-bar-fill.heat.danger {
   background: var(--hud-danger);
-  box-shadow: 0 0 4px var(--hud-danger);
 }
 .sp-turret-card .tc-bar-fill.durability {
   background: var(--hud-shield);
@@ -319,7 +313,7 @@
 /* Animations for overheat */
 @keyframes turret-overheat-glow {
   from { border-color: var(--hud-border-soft); }
-  to { border-color: var(--hud-danger); box-shadow: 0 0 6px color-mix(in srgb, var(--hud-danger) 25%, transparent); }
+  to { border-color: var(--hud-danger); }
 }
 .sp-turret-card.overheat {
   animation: turret-overheat-glow 0.8s infinite alternate ease-in-out;

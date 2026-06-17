@@ -80,12 +80,10 @@
 .delta.pos { 
   color: #44ffaa; 
   background: rgba(20, 60, 40, 0.3);
-  text-shadow: 0 0 8px rgba(68, 255, 170, 0.4);
 }
 .delta.neg { 
   color: #ff5555; 
   background: rgba(60, 20, 20, 0.3);
-  text-shadow: 0 0 8px rgba(255, 85, 85, 0.4);
 }
 
 .slot {

@@ -18,7 +18,7 @@ export interface ShipNavForces {
 
 export function computeShipNavForces(
   p: Player,
-  inputKeys: { space: boolean; w: boolean; a: boolean; s: boolean; d: boolean; boost: boolean; warp: boolean },
+  inputKeys: Record<string, boolean>,
   inputMouseWorld: { x: number; y: number } | null,
   uiBlocksInput: boolean,
   cursorUnlocked: boolean,

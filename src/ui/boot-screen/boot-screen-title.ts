@@ -6,6 +6,7 @@ import { t } from "../../utils/i18n.js";
 import { formatBuildLabel } from "../../data/version.js";
 import { query, setHtml, onClick } from "../dom-helpers.js";
 import { stopActiveProfileSessionTimer } from "../../data/profiles.js";
+import { quitApplication } from "../../utils/app-exit.js";
 
 /**
  * Boot Screen Title Controller
@@ -43,7 +44,7 @@ export function bindTitleScreenEvents(): void {
 
   bind("#title-exit", () => {
     sfxBlip();
-    if (!confirm(t("title.exitConfirm"))) return;
+    void quitApplication();
     window.open("about:blank", "_self");
     window.close();
   });

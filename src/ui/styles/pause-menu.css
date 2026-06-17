@@ -9,8 +9,6 @@
   align-items: center;
   justify-content: center;
   background: color-mix(in srgb, var(--hud-bg-deep) 55%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   transform: scale(var(--ui-scale));
   transform-origin: top left;
 }
@@ -64,7 +62,6 @@
 
 .pause-btn-primary:hover {
   border-color: var(--hud-accent);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--hud-accent) 20%, transparent);
 }
 
 .pause-btn:disabled {
@@ -85,5 +82,10 @@
   background: color-mix(in srgb, var(--hud-danger) 40%, transparent);
   color: var(--hud-text-bright);
   border-color: var(--hud-danger);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--hud-danger) 35%, transparent);
+}
+
+.pause-btn-saved {
+  background: color-mix(in srgb, var(--hud-positive) 18%, transparent);
+  color: var(--hud-positive);
+  border-color: color-mix(in srgb, var(--hud-positive) 50%, transparent);
 }

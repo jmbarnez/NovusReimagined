@@ -10,7 +10,8 @@ import { liveEnemies, liveAsteroids } from "../utils/game.js";
 import { angleDiff } from "../utils/math.js";
 import { SHIPS } from "../data/ships.js";
 import { isHostile } from "../combat/factions.js";
-import { pickHostileTarget, fireTurretsAt } from "./npc-ai.js";
+import { pickHostileTarget } from "./npc-ai.js";
+import { fireTurretsAt } from "../combat/enemy-turrets.js";
 
 let _spawnCooldown = 5.0; // Start spawn check soon after startup
 

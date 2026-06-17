@@ -66,32 +66,28 @@
   border-radius: 2px;
   cursor: pointer;
   position: relative;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .sk-tile:hover {
   border-color: var(--sk-color, color-mix(in srgb, var(--hud-shield) 70%, transparent));
   background: color-mix(in srgb, var(--hud-bg-elevated) 85%, transparent);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.35), inset 0 0 6px rgba(0, 0, 0, 0.2);
 }
 
 .sk-tile.maxed {
   border-color: var(--sk-color, var(--hud-accent));
-  box-shadow: 0 0 6px rgba(255, 200, 0, 0.12);
 }
 
 .sk-icon {
   font-size: calc(20px * var(--effective-font-scale, 1));
   line-height: 1;
   margin-bottom: 3px;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
   opacity: 0.95;
-  transition: transform 0.2s, filter 0.2s;
+  transition: transform 0.2s;
 }
 
 .sk-tile:hover .sk-icon {
   transform: scale(1.15);
-  filter: drop-shadow(0 0 6px var(--sk-color, #fff));
   opacity: 1;
 }
 
@@ -120,7 +116,6 @@
 
 .sk-lvl.maxed {
   color: var(--hud-accent);
-  text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
 }
 
 .sk-bar-track {
@@ -172,7 +167,6 @@
   line-height: 1;
   flex-shrink: 0;
   margin-right: 10px;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.12));
 }
 
 .skd-info {

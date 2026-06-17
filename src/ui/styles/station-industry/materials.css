@@ -115,9 +115,7 @@
   gap: 8px;
   padding: 8px;
   border: 1px solid color-mix(in srgb, #d3a56d 18%, var(--hud-border-soft));
-  background:
-    linear-gradient(90deg, color-mix(in srgb, #1b130b 76%, var(--hud-bg-elevated)), color-mix(in srgb, var(--hud-bg-deep) 66%, transparent));
-  box-shadow: inset 2px 0 0 color-mix(in srgb, #d3a56d 44%, transparent);
+  background: color-mix(in srgb, #1b130b 76%, var(--hud-bg-elevated));
 }
 
 .ind-dock-status-main,
@@ -317,20 +315,22 @@
 
 .ind-run-route span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: calc(8px * var(--effective-font-scale, 1));
-  font-weight: 700;
-  text-align: center;
+  color: var(--hud-text-faint);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--hud-text-main);
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.ind-run-route strong {
+  font-size: calc(10px * var(--effective-font-scale, 1));
+  color: var(--hud-text-bright);
+  text-align: center;
 }
 
 .ind-run-route i {
   height: 1px;
-  background: linear-gradient(90deg, color-mix(in srgb, #d3a56d 20%, transparent), color-mix(in srgb, #d3a56d 72%, transparent));
+  background: #d3a56d;
   position: relative;
 }
 
@@ -341,7 +341,7 @@
   top: -3px;
   border-top: 3px solid transparent;
   border-bottom: 3px solid transparent;
-  border-left: 5px solid color-mix(in srgb, #d3a56d 72%, transparent);
+  border-left: 5px solid #d3a56d;
 }
 
 .ind-action-tray-copy {
@@ -416,10 +416,6 @@
   border-color: color-mix(in srgb, var(--ind-accent, #b47a3c) 28%, var(--hud-border-soft));
 }
 
-.ind-feed-card {
-  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ind-accent, #b47a3c) 65%, transparent);
-}
-
 .ind-feed-card--process.is-selected {
   border-color: color-mix(in srgb, var(--ind-accent, #b47a3c) 44%, var(--hud-border));
   background: color-mix(in srgb, #17120d 52%, var(--hud-bg-elevated));
@@ -451,7 +447,7 @@
   bottom: 0;
   padding-top: 8px;
   padding-bottom: 2px;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, #17120d 92%, var(--hud-bg-elevated)) 22%);
+  background: color-mix(in srgb, #17120d 92%, var(--hud-bg-elevated));
 }
 
 .ind-feed-actions--compact {
@@ -704,7 +700,6 @@
   padding: 8px 9px;
   border: 1px solid color-mix(in srgb, var(--ind-accent, #b47a3c) 18%, var(--hud-border-soft));
   background: color-mix(in srgb, #17120d 60%, var(--hud-bg-elevated));
-  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ind-accent, #b47a3c) 60%, transparent);
 }
 
 .ind-material-row-top,

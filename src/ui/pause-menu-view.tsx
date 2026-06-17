@@ -43,7 +43,13 @@ export function PauseMenuView({ onResume, onSave, onSettings, onExit }: PauseMen
       <button type="button" id="pause-resume" class="pause-btn pause-btn-primary" onClick={onResume}>
         {t("pause.resume")}
       </button>
-      <button type="button" id="pause-save" class="pause-btn" disabled={saveDisabled} onClick={handleSave}>
+      <button
+        type="button"
+        id="pause-save"
+        class={`pause-btn ${saveDisabled ? "pause-btn-saved" : ""}`}
+        disabled={saveDisabled}
+        onClick={handleSave}
+      >
         {saveLabel}
       </button>
       <button type="button" id="pause-settings" class="pause-btn" onClick={onSettings}>
