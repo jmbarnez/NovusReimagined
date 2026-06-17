@@ -10,7 +10,6 @@ import type { ModuleInstance } from "../types/moduleInstance.js";
 import { isHeadlessServer } from "./net-input.js";
 import { emitShipExhaustSheets } from "../utils/ship-exhaust.js";
 import { getIonBoostModuleState } from "../player/boost-module.js";
-import { decayPlayerHitGlows } from "../player/hit-glow.js";
 import { computeShipNavForces } from "./ship-nav.js";
 import { processModuleCapDrain, computeBoostState } from "./ship-modules.js";
 import { resolveSolidCollisions } from "./collisions.js";
@@ -44,8 +43,6 @@ export function updateShip(dt: number, _p?: Player) {
   }
   const cargoMap = _cargoMap;
 
-  PlayerAccess.updatePhysics({ thrustFx: false }, p);
-  PlayerAccess.updatePhysics({ boostFx: false }, p);
   const speed = Math.hypot(p.vx, p.vy);
 
   // ── 1. Navigation (pure decision) ──────────────────────────────────────
@@ -58,7 +55,6 @@ export function updateShip(dt: number, _p?: Player) {
     isLocalPresentation,
   );
   let { ax, ay, at } = nav;
-  if (nav.thrustFx) PlayerAccess.updatePhysics({ thrustFx: true }, p);
 
   // Clear nav/waypoint if the pure helper indicated arrival
   if (p.navCommand && !uiBlocksInput && !(inputKeys?.w || inputKeys?.s || inputKeys?.a || inputKeys?.d)) {
@@ -77,8 +73,8 @@ export function updateShip(dt: number, _p?: Player) {
     }
   }
 
-  const isThrusting = p.thrustFx && speed > C.PHYSICS.SHIP.minSpeedForThrust;
-  const isApplyingThrust = p.thrustFx === true;
+  const isThrusting = nav.thrustFx && speed > C.PHYSICS.SHIP.minSpeedForThrust;
+  const isApplyingThrust = nav.thrustFx;
 
   if (inputKeys?.space) {
     PlayerAccess.updatePhysics({ vx: p.vx * C.PHYSICS.SHIP.brakeVelocityRetention, vy: p.vy * C.PHYSICS.SHIP.brakeVelocityRetention, va: p.va * C.PHYSICS.SHIP.brakeAngularRetention }, p);
@@ -91,7 +87,7 @@ export function updateShip(dt: number, _p?: Player) {
   const boostModule = getIonBoostModuleState(p, cargoMap);
   const abOn = boostModule.online;
   const boostRequested = !!inputKeys?.boost && !uiBlocksInput && isApplyingThrust;
-  const { boostThrustMult, boostSpeedMult } = computeBoostState(
+  const { boostThrustMult, boostSpeedMult, boostActive } = computeBoostState(
     p, dt, cargoMap, boostRequested, isApplyingThrust,
   );
 
@@ -127,7 +123,7 @@ export function updateShip(dt: number, _p?: Player) {
 
   const currentSpeed = Math.hypot(p.vx, p.vy);
   if (isLocalPresentation && currentSpeed > EXHAUST_MIN_SPEED) {
-    emitShipExhaustSheets(p, p.x, p.y, p.angle, abOn, p.boostFx === true, 0);
+    emitShipExhaustSheets(p, p.x, p.y, p.angle, abOn, boostActive, 0);
   }
 
   if ((p._colCooldown ?? 0) > 0) PlayerAccess.setColCooldown((p._colCooldown ?? 0) - dt, p);
@@ -138,7 +134,6 @@ export function updateShip(dt: number, _p?: Player) {
   if (isLocalPresentation && (Client.combatHeat ?? 0) > 0) {
     PlayerAccess.setCombatHeat(Math.max(0, Client.combatHeat - dt * 0.25));
   }
-  decayPlayerHitGlows(dt, p);
 
   PlayerAccess.setShield(Math.min(st.maxShield, p.shield + st.shieldRegen * dt), p);
   PlayerAccess.setEnergy(Math.min(st.maxEnergy, p.energy + st.energyRegen * dt), p);
@@ -154,7 +149,7 @@ export function updateShip(dt: number, _p?: Player) {
   }
 
   const speedRatio = st.maxSpeed > 0 ? Math.min(1, speed / st.maxSpeed) : 0;
-  if (isLocalPresentation) updateEngineSound(isThrusting, speedRatio, abOn || p.boostFx === true);
+  if (isLocalPresentation) updateEngineSound(isThrusting, speedRatio, abOn || boostActive);
 }
 
 

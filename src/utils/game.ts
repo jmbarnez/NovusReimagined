@@ -194,8 +194,6 @@ export function respawnPlayer(p: Player = getState().player) {
     PlayerAccess.setMaxShield(st.maxShield);
     PlayerAccess.setEnergy(st.maxEnergy);
     PlayerAccess.setInvincible(3.0);
-    PlayerAccess.setShieldHitGlow(0);
-    PlayerAccess.setHullHitGlow(0);
     clearSensorLocks(p);
     MiningAccess.update({ active: false });
     clearSimulationEntities();
@@ -212,8 +210,6 @@ export function respawnPlayer(p: Player = getState().player) {
     p.maxShield = st.maxShield;
     p.energy = st.maxEnergy;
     p.invincible = 3.0;
-    p.shieldHitGlow = 0;
-    p.hullHitGlow = 0;
     clearSensorLocks(p);
   }
 

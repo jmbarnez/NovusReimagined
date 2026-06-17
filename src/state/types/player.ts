@@ -52,8 +52,6 @@ export interface PlayerPhysics {
   vx: number; vy: number; va: number;
   angle: number; prevAngle: number;
   sysIdx: number;
-  thrustFx: boolean;
-  boostFx: boolean;
   boostLockout: boolean;
   gateBoostRemaining?: number;
   recoilFrames?: number;
@@ -64,9 +62,6 @@ export interface PlayerCombat {
   structure: number; maxStructure: number;
   shield: number; shieldCd: number;
   maxShield?: number;
-  shieldHitGlow: number; shieldHitAngle: number;
-  hullHitGlow: number; hullHitAngle: number;
-  structureHitGlow?: number; structureHitAngle?: number;
   targetLock: AutoTarget | null;
   lockQueue: LockSlot[];
   fireControlSlot: number;

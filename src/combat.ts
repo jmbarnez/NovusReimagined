@@ -12,17 +12,17 @@ import { spawnWreck } from "./wreck/index.js";
 import { C } from "./config/index.js";
 import type { Enemy } from "./types/enemy.js";
 import type { BulletOwner } from "./utils/entities.js";
+import { triggerShieldHit, triggerStructureHit, removeVisualState } from "./render/entity-visuals.js";
 
 export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner?: BulletOwner, weaponKind?: WeaponDelivery | string | null) {
   if (dmg <= 0) return;
-  
+
   let displayType = "hit";
   let overflow = dmg;
-  
+
   if (e.shield !== undefined && e.shield > 0) {
     displayType = "shield";
-    e.shieldHitGlow = 1;
-    e.shieldHitAngle = Math.atan2(py - e.y, px - e.x);
+    triggerShieldHit(e.id, Math.atan2(py - e.y, px - e.x));
     if (overflow >= e.shield) {
       overflow -= e.shield;
       e.shield = 0;
@@ -31,7 +31,7 @@ export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner
       overflow = 0;
     }
   }
-  
+
   if (overflow > 0) {
     displayType = "hull";
     if (overflow >= e.hp) {
@@ -46,7 +46,7 @@ export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner
   // Structure absorbs whatever overflows past hull (only ships with a structure layer)
   if (overflow > 0 && (e.maxStructure ?? 0) > 0) {
     displayType = "structure";
-    e.structureHitGlow = 1;
+    triggerStructureHit(e.id);
     e.structure = (e.structure ?? 0) - overflow;
     if (e.structure < 0) e.structure = 0;
   }
@@ -67,6 +67,7 @@ export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner
 export function killEnemy(e: Enemy) {
   removeSensorLock(e.id);
   e.alive = false;
+  removeVisualState(e.id);
   e.respawnTimer = RESPAWN_S;
   const exScale = e.type === "raider" ? C.COMBAT.EXPLOSION_SCALE.raider : e.type === "pirate" ? C.COMBAT.EXPLOSION_SCALE.pirate : C.COMBAT.EXPLOSION_SCALE.default;
   const exTier: "small" | "medium" | "large" = e.type === "raider" ? "large" : e.type === "pirate" ? "medium" : "small";

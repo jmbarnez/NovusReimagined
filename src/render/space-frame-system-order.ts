@@ -1,4 +1,5 @@
 export const SPACE_FRAME_SYSTEM_IDS = [
+  "decayVisuals",
   "bg",
   "particles",
   "stations",

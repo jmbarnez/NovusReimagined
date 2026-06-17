@@ -320,7 +320,6 @@ export function processNpcBehavior(e: Enemy, dt: number, _d: number, detectionRa
     e.angle += mv.angleDelta;
     e.vx += mv.vxDelta;
     e.vy += mv.vyDelta;
-    if (mv.thrustFx) e.thrustFx = true;
 
     // ── 5. Combat ────────────────────────────────────────────────────────────
     if (e._npcHasLock) {
@@ -335,7 +334,6 @@ export function processNpcBehavior(e: Enemy, dt: number, _d: number, detectionRa
     e.vx += mv.vxDelta;
     e.vy += mv.vyDelta;
     e.angle += mv.angleDelta;
-    if (mv.thrustFx) e.thrustFx = true;
   }
 }
 

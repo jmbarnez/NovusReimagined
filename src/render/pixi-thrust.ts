@@ -145,9 +145,9 @@ function _syncPlayerThrust(alpha: number, now: number) {
   const ship = SHIPS[p.shipId];
   const nozzles = ship?.render?.nozzleOffsets ?? [[-20, 0]];
   const speed = Math.hypot(p.vx || 0, p.vy || 0);
-  const thrusting = p.thrustFx === true;
+  const thrusting = speed > 12;
   const throttle = flameThrottle(speed, ship?.simMaxSpeedPx ?? 100, thrusting);
-  const boosted = p.boostFx === true;
+  const boosted = speed > (ship?.simMaxSpeedPx ?? 100) * 1.05;
 
   // Ensure we have a sprite per nozzle
   while (_playerSprites.length < nozzles.length) {
@@ -228,9 +228,9 @@ function _syncRemotePlayerThrust(alpha: number, now: number) {
     }
 
     const speed = Math.hypot(p.vx || 0, p.vy || 0);
-    const thrusting = p.thrustFx === true;
+    const thrusting = speed > 12;
     const throttle = flameThrottle(speed, ship?.simMaxSpeedPx ?? 100, thrusting);
-    const boosted = p.boostFx === true;
+    const boosted = speed > (ship?.simMaxSpeedPx ?? 100) * 1.05;
 
     if (throttle <= 0) {
       for (const sprite of sprites) sprite.alpha = 0;
@@ -289,7 +289,7 @@ function _syncEnemyThrust(now: number) {
 
     const maxSpd = def.speed || 80;
     const curSpd = Math.hypot(e.vx || 0, e.vy || 0);
-    const throttle = flameThrottle(curSpd, maxSpd, e.thrustFx === true);
+    const throttle = flameThrottle(curSpd, maxSpd, curSpd > 12);
     if (throttle <= 0) {
       if (_enemySprites.has(e.id)) {
         _enemySprites.get(e.id)!.alpha = 0;

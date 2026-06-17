@@ -2,6 +2,7 @@ import { Sprite, Texture, Filter, UniformGroup } from "pixi.js";
 import { defaultFilterVert } from "pixi.js";
 import { Client, AppMode } from "../state.js";
 import { getState } from "../state-access.js";
+import { getVisualState } from "./entity-visuals.js";
 import { STAGE_LAYER_Z } from "./pixi-z-order.js";
 
 import { app } from "../pixi.js";
@@ -136,12 +137,13 @@ export function updateVignette() {
   const u = _ug.uniforms as unknown as VignetteUniforms;
   const player = getState().player;
   if (player) {
-    u.uShieldGlow     = player.shieldHitGlow || 0;
-    u.uShieldAngle    = player.shieldHitAngle || 0;
-    u.uHullGlow       = player.hullHitGlow || 0;
-    u.uHullAngle      = player.hullHitAngle || 0;
-    u.uStructureGlow  = player.structureHitGlow || 0;
-    u.uStructureAngle = player.structureHitAngle || 0;
+    const v = getVisualState(player.netId || "__player__");
+    u.uShieldGlow     = v.shieldHitGlow || 0;
+    u.uShieldAngle    = v.shieldHitAngle || 0;
+    u.uHullGlow       = v.hullHitGlow || 0;
+    u.uHullAngle      = v.hullHitAngle || 0;
+    u.uStructureGlow  = v.structureHitGlow || 0;
+    u.uStructureAngle = v.structureHitAngle || 0;
   } else {
     u.uShieldGlow     = 0;
     u.uShieldAngle    = 0;

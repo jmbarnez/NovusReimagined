@@ -5,6 +5,7 @@ import { SPACE_FRAME_SYSTEM_IDS } from "../src/render/space-frame-system-order.j
 describe("space frame render systems", () => {
   it("keeps the expected frame sync order stable", () => {
     expect([...SPACE_FRAME_SYSTEM_IDS]).toEqual([
+      "decayVisuals",
       "bg",
       "particles",
       "stations",

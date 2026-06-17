@@ -69,19 +69,12 @@ export interface EnemyAI {
   targetingPlayer?: boolean;
   hasLockOnPlayer?: boolean;
   lockOnTimer?: number;
-  thrustFx?: boolean;
   _orbitDir?: 1 | -1;
   _lastPlayerHitAt?: number;
   _lastPlayerHitKind?: "projectile" | "beam" | "missile";
   _npcTarget?: Enemy | Player | null;
   _npcLockTimer?: number;
   _npcHasLock?: boolean;
-}
-
-export interface EnemyVisual {
-  shieldHitGlow?: number;
-  shieldHitAngle?: number;
-  structureHitGlow?: number;
 }
 
 export interface EnemyFaction {
@@ -105,7 +98,6 @@ export interface Enemy extends
   EnemyPhysics,
   EnemyCombat,
   EnemyAI,
-  EnemyVisual,
   EnemyFaction,
   EnemyTask
 {

@@ -14,7 +14,6 @@ export interface StationTurret {
   y?: number;
   target?: Enemy | null;
   faceAngle?: number;
-  muzzleFlash?: number;
 }
 
 export interface StationIdentity {

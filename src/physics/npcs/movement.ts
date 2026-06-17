@@ -11,7 +11,6 @@ import {
 import { C } from "../../config/index.js";
 import type { Enemy } from "../../types/enemy.js";
 import type { Asteroid } from "../../types/asteroid.js";
-import { decayHitGlows } from "../../combat/hit-impact.js";
 import { type SpatialGrid, type SpatialQueryResult } from "../../utils/spatial.js";
 import { processNpcBehavior, triggerAttackWarningPulse } from "../npc-ai.js";
 
@@ -27,9 +26,6 @@ function updateNpcMovementAndSeparation(
   e.px = e.x;
   e.py = e.y;
   e.prevAngle = e.angle;
-  e.thrustFx = false;
-
-  decayHitGlows(e, dt);
 
   if (e.vx || e.vy) {
     e.x += e.vx * dt;
@@ -109,7 +105,8 @@ function applyNpcStationEvasion(e: Enemy, dt: number, sysIdx: number) {
 }
 
 function spawnNpcTrail(e: Enemy) {
-  if (!e.thrustFx) return;
+  const speed = Math.hypot(e.vx || 0, e.vy || 0);
+  if (speed <= 12) return;
   const backDist = C.ENEMIES.TRAIL.backDistanceOffset + (e.radius || 16) * C.ENEMIES.TRAIL.backDistanceMultiplier;
   const wx = e.x - Math.cos(e.angle) * backDist;
   const wy = e.y - Math.sin(e.angle) * backDist;

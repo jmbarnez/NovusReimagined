@@ -28,7 +28,7 @@ export function damageEnemy(
 
   if (e.shield !== undefined && e.shield > 0) {
     displayType = "shield";
-    applyHitGlow(e, "shield", px, py);
+    applyHitGlow(e.id, "shield", px, py, e.x, e.y);
     if (overflow >= e.shield) {
       overflow -= e.shield;
       e.shield = 0;
@@ -40,7 +40,7 @@ export function damageEnemy(
 
   if (overflow > 0) {
     displayType = "hull";
-    applyHitGlow(e, "hull", px, py);
+    applyHitGlow(e.id, "hull", px, py, e.x, e.y);
     if (overflow >= e.hp) {
       overflow -= e.hp;
       e.hp = 0;
@@ -52,7 +52,7 @@ export function damageEnemy(
 
   if (overflow > 0 && (e.maxStructure ?? 0) > 0) {
     displayType = "structure";
-    applyHitGlow(e, "structure", px, py);
+    applyHitGlow(e.id, "structure", px, py, e.x, e.y);
     e.structure = (e.structure ?? 0) - overflow;
     if (e.structure < 0) e.structure = 0;
   }

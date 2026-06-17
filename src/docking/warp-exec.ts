@@ -11,6 +11,7 @@ import { t } from "../utils/i18n.js";
 import { populateSystem } from "../world-gen.js";
 import { stationLayer } from "../pixi.js";
 import { initPixiCelestial, destroyPixiCelestial } from "../render/celestial/index.js";
+import { clearVisualState } from "../render/entity-visuals.js";
 import type { Gate } from "../types/station.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { C } from "../config/index.js";
@@ -80,6 +81,7 @@ export function warpTo(gate: Gate, p: Player = getState().player) {
     if (p === getState().player) {
       emit("sector:crossed", { toIdx: gate.targetSysIdx });
       destroyPixiCelestial();
+      clearVisualState();
       if (targetSys && stationLayer) initPixiCelestial(stationLayer, targetSys);
     }
   }

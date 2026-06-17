@@ -67,7 +67,6 @@ export function updateStationTurrets(dt: number) {
             hitChance: 1,
           });
           t.shootCd = STATION_TURRET_RELOAD + Math.random() * 0.25;
-          t.muzzleFlash = 0.08;
         }
       }
     }

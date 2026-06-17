@@ -15,6 +15,7 @@ import { isVisible } from "../utils/game.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
 import { drawShipHitGlows } from "./pixi-hit-impact-draw.js";
 import { effectLayer } from "../pixi.js";
+import { getVisualState } from "./entity-visuals.js";
 
 let _hitGfx: Graphics | null = null;
 const _lockMap = new Map<string, LockSlot>();
@@ -61,20 +62,18 @@ export function syncPixiHitEffects(now: number, alpha: number, sys: System): voi
       }
 
       const sigR = e.sigRadius ?? 20;
-      drawShipHitGlows(_hitGfx, ix, iy, sigR, Math.max(12, sigR * 0.85), e);
+      drawShipHitGlows(_hitGfx, ix, iy, sigR, Math.max(12, sigR * 0.85), getVisualState(e.id));
     }
   }
 
   // 2. Player Shield glows & Hull sparks
   if (getState().player) {
     const player = getState().player;
-    const shieldGlow = player.shieldHitGlow || 0;
-    const hullGlow = player.hullHitGlow || 0;
-
-    if (shieldGlow > 0 || hullGlow > 0) {
+    const v = getVisualState(player.netId || "__player__");
+    if ((v.shieldHitGlow ?? 0) > 0 || (v.hullHitGlow ?? 0) > 0) {
       const ix = lerp(player.px, player.x, alpha);
       const iy = lerp(player.py, player.y, alpha);
-      drawShipHitGlows(_hitGfx, ix, iy, 34, 18, player);
+      drawShipHitGlows(_hitGfx, ix, iy, 34, 18, v);
     }
   }
 }

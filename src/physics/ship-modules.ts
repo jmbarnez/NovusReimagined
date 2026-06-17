@@ -84,7 +84,6 @@ export function computeBoostState(
       + (boostModule.online ? C.PHYSICS.SHIP.boostModuleThrustBonus : 0);
     boostSpeedMult = C.PHYSICS.SHIP.boostBaseSpeedMult
       + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
-    PlayerAccess.updatePhysics({ boostFx: true }, p);
   }
 
   return { boostThrustMult, boostSpeedMult, boostActive };

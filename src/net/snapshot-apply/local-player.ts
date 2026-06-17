@@ -43,7 +43,7 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
   p.shield = snap.player.shield;
   p.maxShield = snap.player.maxShield;
   p.energy = snap.player.energy;
-  PlayerAccess.updatePhysics({ boostFx: snap.player.boostFx === true, boostLockout: false }, p);
+  p.boostLockout = false;
   p.credits = snap.player.credits;
   if (typeof snap.player.homeSysIdx === "number") PlayerAccess.setHomeSysIdx(snap.player.homeSysIdx, p);
   if (snap.player.ore) PlayerAccess.setOreAll({ ...snap.player.ore }, p);

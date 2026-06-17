@@ -3,7 +3,7 @@
  * Used for both player and NPC ships.
  */
 import type { Graphics } from "pixi.js";
-import type { HitGlowTarget } from "../combat/hit-impact.js";
+import type { EntityVisualState } from "./entity-visuals.js";
 
 export function drawShieldHitRipple(
   g: Graphics,
@@ -68,15 +68,15 @@ export function drawShipHitGlows(
   cy: number,
   shieldRadius: number,
   hullEdgeRadius: number,
-  target: HitGlowTarget,
+  visual: EntityVisualState,
 ): void {
-  const shieldGlow = target.shieldHitGlow || 0;
-  if (shieldGlow > 0 && target.shieldHitAngle !== undefined) {
-    drawShieldHitRipple(g, cx, cy, shieldRadius, target.shieldHitAngle, shieldGlow);
+  const shieldGlow = visual.shieldHitGlow || 0;
+  if (shieldGlow > 0 && visual.shieldHitAngle !== undefined) {
+    drawShieldHitRipple(g, cx, cy, shieldRadius, visual.shieldHitAngle, shieldGlow);
   }
 
-  const hullGlow = target.hullHitGlow || 0;
-  if (hullGlow > 0 && target.hullHitAngle !== undefined) {
-    drawHullHitSparks(g, cx, cy, hullEdgeRadius, target.hullHitAngle, hullGlow);
+  const hullGlow = visual.hullHitGlow || 0;
+  if (hullGlow > 0 && visual.hullHitAngle !== undefined) {
+    drawHullHitSparks(g, cx, cy, hullEdgeRadius, visual.hullHitAngle, hullGlow);
   }
 }

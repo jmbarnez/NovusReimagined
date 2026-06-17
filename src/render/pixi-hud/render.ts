@@ -52,7 +52,7 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
   const boostSpeedMult = C.PHYSICS.SHIP.boostBaseSpeedMult
     + (boostModule.online ? C.PHYSICS.SHIP.boostModuleSpeedBonus : 0);
   const boostedMaxSpeed = maxSpeed * boostSpeedMult;
-  const boostFx = player.boostFx === true;
+  const boostFx = speed > maxSpeed * 1.01;
   if (boostFx && !hudState.lastBoostFx) hudState.boostPulseUntil = now + 360;
   const boostPulse = Math.max(0, Math.min(1, (hudState.boostPulseUntil - now) / 360));
   const speedDisplayMax = boostFx ? boostedMaxSpeed : maxSpeed;

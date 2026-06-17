@@ -390,7 +390,6 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
       if (dist > stopDistance) {
         e.vx += Math.cos(e.angle) * e.speed * 0.9 * dt;
         e.vy += Math.sin(e.angle) * e.speed * 0.9 * dt;
-        e.thrustFx = true;
       }
 
       if (e._npcHasLock) {
@@ -440,7 +439,6 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
       const thrust = e.speed * 0.8;
       e.vx += Math.cos(e.angle) * thrust * dt;
       e.vy += Math.sin(e.angle) * thrust * dt;
-      e.thrustFx = true;
     }
   }
 }

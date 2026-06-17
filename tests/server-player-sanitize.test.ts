@@ -15,7 +15,6 @@ describe("createServerPlayerState", () => {
     incoming.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
     incoming.turretPower = incoming.turretPower.map(() => true);
     incoming.turretPowerCd = incoming.turretPowerCd.map(() => 99);
-    incoming.boostFx = true;
     incoming.boostLockout = true;
     incoming.netInputFrame = {
       tick: 7,
@@ -38,7 +37,6 @@ describe("createServerPlayerState", () => {
     expect(sanitized.turretPower.every((powered) => powered === false)).toBe(true);
     expect(sanitized.turretPowerCd.every((cd) => cd === 0)).toBe(true);
     expect(sanitized.netInputFrame).toBeNull();
-    expect(sanitized.boostFx).toBe(false);
     expect(sanitized.boostLockout).toBe(false);
   });
 

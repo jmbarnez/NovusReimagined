@@ -1,6 +1,7 @@
 import { Client, type Player } from "../state.js";
 import { PlayerAccess, getState, WorldAccess } from "../state-access.js";
 import { floatText, spawnImpactFlash, spawnParticles } from "../utils/fx.js";
+import { triggerShieldHit, triggerHullHit, triggerStructureHit } from "../render/entity-visuals.js";
 import { respawnPlayer } from "../utils/game.js";
 import { MODULE_DAMAGE_CHANCE, MODULE_DAMAGE_RATIO, RACK_TYPES } from "../constants.js";
 import { invalidate } from "../player/player-stats.js";
@@ -112,8 +113,7 @@ export function damagePlayer(
 
   if (p.shield > 0) {
     PlayerAccess.setShield(p.shield - rawDmg, p);
-    PlayerAccess.setShieldHitGlow(1, p);
-    PlayerAccess.setShieldHitAngle(Math.atan2(sourceY - p.y, sourceX - p.x), p);
+    triggerShieldHit(p.netId || "__player__", Math.atan2(sourceY - p.y, sourceX - p.x));
     if (isLocalPlayer) {
       PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.35));
       WorldAccess.queueEffect({
@@ -133,8 +133,7 @@ export function damagePlayer(
     if (p.hp > 0) {
       PlayerAccess.setHp(p.hp - Math.ceil(overflow), p);
       displayType = "hull";
-      PlayerAccess.setHullHitGlow(1, p);
-      PlayerAccess.setHullHitAngle(Math.atan2(sourceY - p.y, sourceX - p.x), p);
+      triggerHullHit(p.netId || "__player__", Math.atan2(sourceY - p.y, sourceX - p.x));
       if (isLocalPlayer) PlayerAccess.setCombatHeat(Math.min(1, (Client.combatHeat || 0) + 0.55));
       if (p.hp < 0) {
         overflow = -p.hp;
@@ -150,8 +149,7 @@ export function damagePlayer(
   if (overflow > 0) {
     PlayerAccess.setStructure(p.structure - Math.ceil(overflow), p);
     displayType = "structure";
-    PlayerAccess.setStructureHitGlow(1, p);
-    PlayerAccess.setStructureHitAngle(Math.atan2(sourceY - p.y, sourceX - p.x), p);
+    triggerStructureHit(p.netId || "__player__");
     if (p.hp <= 0 && Math.random() < MODULE_DAMAGE_CHANCE) {
       damageRandomModule(overflow, p);
     }

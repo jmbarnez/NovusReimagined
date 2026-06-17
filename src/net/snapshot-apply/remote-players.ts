@@ -21,7 +21,7 @@ export function applyRemotePlayerSnapshots(maps: SnapshotEntityMaps, snap: World
       }
       peer.hp = snapEnt.hp || 100;
       peer.maxHp = snapEnt.maxHp || 100;
-      PlayerAccess.updatePhysics({ thrustFx: snapEnt.thrustFx === true, boostFx: snapEnt.boostFx === true, boostLockout: false }, peer);
+      peer.boostLockout = false;
       peer.sysIdx = snap.player.sysIdx;
       if (snapEnt.miningLaser) {
         if (!peer.miningLaser) peer.miningLaser = { active: false, x1: 0, y1: 0, x2: 0, y2: 0, phase: 0, hitR: 0, hitNx: 0, hitNy: 0 };
@@ -59,7 +59,7 @@ export function applyRemotePlayerSnapshots(maps: SnapshotEntityMaps, snap: World
       sysIdx: snap.player.sysIdx,
     } satisfies RemotePlayerBrief);
     PlayerAccess.updatePhysics({ vx: ent.vx, vy: ent.vy, angle: ent.angle || 0, prevAngle: ent.angle || 0 }, newPeer);
-    PlayerAccess.updatePhysics({ thrustFx: ent.thrustFx === true, boostFx: ent.boostFx === true, boostLockout: false }, newPeer);
+    newPeer.boostLockout = false;
     PlayerAccess.setHp(ent.hp || 100, newPeer);
     PlayerAccess.setMaxHp(ent.maxHp || 100, newPeer);
     PlayerAccess.addServerPlayer(newPeer);

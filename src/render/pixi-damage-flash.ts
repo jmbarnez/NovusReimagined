@@ -1,5 +1,6 @@
 import { Graphics } from "pixi.js";
 import { getState } from "../state-access.js";
+import { getVisualState } from "./entity-visuals.js";
 import { effectLayer, screenContainer, worldContainer } from "../pixi.js";
 
 let flashGfx: Graphics | null = null;
@@ -21,9 +22,11 @@ export function syncPixiDamageFlash(width: number, height: number): void {
   const g = ensureFlash();
   if (!g) return;
 
-  const sGlow = getState().player.shieldHitGlow || 0;
-  const hGlow = getState().player.hullHitGlow || 0;
-  const strGlow = getState().player.structureHitGlow || 0;
+  const player = getState().player;
+  const v = player ? getVisualState(player.netId || "__player__") : null;
+  const sGlow = v?.shieldHitGlow || 0;
+  const hGlow = v?.hullHitGlow || 0;
+  const strGlow = v?.structureHitGlow || 0;
   const dmgFlash = Math.max(sGlow, hGlow, strGlow);
   if (dmgFlash <= 0) { g.clear(); return; }
 

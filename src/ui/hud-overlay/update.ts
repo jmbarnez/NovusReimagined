@@ -68,9 +68,12 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   }
   if (hudState.boostStatus) {
     const p = getState().player;
+    const st = getStats(p);
+    const speed = Math.hypot(p.vx || 0, p.vy || 0);
+    const isBoosting = speed > (st.maxSpeed || 1) * 1.01;
     const lowCap = (p.energy ?? 0) < C.PHYSICS.SHIP.boostMinEnergyToStart;
-    const cls = p.boostFx === true ? "boosting" : lowCap ? "lowcap" : "ready";
-    const label = p.boostFx === true
+    const cls = isBoosting ? "boosting" : lowCap ? "lowcap" : "ready";
+    const label = isBoosting
       ? t("hud.boostActive")
       : lowCap
         ? t("hud.boostLowCap")

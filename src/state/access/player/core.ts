@@ -6,8 +6,6 @@ export const playerCoreAccess = {
     px?: number; py?: number;
     vx?: number; vy?: number; va?: number;
     angle?: number; prevAngle?: number;
-    thrustFx?: boolean;
-    boostFx?: boolean;
     boostLockout?: boolean;
   }, p: Player = _G.P) {
     if (data.x !== undefined) p.x = data.x;
@@ -19,8 +17,6 @@ export const playerCoreAccess = {
     if (data.va !== undefined) p.va = data.va;
     if (data.angle !== undefined) p.angle = data.angle;
     if (data.prevAngle !== undefined) p.prevAngle = data.prevAngle;
-    if (data.thrustFx !== undefined) p.thrustFx = data.thrustFx;
-    if (data.boostFx !== undefined) p.boostFx = data.boostFx;
     if (data.boostLockout !== undefined) p.boostLockout = data.boostLockout;
   },
 
@@ -46,30 +42,6 @@ export const playerCoreAccess = {
 
   setColCooldown(value: number, p: Player = _G.P) {
     p._colCooldown = value;
-  },
-
-  setShieldHitGlow(value: number, p: Player = _G.P) {
-    p.shieldHitGlow = value;
-  },
-
-  setShieldHitAngle(value: number, p: Player = _G.P) {
-    p.shieldHitAngle = value;
-  },
-
-  setHullHitGlow(value: number, p: Player = _G.P) {
-    p.hullHitGlow = value;
-  },
-
-  setHullHitAngle(value: number, p: Player = _G.P) {
-    p.hullHitAngle = value;
-  },
-
-  setStructureHitGlow(value: number, p: Player = _G.P) {
-    p.structureHitGlow = value;
-  },
-
-  setStructureHitAngle(value: number, p: Player = _G.P) {
-    p.structureHitAngle = value;
   },
 
   setCombatHeat(value: number) {
