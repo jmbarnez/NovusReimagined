@@ -105,14 +105,7 @@ export function destroyEffectsOverlay(): void {
   floatLayer = null;
 }
 
-const _hexCache = new Map<string, number>();
-function hexStringToNumber(hex: string): number {
-  const hit = _hexCache.get(hex);
-  if (hit !== undefined) return hit;
-  const val = parseInt(hex.replace("#", ""), 16) || 0xffffff;
-  _hexCache.set(hex, val);
-  return val;
-}
+import { hexStringToNumber } from "./cache.js";
 
 function ensureLayer(): Container | null {
   const root = effectLayer ?? worldContainer;

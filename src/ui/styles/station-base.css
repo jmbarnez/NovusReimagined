@@ -63,7 +63,6 @@
   background: color-mix(in srgb, var(--hud-positive) 20%, var(--hud-bg-deep));
   color: color-mix(in srgb, var(--hud-positive) 85%, white);
   border-color: color-mix(in srgb, var(--hud-positive) 50%, transparent);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--hud-positive) 20%, transparent);
 }
 
 /* ── Tabs (horizontal) ── */
@@ -105,7 +104,6 @@
   color: var(--hud-text-bright);
   background: color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);
   border-color: color-mix(in srgb, var(--hud-shield) 50%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-shield) 15%, transparent);
 }
 
 .st-tab:disabled {
@@ -117,19 +115,15 @@
 /* Tab color accents */
 .st-tab[data-tab="hangar"].active {
   border-color: color-mix(in srgb, var(--hud-shield) 60%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-shield) 15%, transparent);
 }
 .st-tab[data-tab="market"].active {
   border-color: color-mix(in srgb, var(--hud-positive) 60%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-positive) 15%, transparent);
 }
 .st-tab[data-tab="industry"].active {
   border-color: color-mix(in srgb, var(--hud-accent) 60%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-accent) 15%, transparent);
 }
 .st-tab[data-tab="skills"].active {
   border-color: color-mix(in srgb, var(--hud-arcane) 60%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--hud-arcane) 15%, transparent);
 }
 
 /* ── Main Content Area ── */
@@ -166,22 +160,6 @@
   overflow: hidden;
 }
 
-/* ── Scanline overlay ── */
-#station-overlay::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.03) 2px,
-    rgba(0,0,0,0.03) 4px
-  );
-  z-index: 1;
-}
-
 /* ── Dimmer ── */
 #st-dimmer {
   display: none;
@@ -201,29 +179,21 @@
   display: block;
 }
 
-/* Inset border + glow so the highlight is never clipped by ancestor overflow:hidden */
 .tutorial-hangar-highlight {
   position: relative;
   z-index: 26 !important;
   outline: none;
   border: 2px solid var(--hud-accent);
   filter: brightness(1.08);
-  box-shadow:
-    inset 0 0 0 2px color-mix(in srgb, var(--hud-accent) 22%, transparent),
-    inset 0 0 20px color-mix(in srgb, var(--hud-accent) 38%, transparent);
   animation: tutorialHangarPulseInset 1.4s ease-in-out infinite;
 }
 
 @keyframes tutorialHangarPulseInset {
   0%, 100% {
-    box-shadow:
-      inset 0 0 0 2px color-mix(in srgb, var(--hud-accent) 18%, transparent),
-      inset 0 0 14px color-mix(in srgb, var(--hud-accent) 30%, transparent);
+    border-color: color-mix(in srgb, var(--hud-accent) 70%, transparent);
   }
   50% {
-    box-shadow:
-      inset 0 0 0 4px color-mix(in srgb, var(--hud-accent) 28%, transparent),
-      inset 0 0 22px color-mix(in srgb, var(--hud-accent) 42%, transparent);
+    border-color: var(--hud-accent);
   }
 }
 

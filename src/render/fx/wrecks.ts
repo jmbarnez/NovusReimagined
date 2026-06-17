@@ -8,15 +8,7 @@ import { ENEMY_DEFS } from "../../data/enemies.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "../pixi-lock-brackets.js";
 import { PixiGeometryBufferPool } from "../pixi-geometry-buffer-pool.js";
 
-const _hexCache = new Map<string, number>();
-
-function hexStringToNumber(hex: string): number {
-  const hit = _hexCache.get(hex);
-  if (hit !== undefined) return hit;
-  const val = parseInt(hex.replace("#", ""), 16) || 0xffffff;
-  _hexCache.set(hex, val);
-  return val;
-}
+import { hexStringToNumber } from "../cache.js";
 
 let _polyBuffers: PixiGeometryBufferPool | null = null;
 let _lockSlotById = new Map<string, any>();

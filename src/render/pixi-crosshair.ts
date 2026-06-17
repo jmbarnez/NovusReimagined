@@ -18,16 +18,7 @@ function ensureCrosshair(): Graphics | null {
   return crosshairGfx;
 }
 
-const _hexCache = new Map<string, number>();
-function hexStringToNumber(color: string): number {
-  const hit = _hexCache.get(color);
-  if (hit !== undefined) return hit;
-  const clean = color.startsWith("#") ? color.slice(1) : color;
-  const parsed = Number.parseInt(clean, 16);
-  const val = Number.isNaN(parsed) ? 0xffffff : parsed;
-  _hexCache.set(color, val);
-  return val;
-}
+import { hexStringToNumber } from "./cache.js";
 
 function drawReticleStyle(g: Graphics, style: string, sz: number, color: number, lineWidth: number): void {
   const stroke = (alpha = 1) => g.stroke({ color, width: lineWidth, alpha });

@@ -134,36 +134,43 @@ export interface ResistProfile {
   exp: number;
 }
 
-export interface Enemy {
+// ── Enemy sub-interfaces (same runtime shape, explicit domain separation) ──
+
+export interface EnemyIdentity {
   id: string;
   type: string;
   name: string;
+  credits: number;
+  loot: Record<string, number>;
+  level?: number;
+  alive: boolean;
+  respawnTimer: number;
+}
+
+export interface EnemyPhysics {
   x: number;
   y: number;
   px: number;
   py: number;
-  spawnX: number;
-  spawnY: number;
-  hp: number;
-  maxHp: number;
   vx: number;
   vy: number;
   angle: number;
   prevAngle: number;
   speed: number;
-  credits: number;
-  loot: Record<string, number>;
-  alive: boolean;
-  respawnTimer: number;
+  spawnX: number;
+  spawnY: number;
+  radius?: number;
+  sigRadius: number;
+}
+
+export interface EnemyCombat {
+  hp: number;
+  maxHp: number;
   aggroRange: number;
   weaponRange?: number;
-  sigRadius: number;
   accuracy?: number;
-  radius?: number;
-  level?: number;
   fitting: EnemyFitting;
   turretCds: number[];
-
   shield?: number;
   maxShield?: number;
   structure?: number;
@@ -171,39 +178,54 @@ export interface Enemy {
   weaponMult?: number;
   resists?: ResistProfile;
   _lastHitByPlayer?: Player;
+}
 
-  // AI/combat scratch state (set during ticks)
+export interface EnemyAI {
   targetingPlayer?: boolean;
   hasLockOnPlayer?: boolean;
   lockOnTimer?: number;
   thrustFx?: boolean;
   _orbitDir?: 1 | -1;
   _lastPlayerHitAt?: number;
-  _lastPlayerHitBy?: Player;
   _lastPlayerHitKind?: "projectile" | "beam" | "missile";
   _npcTarget?: Enemy | Player | null;
   _npcLockTimer?: number;
   _npcHasLock?: boolean;
+}
 
-  // Shield hit visual state
+export interface EnemyVisual {
   shieldHitGlow?: number;
   shieldHitAngle?: number;
   structureHitGlow?: number;
+}
 
-  // Temporary module instances stored on the fitting at spawn time
-  _tempInstances?: import("./moduleInstance.js").ModuleInstance[];
-
-  // Faction and interaction state
+export interface EnemyFaction {
   faction?: "hostile" | "neutral" | "player" | "friendly";
+  hailable?: boolean;
+  commsRange?: number;
+  _speech?: { text: string; until: number };
+}
+
+export interface EnemyTask {
   _task?: "transit-in" | "goto-station" | "dwell" | "mine" | "patrol" | "engage" | "depart";
   _taskTimer?: number;
   _wpX?: number;
   _wpY?: number;
   _exitGateIdx?: number;
   _mineTargetId?: string;
-  hailable?: boolean;
-  _speech?: { text: string; until: number };
-  commsRange?: number;
+}
+
+export interface Enemy extends
+  EnemyIdentity,
+  EnemyPhysics,
+  EnemyCombat,
+  EnemyAI,
+  EnemyVisual,
+  EnemyFaction,
+  EnemyTask
+{
+  // Temporary module instances stored on the fitting at spawn time
+  _tempInstances?: import("./moduleInstance.js").ModuleInstance[];
 }
 
 export interface AsteroidCrystal {

@@ -13,10 +13,10 @@
   --hud-scanner-w: 360px;
   --hud-minimap-w: 102px;
   /* surfaces */
-  --hud-bg-deep: rgba(2,5,10,0.88);
-  --hud-bg-window: rgba(10,14,20,0.82);
-  --hud-bg-panel: rgba(10,15,25,1.0);
-  --hud-bg-elevated: rgba(30,42,58,0.75);
+  --hud-bg-deep: rgba(2,5,10,0.72);
+  --hud-bg-window: rgba(10,14,20,0.68);
+  --hud-bg-panel: rgba(10,15,25,0.82);
+  --hud-bg-elevated: rgba(30,42,58,0.58);
   /* borders */
   --hud-border: rgba(55,85,110,0.65);
   --hud-border-soft: rgba(40,55,70,0.5);
@@ -124,8 +124,6 @@ html, body, #hud-overlay, #loading, #settings-overlay, #station-overlay {
   min-width: 12px;
   padding: 0;
   border-color: color-mix(in srgb, var(--hud-border) 85%, var(--hud-border-soft) 15%);
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--hud-bg-window) 65%, transparent) 0%,
-    color-mix(in srgb, var(--hud-bg-panel) 85%, transparent) 100%);
+  background: color-mix(in srgb, var(--hud-bg-window) 65%, transparent);
   color: color-mix(in srgb, var(--hud-text-bright) 80%, #050607 20%);
 }

@@ -23,6 +23,7 @@ import type { ModuleInstance } from "../types/moduleInstance.js";
 import { isHeadlessServer } from "./net-input.js";
 import { emitShipExhaustSheets } from "../utils/ship-exhaust.js";
 import { getIonBoostModuleState, ION_BOOST_MODULE_ID } from "../player/boost-module.js";
+import { decayPlayerHitGlows } from "../player/hit-glow.js";
 
 let _cargoMap = new Map<string, ModuleInstance>();
 const EXHAUST_MIN_SPEED = 8;
@@ -243,27 +244,7 @@ export function updateShip(dt: number, _p?: Player) {
   if (isLocalPresentation && (Client.combatHeat ?? 0) > 0) {
     PlayerAccess.setCombatHeat(Math.max(0, Client.combatHeat - dt * 0.25));
   }
-  if (p.shieldHitGlow > 0) {
-    PlayerAccess.setShieldHitGlow(p.shieldHitGlow - dt * 2.5, p);
-    if (p.shieldHitGlow <= 0) {
-      PlayerAccess.setShieldHitGlow(0, p);
-      PlayerAccess.setShieldHitAngle(0, p);
-    }
-  }
-  if (p.hullHitGlow > 0) {
-    PlayerAccess.setHullHitGlow(p.hullHitGlow - dt * 3.0, p);
-    if (p.hullHitGlow <= 0) {
-      PlayerAccess.setHullHitGlow(0, p);
-      PlayerAccess.setHullHitAngle(0, p);
-    }
-  }
-  if ((p.structureHitGlow ?? 0) > 0) {
-    PlayerAccess.setStructureHitGlow((p.structureHitGlow ?? 0) - dt * 3.0, p);
-    if (p.structureHitGlow! <= 0) {
-      PlayerAccess.setStructureHitGlow(0, p);
-      PlayerAccess.setStructureHitAngle(0, p);
-    }
-  }
+  decayPlayerHitGlows(dt, p);
 
   PlayerAccess.setShield(Math.min(st.maxShield, p.shield + st.shieldRegen * dt), p);
   PlayerAccess.setEnergy(Math.min(st.maxEnergy, p.energy + st.energyRegen * dt), p);

@@ -78,14 +78,7 @@ export function refreshPickupFonts(): void {
   _sharedPickupStyle.fontSize = 7 * scale;
 }
 
-const _hexCache = new Map<string, number>();
-function hexStringToNumber(hex: string): number {
-  const hit = _hexCache.get(hex);
-  if (hit !== undefined) return hit;
-  const val = parseInt(hex.replace("#", ""), 16) || 0xffffff;
-  _hexCache.set(hex, val);
-  return val;
-}
+import { hexStringToNumber } from "../cache.js";
 
 function getPooledSprite(): Sprite {
   if (_spritePool.length > 0) {

@@ -3,7 +3,7 @@ import type { HubJob, HubOutput, HubDeposit } from "./hub.js";
 import type { ModuleInstance } from "../../types/moduleInstance.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 import type { MissionContract } from "../../data/missions.js";
-import type { SignatureContact } from "../../types/world.js";
+import type { SignatureContact, AutoTarget, LockSlot } from "../../types/world.js";
 import type { ActiveScanTarget } from "./combat.js";
 
 export interface MiningLaserState {
@@ -35,14 +35,30 @@ export interface TractorState {
   phase: number;
 }
 
-export interface Player {
+export interface PlayerIdentity {
   shipId: string;
+  pilotName: string;
   homeSysIdx: number;
   pendingHomeSpawn: boolean;
+  netId?: string;
+  netInputFrame?: unknown;
+  saveVersion?: number;
+}
+
+export interface PlayerPhysics {
   x: number; y: number;
   px: number; py: number;
   vx: number; vy: number; va: number;
   angle: number; prevAngle: number;
+  sysIdx: number;
+  thrustFx: boolean;
+  boostFx: boolean;
+  boostLockout: boolean;
+  gateBoostRemaining?: number;
+  recoilFrames?: number;
+}
+
+export interface PlayerCombat {
   hp: number; maxHp: number;
   structure: number; maxStructure: number;
   shield: number; shieldCd: number;
@@ -50,8 +66,8 @@ export interface Player {
   shieldHitGlow: number; shieldHitAngle: number;
   hullHitGlow: number; hullHitAngle: number;
   structureHitGlow?: number; structureHitAngle?: number;
-  targetLock: import("../../types/world.js").AutoTarget | null;
-  lockQueue: import("../../types/world.js").LockSlot[];
+  targetLock: AutoTarget | null;
+  lockQueue: LockSlot[];
   fireControlSlot: number;
   turretTargets: (string | null)[];
   highTargets: (string | null)[];
@@ -60,7 +76,13 @@ export interface Player {
   turretPowerCd: number[];
   combatBar: { pos: number; dir: number };
   energy: number;
-  sysIdx: number;
+  shootCd: number; mineCd: number;
+  invincible: number;
+  _assignTargetId: string | null;
+  _colCooldown?: number;
+}
+
+export interface PlayerEconomy {
   credits: number;
   ore: Record<string, number>;
   mixedOreCargo: MixedOreCargo[];
@@ -75,55 +97,79 @@ export interface Player {
   skills: Record<string, number>;
   skillXp: Record<string, number>;
   xp: number; level: number; kills: number;
-  shootCd: number; mineCd: number;
-  invincible: number;
-  thrustFx: boolean;
-  boostFx: boolean;
-  boostLockout: boolean;
-  gateBoostRemaining?: number;
-  recoilFrames?: number;
+}
+
+export interface PlayerFitting {
   fitting: Record<string, (string | null)[]>;
   moduleHp: Record<string, (number | null)[]>;
   slotActive: Record<string, boolean[]>;
   slotPowerCd?: Record<string, number[]>;
-  _assignTargetId: string | null;
   slotHeat?: Record<string, number[]>;
-  _colCooldown?: number;
-  contracts: MissionContract[];
-  craftQueue: CraftJob[];
-  tractorCarryKg?: number;
-  tractorTightness?: number;
-  hubQueue: HubJob[];
-  hubOutput: HubOutput;
-  hubDeposit: HubDeposit;
+}
+
+export interface PlayerNavigation {
   inputKeys?: { space: boolean; w: boolean; a: boolean; s: boolean; d: boolean; boost: boolean; warp: boolean } | null;
   inputMouseWorld?: { x: number; y: number } | null;
   waypoint?: { x: number; y: number } | null;
   navCommand?: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;
   movementControlMode?: "waypoint" | "direct";
-  gateCooldowns?: Record<string, number>;
-  gatesCleared?: string[];
-  tutorial: { active: boolean; step: number; completed: boolean; skipped: boolean; stepEnteredAt?: number; v?: number };
-  pilotName: string;
-  scannedSiteIds: string[];
-  completedSiteIds: string[];
-  netId?: string;
-  netInputFrame?: unknown;
-  discoveredConcentricSectors: number[];
-  discoveredLocalRegionIds: string[];
-  stationOffers: MissionContract[];
-  stationOfferStationId: string | null;
-  miningLaser?: MiningLaserState | null;
-  salvager?: SalvagerState | null;
-  tractor?: TractorState | null;
+}
+
+export interface PlayerWarp {
   warpCooldown?: number;
   warpTargetIdx?: number;
   warpHoldStartTime?: number | null;
+  gateCooldowns?: Record<string, number>;
+  gatesCleared?: string[];
+}
+
+export interface PlayerIndustry {
+  contracts: MissionContract[];
+  craftQueue: CraftJob[];
+  hubQueue: HubJob[];
+  hubOutput: HubOutput;
+  hubDeposit: HubDeposit;
+  stationOffers: MissionContract[];
+  stationOfferStationId: string | null;
+  tractorCarryKg?: number;
+  tractorTightness?: number;
+  miningLaser?: MiningLaserState | null;
+  salvager?: SalvagerState | null;
+  tractor?: TractorState | null;
+}
+
+export interface PlayerScanning {
+  scannedSiteIds: string[];
+  completedSiteIds: string[];
   detectedSignatures: SignatureContact[];
   activeScan: ActiveScanTarget | null;
   scannerAngle: number;
   scannerConeDeg: number;
   mapScannerActive: boolean;
   mapScannerStrength: number;
-  saveVersion?: number;
+}
+
+export interface PlayerProgression {
+  discoveredConcentricSectors: number[];
+  discoveredLocalRegionIds: string[];
+}
+
+export interface PlayerTutorial {
+  tutorial: { active: boolean; step: number; completed: boolean; skipped: boolean; stepEnteredAt?: number; v?: number };
+}
+
+export interface Player extends
+  PlayerIdentity,
+  PlayerPhysics,
+  PlayerCombat,
+  PlayerEconomy,
+  PlayerFitting,
+  PlayerNavigation,
+  PlayerWarp,
+  PlayerIndustry,
+  PlayerScanning,
+  PlayerProgression,
+  PlayerTutorial
+{
+  // No additional fields — all domains are covered above.
 }

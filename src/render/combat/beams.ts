@@ -11,15 +11,7 @@ import {
   getEnemyTurretOrigin,
 } from "../../combat/turret-origin.js";
 
-const _hexCache = new Map<string, number>();
-
-function hexStringToNumber(hex: string): number {
-  const hit = _hexCache.get(hex);
-  if (hit !== undefined) return hit;
-  const val = parseInt(hex.replace("#", ""), 16) || 0xffffff;
-  _hexCache.set(hex, val);
-  return val;
-}
+import { hexStringToNumber } from "../cache.js";
 
 /** Re-anchor beam start to the rendered nose mount when it originated from a ship mount. */
 function resolveBeamStart(x1: number, y1: number, alpha: number, sys: System, player: ReturnType<typeof getState>["player"]): { x: number; y: number } {
