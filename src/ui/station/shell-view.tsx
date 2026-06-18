@@ -5,7 +5,7 @@ const STATION_TABS = [
   { id: "market", labelKey: "station.market" },
   { id: "industry", labelKey: "station.industry" },
   { id: "fabrication", labelKey: "station.fabrication" },
-  { id: "contracts", labelKey: "station.contracts" },
+  { id: "missions", labelKey: "station.missions" },
 ] as const;
 
 export function StationShellView() {
@@ -30,7 +30,7 @@ export function StationShellView() {
         <div className="panel" id="panel-market" />
         <div className="panel panel--tool" id="panel-industry" />
         <div className="panel panel--tool" id="panel-fabrication" />
-        <div className="panel" id="panel-contracts" />
+        <div className="panel" id="panel-missions" />
       </main>
       <div id="st-dimmer" />
     </>

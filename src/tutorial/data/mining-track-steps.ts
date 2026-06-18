@@ -72,7 +72,6 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     zone: tutorialRegionZone("tut-hub"),
     beaconColor: 0x55aaff,
     nav: { trackId: "approach", label: t("world.location.academy"), targetX: 0, targetY: 0 },
-    completesTutorialOnComplete: true,
     onEnter(ctx) {
       const track = getTutorialTrackById("approach");
       ctx.patchSnapshot({ trackProgressTotal: track ? trackTotalArcLength(track) : 0 });
@@ -137,14 +136,8 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.targeting.title"),
     highlight: "#hud-scanner-dock",
     objective() {
-      const key = Client.settings.movementControlMode === "direct"
-        ? "tutorial.step.targeting.objectiveDirect"
-        : "tutorial.step.targeting.objective";
-      const lockActionText = Client.settings.movementControlMode === "direct"
-        ? t("tutorial.action.shiftLeftClick")
-        : t("tutorial.action.leftClick");
-      const lockAction = `<span class="tutorial-keybind">${lockActionText}</span>`;
-      return t(key, { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake"), lockAction });
+      const lockAction = `<span class="tutorial-keybind">${t("tutorial.action.shiftLeftClick")}</span>`;
+      return t("tutorial.step.targeting.objectiveDirect", { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake"), lockAction });
     },
     zone: tutorialRegionZone("tut-mining"),
     beaconColor: 0x88ccff,

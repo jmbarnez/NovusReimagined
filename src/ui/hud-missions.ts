@@ -3,8 +3,11 @@ import { Client } from "../state.js";
 import { getState } from "../state-access.js";
 import { fmtCompact } from "../utils/format.js";
 import type { MissionContract } from "../data/missions.js";
+import { isTutorialContract } from "../data/missions.js";
+import { getTutorialMissionForHud } from "../data/tutorial-mission.js";
 import { attachMissionTooltipListeners } from "./hud-mission-tooltip.js";
 import { setHtml } from "./dom-helpers.js";
+import { on } from "../events.js";
 
 let _panel: HTMLElement | null = null;
 
@@ -20,6 +23,13 @@ export function initMissionsPanel(mount: HTMLElement | null) {
   _panel = mount;
   _panel.id = "hud-missions";
   attachMissionTooltipListeners(_panel);
+  bindMissionPanelEvents();
+}
+
+function bindMissionPanelEvents() {
+  on("tutorial:step-change", updateMissionsPanel);
+  on("mission:accepted", updateMissionsPanel);
+  on("mission:completed", updateMissionsPanel);
 }
 
 export function getMissionsPanelEl() {
@@ -29,16 +39,19 @@ export function getMissionsPanelEl() {
 export function updateMissionsPanel() {
   if (!_panel || Client.stationOpen) return;
 
+  // Sync tutorial progress so the panel reflects the current step immediately.
+  getTutorialMissionForHud();
+
   const contracts = getState().player?.contracts ?? [];
   const active = contracts.filter(c => c.status === "active" || c.status === "complete");
 
   if (active.length === 0) {
-    setHtml(_panel, `<div class="hm-empty">NO ACTIVE<br>CONTRACTS</div>`);
+    setHtml(_panel, `<div class="hm-empty">NO ACTIVE<br>MISSIONS</div>`);
     return;
   }
 
   const rows = active.slice(0, 3).map(c => renderContract(c)).join("");
-  setHtml(_panel, `<div class="hm-header">CONTRACTS</div>${rows}`);
+  setHtml(_panel, `<div class="hm-header">MISSIONS</div>${rows}`);
 }
 
 function renderContract(c: MissionContract): string {
@@ -49,7 +62,9 @@ function renderContract(c: MissionContract): string {
   const bar = "█".repeat(filled) + "░".repeat(empty);
   const complete = c.status === "complete";
   const cls = complete ? "hm-contract complete" : "hm-contract";
-  const icon = TYPE_ICONS[c.type] ?? "○";
+  const icon = isTutorialContract(c)
+    ? (c.id === "mc_getting_started" ? "▲" : "★")
+    : (TYPE_ICONS[c.type] ?? "○");
   const statusText = complete
     ? `<span class="hm-done">TURN IN</span>`
     : `<span class="hm-prog">${bar} ${current}/${required}</span>`;

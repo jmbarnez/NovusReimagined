@@ -2,8 +2,19 @@ import { type Player } from "../../state.js";
 import { PlayerAccess, getState } from "../../state-access.js";
 import { emit } from "../../events.js";
 import type { MissionContract } from "../../data/missions.js";
+import { isTutorialContract } from "../../data/missions.js";
 import { getDockableStation } from "../../docking/index.js";
 import type { ActionResponse } from "./economy.js";
+
+function countActiveContracts(p: Player): number {
+  return p.contracts.filter(c => c.status === "active" || c.status === "complete").length;
+}
+
+function atContractLimit(p: Player): boolean {
+  // Tutorial missions are not counted against the regular contract limit.
+  const regularContracts = countActiveContracts(p) - p.contracts.filter(c => isTutorialContract(c)).length;
+  return regularContracts >= 3;
+}
 
 export function acceptContractAction(
   contractId: string,
@@ -12,7 +23,7 @@ export function acceptContractAction(
 ): ActionResponse {
   const contract = stationContracts.find(c => c.id === contractId);
   if (!contract) return { success: false, reason: "Contract not found" };
-  if (p.contracts.length >= 3) {
+  if (!isTutorialContract(contract) && atContractLimit(p)) {
     return { success: false, reason: "Contract limit reached" };
   }
 
@@ -30,7 +41,7 @@ export function acceptContractProposalAction(
   stationId: string | null,
   p: Player = getState().player
 ): ActionResponse {
-  if (p.contracts.length >= 3) {
+  if (!isTutorialContract(contract) && atContractLimit(p)) {
     return { success: false, reason: "Contract limit reached" };
   }
   const accepted = { ...contract, status: "active" as const };

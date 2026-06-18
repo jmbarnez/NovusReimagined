@@ -9,8 +9,6 @@ import {
 const CURRENT_SAVE_VERSION = 2;
 import { ModuleRarity } from "../data/moduleRarity.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
-import { createTutorialMission } from "../data/missions.js";
-import { TUTORIAL_STEP_COUNT } from "../data/tutorial.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { getHardpointSlotCount } from "../utils/hardpoints.js";
 import { makeDefaultAlloyCodex, makeDefaultRefineryStorage } from "../refinery/index.js";
@@ -55,8 +53,6 @@ export function makePlayer(): Player {
     targetLock: null,
     lockQueue: [],
     fireControlSlot: 0,
-    waypoint: null,
-    navCommand: null,
     netInputFrame: null,
     turretTargets: Array(hardpointCount).fill(null),
     highTargets: Array(fit.high?.length ?? 0).fill(null),
@@ -85,8 +81,7 @@ export function makePlayer(): Player {
     boostLockout: false,
     fitting: fit,
 
-    _assignTargetId: null,
-    contracts: [createTutorialMission(0, TUTORIAL_STEP_COUNT)],
+    contracts: [],
     craftQueue: [],
     tractorCarryKg: 0,
     tractorTightness: 0.5,

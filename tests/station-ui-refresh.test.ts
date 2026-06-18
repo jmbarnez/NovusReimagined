@@ -23,7 +23,7 @@ const TEST_STATION: Station = {
 
 function resetStationState(): void {
   stationState.previewFitting = null;
-  stationState._stationContracts = [];
+  stationState._stationMissions = [];
   stationState.activeTab = "hangar";
   stationState.mktTab = "modules";
   stationState.mktRack = "all";
@@ -130,7 +130,7 @@ describe("station UI snapshot refresh", () => {
 
     expect(document.querySelector('[data-action="acceptContract"][data-contract-id="contract-refresh"]')).toBeNull();
     expect(document.querySelector('[data-action="abandonContract"][data-contract-id="contract-refresh"]')).not.toBeNull();
-    expect(document.getElementById("panel-contracts")?.textContent).toContain("Test Mining");
+    expect(document.getElementById("panel-missions")?.textContent).toContain("Test Mining");
   });
 
   it("refreshes hangar fitting controls after authoritative fit changes", () => {

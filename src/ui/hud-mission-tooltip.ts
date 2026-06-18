@@ -8,6 +8,7 @@ import { TUTORIAL_STEP_REWARDS } from "../data/tutorial-mission.js";
 import { getCurrentTutorialStep } from "../data/tutorial.js";
 import { SKILL_DEF } from "../data/skills.js";
 import { CONTRACT_TYPE_ICONS } from "./station/shared.js";
+import { TUTORIAL_MISSION_ICONS } from "./station/contracts.js";
 import { getElement, createElement, append, setHtml, setStyle, setPosition, getStyleProperty, onMouseOver, onMouseMove, onMouseLeave } from "./dom-helpers.js";
 
 const TOOLTIP_ID = "hud-mission-tooltip";
@@ -31,13 +32,15 @@ function ensureMissionTooltip(): HTMLElement {
 
 function statusLabel(c: MissionContract): string {
   if (c.status === "complete") {
-    return isTutorialContract(c) ? "Ready to graduate" : "Complete — turn in at station";
+    return isTutorialContract(c) && c.id === "mc_tutorial_graduation" ? "Ready to graduate" : "Complete — turn in at station";
   }
   return "Active";
 }
 
 function buildMissionTooltipHtml(c: MissionContract): string {
-  const icon = CONTRACT_TYPE_ICONS[c.type] ?? "○";
+  const icon = isTutorialContract(c)
+    ? (TUTORIAL_MISSION_ICONS[c.id] ?? "★")
+    : (CONTRACT_TYPE_ICONS[c.type] ?? "○");
   const { current, required } = c.objective;
   const pct = required > 0 ? Math.round((current / required) * 100) : 0;
   const isTutorial = isTutorialContract(c);

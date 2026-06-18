@@ -7,8 +7,8 @@ import type { RefiningHeatMode } from "../../state.js";
 
 export const stationState = {
   previewFitting: null as Record<string, (string | null)[]> | null,
-  _stationContracts: [] as MissionContract[],
-  activeTab: "hangar" as "hangar" | "market" | "industry" | "fabrication" | "contracts",
+  _stationMissions: [] as MissionContract[],
+  activeTab: "hangar" as "hangar" | "market" | "industry" | "fabrication" | "missions",
   mktTab: "modules",
   mktRack: "all",
   mktSearch: "",

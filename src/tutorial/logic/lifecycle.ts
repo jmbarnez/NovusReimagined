@@ -21,9 +21,10 @@ import {
 import {
   ensureTutorialMission,
   grantTutorialStepReward,
+  grantRemainingTutorialMissions,
   finalizeTutorialMission,
 } from "../data/mission.js";
-import { syncTutorialMissionProgress } from "../../data/missions.js";
+import { syncTutorialMissionProgress } from "../data/mission.js";
 import { getSnapshot, resetSnapshot } from "./snapshot.js";
 import { buildCtx, nowSec } from "./context.js";
 import { syncTutorialStateToServer } from "./sync.js";
@@ -51,6 +52,7 @@ export function initTutorial() {
   if (step?.gatePulse) setTutorialGatePulse(1);
   ensureTutorialMission();
   syncTutorialMissionProgress(getState().player);
+  grantRemainingTutorialMissions(getState().player);
   emit("tutorial:step-change", { step: getState().player.tutorial.step });
   syncTutorialStateToServer();
 }
@@ -85,6 +87,7 @@ export function goBackStep() {
 
   emit("tutorial:step-change", { step: prevIdx });
   syncTutorialMissionProgress(getState().player);
+  ensureTutorialMission();
   savePlayer();
   syncTutorialStateToServer();
 }
@@ -124,6 +127,8 @@ export function advanceStep() {
   next.onEnter?.(buildCtx());
   if (next.gatePulse) setTutorialGatePulse(1);
   syncTutorialMissionProgress(getState().player);
+  ensureTutorialMission();
+  grantRemainingTutorialMissions(getState().player);
   emit("tutorial:step-change", { step: nextIdx });
   savePlayer();
   syncTutorialStateToServer();

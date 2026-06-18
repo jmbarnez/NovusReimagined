@@ -6,7 +6,7 @@ import type { Station } from "../../types/station.js";
 import { stationState } from "./shared.js";
 import { renderHangar } from "./hangar.js";
 import { renderMarket } from "./market.js";
-import { renderContracts } from "./contracts.js";
+import { renderMissions } from "./contracts.js";
 import { renderFabrication, renderIndustry } from "./industry.js";
 import { mountInventoryInPane, resetInventoryUI } from "../inventory/index.js";
 import { syncTutorialVisuals, clearTutorialVisuals } from "../../tutorial/ui/visuals.js";
@@ -40,7 +40,7 @@ function syncStationStateFromActiveStation(): void {
   const station = Client.activeStation;
   const player = getState().player;
   stationState.craftQueue = player.craftQueue;
-  stationState._stationContracts = station && player.stationOfferStationId === station.id
+  stationState._stationMissions = station && player.stationOfferStationId === station.id
     ? player.stationOffers
     : [];
 }
@@ -49,7 +49,7 @@ function signatureForPlayerRecord(record: Record<string, unknown> | undefined): 
   return JSON.stringify(record ?? {});
 }
 
-function signatureForContracts(contracts: Player["contracts"]): string {
+function signatureForMissions(contracts: Player["contracts"]): string {
   return contracts
     .map((contract) => `${contract.id}:${contract.status}:${contract.objective.current}/${contract.objective.required}`)
     .join("|");
@@ -87,7 +87,7 @@ function signatureForStationView(): string {
     hubOutput: player.hubOutput,
     craftQueue: player.craftQueue,
     modules: signatureForModules(player),
-    contracts: signatureForContracts(player.contracts),
+    contracts: signatureForMissions(player.contracts),
     stationOffers: signatureForStationOffers(player.stationOffers, player.stationOfferStationId),
   });
 }
@@ -134,7 +134,7 @@ export function buildStationView(st: Station): void {
   el.querySelectorAll(".st-tab").forEach((btn) => {
     const tab = (btn as HTMLElement).dataset.tab;
     const avail = tab === "hangar"
-      || tab === "contracts"
+      || tab === "missions"
       || (tab === "fabrication" ? st.services.includes("industry") : st.services.includes(tab!));
     (btn as HTMLButtonElement).disabled = !avail;
     toggleClass(btn, "active", false);
@@ -185,7 +185,7 @@ export function renderStationView(): void {
   renderHangar();
   mountInventoryInPane("hangar-pane-cargo");
   renderMarket();
-  renderContracts();
+  renderMissions();
   const industryPanel = getElement("panel-industry");
   if (industryPanel?.classList.contains("active")) {
     renderIndustry(industryPanel);

@@ -7,7 +7,7 @@ import { stationState } from "./shared.js";
 import { getElement, toggleClass } from "../dom-helpers.js";
 import { getState } from "../../state-access.js";
 
-export type StationTabId = "hangar" | "market" | "industry" | "fabrication" | "contracts";
+export type StationTabId = "hangar" | "market" | "industry" | "fabrication" | "missions";
 
 function resolveStationOverlay(): HTMLElement | null {
   return getElement("station-overlay");

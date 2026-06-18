@@ -7,7 +7,6 @@ import type { Player } from "../state.js";
 
 export type MissionType = "bounty" | "mining" | "delivery" | "salvage" | "tutorial";
 
-export const TUTORIAL_MISSION_ID = "mc_academy_training";
 export const TUTORIAL_ACADEMY_STATION_ID = "station-sys-0-academy-prime";
 export const TUTORIAL_GRADUATION_REWARD = 2500;
 const ACADEMY_PROGRAM_MINING_ID = "mc_academy_program_mining";
@@ -247,36 +246,5 @@ export function checkDeliveryContracts(station: Station, p: Player = getState().
 // ── Tutorial Helpers ─────────────────────────────────────────────────────────
 
 export function isTutorialContract(c: MissionContract): boolean {
-  return c.id === TUTORIAL_MISSION_ID;
-}
-
-export function createTutorialMission(currentStep: number, requiredSteps: number): MissionContract {
-  return {
-    id: TUTORIAL_MISSION_ID,
-    type: "tutorial",
-    title: "Academy Training",
-    description: "Complete Academy training and warp to Novus Prime.",
-    reward: TUTORIAL_GRADUATION_REWARD,
-    stationId: TUTORIAL_ACADEMY_STATION_ID,
-    sysIdx: 0,
-    objective: {
-      type: "tutorial",
-      target: "step",
-      required: requiredSteps,
-      current: currentStep,
-    },
-    status: "active",
-  };
-}
-
-export function findTutorialContract(p: Player): MissionContract | undefined {
-  return p.contracts?.find(c => isTutorialContract(c));
-}
-
-export function syncTutorialMissionProgress(p: Player): void {
-  const c = findTutorialContract(p);
-  if (!c) return;
-  if (p.tutorial) {
-    c.objective.current = p.tutorial.step;
-  }
+  return c.type === "tutorial";
 }
