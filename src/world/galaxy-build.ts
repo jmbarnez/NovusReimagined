@@ -73,7 +73,7 @@ function makeGalaxySystem(
     mapX, mapY,
     ring,
     links: [],
-    _ready: false,
+    ready: false,
     asteroids: [], enemies: [], gates: [], stations: [], planets: [],
     nebulaHues: (() => {
       const f = mkRng(`sys-hue-${idx}`);
@@ -106,7 +106,7 @@ export function getSectorBounds(idx: number): { inner: number; outer: number } {
 export function buildGalaxy(): System[] {
   const cadet = makeGalaxySystem(0, "S.T.A.R.T System", -420, 0, 1.0, 0);
   const prime = makeGalaxySystem(1, "Novus Prime Core", 420, 0, 0.8, 1);
-  prime._isNovusPrime = true;
+  prime.isNovusPrime = true;
   const innerBelt = makeGalaxySystem(2, "Inner Belt", 570, 0, 0.5, 2);
   const outerBelt = makeGalaxySystem(3, "Outer Belt", 720, 0, 0.2, 3);
   const deepSpace = makeGalaxySystem(4, "Deep Space", 870, 0, 0.0, 4);

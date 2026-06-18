@@ -108,8 +108,8 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
   // Ensure per-system live caches exist so renderers have data even if a tick missed rebuild.
   // Guard: only rebuild when the cache arrays are truly absent, not when they were already
   // built this tick. The simulation tick itself rebuilds the grid; we only patch here.
-  const needsEnemyCache = !sys._liveEnemies;
-  const needsAsteroidCache = !sys._liveAsteroids;
+  const needsEnemyCache = !sys.liveEnemies;
+  const needsAsteroidCache = !sys.liveAsteroids;
   if (needsEnemyCache || needsAsteroidCache) {
     rebuildSpatialGrid(sys.idx);
   }

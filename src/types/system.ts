@@ -27,7 +27,7 @@ export interface HiddenSite {
   siteTypeId: string;
   requiredSurveyLevel: number;
   isTutorialSite?: boolean;
-  _orbitSpeed?: number;
+  orbitSpeed?: number;
 }
 
 export type SignatureClassification = "relic" | "derelict" | "resource" | "combat" | "unknown" | string;
@@ -62,7 +62,7 @@ export interface System {
   mapY: number;
   ring: number;
   links: number[];
-  _ready: boolean;
+  ready: boolean;
   asteroids: Asteroid[];
   enemies: Enemy[];
   gates: Gate[];
@@ -71,7 +71,7 @@ export interface System {
   nebulaHues: number[];
   starHue: number;
   hiddenSites?: HiddenSite[];
-  _isNovusPrime?: boolean;
+  isNovusPrime?: boolean;
 
   // Visual identity fields (A1)
   archetype?: string;
@@ -83,10 +83,10 @@ export interface System {
   flareTimer?: number;
 
   // Cached views rebuilt by physics each tick
-  _liveEnemies?: Enemy[];
-  _liveAsteroids?: Asteroid[];
-  _enemyMap?: Map<string, Enemy>;
-  _asteroidMap?: Map<string, Asteroid>;
+  liveEnemies?: Enemy[];
+  liveAsteroids?: Asteroid[];
+  enemyMap?: Map<string, Enemy>;
+  asteroidMap?: Map<string, Asteroid>;
 }
 
 export interface Star {

@@ -79,8 +79,8 @@ function resolveEnemyAsteroid(e: Enemy, a: Asteroid, dx: number, dy: number, dis
 export function resolveNpcAsteroidCollisions(sysIdx: number) {
   const sys = getState().GALAXY[sysIdx];
   if (!sys) return;
-  const enemies = sys._liveEnemies;
-  const asteroids = sys._liveAsteroids;
+  const enemies = sys.liveEnemies;
+  const asteroids = sys.liveAsteroids;
   if (!enemies || !asteroids || !asteroids.length) return;
 
   const grid = getState().spatialGrid;

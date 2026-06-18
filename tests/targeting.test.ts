@@ -166,12 +166,12 @@ describe("target resolution", () => {
     G.P.x = asteroid.x;
     G.P.y = asteroid.y;
     G.P.lockQueue = [{ id: asteroid.id, resolving: true, acc: 0 }];
-    sys._asteroidMap = undefined;
+    sys.asteroidMap = undefined;
 
     updateSensorLocks(0.1, getStats(G.P), G.P);
 
     expect(G.P.lockQueue[0]?.id).toBe(asteroid.id);
-    const refreshedMap = sys._asteroidMap as Map<string, typeof asteroid> | undefined;
+    const refreshedMap = sys.asteroidMap as Map<string, typeof asteroid> | undefined;
     expect(refreshedMap?.get(asteroid.id)).toBe(asteroid);
   });
 });
@@ -187,8 +187,8 @@ describe("sensor lock range gating", () => {
   it("rejects lock requests beyond drop range to prevent blink", () => {
     const sys = G.GALAXY[0]!;
     const enemy = sys.enemies[0]!;
-    sys._enemyMap = new Map();
-    sys._enemyMap.set(enemy.id, enemy);
+    sys.enemyMap = new Map();
+    sys.enemyMap.set(enemy.id, enemy);
 
     const ship = SHIPS[G.P.shipId];
     const dropRange = getSensorContactRangePx(ship) * C.TARGETING.SENSOR.dropRangeMultiplier;
@@ -217,8 +217,8 @@ describe("sensor lock command path", () => {
   it("executeGameCommand requestSensorLock adds target to queue", () => {
     const sys = G.GALAXY[0]!;
     const enemy = sys.enemies[0]!;
-    sys._enemyMap = new Map();
-    sys._enemyMap.set(enemy.id, enemy);
+    sys.enemyMap = new Map();
+    sys.enemyMap.set(enemy.id, enemy);
 
     G.P.x = enemy.x;
     G.P.y = enemy.y;
@@ -252,8 +252,8 @@ describe("sensor lock command path", () => {
   it("assignModuleSlotToTarget resolves the player's hardpoint rack instead of legacy turret slots", () => {
     const sys = G.GALAXY[0]!;
     const enemy = sys.enemies[0]!;
-    sys._enemyMap = new Map();
-    sys._enemyMap.set(enemy.id, enemy);
+    sys.enemyMap = new Map();
+    sys.enemyMap.set(enemy.id, enemy);
 
     G.P.x = enemy.x;
     G.P.y = enemy.y;

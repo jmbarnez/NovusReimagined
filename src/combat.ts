@@ -55,9 +55,9 @@ export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner
   }
 
   if (!owner || owner === getState().player) {
-    e._lastPlayerHitAt = performance.now();
+    e.lastPlayerHitAt = performance.now();
     if (weaponKind === "projectile" || weaponKind === "beam" || weaponKind === "missile") {
-      e._lastPlayerHitKind = weaponKind;
+      e.lastPlayerHitKind = weaponKind;
     }
   }
   
@@ -89,13 +89,13 @@ export function killEnemy(e: Enemy) {
     },
   });
 
-  const playerParticipated = e._lastPlayerHitAt && (performance.now() - e._lastPlayerHitAt) < PLAYER_PARTICIPATION_WINDOW_MS;
+  const playerParticipated = e.lastPlayerHitAt && (performance.now() - e.lastPlayerHitAt) < PLAYER_PARTICIPATION_WINDOW_MS;
   if (playerParticipated) {
     if (e.faction !== "neutral") {
       PlayerAccess.setKills(getState().player.kills + 1);
       progressMissions("bounty", 1, e.type);
       addXp(XP_PER_KILL);
-      const kind: WeaponDelivery = (e._lastPlayerHitKind as WeaponDelivery) ?? "projectile";
+      const kind: WeaponDelivery = (e.lastPlayerHitKind as WeaponDelivery) ?? "projectile";
       const skillId = WEAPON_SKILL[kind];
       addSkillXp(skillId, 25);
       floatText(e.x, e.y - 35, t("combat.xpGain", { xp: XP_PER_KILL }), "#aaddff");

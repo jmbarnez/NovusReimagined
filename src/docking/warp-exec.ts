@@ -81,7 +81,7 @@ export function warpTo(gate: Gate, p: Player = getState().player) {
   if (crossSys && typeof gate.targetSysIdx === "number") {
     PlayerAccess.setSysIdx(gate.targetSysIdx, p);
     const targetSys = getState().GALAXY[gate.targetSysIdx];
-    if (targetSys && !targetSys._ready) {
+    if (targetSys && !targetSys.ready) {
       populateSystem(targetSys);
     }
     if (p === getState().player) {

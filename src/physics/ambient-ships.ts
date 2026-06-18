@@ -116,8 +116,8 @@ export function updateAmbientDirector(dt: number) {
         const newShip = buildFactionShip(sys, chosenType, entryGate, exitGateIdx);
         sys.enemies.push(newShip);
         
-        if (!sys._enemyMap) sys._enemyMap = new Map();
-        sys._enemyMap.set(newShip.id, newShip);
+        if (!sys.enemyMap) sys.enemyMap = new Map();
+        sys.enemyMap.set(newShip.id, newShip);
       }
     }
   }
@@ -163,9 +163,9 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
       if (ts.task !== "engage") {
         ts.task = "engage";
         const ai = getAiState(e.id);
-        ai._npcTarget = closestHostile;
-        ai._npcLockTimer = 0;
-        ai._npcHasLock = false;
+        ai.npcTarget = closestHostile;
+        ai.npcLockTimer = 0;
+        ai.npcHasLock = false;
       }
     } else {
       // Non-combat ships flee and immediately head to depart
@@ -351,7 +351,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
 
     case "engage": {
       const ai = getAiState(e.id);
-      let combatTarget = ai._npcTarget;
+      let combatTarget = ai.npcTarget;
       if (combatTarget) {
         if ((combatTarget as unknown) === getState().player) {
           if (getState().player.hp <= 0) combatTarget = null;
@@ -363,7 +363,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
       if (!combatTarget) {
         ts.task = "patrol";
         ts.taskTimer = 20.0;
-        ai._npcTarget = null;
+        ai.npcTarget = null;
         pickRandomPatrolWp(ts);
         return;
       }
@@ -373,7 +373,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
         // Lost target due to distance
         ts.task = "patrol";
         ts.taskTimer = 20.0;
-        ai._npcTarget = null;
+        ai.npcTarget = null;
         pickRandomPatrolWp(ts);
         return;
       }
@@ -385,9 +385,9 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
         C.ENEMIES.AI.LOCK_ON.baseTime - (shipDef.lockBonusTicks || 0) * C.ENEMIES.AI.LOCK_ON.perBonusTickReduction
       );
 
-      ai._npcLockTimer = ai._npcLockTimer + dt;
-      if (ai._npcLockTimer >= lockTimeRequired) {
-        ai._npcHasLock = true;
+      ai.npcLockTimer = ai.npcLockTimer + dt;
+      if (ai.npcLockTimer >= lockTimeRequired) {
+        ai.npcHasLock = true;
       }
 
       const targetAngle = Math.atan2(combatTarget.y - e.y, combatTarget.x - e.x);
@@ -400,7 +400,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
         e.vy += Math.sin(e.angle) * e.speed * 0.9 * dt;
       }
 
-      if (ai._npcHasLock) {
+      if (ai.npcHasLock) {
         fireTurretsAt(e, combatTarget, dt, detectionRange);
       }
       return; // Handled movement/combat completely
@@ -418,7 +418,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
           e.alive = false;
           // Filter out of enemies
           sys.enemies = sys.enemies.filter(item => item.id !== e.id);
-          if (sys._enemyMap) sys._enemyMap.delete(e.id);
+          if (sys.enemyMap) sys.enemyMap.delete(e.id);
           removeTaskState(e.id);
           return;
         } else {
@@ -429,7 +429,7 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
         // Fallback despawn
         e.alive = false;
         sys.enemies = sys.enemies.filter(item => item.id !== e.id);
-        if (sys._enemyMap) sys._enemyMap.delete(e.id);
+        if (sys.enemyMap) sys.enemyMap.delete(e.id);
         removeTaskState(e.id);
         return;
       }

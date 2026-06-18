@@ -35,7 +35,7 @@ export function applyConnectAckSpawn(spawn: ConnectAckPayload["spawn"]): void {
   if (spawn.sysIdx !== getState().player.sysIdx) PlayerAccess.setSysIdx(spawn.sysIdx);
 
   const sys = getState().GALAXY[spawn.sysIdx];
-  if (sys && !sys._ready) {
+  if (sys && !sys.ready) {
     populateSystem(sys);
     netLog(`populateSystem sys=${spawn.sysIdx} (${sys.name}) from connect_ack`);
   } else if (sys) {

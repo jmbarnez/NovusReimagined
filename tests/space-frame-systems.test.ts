@@ -37,7 +37,6 @@ describe("space frame render systems", () => {
       "tarrows",
       "guidearrow",
       "vignette",
-      "collisionDebug",
       "renderPixi",
       "mapoverlays",
       "minimap",

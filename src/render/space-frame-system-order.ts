@@ -31,7 +31,6 @@ export const SPACE_FRAME_SYSTEM_IDS = [
   "tarrows",
   "guidearrow",
   "vignette",
-  "collisionDebug",
   "renderPixi",
   "mapoverlays",
   "minimap",

@@ -91,6 +91,29 @@ export function pointInPolygon(px: number, py: number, poly: number[][]): boolea
   return inside;
 }
 
+/** Find the closest point on a polygon's edges to (px, py). */
+export function closestPointOnPolygon(px: number, py: number, poly: number[][]): { x: number; y: number; dist: number } {
+  let bestX = 0, bestY = 0, bestDistSq = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const j = (i + 1) % poly.length;
+    const ax = poly[i][0], ay = poly[i][1];
+    const bx = poly[j][0], by = poly[j][1];
+    const dx = bx - ax, dy = by - ay;
+    const lenSq = dx * dx + dy * dy;
+    let t = lenSq > 0 ? ((px - ax) * dx + (py - ay) * dy) / lenSq : 0;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx;
+    const cy = ay + t * dy;
+    const dSq = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+    if (dSq < bestDistSq) {
+      bestDistSq = dSq;
+      bestX = cx;
+      bestY = cy;
+    }
+  }
+  return { x: bestX, y: bestY, dist: Math.sqrt(bestDistSq) };
+}
+
 export function segmentsIntersect(
   ax1: number, ay1: number, ax2: number, ay2: number,
   bx1: number, by1: number, bx2: number, by2: number,
@@ -250,6 +273,36 @@ export function resolveElasticCollision(
     e2.vy = e2vy + (j / m2) * useNy;
   }
   return closing;
+}
+
+/** Resolve a collision where e2 is effectively immovable (e.g. player vs asteroid).
+ *  Pushes e1 fully out along the normal + a separation buffer, then reflects
+ *  e1's velocity with the given restitution. Returns closing speed for damage. */
+export function resolveCollisionVsImmovable(
+  e1: Collidable,
+  nx: number,
+  ny: number,
+  penetration: number,
+  restitution: number,
+  separationBuffer = 0.5,
+): number {
+  if (penetration <= COLLISION_BUFFER) return 0;
+
+  // Push e1 fully out + buffer in one frame — no jitter
+  e1.x += nx * (penetration + separationBuffer);
+  e1.y += ny * (penetration + separationBuffer);
+
+  // Reflect velocity along the normal
+  const e1vx = e1.vx || 0;
+  const e1vy = e1.vy || 0;
+  const closing = e1vx * nx + e1vy * ny;
+  if (closing < 0) {
+    // Ship is moving into the surface — reflect outward
+    const j = (1 + restitution) * closing;
+    e1.vx = e1vx - j * nx;
+    e1.vy = e1vy - j * ny;
+  }
+  return Math.abs(closing);
 }
 
 export function rayCircleSurfaceHit(ox: number, oy: number, cx: number, cy: number, radius: number): { x: number; y: number; nx: number; ny: number } {

@@ -29,7 +29,7 @@ export function fireTurretsAt(e: Enemy, target: Enemy | Player, dt: number, dete
   for (let i = 0; i < e.fitting.turret.length; i++) {
     const uid = e.fitting.turret[i];
     if (!uid) continue;
-    const inst = e.fitting._tempInstances?.find((inst) => inst.uid === uid);
+    const inst = e.fitting.tempInstances?.find((inst) => inst.uid === uid);
     const baseId = inst ? inst.baseId : uid;
     if (e.turretCds[i] > 0) e.turretCds[i] -= dt;
 

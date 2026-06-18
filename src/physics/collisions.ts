@@ -8,16 +8,18 @@ import type { WreckPiece } from "../types/system.js";
 import type { SpatialQueryResult } from "../utils/spatial.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import {
-  PLAYER_MASS, ASTEROID_DENSITY, ENEMY_MASS,
+  PLAYER_MASS, ENEMY_MASS,
   COLLISION_RESTITUTION, COLLISION_DMG_THRESHOLD,
   COLLISION_DMG_SCALE, COLLISION_COOLDOWN,
 } from "../constants.js";
 import { damagePlayer } from "../combat/damage-display.js";
 import { getCollisionCooldown, setCollisionCooldown } from "../player/collision-state.js";
-import { resolveElasticCollision, polygonCollisionInfo } from "../utils/math.js";
+import { resolveElasticCollision, resolveCollisionVsImmovable, polygonCollisionInfo, pointInPolygon, closestPointOnPolygon } from "../utils/math.js";
 import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { getEnemyColRadius, getPlayerColRadius } from "../utils/collision-helpers.js";
+import { spawnCollisionSparks } from "../utils/fx.js";
+import { isPointInAsteroid } from "./combat-physics.js";
 
 
 const _colHits: SpatialQueryResult<unknown>[] = [];
@@ -40,18 +42,111 @@ function transformPolygonToWorld(
   }
 }
 
-/** Narrow-phase: precise ship polygon vs asteroid polygon. Returns collision normal (asteroid → ship) and depth. */
-function shipAsteroidCollisionInfo(p: Player, ast: Asteroid): { nx: number; ny: number; depth: number } | null {
-  const shipPath = SHIPS[p.shipId]?.render.path;
-  if (!shipPath || shipPath.length < 2) return null;
-  transformPolygonToWorld(p.x, p.y, p.angle, shipPath, _worldPolyA);
+/** Check if any vertex of the ship's rotated hull lies inside the asteroid polygon. */
+function shipPolygonVsAsteroid(p: Player, ast: Asteroid): boolean {
+  const path = SHIPS[p.shipId]?.render.path;
+  if (!path || path.length < 2) return true;
+  const cos = Math.cos(p.angle);
+  const sin = Math.sin(p.angle);
+  for (let i = 0; i < path.length; i++) {
+    const [vx, vy] = path[i];
+    const wx = p.x + vx * cos - vy * sin;
+    const wy = p.y + vx * sin + vy * cos;
+    if (isPointInAsteroid(wx, wy, ast, 0)) return true;
+  }
+  return false;
+}
+
+/** Check if the asteroid center is inside the ship's rotated hull polygon. */
+function asteroidCenterInShipPolygon(p: Player, ast: Asteroid): boolean {
+  const path = SHIPS[p.shipId]?.render.path;
+  if (!path || path.length < 2) return true;
+  const cos = Math.cos(p.angle);
+  const sin = Math.sin(p.angle);
+  const px = ast.x;
+  const py = ast.y;
+  return pointInPolygon(px, py, transformShipPath(p, path));
+}
+
+function transformShipPath(p: Player, path: number[][]): number[][] {
+  const cos = Math.cos(p.angle);
+  const sin = Math.sin(p.angle);
+  _worldPolyA.length = path.length;
+  for (let i = 0; i < path.length; i++) {
+    const [vx, vy] = path[i];
+    if (!_worldPolyA[i]) _worldPolyA[i] = [0, 0];
+    _worldPolyA[i][0] = p.x + vx * cos - vy * sin;
+    _worldPolyA[i][1] = p.y + vx * sin + vy * cos;
+  }
+  return _worldPolyA;
+}
+
+/** Returns true if the ship hull overlaps the asteroid polygon. */
+function shipCollidesWithAsteroid(p: Player, ast: Asteroid): boolean {
+  return shipPolygonVsAsteroid(p, ast) || asteroidCenterInShipPolygon(p, ast);
+}
+
+/** Build the asteroid's world-space polygon (for normal estimation only). */
+function asteroidWorldPolygon(ast: Asteroid): number[][] {
+  const cos = Math.cos(ast.spinAngle || 0);
+  const sin = Math.sin(ast.spinAngle || 0);
+  const r = ast.radius;
   _worldPolyB.length = ast.shape.length;
   for (let i = 0; i < ast.shape.length; i++) {
     if (!_worldPolyB[i]) _worldPolyB[i] = [0, 0];
-    _worldPolyB[i][0] = ast.x + ast.shape[i][0];
-    _worldPolyB[i][1] = ast.y + ast.shape[i][1];
+    const lx = ast.shape[i][0] * r;
+    const ly = ast.shape[i][1] * r;
+    _worldPolyB[i][0] = ast.x + lx * cos - ly * sin;
+    _worldPolyB[i][1] = ast.y + lx * sin + ly * cos;
   }
-  return polygonCollisionInfo(_worldPolyA, _worldPolyB);
+  return _worldPolyB;
+}
+
+/** Compute a stable push-out normal (asteroid → ship) and penetration depth.
+ *  Tries SAT first (shallow convex overlaps), then falls back to
+ *  closest-point-on-asteroid-edge which is stable for deep/concave penetrations. */
+function asteroidContactNormal(
+  p: Player, ast: Asteroid,
+  fallbackDx: number, fallbackDy: number, dist: number, broadOverlap: number,
+): { nx: number; ny: number; depth: number } {
+  const shipPath = SHIPS[p.shipId]?.render.path;
+
+  // Try SAT for a proper contact normal (works for shallow convex overlaps)
+  if (shipPath && shipPath.length >= 3) {
+    transformShipPath(p, shipPath);
+    asteroidWorldPolygon(ast);
+    const info = polygonCollisionInfo(_worldPolyA, _worldPolyB);
+    if (info) return { nx: info.nx, ny: info.ny, depth: info.depth };
+  }
+
+  // Fallback: find closest point on asteroid polygon to ship center.
+  // Direction from closest point → ship center is the push-out direction.
+  asteroidWorldPolygon(ast);
+  const cp = closestPointOnPolygon(p.x, p.y, _worldPolyB);
+  let nx: number, ny: number, depth: number;
+
+  if (cp.dist > 0.001) {
+    nx = (p.x - cp.x) / cp.dist;
+    ny = (p.y - cp.y) / cp.dist;
+    // If ship center is outside the asteroid, penetration = broad overlap.
+    // If inside, penetration = distance to nearest edge + ship radius.
+    if (pointInPolygon(p.x, p.y, _worldPolyB)) {
+      depth = cp.dist + getPlayerColRadius(p.shipId);
+    } else {
+      depth = broadOverlap;
+    }
+  } else {
+    // Ship center is exactly on an edge — use center-to-center
+    if (dist > 0.001) {
+      nx = fallbackDx / dist;
+      ny = fallbackDy / dist;
+    } else {
+      nx = 1; ny = 0;
+    }
+    depth = broadOverlap;
+  }
+
+  return { nx, ny, depth };
 }
 
 /** Narrow-phase: ship polygon vs circle (wreck pieces). */
@@ -92,14 +187,54 @@ function shipPolygonCollidesWithCircle(p: Player, cx: number, cy: number, radius
   return false;
 }
 
-/** Narrow-phase: precise ship polygon vs enemy polygon. Returns collision normal (enemy → ship) and depth. */
-function shipEnemyCollisionInfo(p: Player, e: Enemy): { nx: number; ny: number; depth: number } | null {
+/** Returns true if the ship hull overlaps the enemy polygon. */
+function shipCollidesWithEnemy(p: Player, e: Enemy): boolean {
   const shipPath = SHIPS[p.shipId]?.render.path;
   const enemyPath = ENEMY_DEFS[e.type]?.render.path;
-  if (!shipPath || !enemyPath) return null;
+  if (!shipPath || !enemyPath) return true;
   transformPolygonToWorld(p.x, p.y, p.angle, shipPath, _worldPolyA);
   transformPolygonToWorld(e.x, e.y, e.angle, enemyPath, _worldPolyB);
-  return polygonCollisionInfo(_worldPolyA, _worldPolyB);
+  // Vertex-in-polygon check (works for concave shapes)
+  for (let i = 0; i < _worldPolyA.length; i++) {
+    if (pointInPolygon(_worldPolyA[i][0], _worldPolyA[i][1], _worldPolyB)) return true;
+  }
+  for (let i = 0; i < _worldPolyB.length; i++) {
+    if (pointInPolygon(_worldPolyB[i][0], _worldPolyB[i][1], _worldPolyA)) return true;
+  }
+  return false;
+}
+
+/** Compute a stable push-out normal (enemy → ship) and penetration depth. */
+function enemyContactNormal(
+  p: Player, e: Enemy,
+  fallbackDx: number, fallbackDy: number, dist: number, broadOverlap: number,
+): { nx: number; ny: number; depth: number } {
+  const shipPath = SHIPS[p.shipId]?.render.path;
+  const enemyPath = ENEMY_DEFS[e.type]?.render.path;
+
+  if (shipPath && enemyPath && shipPath.length >= 3 && enemyPath.length >= 3) {
+    transformPolygonToWorld(p.x, p.y, p.angle, shipPath, _worldPolyA);
+    transformPolygonToWorld(e.x, e.y, e.angle, enemyPath, _worldPolyB);
+    const info = polygonCollisionInfo(_worldPolyA, _worldPolyB);
+    if (info) return { nx: info.nx, ny: info.ny, depth: info.depth };
+  }
+
+  // Fallback: closest point on enemy polygon to ship center
+  if (enemyPath && enemyPath.length >= 3) {
+    transformPolygonToWorld(e.x, e.y, e.angle, enemyPath, _worldPolyB);
+    const cp = closestPointOnPolygon(p.x, p.y, _worldPolyB);
+    if (cp.dist > 0.001) {
+      const nx = (p.x - cp.x) / cp.dist;
+      const ny = (p.y - cp.y) / cp.dist;
+      const depth = pointInPolygon(p.x, p.y, _worldPolyB)
+        ? cp.dist + getPlayerColRadius(p.shipId)
+        : broadOverlap;
+      return { nx, ny, depth };
+    }
+  }
+
+  if (dist > 0.001) return { nx: fallbackDx / dist, ny: fallbackDy / dist, depth: broadOverlap };
+  return { nx: 1, ny: 0, depth: broadOverlap };
 }
 
 export function resolveSolidCollisions(p: Player) {
@@ -121,16 +256,23 @@ export function resolveSolidCollisions(p: Player) {
     if (h.type === "asteroid") {
       const ast = h.data as Asteroid;
       if (!ast) continue;
-      const info = shipAsteroidCollisionInfo(p, ast);
-      if (!info) continue;
-      const mA = ast.radius * ast.radius * ASTEROID_DENSITY;
-      const closing = resolveElasticCollision(p, ast, PLAYER_MASS, mA, h.dx, h.dy, h.dist, playerR + h.radius, COLLISION_RESTITUTION, info.nx, info.ny);
+      if (!shipCollidesWithAsteroid(p, ast)) continue;
+      const { nx, ny, depth } = asteroidContactNormal(p, ast, h.dx, h.dy, h.dist, overlap);
+      // Asteroids are effectively immovable — push player fully out + buffer in one frame
+      const closing = resolveCollisionVsImmovable(p, nx, ny, depth, COLLISION_RESTITUTION);
+
+      // Procedural sparks at the contact point
+      if (closing > 30) {
+        const contactX = p.x - nx * (playerR * 0.5);
+        const contactY = p.y - ny * (playerR * 0.5);
+        spawnCollisionSparks(contactX, contactY, nx, ny, closing, "#ffcc66");
+      }
 
       const id = p.netId ?? p.shipId;
       if (closing > COLLISION_DMG_THRESHOLD && getCollisionCooldown(id) <= 0) {
         const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE;
-        const contactX = p.x - info.nx * (playerR * 0.5);
-        const contactY = p.y - info.ny * (playerR * 0.5);
+        const contactX = p.x - nx * (playerR * 0.5);
+        const contactY = p.y - ny * (playerR * 0.5);
         damagePlayer(dmg, contactX, contactY, {}, p);
         setCollisionCooldown(id, COLLISION_COOLDOWN);
       }
@@ -138,16 +280,23 @@ export function resolveSolidCollisions(p: Player) {
     } else if (h.type === "enemy") {
       const en = h.data as Enemy;
       if (!en) continue;
-      const info = shipEnemyCollisionInfo(p, en);
-      if (!info) continue;
+      if (!shipCollidesWithEnemy(p, en)) continue;
+      const { nx, ny } = enemyContactNormal(p, en, h.dx, h.dy, h.dist, overlap);
       const enR = getEnemyColRadius(en.type);
-      const closing = resolveElasticCollision(p, en, PLAYER_MASS, ENEMY_MASS, h.dx, h.dy, h.dist, playerR + enR, COLLISION_RESTITUTION, info.nx, info.ny);
+      const closing = resolveElasticCollision(p, en, PLAYER_MASS, ENEMY_MASS, h.dx, h.dy, h.dist, playerR + enR, COLLISION_RESTITUTION, nx, ny);
+
+      // Procedural sparks at the contact point
+      if (closing > 30) {
+        const contactX = p.x - nx * (playerR * 0.5);
+        const contactY = p.y - ny * (playerR * 0.5);
+        spawnCollisionSparks(contactX, contactY, nx, ny, closing, "#ff8844");
+      }
 
       const id = p.netId ?? p.shipId;
       if (closing > COLLISION_DMG_THRESHOLD && getCollisionCooldown(id) <= 0) {
         const dmg = (closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.5;
-        const contactX = p.x - info.nx * (playerR * 0.5);
-        const contactY = p.y - info.ny * (playerR * 0.5);
+        const contactX = p.x - nx * (playerR * 0.5);
+        const contactY = p.y - ny * (playerR * 0.5);
         damagePlayer(dmg, contactX, contactY, {}, p);
         setCollisionCooldown(id, COLLISION_COOLDOWN);
       }
@@ -156,8 +305,17 @@ export function resolveSolidCollisions(p: Player) {
       const piece = h.data as WreckPiece;
       if (!piece || piece.hp <= 0) continue;
       if (!shipPolygonCollidesWithCircle(p, piece.x, piece.y, piece.radius)) continue;
-      const pieceMass = piece.radius * piece.radius * 0.8;
-      const closing = resolveElasticCollision(p, piece, PLAYER_MASS, pieceMass, h.dx, h.dy, h.dist, playerR + piece.radius, COLLISION_RESTITUTION);
+      // Wreck pieces are heavy debris — push player fully out
+      const wnx = h.dist > 0.001 ? h.dx / h.dist : 1;
+      const wny = h.dist > 0.001 ? h.dy / h.dist : 0;
+      const closing = resolveCollisionVsImmovable(p, wnx, wny, overlap, COLLISION_RESTITUTION);
+
+      // Procedural sparks at the contact point
+      if (closing > 30) {
+        const contactX = p.x - wnx * (playerR * 0.5);
+        const contactY = p.y - wny * (playerR * 0.5);
+        spawnCollisionSparks(contactX, contactY, wnx, wny, closing, "#aa88ff");
+      }
 
       const id = p.netId ?? p.shipId;
       if (closing > COLLISION_DMG_THRESHOLD && getCollisionCooldown(id) <= 0) {

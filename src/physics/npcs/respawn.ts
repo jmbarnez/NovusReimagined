@@ -23,9 +23,9 @@ export function updateEnemyRespawns(dt: number, sysIdx: number) {
     ai.targetingPlayer = false;
     ai.hasLockOnPlayer = false;
     ai.lockOnTimer = 0;
-    ai._npcTarget = null;
-    ai._npcLockTimer = 0;
-    ai._npcHasLock = false;
-    ai._orbitDir = undefined;
+    ai.npcTarget = null;
+    ai.npcLockTimer = 0;
+    ai.npcHasLock = false;
+    ai.orbitDir = undefined;
   }
 }

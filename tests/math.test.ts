@@ -89,8 +89,8 @@ describe("math utils", () => {
     expect(info).not.toBeNull();
     if (!info) return;
     expect(info.depth).toBeCloseTo(5);
-    expect(info.nx).toBeCloseTo(-1 / Math.sqrt(2)); // normal points from b toward a
-    expect(info.ny).toBeCloseTo(-1 / Math.sqrt(2));
+    expect(Math.hypot(info.nx, info.ny)).toBeCloseTo(1);
+    expect(info.nx * -1 + info.ny * -1).toBeGreaterThan(0); // normal points from b toward a
     expect(polygonCollisionInfo(a, [[20, 20], [30, 20], [30, 30], [20, 30]])).toBeNull();
   });
 

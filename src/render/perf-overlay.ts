@@ -108,8 +108,8 @@ export function getPerformanceTelemetrySnapshot(): PerformanceTelemetrySnapshot 
   const width = viewportW();
   const height = viewportH();
   const pixiResolution = app?.renderer?.resolution ?? pixiDpr;
-  const enemies = sys?._liveEnemies ?? [];
-  const asteroids = sys?._liveAsteroids ?? [];
+  const enemies = sys?.liveEnemies ?? [];
+  const asteroids = sys?.liveAsteroids ?? [];
   const visibleEnemies = Client.perfAdvanced
     ? enemies.reduce((count, enemy) => count + (isVisible(enemy.x, enemy.y, Math.max(28, enemy.sigRadius ?? 18) + 24) ? 1 : 0), 0)
     : 0;

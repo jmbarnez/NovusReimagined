@@ -67,9 +67,9 @@ export function killEnemy(e: Enemy) {
     },
   });
 
-  const playerParticipated = e._lastPlayerHitAt && (performance.now() - e._lastPlayerHitAt) < C.COMBAT.PLAYER_PARTICIPATION_WINDOW_MS;
+  const playerParticipated = e.lastPlayerHitAt && (performance.now() - e.lastPlayerHitAt) < C.COMBAT.PLAYER_PARTICIPATION_WINDOW_MS;
   const isTutorialEnemy = TUTORIAL_ENEMY_TYPES.has(e.type);
-  const killer: Player | undefined = e._lastHitByPlayer ?? undefined;
+  const killer: Player | undefined = e.lastHitByPlayer ?? undefined;
 
   if (playerParticipated && killer) {
     removeSensorLock(e.id, killer);
@@ -82,7 +82,7 @@ export function killEnemy(e: Enemy) {
       PlayerAccess.setKills(killer.kills + 1, killer);
       progressMissions("bounty", 1, e.type, killer);
       addXp(C.COMBAT.XP.perKill, killer);
-      const kind: WeaponDelivery = (e._lastPlayerHitKind as WeaponDelivery) ?? "projectile";
+      const kind: WeaponDelivery = (e.lastPlayerHitKind as WeaponDelivery) ?? "projectile";
       const skillId = WEAPON_SKILL[kind];
       addSkillXp(skillId, C.COMBAT.XP.weaponSkillPerKill, killer);
       floatText(e.x, e.y - 35, t("combat.xpGain", { xp: C.COMBAT.XP.perKill }), "#aaddff");

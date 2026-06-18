@@ -23,7 +23,7 @@ function makeStockInstance(baseId: string): ModuleInstance {
 
 export function buildEnemyFitting(type: string, level: number, f: () => number): EnemyFitting {
   const def = ENEMY_DEFS[type];
-  const fitting: Record<string, (string | null)[]> & { _tempInstances?: ModuleInstance[] } = { turret: [], high: [], med: [], low: [] };
+  const fitting: Record<string, (string | null)[]> & { tempInstances?: ModuleInstance[] } = { turret: [], high: [], med: [], low: [] };
   if (!def.slots) return fitting as EnemyFitting;
 
   const lootPool = def.moduleLoot?.map(l => l.id) || [];
@@ -56,7 +56,7 @@ export function buildEnemyFitting(type: string, level: number, f: () => number):
   if (def.slots.med) fillRack("med", def.slots.med);
   if (def.slots.low) fillRack("low", def.slots.low);
 
-  fitting._tempInstances = tempInstances;
+  fitting.tempInstances = tempInstances;
   return fitting as EnemyFitting;
 }
 

@@ -276,13 +276,13 @@ export function rebuildSpatialGrid(sysIdx?: number) {
   const sys = sysIdx !== undefined ? getState().GALAXY[sysIdx] : curSys();
   if (!sys) return;
 
-  if (!sys._liveEnemies) sys._liveEnemies = [];
-  if (!sys._liveAsteroids) sys._liveAsteroids = [];
+  if (!sys.liveEnemies) sys.liveEnemies = [];
+  if (!sys.liveAsteroids) sys.liveAsteroids = [];
   let le = 0, la = 0;
-  for (const e of sys.enemies) if (e.alive) sys._liveEnemies[le++] = e;
-  sys._liveEnemies.length = le;
-  for (const a of sys.asteroids) if (!a.depleted && a.hp > 0) sys._liveAsteroids[la++] = a;
-  sys._liveAsteroids.length = la;
+  for (const e of sys.enemies) if (e.alive) sys.liveEnemies[le++] = e;
+  sys.liveEnemies.length = le;
+  for (const a of sys.asteroids) if (!a.depleted && a.hp > 0) sys.liveAsteroids[la++] = a;
+  sys.liveAsteroids.length = la;
 
   for (const p of getState().players.values()) {
     if (p.sysIdx !== sys.idx) continue;
@@ -290,12 +290,12 @@ export function rebuildSpatialGrid(sysIdx?: number) {
     grid.insert(p.netId ?? "__player", p.x, p.y, playerColRadius, "player", p);
   }
 
-  for (const e of sys._liveEnemies) {
+  for (const e of sys.liveEnemies) {
     const enemyColRadius = getEnemyColRadius(e.type);
     grid.insert(e.id, e.x, e.y, enemyColRadius, "enemy", e);
   }
 
-  for (const a of sys._liveAsteroids) {
+  for (const a of sys.liveAsteroids) {
     grid.insert(a.id, a.x, a.y, getAsteroidColRadius(a), "asteroid", a);
   }
 

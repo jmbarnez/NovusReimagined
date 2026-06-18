@@ -70,7 +70,7 @@ export function discoverSector(sectorIdx: number, p: Player): void {
   if (isSectorDiscovered(sectorIdx, p)) return;
   PlayerAccess.addDiscoveredConcentricSector(sectorIdx, p);
   const sys = getState().GALAXY[sectorIdx];
-  if (sys && !sys._ready) populateSystem(sys);
+  if (sys && !sys.ready) populateSystem(sys);
 }
 
 export function discoverLocalRegion(regionId: string, p: Player): void {

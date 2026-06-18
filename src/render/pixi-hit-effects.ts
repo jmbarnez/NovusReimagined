@@ -45,8 +45,8 @@ export function syncPixiHitEffects(now: number, alpha: number, sys: System): voi
   }
 
   // 1. Enemy Lock brackets & Shield glows
-  if (sys?._liveEnemies) {
-    for (const e of sys._liveEnemies) {
+  if (sys?.liveEnemies) {
+    for (const e of sys.liveEnemies) {
       if (!isVisible(e.x, e.y, 40)) continue;
       const ix = lerp(e.px, e.x, alpha);
       const iy = lerp(e.py, e.y, alpha);

@@ -54,7 +54,7 @@ describe("player-spawn", () => {
       gates: [],
       nebulaHues: [],
       starHue: 0,
-      _ready: false,
+      ready: false,
     };
     const galaxy = [emptySys];
 

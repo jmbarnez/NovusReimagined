@@ -28,7 +28,7 @@ export interface StationPhysics {
   y: number;
   radius: number;
   spin: number;
-  _orbitSpeed?: number;
+  orbitSpeed?: number;
 }
 
 export interface StationSecurity {
@@ -69,7 +69,7 @@ export interface Gate {
   radius: number;
   spin: number;
   angle?: number;
-  _orbitSpeed?: number;
+  orbitSpeed?: number;
   gateState?: "dormant" | "charging" | "active" | "warping" | "cooldown";
   chargeProgress?: number;
   cooldownTimer?: number;
@@ -90,5 +90,5 @@ export interface Planet {
   hasRing: boolean;
   ringTilt: number;
   moons: number;
-  _orbitSpeed?: number;
+  orbitSpeed?: number;
 }

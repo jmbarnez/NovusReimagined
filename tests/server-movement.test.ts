@@ -66,7 +66,7 @@ describe("GameServer movement input", () => {
     expect(Math.hypot(p.x - startX, p.y - startY)).toBeGreaterThan(1);
   });
 
-  it("applies direct forward and reverse thrust from authoritative input", () => {
+  it("applies direct forward thrust and brakes from authoritative input", () => {
     server.handleClientConnect("direct-client", "Pilot", makePlayer());
     const sessions = (server as unknown as { sessions: Map<string, { playerState: Player }> }).sessions;
     const session = sessions.get("direct-client");
@@ -83,10 +83,10 @@ describe("GameServer movement input", () => {
     tick(1 / 60);
     expect(p.vx).toBeGreaterThan(0);
 
-    p.vx = 0;
+    const movingVx = p.vx;
     server.handleClientInput("direct-client", directFrame(2, { space: false, w: false, a: false, s: true, d: false, boost: false, warp: false, lmb: false }));
     tick(1 / 60);
-    expect(p.vx).toBeLessThan(0);
+    expect(p.vx).toBeLessThan(movingVx);
   });
 
   it("applies direct yaw from authoritative input", () => {

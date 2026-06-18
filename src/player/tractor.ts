@@ -42,7 +42,7 @@ function resolveAssignedTarget(slotIdx: number): { entity: Asteroid | WreckPiece
   if (isAsteroidTarget(assignedId)) {
     const sys = curSys();
     if (!sys) return null;
-    const ast = sys._asteroidMap?.get(assignedId);
+    const ast = sys.asteroidMap?.get(assignedId);
     if (!ast || ast.depleted || ast.hp <= 0) return null;
     if (dst(getState().player.x, getState().player.y, ast.x, ast.y) > TRACTOR_RANGE) return null;
     const mass = ast.radius * ast.radius * ASTEROID_DENSITY;

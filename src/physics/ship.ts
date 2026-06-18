@@ -59,7 +59,7 @@ export function updateShip(dt: number, _p?: Player) {
   const isThrusting = nav.thrustFx && speed > C.PHYSICS.SHIP.minSpeedForThrust;
   const isApplyingThrust = nav.thrustFx;
 
-  if (inputKeys?.space) {
+  if (inputKeys?.space || inputKeys?.s) {
     PlayerAccess.updatePhysics({ vx: p.vx * C.PHYSICS.SHIP.brakeVelocityRetention, vy: p.vy * C.PHYSICS.SHIP.brakeVelocityRetention, va: p.va * C.PHYSICS.SHIP.brakeAngularRetention }, p);
   }
 

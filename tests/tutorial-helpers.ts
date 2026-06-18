@@ -34,7 +34,7 @@ export function makeSys(enemies: Enemy[]): System {
     gates: [],
     nebulaHues: [],
     starHue: 0,
-    _ready: true,
+    ready: true,
   };
 }
 

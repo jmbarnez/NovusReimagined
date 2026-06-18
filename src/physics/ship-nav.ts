@@ -26,15 +26,13 @@ export function computeShipNavForces(
   let thrustFx = false;
 
   const manualForward = !!inputKeys?.w;
-  const manualBackward = !!inputKeys?.s;
   const manualLeft = !!inputKeys?.a;
   const manualRight = !!inputKeys?.d;
 
-  if (!uiBlocksInput && (manualForward || manualBackward || manualLeft || manualRight)) {
-    if (manualForward !== manualBackward) {
-      const thrustDir = manualForward ? 1 : -1;
-      ax = Math.cos(p.angle) * thrustDir;
-      ay = Math.sin(p.angle) * thrustDir;
+  if (!uiBlocksInput && (manualForward || manualLeft || manualRight)) {
+    if (manualForward) {
+      ax = Math.cos(p.angle);
+      ay = Math.sin(p.angle);
       thrustFx = true;
     }
     if (manualLeft !== manualRight) {

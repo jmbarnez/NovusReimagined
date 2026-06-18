@@ -115,8 +115,8 @@ export function applyAsteroidSnapshots(sys: System, maps: SnapshotEntityMaps): v
 }
 
 export function rebuildSystemEntityMaps(sys: System): void {
-  sys._enemyMap = new Map();
-  for (const e of sys.enemies) sys._enemyMap.set(e.id, e);
-  sys._asteroidMap = new Map();
-  for (const a of sys.asteroids) sys._asteroidMap.set(a.id, a);
+  sys.enemyMap = new Map();
+  for (const e of sys.enemies) sys.enemyMap.set(e.id, e);
+  sys.asteroidMap = new Map();
+  for (const a of sys.asteroids) sys.asteroidMap.set(a.id, a);
 }

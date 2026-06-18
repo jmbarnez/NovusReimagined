@@ -37,13 +37,13 @@ describe("syncPixiEntities", () => {
   it("hides offscreen enemy bundles and restores them when visible again", async () => {
     const pixiMod = await import("../src/pixi.js");
     const entitiesMod = await import("../src/render/pixi-entities.js");
-    const enemy = G.GALAXY[0]!._liveEnemies?.[0] ?? G.GALAXY[0]!.enemies[0]!;
+    const enemy = G.GALAXY[0]!.liveEnemies?.[0] ?? G.GALAXY[0]!.enemies[0]!;
 
     enemy.x = 4000;
     enemy.y = 4000;
     enemy.px = enemy.x;
     enemy.py = enemy.y;
-    G.GALAXY[0]!._liveEnemies = [enemy];
+    G.GALAXY[0]!.liveEnemies = [enemy];
 
     entitiesMod.syncPixiEntities(1, 0);
 

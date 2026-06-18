@@ -91,7 +91,7 @@ export function buildTutorialHiddenSite(sys: System) {
     siteTypeId: siteType.id,
     requiredSurveyLevel: siteType.requiredSurveyLevel ?? 0,
     isTutorialSite: true,
-    _orbitSpeed: 0,
+    orbitSpeed: 0,
   }];
   applyHiddenSitePersistence(sys);
 }
@@ -121,7 +121,7 @@ function hiddenSiteFromType(
     hasEncryptedContent: siteType.hasEncryptedContent,
     siteTypeId: siteType.id,
     requiredSurveyLevel: siteType.requiredSurveyLevel ?? 0,
-    _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.siteMultiplier),
+    orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.siteMultiplier),
   };
 }
 

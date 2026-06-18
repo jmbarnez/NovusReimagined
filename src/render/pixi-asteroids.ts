@@ -260,7 +260,7 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
     for (const slot of player.lockQueue) _asteroidLockMap.set(slot.id, slot);
   }
 
-  const asteroids = sys?._liveAsteroids ?? [];
+  const asteroids = sys?.liveAsteroids ?? [];
   const isMultiplayer = Client.multiplayerRole !== "none";
   const activeIds = new Set<string>();
   const sun = getSunWorldPos(sys);

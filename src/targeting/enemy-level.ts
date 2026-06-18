@@ -13,7 +13,7 @@ export function computeEnemyLevel(enemy: Enemy): number {
   if (enemy.fitting?.turret) {
     for (const uid of enemy.fitting.turret) {
       if (!uid) continue;
-      const inst = enemy.fitting._tempInstances?.find(inst => inst.uid === uid);
+      const inst = enemy.fitting.tempInstances?.find(inst => inst.uid === uid);
       const baseId = inst ? inst.baseId : uid;
       const wProf = WEAPON_PROFILES[baseId];
       if (wProf && wProf.dmg > maxDmg) maxDmg = wProf.dmg;

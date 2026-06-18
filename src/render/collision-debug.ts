@@ -75,7 +75,7 @@ function drawCollisionShapes(): void {
   }
 
   // Enemies
-  for (const e of sys._liveEnemies ?? []) {
+  for (const e of sys.liveEnemies ?? []) {
     const enemyPath = ENEMY_DEFS[e.type]?.render.path;
     if (enemyPath) {
       transformPath(e.x, e.y, e.angle, enemyPath, _worldPath);

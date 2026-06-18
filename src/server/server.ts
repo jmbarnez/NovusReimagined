@@ -1,5 +1,5 @@
 import { getState } from "../state-access.js";
-import { Client, _G, type Player } from "../state.js";
+import { _G, type Player } from "../state.js";
 import { Simulation } from "../sim/index.js";
 import { ClientSession } from "./client-session.js";
 import { createSnapshot, diffSnapshots, type WorldSnapshot } from "../sim/snapshot.js";
@@ -211,12 +211,6 @@ export class GameServer {
       const { frame, staleActions } = session.consumeInputForTick(this.currentTick);
       session.playerState.netInputFrame = frame ?? null;
       bindPlayerNetInput(session.playerState, frame);
-      if (session.playerState === getState().player) {
-        const input = getPlayerInput(session.playerState.netId ?? session.playerState.shipId);
-        Client.keys[" "] = input.keys.space;
-        Client.mouseWorld.x = input.mouseWorld.x;
-        Client.mouseWorld.y = input.mouseWorld.y;
-      }
       if (staleActions.length > 0) {
         this.sim.applyActions(
           {

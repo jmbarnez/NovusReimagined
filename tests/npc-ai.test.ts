@@ -64,7 +64,7 @@ describe("processNpcBehavior", () => {
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     const ai = getAiState(e.id);
     expect(ai.targetingPlayer).toBe(true);
-    expect(ai._npcTarget).toBe(G.P);
+    expect(ai.npcTarget).toBe(G.P);
   });
 
   it("does not target the player when faction is neutral (until provoked)", () => {
@@ -86,7 +86,7 @@ describe("processNpcBehavior", () => {
     e.aggroRange = 310;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     let ai = getAiState(e.id);
-    const stalePlayer = ai._npcTarget;
+    const stalePlayer = ai.npcTarget;
     expect(stalePlayer).toBe(G.P);
 
     const replacement = makePlayer();
@@ -98,7 +98,7 @@ describe("processNpcBehavior", () => {
     expect(isPlayerRef(stalePlayer)).toBe(true);
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     ai = getAiState(e.id);
-    expect(ai._npcTarget).toBe(G.P);
+    expect(ai.npcTarget).toBe(G.P);
     expect(ai.targetingPlayer).toBe(true);
   });
 
@@ -114,7 +114,7 @@ describe("processNpcBehavior", () => {
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     ai = getAiState(e.id);
     expect(ai.targetingPlayer).toBe(true);
-    expect(ai._npcTarget).toBe(G.P);
+    expect(ai.npcTarget).toBe(G.P);
   });
 
   it("drops targeting only when structure is destroyed", () => {
@@ -127,14 +127,14 @@ describe("processNpcBehavior", () => {
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     const ai = getAiState(e.id);
     expect(ai.targetingPlayer).toBeFalsy();
-    expect(ai._npcTarget).toBeNull();
+    expect(ai.npcTarget).toBeNull();
   });
 
   it("retaliates when provoked even with neutral faction (via pickHostileTarget)", () => {
     const e = makeHostileNearPlayer(150);
     e.faction = "neutral";
     e.aggroRange = 310;
-    e._lastPlayerHitAt = performance.now();
+    e.lastPlayerHitAt = performance.now();
     const target = pickHostileTarget(e, e.aggroRange);
     expect(target).toBe(G.P);
   });

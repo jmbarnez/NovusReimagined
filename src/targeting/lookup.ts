@@ -19,21 +19,21 @@ export function isAsteroidTarget(id: string): boolean {
 export function targetByLockId(id: string, p: Player = getState().player): Enemy | Asteroid | WreckPiece | AutoTarget | null {
   const sys = curSys(p);
   if (!sys) return null;
-  let en = sys._enemyMap?.get(id);
+  let en = sys.enemyMap?.get(id);
   if (!en) {
     en = sys.enemies.find((e) => e.id === id);
     if (en) {
-      if (!sys._enemyMap) sys._enemyMap = new Map();
-      sys._enemyMap.set(id, en);
+      if (!sys.enemyMap) sys.enemyMap = new Map();
+      sys.enemyMap.set(id, en);
     }
   }
   if (en && en.alive) return en;
-  let ast = sys._asteroidMap?.get(id);
+  let ast = sys.asteroidMap?.get(id);
   if (!ast && isAsteroidTarget(id)) {
     ast = sys.asteroids.find((a) => a.id === id);
     if (ast) {
-      if (!sys._asteroidMap) sys._asteroidMap = new Map();
-      sys._asteroidMap.set(id, ast);
+      if (!sys.asteroidMap) sys.asteroidMap = new Map();
+      sys.asteroidMap.set(id, ast);
     }
   }
   if (ast && !ast.depleted && ast.hp > 0) {
@@ -56,6 +56,6 @@ export function targetByLockId(id: string, p: Player = getState().player): Enemy
 export function enemyByLockId(id: string): Enemy | null {
   const sys = curSys();
   if (!sys) return null;
-  const en = sys._enemyMap?.get(id);
+  const en = sys.enemyMap?.get(id);
   return en && en.alive ? en : null;
 }

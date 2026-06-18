@@ -12,10 +12,10 @@ export interface EnemyAIState {
   targetingPlayer: boolean;
   hasLockOnPlayer: boolean;
   lockOnTimer: number;
-  _orbitDir: 1 | -1 | undefined;
-  _npcTarget: Enemy | Player | null;
-  _npcLockTimer: number;
-  _npcHasLock: boolean;
+  orbitDir: 1 | -1 | undefined;
+  npcTarget: Enemy | Player | null;
+  npcLockTimer: number;
+  npcHasLock: boolean;
 }
 
 const _store = new Map<string, EnemyAIState>();
@@ -25,10 +25,10 @@ function defaultAiState(): EnemyAIState {
     targetingPlayer: false,
     hasLockOnPlayer: false,
     lockOnTimer: 0,
-    _orbitDir: undefined,
-    _npcTarget: null,
-    _npcLockTimer: 0,
-    _npcHasLock: false,
+    orbitDir: undefined,
+    npcTarget: null,
+    npcLockTimer: 0,
+    npcHasLock: false,
   };
 }
 
@@ -67,7 +67,7 @@ export function getLockOnTimer(id: string): number {
 }
 
 export function getNpcTarget(id: string): Enemy | Player | null {
-  return _store.get(id)?._npcTarget ?? null;
+  return _store.get(id)?.npcTarget ?? null;
 }
 
 /** Iterate all AI states. Used by warning-pulse logic. */

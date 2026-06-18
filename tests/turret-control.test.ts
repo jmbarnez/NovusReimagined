@@ -18,7 +18,7 @@ describe("turret control hardpoint rack", () => {
   it("does not auto-fire assigned combat weapons (manual fire only)", () => {
     const sys = G.GALAXY[0]!;
     const enemy = sys.enemies[0]!;
-    sys._enemyMap = new Map([[enemy.id, enemy]]);
+    sys.enemyMap = new Map([[enemy.id, enemy]]);
 
     G.P.x = enemy.x;
     G.P.y = enemy.y;

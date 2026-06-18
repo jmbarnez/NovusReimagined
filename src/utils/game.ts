@@ -55,21 +55,21 @@ const _emptyAsteroids: Asteroid[] = [];
 export function liveEnemies(p: Player = getState().player): Enemy[] {
   const sys = curSys(p);
   if (!sys) return _emptyEnemies;
-  if (sys._liveEnemies) return sys._liveEnemies;
+  if (sys.liveEnemies) return sys.liveEnemies;
   return sys.enemies.filter((e) => e.alive);
 }
 
 export function liveAsteroids(p: Player = getState().player): Asteroid[] {
   const sys = curSys(p);
   if (!sys) return _emptyAsteroids;
-  if (sys._liveAsteroids) return sys._liveAsteroids;
+  if (sys.liveAsteroids) return sys.liveAsteroids;
   return sys.asteroids.filter((a) => !a.depleted && a.hp > 0);
 }
 
 export function liveEnemiesInSys(sysIdx: number): Enemy[] {
   const sys = getState().GALAXY[sysIdx];
   if (!sys) return _emptyEnemies;
-  if (sys._liveEnemies) return sys._liveEnemies;
+  if (sys.liveEnemies) return sys.liveEnemies;
   return sys.enemies.filter((e) => e.alive);
 }
 

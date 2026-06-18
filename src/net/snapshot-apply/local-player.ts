@@ -26,7 +26,7 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
   if (snap.player.sysIdx !== prevSysIdx) {
     netLog(`sysIdx change ${prevSysIdx} → ${snap.player.sysIdx}`);
     const newSys = getState().GALAXY[snap.player.sysIdx];
-    if (newSys && !newSys._ready) {
+    if (newSys && !newSys.ready) {
       populateSystem(newSys);
       netLog(`populateSystem sys=${snap.player.sysIdx} (${newSys.name}) from snapshot`);
     }

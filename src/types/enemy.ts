@@ -10,7 +10,7 @@ export interface EnemyFitting {
   high?: (string | null)[];
   med?: (string | null)[];
   low?: (string | null)[];
-  _tempInstances?: ModuleInstance[];
+  tempInstances?: ModuleInstance[];
   [key: string]: (string | null)[] | ModuleInstance[] | undefined;
 }
 
@@ -62,9 +62,9 @@ export interface EnemyCombat {
   maxStructure?: number;
   weaponMult?: number;
   resists?: ResistProfile;
-  _lastHitByPlayer?: Player;
-  _lastPlayerHitAt?: number;
-  _lastPlayerHitKind?: "projectile" | "beam" | "missile";
+  lastHitByPlayer?: Player;
+  lastPlayerHitAt?: number;
+  lastPlayerHitKind?: "projectile" | "beam" | "missile";
 }
 
 export interface EnemyFaction {
@@ -80,5 +80,5 @@ export interface Enemy extends
   EnemyFaction
 {
   // Temporary module instances stored on the fitting at spawn time
-  _tempInstances?: ModuleInstance[];
+  tempInstances?: ModuleInstance[];
 }

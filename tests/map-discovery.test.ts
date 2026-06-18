@@ -34,7 +34,7 @@ function stubConcentricSys(idx: number): System {
     hiddenSites: [],
     nebulaHues: [],
     starHue: 200,
-    _ready: true,
+    ready: true,
   };
 }
 

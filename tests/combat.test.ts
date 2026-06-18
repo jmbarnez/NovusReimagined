@@ -111,8 +111,8 @@ describe("server-side weapon ownership", () => {
   it("does not credit player participation when damage has no player owner", () => {
     const enemy = { hp: 100, maxHp: 100, x: 0, y: 0, resists: noResist } as Enemy;
     damageEnemy(enemy, 5, 0, 0, undefined, "projectile");
-    expect(enemy._lastHitByPlayer).toBeUndefined();
-    expect(enemy._lastPlayerHitAt).toBeUndefined();
+    expect(enemy.lastHitByPlayer).toBeUndefined();
+    expect(enemy.lastPlayerHitAt).toBeUndefined();
   });
 
   it("assigns fired missiles to the explicit firing player", () => {
@@ -133,8 +133,8 @@ describe("server-side weapon ownership", () => {
       vx: 0,
       vy: 0,
       alive: true,
-      _lastHitByPlayer: player,
-      _lastPlayerHitAt: performance.now(),
+      lastHitByPlayer: player,
+      lastPlayerHitAt: performance.now(),
     } as Enemy;
     G.salvagePickups = [];
 

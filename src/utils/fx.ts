@@ -173,3 +173,64 @@ export function spawnShockwave(x: number, y: number, color: string, scale = 1.0)
     width: 2 + scale * 2,
   });
 }
+
+/** GPU-rendered procedural sparks at a collision contact point.
+ *  Sparks spray along the surface tangent (perpendicular to the normal),
+ *  with a few bright center sparks and a quick flash ring. */
+export function spawnCollisionSparks(
+  x: number, y: number,
+  nx: number, ny: number,
+  intensity: number,
+  baseColor = "#ffcc66",
+): void {
+  if (intensity <= 0) return;
+  const count = Math.min(24, Math.max(6, Math.round(intensity * 0.15)));
+  // Tangent direction (perpendicular to normal)
+  const tx = -ny;
+  const ty = nx;
+  const spdScale = Math.min(1.5, intensity * 0.012);
+
+  for (let i = 0; i < count; i++) {
+    const spread = (Math.random() - 0.5) * 1.8;
+    const spd = (80 + Math.random() * 160) * spdScale;
+    // Mix normal reflection with tangent spread
+    const vx = (nx * 0.4 + tx * spread) * spd;
+    const vy = (ny * 0.4 + ty * spread) * spd;
+    addParticle({
+      x, y,
+      color: baseColor,
+      vx, vy,
+      r: 3 + Math.random() * 4,
+      life: 0.35 + Math.random() * 0.4,
+      drag: 0.88 + Math.random() * 0.05,
+      decay: 1.8 + Math.random() * 0.8,
+    });
+  }
+
+  // Bright white-hot center sparks
+  const hotCount = Math.min(8, Math.max(2, Math.round(count * 0.35)));
+  for (let i = 0; i < hotCount; i++) {
+    const a = Math.random() * TAU;
+    const s = (50 + Math.random() * 100) * spdScale;
+    addParticle({
+      x, y,
+      color: "#ffffff",
+      vx: Math.cos(a) * s,
+      vy: Math.sin(a) * s,
+      r: 2 + Math.random() * 2.5,
+      life: 0.18 + Math.random() * 0.15,
+      drag: 0.84,
+      decay: 3.5,
+    });
+  }
+
+  // Quick flash ring — scales with intensity
+  const ringR = 8 + Math.min(30, intensity * 0.15);
+  addShockwave({
+    x, y,
+    maxRadius: ringR,
+    life: 0.12 + Math.min(0.1, intensity * 0.001),
+    color: "#fff8e0",
+    width: 1.5,
+  });
+}

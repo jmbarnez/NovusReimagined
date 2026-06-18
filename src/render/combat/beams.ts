@@ -21,7 +21,7 @@ function resolveBeamStart(x1: number, y1: number, alpha: number, sys: System, pl
       return getRenderedPlayerTurretOrigin(alpha, player);
     }
   }
-  for (const e of sys?._liveEnemies ?? []) {
+  for (const e of sys?.liveEnemies ?? []) {
     const enemyMount = getEnemyTurretOrigin(e);
     if (Math.hypot(x1 - enemyMount.x, y1 - enemyMount.y) < 18) {
       return getRenderedEnemyTurretOrigin(e, alpha);

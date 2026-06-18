@@ -24,7 +24,7 @@ export interface AsteroidPhysics {
   radius: number;
   spawnX?: number;
   spawnY?: number;
-  _orbitSpeed?: number;
+  orbitSpeed?: number;
 }
 
 export interface AsteroidDurability {

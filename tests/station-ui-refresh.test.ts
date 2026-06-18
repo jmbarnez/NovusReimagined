@@ -88,7 +88,7 @@ describe("station UI snapshot refresh", () => {
       mapY: 0,
       ring: 0,
       links: [],
-      _ready: true,
+      ready: true,
       asteroids: [],
       enemies: [],
       gates: [],

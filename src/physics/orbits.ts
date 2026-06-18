@@ -11,7 +11,7 @@ type Orbitable = {
   angle?: number;
   spawnX?: number;
   spawnY?: number;
-  _orbitSpeed?: number;
+  orbitSpeed?: number;
 };
 
 function rotatePair(x: number, y: number, angle: number): { x: number; y: number } {
@@ -24,7 +24,7 @@ function rotatePair(x: number, y: number, angle: number): { x: number; y: number
 }
 
 function rotateOrbitable(body: Orbitable, dt: number, rotateSpawn = false) {
-  const speed = body._orbitSpeed;
+  const speed = body.orbitSpeed;
   if (!speed) return;
   const angle = speed * dt;
   if (Math.abs(angle) < 1e-9) return;

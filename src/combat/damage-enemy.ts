@@ -59,10 +59,10 @@ export function damageEnemy(
 
   const isOwnerPlayer = !!owner && isPlayerRef(owner);
   if (isOwnerPlayer) {
-    e._lastPlayerHitAt = performance.now();
-    e._lastHitByPlayer = owner as Player;
+    e.lastPlayerHitAt = performance.now();
+    e.lastHitByPlayer = owner as Player;
     if (weaponKind === "projectile" || weaponKind === "beam" || weaponKind === "missile") {
-      e._lastPlayerHitKind = weaponKind;
+      e.lastPlayerHitKind = weaponKind;
     }
   }
 

@@ -24,7 +24,7 @@ export function applySnapshotToG(snap: WorldSnapshot, isFullSnapshot = false): v
   const sys = getState().GALAXY[snap.player.sysIdx] || getState().GALAXY[0];
   if (!sys) return;
 
-  if (!sys._ready) {
+  if (!sys.ready) {
     populateSystem(sys);
   }
 

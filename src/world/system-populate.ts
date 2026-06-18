@@ -80,7 +80,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       services: ["market", "industry", "repair"],
       safeRadius: C.WORLD.STATIONS.safeRadiusHighSec,
       turrets: turrets1,
-      _orbitSpeed: orbitSpeedFor(starterX, starterY, f, C.WORLD.ORBITS.stationMultiplier),
+      orbitSpeed: orbitSpeedFor(starterX, starterY, f, C.WORLD.ORBITS.stationMultiplier),
     });
 
     const pOrbit = 3800;
@@ -93,7 +93,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       hue: 200, sat: 50, lit: 25,
       hasRing: true, ringTilt: 0.3,
       moons: 0,
-      _orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
+      orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
     });
   } else if (idx === 2) {
     const angle = 1.2;
@@ -120,7 +120,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       services: ["market", "repair"],
       safeRadius: C.WORLD.STATIONS.safeRadiusMidSec,
       turrets,
-      _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.stationMultiplier),
+      orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.stationMultiplier),
     });
 
     const pOrbit = 3000;
@@ -133,7 +133,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       hue: 25, sat: 40, lit: 20,
       hasRing: false, ringTilt: 0,
       moons: 0,
-      _orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
+      orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
     });
   } else if (idx === 3) {
     const angle = -2.1;
@@ -150,7 +150,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       services: ["market"],
       safeRadius: C.WORLD.STATIONS.safeRadiusLowSec,
       turrets: [],
-      _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.stationMultiplier),
+      orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.stationMultiplier),
     });
 
     const pOrbit = 3500;
@@ -163,7 +163,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       hue: 180, sat: 45, lit: 20,
       hasRing: true, ringTilt: -0.2,
       moons: 0,
-      _orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
+      orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
     });
   } else if (idx === 4) {
     const angle = 0.5;
@@ -180,7 +180,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       services: ["market", "repair"],
       safeRadius: 0,
       turrets: [],
-      _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.stationMultiplier),
+      orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.stationMultiplier),
     });
 
     const pOrbit = 4000;
@@ -193,7 +193,7 @@ function buildConcentricSystemEntities(sys: System, f: () => number) {
       hue: 280, sat: 50, lit: 15,
       hasRing: true, ringTilt: 0.45,
       moons: 0,
-      _orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
+      orbitSpeed: orbitSpeedFor(px, py, f, C.WORLD.ORBITS.planetMultiplier),
     });
   }
 }
@@ -213,7 +213,7 @@ function buildTutorialStations(sys: System) {
     safeRadius: 350,
     turrets: [],
     structureType: "standard",
-    _orbitSpeed: orbitSpeedFor(stationX, stationY, mkRng(sys.id + "-academy-prime-station"), C.WORLD.ORBITS.stationMultiplier * 0.08),
+    orbitSpeed: orbitSpeedFor(stationX, stationY, mkRng(sys.id + "-academy-prime-station"), C.WORLD.ORBITS.stationMultiplier * 0.08),
   });
 }
 
@@ -234,7 +234,7 @@ function ensureTutorialPlanets(sys: System) {
     hasRing: true,
     ringTilt: 0.28,
     moons: 0,
-    _orbitSpeed: orbitSpeedFor(TUTORIAL_START_PLANET.x, TUTORIAL_START_PLANET.y, mkRng(sys.id + "-academy-prime"), C.WORLD.ORBITS.planetMultiplier * 0.08),
+    orbitSpeed: orbitSpeedFor(TUTORIAL_START_PLANET.x, TUTORIAL_START_PLANET.y, mkRng(sys.id + "-academy-prime"), C.WORLD.ORBITS.planetMultiplier * 0.08),
   });
 }
 
@@ -290,7 +290,7 @@ function spawnAsteroidCluster(
       prevSpin: sAngle,
       tintHue: Math.round(rf(f, C.WORLD.ASTEROIDS.tintHueMin, C.WORLD.ASTEROIDS.tintHueMax)),
       tintSat: Math.round(rf(f, C.WORLD.ASTEROIDS.tintSatMin, C.WORLD.ASTEROIDS.tintSatMax)),
-      _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.asteroidMultiplier),
+      orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.asteroidMultiplier),
     });
   }
 }
@@ -333,7 +333,7 @@ function buildTutorialAsteroids(sys: System, danger: number) {
       prevSpin: sAngle,
       tintHue: Math.round(rf(f, C.WORLD.ASTEROIDS.tintHueMin, C.WORLD.ASTEROIDS.tintHueMax)),
       tintSat: Math.round(rf(f, C.WORLD.ASTEROIDS.tintSatMin, C.WORLD.ASTEROIDS.tintSatMax)),
-      _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.asteroidMultiplier),
+      orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.asteroidMultiplier),
     });
   }
 }
@@ -366,11 +366,11 @@ function asteroidDisplayName(composition: OreComposition): string {
 }
 
 export function populateSystem(sys: System) {
-  if (sys._ready) {
+  if (sys.ready) {
     if (sys.idx === 0) ensureTutorialPlanets(sys);
     return;
   }
-  sys._ready = true;
+  sys.ready = true;
 
   const f = mkRng(sys.id + "-pop");
   const danger = Math.max(0, 1 - sys.security);
@@ -415,7 +415,7 @@ export function populateSystem(sys: System) {
       radius: C.WORLD.GATES.radius,
       spin: rf(f, 0.004, 0.012),
       angle: Math.atan2(y, x) + Math.PI / 2,
-      _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
+      orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
       activationRadius,
       fxProfile: "sector",
     });
@@ -447,7 +447,7 @@ export function populateSystem(sys: System) {
         radius: C.WORLD.GATES.radius,
         spin: rf(f, 0.004, 0.012),
         angle: Math.atan2(TUTORIAL_STATION.y - y, TUTORIAL_STATION.x - x),
-        _orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
+        orbitSpeed: orbitSpeedFor(x, y, f, C.WORLD.ORBITS.gateMultiplier),
         activationRadius,
         fxProfile: "tutorial-return",
       });
@@ -472,7 +472,7 @@ export function populateSystem(sys: System) {
       radius: C.WORLD.GATES.radius,
       spin: rf(f, 0.004, 0.012),
       angle: Math.atan2(TUTORIAL_STATION.y - devGateY, TUTORIAL_STATION.x - devGateX),
-      _orbitSpeed: orbitSpeedFor(devGateX, devGateY, f, C.WORLD.ORBITS.gateMultiplier),
+      orbitSpeed: orbitSpeedFor(devGateX, devGateY, f, C.WORLD.ORBITS.gateMultiplier),
       activationRadius: devActivationRadius,
       fxProfile: "temporary",
     });
@@ -541,8 +541,8 @@ export function populateSystem(sys: System) {
     }
   }
 
-  sys._enemyMap = new Map();
-  for (const e of sys.enemies) sys._enemyMap.set(e.id, e);
-  sys._asteroidMap = new Map();
-  for (const a of sys.asteroids) sys._asteroidMap.set(a.id, a);
+  sys.enemyMap = new Map();
+  for (const e of sys.enemies) sys.enemyMap.set(e.id, e);
+  sys.asteroidMap = new Map();
+  for (const a of sys.asteroids) sys.asteroidMap.set(a.id, a);
 }

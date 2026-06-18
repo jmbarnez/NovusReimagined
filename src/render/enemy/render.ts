@@ -171,7 +171,7 @@ export function syncPixiEntities(alpha: number, now: number): void {
   if (!entityLayer || !effectLayer) return;
 
   const sys = getState().GALAXY?.[getState().player?.sysIdx ?? 0];
-  const liveEnemies: Enemy[] = sys?._liveEnemies ?? [];
+  const liveEnemies: Enemy[] = sys?.liveEnemies ?? [];
   const lod = Client.zoom < 0.4;
   const useFixedTickInterpolation = Client.multiplayerRole === "none";
   const lightOn = !lod && Client.settings?.directionalLighting !== false;

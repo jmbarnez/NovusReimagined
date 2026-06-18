@@ -17,7 +17,6 @@ import { forEachAiState } from "../physics/npcs/ai-state.js";
 import { setCursorLock, getCanvasElement, isBlockedByUi, getUiPointerBlockSelector } from "./core.js";
 import { getCurrentTutorialStep } from "../data/tutorial.js";
 import { isCurrentStepComplete } from "../tutorial/index.js";
-import { toggleCollisionDebug } from "../render/collision-debug.js";
 
 function isTutorialUndockBlocked(): boolean {
   const step = getCurrentTutorialStep(getState().player);
@@ -33,11 +32,6 @@ export function handleKeyDown(e: KeyboardEvent): void {
 
   if (e.code === keybinds.perf) {
     Client.showPerf = !Client.showPerf;
-    return;
-  }
-
-  if (e.code === "F9") {
-    toggleCollisionDebug();
     return;
   }
 
