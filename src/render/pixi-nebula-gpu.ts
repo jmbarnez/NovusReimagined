@@ -1,4 +1,4 @@
-import { Container, Sprite, Texture, Filter, UniformGroup } from "pixi.js";
+import { Container, Sprite, Texture, Filter, UniformGroup, ImageSource } from "pixi.js";
 import type { System } from "../types/system.js";
 import { defaultFilterVert } from "pixi.js";
 import { NOISE_GLSL } from "./shaders/noise.glsl.js";
@@ -25,7 +25,22 @@ interface NebulaUniforms {
 let _sprite: Sprite | null = null;
 let _filter: Filter | null = null;
 let _ug: UniformGroup | null = null;
+let _nebulaBaseTex: Texture | null = null;
 const _nebulaSessionSeed = Date.now();
+
+function getNebulaBaseTexture(): Texture {
+  if (!_nebulaBaseTex || _nebulaBaseTex.destroyed) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 1;
+    const ctx = c.getContext("2d")!;
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, 1, 1);
+    _nebulaBaseTex = new Texture({
+      source: new ImageSource({ resource: c, resolution: 1, scaleMode: "linear" }),
+    });
+  }
+  return _nebulaBaseTex;
+}
 
 // ── GLSL fragment shader ───────────────────────────────────────────────────
 const FRAG = `#version 300 es
@@ -135,7 +150,7 @@ export function initNebulaMesh(parent: Container) {
     _sprite = null;
   }
   _filter = buildFilter();
-  _sprite = new Sprite(Texture.EMPTY);
+  _sprite = new Sprite(getNebulaBaseTexture());
   _sprite.filters = [_filter];
   _sprite.zIndex = SCREEN_LAYER_Z.NEBULA;
   resizeNebulaMesh();
@@ -252,4 +267,6 @@ export function destroyNebulaMesh() {
   if (_sprite) { _sprite.destroy(); _sprite = null; }
   _filter  = null;
   _ug      = null;
+  _nebulaBaseTex?.destroy(true);
+  _nebulaBaseTex = null;
 }

@@ -189,6 +189,12 @@ export function updateBackground(now: number, camX: number, camY: number) {
   const sys     = state.GALAXY?.[sysIdx];
   const starHue = sys?.starHue ?? 210;
 
+  // Recover from lifecycle resets that destroyed the nebula mesh without
+  // clearing our module-level state, so the background does not stay black.
+  if (screenContainer && !isNebulaMeshReady(screenContainer)) {
+    initNebulaMesh(screenContainer);
+  }
+
   const Wc = viewportW();
   const Hc = viewportH();
 
