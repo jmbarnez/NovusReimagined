@@ -79,6 +79,10 @@ function drawTitleState(now: number, width: number, height: number, sys: System)
   Client.camx += 0.8;
   Client.camy += 0.4;
 
+  // Hide world-space celestial objects so the title screen shows only the
+  // nebula/star background through the cockpit window.
+  if (worldContainer) worldContainer.visible = false;
+
   updatePixiBackground(now, Client.camx, Client.camy);
   renderPixi();
 }
@@ -127,6 +131,7 @@ function drawSpaceState(now: number, alpha: number, frameDt: number, width: numb
 
   // Update PixiJS world container camera transform
   if (worldContainer) {
+    worldContainer.visible = true;
     worldContainer.x = viewCX - camxR * Client.zoom;
     worldContainer.y = viewCY - camyR * Client.zoom;
     worldContainer.scale.set(Client.zoom);
