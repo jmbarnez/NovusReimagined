@@ -18,6 +18,7 @@ export function updateEnemyRespawns(dt: number, sysIdx: number) {
     e.y = e.spawnY;
     e.vx = 0;
     e.vy = 0;
+    e.angularVel = 0;
     e.angle = random() * Math.PI * 2;
     const ai = getAiState(e.id);
     ai.targetingPlayer = false;

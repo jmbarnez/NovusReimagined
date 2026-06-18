@@ -43,6 +43,7 @@ export function applyEnemySnapshots(sys: System, maps: SnapshotEntityMaps): void
         vy: snapEnt.vy,
         angle: snapEnt.angle || 0,
         prevAngle: snapEnt.angle || 0,
+        angularVel: 0,
         speed: snapEnt.speed ?? 100,
         credits: 0,
         loot: {},

@@ -1,6 +1,5 @@
 import { getState } from "../state-access.js";
 import {
-  resolveNpcAsteroidCollisions as resolveNpcAsteroidCollisionsForSys,
   updateAsteroids as updateAsteroidsForSys,
   updateEnemyBullets as updateEnemyBulletsForSys,
   updateEnemyRespawns as updateEnemyRespawnsForSys,
@@ -22,10 +21,6 @@ export function updateEnemyBullets(dt: number): void {
 
 export function updateAsteroids(dt: number): void {
   updateAsteroidsForSys(dt, currentSysIdx());
-}
-
-export function resolveNpcAsteroidCollisions(): void {
-  resolveNpcAsteroidCollisionsForSys(currentSysIdx());
 }
 
 export function updateMining(dt: number): void {

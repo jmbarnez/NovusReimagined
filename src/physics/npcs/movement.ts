@@ -40,6 +40,13 @@ function updateNpcMovementAndSeparation(
     }
   }
 
+  // Integrate collision-induced angular velocity, with drag
+  if (e.angularVel) {
+    e.angle += e.angularVel * dt;
+    e.angularVel *= enemyDecay;
+    if (Math.abs(e.angularVel) < 0.05) e.angularVel = 0;
+  }
+
   if (!grid) return;
 
   _qOut.length = 0;

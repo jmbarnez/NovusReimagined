@@ -11,8 +11,8 @@
 }
 
 #hud-tutorial .tutorial-tour-label {
-  margin-top: 5px;
-  font-size: calc(10px * var(--effective-font-scale, 1));
+  margin-top: 4px;
+  font-size: calc(6px * var(--effective-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -21,8 +21,8 @@
 }
 
 #hud-tutorial .tutorial-tour-body {
-  margin-top: 4px;
-  font-size: calc(10px * var(--effective-font-scale, 1));
+  margin-top: 3px;
+  font-size: calc(6px * var(--effective-font-scale, 1));
   line-height: 1.4;
   color: var(--hud-text-muted, #aab3bc);
   display: none;
@@ -30,8 +30,8 @@
 
 #hud-tutorial .tutorial-tour-next-btn {
   margin-left: auto;
-  font-size: calc(10px * var(--effective-font-scale, 1));
-  padding: 3px 10px;
+  font-size: calc(6px * var(--effective-font-scale, 1));
+  padding: 3px 6px;
   border-radius: 0;
   cursor: pointer;
   font-family: inherit;
@@ -56,11 +56,11 @@
 
 #hud-tutorial {
   position: absolute;
-  top: 10px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
   pointer-events: auto;
-  max-width: min(400px, 88%);
+  max-width: min(250px, 88%);
   font-family: var(--font-family), inherit;
 }
 
@@ -68,37 +68,37 @@
   background: var(--hud-bg-window);
   border: 1px solid var(--hud-border);
   border-radius: 0;
-  padding: 7px 11px 9px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(12px);
+  padding: 5px 8px 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 #hud-tutorial .tutorial-card--ready {
   border-color: var(--hud-border-accent);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.6),
-    0 0 12px color-mix(in srgb, var(--hud-accent) 25%, transparent);
+    0 5px 20px rgba(0, 0, 0, 0.6),
+    0 0 8px color-mix(in srgb, var(--hud-accent) 25%, transparent);
 }
 
 #hud-tutorial .tutorial-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 5px;
+  margin-bottom: 3px;
 }
 
 #hud-tutorial .tutorial-counter {
-  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-size: calc(6px * var(--effective-font-scale, 1));
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hud-text-dim);
 }
 
 #hud-tutorial .tutorial-skip-btn {
-  font-size: calc(9px * var(--effective-font-scale, 1));
-  padding: 2px 6px;
+  font-size: calc(6px * var(--effective-font-scale, 1));
+  padding: 1px 4px;
   border: 1px solid var(--hud-border-soft);
   background: color-mix(in srgb, var(--hud-bg-deep) 90%, transparent);
   color: var(--hud-text-dim);
@@ -115,24 +115,24 @@
 }
 
 #hud-tutorial .tutorial-title {
-  font-size: calc(13px * var(--effective-font-scale, 1));
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-bright);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 #hud-tutorial .tutorial-objective {
-  font-size: calc(11px * var(--effective-font-scale, 1));
+  font-size: calc(8px * var(--effective-font-scale, 1));
   line-height: 1.4;
   color: var(--hud-text-main);
 }
 
 .tutorial-nav-progress {
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .tutorial-nav-progress-track {
-  height: 4px;
+  height: 3px;
   background: color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);
   border: 1px solid var(--hud-border-soft);
   border-radius: 0;
@@ -149,7 +149,7 @@
 .tutorial-nav-progress-label {
   display: block;
   margin-top: 3px;
-  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-size: calc(6px * var(--effective-font-scale, 1));
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--hud-text-dim);
@@ -157,39 +157,39 @@
 
 #map-tutorial-strip {
   position: fixed;
-  top: 10px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 25;
-  max-width: min(400px, 88%);
-  padding: 7px 11px 9px;
+  max-width: min(250px, 88%);
+  padding: 5px 8px 6px;
   background: var(--hud-bg-window);
   border: 1px solid var(--hud-border);
   border-radius: 0;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
   font-family: var(--font-family), inherit;
   display: none;
   pointer-events: none;
 }
 
 #map-tutorial-strip .map-tutorial-strip-title {
-  font-size: calc(13px * var(--effective-font-scale, 1));
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-bright);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 #map-tutorial-strip .map-tutorial-strip-objective {
-  font-size: calc(11px * var(--effective-font-scale, 1));
+  font-size: calc(8px * var(--effective-font-scale, 1));
   line-height: 1.4;
   color: var(--hud-text-main);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 #hud-tutorial .tutorial-status {
-  margin-top: 4px;
-  font-size: calc(10px * var(--effective-font-scale, 1));
+  margin-top: 3px;
+  font-size: calc(6px * var(--effective-font-scale, 1));
   line-height: 1.35;
   color: var(--hud-positive);
   letter-spacing: 0.02em;
@@ -201,12 +201,12 @@
 
 .tutorial-keybind {
   display: inline-block;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: 0;
   background: color-mix(in srgb, var(--hud-accent) 20%, var(--hud-bg-deep));
   border: 1px solid color-mix(in srgb, var(--hud-accent) 40%, var(--hud-border));
   color: var(--hud-accent);
-  font-size: calc(9px * var(--effective-font-scale, 1));
+  font-size: calc(6px * var(--effective-font-scale, 1));
   font-weight: 700;
   line-height: 1;
   vertical-align: middle;
@@ -217,15 +217,15 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
-  margin-top: 7px;
-  padding-top: 6px;
+  gap: 5px;
+  margin-top: 5px;
+  padding-top: 4px;
   border-top: 1px solid var(--hud-border-soft);
 }
 
 #hud-tutorial .tutorial-next-btn {
-  font-size: calc(10px * var(--effective-font-scale, 1));
-  padding: 3px 10px;
+  font-size: calc(6px * var(--effective-font-scale, 1));
+  padding: 3px 6px;
   border-radius: 0;
   cursor: pointer;
   font-family: inherit;
@@ -242,7 +242,7 @@
 #hud-tutorial .tutorial-next-btn:hover {
   border-color: var(--hud-accent);
   background: color-mix(in srgb, var(--hud-accent) 25%, transparent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--hud-accent) 30%, transparent);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--hud-accent) 30%, transparent);
 }
 
 #hud-tutorial .tutorial-next-btn[hidden] {
@@ -255,9 +255,9 @@
 }
 
 @keyframes tutorialPulse {
-  0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); }
-  40% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 18px color-mix(in srgb, var(--hud-accent) 45%, transparent); }
-  100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); }
+  0% { box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6); }
+  40% { box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6), 0 0 11px color-mix(in srgb, var(--hud-accent) 45%, transparent); }
+  100% { box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6); }
 }
 
 #hud-tutorial .tutorial-confirm {
@@ -279,27 +279,27 @@
   background: var(--hud-bg-window);
   border: 1px solid color-mix(in srgb, var(--hud-danger) 40%, var(--hud-border));
   border-radius: 0;
-  padding: 20px 24px;
-  max-width: 360px;
+  padding: 13px 15px;
+  max-width: 225px;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.65);
 }
 
 #hud-tutorial .tutorial-confirm-card p {
-  margin: 0 0 16px;
-  font-size: calc(13px * var(--effective-font-scale, 1));
+  margin: 0 0 10px;
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
 }
 
 #hud-tutorial .tutorial-confirm-actions {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   justify-content: center;
 }
 
 #hud-tutorial .tutorial-confirm-actions button {
-  font-size: calc(11px * var(--effective-font-scale, 1));
-  padding: 6px 12px;
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  padding: 4px 8px;
   border-radius: 0;
   cursor: pointer;
   border: 1px solid var(--hud-border-soft);
@@ -340,21 +340,21 @@
   background: var(--hud-bg-window);
   border: 1px solid color-mix(in srgb, var(--hud-positive) 50%, var(--hud-border));
   border-radius: 0;
-  padding: 28px 36px;
+  padding: 18px 23px;
   text-align: center;
   animation: tutorialCompleteIn 0.5s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.65);
 }
 
 #hud-tutorial .tutorial-complete-title {
-  font-size: calc(20px * var(--effective-font-scale, 1));
+  font-size: calc(13px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-positive);
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 
 #hud-tutorial .tutorial-complete-sub {
-  font-size: calc(13px * var(--effective-font-scale, 1));
+  font-size: calc(9px * var(--effective-font-scale, 1));
   color: var(--hud-text-main);
 }
 

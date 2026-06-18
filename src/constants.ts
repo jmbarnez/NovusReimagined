@@ -42,7 +42,6 @@ export const SAVE_KEY = "ss2-sim-v1";
 
 export const PLAYER_MASS = 800;
 export const ASTEROID_DENSITY = 1.8;
-export const ENEMY_MASS = 450;
 export const COLLISION_RESTITUTION = 0.45;
 export const COLLISION_DMG_THRESHOLD = 70;
 export const COLLISION_DMG_SCALE = 0.055;

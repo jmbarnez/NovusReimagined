@@ -41,6 +41,8 @@ export interface EnemyPhysics {
   vy: number;
   angle: number;
   prevAngle: number;
+  /** Angular velocity from collision impulses (rad/s). AI steering sets angle directly. */
+  angularVel: number;
   speed: number;
   spawnX: number;
   spawnY: number;

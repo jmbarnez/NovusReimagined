@@ -242,10 +242,10 @@ export function resolveElasticCollision(
   restitution: number,
   nx?: number,
   ny?: number,
+  friction = 0.15,
 ): number {
   if (dist <= 0 || !Number.isFinite(dist)) return 0;
   const overlap = minDist - dist;
-  // Ignore sub-pixel overlaps entirely — prevents jitter while keeping precision.
   if (overlap <= COLLISION_BUFFER) return 0;
   const useNx = nx ?? dx / dist;
   const useNy = ny ?? dy / dist;
@@ -271,38 +271,119 @@ export function resolveElasticCollision(
     e1.vy = e1vy - (j / m1) * useNy;
     e2.vx = e2vx + (j / m2) * useNx;
     e2.vy = e2vy + (j / m2) * useNy;
+
+    if (friction > 0) {
+      const tx = -useNy;
+      const ty = useNx;
+      const vt = (e1.vx - e2.vx) * tx + (e1.vy - e2.vy) * ty;
+      const jt = friction * vt / invSum;
+      e1.vx -= (jt / m1) * tx;
+      e1.vy -= (jt / m1) * ty;
+      e2.vx += (jt / m2) * tx;
+      e2.vy += (jt / m2) * ty;
+    }
   }
   return closing;
 }
 
-/** Resolve a collision where e2 is effectively immovable (e.g. player vs asteroid).
- *  Pushes e1 fully out along the normal + a separation buffer, then reflects
- *  e1's velocity with the given restitution. Returns closing speed for damage. */
-export function resolveCollisionVsImmovable(
+/** Rigid body collision response with angular impulse.
+ *
+ *  Extends resolveElasticCollision by computing torque from off-center contact
+ *  points. When the contact normal doesn't pass through the entity's center of
+ *  mass, the impulse induces spin — so glancing hits knock ships into rotation
+ *  rather than just bouncing them linearly.
+ *
+ *  Moment of inertia is passed explicitly (use getMomentOfInertia for disc
+ *  approximation). Angular velocities are passed in and returned as deltas,
+ *  since Collidable doesn't carry angular state.
+ */
+export function resolveRigidCollision(
   e1: Collidable,
-  nx: number,
-  ny: number,
-  penetration: number,
+  e2: Collidable,
+  m1: number, m2: number,
+  i1: number, i2: number,
+  nx: number, ny: number,
+  overlap: number,
   restitution: number,
+  friction: number,
+  contactX: number, contactY: number,
+  av1: number, av2: number,
   separationBuffer = 0.5,
-): number {
-  if (penetration <= COLLISION_BUFFER) return 0;
+): { closing: number; dav1: number; dav2: number } {
+  if (overlap <= COLLISION_BUFFER) return { closing: 0, dav1: 0, dav2: 0 };
 
-  // Push e1 fully out + buffer in one frame — no jitter
-  e1.x += nx * (penetration + separationBuffer);
-  e1.y += ny * (penetration + separationBuffer);
+  const invM1 = 1 / m1;
+  const invM2 = 1 / m2;
+  const invI1 = i1 > 0 ? 1 / i1 : 0;
+  const invI2 = i2 > 0 ? 1 / i2 : 0;
 
-  // Reflect velocity along the normal
+  // Normal n points from e2 → e1 (the push-out direction for e1).
+  // Positional correction: push e1 in +n, e2 in -n.
+  // Separation buffer on e1 guarantees full separation regardless of mass ratio.
+  const invSum = invM1 + invM2;
+  const e1Share = overlap * (invM1 / invSum) + separationBuffer;
+  const e2Share = overlap * (invM2 / invSum);
+  e1.x += nx * e1Share;
+  e1.y += ny * e1Share;
+  e2.x -= nx * e2Share;
+  e2.y -= ny * e2Share;
+
+  // Contact point relative to each center (for torque computation)
+  const r1x = contactX - e1.x;
+  const r1y = contactY - e1.y;
+  const r2x = contactX - e2.x;
+  const r2y = contactY - e2.y;
+
+  // Scalar cross products: r × n
+  const rn1 = r1x * ny - r1y * nx;
+  const rn2 = r2x * ny - r2y * nx;
+
+  // Effective inverse mass includes rotational component
+  const effInvMass = invM1 + invM2 + rn1 * rn1 * invI1 + rn2 * rn2 * invI2;
+
   const e1vx = e1.vx || 0;
   const e1vy = e1.vy || 0;
-  const closing = e1vx * nx + e1vy * ny;
-  if (closing < 0) {
-    // Ship is moving into the surface — reflect outward
-    const j = (1 + restitution) * closing;
-    e1.vx = e1vx - j * nx;
-    e1.vy = e1vy - j * ny;
+  const e2vx = e2.vx || 0;
+  const e2vy = e2.vy || 0;
+
+  // Closing speed: how fast e1 and e2 are approaching along n.
+  // n points from e2→e1, so e1 moving toward e2 means e1v·n < 0,
+  // and e2 moving toward e1 means e2v·n > 0.
+  // Closing = (e2v - e1v) · n + angular contribution.
+  const closing = (e2vx - e1vx) * nx + (e2vy - e1vy) * ny
+    + (rn2 * av2 - rn1 * av1);
+
+  let dav1 = 0, dav2 = 0;
+  if (closing > 0) {
+    // Normal impulse: push e1 in +n, e2 in -n
+    const j = (1 + restitution) * closing / effInvMass;
+    e1.vx = e1vx + (j * invM1) * nx;
+    e1.vy = e1vy + (j * invM1) * ny;
+    e2.vx = e2vx - (j * invM2) * nx;
+    e2.vy = e2vy - (j * invM2) * ny;
+    // Angular impulse from normal force
+    dav1 = j * rn1 * invI1;
+    dav2 = -j * rn2 * invI2;
+
+    // Tangential friction impulse
+    if (friction > 0) {
+      const tx = -ny;
+      const ty = nx;
+      const rt1 = r1x * ty - r1y * tx;
+      const rt2 = r2x * ty - r2y * tx;
+      const effInvMassT = invM1 + invM2 + rt1 * rt1 * invI1 + rt2 * rt2 * invI2;
+      const vt = (e2.vx - e1.vx) * tx + (e2.vy - e1.vy) * ty
+        + (rt2 * (av2 + dav2) - rt1 * (av1 + dav1));
+      const jt = friction * vt / effInvMassT;
+      e1.vx += (jt * invM1) * tx;
+      e1.vy += (jt * invM1) * ty;
+      e2.vx -= (jt * invM2) * tx;
+      e2.vy -= (jt * invM2) * ty;
+      dav1 += jt * rt1 * invI1;
+      dav2 -= jt * rt2 * invI2;
+    }
   }
-  return Math.abs(closing);
+  return { closing, dav1, dav2 };
 }
 
 export function rayCircleSurfaceHit(ox: number, oy: number, cx: number, cy: number, radius: number): { x: number; y: number; nx: number; ny: number } {

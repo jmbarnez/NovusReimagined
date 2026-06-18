@@ -46,6 +46,7 @@ export function buildFactionShip(sys: System, type: string, gate: Gate, exitGate
     vy: 0,
     angle: Math.random() * Math.PI * 2,
     prevAngle: 0,
+      angularVel: 0,
     speed: def.speed ?? 100,
     credits: 0,
     loot: {},

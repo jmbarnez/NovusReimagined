@@ -7,7 +7,6 @@ import {
   updateNpcs,
   updateEnemyBullets,
   updateAsteroids,
-  resolveNpcAsteroidCollisions,
   updateEnemyRespawns,
 } from "./npcs.js";
 import { updateMining } from "./mining.js";
@@ -26,6 +25,7 @@ import { updateAsteroidDebris } from "../utils/mining.js";
 import { updateAmbientDirector } from "./ambient-ships.js";
 import { tickIndustryQueue } from "../state/actions.js";
 import { updateMapScanner, updateScanning } from "../scanning/index.js";
+import { resolveAllCollisions } from "./collision-system.js";
 
 export interface SimSystem {
   id: string;
@@ -110,8 +110,8 @@ function asteroids(): SimSystem {
   return { id: "asteroids", category: "physics", run(dt) { updateAsteroids(dt); } };
 }
 
-function npcAsteroidCollisions(): SimSystem {
-  return { id: "npc-asteroid-collisions", category: "physics", run() { resolveNpcAsteroidCollisions(); } };
+function collisions(): SimSystem {
+  return { id: "collisions", category: "physics", run() { resolveAllCollisions(); } };
 }
 
 function mining(): SimSystem {
@@ -213,7 +213,7 @@ export const SIMULATION_SYSTEMS: readonly SimSystem[] = [
   enemyBullets(),
   projectiles(),
   asteroids(),
-  npcAsteroidCollisions(),
+  collisions(),
   mining(),
   salvager(),
   tractor(),

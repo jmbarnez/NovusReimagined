@@ -11,7 +11,6 @@ import { emitShipExhaustSheets } from "../utils/ship-exhaust.js";
 import { getIonBoostModuleState } from "../player/boost-module.js";
 import { computeShipNavForces } from "./ship-nav.js";
 import { processModuleCapDrain, computeBoostState } from "./ship-modules.js";
-import { resolveSolidCollisions } from "./collisions.js";
 import { getPlayerInput } from "../player/input-state.js";
 import { tickCollisionCooldown } from "../player/collision-state.js";
 
@@ -110,8 +109,6 @@ export function updateShip(dt: number, _p?: Player) {
   }
 
   tickCollisionCooldown(p.netId ?? p.shipId, dt);
-
-  resolveSolidCollisions(p);
 
   if (p.invincible > 0) PlayerAccess.setInvincible(p.invincible - dt, p);
   if (isLocalPresentation && (Client.combatHeat ?? 0) > 0) {

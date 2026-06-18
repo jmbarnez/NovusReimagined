@@ -3,6 +3,10 @@ import { ENEMY_DEFS } from "../data/enemies.js";
 
 const _shipRadiusCache = new Map<string, number>();
 const _enemyRadiusCache = new Map<string, number>();
+const _enemyMassCache = new Map<string, number>();
+
+/** Density constant for mass derivation: mass = colRadius² × density. */
+const ENEMY_DENSITY = 1.2;
 
 function computePathMaxRadius(path: number[][] | undefined): number {
   if (!path || path.length === 0) return 0;
@@ -34,4 +38,22 @@ export function getEnemyColRadius(type: string): number {
     _enemyRadiusCache.set(type, r);
   }
   return r;
+}
+
+/** Mass derived from collision radius: mass = colRadius² × density.
+ *  Larger ships are heavier and harder to knock around. */
+export function getEnemyMass(type: string): number {
+  let m = _enemyMassCache.get(type);
+  if (m === undefined) {
+    const r = getEnemyColRadius(type);
+    m = r * r * ENEMY_DENSITY;
+    _enemyMassCache.set(type, m);
+  }
+  return m;
+}
+
+/** Moment of inertia for a disc approximation: I = ½ * m * r².
+ *  Used for angular impulse from off-center collisions. */
+export function getMomentOfInertia(mass: number, radius: number): number {
+  return 0.5 * mass * radius * radius;
 }

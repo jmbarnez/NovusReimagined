@@ -84,7 +84,7 @@ export function buildEnemyFromSpawn(sys: System, zone: SpawnZone, entry: { type:
     structure, maxStructure: structure,
     weaponMult: def.weaponMult ?? 1.0,
     vx: 0, vy: 0,
-    angle: f() * TAU, prevAngle: f() * TAU,
+    angle: f() * TAU, prevAngle: f() * TAU, angularVel: 0,
     speed: def.speed ?? 100,
     credits,
     loot: { ...def.loot },
