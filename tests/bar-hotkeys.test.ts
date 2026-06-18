@@ -4,13 +4,14 @@ import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { applyBarHotkey, barHotkeySlotList } from "../src/player/player-fitting.js";
 import { createLocalInputFrame } from "../src/sim/input.js";
+import { setAssignTargetId } from "../src/player/target-selection.js";
 import { playerHardpointRack } from "../src/utils/hardpoints.js";
 
 describe("bar hotkeys", () => {
   beforeEach(() => {
     installTestPlayer(makePlayer());
     createLocalInputFrame(0);
-    G.P._assignTargetId = null;
+    setAssignTargetId(G.P.netId ?? G.P.shipId, null);
   });
 
   it("queues hardpoint selection through the command path", () => {
@@ -28,7 +29,7 @@ describe("bar hotkeys", () => {
 
   it("queues hardpoint target assignment when an assignment target is selected", () => {
     G.P.turretPower[0] = true;
-    G.P._assignTargetId = "rat-1";
+    setAssignTargetId(G.P.netId ?? G.P.shipId, "rat-1");
 
     applyBarHotkey(0);
     const frame = createLocalInputFrame(1);

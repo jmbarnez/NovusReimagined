@@ -1,5 +1,6 @@
 import { Client } from "../../state.js";
-import { getCurrentTutorialStep, getTutorialNavProgress, getTutorialNavRemainingM, getTutorialStepObjective, hasActiveTourPanel, TUTORIAL_STEP_COUNT } from "../data/helpers.js";
+import { getCurrentTutorialStep, getTutorialNavProgress, getTutorialNavRemainingM, getTutorialStepObjective, hasActiveTourPanel } from "../data/helpers.js";
+import { getTutorialMissionStepCounter } from "../data/mission.js";
 import { getTutorialSnapshot, isCurrentStepComplete, canAdvanceTour } from "../logic/index.js";
 import { getState } from "../../state-access.js";
 import { t } from "../../utils/i18n.js";
@@ -112,7 +113,8 @@ export function renderStep() {
   if (tutorialState.cardEl) tutorialState.cardEl.hidden = false;
   if (tutorialState.completeEl) tutorialState.completeEl.hidden = true;
   if (tutorialState.confirmEl) tutorialState.confirmEl.hidden = true;
-  if (tutorialState.counterEl) setText(tutorialState.counterEl, t("tutorial.stepCounter", { n: getState().player.tutorial.step + 1, total: TUTORIAL_STEP_COUNT }));
+  const counter = getTutorialMissionStepCounter(getState().player.tutorial.step);
+  if (tutorialState.counterEl) setText(tutorialState.counterEl, t("tutorial.stepCounter", { n: counter.n, total: counter.total }));
   if (tutorialState.titleEl) setText(tutorialState.titleEl, step.title);
   if (tutorialState.objectiveEl) {
     if (hasActiveTourPanel(step, snapshot)) {

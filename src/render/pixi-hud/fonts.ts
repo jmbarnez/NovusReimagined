@@ -4,7 +4,7 @@ import { hudState } from "./state.js";
 
 export function refreshHudFonts(): void {
   const font = getUIFont();
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   if (hudState.speedStyle) { hudState.speedStyle.fontFamily = font; hudState.speedStyle.fontSize = 8 * scale; }
   if (hudState.shieldStyle) { hudState.shieldStyle.fontFamily = font; hudState.shieldStyle.fontSize = 8 * scale; }
   if (hudState.warningStyle) { hudState.warningStyle.fontFamily = font; hudState.warningStyle.fontSize = 9 * scale; }

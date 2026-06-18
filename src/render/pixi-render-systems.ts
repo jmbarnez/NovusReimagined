@@ -16,6 +16,7 @@ import { initPixiAsteroids, destroyPixiAsteroids } from "./pixi-asteroids.js";
 import { initPixiHitEffects, destroyPixiHitEffects } from "./pixi-hit-effects.js";
 import { destroyLensFlare } from "./pixi-lens-flare.js";
 import { destroyEffectsOverlay } from "./pixi-effects-overlay.js";
+import { syncCollisionDebug, destroyCollisionDebug } from "./collision-debug.js";
 
 interface PixiRenderSystem {
   readonly id: string;
@@ -113,6 +114,11 @@ const RENDER_SYSTEMS: PixiRenderSystem[] = [
     id: "maps",
     init: initPixiMaps,
     destroy: destroyPixiMaps,
+  },
+  {
+    id: "collisionDebug",
+    init: () => { /* initialized lazily */ },
+    destroy: destroyCollisionDebug,
   },
 ];
 

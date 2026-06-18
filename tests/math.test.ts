@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { dst, angleDiff, lerp, mulberry32, hashStr, rpick, rayCircleSurfaceHit, resolveElasticCollision } from "../src/utils/math.js";
+import { dst, angleDiff, lerp, mulberry32, hashStr, rpick, rayCircleSurfaceHit, resolveElasticCollision, pointInPolygon, segmentsIntersect, polygonsIntersect, polygonCollisionInfo } from "../src/utils/math.js";
+import { getPlayerColRadius, getEnemyColRadius } from "../src/utils/collision-helpers.js";
 
 const TAU = Math.PI * 2;
 
@@ -60,5 +61,44 @@ describe("math utils", () => {
     expect(closing).toBe(0);
     expect(Number.isFinite(a.vx)).toBe(true);
     expect(Number.isFinite(b.vx)).toBe(true);
+  });
+
+  it("pointInPolygon detects inside and outside points", () => {
+    const square = [[0, 0], [10, 0], [10, 10], [0, 10]];
+    expect(pointInPolygon(5, 5, square)).toBe(true);
+    expect(pointInPolygon(15, 5, square)).toBe(false);
+  });
+
+  it("segmentsIntersect detects crossing and non-crossing segments", () => {
+    expect(segmentsIntersect(0, 0, 10, 10, 0, 10, 10, 0)).toBe(true);
+    expect(segmentsIntersect(0, 0, 10, 0, 5, 1, 5, 10)).toBe(false);
+  });
+
+  it("polygonsIntersect detects overlapping polygons", () => {
+    const a = [[0, 0], [10, 0], [10, 10], [0, 10]];
+    const b = [[5, 5], [15, 5], [15, 15], [5, 15]];
+    const c = [[20, 20], [30, 20], [30, 30], [20, 30]];
+    expect(polygonsIntersect(a, b)).toBe(true);
+    expect(polygonsIntersect(a, c)).toBe(false);
+  });
+
+  it("polygonCollisionInfo returns a separation normal for overlapping polygons", () => {
+    const a = [[0, 0], [10, 0], [10, 10], [0, 10]];
+    const b = [[5, 5], [15, 5], [15, 15], [5, 15]];
+    const info = polygonCollisionInfo(a, b);
+    expect(info).not.toBeNull();
+    if (!info) return;
+    expect(info.depth).toBeCloseTo(5);
+    expect(info.nx).toBeCloseTo(-1 / Math.sqrt(2)); // normal points from b toward a
+    expect(info.ny).toBeCloseTo(-1 / Math.sqrt(2));
+    expect(polygonCollisionInfo(a, [[20, 20], [30, 20], [30, 30], [20, 30]])).toBeNull();
+  });
+
+  it("collision helpers derive radii from hull paths", () => {
+    expect(getPlayerColRadius("scout")).toBe(14);
+    expect(getEnemyColRadius("rat_drone")).toBe(14);
+    expect(getEnemyColRadius("drone")).toBe(13);
+    expect(getEnemyColRadius("pirate")).toBe(18);
+    expect(getEnemyColRadius("raider")).toBe(23);
   });
 });

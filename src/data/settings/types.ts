@@ -72,7 +72,6 @@ export interface FontOption {
 }
 
 export type VideoPreset = "performance" | "balanced" | "cinematic" | "custom";
-export type MovementControlMode = "waypoint" | "direct";
 
 export interface Settings {
   theme: string;
@@ -86,7 +85,6 @@ export interface Settings {
   fpsLimit: number;
   backgroundDetail: string;
   videoPreset: VideoPreset;
-  movementControlMode: MovementControlMode;
   nebulaDensity: number;
   colorGrading: boolean;
   vignetteEnabled: boolean;

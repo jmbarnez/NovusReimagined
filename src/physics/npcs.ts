@@ -4,9 +4,9 @@ import {
   updateAsteroids as updateAsteroidsForSys,
   updateEnemyBullets as updateEnemyBulletsForSys,
   updateEnemyRespawns as updateEnemyRespawnsForSys,
-  updateMining as updateMiningForPlayer,
   updateNpcs as updateNpcsForSys,
 } from "./npcs/index.js";
+import { updateMining as updateMiningForPlayer } from "./mining.js";
 
 function currentSysIdx(): number {
   return getState().player?.sysIdx ?? 0;

@@ -12,7 +12,7 @@ function isTurretReady(idx: number, p: Player): boolean {
   return isSlotOnline(playerHardpointRack(p), idx, p);
 }
 
-export function fireSelectedTurret(isAutoFire = false, p: Player = getState().player) {
+export function fireSelectedTurret(p: Player = getState().player) {
   if (isGameplayPaused()) return;
   if (p === getState().player && (Client.showMap || Client.bridgeOpen)) return;
   const slot = p.fireControlSlot ?? 0;
@@ -22,10 +22,10 @@ export function fireSelectedTurret(isAutoFire = false, p: Player = getState().pl
   const m = inst ? MODULES[inst.baseId] : null;
   if (!m || MODULE_FLAGS.isMiningTurret(m) || !m.weaponDelivery) return;
   if (!isTurretReady(slot, p)) {
-    if (!isAutoFire && typeof window !== "undefined") floatText(p.x, p.y - 32, t("combat.turretOffline"), "#ff6644");
+    if (typeof window !== "undefined") floatText(p.x, p.y - 32, t("combat.turretOffline"), "#ff6644");
     return;
   }
-  playerShoot(slot, null, isAutoFire, p);
+  playerShoot(slot, null, p);
 }
 
 export function updateTurretCooldowns(dt: number, p: Player = getState().player) {

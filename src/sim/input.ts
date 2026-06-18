@@ -1,5 +1,5 @@
 import { Client, type Player } from "../state.js";
-import type { GameCommand, InputNavCommand } from "./commands.js";
+import type { GameCommand } from "./commands.js";
 export type GameAction = GameCommand;
 
 const pendingFrameActions: GameCommand[] = [];
@@ -14,11 +14,9 @@ export interface InputFrame {
     d: boolean;
     boost: boolean;
     warp: boolean;
+    lmb: boolean;
   };
   mouseWorld: { x: number; y: number };
-  waypoint: { x: number; y: number } | null;
-  navCommand: InputNavCommand | null;
-  movementControlMode: "waypoint" | "direct";
   actions: GameCommand[];
 }
 
@@ -62,10 +60,8 @@ function optionalPayloadRecord(action: Record<string, unknown>): Record<string, 
 
 function sanitizeAction(action: Record<string, unknown>): GameCommand | null {
   switch (action.type) {
-    case "fireSelectedTurret": {
-      const payload = optionalPayloadRecord(action);
-      return { type: "fireSelectedTurret", payload: { isAutoFire: payload.isAutoFire === true } };
-    }
+    case "fireSelectedTurret":
+      return { type: "fireSelectedTurret" };
     case "dock": {
       const payload = optionalPayloadRecord(action);
       return typeof payload.stationId === "string" ? { type: "dock", payload: { stationId: payload.stationId } } : { type: "dock" };
@@ -268,18 +264,6 @@ function sanitizePoint(value: unknown): { x: number; y: number } | null {
   };
 }
 
-function sanitizeNavCommand(value: unknown): InputNavCommand | null {
-  if (!isRecord(value)) return null;
-  if (value.mode !== "orbit" && value.mode !== "keepRange") return null;
-  if (typeof value.targetId !== "string") return null;
-  return {
-    mode: value.mode,
-    targetId: value.targetId,
-    rangePx: clampFinite(value.rangePx, 0, MAX_NAV_RANGE),
-    dir: value.dir === -1 ? -1 : 1,
-  };
-}
-
 function sanitizeActions(value: unknown): GameCommand[] {
   if (!Array.isArray(value)) return [];
   const actions: GameCommand[] = [];
@@ -296,9 +280,6 @@ export function sanitizeInputFrame(value: unknown): InputFrame | null {
   if (!isRecord(value)) return null;
   const keys = isRecord(value.keys) ? value.keys : {};
   const mouseWorld = sanitizePoint(value.mouseWorld) ?? { x: 0, y: 0 };
-  const waypoint = value.waypoint === null || value.waypoint === undefined
-    ? null
-    : sanitizePoint(value.waypoint);
 
   return {
     tick: Number.isInteger(value.tick) ? finiteOrZero(value.tick) : 0,
@@ -310,11 +291,9 @@ export function sanitizeInputFrame(value: unknown): InputFrame | null {
       d: keys.d === true,
       boost: keys.boost === true,
       warp: keys.warp === true,
+      lmb: keys.lmb === true,
     },
     mouseWorld,
-    waypoint,
-    navCommand: sanitizeNavCommand(value.navCommand),
-    movementControlMode: value.movementControlMode === "waypoint" ? "waypoint" : "direct",
     actions: sanitizeActions(value.actions),
   };
 }
@@ -334,7 +313,8 @@ export function queueFrameAction(command: GameCommand, opts?: { replaceByType?: 
 import { setPlayerInput } from "../player/input-state.js";
 
 export function applyInputFrameToPlayer(frame: InputFrame, p: Player): void {
-  setPlayerInput(p.netId ?? p.shipId, {
+  const id = p.netId ?? p.shipId;
+  setPlayerInput(id, {
     space: frame.keys.space,
     w: frame.keys.w,
     a: frame.keys.a,
@@ -342,45 +322,29 @@ export function applyInputFrameToPlayer(frame: InputFrame, p: Player): void {
     d: frame.keys.d,
     boost: frame.keys.boost,
     warp: frame.keys.warp,
+    lmb: frame.keys.lmb,
   }, { x: frame.mouseWorld.x, y: frame.mouseWorld.y });
-  p.movementControlMode = frame.movementControlMode;
-  p.waypoint = frame.waypoint;
-  p.navCommand = frame.navCommand;
 }
 
 export function createLocalInputFrame(tickNum: number): InputFrame {
   const actions = pendingFrameActions.splice(0, pendingFrameActions.length);
 
-  if (
-    Client.mouse.lmb &&
-    !Client.keys["shift"] &&
-    Client.gameStarted &&
-    !Client.stationOpen &&
-    !Client.bridgeOpen &&
-    !Client.showMap &&
-    !Client.settingsOpen
-  ) {
-    actions.push({ type: "fireSelectedTurret", payload: { isAutoFire: false } });
-  }
-
   return {
     tick: tickNum,
     keys: {
       space: !!Client.keys[" "],
-      w: Client.settings.movementControlMode === "direct" && !!Client.keys["w"],
-      a: Client.settings.movementControlMode === "direct" && !!Client.keys["a"],
-      s: Client.settings.movementControlMode === "direct" && !!Client.keys["s"],
-      d: Client.settings.movementControlMode === "direct" && !!Client.keys["d"],
+      w: !!Client.keys["w"],
+      a: !!Client.keys["a"],
+      s: !!Client.keys["s"],
+      d: !!Client.keys["d"],
       boost: !!Client.keys["boost"],
       warp: !!Client.keys["warp"],
+      lmb: Client.mouse.lmb,
     },
     mouseWorld: {
       x: Client.mouseWorld?.x ?? 0,
       y: Client.mouseWorld?.y ?? 0,
     },
-    waypoint: Client.settings.movementControlMode === "waypoint" && Client.waypoint ? { ...Client.waypoint } : null,
-    navCommand: Client.settings.movementControlMode === "waypoint" && Client.navCommand ? { ...Client.navCommand } : null,
-    movementControlMode: Client.settings.movementControlMode,
     actions,
   };
 }

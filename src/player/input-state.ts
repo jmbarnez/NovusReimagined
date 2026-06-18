@@ -15,6 +15,7 @@ export interface PlayerInputState {
     d: boolean;
     boost: boolean;
     warp: boolean;
+    lmb: boolean;
   };
   mouseWorld: { x: number; y: number };
 }
@@ -22,18 +23,21 @@ export interface PlayerInputState {
 const _store = new Map<string, PlayerInputState>();
 
 function defaultKeys(): PlayerInputState["keys"] {
-  return { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false };
+  return { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false, lmb: false };
 }
 
-function defaultMouseWorld(p: { x: number; y: number; angle: number }): PlayerInputState["mouseWorld"] {
-  return { x: p.x + Math.cos(p.angle) * 200, y: p.y + Math.sin(p.angle) * 200 };
+function defaultState(): PlayerInputState {
+  return {
+    keys: defaultKeys(),
+    mouseWorld: { x: 0, y: 0 },
+  };
 }
 
 /** Get or create input state for a player id. */
 export function getPlayerInput(id: string): PlayerInputState {
   let s = _store.get(id);
   if (!s) {
-    s = { keys: defaultKeys(), mouseWorld: { x: 0, y: 0 } };
+    s = defaultState();
     _store.set(id, s);
   }
   return s;
@@ -45,7 +49,9 @@ export function setPlayerInput(
   keys: PlayerInputState["keys"],
   mouseWorld: PlayerInputState["mouseWorld"],
 ): void {
-  _store.set(id, { keys, mouseWorld });
+  const s = getPlayerInput(id);
+  s.keys = keys;
+  s.mouseWorld = mouseWorld;
 }
 
 /** Reset input to neutral (used on sanitize / respawn). */

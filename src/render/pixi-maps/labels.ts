@@ -5,20 +5,20 @@ import { pixiMapState } from "./state.js";
 import type { LabelStyleKind } from "./utils.js";
 
 function createNameStyle(): TextStyle {
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   return new TextStyle({ fontFamily: getUIFont(), fontSize: 9 * scale, fill: "#ffffff", align: "center" });
 }
 function createSmallStyle(): TextStyle {
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   return new TextStyle({ fontFamily: getUIFont(), fontSize: 8 * scale, fill: "#6688aa", align: "center" });
 }
 function createBoldStyle(): TextStyle {
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   return new TextStyle({ fontFamily: getUIFont(), fontSize: 10 * scale, fontWeight: "bold", fill: "#ffffff", align: "center" });
 }
 
 export function getLabelStyle(kind: LabelStyleKind): TextStyle {
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   const font = getUIFont();
   const key = `${font}|${scale.toFixed(3)}`;
   if (pixiMapState._lastLabelFontKey !== key) {

@@ -2,7 +2,7 @@
 #hud-lock-rail {
   position: absolute;
   top: 0; left: 0; right: var(--hud-minimap-w);
-  height: 72px;
+  height: var(--hud-minimap-w);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -19,323 +19,309 @@
 }
 #hud-lock-rail::-webkit-scrollbar { height: 4px; }
 #hud-lock-rail::-webkit-scrollbar-track { background: transparent; }
-#hud-lock-rail::-webkit-scrollbar-thumb { background: var(--hud-border-soft); border-radius: 2px; }
+#hud-lock-rail::-webkit-scrollbar-thumb { background: var(--hud-border-soft); border-radius: 0; }
 
 /* ── Lock Card Base ── */
 .lock-card {
-  flex: 0 0 130px;
-  height: 58px;
-  background: rgba(10, 15, 25, 0.95);
-  border: 1px solid var(--lc-border);
-  border-radius: 4px;
+  flex: 0 0 140px;
+  height: calc(var(--hud-minimap-w) - 6px);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--hud-bg-window) 55%, var(--hud-bg-panel) 45%) 0%,
+    color-mix(in srgb, var(--hud-bg-panel) 75%, var(--hud-bg-deep) 25%) 100%);
+  border: 1px solid color-mix(in srgb, var(--hud-border) 65%, transparent);
+  border-radius: 0;
   position: relative;
   cursor: pointer;
-  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: 34px 1fr;
-  grid-template-rows: 1fr;
+  display: flex;
+  flex-direction: row;
   box-sizing: border-box;
   --lc-theme: var(--hud-text-bright);
-  --lc-border: var(--hud-border-soft);
-  --lc-bg-header: color-mix(in srgb, var(--hud-text-bright) 6%, transparent);
+  --lc-border: color-mix(in srgb, var(--hud-border) 65%, transparent);
 }
 
 .lock-card:hover {
-  transform: translateY(-2px);
   border-color: var(--lc-theme);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 
-              0 0 8px color-mix(in srgb, var(--lc-theme) 30%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--lc-theme) 20%, transparent);
 }
 
-.lock-card.primary {
-  border-color: var(--lc-theme);
-  background: color-mix(in srgb, var(--lc-theme) 12%, rgba(10, 15, 25, 0.8));
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5),
-              0 0 12px color-mix(in srgb, var(--lc-theme) 35%, transparent),
-              inset 0 0 4px color-mix(in srgb, var(--lc-theme) 15%, transparent);
-}
-.lock-card.primary:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6),
-              0 0 16px color-mix(in srgb, var(--lc-theme) 45%, transparent),
-              inset 0 0 6px color-mix(in srgb, var(--lc-theme) 25%, transparent);
-}
-
+/* ── State Variants ── */
 .lock-card.assigned {
   border-color: var(--hud-border-accent);
-  background: color-mix(in srgb, var(--hud-border-accent) 12%, rgba(10, 15, 25, 0.8));
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5),
-              0 0 10px color-mix(in srgb, var(--hud-border-accent) 30%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hud-border-accent) 25%, transparent);
 }
-.lock-card.assigned:hover {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6),
-              0 0 14px color-mix(in srgb, var(--hud-border-accent) 40%, transparent);
-}
-
-.lock-card.asteroid {
-  --lc-theme: var(--hud-shield);
-  --lc-border: color-mix(in srgb, var(--hud-shield) 30%, transparent);
-  --lc-bg-header: color-mix(in srgb, var(--hud-shield) 5%, transparent);
+.lock-card.primary {
+  border-color: var(--lc-theme);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--lc-theme) 10%, color-mix(in srgb, var(--hud-bg-window) 55%, var(--hud-bg-panel) 45%)) 0%,
+    color-mix(in srgb, var(--lc-theme) 6%, color-mix(in srgb, var(--hud-bg-panel) 75%, var(--hud-bg-deep) 25%)) 100%);
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--lc-theme) 30%, transparent),
+    inset 0 0 6px color-mix(in srgb, var(--lc-theme) 10%, transparent);
 }
 
-.lock-card.wreck {
-  --lc-theme: var(--hud-text-dim);
-  --lc-border: color-mix(in srgb, var(--hud-text-dim) 25%, transparent);
-  --lc-bg-header: color-mix(in srgb, var(--hud-text-dim) 4%, transparent);
-}
-
-.lock-card.enemy {
-  --lc-theme: var(--hud-danger);
-  --lc-border: color-mix(in srgb, var(--hud-danger) 40%, transparent);
-  --lc-bg-header: color-mix(in srgb, var(--hud-danger) 6%, transparent);
-}
+.lock-card.asteroid { --lc-theme: var(--hud-shield); }
+.lock-card.wreck    { --lc-theme: var(--hud-text-dim); }
+.lock-card.enemy    { --lc-theme: var(--hud-danger); }
 
 .lock-card.enemy.target-targeting {
   --lc-theme: var(--hud-accent);
-  --lc-border: color-mix(in srgb, var(--hud-accent) 60%, transparent);
-  --lc-bg-header: color-mix(in srgb, var(--hud-accent) 10%, transparent);
-  animation: lc-warning-pulse 1.5s infinite alternate ease-in-out;
+  animation: lc-pulse-warning 1.2s infinite alternate ease-in-out;
 }
-
 .lock-card.enemy.target-locked {
   --lc-theme: var(--hud-danger);
-  --lc-border: color-mix(in srgb, var(--hud-danger) 80%, transparent);
-  --lc-bg-header: color-mix(in srgb, var(--hud-danger) 14%, transparent);
-  animation: lc-danger-pulse 1s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+  animation: lc-pulse-danger 0.9s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes lc-warning-pulse {
-  0% {
-    border-color: color-mix(in srgb, var(--hud-accent) 30%, transparent);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 4px color-mix(in srgb, var(--hud-accent) 15%, transparent);
-  }
-  100% {
-    border-color: color-mix(in srgb, var(--hud-accent) 95%, transparent);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 12px color-mix(in srgb, var(--hud-accent) 45%, transparent);
-  }
+@keyframes lc-pulse-warning {
+  0%   { box-shadow: 0 0 4px color-mix(in srgb, var(--hud-accent) 15%, transparent); }
+  100% { box-shadow: 0 0 14px color-mix(in srgb, var(--hud-accent) 40%, transparent); }
+}
+@keyframes lc-pulse-danger {
+  0%   { box-shadow: 0 0 6px color-mix(in srgb, var(--hud-danger) 20%, transparent); }
+  100% { box-shadow: 0 0 18px color-mix(in srgb, var(--hud-danger) 55%, transparent); }
 }
 
-@keyframes lc-danger-pulse {
-  0% {
-    border-color: color-mix(in srgb, var(--hud-danger) 40%, transparent);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 6px color-mix(in srgb, var(--hud-danger) 20%, transparent);
-  }
-  100% {
-    border-color: color-mix(in srgb, var(--hud-danger) 100%, transparent);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 16px color-mix(in srgb, var(--hud-danger) 60%, transparent);
-  }
-}
-
+/* ── Hologram Viewport ── */
 .lock-card .lc-hologram-viewport {
-  width: 34px;
-  height: 40px;
+  width: 44px;
+  height: 100%;
+  flex-shrink: 0;
   position: relative;
-  background: rgba(0, 0, 0, 0.55);
+  background: color-mix(in srgb, var(--hud-bg-deep) 55%, transparent);
   border-right: 1px solid var(--lc-border);
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
-  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-.lock-card .lc-hologram-grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.lock-card:not(.enemy) .lc-hologram-grid {
-  background: linear-gradient(color-mix(in srgb, var(--lc-theme) 6%, transparent) 1px, transparent 1px),
-              linear-gradient(90deg, color-mix(in srgb, var(--lc-theme) 6%, transparent) 1px, transparent 1px);
-  background-size: 8px 8px;
-  background-position: center;
-  opacity: 0.75;
-}
-
-.lock-card.enemy .lc-hologram-grid {
-  background: radial-gradient(circle, transparent 35%, color-mix(in srgb, var(--lc-theme) 8%, transparent) 36%, color-mix(in srgb, var(--lc-theme) 8%, transparent) 40%, transparent 41%),
-              radial-gradient(circle, transparent 65%, color-mix(in srgb, var(--lc-theme) 4%, transparent) 66%, color-mix(in srgb, var(--lc-theme) 4%, transparent) 70%, transparent 71%);
-  background-position: center;
-}
-
-.lock-card.enemy .lc-hologram-viewport::before,
-.lock-card.enemy .lc-hologram-viewport::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  background: color-mix(in srgb, var(--lc-theme) 20%, transparent);
-}
-.lock-card.enemy .lc-hologram-viewport::before {
-  top: 50%; left: 4px; right: 4px;
-  height: 1px;
-}
-.lock-card.enemy .lc-hologram-viewport::after {
-  left: 50%; top: 4px; bottom: 4px;
-  width: 1px;
-}
-
 .lock-card .lc-canvas {
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   z-index: 2;
   position: relative;
 }
 
+/* ── Content Area ── */
 .lock-card .lc-content-area {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
   min-width: 0;
-  height: 40px;
+  padding: 5px 6px 4px;
+  gap: 3px;
+  box-sizing: border-box;
 }
 
+/* Header: Name + Level */
 .lock-card .lc-header {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: baseline;
   gap: 4px;
-  padding: 2px 28px 2px 6px;
-  height: 16px;
-  box-sizing: border-box;
-  background: var(--lc-bg-header);
-  border-bottom: 1px solid var(--lc-border);
-  border-top-right-radius: 5px;
+  min-width: 0;
 }
 
 .lock-card .lc-name {
   font-family: var(--font-family);
-  font-size: calc(7px * var(--effective-font-scale, 1));
+  font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 700;
   color: var(--hud-text-bright);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 0 1 auto;
+  flex: 1;
   min-width: 0;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
+  line-height: 1.2;
 }
 
 .lock-card .lc-level {
   font-family: var(--font-family);
-  font-size: calc(7px * var(--effective-font-scale, 1));
+  font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 900;
   color: var(--lc-theme);
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--lc-border);
-  border-radius: 3px;
-  padding: 1px 3px;
-  flex-shrink: 0;
   line-height: 1;
+  flex-shrink: 0;
 }
-.lock-card .lc-level:empty {
+.lock-card .lc-level:empty { display: none; }
+
+/* Targeting indicator */
+.lock-card .lc-target {
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  line-height: 1;
+  flex-shrink: 0;
+  margin-left: auto;
   display: none;
 }
 
-.lock-card .lc-target {
+/* Info row: Distance (primary) + optional speed/sig */
+.lock-card .lc-info-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lock-card .lc-dist {
+  font-family: var(--font-family);
   font-size: calc(8px * var(--effective-font-scale, 1));
   font-weight: 700;
-  line-height: 1;
-  pointer-events: none;
-  flex-shrink: 0;
+  color: var(--hud-text-dim);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.lock-card .lc-dist .d-val {
+  color: var(--hud-text-bright);
+}
+.lock-card .lc-dist .d-unit {
+  color: var(--hud-text-faint);
+  font-size: calc(7px * var(--effective-font-scale, 1));
+}
+.lock-card .lc-dist .d-band {
+  color: var(--hud-text-faint);
+  font-size: calc(7px * var(--effective-font-scale, 1));
+  margin-left: 2px;
+}
+.lock-card .lc-dist .d-band.opt {
+  color: var(--hud-positive);
+}
+
+.lock-card .lc-meta-inline {
+  font-family: var(--font-family);
+  font-size: calc(7px * var(--effective-font-scale, 1));
+  font-weight: 700;
+  color: var(--hud-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  line-height: 1.2;
   margin-left: auto;
 }
 
-.lock-card .lc-body {
-  flex: 1;
+/* ── Bars ── */
+.lock-card .lc-bars {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 3px;
+  margin-top: 2px;
+  min-height: 0;
+}
+
+.lock-card .lc-bar {
   position: relative;
-}
-
-.lock-card .lc-telemetry {
-  display: none;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px 6px;
-  padding: 4px 8px;
+  height: 10px;
+  background: color-mix(in srgb, var(--hud-bg-deep) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hud-border-soft) 30%, transparent);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
-.lock-card.resolved .lc-telemetry {
-  display: grid;
+.lock-card .lc-bar > span {
+  display: block;
+  height: 100%;
+  transition: width 0.15s linear;
 }
 
-.lock-card .lc-metric {
+.lock-card .lc-bar.hp > span {
+  background: linear-gradient(90deg, var(--hud-hull), color-mix(in srgb, var(--hud-hull) 50%, #000));
+}
+.lock-card .lc-bar.shield > span {
+  background: linear-gradient(90deg, var(--hud-shield), color-mix(in srgb, var(--hud-shield) 50%, #000));
+}
+.lock-card .lc-bar.struct > span {
+  background: linear-gradient(90deg, var(--hud-accent), color-mix(in srgb, var(--hud-accent) 50%, #000));
+}
+
+.lock-card .lc-bar-label {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
   font-family: var(--font-family);
-  font-size: calc(7.5px * var(--effective-font-scale, 1));
-  color: var(--hud-text-dim);
-  white-space: nowrap;
-  line-height: 1.1;
-}
-.lock-card .lc-metric .m-val {
-  color: var(--hud-text-bright);
+  font-size: calc(7px * var(--effective-font-scale, 1));
   font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  pointer-events: none;
+  line-height: 1;
+  text-shadow: 0 0 2px #000;
+}
+.lock-card .lc-bar-label .bl-name {
+  text-transform: uppercase;
+  font-size: calc(6px * var(--effective-font-scale, 1));
+  color: var(--hud-text-faint);
+  letter-spacing: 0.3px;
+}
+.lock-card .lc-bar-label .bl-val {
+  color: var(--hud-text-bright);
 }
 
-.lock-card .lc-meta {
-  font-family: var(--font-family);
-  font-size: calc(7.5px * var(--effective-font-scale, 1));
-  font-weight: 900;
-  color: var(--lc-theme);
-  padding: 4px 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
+/* Hide shield/struct when unresolved */
+.lock-card:not(.resolved) .lc-bar.shield,
+.lock-card:not(.resolved) .lc-bar.struct {
   display: none;
 }
 
+/* Unresolved: single large scan bar */
+.lock-card:not(.resolved) .lc-bar.hp {
+  height: 22px;
+  background: color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hud-border-soft) 35%, transparent);
+}
+
+.lock-card:not(.resolved) .lc-bar.hp > span {
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--lc-theme) 70%, transparent),
+    color-mix(in srgb, var(--lc-theme) 30%, transparent));
+  background-size: 200% 100%;
+  animation: lc-scan-sweep 1.5s infinite linear;
+}
+
+.lock-card:not(.resolved) .lc-bar.hp .lc-bar-label {
+  justify-content: center;
+  font-size: calc(8px * var(--effective-font-scale, 1));
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+@keyframes lc-scan-sweep {
+  0% { background-position: 200% 0%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* ── Scan Overlay (replaces body content while resolving) ── */
 .lock-card .lc-scan {
   display: none;
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-family);
-  font-size: calc(9px * var(--effective-font-scale, 1));
-  font-weight: 900;
-  color: var(--lc-theme);
-  letter-spacing: 2px;
-  background: rgba(2, 5, 10, 0.7);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  z-index: 2;
-  border-bottom-right-radius: 5px;
-  animation: lc-scan-blink 1s infinite alternate cubic-bezier(0.4, 0, 0.6, 1);
-}
-@keyframes lc-scan-blink {
-  0% { opacity: 0.35; }
-  100% { opacity: 1.0; }
 }
 
+/* ── Close Button ── */
 .lock-card .lc-close {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 12px;
-  height: 12px;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid var(--lc-border);
-  border-radius: 50%;
+  background: color-mix(in srgb, var(--hud-bg-deep) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hud-border-soft) 50%, transparent);
+  color: var(--hud-text-faint);
   font-family: var(--font-family);
-  font-size: calc(8px * var(--effective-font-scale, 1));
+  font-size: calc(10px * var(--effective-font-scale, 1));
   font-weight: 700;
-  color: var(--hud-text-dim);
   cursor: pointer;
   pointer-events: auto;
   line-height: 1;
   z-index: 3;
-  opacity: 0.4;
-  transition: opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
 .lock-card:hover .lc-close {
@@ -346,15 +332,14 @@
   background: var(--hud-danger);
   color: #000;
   border-color: var(--hud-danger);
-  transform: scale(1.1);
-  box-shadow: 0 0 6px var(--hud-danger);
 }
 
+/* ── Assignment Badge ── */
 .lock-card .lc-assign {
   position: absolute;
-  top: 3px;
+  top: 2px;
   right: 18px;
-  height: 12px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -364,90 +349,7 @@
   font-family: var(--font-family);
   font-size: calc(7px * var(--effective-font-scale, 1));
   font-weight: 900;
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.5px;
   z-index: 3;
 }
-.lock-card .lc-assign:empty {
-  display: none;
-}
-
-.lock-card .lc-bars {
-  position: absolute;
-  bottom: 3px;
-  left: 5px;
-  right: 5px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 1;
-  height: 14px;
-}
-
-.lock-card .lc-bar {
-  position: relative;
-  height: 4px;
-  background: rgba(0, 0, 0, 0.65);
-  border-radius: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.lock-card .lc-bar > span {
-  display: block;
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.15s linear;
-}
-
-.lock-card .lc-bar.hp > span {
-  background: linear-gradient(90deg, var(--hud-hull), color-mix(in srgb, var(--hud-hull) 45%, #000));
-}
-.lock-card .lc-bar.shield > span {
-  background: linear-gradient(90deg, var(--hud-shield), color-mix(in srgb, var(--hud-shield) 45%, #000));
-}
-.lock-card .lc-bar.struct > span {
-  background: linear-gradient(90deg, var(--hud-accent), color-mix(in srgb, var(--hud-accent) 45%, #000));
-}
-
-.lock-card .lc-bar-label {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  font-family: var(--font-family);
-  font-size: calc(5px * var(--effective-font-scale, 1));
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 4px;
-  pointer-events: none;
-  line-height: 1;
-  text-shadow: 0 0 1px #000;
-}
-
-.lock-card:not(.resolved) .lc-bar.shield,
-.lock-card:not(.resolved) .lc-bar.struct {
-  display: none;
-}
-
-.lock-card:not(.resolved) .lc-bar.hp {
-  height: 14px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.lock-card:not(.resolved) .lc-bar.hp > span {
-  background: linear-gradient(90deg, var(--lc-theme), color-mix(in srgb, var(--lc-theme) 40%, #000));
-  background-size: 200% 100%;
-  border-radius: 3px;
-  animation: lc-scanning-sweep 1.5s infinite linear;
-}
-
-@keyframes lc-scanning-sweep {
-  0% { background-position: 200% 0%; }
-  100% { background-position: 0% 0%; }
-}
+.lock-card .lc-assign:empty { display: none; }

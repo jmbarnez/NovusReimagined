@@ -15,6 +15,7 @@ import type { AutoTarget } from "../types/combat.js";
 import type { ComputedStats } from "../player/player-stats.js";
 import type { Player } from "../state.js";
 import { getSensorContactRangePx } from "./ranges.js";
+import { getAssignTargetId } from "../player/target-selection.js";
 import { isAsteroidTarget, isWreckPieceTarget, targetByLockId } from "./lookup.js";
 import { acceptsSpecialResourceTarget, getFittedHardpointModule, isWeaponHardpointModule } from "./modules.js";
 import { isGateLockId } from "../utils/warp-gates.js";
@@ -149,6 +150,7 @@ export function clearSensorLocks(p: Player = getState().player, _opts?: { suppre
   if (isLocalPlayer(p)) {
     PlayerAccess.setLockQueue([]);
     setPlayerTargetLock(p, null);
+    PlayerAccess.setAssignTargetId(null, p);
     if (p.turretTargets) {
       PlayerAccess.setTurretTargetsAll(Array(p.turretTargets.length).fill(null));
     }
@@ -310,11 +312,12 @@ export function selectLockTarget(
   const i = p.lockQueue.findIndex((s) => s.id === id);
   if (i < 0) return;
 
-  if (p._assignTargetId === id) {
+  const currentAssign = getAssignTargetId(p.netId ?? p.shipId);
+  if (currentAssign === id) {
     if (isLocalPlayer(p)) {
       PlayerAccess.setAssignTargetId(null);
     } else {
-      p._assignTargetId = null;
+      // no-op for remote; cache is owned by local side
     }
     return;
   }
@@ -331,8 +334,6 @@ export function selectLockTarget(
 
   if (isLocalPlayer(p)) {
     PlayerAccess.setAssignTargetId(id, p);
-  } else {
-    p._assignTargetId = id;
   }
   syncPrimaryTargetLock(p);
 }

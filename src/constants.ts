@@ -47,6 +47,8 @@ export const COLLISION_RESTITUTION = 0.28;
 export const COLLISION_DMG_THRESHOLD = 70;
 export const COLLISION_DMG_SCALE = 0.055;
 export const COLLISION_COOLDOWN = 0.35;
+/** Resting-overlap tolerance: collision is ignored while penetration is ≤ this value (px). */
+export const COLLISION_BUFFER = 0.1;
 export const ASTEROID_VEL_DECAY = 0.12;
 export const WRECK_PIECE_LINEAR_DRAG = 0.42;
 export const WRECK_PIECE_ANGULAR_DRAG = 0.55;

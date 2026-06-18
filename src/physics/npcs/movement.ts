@@ -2,7 +2,8 @@ import { type Player } from "../../state.js";
 import { getState } from "../../state-access.js";
 import { addTrailSegment } from "../../utils/entities.js";
 import { liveEnemiesInSys, activePlayersInSys, nearestPlayerInSys } from "../../utils/game.js";
-import { ENEMY_DEFS } from "../../data/enemies.js";
+import { getEnemyColRadius } from "../../utils/collision-helpers.js";
+import { getAsteroidColRadius } from "../../utils/asteroid-helpers.js";
 import {
   ENEMY_AMBIENT_DRAG,
   ENEMY_MIN_DIST_HOME_STATION,
@@ -64,7 +65,7 @@ function updateNpcMovementAndSeparation(
   // Asteroid avoidance: steer around rocks using a velocity look-ahead probe
   // so the enemy curves clear before the physical collision resolver kicks in.
   const avoidance = C.ENEMIES.AI.AVOIDANCE;
-  const enemyRadius = ENEMY_DEFS[e.type]?.colRadius ?? e.sigRadius ?? 18;
+  const enemyRadius = getEnemyColRadius(e.type);
   const probeX = e.x + e.vx * avoidance.LOOKAHEAD_TIME;
   const probeY = e.y + e.vy * avoidance.LOOKAHEAD_TIME;
   _astOut.length = 0;
@@ -74,7 +75,8 @@ function updateNpcMovementAndSeparation(
   for (let i = 0; i < _astOut.length; i++) {
     const a = _astOut[i];
     if (a.dist < 1) continue;
-    const avoidRadius = enemyRadius + a.radius + avoidance.AVOID_PADDING;
+    const ast = a.data;
+    const avoidRadius = enemyRadius + (ast ? getAsteroidColRadius(ast) : a.radius) + avoidance.AVOID_PADDING;
     const force = (avoidRadius - a.dist) / avoidRadius;
     if (force <= 0) continue;
     avX -= (a.dx / a.dist) * force;

@@ -3,6 +3,8 @@ import { PlayerAccess, getState } from "../state-access.js";
 import { t } from "../utils/i18n.js";
 import type { Player } from "../state.js";
 import { resetPlayerInput } from "./input-state.js";
+import { resetCollisionCooldown } from "./collision-state.js";
+import { setAssignTargetId } from "./target-selection.js";
 import { SHIPS } from "../data/ships.js";
 import { SKILL_IDS, SKILL_DEF, xpForSkillLevel, levelForSkillXp, MAX_SKILL_LEVEL, type SkillId } from "../data/skills.js";
 import {
@@ -50,8 +52,8 @@ export function makePlayer(): Player {
 
 export function clearTransientPlayerInput(p: Player): void {
   resetPlayerInput(p.netId ?? p.shipId);
-  p.waypoint = null;
-  p.navCommand = null;
+  resetCollisionCooldown(p.netId ?? p.shipId);
+  setAssignTargetId(p.netId ?? p.shipId, null);
   p.netInputFrame = null;
   p.boostLockout = false;
 }

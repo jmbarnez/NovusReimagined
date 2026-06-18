@@ -17,6 +17,7 @@ import type { WorldSnapshot } from "../sim/snapshot.js";
 import { TICK_DT } from "../constants.js";
 import { updateCombat } from "../physics/combat-physics.js";
 import { startScanPulse } from "../scanning/index.js";
+import { getAssignTargetId } from "../player/target-selection.js";
 
 // PredictionManager class: Maintains unacknowledged local input frames
 // and replays them on top of incoming server snapshots to reconcile state.
@@ -45,8 +46,6 @@ export class PredictionManager {
     // Replay remaining unacknowledged inputs to catch up from server tick to current predicted tick
     const oldSpace = Client.keys[" "];
     const oldMouseWorld = { ...Client.mouseWorld };
-    const oldWaypoint = Client.waypoint;
-    const oldNavCommand = Client.navCommand;
 
     for (const frame of this.unackInputs) {
       const p = getState().player;
@@ -63,19 +62,6 @@ export class PredictionManager {
     Client.keys[" "] = oldSpace;
     Client.mouseWorld.x = oldMouseWorld.x;
     Client.mouseWorld.y = oldMouseWorld.y;
-
-    // Smart restoration: only restore waypoint/navCommand if the client has updated them
-    // since the last replayed frame (or snapshot if no unacknowledged frames exist).
-    const lastFrame = this.unackInputs[this.unackInputs.length - 1];
-    const lastExpectedWaypoint = lastFrame ? lastFrame.waypoint : snap.player.waypoint;
-    if (!areWaypointsEqual(oldWaypoint, lastExpectedWaypoint)) {
-      Client.waypoint = oldWaypoint;
-    }
-
-    const lastExpectedNav = lastFrame ? lastFrame.navCommand : snap.player.navCommand;
-    if (!areNavCommandsEqual(oldNavCommand, lastExpectedNav)) {
-      Client.navCommand = oldNavCommand;
-    }
 
     // Keep the replayed predicted state. applySnapshotToG() already rewound the
     // player to the authoritative server tick before this method ran; moving
@@ -140,8 +126,6 @@ export class PredictionManager {
     Client.keys[" "] = frame.keys.space;
     Client.mouseWorld.x = frame.mouseWorld.x;
     Client.mouseWorld.y = frame.mouseWorld.y;
-    Client.waypoint = frame.waypoint;
-    Client.navCommand = frame.navCommand;
     if (getState().player) applyInputFrameToPlayer(frame, getState().player);
   }
 
@@ -166,7 +150,7 @@ export class PredictionManager {
           {
             const existing = p.lockQueue.find((slot) => slot.id === action.payload.id);
             // Prediction replay should not flip an already-selected assignment off.
-            if (existing && !existing.resolving && p._assignTargetId === action.payload.id) break;
+            if (existing && !existing.resolving && getAssignTargetId(p.netId ?? p.shipId) === action.payload.id) break;
             requestSensorLock(action.payload.id, p, { suppressFrameAction: true });
           }
           break;
@@ -175,7 +159,7 @@ export class PredictionManager {
           break;
         case "selectLockTarget":
           // Idempotent replay: keep selection on, avoid toggle-off behavior.
-          if (p._assignTargetId === action.payload.id) break;
+          if (getAssignTargetId(p.netId ?? p.shipId) === action.payload.id) break;
           selectLockTarget(action.payload.id, p, { suppressFrameAction: true });
           break;
         case "clearSensorLocks":

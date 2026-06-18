@@ -61,7 +61,7 @@ function returnPooledFloatText(t: Text): void {
 
 export function refreshEffectsOverlayFonts(): void {
   const font = getUIFont();
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   for (const t of _floatTextPool) {
     t.style.fontFamily = font;
     t.style.fontSize = 12 * scale;

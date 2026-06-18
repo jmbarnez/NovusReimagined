@@ -113,17 +113,37 @@ export function drawLiveTargetIcon(
     }
     const pw = maxX - minX || 1;
     const ph = maxY - minY || 1;
-    const boxSize = 32; // Fits beautifully in 48x48 bounds
+    const boxSize = 38;
     const scale = Math.min(boxSize / pw, boxSize / ph);
     const cxOffset = -(minX + maxX) / 2;
     const cyOffset = -(minY + maxY) / 2;
 
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
     ctx2d.save();
-    ctx2d.translate(canvas.width / 2, canvas.height / 2);
+    ctx2d.translate(cx, cy);
     ctx2d.rotate(angle);
 
+    // 1. Subtle outer acquisition ring
     ctx2d.beginPath();
-    // Apply offset first to center, then scale
+    ctx2d.arc(0, 0, 24, 0, Math.PI * 2);
+    ctx2d.strokeStyle = colorMixTranslucent(strokeColor, 0.15);
+    ctx2d.lineWidth = 1;
+    ctx2d.setLineDash([4, 4]);
+    ctx2d.stroke();
+    ctx2d.setLineDash([]);
+
+    // 2. Heading indicator tick (top = forward)
+    ctx2d.beginPath();
+    ctx2d.moveTo(0, -26);
+    ctx2d.lineTo(0, -22);
+    ctx2d.strokeStyle = colorMixTranslucent(strokeColor, 0.5);
+    ctx2d.lineWidth = 1.5;
+    ctx2d.stroke();
+
+    // 3. Ship silhouette
+    ctx2d.beginPath();
     ctx2d.moveTo((pts[0][0] + cxOffset) * scale, (pts[0][1] + cyOffset) * scale);
     for (let i = 1; i < pts.length; i++) {
       ctx2d.lineTo((pts[i][0] + cxOffset) * scale, (pts[i][1] + cyOffset) * scale);
@@ -131,7 +151,7 @@ export function drawLiveTargetIcon(
     ctx2d.closePath();
 
     ctx2d.lineJoin = "round";
-    ctx2d.lineWidth = 1.8;
+    ctx2d.lineWidth = 2.2;
     ctx2d.fillStyle = fillColor;
     ctx2d.fill();
     ctx2d.strokeStyle = strokeColor;

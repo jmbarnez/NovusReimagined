@@ -253,7 +253,7 @@
   padding: 10px;
   border: 1px solid color-mix(in srgb, var(--hud-border) 30%, transparent);
   background: color-mix(in srgb, var(--hud-bg-elevated) 84%, transparent);
-  border-radius: 6px;
+  border-radius: 0;
   overflow: auto;
 }
 

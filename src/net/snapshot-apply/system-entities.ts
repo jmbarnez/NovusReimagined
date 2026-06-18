@@ -95,6 +95,7 @@ export function applyAsteroidSnapshots(sys: System, maps: SnapshotEntityMaps): v
         vy: snapEnt.vy,
         radius: snapEnt.radius ?? 20,
         shape: [[1, 0], [0.5, 0.87], [-0.5, 0.87], [-1, 0], [-0.5, -0.87], [0.5, -0.87]],
+        shapeMax: 1.0,
         hp: snapEnt.hp || 0,
         maxHp: snapEnt.maxHp || 100,
         composition: snapEnt.composition ? { ...snapEnt.composition } : { iron: 1 },

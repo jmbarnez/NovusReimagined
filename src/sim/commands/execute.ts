@@ -69,7 +69,7 @@ function resetTurretPowerOnUndock(p: Player): void {
 export function executeGameCommand(command: GameCommand, p: Player): void {
   switch (command.type) {
     case "fireSelectedTurret":
-      fireSelectedTurret(command.payload?.isAutoFire ?? false, p);
+      fireSelectedTurret(p);
       break;
     case "interactSite":
       tryInteractSite(p);

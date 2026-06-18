@@ -26,15 +26,15 @@ export function resolveLockBracketStyle(
   enemy?: EnemyLockBracketContext,
   alphaScale = 1,
 ): LockBracketStyle {
+  const lineWidth = isPrimary ? 1.7 : 1.3;
+
   if (kind === "enemy") {
     let color = 0xff5522;
     let alpha = isPrimary ? 0.90 : 0.70;
-    let lineWidth = isPrimary ? 1.7 : 1.3;
 
     if (enemy?.hasLockOnPlayer) {
       color = 0xff3b30;
       alpha = isPrimary ? 0.95 : 0.75;
-      lineWidth = isPrimary ? 1.8 : 1.4;
     } else if (enemy?.targetingPlayer) {
       const blink = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * 0.024));
       color = 0xffcc00;
@@ -43,7 +43,6 @@ export function resolveLockBracketStyle(
       const blink = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * 0.014));
       color = 0xff8800;
       alpha = blink * (isPrimary ? 0.85 : 0.65);
-      lineWidth = isPrimary ? 1.4 : 1.1;
     }
 
     return { color, alpha: alpha * alphaScale, lineWidth };
@@ -52,13 +51,11 @@ export function resolveLockBracketStyle(
   // Neutral targets: asteroids, wreck pieces, etc.
   let color = 0x0077ff;
   let alpha = isPrimary ? 0.90 : 0.70;
-  let lineWidth = isPrimary ? 1.7 : 1.3;
 
   if (slot.resolving) {
     const blink = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * 0.014));
     color = 0x00d2ff;
     alpha = blink * (isPrimary ? 0.85 : 0.65);
-    lineWidth = isPrimary ? 1.4 : 1.1;
   }
 
   return { color, alpha: alpha * alphaScale, lineWidth };

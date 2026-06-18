@@ -3,6 +3,7 @@ import { getStats } from "../../player/player-stats.js";
 import type { AutoTarget } from "../../types/combat.js";
 import type { EntitySnapshot, TargetLockSnapshot, WorldSnapshot } from "./types.js";
 import { quantizeSnapshotNumber as q } from "./helpers.js";
+import { getAssignTargetId } from "../../player/target-selection.js";
 
 function snapshotTargetLock(target: AutoTarget | null | undefined): TargetLockSnapshot | null {
   if (!target) return null;
@@ -154,8 +155,6 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
       credits: subject.credits,
       sysIdx: subject.sysIdx,
       homeSysIdx: subject.homeSysIdx,
-      waypoint: subject.waypoint ? { x: q(subject.waypoint.x), y: q(subject.waypoint.y) } : null,
-      navCommand: subject.navCommand ? { ...subject.navCommand } : null,
       miningLaser: subject.miningLaser ? { ...subject.miningLaser } : null,
       salvager: subject.salvager ? { ...subject.salvager } : null,
       tractor: subject.tractor ? { ...subject.tractor } : null,
@@ -165,7 +164,7 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
       warpTargetIdx: typeof subject.warpTargetIdx === "number" ? subject.warpTargetIdx : undefined,
       targetLock: snapshotTargetLock(subject.targetLock),
       lockQueue: subject.lockQueue ? subject.lockQueue.map(s => ({ ...s })) : null,
-      _assignTargetId: subject._assignTargetId,
+      _assignTargetId: getAssignTargetId(subject.netId ?? subject.shipId),
       turretTargets: subject.turretTargets ? [ ...subject.turretTargets ] : null,
       highTargets: subject.highTargets ? [ ...subject.highTargets ] : null,
       slotActive: subject.slotActive ? JSON.parse(JSON.stringify(subject.slotActive)) : null,

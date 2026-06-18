@@ -33,14 +33,11 @@ describe("new game movement", () => {
     const startX = p.x;
     const startY = p.y;
 
-    // Send a waypoint input frame (simulating right-click in waypoint mode)
+    // Send a direct movement input frame
     server.handleClientInput("new-game-client", {
       tick: 1,
-      keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false },
+      keys: { space: false, w: true, a: false, s: false, d: false, boost: false, warp: false, lmb: false },
       mouseWorld: { x: startX + 800, y: startY },
-      waypoint: { x: startX + 800, y: startY },
-      navCommand: null,
-      movementControlMode: "waypoint",
       actions: [],
     });
 

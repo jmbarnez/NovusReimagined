@@ -9,6 +9,7 @@ import {
   type MissionContract,
 } from "../../data/missions.js";
 import { t } from "../../utils/i18n.js";
+import { TUTORIAL_STEP_COUNT } from "./helpers.js";
 
 export interface TutorialStepReward {
   credits: number;
@@ -100,6 +101,15 @@ function getMissionDefById(id: string): TutorialMissionDef | undefined {
 
 function getMissionDefForStep(step: number): TutorialMissionDef | undefined {
   return TUTORIAL_MISSION_CHAIN.find((m) => step >= m.firstStep && step <= m.lastStep);
+}
+
+export function getTutorialMissionStepCounter(step: number): { n: number; total: number } {
+  const def = getMissionDefForStep(step);
+  if (!def) return { n: step + 1, total: TUTORIAL_STEP_COUNT };
+  return {
+    n: step - def.firstStep + 1,
+    total: def.lastStep - def.firstStep + 1,
+  };
 }
 
 export function createTutorialMission(def: TutorialMissionDef, currentStep: number): MissionContract {

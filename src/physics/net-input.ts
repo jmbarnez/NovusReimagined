@@ -18,14 +18,12 @@ export function bindPlayerNetInput(p: Player, frame: InputFrame | null | undefin
       d: !!frame.keys.d,
       boost: !!frame.keys.boost,
       warp: !!frame.keys.warp,
+      lmb: !!frame.keys.lmb,
     }, { x: frame.mouseWorld.x, y: frame.mouseWorld.y });
   } else {
     setPlayerInput(id, {
-      space: false, w: false, a: false, s: false, d: false, boost: false, warp: false,
+      space: false, w: false, a: false, s: false, d: false, boost: false, warp: false, lmb: false,
     }, { x: p.x + Math.cos(p.angle) * 200, y: p.y + Math.sin(p.angle) * 200 });
   }
-  p.waypoint = frame ? (frame.waypoint ? { ...frame.waypoint } : null) : (p.waypoint ?? null);
-  p.navCommand = frame ? (frame.navCommand ? { ...frame.navCommand } : null) : (p.navCommand ?? null);
-  p.movementControlMode = frame ? frame.movementControlMode : (p.movementControlMode ?? "direct");
   return !!frame;
 }

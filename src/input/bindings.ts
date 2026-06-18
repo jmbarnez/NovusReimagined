@@ -17,6 +17,7 @@ import { forEachAiState } from "../physics/npcs/ai-state.js";
 import { setCursorLock, getCanvasElement, isBlockedByUi, getUiPointerBlockSelector } from "./core.js";
 import { getCurrentTutorialStep } from "../data/tutorial.js";
 import { isCurrentStepComplete } from "../tutorial/index.js";
+import { toggleCollisionDebug } from "../render/collision-debug.js";
 
 function isTutorialUndockBlocked(): boolean {
   const step = getCurrentTutorialStep(getState().player);
@@ -35,6 +36,11 @@ export function handleKeyDown(e: KeyboardEvent): void {
     return;
   }
 
+  if (e.code === "F9") {
+    toggleCollisionDebug();
+    return;
+  }
+
   if (!Client.gameStarted) return;
 
   if (Client.settingsOpen && listeningFor) return;
@@ -44,15 +50,11 @@ export function handleKeyDown(e: KeyboardEvent): void {
   // Brake — only space cancels the waypoint.
   if (e.code === keybinds.brake) Client.keys[" "] = true;
   if (e.code === keybinds.engineBoost || e.code === "ShiftLeft" || e.code === "ShiftRight") Client.keys["boost"] = true;
-  if (Client.settings.movementControlMode === "direct") {
-    if (e.code === keybinds.forwardThrust) Client.keys["w"] = true;
-    if (e.code === keybinds.reverseThrust) Client.keys["s"] = true;
-    if (e.code === keybinds.turnLeft) Client.keys["a"] = true;
-    if (e.code === keybinds.turnRight) Client.keys["d"] = true;
-  }
+  if (e.code === keybinds.forwardThrust) Client.keys["w"] = true;
+  if (e.code === keybinds.reverseThrust) Client.keys["s"] = true;
+  if (e.code === keybinds.turnLeft) Client.keys["a"] = true;
+  if (e.code === keybinds.turnRight) Client.keys["d"] = true;
   if (e.code === "ShiftLeft" || e.code === "ShiftRight") setCursorLock(false, canvasEl);
-
-  if (Client.keys[" "]) Client.waypoint = null;
 
   if (e.code === keybinds.settings) {
     if (Client.settingsOpen) { closeSettings(); return; }

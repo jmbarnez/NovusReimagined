@@ -8,7 +8,7 @@
   background: var(--hud-bg-window);
   border: 1px solid var(--hud-border);
   border-left: 3px solid var(--hud-border-accent);
-  border-radius: 3px;
+  border-radius: 0;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
   pointer-events: none;
   font-family: var(--font-family);

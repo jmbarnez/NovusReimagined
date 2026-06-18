@@ -112,8 +112,6 @@ export const Client: ClientState = {
   camx: 0,
   camy: 0,
   zoom: 1.0,
-  waypoint: null,
-  navCommand: null,
   cursorUnlocked: false,
   combatHeat: 0,
   showMap: false,

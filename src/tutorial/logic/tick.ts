@@ -14,8 +14,8 @@ import type { TutorialStep } from "../types.js";
 
 const STEP_HANDLERS: Record<string, (step: TutorialStep, now: number) => void | boolean> = {
   "piloting-choice"() {
-    const moved = Client.keys["w"] || Client.keys["a"] || Client.keys["s"] || Client.keys["d"];
-    if (moved || Client.waypoint !== null) patchSnapshot({ pilotingTried: true });
+    const moved = Client.keys["w"] || Client.keys["a"] || Client.keys["d"];
+    if (moved) patchSnapshot({ pilotingTried: true });
   },
 
   "boost-try"() {

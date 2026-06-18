@@ -49,7 +49,7 @@
   background: color-mix(in srgb, var(--hud-positive) 12%, var(--hud-bg-deep));
   color: var(--hud-positive);
   border: 1px solid color-mix(in srgb, var(--hud-positive) 30%, transparent);
-  border-radius: 3px;
+  border-radius: 0;
   cursor: pointer;
   font-family: inherit;
   font-size: calc(9px * var(--effective-font-scale, 1));
@@ -84,7 +84,7 @@
   background: transparent;
   color: var(--hud-text-faint);
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: 0;
   cursor: pointer;
   font-family: inherit;
   font-size: calc(10px * var(--effective-font-scale, 1));
@@ -257,7 +257,7 @@ h4 {
   cursor: pointer;
   font-family: inherit;
   font-size: calc(11px * var(--effective-font-scale, 1));
-  border-radius: 2px;
+  border-radius: 0;
   transition: all 0.1s ease;
 }
 
@@ -303,7 +303,7 @@ h4 {
   font-family: inherit;
   font-size: calc(9px * var(--effective-font-scale, 1));
   padding: 1px 4px;
-  border-radius: 2px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);
   border: 1px solid var(--hud-border-soft);
   color: var(--hud-text-dim);

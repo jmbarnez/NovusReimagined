@@ -67,7 +67,6 @@ export function makeRemotePlayerStub(brief: RemotePlayerBrief): Player {
     fitting: { turret: [], high: [], med: [], low: [] },
     moduleHp: {},
     slotActive: { turret: [], high: [], med: [], low: [] },
-    _assignTargetId: null,
     contracts: [],
     stationOffers: [],
     stationOfferStationId: null,

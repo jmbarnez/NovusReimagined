@@ -1,6 +1,5 @@
 import { Client, type Player } from "../state.js";
-import { PlayerAccess, clearNav, getState } from "../state-access.js";
-import { enemyByLockId } from "../targeting.js";
+import { PlayerAccess, getState } from "../state-access.js";
 import { ACCEL, FRICTION, ANG_FRICTION } from "../constants.js";
 import { getStats } from "../player/player-stats.js";
 import { updateEngineSound } from "../audio/procedural.js";
@@ -14,6 +13,7 @@ import { computeShipNavForces } from "./ship-nav.js";
 import { processModuleCapDrain, computeBoostState } from "./ship-modules.js";
 import { resolveSolidCollisions } from "./collisions.js";
 import { getPlayerInput } from "../player/input-state.js";
+import { tickCollisionCooldown } from "../player/collision-state.js";
 
 let _cargoMap = new Map<string, ModuleInstance>();
 const EXHAUST_MIN_SPEED = 8;
@@ -53,27 +53,8 @@ export function updateShip(dt: number, _p?: Player) {
     inputKeys,
     inputMouseWorld,
     uiBlocksInput,
-    Client.cursorUnlocked,
-    isLocalPresentation,
   );
   let { ax, ay, at } = nav;
-
-  // Clear nav/waypoint if the pure helper indicated arrival
-  if (p.navCommand && !uiBlocksInput && !(inputKeys?.w || inputKeys?.s || inputKeys?.a || inputKeys?.d)) {
-    const target = enemyByLockId(p.navCommand.targetId);
-    if (!target) {
-      p.navCommand = null;
-      if (isLocalPresentation) clearNav();
-    }
-  }
-  if (p.waypoint && !uiBlocksInput && !(inputKeys?.w || inputKeys?.s || inputKeys?.a || inputKeys?.d)) {
-    const dx = p.waypoint.x - p.x;
-    const dy = p.waypoint.y - p.y;
-    if (Math.hypot(dx, dy) < 30) {
-      p.waypoint = null;
-      if (isLocalPresentation) Client.waypoint = null;
-    }
-  }
 
   const isThrusting = nav.thrustFx && speed > C.PHYSICS.SHIP.minSpeedForThrust;
   const isApplyingThrust = nav.thrustFx;
@@ -128,7 +109,7 @@ export function updateShip(dt: number, _p?: Player) {
     emitShipExhaustSheets(p, p.x, p.y, p.angle, abOn, boostActive, 0);
   }
 
-  if ((p._colCooldown ?? 0) > 0) PlayerAccess.setColCooldown((p._colCooldown ?? 0) - dt, p);
+  tickCollisionCooldown(p.netId ?? p.shipId, dt);
 
   resolveSolidCollisions(p);
 

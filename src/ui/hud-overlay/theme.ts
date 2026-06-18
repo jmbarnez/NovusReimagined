@@ -15,7 +15,7 @@ let appliedFontScale = -1;
 
 export function applyTheme(themeId: string, fontId: string) {
   const uiScale = Client.settings?.uiScale ?? 1.0;
-  const fontScale = Client.settings?.fontScale ?? 1.0;
+  const fontScale = Client.settings?.fontScale ?? 1.2;
   const s = document.documentElement;
   setCssVar(s, "--ui-scale", String(uiScale));
   setCssVar(s, "--font-scale", String(fontScale));

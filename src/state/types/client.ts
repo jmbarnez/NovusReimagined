@@ -26,8 +26,6 @@ export interface ClientState {
   mouseWorld: { x: number; y: number };
   camx: number; camy: number;
   zoom: number;
-  waypoint: { x: number; y: number } | null;
-  navCommand: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;
   cursorUnlocked: boolean;
   combatHeat: number;
   showMap: boolean;

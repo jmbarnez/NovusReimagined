@@ -3,7 +3,7 @@ import { _G as G } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { TUTORIAL_STEPS } from "../src/data/tutorial.js";
-import { TUTORIAL_STEP_REWARDS, TUTORIAL_MISSION_CHAIN, TUTORIAL_MISSION_IDS } from "../src/tutorial/data/mission.js";
+import { TUTORIAL_STEP_REWARDS, TUTORIAL_MISSION_CHAIN, TUTORIAL_MISSION_IDS, getTutorialMissionStepCounter } from "../src/tutorial/data/mission.js";
 import { skipTutorial, initTutorial, advanceStep } from "../src/tutorial/index.js";
 import { SAVE_KEY } from "../src/constants.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
@@ -67,6 +67,15 @@ describe("tutorial mission contract", () => {
 
     setStepComplete(2);
     expect(mission1?.status).toBe("complete");
+  });
+
+  it("counts steps within the current tutorial mission", () => {
+    expect(getTutorialMissionStepCounter(0)).toEqual({ n: 1, total: 3 });
+    expect(getTutorialMissionStepCounter(2)).toEqual({ n: 3, total: 3 });
+    expect(getTutorialMissionStepCounter(3)).toEqual({ n: 1, total: 5 });
+    expect(getTutorialMissionStepCounter(7)).toEqual({ n: 5, total: 5 });
+    expect(getTutorialMissionStepCounter(8)).toEqual({ n: 1, total: 1 });
+    expect(getTutorialMissionStepCounter(13)).toEqual({ n: 2, total: 2 });
   });
 
   it("lists all tutorial missions as active after the first mission completes", () => {

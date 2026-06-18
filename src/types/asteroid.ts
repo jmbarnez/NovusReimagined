@@ -41,6 +41,8 @@ export interface AsteroidComposition {
 
 export interface AsteroidVisual {
   shape: number[][];
+  /** Max distance of any shape vertex from centre (1.0 = perfect circle). */
+  shapeMax: number;
   spinAngle: number;
   spinVel: number;
   prevSpin: number;

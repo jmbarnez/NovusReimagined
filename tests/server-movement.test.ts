@@ -7,11 +7,8 @@ import type { InputFrame } from "../src/sim/input.js";
 function movementFrame(tick: number, x: number, y: number): InputFrame {
   return {
     tick,
-    keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false },
+    keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false, lmb: false },
     mouseWorld: { x, y },
-    waypoint: { x, y },
-    navCommand: null,
-    movementControlMode: "waypoint",
     actions: [],
   };
 }
@@ -21,16 +18,13 @@ function directFrame(tick: number, keys: InputFrame["keys"]): InputFrame {
     tick,
     keys,
     mouseWorld: { x: 0, y: 0 },
-    waypoint: null,
-    navCommand: null,
-    movementControlMode: "direct",
     actions: [],
   };
 }
 
-const DIRECT_IDLE_KEYS: InputFrame["keys"] = { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false };
-const DIRECT_FORWARD_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: false, warp: false };
-const DIRECT_BOOST_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false };
+const DIRECT_IDLE_KEYS: InputFrame["keys"] = { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false, lmb: false };
+const DIRECT_FORWARD_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: false, warp: false, lmb: false };
+const DIRECT_BOOST_KEYS: InputFrame["keys"] = { space: false, w: true, a: false, s: false, d: false, boost: true, warp: false, lmb: false };
 
 function removeIonBoostModule(p: Player): void {
   p.fitting.med = p.fitting.med.map((uid) => uid === "start-me-ab1" ? null : uid);
@@ -61,7 +55,8 @@ describe("GameServer movement input", () => {
     const p = session.playerState;
     const startX = p.x;
     const startY = p.y;
-    server.handleClientInput("second-client", movementFrame(1, startX + 800, startY));
+    // Use direct forward thrust to move
+    server.handleClientInput("second-client", directFrame(1, { space: false, w: true, a: false, s: false, d: false, boost: false, warp: false, lmb: false }));
 
     const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
     for (let i = 0; i < 90; i++) {
@@ -89,7 +84,7 @@ describe("GameServer movement input", () => {
     expect(p.vx).toBeGreaterThan(0);
 
     p.vx = 0;
-    server.handleClientInput("direct-client", directFrame(2, { space: false, w: false, a: false, s: true, d: false, boost: false, warp: false }));
+    server.handleClientInput("direct-client", directFrame(2, { space: false, w: false, a: false, s: true, d: false, boost: false, warp: false, lmb: false }));
     tick(1 / 60);
     expect(p.vx).toBeLessThan(0);
   });
@@ -105,12 +100,12 @@ describe("GameServer movement input", () => {
     p.va = 0;
     const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
 
-    server.handleClientInput("yaw-client", directFrame(1, { space: false, w: false, a: true, s: false, d: false, boost: false, warp: false }));
+    server.handleClientInput("yaw-client", directFrame(1, { space: false, w: false, a: true, s: false, d: false, boost: false, warp: false, lmb: false }));
     tick(1 / 60);
     expect(p.va).toBeLessThan(0);
 
     p.va = 0;
-    server.handleClientInput("yaw-client", directFrame(2, { space: false, w: false, a: false, s: false, d: true, boost: false, warp: false }));
+    server.handleClientInput("yaw-client", directFrame(2, { space: false, w: false, a: false, s: false, d: true, boost: false, warp: false, lmb: false }));
     tick(1 / 60);
     expect(p.va).toBeGreaterThan(0);
   });
@@ -129,11 +124,8 @@ describe("GameServer movement input", () => {
 
     server.handleClientInput("direct-mouse-client", {
       tick: 1,
-      keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false },
+      keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false, lmb: false },
       mouseWorld: { x: p.x, y: p.y - 1000 },
-      waypoint: null,
-      navCommand: null,
-      movementControlMode: "direct",
       actions: [],
     });
     tick(1 / 60);

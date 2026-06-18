@@ -28,7 +28,7 @@
   background: transparent;
   color: var(--hud-text-faint);
   border: 1px solid var(--hud-border-soft);
-  border-radius: 2px;
+  border-radius: 0;
   cursor: pointer;
   font-family: inherit;
   font-size: calc(10px * var(--effective-font-scale, 1));
@@ -53,7 +53,7 @@
   background: transparent;
   color: var(--hud-text-dim);
   border: 1px solid var(--hud-border-soft);
-  border-radius: 2px;
+  border-radius: 0;
   cursor: pointer;
   font-family: inherit;
   font-size: calc(10px * var(--effective-font-scale, 1));
@@ -80,7 +80,7 @@
   background: var(--hud-bg-deep);
   color: var(--hud-text-dim);
   border: 1px solid var(--hud-border-soft);
-  border-radius: 2px;
+  border-radius: 0;
   font-family: inherit;
   font-size: calc(10px * var(--effective-font-scale, 1));
   padding: 4px 8px;
@@ -96,7 +96,7 @@
   background: var(--hud-bg-deep);
   color: var(--hud-text-faint);
   border: 1px solid var(--hud-border-soft);
-  border-radius: 2px;
+  border-radius: 0;
   font-family: inherit;
   font-size: calc(10px * var(--effective-font-scale, 1));
   padding: 4px 8px;

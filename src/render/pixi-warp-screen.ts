@@ -88,7 +88,7 @@ function ensureLayer(): Container | null {
 }
 
 export function refreshWarpScreenFonts(): void {
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   if (titleText) { titleText.style.fontFamily = getUIFont(); titleText.style.fontSize = 10 * scale; }
   if (destText) { destText.style.fontFamily = getUIFont(); destText.style.fontSize = 24 * scale; }
   if (secText) { secText.style.fontFamily = getUIFont(); secText.style.fontSize = 10 * scale; }

@@ -120,25 +120,7 @@ export function syncPixiSystemMap(Wc: number, Hc: number, now: number): void {
   const playerMapPos = worldToMapScreen(player.x, player.y, mapTransform);
   drawObjects(toMap, scale, playerMapPos, now, sys, player);
 
-  // Waypoint
-  if (pixiMapState.waypointGfx) {
-    pixiMapState.waypointGfx.clear();
-  }
-  if (pixiMapState.waypointGfx && Client.waypoint) {
-    const wp = toMap(Client.waypoint.x, Client.waypoint.y);
-    const ppLine = toMap(player.x, player.y);
-
-    pixiMapState.waypointGfx.moveTo(ppLine.x, ppLine.y);
-    pixiMapState.waypointGfx.lineTo(wp.x, wp.y);
-    pixiMapState.waypointGfx.stroke({ color: rgbaToHex(theme.shield), width: 1.5, alpha: 0.55 });
-
-    pixiMapState.waypointGfx.moveTo(wp.x, wp.y - 7);
-    pixiMapState.waypointGfx.lineTo(wp.x + 7, wp.y);
-    pixiMapState.waypointGfx.lineTo(wp.x, wp.y + 7);
-    pixiMapState.waypointGfx.lineTo(wp.x - 7, wp.y);
-    pixiMapState.waypointGfx.closePath();
-    pixiMapState.waypointGfx.stroke({ color: rgbaToHex(theme.shield), width: 1.5, alpha: 0.85 });
-  }
+  // Waypoint rendering removed — autopilot navigation eliminated
 
   // Player
   if (pixiMapState.playerGfx) {

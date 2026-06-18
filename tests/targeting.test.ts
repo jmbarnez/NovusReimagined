@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { _G as G } from "../src/state.js";;
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
+import { getAssignTargetId, setAssignTargetId } from "../src/player/target-selection.js";
 import {
   turretModuleAcceptsTarget,
   isAsteroidTarget,
@@ -70,20 +71,20 @@ describe("lock re-click assignment", () => {
     installTestPlayer(makePlayer());
     G.P.lockQueue = [];
     G.P.targetLock = null;
-    G.P._assignTargetId = null;
+    setAssignTargetId(G.P.netId ?? G.P.shipId, null);
   });
 
   it("requestSensorLock on new target does not enter assignment mode", () => {
     requestSensorLock("ast-1", G.P);
     expect(G.P.lockQueue[0]?.id).toBe("ast-1");
-    expect(G.P._assignTargetId).toBeNull();
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBeNull();
   });
 
   it("requestSensorLock on existing lock enters assignment mode", () => {
     G.P.lockQueue = [{ id: "ast-1", resolving: false, acc: 1 }];
     G.P.targetLock = { id: "ast-1", x: 0, y: 0, hp: 100 };
     requestSensorLock("ast-1", G.P);
-    expect(G.P._assignTargetId).toBe("ast-1");
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBe("ast-1");
   });
 
   it("requestSensorLock on unresolved lock leaves it resolving without entering assignment mode", () => {
@@ -91,14 +92,14 @@ describe("lock re-click assignment", () => {
     requestSensorLock("ast-1", G.P);
     expect(G.P.lockQueue[0]?.resolving).toBe(true);
     expect(G.P.lockQueue[0]?.acc).toBe(0.2);
-    expect(G.P._assignTargetId).toBeNull();
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBeNull();
   });
 
   it("requestSensorLock on existing lock toggles assignment mode off", () => {
     G.P.lockQueue = [{ id: "ast-1", resolving: false, acc: 1 }];
-    G.P._assignTargetId = "ast-1";
+    setAssignTargetId(G.P.netId ?? G.P.shipId, "ast-1");
     requestSensorLock("ast-1", G.P);
-    expect(G.P._assignTargetId).toBeNull();
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBeNull();
   });
 
   it("requestSensorLock promotes re-selected lock to front of queue", () => {
@@ -108,15 +109,15 @@ describe("lock re-click assignment", () => {
     ];
     requestSensorLock("ast-1", G.P);
     expect(G.P.lockQueue[0]?.id).toBe("ast-1");
-    expect(G.P._assignTargetId).toBe("ast-1");
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBe("ast-1");
   });
 
   it("selectLockTarget toggles assignment mode", () => {
     G.P.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
     selectLockTarget("rat-1", G.P);
-    expect(G.P._assignTargetId).toBe("rat-1");
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBe("rat-1");
     selectLockTarget("rat-1", G.P);
-    expect(G.P._assignTargetId).toBeNull();
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBeNull();
   });
 
   it("assignModuleSlotToTarget accepts null to clear an existing turret target", () => {
@@ -210,7 +211,7 @@ describe("sensor lock command path", () => {
     populateSystem(G.GALAXY[0]!);
     G.P.lockQueue = [];
     G.P.targetLock = null;
-    G.P._assignTargetId = null;
+    setAssignTargetId(G.P.netId ?? G.P.shipId, null);
   });
 
   it("executeGameCommand requestSensorLock adds target to queue", () => {
@@ -232,14 +233,14 @@ describe("sensor lock command path", () => {
   it("executeGameCommand selectLockTarget sets assignment id", () => {
     G.P.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
     executeGameCommand({ type: "selectLockTarget", payload: { id: "rat-1" } }, G.P);
-    expect(G.P._assignTargetId).toBe("rat-1");
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBe("rat-1");
   });
 
   it("executeGameCommand selectLockTarget toggles assignment off when already assigned", () => {
     G.P.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
-    G.P._assignTargetId = "rat-1";
+    setAssignTargetId(G.P.netId ?? G.P.shipId, "rat-1");
     executeGameCommand({ type: "selectLockTarget", payload: { id: "rat-1" } }, G.P);
-    expect(G.P._assignTargetId).toBeNull();
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBeNull();
   });
 
   it("executeGameCommand removeSensorLock drops target from queue", () => {

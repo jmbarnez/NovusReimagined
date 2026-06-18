@@ -204,7 +204,7 @@
     color-mix(in srgb, var(--hud-border) 40%, transparent) 0%,
     color-mix(in srgb, var(--hud-border-soft) 60%, transparent) 50%,
     color-mix(in srgb, var(--hud-border) 40%, transparent) 100%);
-  border-radius: 1px;
+  border-radius: 0;
   margin: 2px 1px;
   opacity: 0.7;
 }
@@ -220,7 +220,7 @@
   color: var(--hud-shield);
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid color-mix(in srgb, var(--hud-shield) 40%, transparent);
-  border-radius: 2px;
+  border-radius: 0;
   padding: 1px 3px;
   cursor: pointer;
   pointer-events: auto;

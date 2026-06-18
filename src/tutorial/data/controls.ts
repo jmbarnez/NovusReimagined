@@ -42,12 +42,8 @@ export function resolveTutorialGateHint(key: TutorialGateHintKey): string {
   const dock = tutorialKey("dock");
   const forward = tutorialKey("forwardThrust");
   switch (key) {
-    case "move-course": {
-      const isDirect = Client.settings?.movementControlMode === "direct";
-      return isDirect
-        ? t("tutorial.gateHint.moveCourseDirect", { forwardKey: forward })
-        : t("tutorial.gateHint.moveCourse");
-    }
+    case "move-course":
+      return t("tutorial.gateHint.moveCourseDirect", { forwardKey: forward });
     case "brake-gate":
       return t("tutorial.gateHint.brakeGate", { brakeKey: brake });
     case "gate-boost":

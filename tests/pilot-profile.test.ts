@@ -53,14 +53,10 @@ describe("loadPlayer pilotName migration", () => {
   it("clears transient input state from loaded saves", () => {
     const base = makePlayer();
     base.pilotName = "Waypoint Test";
-    base.waypoint = { x: 1000, y: 2000 };
-    base.navCommand = { mode: "orbit", targetId: "station-1", rangePx: 500, dir: 1 };
     base.netInputFrame = {
       tick: 42,
       keys: { space: true, w: false, a: true, s: false, d: true, boost: true, warp: false },
       mouseWorld: { x: 7, y: 8 },
-      waypoint: { x: 9, y: 10 },
-      navCommand: null,
       actions: [],
     };
 
@@ -68,9 +64,7 @@ describe("loadPlayer pilotName migration", () => {
     const p = loadPlayer();
 
     expect(p.pilotName).toBe("Waypoint Test");
-    expect(getPlayerInputKeys(p.netId ?? p.shipId)).toEqual({ space: false, w: false, a: false, s: false, d: false, boost: false, warp: false });
-    expect(p.waypoint).toBeNull();
-    expect(p.navCommand).toBeNull();
+    expect(getPlayerInputKeys(p.netId ?? p.shipId)).toEqual({ space: false, w: false, a: false, s: false, d: false, boost: false, warp: false, lmb: false });
     expect(p.netInputFrame).toBeNull();
   });
 });

@@ -10,7 +10,8 @@ import type { Asteroid } from "../types/asteroid.js";
 import type { Gate, Station } from "../types/station.js";
 import type { System } from "../types/system.js";
 import { liveEnemies, liveAsteroids } from "../utils/game.js";
-import { angleDiff } from "../utils/math.js";
+import { angleDiff, rayCircleSurfaceHit } from "../utils/math.js";
+import { getEnemyTurretOrigin } from "../combat/turret-origin.js";
 import { SHIPS } from "../data/ships.js";
 import { isHostile } from "../combat/factions.js";
 import { pickHostileTarget } from "./npc-ai.js";
@@ -297,14 +298,16 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
           e.angle += angleDiff(e.angle, Math.atan2(dy, dx)) * 0.1;
 
           // Industrial mining beam visual effect
+          const origin = getEnemyTurretOrigin(e);
+          const surface = rayCircleSurfaceHit(origin.x, origin.y, asteroid.x, asteroid.y, asteroid.radius);
           addBeam({
-            x1: e.x,
-            y1: e.y,
-            x2: asteroid.x,
-            y2: asteroid.y,
+            x1: origin.x,
+            y1: origin.y,
+            x2: surface.x,
+            y2: surface.y,
             color: "#00ffcc",
-            width: 2.0,
-            life: 0.05,
+            width: 3.0,
+            life: 0.5,
           });
 
           _miningLaserHum -= dt;

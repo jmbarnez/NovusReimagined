@@ -95,12 +95,12 @@
   width: 100%;
   height: 4px;
   background: rgba(40,50,60,0.6);
-  border-radius: 2px;
+  border-radius: 0;
   overflow: hidden;
 }
 .tt-dur-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 0;
   transition: width 0.2s;
 }
 .tt-desc {

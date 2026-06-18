@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  border-radius: 0;
 }
 .inv-view-btn:hover {
   color: var(--hud-text-bright);
@@ -37,7 +37,7 @@
   font-size: calc(9px * var(--effective-font-scale, 1));
   font-family: inherit;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -153,7 +153,7 @@
   gap: 2px;
   padding: 4px;
   border: 1px solid var(--hud-border-soft);
-  border-radius: 2px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--hud-bg-deep) 40%, transparent);
   aspect-ratio: 1;
   touch-action: none;
@@ -184,7 +184,7 @@
   color: var(--hud-text-bright);
   background: color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);
   padding: 0 4px;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .inv-grid-cell.is-drag-over {
@@ -202,7 +202,7 @@
   opacity: 0.85;
   transform: scale(1.05);
   border: 1px solid var(--hud-accent);
-  border-radius: 2px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--hud-bg-deep) 40%, transparent);
 }
 
@@ -320,14 +320,14 @@
 .inv-info-dur {
   height: 3px;
   background: color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);
-  border-radius: 2px;
+  border-radius: 0;
   overflow: hidden;
   margin-top: 2px;
 }
 .inv-info-dur-fill {
   height: 100%;
   background: color-mix(in srgb, var(--hud-accent) 80%, transparent);
-  border-radius: 2px;
+  border-radius: 0;
 }
 .inv-info-affixes {
   font-size: calc(9px * var(--effective-font-scale, 1));
@@ -346,7 +346,7 @@
   background: var(--hud-bg-window);
   border: 1px solid var(--hud-border);
   padding: 6px 8px;
-  border-radius: 2px;
+  border-radius: 0;
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
   pointer-events: none;
   max-width: 220px;
@@ -371,7 +371,7 @@
   background: var(--hud-bg-window);
   border: 1px solid var(--hud-border);
   padding: 4px 10px;
-  border-radius: 2px;
+  border-radius: 0;
   font-size: calc(10px * var(--effective-font-scale, 1));
   color: var(--hud-accent);
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);

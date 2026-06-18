@@ -73,7 +73,7 @@ const _sharedPickupStyle = new TextStyle({
 
 export function refreshPickupFonts(): void {
   const font = getUIFont();
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   _sharedPickupStyle.fontFamily = font;
   _sharedPickupStyle.fontSize = 7 * scale;
 }

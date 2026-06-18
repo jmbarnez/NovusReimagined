@@ -31,7 +31,7 @@ export function getWorldLabelTextStyle(): TextStyle {
 export function refreshWorldLabelTextStyle(): void {
   const style = getWorldLabelTextStyle();
   style.fontFamily = getUIFont();
-  style.fontSize = 11 * (Client.settings?.fontScale ?? 1.0);
+  style.fontSize = 11 * (Client.settings?.fontScale ?? 1.2);
 }
 
 /** Title-case label text; bracketed key hints (e.g. [F]) stay uppercase. */

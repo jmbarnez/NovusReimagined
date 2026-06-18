@@ -38,6 +38,6 @@ describe("Preact UI shells", () => {
     expect(overlay?.querySelector("#panel-market")).toBeInstanceOf(HTMLElement);
     expect(overlay?.querySelector("#panel-industry")).toBeInstanceOf(HTMLElement);
     expect(overlay?.querySelector("#panel-fabrication")).toBeInstanceOf(HTMLElement);
-    expect(overlay?.querySelector("#panel-contracts")).toBeInstanceOf(HTMLElement);
+    expect(overlay?.querySelector("#panel-missions")).toBeInstanceOf(HTMLElement);
   });
 });

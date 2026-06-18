@@ -6,12 +6,14 @@ import { getState } from "../../state-access.js";
 import { isVisible } from "../../utils/game.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
 import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "../pixi-lock-brackets.js";
+import { getAssignTargetId } from "../../player/target-selection.js";
 import { PixiGeometryBufferPool } from "../pixi-geometry-buffer-pool.js";
+import type { LockSlot } from "../../types/combat.js";
 
 import { hexStringToNumber } from "../cache.js";
 
 let _polyBuffers: PixiGeometryBufferPool | null = null;
-let _lockSlotById = new Map<string, any>();
+let _lockSlotById = new Map<string, LockSlot>();
 
 export function setPolyBuffers(buffers: PixiGeometryBufferPool): void {
   _polyBuffers = buffers;
@@ -25,7 +27,7 @@ export function syncWrecks(wreckGfx: Graphics, now: number): void {
   const hasWreckPieces = state.wreckPieces?.length > 0;
   if (hasWreckPieces) wreckGfx.clear();
   const primaryId = state.player.targetLock?.id;
-  const selectedId = state.player._assignTargetId;
+  const selectedId = getAssignTargetId(state.player.netId ?? state.player.shipId);
   _lockSlotById.clear();
   if (Array.isArray(state.player.lockQueue)) {
     for (const slot of state.player.lockQueue) _lockSlotById.set(slot.id, slot);

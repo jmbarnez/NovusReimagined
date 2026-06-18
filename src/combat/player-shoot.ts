@@ -29,7 +29,6 @@ const NOT_INARC_COOLDOWN_MS = 800;
 function validatePlayerShootRequirements(
   p: Player,
   slotIdx: number,
-  isAutoFire: boolean,
 ): { uid: string; inst: ModuleInstance; turretMod: ModuleDef; wProf: WeaponProfile; capNeed: number; ammoKey: string; ammoCost: number } | null {
   const hpRack = playerHardpointRack(p);
   const uid = p.fitting?.[hpRack]?.[slotIdx];
@@ -51,7 +50,7 @@ function validatePlayerShootRequirements(
   const ammoKey = wProf.ammoType || "hybrid";
   const ammoCost = wProf.ammoPerShot ?? 1;
   if (ammoCost > 0 && (p.ammo[ammoKey as keyof typeof p.ammo] ?? 0) < ammoCost) {
-    if (!isAutoFire && typeof window !== "undefined") {
+    if (typeof window !== "undefined") {
       floatText(p.x, p.y - 22, t("combat.noAmmo"), "#ff9944");
       logEvent(t("combat.noAmmoLog"), "warn");
     }
@@ -61,9 +60,9 @@ function validatePlayerShootRequirements(
   return { uid, inst, turretMod, wProf, capNeed, ammoKey, ammoCost };
 }
 
-export function playerShoot(slotIdx: number, targetEnemy: Enemy | Asteroid | WreckPiece | null, isAutoFire: boolean, p: Player): boolean {
+export function playerShoot(slotIdx: number, targetEnemy: Enemy | Asteroid | WreckPiece | null, p: Player): boolean {
   ensureAmmoDefaults(p);
-  const reqs = validatePlayerShootRequirements(p, slotIdx, isAutoFire);
+  const reqs = validatePlayerShootRequirements(p, slotIdx);
   if (!reqs) return false;
 
   const { turretMod, wProf, capNeed, ammoKey, ammoCost } = reqs;
@@ -116,7 +115,7 @@ export function playerShoot(slotIdx: number, targetEnemy: Enemy | Asteroid | Wre
 
   const traverseDiff = Math.abs(angleDiff(p.angle, angle));
   if (traverseDiff > C.COMBAT.TURRET.traverseConeRad) {
-    if (!isAutoFire && typeof window !== "undefined") {
+    if (typeof window !== "undefined") {
       const now = performance.now();
       if (now - _lastNotInArcWarn > NOT_INARC_COOLDOWN_MS) {
         _lastNotInArcWarn = now;

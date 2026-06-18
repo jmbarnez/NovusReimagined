@@ -9,7 +9,6 @@ export type {
   FontOption,
   Settings,
   VideoPreset,
-  MovementControlMode,
 } from "./types.js";
 
 export { FONT_OPTIONS, getFontStack } from "./fonts.js";

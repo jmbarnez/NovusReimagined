@@ -9,7 +9,7 @@
   flex-direction: column;
   background: color-mix(in srgb, var(--hud-bg-deep) 82%, transparent);
   border: 1px solid color-mix(in srgb, var(--hud-border) 55%, transparent);
-  border-radius: 4px;
+  border-radius: 0;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
@@ -106,7 +106,7 @@
   color: var(--hud-text-bright);
   background: color-mix(in srgb, var(--hud-bg-deep) 70%, transparent);
   border: 1px solid color-mix(in srgb, var(--hud-border-soft) 75%, transparent);
-  border-radius: 2px;
+  border-radius: 0;
   outline: none;
 }
 
@@ -131,7 +131,7 @@
     color-mix(in srgb, var(--hud-bg-window) 65%, transparent) 0%,
     color-mix(in srgb, var(--hud-bg-panel) 85%, transparent) 100%);
   border: 1px solid color-mix(in srgb, var(--hud-border) 85%, var(--hud-border-soft) 15%);
-  border-radius: 3px;
+  border-radius: 0;
   cursor: pointer;
 }
 
@@ -153,7 +153,7 @@
   padding: 3px 8px;
   background: color-mix(in srgb, var(--hud-bg-deep) 82%, transparent);
   border: 1px solid color-mix(in srgb, var(--hud-border) 55%, transparent);
-  border-radius: 4px;
+  border-radius: 0;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);

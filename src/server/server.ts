@@ -216,18 +216,13 @@ export class GameServer {
         Client.keys[" "] = input.keys.space;
         Client.mouseWorld.x = input.mouseWorld.x;
         Client.mouseWorld.y = input.mouseWorld.y;
-        Client.waypoint = session.playerState.waypoint ?? null;
-        Client.navCommand = session.playerState.navCommand ?? null;
       }
       if (staleActions.length > 0) {
         this.sim.applyActions(
           {
             tick: this.currentTick,
-            keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false },
+            keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false, lmb: false },
             mouseWorld: { x: 0, y: 0 },
-            waypoint: null,
-            navCommand: null,
-            movementControlMode: session.playerState.movementControlMode ?? "direct",
             actions: staleActions,
           },
           session.playerState,

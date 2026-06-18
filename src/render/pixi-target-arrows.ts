@@ -95,7 +95,7 @@ export function destroyPixiTargetArrows(): void {
 
 export function refreshTargetArrowFonts(): void {
   const font = getUIFont();
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   if (labelStyle) { labelStyle.fontFamily = font; labelStyle.fontSize = 8 * scale; }
 }
 

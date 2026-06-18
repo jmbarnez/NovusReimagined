@@ -29,7 +29,8 @@ export class Simulation {
   public applyInput(frame: InputFrame, p: Player) {
     if (!p) return;
     p.netInputFrame = frame;
-    setPlayerInput(p.netId ?? p.shipId, {
+    const id = p.netId ?? p.shipId;
+    setPlayerInput(id, {
       space: frame.keys.space,
       w: frame.keys.w,
       a: frame.keys.a,
@@ -37,24 +38,19 @@ export class Simulation {
       d: frame.keys.d,
       boost: frame.keys.boost,
       warp: frame.keys.warp,
+      lmb: frame.keys.lmb,
     }, { x: frame.mouseWorld.x, y: frame.mouseWorld.y });
-    p.movementControlMode = frame.movementControlMode;
-    p.waypoint = frame.waypoint;
-    p.navCommand = frame.navCommand;
 
     if (!isHeadlessServer() && isLocalPlayer(p)) {
       Client.keys[" "] = frame.keys.space;
       Client.keys["w"] = frame.keys.w;
       Client.keys["a"] = frame.keys.a;
       Client.keys["s"] = frame.keys.s;
-      Client.keys["d"] = frame.keys.d;
       Client.keys["boost"] = frame.keys.boost;
       Client.keys["warp"] = frame.keys.warp;
+      Client.mouse.lmb = frame.keys.lmb;
       Client.mouseWorld.x = frame.mouseWorld.x;
       Client.mouseWorld.y = frame.mouseWorld.y;
-      Client.waypoint = frame.waypoint;
-      Client.navCommand = frame.navCommand;
-      Client.settings.movementControlMode = frame.movementControlMode;
     }
 
     this.applyActions(frame, p);

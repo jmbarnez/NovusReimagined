@@ -49,7 +49,7 @@ const _typingStyle = new TextStyle({
 
 export function refreshChatBubbleFonts(): void {
   const font = getUIFont();
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   _bubbleStyle.fontFamily = font;
   _bubbleStyle.fontSize = 10 * scale;
   _typingStyle.fontFamily = font;

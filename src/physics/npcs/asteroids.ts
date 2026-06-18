@@ -1,9 +1,10 @@
 import { random, resolveElasticCollision } from "../../utils/math.js";
 import { getState } from "../../state-access.js";
 import { spawnParticles } from "../../utils/fx.js";
-import { ENEMY_DEFS } from "../../data/enemies.js";
+import { getEnemyColRadius } from "../../utils/collision-helpers.js";
 import { ORE } from "../../data/resources.js";
 import { dominantOreKey } from "../../utils/ore-naming.js";
+import { getAsteroidColRadius } from "../../utils/asteroid-helpers.js";
 import {
   AST_SPIN_RANGE,
   ASTEROID_VEL_DECAY,
@@ -85,7 +86,8 @@ export function resolveNpcAsteroidCollisions(sysIdx: number) {
   const grid = getState().spatialGrid;
   let maxAsteroidRadius = 0;
   for (let i = 0; i < asteroids.length; i++) {
-    if (asteroids[i].radius > maxAsteroidRadius) maxAsteroidRadius = asteroids[i].radius;
+    const ar = getAsteroidColRadius(asteroids[i]);
+    if (ar > maxAsteroidRadius) maxAsteroidRadius = ar;
   }
 
   for (let pass = 0; pass < 3; pass++) {
@@ -93,7 +95,7 @@ export function resolveNpcAsteroidCollisions(sysIdx: number) {
     if (grid) {
       if (pass > 0) rebuildSpatialGrid(sysIdx);
       for (const e of enemies) {
-        const enemyRadius = ENEMY_DEFS[e.type]?.colRadius ?? e.sigRadius ?? 18;
+        const enemyRadius = getEnemyColRadius(e.type);
         _asteroidQuery.length = 0;
         grid.query<Asteroid>(e.x, e.y, enemyRadius + maxAsteroidRadius, "asteroid", _asteroidQuery);
         for (const hit of _asteroidQuery) {
@@ -101,19 +103,19 @@ export function resolveNpcAsteroidCollisions(sysIdx: number) {
           const dx = a.x - e.x;
           const dy = a.y - e.y;
           const dist = Math.hypot(dx, dy);
-          const minDist = enemyRadius + a.radius;
+          const minDist = enemyRadius + getAsteroidColRadius(a);
           if (dist >= minDist || dist < 0.001) continue;
           resolveEnemyAsteroid(e, a, dx, dy, dist, minDist);
         }
       }
     } else {
       for (const e of enemies) {
-        const enemyRadius = ENEMY_DEFS[e.type]?.colRadius ?? e.sigRadius ?? 18;
+        const enemyRadius = getEnemyColRadius(e.type);
         for (const a of asteroids) {
           const dx = a.x - e.x;
           const dy = a.y - e.y;
           const dist = Math.hypot(dx, dy);
-          const minDist = enemyRadius + a.radius;
+          const minDist = enemyRadius + getAsteroidColRadius(a);
           if (dist >= minDist || dist < 0.001) continue;
           resolveEnemyAsteroid(e, a, dx, dy, dist, minDist);
         }
@@ -128,7 +130,7 @@ export function resolveNpcAsteroidCollisions(sysIdx: number) {
         const dx = a2.x - a1.x;
         const dy = a2.y - a1.y;
         const dist = Math.hypot(dx, dy);
-        const minDist = a1.radius + a2.radius;
+        const minDist = getAsteroidColRadius(a1) + getAsteroidColRadius(a2);
         if (dist >= minDist || dist < 0.001) continue;
 
         const m1 = a1.radius * a1.radius * ASTEROID_DENSITY;

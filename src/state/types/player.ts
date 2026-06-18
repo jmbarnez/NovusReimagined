@@ -74,8 +74,6 @@ export interface PlayerCombat {
   energy: number;
   shootCd: number; mineCd: number;
   invincible: number;
-  _assignTargetId: string | null;
-  _colCooldown?: number;
 }
 
 export interface PlayerEconomy {
@@ -104,9 +102,7 @@ export interface PlayerFitting {
 }
 
 export interface PlayerNavigation {
-  waypoint?: { x: number; y: number } | null;
-  navCommand?: { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;
-  movementControlMode?: "waypoint" | "direct";
+  /* Navigation state lives in the input-state component store (src/player/input-state.ts) */
 }
 
 export interface PlayerWarp {

@@ -17,6 +17,7 @@ import { drawShipHitGlows } from "./pixi-hit-impact-draw.js";
 import { effectLayer } from "../pixi.js";
 import { getVisualState } from "./entity-visuals.js";
 import { getAiState } from "../physics/npcs/ai-state.js";
+import { getAssignTargetId } from "../player/target-selection.js";
 
 let _hitGfx: Graphics | null = null;
 const _lockMap = new Map<string, LockSlot>();
@@ -38,7 +39,7 @@ export function syncPixiHitEffects(now: number, alpha: number, sys: System): voi
   _lockMap.clear();
 
   const primaryId = getState().player?.targetLock?.id;
-  const selectedId = getState().player?._assignTargetId;
+  const selectedId = getAssignTargetId(getState().player?.netId ?? getState().player?.shipId ?? "");
   if (Array.isArray(getState().player?.lockQueue)) {
     for (const slot of getState().player.lockQueue) _lockMap.set(slot.id, slot);
   }

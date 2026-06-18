@@ -1,16 +1,3 @@
-import { Client } from "../../state.js";
-
-// ─── Client Navigation accessors ─────────────────────────────────────────────
-
-/** Set active navigation command and clear waypoint. */
-export function setNavCommand(cmd: typeof Client.navCommand) {
-  Client.navCommand = cmd;
-  if (cmd) {
-    Client.waypoint = null;
-  }
-}
-
-/** Clear active navigation command. */
-export function clearNav() {
-  Client.navCommand = null;
-}
+// Navigation accessors removed — autopilot (waypoint / orbit / keepRange) has been
+// eliminated in favor of direct WASD control.
+export {};

@@ -1,7 +1,7 @@
 .st-hangar-contracts {
   border: 1px solid var(--hud-border-soft);
   background: rgba(10, 20, 30, 0.32);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 12px;
 }
 
@@ -40,7 +40,7 @@
   background: rgba(10, 20, 30, 0.4);
   padding: 10px;
   border: 1px solid rgba(40, 60, 80, 0.3);
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 @media (max-width: 700px) {
@@ -74,7 +74,7 @@
   font-weight: 500;
   margin-left: 6px;
   padding: 1px 4px;
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 .delta.pos { 
@@ -91,7 +91,7 @@
   padding: 12px;
   background: rgba(10, 15, 25, 0.6);
   border: 1px solid rgba(30, 50, 70, 0.4);
-  border-radius: 6px;
+  border-radius: 0;
   margin-bottom: 8px;
   transition: all 0.2s ease;
 }
@@ -147,7 +147,7 @@
   background: rgba(5, 10, 18, 0.8);
   color: #5a8098;
   border: 1px solid #152030;
-  border-radius: 2px;
+  border-radius: 0;
   font-family: inherit;
   font-size: calc(10px * var(--effective-font-scale, 1));
   padding: 3px 6px;
@@ -251,7 +251,7 @@
   background: rgba(5, 10, 18, 0.8);
   color: #5a8098;
   border: 1px solid #152030;
-  border-radius: 2px;
+  border-radius: 0;
   font-family: inherit;
   font-size: calc(9px * var(--effective-font-scale, 1));
   padding: 2px 4px;
@@ -265,7 +265,7 @@
   padding: 2px 6px;
   line-height: 1;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   background: rgba(30, 50, 70, 0.4);

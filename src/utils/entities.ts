@@ -19,6 +19,9 @@ import { clearVisualState, removeVisualState } from "../render/entity-visuals.js
 import { clearAiState } from "../physics/npcs/ai-state.js";
 import { clearTaskState } from "../physics/npcs/task-state.js";
 import { clearNpcSpeech } from "../render/npc-speech.js";
+import { clearPlayerInput } from "../player/input-state.js";
+import { clearCollisionCooldowns } from "../player/collision-state.js";
+import { clearAssignTargetIds } from "../player/target-selection.js";
 
 let _nextId = 1;
 function generateId(): number { return _nextId++; }
@@ -62,6 +65,9 @@ export function clearSimulationEntities() {
   clearAiState();
   clearTaskState();
   clearNpcSpeech();
+  clearPlayerInput();
+  clearCollisionCooldowns();
+  clearAssignTargetIds();
 }
 
 // ── Bullets ────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { _G, type Player } from "../../../state.js";
+import { setAssignTargetId as _setAssignTargetId } from "../../../player/target-selection.js";
 import type { ModuleInstance } from "../../../types/moduleInstance.js";
 import type { LockSlot } from "../../../types/combat.js";
 
@@ -83,7 +84,7 @@ export const playerFittingAccess = {
   },
 
   setAssignTargetId(id: string | null, p: Player = _G.P) {
-    p._assignTargetId = id;
+    _setAssignTargetId(p.netId ?? p.shipId, id);
   },
 
   setHighTarget(idx: number, targetId: string | null, p: Player = _G.P) {

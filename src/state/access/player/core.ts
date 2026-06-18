@@ -40,10 +40,6 @@ export const playerCoreAccess = {
     p.invincible = value;
   },
 
-  setColCooldown(value: number, p: Player = _G.P) {
-    p._colCooldown = value;
-  },
-
   setCombatHeat(value: number) {
     Client.combatHeat = value;
   },

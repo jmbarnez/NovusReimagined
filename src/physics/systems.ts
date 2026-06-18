@@ -7,10 +7,10 @@ import {
   updateNpcs,
   updateEnemyBullets,
   updateAsteroids,
-  updateMining,
   resolveNpcAsteroidCollisions,
   updateEnemyRespawns,
 } from "./npcs.js";
+import { updateMining } from "./mining.js";
 import { updateStationTurrets } from "./station-turrets.js";
 import { updateWarp } from "../docking/index.js";
 import { syncSpatialGrid } from "../utils/spatial.js";
@@ -115,7 +115,7 @@ function npcAsteroidCollisions(): SimSystem {
 }
 
 function mining(): SimSystem {
-  return { id: "mining", category: "economy", run(dt) { updateMining(dt); } };
+  return { id: "mining", category: "economy", run(dt) { const p = getState().player; if (p) updateMining(dt, p); } };
 }
 
 function salvager(): SimSystem {

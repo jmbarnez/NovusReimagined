@@ -93,8 +93,6 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
     );
   }
   p.sysIdx = snap.player.sysIdx;
-  p.waypoint = snap.player.waypoint;
-  p.navCommand = snap.player.navCommand;
   p.gateCooldowns = snap.player.gateCooldowns ? { ...snap.player.gateCooldowns } : {};
   p.gatesCleared = snap.player.gatesCleared ? [...snap.player.gatesCleared] : [];
   if (typeof snap.player.warpCooldown === "number") p.warpCooldown = snap.player.warpCooldown;
@@ -141,11 +139,6 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
   if (slotActiveChanged) {
     invalidate(p);
   }
-  if (Client.multiplayerRole !== "client" || shouldSnap) {
-    Client.waypoint = snap.player.waypoint;
-    Client.navCommand = snap.player.navCommand;
-  }
-
   if (snap.player.miningLaser) {
     MiningAccess.update(snap.player.miningLaser, p);
   } else {

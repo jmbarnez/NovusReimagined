@@ -5,11 +5,8 @@ import { Client } from "../src/state.js";
 describe("frame action queue", () => {
   beforeEach(() => {
     Client.keys = {};
-    Client.waypoint = null;
-    Client.navCommand = null;
     Client.mouse.lmb = false;
     Client.gameStarted = false;
-    Client.settings.movementControlMode = "waypoint";
     createLocalInputFrame(0);
   });
 
@@ -40,34 +37,15 @@ describe("frame action queue", () => {
     ]);
   });
 
-  it("includes WASD only in direct movement mode", () => {
-    Client.settings.movementControlMode = "direct";
+  it("always includes WASD keys", () => {
     Client.keys["w"] = true;
     Client.keys["a"] = true;
     Client.keys["s"] = true;
     Client.keys["d"] = true;
 
-    const directFrame = createLocalInputFrame(1);
+    const frame = createLocalInputFrame(1);
 
-    expect(directFrame.keys).toEqual({ space: false, w: true, a: true, s: true, d: true, boost: false, warp: false });
-
-    Client.settings.movementControlMode = "waypoint";
-    const waypointFrame = createLocalInputFrame(2);
-
-    expect(waypointFrame.keys).toEqual({ space: false, w: false, a: false, s: false, d: false, boost: false, warp: false });
-  });
-
-  it("sends waypoints only in waypoint movement mode", () => {
-    Client.waypoint = { x: 12, y: 34 };
-
-    const waypointFrame = createLocalInputFrame(1);
-
-    expect(waypointFrame.waypoint).toEqual({ x: 12, y: 34 });
-
-    Client.settings.movementControlMode = "direct";
-    const directFrame = createLocalInputFrame(2);
-
-    expect(directFrame.waypoint).toBeNull();
+    expect(frame.keys).toEqual({ space: false, w: true, a: true, s: true, d: true, boost: false, warp: false, lmb: false });
   });
 
   it("defaults missing legacy movement keys to false when sanitizing input", () => {
@@ -75,13 +53,10 @@ describe("frame action queue", () => {
       tick: 1,
       keys: { space: true, w: true },
       mouseWorld: { x: 0, y: 0 },
-      waypoint: null,
-      navCommand: null,
-      movementControlMode: "waypoint",
       actions: [],
     });
 
-    expect(frame?.keys).toEqual({ space: true, w: true, a: false, s: false, d: false, boost: false, warp: false });
+    expect(frame?.keys).toEqual({ space: true, w: true, a: false, s: false, d: false, boost: false, warp: false, lmb: false });
   });
 
   it("includes held engine boost input in local frames", () => {
@@ -96,7 +71,6 @@ describe("frame action queue", () => {
     Client.gameStarted = true;
     Client.mouse.lmb = true;
     Client.keys["shift"] = true;
-    Client.settings.movementControlMode = "direct";
 
     const frame = createLocalInputFrame(1);
 

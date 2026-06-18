@@ -20,11 +20,21 @@ describe("resolveLockBracketStyle", () => {
   it("uses cyan blink while resolving neutral targets", () => {
     const s = resolveLockBracketStyle(slot(true), true, 0, "neutral");
     expect(s.color).toBe(0x00d2ff);
-    expect(s.lineWidth).toBe(1.4);
+    expect(s.lineWidth).toBe(1.7);
   });
 
   it("uses red when the enemy has locked the player", () => {
     const s = resolveLockBracketStyle(slot(false), true, 0, "enemy", { hasLockOnPlayer: true });
     expect(s.color).toBe(0xff3b30);
+    expect(s.lineWidth).toBe(1.7);
+  });
+
+  it("keeps lineWidth constant so brackets only change color, not shape", () => {
+    const resolved = resolveLockBracketStyle(slot(false), true, 0, "enemy");
+    const resolving = resolveLockBracketStyle(slot(true), true, 0, "enemy");
+    const locked = resolveLockBracketStyle(slot(false), true, 0, "enemy", { hasLockOnPlayer: true });
+    expect(resolved.lineWidth).toBe(1.7);
+    expect(resolving.lineWidth).toBe(1.7);
+    expect(locked.lineWidth).toBe(1.7);
   });
 });

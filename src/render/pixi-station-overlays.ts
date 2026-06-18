@@ -111,7 +111,7 @@ function ensureGateText(id: string, text: string, x: number, y: number, fill: st
 
 export function refreshStationOverlayFonts(): void {
   const font = getUIFont();
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   for (const t of stationLabels.values()) {
     t.style.fontFamily = font;
     t.style.fontSize = 10 * scale;

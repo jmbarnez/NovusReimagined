@@ -22,6 +22,7 @@ import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
 import { getSlotPowerCd, isSlotPoweredOn } from "../../utils/slot-power.js";
 import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave, remove, setCssVar } from "../dom-helpers.js";
+import { getAssignTargetId } from "../../player/target-selection.js";
 
 export interface SlotNode {
   el: HTMLElement;
@@ -38,7 +39,7 @@ export interface SlotNode {
 export function updateSlots(ship: ShipDef, st: ComputedStats, now: number) {
   const ft = ship.fitting;
   const nSlots = (ft.turret | 0) + (ft.high | 0) + (ft.med | 0) + (ft.low | 0);
-  const stateKey = `${nSlots}|${getState().player._assignTargetId ?? "-"}`;
+  const stateKey = `${nSlots}|${getAssignTargetId(getState().player.netId ?? getState().player.shipId) ?? "-"}`;
 
   // Rebuild slots if ship/fitting changed
   if (stateKey !== hudState.lastSlotState) {
@@ -134,7 +135,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   const uid = getState().player.fitting[r]?.[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
-  const pending = getState().player._assignTargetId != null;
+  const pending = getAssignTargetId(getState().player.netId ?? getState().player.shipId) != null;
 
   const isTurret = rack === playerHardpointRack(getState().player);
   const ownPower = isSlotPoweredOn(r, idx, getState().player);

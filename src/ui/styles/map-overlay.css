@@ -35,7 +35,7 @@
 
   background: var(--hud-bg-window);
   border: 1px solid var(--hud-border);
-  border-radius: 4px;
+  border-radius: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
 }
 
@@ -68,7 +68,7 @@
   color: var(--hud-text-dim);
   padding: 3px 10px;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 0;
   font-family: var(--font-family), sans-serif;
   font-size: calc(9px * var(--effective-font-scale, 1));
   font-weight: 600;
@@ -106,7 +106,7 @@
 
   background: var(--hud-bg-window);
   border: 1px solid var(--hud-border);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
@@ -157,7 +157,7 @@
   padding: 8px 10px;
   background: var(--hud-bg-window);
   border: 1px solid var(--hud-border);
-  border-radius: 4px;
+  border-radius: 0;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   pointer-events: auto;
 }
@@ -176,7 +176,7 @@
   color: var(--hud-text-main);
   padding: 4px 10px;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 0;
   font-family: var(--font-family), sans-serif;
   font-size: calc(10px * var(--effective-font-scale, 1));
   transition: all 0.15s ease;

@@ -8,6 +8,7 @@ import { spawnImpactFlash } from "../utils/fx.js";
 import { floatText } from "../utils/fx.js";
 import { removeBullet, updateBeams, updateParticles, updateShockwaves, updateFloatTexts, isTargetDestroyed } from "../utils/entities.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
+import { getAsteroidColRadius } from "../utils/asteroid-helpers.js";
 import type { SpatialQueryResult } from "../utils/spatial.js";
 import type { Enemy } from "../types/enemy.js";
 import type { Asteroid } from "../types/asteroid.js";
@@ -33,7 +34,7 @@ export function isPointInAsteroid(bx: number, by: number, ast: Asteroid, bSz: nu
   
   // Quick bounds check
   const distSq = dx * dx + dy * dy;
-  const maxR = ast.radius + bSz;
+  const maxR = getAsteroidColRadius(ast) + bSz;
   if (distSq > maxR * maxR) return false;
 
   const cos = Math.cos(ast.spinAngle || 0);

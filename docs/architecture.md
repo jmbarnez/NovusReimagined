@@ -28,10 +28,13 @@ Exception: `G._statsCache` is internal to `player-stats.ts`.
 Boot via `WorldAccess.initPlayer()` / `installLocalPlayer()`; tests use `installTestPlayer()`.
 Remote stubs use `PlayerAccess.addServerPlayer()`; never remove `LOCAL_PLAYER_ID` on disconnect.
 
-When adding new state, prefer player-owned fields on `Player` (warp, beams, fitting) or
-world-owned fields on `G` (bullets, galaxy, wrecks). Add accessors in `src/state/access/`.
-Keep simulation entities (`bullets`, `beams`, `particles`) separate from UI/client state
-(held in `Client`: `stationOpen`, `bridgeOpen`, etc.).
+When adding new state:
+1. **Persistent player data** (HP, credits, fitting, skills) → add fields on `Player` with accessors in `src/state/access/`.
+2. **World simulation entities** (bullets, beams, particles, asteroids) → use object pooling via `src/utils/entities.ts`.
+3. **Ephemeral/render/AI state** per entity → use a **component store** (see Component Stores section below).
+4. **UI-only client state** (`stationOpen`, `bridgeOpen`, etc.) → add fields on `Client`.
+
+Keep simulation entities (`bullets`, `beams`, `particles`) separate from UI/client state.
 
 **Simulation entry:** Only `src/sim/index.ts` drives a full physics step (`Simulation.tick`).
 `src/physics.ts` exports `simulationTick` for internal use by `Simulation` only (server worker).
@@ -56,6 +59,62 @@ Clients (SP via local worker, MP host/client): send input frames, prediction, an
 - Do not mix game-logic mutations with DOM manipulation in the same function.
 - UI state (`Client.stationOpen`, `Client.settingsOpen`, etc.) should only be set from the
   module that owns that UI, not from physics or combat code.
+
+## Component Stores (ECS-lite)
+
+Entity types (`Player`, `Enemy`) own only **persistent** simulation state (position, HP, fitting, etc.).
+Ephemeral, render-side, or AI-side state lives in dedicated component stores keyed by entity ID.
+This prevents entity bloat, simplifies snapshot serialization, and keeps render/AI concerns separate
+from the core simulation data model.
+
+### Store pattern
+
+A component store is a module-private `Map<string, T>` with a minimal exported API:
+
+```ts
+const _store = new Map<string, MyComponentState>();
+
+export function getMyComponent(id: string): MyComponentState { ... }
+export function setMyComponent(id: string, value: MyComponentState): void { ... }
+export function removeMyComponent(id: string): void { _store.delete(id); }
+export function clearMyComponents(): void { _store.clear(); }
+```
+
+**Naming conventions:**
+- Module path: `{domain}/{feature}-state.ts` (e.g. `player/input-state.ts`, `render/npc-speech.ts`)
+- Getter: `get{Feature}(id)` — returns the value or a default
+- Setter: `set{Feature}(id, value)` — writes or deletes (when `value` is `null`)
+- Per-entity removal: `remove{Feature}(id)` — called when the entity dies or despawns
+- Global clear: `clear{Feature}s()` — called on warp, respawn, or simulation reset
+
+**Lifecycle rules:**
+- `removeXxx(id)` must be called in every code path that destroys the entity (combat kill, despawn, etc.).
+- `clearXxx()` must be wired into `clearSimulationEntities()` (`src/utils/entities.ts`) and `warp-exec.ts`.
+- Player-owned stores must also be cleared in `clearTransientPlayerInput()` (`src/player/player-data.ts`).
+
+### Current stores
+
+| Store | Path | Owner | Purpose |
+|-------|------|-------|---------|
+| `entity-visuals` | `src/render/entity-visuals.ts` | Enemy/Player | Shield/hull hit flash state for Pixi render |
+| `npc-speech` | `src/render/npc-speech.ts` | Enemy/Neutral | Floating hail/speech bubble text + expiry |
+| `ai-state` | `src/physics/npcs/ai-state.ts` | Enemy | AI behavior flags (targeting, lock timers, aim state) |
+| `task-state` | `src/physics/npcs/task-state.ts` | Enemy | Patrol/mining/task timers and waypoints |
+| `input-state` | `src/player/input-state.ts` | Player | Input frame cache (keys, mouse, waypoint, navCommand) |
+| `collision-state` | `src/player/collision-state.ts` | Player | Collision damage cooldown timer |
+| `target-selection` | `src/player/target-selection.ts` | Player | Selected lock target for module assignment |
+
+**When to add a new store:**
+1. The state is ephemeral (does not need to be saved/loaded).
+2. The state is read by a subsystem that is not the owner (e.g. render reads AI state).
+3. The state would otherwise be prefixed with `_` on the entity type.
+4. The state has per-entity lifecycle requirements (spawn on entity creation, cull on death).
+
+### What NOT to put in a component store
+
+- **Persistent player state** (HP, credits, fitting, skills) stays on `Player` and mutates through `PlayerAccess`.
+- **World-owned simulation entities** (bullets, beams, particles, asteroids) use object pooling in `src/utils/entities.ts`.
+- **UI-only client state** (`Client.stationOpen`, `Client.settingsOpen`) stays in `Client`.
 
 ## Architecture Fitness Functions
 

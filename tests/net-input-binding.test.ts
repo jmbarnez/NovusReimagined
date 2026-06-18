@@ -9,16 +9,13 @@ describe("bindPlayerNetInput", () => {
     const player = makePlayer();
     const frame: InputFrame = {
       tick: 1,
-      keys: { space: true, w: true, a: true, s: false, d: true, boost: true, warp: false },
+      keys: { space: true, w: true, a: true, s: false, d: true, boost: true, warp: false, lmb: false },
       mouseWorld: { x: 10, y: 20 },
-      waypoint: null,
-      navCommand: null,
-      movementControlMode: "waypoint",
       actions: [],
     };
 
     bindPlayerNetInput(player, frame);
 
-    expect(getPlayerInputKeys(player.netId ?? player.shipId)).toEqual({ space: true, w: true, a: true, s: false, d: true, boost: true, warp: false });
+    expect(getPlayerInputKeys(player.netId ?? player.shipId)).toEqual({ space: true, w: true, a: true, s: false, d: true, boost: true, warp: false, lmb: false });
   });
 });

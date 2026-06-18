@@ -21,6 +21,7 @@ import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock
 import { PixiGeometryBufferPool } from "./pixi-geometry-buffer-pool.js";
 import { entityLayer } from "../pixi.js";
 import { getSunWorldPos } from "../utils/sun-position.js";
+import { getAssignTargetId } from "../player/target-selection.js";
 
 const TAU = Math.PI * 2;
 const ASTEROID_TEX_SCALE = 3;
@@ -254,7 +255,7 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
 
   const player = getState().player;
   const primaryId = player.targetLock?.id;
-  const selectedId = player._assignTargetId;
+  const selectedId = getAssignTargetId(player.netId ?? player.shipId);
   if (Array.isArray(player.lockQueue)) {
     for (const slot of player.lockQueue) _asteroidLockMap.set(slot.id, slot);
   }

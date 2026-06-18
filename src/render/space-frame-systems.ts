@@ -22,7 +22,6 @@ import { syncPixiTutorialGates } from "./pixi-tutorial-gates.js";
 import { syncPixiStationOverlays } from "./pixi-station-overlays.js";
 import { syncPixiLensFlare } from "./pixi-lens-flare.js";
 import { syncPixiStationTurrets } from "./pixi-station-turrets.js";
-import { syncPixiWaypoint } from "./pixi-waypoint.js";
 import { syncPixiDamageFlash } from "./pixi-damage-flash.js";
 import { syncPixiShockwaves, syncPixiFloatTexts, syncPixiWorldBorder } from "./pixi-effects-overlay.js";
 import { syncPixiChatBubbles } from "./pixi-chat-bubbles.js";
@@ -32,6 +31,7 @@ import { drawPixiSystemMapCanvasOverlays, syncPixiSystemMap } from "./pixi-maps.
 import { syncPixiMinimap } from "./pixi-minimap.js";
 import { syncPixiCrosshair } from "./pixi-crosshair.js";
 import { syncPixiWarpScreen } from "./pixi-warp-screen.js";
+import { syncCollisionDebug } from "./collision-debug.js";
 import { decayVisualState } from "./entity-visuals.js";
 import { SECTOR_OUTER_RADIUS } from "../world-gen.js";
 import { SPACE_FRAME_SYSTEM_IDS, type SpaceFrameSystemId } from "./space-frame-system-order.js";
@@ -86,7 +86,6 @@ const SPACE_FRAME_SYSTEMS: Record<SpaceFrameSystemId, SpaceFrameSystemRunner> = 
   lensflare: (ctx) => {
     if (Client.settings?.lensFlare) syncPixiLensFlare(ctx.width, ctx.height);
   },
-  waypoint: (ctx) => syncPixiWaypoint(ctx.now),
   dmgflash: (ctx) => syncPixiDamageFlash(ctx.width, ctx.height),
   shockwaves: () => syncPixiShockwaves(),
   floattexts: () => syncPixiFloatTexts(),
@@ -105,6 +104,7 @@ const SPACE_FRAME_SYSTEMS: Record<SpaceFrameSystemId, SpaceFrameSystemRunner> = 
   vignette: () => {
     if (Client.settings?.vignetteEnabled) updateVignette();
   },
+  collisionDebug: () => syncCollisionDebug(),
   renderPixi: () => renderPixi(),
   mapoverlays: (ctx) => {
     if (ctx.mapBounds) drawPixiSystemMapCanvasOverlays(ctx.mapBounds.width, ctx.mapBounds.height, ctx.now);

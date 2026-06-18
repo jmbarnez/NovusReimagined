@@ -9,7 +9,7 @@
   padding: 6px 12px;
   background: rgba(0,2,6,0.78);
   border: 1px solid rgba(120,160,200,0.45);
-  border-radius: 2px;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -51,12 +51,12 @@
   grid-column: 1 / -1; grid-row: 2;
   height: 4px;
   background: rgba(255,255,255,0.08);
-  border-radius: 2px;
+  border-radius: 0;
   overflow: hidden;
 }
 #hud-xp-popup .xp-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #4a9eff, #80c8ff);
-  border-radius: 2px;
+  border-radius: 0;
   will-change: width;
 }

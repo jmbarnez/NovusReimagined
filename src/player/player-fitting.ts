@@ -13,6 +13,7 @@ import { sfxPowerCycle, sfxTurretAssign } from "../audio/procedural.js";
 import { getInstance } from "../utils/items.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { tryActivate as tryActivateAbility, ABILITY_BY_ID } from "./abilities.js";
+import { getAssignTargetId } from "./target-selection.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 
 export function syncSlotHeat(p: Player = getState().player) {
@@ -114,7 +115,7 @@ export function applyBarHotkey(keyIndex: number) {
       queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack: hardpointRack, idx } });
     }
     queueFrameAction({ type: "setFireControlSlot", payload: { slot: idx } });
-    const assignTargetId = getState().player._assignTargetId;
+    const assignTargetId = getAssignTargetId(getState().player.netId ?? getState().player.shipId);
     if (assignTargetId != null) {
       queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: idx, targetId: assignTargetId } });
       queueFrameAction({ type: "selectLockTarget", payload: { id: assignTargetId } });

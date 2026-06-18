@@ -8,8 +8,8 @@
 :root {
   --font-family: 'Orbitron', sans-serif;
   --ui-scale: 1;
-  --font-scale: 1;
-  --effective-font-scale: 1;
+  --font-scale: 1.2;
+  --effective-font-scale: 1.2;
   --hud-scanner-w: 360px;
   --hud-minimap-w: 102px;
   /* surfaces */

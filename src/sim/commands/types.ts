@@ -1,16 +1,8 @@
 import type { Player } from "../../state.js";
 import type { RefiningHeatMode } from "../../state.js";
 
-export interface InputNavCommand {
-  mode: "orbit" | "keepRange";
-  targetId: string;
-  rangePx: number;
-  dir: 1 | -1;
-}
-
 export interface FireSelectedTurretCommand {
   type: "fireSelectedTurret";
-  payload?: { isAutoFire?: boolean };
 }
 
 export interface DockCommand {

@@ -5,7 +5,7 @@ import { showZoomIndicator } from "../ui/hud/zoom-indicator.js";
 import { curSys } from "../utils/game.js";
 import { dst } from "../utils/math.js";
 import { gateStableId } from "../utils/warp-gates.js";
-import { clearNav, getState } from "../state-access.js";
+import { getState } from "../state-access.js";
 import { stopEngineNodes } from "../audio/procedural.js";
 import { getCanvasElement, isBlockedByUi, getUiPointerBlockSelector, setCursorLock, clearAllInputState } from "./core.js";
 
@@ -18,9 +18,8 @@ export function handleMouseDown(e: MouseEvent): void {
   }
   if (e.button === 0) {
     const shiftClick = e.shiftKey || !!Client.keys["shift"];
-    const directShiftLock = Client.settings.movementControlMode === "direct" && shiftClick;
-    Client.mouse.lmb = !directShiftLock;
-    if (directShiftLock) setCursorLock(false, getCanvasElement());
+    Client.mouse.lmb = !shiftClick;
+    if (shiftClick) setCursorLock(false, getCanvasElement());
 
     // Map drag start
     if (Client.showMap && e.target instanceof Element && isBlockedByUi(e.target, getUiPointerBlockSelector())) {
@@ -35,8 +34,20 @@ export function handleMouseDown(e: MouseEvent): void {
 
     if (isBlockedByUi(e.target, getUiPointerBlockSelector())) return;
 
-    const canClickLock = Client.settings.movementControlMode !== "direct" || shiftClick;
-    if (canClickLock && !Client.stationOpen && !Client.bridgeOpen) {
+    // Manual fire on LMB click
+    if (
+      !Client.keys["shift"] &&
+      Client.gameStarted &&
+      !Client.stationOpen &&
+      !Client.bridgeOpen &&
+      !Client.showMap &&
+      !Client.settingsOpen
+    ) {
+      queueFrameAction({ type: "fireSelectedTurret" });
+    }
+
+    // Target locking on click (shift-click or normal)
+    if (!Client.stationOpen && !Client.bridgeOpen) {
       const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
       const sys = curSys();
       let locked = false;
@@ -97,12 +108,6 @@ export function handleMouseDown(e: MouseEvent): void {
 
     if (enemyClicked) {
       showEnemyCtxMenu(e.clientX, e.clientY, enemyClicked.id);
-    } else {
-      if (Client.settings.movementControlMode === "waypoint") {
-        Client.mouse.rmb = true;
-        Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
-        clearNav();
-      }
     }
   }
 }
@@ -129,9 +134,6 @@ export function handleMouseMove(e: MouseEvent): void {
     Client.mapDragLastSy = e.clientY;
   }
 
-  if (Client.mouse.rmb && Client.settings.movementControlMode === "waypoint") {
-    Client.waypoint = { x: Client.mouseWorld.x, y: Client.mouseWorld.y };
-  }
 }
 
 export function handleWheel(e: WheelEvent): void {

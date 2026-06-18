@@ -28,7 +28,7 @@ export function initPixiEntities(): void {
 /** Re-apply the active UI font to all live enemy name/level labels. */
 export function refreshEntityFonts() {
   const font = getUIFont();
-  const scale = Client.settings?.fontScale ?? 1.0;
+  const scale = Client.settings?.fontScale ?? 1.2;
   _nameStyle.fontFamily = font;
   _nameStyle.fontSize = 9 * scale;
   _levelStyle.fontFamily = font;

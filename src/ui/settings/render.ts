@@ -1,5 +1,5 @@
 import { Client } from "../../state.js";
-import { saveSettings, HUD_THEMES, FONT_OPTIONS, CONTROL_SECTIONS, DEFAULT_KEYBINDS, type Keybinds, type MovementControlMode, type VideoPreset } from "../../data/settings.js";
+import { saveSettings, HUD_THEMES, FONT_OPTIONS, CONTROL_SECTIONS, DEFAULT_KEYBINDS, type Keybinds, type VideoPreset } from "../../data/settings.js";
 import { RETICLE_OPTIONS } from "../../data/reticles.js";
 import { refreshTheme } from "../hud-overlay.js";
 import { renderReticleStyle } from "../../render/reticle.js";
@@ -64,47 +64,14 @@ export function renderSettings() {
   if (uiScaleVal) setText(uiScaleVal, (settings.uiScale ?? 1.0).toFixed(2) + "x");
 
   const fontScaleSlider = getElement("font-scale") as HTMLInputElement | null;
-  if (fontScaleSlider) fontScaleSlider.value = String(settings.fontScale ?? 1.0);
+  if (fontScaleSlider) fontScaleSlider.value = String(settings.fontScale ?? 1.2);
   const fontScaleVal = getElement("font-scale-val") as HTMLElement | null;
-  if (fontScaleVal) setText(fontScaleVal, (settings.fontScale ?? 1.0).toFixed(2) + "x");
+  if (fontScaleVal) setText(fontScaleVal, (settings.fontScale ?? 1.2).toFixed(2) + "x");
 
   const langSelect = getElement("settings-language") as HTMLSelectElement | null;
   if (langSelect) langSelect.value = settings.language;
 
-  const movementModeButtons = getElement("movement-mode-buttons") as HTMLElement | null;
-  if (movementModeButtons) {
-    const modes: { id: MovementControlMode; label: string; desc: string; icon: string }[] = [
-      { id: "waypoint", label: t("settings.movementMode.waypoint"), desc: t("settings.movementMode.waypointDesc"), icon: "MOUSE" },
-      { id: "direct", label: t("settings.movementMode.direct"), desc: t("settings.movementMode.directDesc"), icon: "KEYS" },
-    ];
-    setHtml(movementModeButtons, modes
-      .map((mode) => `
-        <button class="movement-mode-card${settings.movementControlMode === mode.id ? " active" : ""}" data-movement-mode="${mode.id}">
-          <span class="movement-mode-icon" aria-hidden="true">${mode.icon}</span>
-          <span class="movement-mode-copy">
-            <span class="movement-mode-title">${mode.label}</span>
-            <span class="movement-mode-desc">${mode.desc}</span>
-          </span>
-        </button>
-      `)
-      .join(""));
-    movementModeButtons.querySelectorAll("[data-movement-mode]").forEach((btn) => {
-      onClick(btn, () => {
-        sfxBlip();
-        const mode = (btn as HTMLElement).dataset.movementMode as MovementControlMode;
-        settings.movementControlMode = mode;
-        Client.waypoint = null;
-        Client.navCommand = null;
-        Client.mouse.rmb = false;
-        Client.keys["w"] = false;
-        Client.keys["a"] = false;
-        Client.keys["s"] = false;
-        Client.keys["d"] = false;
-        saveSettings(settings);
-        renderSettings();
-      });
-    });
-  }
+
 
   const detailContainer = getElement("detail-buttons") as HTMLElement | null;
   if (detailContainer) {

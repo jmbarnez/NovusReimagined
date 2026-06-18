@@ -49,14 +49,32 @@ This is a WebGL/WebGPU-rendered game. Avoid allocations, heavy loops, or unneces
 - **Binary network codec**: All new WebSocket message types must encode through `src/net/codec.ts` (`encodeNetMessage` / `decodeNetMessage`). Do not call `JSON.stringify` directly on socket payloads.
 - **System registry**: Any new physics subsystem must be registered in `src/physics/systems.ts` rather than hardcoded into `src/physics.ts`.
 
-### 8. UI vs. Simulation Separation
+### 8. Component Stores
+
+Entity types (`Player`, `Enemy`) own only **persistent** simulation state. Ephemeral, render-side,
+or AI-side state lives in dedicated component stores keyed by entity ID (`Map<string, T>`).
+
+**Rules when adding or modifying component stores:**
+- Place the module at `{domain}/{feature}-state.ts` (e.g. `player/input-state.ts`, `render/npc-speech.ts`).
+- Export `get{Feature}(id)`, `set{Feature}(id, value)`, `remove{Feature}(id)`, and `clear{Feature}s()`.
+- Wire `remove{Feature}(id)` into every entity death/despawn path (combat kill, culling, etc.).
+- Wire `clear{Feature}s()` into `clearSimulationEntities()` and `warp-exec.ts`.
+- For player-owned stores, also wire clearing into `clearTransientPlayerInput()`.
+- Never add `_`-prefixed fields to entity types as a shortcut; always prefer a component store.
+
+See `docs/architecture.md` for the full component store specification and current store registry.
+
+### 9. UI vs. Simulation Separation
 Keep HUD and UI logic decoupled from combat, docking, and economy simulation. The client renders state; it does not decide outcomes. Presentation code should never mutate simulation state directly.
 
-### 9. Error Handling & Graceful Degradation
+### 10. Error Handling & Graceful Degradation
 Never crash the game loop due to a malformed packet, missing asset, or unexpected null. Log the anomaly, degrade gracefully, and recover. This is especially critical for multiplayer paths where untrusted input is a reality.
 
-### 10. Communication Style
+### 11. Communication Style
 Be concise and direct. Avoid unnecessary preamble, validation phrases, or filler. When referencing existing code, always use citations with file paths and line numbers. Favor short paragraphs and bullet points over long blocks of text.
+
+### 12. No Commits Without Explicit Request
+Never run `git commit` or create commits unless the user explicitly asks for it. It is fine to stage files, review diffs, or prepare a commit message, but do not finalize the commit without the user's direct instruction. If the user says to never commit, honor that for the remainder of the session.
 
 ## Build Commands
 

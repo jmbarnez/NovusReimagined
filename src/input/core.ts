@@ -48,7 +48,6 @@ export function clearAllInputState(): void {
   Client.keys[" "] = false;
   Client.keys["w"] = false;
   Client.keys["a"] = false;
-  Client.keys["s"] = false;
   Client.keys["d"] = false;
   Client.keys["shift"] = false;
   Client.keys["boost"] = false;

@@ -68,7 +68,7 @@ describe("warp gate hold-to-charge", () => {
     p.y = 0;
     p.targetLock = null;
     p.warpCooldown = 0;
-    setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true }, { x: 0, y: 0 });
+    setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true, lmb: false }, { x: 0, y: 0 });
     Client.keys["warp"] = false;
 
     updateGateActivation(0.5, p);
@@ -97,7 +97,7 @@ describe("warp gate hold-to-charge", () => {
     p.y = 0;
     p.targetLock = null;
     p.warpCooldown = 0;
-    setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true }, { x: 0, y: 0 });
+    setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true, lmb: false }, { x: 0, y: 0 });
 
     updateGateActivation(0.5, p);
 
@@ -125,7 +125,7 @@ describe("warp gate hold-to-charge", () => {
     p.y = 0;
     p.targetLock = null;
     p.warpCooldown = 0;
-    setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true }, { x: 0, y: 0 });
+    setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true, lmb: false }, { x: 0, y: 0 });
 
     updateGateActivation(0.5, p);
 
@@ -153,7 +153,7 @@ describe("warp gate hold-to-charge", () => {
     p.y = 0;
     p.targetLock = null;
     p.warpCooldown = 0;
-    setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true }, { x: 0, y: 0 });
+    setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true, lmb: false }, { x: 0, y: 0 });
     Client.keys["warp"] = false;
 
     // Charge time is 2.0 seconds; tick with dt=2.0 to complete in one call

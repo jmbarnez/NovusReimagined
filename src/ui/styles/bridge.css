@@ -18,7 +18,7 @@
 .window-skills .win-head{height:20px;background:color-mix(in srgb, var(--hud-bg-elevated) 70%, transparent);}
 .win-title{font-size: calc(10px * var(--effective-font-scale, 1));font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--hud-text-bright);}
 .win-sub{font-size: calc(8px * var(--effective-font-scale, 1));color:var(--hud-text-dim);flex:1;}
-.win-btn{width:18px;height:18px;padding:0;border:1px solid color-mix(in srgb,var(--hud-border) 85%,var(--hud-border-soft) 15%);background:linear-gradient(180deg,color-mix(in srgb,var(--hud-bg-window) 65%,transparent) 0%,color-mix(in srgb,var(--hud-bg-panel) 85%,transparent) 100%);color:color-mix(in srgb,var(--hud-text-bright) 80%,#050607 20%);cursor:pointer;font-size: calc(12px * var(--effective-font-scale, 1));display:flex;align-items:center;justify-content:center;border-radius:4px;box-shadow:inset 0 0 8px rgba(255,255,255,0.05),0 2px 6px rgba(0,0,0,0.45);transition:border-color .15s ease,background .15s ease,color .15s ease,box-shadow .15s ease,transform .15s ease;line-height:0;}
+.win-btn{width:18px;height:18px;padding:0;border:1px solid color-mix(in srgb,var(--hud-border) 85%,var(--hud-border-soft) 15%);background:linear-gradient(180deg,color-mix(in srgb,var(--hud-bg-window) 65%,transparent) 0%,color-mix(in srgb,var(--hud-bg-panel) 85%,transparent) 100%);color:color-mix(in srgb,var(--hud-text-bright) 80%,#050607 20%);cursor:pointer;font-size: calc(12px * var(--effective-font-scale, 1));display:inline-flex;align-items:center;justify-content:center;border-radius:0;box-shadow:inset 0 0 8px rgba(255,255,255,0.05),0 2px 6px rgba(0,0,0,0.45);transition:border-color .15s ease,background .15s ease,color .15s ease,box-shadow .15s ease,transform .15s ease;line-height:1;}
 .win-btn svg{display:block;width:12px;height:12px;pointer-events:none;}
 .win-btn:hover{color:var(--hud-text-bright);background:linear-gradient(180deg,color-mix(in srgb,var(--hud-accent) 22%,var(--hud-bg-window) 78%) 0%,color-mix(in srgb,var(--hud-bg-panel) 92%,transparent) 100%);border-color:color-mix(in srgb,var(--hud-accent) 65%,var(--hud-border) 35%);box-shadow:0 0 12px color-mix(in srgb,var(--hud-accent) 30%,transparent);transform:translateY(-1px);}
 .win-btn:active{transform:translateY(0);box-shadow:inset 0 0 10px color-mix(in srgb,var(--hud-bg-deep) 30%,transparent);}
@@ -91,7 +91,7 @@
 .inv-tree::-webkit-scrollbar-track{background:var(--hud-scrollbar-track);}
 .inv-tree::-webkit-scrollbar-thumb{background:var(--hud-scrollbar-thumb);border-radius:999px;}
 .inv-tree::-webkit-scrollbar-thumb:hover{background:var(--hud-scrollbar-thumb-hover);}
-.inv-tree-node{display:flex;align-items:center;gap:4px;padding:3px 8px;cursor:pointer;user-select:none;color:var(--hud-text-dim);border-radius:2px;margin:0 4px;font-family:inherit;}
+.inv-tree-node{display:flex;align-items:center;gap:4px;padding:3px 8px;cursor:pointer;user-select:none;color:var(--hud-text-dim);border-radius:0;margin:0 4px;font-family:inherit;}
 .inv-tree-node:hover{background:color-mix(in srgb, var(--hud-accent) 8%, transparent);color:var(--hud-text-bright);}
 .inv-tree-node.is-selected{background:color-mix(in srgb, var(--hud-accent) 15%, transparent);color:var(--hud-text-bright);font-weight:600;}
 .inv-tree-arrow{width:10px;text-align:center;font-size: calc(8px * var(--effective-font-scale, 1));color:var(--hud-text-faint);}
@@ -107,7 +107,7 @@
 
 .inv-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .inv-toolbar{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:4px 8px;background:color-mix(in srgb, var(--hud-bg-deep) 60%, transparent);border-bottom:1px solid var(--hud-border-soft);}
-.inv-filter{flex:1;background:color-mix(in srgb, var(--hud-bg-deep) 90%, transparent);border:1px solid var(--hud-border);color:var(--hud-text-main);padding:3px 6px;font-size: calc(10px * var(--effective-font-scale, 1));font-family:inherit;outline:none;border-radius:2px;transition:border-color 0.15s ease-in-out;}
+.inv-filter{flex:1;background:color-mix(in srgb, var(--hud-bg-deep) 90%, transparent);border:1px solid var(--hud-border);color:var(--hud-text-main);padding:3px 6px;font-size: calc(10px * var(--effective-font-scale, 1));font-family:inherit;outline:none;border-radius:0;transition:border-color 0.15s ease-in-out;}
 .inv-filter::placeholder{color:var(--hud-text-faint);}
 .inv-filter:focus{border-color:var(--hud-accent);box-shadow:0 0 4px color-mix(in srgb, var(--hud-accent) 30%, transparent);}
 .inv-cap-label{flex-shrink:0;font-size: calc(9px * var(--effective-font-scale, 1));color:var(--hud-text-dim);white-space:nowrap;font-family:var(--font-family), inherit;}
@@ -138,8 +138,8 @@
 
 .inv-footer{flex-shrink:0;padding:4px 8px;background:color-mix(in srgb, var(--hud-bg-deep) 60%, transparent);border-top:1px solid var(--hud-border-soft);}
 .inv-footer-row{display:flex;align-items:center;gap:12px;}
-.inv-cap-bar{height:4px;background:color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);border-radius:2px;overflow:hidden;margin-bottom:4px;}
-.inv-cap-fill{height:100%;background:color-mix(in srgb, var(--hud-accent) 80%, transparent);border-radius:2px;transition:width .2s;}
+.inv-cap-bar{height:4px;background:color-mix(in srgb, var(--hud-bg-deep) 80%, transparent);border-radius:0;overflow:hidden;margin-bottom:4px;}
+.inv-cap-fill{height:100%;background:color-mix(in srgb, var(--hud-accent) 80%, transparent);border-radius:0;transition:width .2s;}
 .inv-selection{font-size: calc(9px * var(--effective-font-scale, 1));color:var(--hud-text-dim);}
 .inv-selection b{color:var(--hud-text-bright);font-weight:600;}
 .inv-sel-meta{color:var(--hud-text-faint);margin-left:4px;}
@@ -148,6 +148,6 @@
 .inv-credits-value{font-size: calc(12px * var(--effective-font-scale, 1));font-weight:900;letter-spacing:0.5px;}
 
 /* Context menu */
-.inv-ctx{position:fixed;z-index:9200;background:var(--hud-bg-window);border:1px solid var(--hud-border);box-shadow:0 6px 24px rgba(0,0,0,0.5);min-width:120px;padding:2px 0;border-radius:2px;}
+.inv-ctx{position:fixed;z-index:9200;background:var(--hud-bg-window);border:1px solid var(--hud-border);box-shadow:0 6px 24px rgba(0,0,0,0.5);min-width:120px;padding:2px 0;border-radius:0;}
 .inv-ctx-item{padding:5px 10px;font-size: calc(10px * var(--effective-font-scale, 1));color:var(--hud-text-main);cursor:pointer;user-select:none;}
 .inv-ctx-item:hover{background:color-mix(in srgb, var(--hud-accent) 15%, transparent);color:var(--hud-text-bright);}

@@ -6,16 +6,14 @@ import { predictionManager } from "../src/net/prediction.js";
 import { applySnapshotToG } from "../src/net/client.js";
 import { createSnapshot } from "../src/sim/snapshot.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
+import { setAssignTargetId, getAssignTargetId } from "../src/player/target-selection.js";
 import type { InputFrame } from "../src/sim/input.js";
 
 function frameWithAction(actions: InputFrame["actions"]): InputFrame {
   return {
     tick: 1,
-    keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false },
+    keys: { space: false, w: false, a: false, s: false, d: false, boost: false, warp: false, lmb: false },
     mouseWorld: { x: 0, y: 0 },
-    waypoint: null,
-    navCommand: null,
-    movementControlMode: "waypoint",
     actions,
   };
 }
@@ -27,7 +25,7 @@ describe("prediction action replay", () => {
     local.netId = "local-player";
     local.lockQueue = [];
     local.targetLock = null;
-    local._assignTargetId = null;
+    setAssignTargetId(local.netId ?? local.shipId, null);
     G.GALAXY = buildGalaxy();
     populateSystem(G.GALAXY[0]!);
   });
@@ -69,9 +67,9 @@ describe("prediction action replay", () => {
     if (!asteroidId) return;
 
     G.P.lockQueue = [{ id: asteroidId, resolving: false, acc: 1 }];
-    G.P._assignTargetId = asteroidId;
+    setAssignTargetId(G.P.netId ?? G.P.shipId, asteroidId);
     authoritative.lockQueue = [{ id: asteroidId, resolving: false, acc: 1 }];
-    authoritative._assignTargetId = asteroidId;
+    setAssignTargetId(authoritative.netId ?? authoritative.shipId, asteroidId);
 
     predictionManager.addInput(frameWithAction([
       { type: "requestSensorLock", payload: { id: asteroidId } },
@@ -81,7 +79,7 @@ describe("prediction action replay", () => {
     applySnapshotToG(snap, true);
     predictionManager.reconcile(snap);
 
-    expect(G.P._assignTargetId).toBe(asteroidId);
+    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBe(asteroidId);
   });
 
   it("reapplies a pending module toggle after an older snapshot overwrites local power state", () => {

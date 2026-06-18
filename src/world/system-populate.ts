@@ -36,12 +36,16 @@ function orbitSpeedFor(x: number, y: number, f: () => number, multiplier = 1): n
   return dir * o.angularSpeedBase * radiusScale * rf(f, o.jitterMin, o.jitterMax) * multiplier;
 }
 
-export function makeAstShape(f: () => number): number[][] {
+export function makeAstShape(f: () => number): { shape: number[][]; shapeMax: number } {
   const n = ri(f, 7, 13);
-  return Array.from({ length: n }, (_, i) => {
+  let shapeMax = 0;
+  const shape = Array.from({ length: n }, (_, i) => {
     const a = (i / n) * TAU;
-    return [Math.cos(a) * rf(f, 0.65, 1.1), Math.sin(a) * rf(f, 0.65, 1.1)];
+    const r = rf(f, 0.65, 1.1);
+    if (r > shapeMax) shapeMax = r;
+    return [Math.cos(a) * r, Math.sin(a) * r];
   });
+  return { shape, shapeMax };
 }
 
 function buildConcentricSystemEntities(sys: System, f: () => number) {
@@ -267,13 +271,15 @@ function spawnAsteroidCluster(
     const sAngle = rf(f, 0, TAU);
     const sVel = rf(f, C.WORLD.ASTEROIDS.spinVelMin, C.WORLD.ASTEROIDS.spinVelMax);
     rf(f, 0, TAU); // Consume to keep PRNG stream aligned
+    const { shape, shapeMax } = makeAstShape(mkRng(sys.id + `${clusterKey}${i}`));
     sys.asteroids.push({
       id: `ast-${sys.id}-${clusterKey}-${i}`,
       x,
       y,
       px: x, py: y, vx: 0, vy: 0,
       radius: rad,
-      shape: makeAstShape(mkRng(sys.id + `${clusterKey}${i}`)),
+      shape,
+      shapeMax,
       hp: maxHp, maxHp,
       composition,
       name: astName,
@@ -309,12 +315,14 @@ function buildTutorialAsteroids(sys: System, danger: number) {
     const sAngle = rf(f, 0, TAU);
     const sVel = rf(f, C.WORLD.ASTEROIDS.spinVelMin, C.WORLD.ASTEROIDS.spinVelMax);
     rf(f, 0, TAU); // keep PRNG stream aligned
+    const { shape, shapeMax } = makeAstShape(mkRng(sys.id + `belt${i}`));
     sys.asteroids.push({
       id: `ast-${sys.id}-belt-${i}`,
       x, y,
       px: x, py: y, vx: 0, vy: 0,
       radius: rad,
-      shape: makeAstShape(mkRng(sys.id + `belt${i}`)),
+      shape,
+      shapeMax,
       hp: maxHp, maxHp,
       composition,
       name: astName,

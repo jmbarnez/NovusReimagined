@@ -5,8 +5,7 @@ import type { Enemy } from "../types/enemy.js";
 import type { WreckPiece } from "../types/system.js";
 import type { AutoTarget } from "../types/combat.js";
 import type { Player } from "../state.js";
-import { sortedCompositionEntries } from "../utils/ore-naming.js";
-import { ORE } from "../data/resources.js";
+
 import { gateByLockId, gateLockTarget, isGateLockId } from "../utils/warp-gates.js";
 
 export function isWreckPieceTarget(id: string): boolean {
@@ -39,8 +38,7 @@ export function targetByLockId(id: string, p: Player = getState().player): Enemy
   }
   if (ast && !ast.depleted && ast.hp > 0) {
     if (!ast.name) {
-      const top = sortedCompositionEntries(ast.composition)[0]?.[0] ?? "iron";
-      ast.name = `${ORE[top]?.label.split(" ")[0] ?? top} Asteroid`;
+      ast.name = "Asteroid";
     }
     return ast;
   }

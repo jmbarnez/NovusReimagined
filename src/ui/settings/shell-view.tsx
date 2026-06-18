@@ -169,11 +169,6 @@ export function SettingsContentView() {
 
           <div className="settings-tab-panel" data-tab-panel="controls">
             <h3 className="accent-controls">{t("settings.tab.controls")}</h3>
-            <div className="settings-row movement-mode-row">
-              <label>{t("settings.movementMode")}</label>
-              <div id="movement-mode-buttons" className="movement-mode-grid" />
-              <TipIcon impact="NONE" desc={t("settings.tip.movementMode")} />
-            </div>
             <div id="keybind-list" />
           </div>
         </div>

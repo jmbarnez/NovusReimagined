@@ -153,8 +153,6 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
   p.va = 0;
   p.netInputFrame = null;
   resetPlayerInput(p.netId ?? p.shipId);
-  p.waypoint = null;
-  p.navCommand = null;
 
   p.maxHp = maxHp;
   p.hp = finiteNumber(incoming.hp, maxHp, 0, maxHp);
@@ -190,7 +188,6 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
   p.fireControlSlot = 0;
   p.targetLock = null;
   p.lockQueue = [];
-  p._assignTargetId = null;
 
   p.blueprints = cloneBooleanRecord(incoming.blueprints, base.blueprints);
   p.skills = cloneNumberRecord(incoming.skills, base.skills);
@@ -249,11 +246,8 @@ export function createDurableCharacterSync(source: Player): Player {
   p.px = p.x;
   p.py = p.y;
   p.prevAngle = p.angle;
-  p.waypoint = null;
-  p.navCommand = null;
   p.targetLock = null;
   p.lockQueue = [];
-  p._assignTargetId = null;
   p.turretTargets = Array(p.turretTargets?.length ?? 0).fill(null);
   p.highTargets = Array(p.highTargets?.length ?? 0).fill(null);
   p.turretCds = Array(p.turretCds?.length ?? 0).fill(0);

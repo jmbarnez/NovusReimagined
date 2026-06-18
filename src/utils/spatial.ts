@@ -1,7 +1,7 @@
 import { getState } from "../state-access.js";
 import { curSys } from "./game.js";
-import { SHIPS } from "../data/ships.js";
-import { ENEMY_DEFS } from "../data/enemies.js";
+import { getPlayerColRadius, getEnemyColRadius } from "./collision-helpers.js";
+import { getAsteroidColRadius } from "./asteroid-helpers.js";
 
 // ─── Spatial grid performance telemetry ─────────────────────────────────────
 interface SpatialGridPerf {
@@ -286,19 +286,17 @@ export function rebuildSpatialGrid(sysIdx?: number) {
 
   for (const p of getState().players.values()) {
     if (p.sysIdx !== sys.idx) continue;
-    const playerColRadius = SHIPS[p.shipId]?.colRadius ?? 20;
+    const playerColRadius = getPlayerColRadius(p.shipId);
     grid.insert(p.netId ?? "__player", p.x, p.y, playerColRadius, "player", p);
   }
 
   for (const e of sys._liveEnemies) {
-    const def = ENEMY_DEFS[e.type];
-    const colRadius = def?.colRadius ?? e.sigRadius ?? 18;
-    const effectiveRadius = ((e.shield ?? 0) > 0) ? (e.sigRadius ?? colRadius) : colRadius;
-    grid.insert(e.id, e.x, e.y, effectiveRadius, "enemy", e);
+    const enemyColRadius = getEnemyColRadius(e.type);
+    grid.insert(e.id, e.x, e.y, enemyColRadius, "enemy", e);
   }
 
   for (const a of sys._liveAsteroids) {
-    grid.insert(a.id, a.x, a.y, a.radius, "asteroid", a);
+    grid.insert(a.id, a.x, a.y, getAsteroidColRadius(a), "asteroid", a);
   }
 
   for (const s of sys.stations) {
@@ -332,7 +330,7 @@ export function syncSpatialGrid(sysIdx?: number) {
     if (p.sysIdx !== sys.idx) continue;
     const id = p.netId ?? "__player";
     expectedIds.add(id);
-    const playerColRadius = SHIPS[p.shipId]?.colRadius ?? 20;
+    const playerColRadius = getPlayerColRadius(p.shipId);
     if (grid.has(id)) {
       grid.update(id, p.x, p.y, playerColRadius);
     } else {
@@ -343,23 +341,22 @@ export function syncSpatialGrid(sysIdx?: number) {
   for (const e of sys.enemies) {
     if (!e.alive) continue;
     expectedIds.add(e.id);
-    const def = ENEMY_DEFS[e.type];
-    const colRadius = def?.colRadius ?? e.sigRadius ?? 18;
-    const effectiveRadius = ((e.shield ?? 0) > 0) ? (e.sigRadius ?? colRadius) : colRadius;
+    const enemyColRadius = getEnemyColRadius(e.type);
     if (grid.has(e.id)) {
-      grid.update(e.id, e.x, e.y, effectiveRadius);
+      grid.update(e.id, e.x, e.y, enemyColRadius);
     } else {
-      grid.insert(e.id, e.x, e.y, effectiveRadius, "enemy", e);
+      grid.insert(e.id, e.x, e.y, enemyColRadius, "enemy", e);
     }
   }
 
   for (const a of sys.asteroids) {
     if (a.depleted || a.hp <= 0) continue;
     expectedIds.add(a.id);
+    const colR = getAsteroidColRadius(a);
     if (grid.has(a.id)) {
-      grid.update(a.id, a.x, a.y, a.radius);
+      grid.update(a.id, a.x, a.y, colR);
     } else {
-      grid.insert(a.id, a.x, a.y, a.radius, "asteroid", a);
+      grid.insert(a.id, a.x, a.y, colR, "asteroid", a);
     }
   }
 

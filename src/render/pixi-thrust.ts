@@ -4,6 +4,7 @@ import { getState } from "../state-access.js";
 import type { Enemy } from "../types/enemy.js";
 import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
+import { getPlayerColRadius } from "../utils/collision-helpers.js";
 import { thrustLayer } from "../pixi.js";
 import { lerp } from "../utils/math.js";
 import { liveEnemies } from "../utils/game.js";
@@ -106,8 +107,7 @@ export function initThrust() {
 
 // Flame dimensions scale with ship collision radius.
 function playerFlameDims(shipId: string): { w: number; l: number } {
-  const ship = SHIPS[shipId];
-  const r = ship?.colRadius ?? 24;
+  const r = getPlayerColRadius(shipId);
   return { w: r * 0.15, l: r * 0.62 };
 }
 // Enemy flame dims — proportional to sigRadius, set per-enemy in sync

@@ -7,6 +7,7 @@ import { getState } from "../../state-access.js";
 import type { Enemy } from "../../types/enemy.js";
 import type { LockSlot } from "../../types/combat.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
+import { getEnemyColRadius } from "../../utils/collision-helpers.js";
 import { entityLayer, effectLayer } from "../../pixi.js";
 import { lerp } from "../../utils/math.js";
 import { isVisible } from "../../utils/game.js";
@@ -191,7 +192,7 @@ export function syncPixiEntities(alpha: number, now: number): void {
 
     if (!_bundles.has(e.id)) _bundles.set(e.id, createBundle(e));
     const b = _bundles.get(e.id)!;
-    const visRadius = Math.max(28, ENEMY_DEFS[e.type]?.colRadius ?? e.sigRadius ?? 18) + 24;
+    const visRadius = Math.max(28, getEnemyColRadius(e.type)) + 24;
     if (!isVisible(e.x, e.y, visRadius)) {
       hideBundleVisuals(b);
       continue;

@@ -4,7 +4,7 @@
   gap: 6px;
   padding: 5px 8px;
   border: 1px solid var(--hud-border-soft);
-  border-radius: 4px;
+  border-radius: 0;
   font-size: calc(10px * var(--effective-font-scale, 1));
   background: color-mix(in srgb, var(--hud-bg-elevated) 72%, transparent);
   color: var(--hud-text-main);
@@ -458,7 +458,7 @@
 .ind-process-preview {
   padding: 8px 10px;
   background: color-mix(in srgb, var(--hud-bg-deep) 52%, transparent);
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .ind-process-compact-summary {
@@ -496,7 +496,7 @@
   margin-top: 8px;
   padding: 6px 8px;
   background: color-mix(in srgb, var(--hud-bg-elevated) 36%, transparent);
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .ind-stage-outcome span {
@@ -754,7 +754,7 @@
   align-items: center;
   padding: 7px 8px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 0;
   font-size: calc(10px * var(--effective-font-scale, 1));
 }
 
