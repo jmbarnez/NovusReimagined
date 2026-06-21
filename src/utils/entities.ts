@@ -21,12 +21,14 @@ export {
   addEnemyBullet,
   removeBullet,
   removeEnemyBullet,
+  clearBullets,
+  clearEnemyBullets,
   _getBulletPoolSize,
   _getEnemyBulletPoolSize,
 } from "./entities/bullets.js";
 
 export type { Beam } from "./entities/beams.js";
-export { addBeam, updateBeams } from "./entities/beams.js";
+export { addBeam, updateBeams, clearBeams } from "./entities/beams.js";
 
 export type { Particle, ParticleConfig } from "./entities/particles.js";
 export { addParticle, updateParticles, _getParticlePoolSize } from "./entities/particles.js";

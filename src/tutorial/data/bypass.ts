@@ -2,7 +2,7 @@ import { type Player } from "../../state.js";
 import { dst } from "../../utils/math.js";
 import { getState } from "../../state-access.js";
 import { ORE } from "../../data/resources.js";
-import { flattenStorageMaterials } from "../../refinery/index.js";
+import { flattenStorageMaterials } from "../../refinery/storage.js";
 import { TUTORIAL_TRAINING_SITE_ID } from "./site.js";
 import type { TutorialZone } from "../types.js";
 

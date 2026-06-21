@@ -1,5 +1,9 @@
 import type { Player } from "../../state.js";
-import { flattenStorageMaterials, makeDefaultRefineryStorage, preferredStorageForMaterial } from "../../refinery/index.js";
+import {
+  flattenStorageMaterials,
+  makeDefaultRefineryStorage,
+  preferredStorageForMaterial,
+} from "../../refinery/storage.js";
 
 export function migrateRefineryStorage(p: Player): void {
   if (!Array.isArray(p.refineryStorage) || p.refineryStorage.length === 0) {

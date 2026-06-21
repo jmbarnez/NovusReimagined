@@ -5,6 +5,7 @@ import { Graphics } from "pixi.js";
 import { getState } from "../../state-access.js";
 import {
   getRenderedPlayerTurretOrigin,
+  getRenderedEnemyTurretOrigin,
 } from "../../combat/turret-origin.js";
 import { getSalvagerBeam } from "../../player/salvager.js";
 import { getTractorBeam } from "../../player/tractor.js";
@@ -14,6 +15,7 @@ import {
   endMiningLaserGpuFrame,
   initMiningLaserGpu,
 } from "./mining-laser-gpu.js";
+import { getTaskState } from "../../physics/npcs/task-state.js";
 
 let _currentNow = 0;
 let _utilityGfx: Graphics | null = null;
@@ -106,6 +108,29 @@ export function syncUtilityBeams(now: number, alpha: number): void {
       }
     }
   }
+
+  // Ambient NPC miner beams — rendered via the same GPU pipeline as the player
+  const sys = state.GALAXY[state.player?.sysIdx ?? 0];
+  if (sys) {
+    for (const e of sys.enemies) {
+      if (!e.alive || e.faction !== "neutral") continue;
+      const ts = getTaskState(e.id);
+      const ml = ts.miningLaser;
+      if (!ml.active) continue;
+      const origin = getRenderedEnemyTurretOrigin(e, alpha);
+      drawMiningLaserGpu(
+        origin.x,
+        origin.y,
+        ml.x2,
+        ml.y2,
+        ml.phase,
+        ml.hitNx,
+        ml.hitNy,
+        ml.hitR,
+      );
+    }
+  }
+
   endMiningLaserGpuFrame();
 }
 

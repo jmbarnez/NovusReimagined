@@ -1,6 +1,6 @@
 import type { Player } from "../../state.js";
 import { PlayerAccess } from "../../state-access.js";
-import { ALLOY_FAMILIES } from "../../refinery/index.js";
+import { ALLOY_FAMILIES } from "../../refinery/families.js";
 
 type LegacyRefinedPool = Partial<Record<"bar" | "lattice" | "condensate", number>>;
 

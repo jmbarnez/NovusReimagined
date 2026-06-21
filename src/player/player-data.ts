@@ -21,7 +21,8 @@ import { logEvent, showXpEarned } from "../feedback.js";
 import { ModuleRarity } from "../data/moduleRarity.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { syncActiveProfile } from "../data/profiles.js";
-import { ALLOY_FAMILIES, makeDefaultAlloyCodex } from "../refinery/index.js";
+import { makeDefaultAlloyCodex } from "../refinery/assessment.js";
+import { ALLOY_FAMILIES } from "../refinery/families.js";
 import { makePlayer as makePlayerImpl } from "./player-factory.js";
 import {
   normalizeHardpointArrays,

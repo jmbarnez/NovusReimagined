@@ -3,7 +3,6 @@
 ## Known Architectural Debt
 
 - [ ] `G` is a global mutable singleton — writes are now fully encapsulated via `PlayerAccess`/`WorldAccess`/`MiningAccess`/`SalvagerAccess`; `getState()` no longer exposes mutation paths (`pendingEffects`, `_statsCache`, entity arrays all migrated to accessors or direct `_G` in canonical lifecycle modules)
-- [ ] Test coverage is minimal (math, entities, player-stats only)
 - [ ] `tsconfig.json` uses `strict: true` but `noUncheckedIndexedAccess: false`. Enabling the latter is a follow-up cleanup
 - [ ] `audio/procedural.ts` uses `_master!` non-null assertions — init order should be restructured
 - [ ] Economy commands currently rely on snapshot-state confirmation only (no explicit per-command ACK/ERR reason channel to UI)
@@ -11,6 +10,8 @@
 
 ## Resolved Debt Items
 
+- ~~Architecture fitness checks documented but not wired~~ — `npm run lint` now runs `scripts/check-gp-boundaries.ts` and enforces server authority, UI command boundaries, entity lifecycle mutation, state write boundaries, and removed screen-canvas regressions.
+- ~~Test coverage is minimal (math, entities, player-stats only)~~ — The suite now covers 80+ focused test files across sim, server, Pixi, UI, tutorial, net, and state behavior.
 - ~~109 'any' types across 47 files~~ — Fully eliminated all `any` types from the codebase, replacing them with strict typings (`System`, `Enemy`, `Asteroid`, `WreckPiece`, `SalvagePickup`, etc.).
 - ~~`ui/hud-overlay.ts` (~819 lines)~~ — Refactored to 286 lines with 8 sub-modules totaling ~920 lines
 - ~~`render/world.ts` (~797 lines) and `render/world/` folder~~ — Transitioned all dynamic space objects (Stars, planets, border boundaries, bullets, mining lasers, tractor spring vectors, wrecks, salvage containers, floating damage cards, shield waves, hull sparks, and brackets) to high-performance PixiJS GPU rendering, and consolidated the four remaining legacy screenspace/station overlay functions into `src/render/world-overlays.ts`, fully deleting the `render/world/` sub-directory.

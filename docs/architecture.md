@@ -197,6 +197,9 @@ src/
   render/             PixiJS WebGL/WebGPU gameplay rendering. All in-game visuals
                       go through Pixi; the screen `<canvas id="c">` and `canvas.ts`
                       were removed in the 2026-06-01 migration.
+                      Offscreen Canvas2D is allowed only for baking Pixi textures,
+                      icons, and small UI previews; it must not be used as a
+                      gameplay renderer or via the removed `#c` screen canvas.
   scanning/           Scanning and contact system
   server/             Server code (session management, sanitization, worker)
   sim/                Simulation system (commands, input, snapshot)

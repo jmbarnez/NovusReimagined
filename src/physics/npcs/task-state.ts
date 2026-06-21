@@ -1,11 +1,23 @@
 /**
  * NPC task/behavior state component store.
  *
- * Used exclusively by the ambient ship director (ambient-ships.ts)
- * to track FSM state for neutral faction ships.
+ * Used exclusively by the ambient mining vessel director (ambient-ships.ts)
+ * to track FSM state for neutral faction miners.
  */
 
-export type EnemyTaskKind = "transit-in" | "goto-station" | "dwell" | "mine" | "patrol" | "engage" | "depart";
+export type EnemyTaskKind = "transit-in" | "mine" | "depart";
+
+export interface EnemyMiningLaser {
+  active: boolean;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  phase: number;
+  hitNx: number;
+  hitNy: number;
+  hitR: number;
+}
 
 export interface EnemyTaskState {
   task: EnemyTaskKind;
@@ -15,6 +27,7 @@ export interface EnemyTaskState {
   exitGateIdx: number | undefined;
   mineTargetId: string | undefined;
   mineCd: number;
+  miningLaser: EnemyMiningLaser;
 }
 
 const _store = new Map<string, EnemyTaskState>();
@@ -28,6 +41,7 @@ function defaultTaskState(): EnemyTaskState {
     exitGateIdx: undefined,
     mineTargetId: undefined,
     mineCd: 0,
+    miningLaser: { active: false, x1: 0, y1: 0, x2: 0, y2: 0, phase: 0, hitNx: 0, hitNy: 0, hitR: 0 },
   };
 }
 

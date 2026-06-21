@@ -1,9 +1,8 @@
-import { _G } from "../../state.js";
 import type { WorldSnapshot } from "../../sim/snapshot.js";
-import { addBeam } from "../../utils/entities.js";
+import { addBeam, clearBeams } from "../../utils/entities.js";
 
 export function applyBeamSnapshots(snap: WorldSnapshot): void {
-  _G.beams.length = 0;
+  clearBeams();
 
   for (const ent of snap.entities) {
     if (ent.type === "beam") {

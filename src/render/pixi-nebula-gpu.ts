@@ -100,12 +100,13 @@ void main() {
     lane = exp(-laneT * laneT * 10.0) * 0.35 * uDensity;
   }
 
-  vec3 col = uColor0 * far + uColor1 * mid * 0.65 + uColor2 * near * 0.35;
-  float d  = far * 0.50 + mid * 0.32 + near * 0.13 + lane;
-  d *= uDensity * (0.96 + 0.04 * sin(uTime * 0.00024));
+  vec3 col = uColor0 * far * 1.04 + uColor1 * mid * 0.74 + uColor2 * near * 0.44;
+  float d  = far * 0.52 + mid * 0.36 + near * 0.16 + lane;
+  d *= uDensity * (1.01 + 0.04 * sin(uTime * 0.00024));
   d  = clamp(d, 0.0, 1.0);
 
-  fragColor = vec4(col * d, d);
+  float highlight = smoothstep(0.42, 0.86, d);
+  fragColor = vec4(col * d * (1.04 + highlight * 0.10), d);
 }
 `;
 
@@ -174,9 +175,9 @@ export function setNebulaSystem(sys: System, enabled = true) {
   // Vary the generated background nebula by session launch time
   const rng = mkRng(sys.id + "-neb-gpu-v2-" + _nebulaSessionSeed);
 
-  // Procedural density / coverage / brightness multiplier
-  // yielding values between 0.35 and 0.90 for rich coverage variations
-  const coverage = 0.35 + rng() * 0.55;
+  // Procedural density / coverage multiplier. Keep this restrained so the
+  // nebula has presence without flattening the starfield.
+  const coverage = 0.38 + rng() * 0.50;
   u.uDensity = coverage;
 
   // Procedural and fully random hues, saturations, and lightnesses
@@ -185,14 +186,14 @@ export function setNebulaSystem(sys: System, enabled = true) {
   const h1 = (baseHue + 20 + rng() * 80) % 360;
   const h2 = (baseHue + 150 + rng() * 100) % 360;
 
-  // Randomize saturations (0.45 to 0.85) and lightnesses (0.35 to 0.65) for maximum visual beauty and depth
-  const s0 = 0.45 + rng() * 0.4;
-  const s1 = 0.45 + rng() * 0.4;
-  const s2 = 0.45 + rng() * 0.4;
+  // Bias colors slightly richer while keeping the top end below neon.
+  const s0 = 0.52 + rng() * 0.32;
+  const s1 = 0.52 + rng() * 0.32;
+  const s2 = 0.52 + rng() * 0.32;
 
-  const l0 = 0.35 + rng() * 0.3;
-  const l1 = 0.35 + rng() * 0.3;
-  const l2 = 0.35 + rng() * 0.3;
+  const l0 = 0.38 + rng() * 0.24;
+  const l1 = 0.38 + rng() * 0.24;
+  const l2 = 0.38 + rng() * 0.24;
 
   const c0 = hslToRgb(h0 / 360, s0, l0);
   const c1 = hslToRgb(h1 / 360, s1, l1);

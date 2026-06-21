@@ -137,7 +137,7 @@ export function advanceStep() {
 export function completeTutorial(fromSkip: boolean) {
   const primeIdx = getNovusPrimeIdx();
   finalizeTutorialMission(fromSkip);
-  PlayerAccess.setTutorialComplete();
+  PlayerAccess.setTutorialComplete(getState().player, TUTORIAL_STEP_COUNT - 1);
   if (fromSkip) PlayerAccess.setTutorialSkipped();
   if (primeIdx >= 0) PlayerAccess.setHomeSysIdx(primeIdx);
   setTutorialGatePulse(0);
@@ -154,7 +154,7 @@ export function completeTutorial(fromSkip: boolean) {
 export function skipTutorial() {
   const primeIdx = getNovusPrimeIdx();
   finalizeTutorialMission(true);
-  PlayerAccess.setTutorialComplete();
+  PlayerAccess.setTutorialComplete(getState().player, TUTORIAL_STEP_COUNT - 1);
   PlayerAccess.setTutorialSkipped();
   if (primeIdx >= 0) PlayerAccess.setHomeSysIdx(primeIdx);
   setTutorialGatePulse(0);

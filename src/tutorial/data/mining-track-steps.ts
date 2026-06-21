@@ -8,7 +8,7 @@ import {
 } from "./layout.js";
 import { tutorialKeyStyled, tutorialBarKeyStyled } from "./controls.js";
 import { t } from "../../utils/i18n.js";
-import { flattenStorageMaterials } from "../../refinery/index.js";
+import { flattenStorageMaterials } from "../../refinery/storage.js";
 import type { TutorialStep } from "../types.js";
 import {
   totalOre,

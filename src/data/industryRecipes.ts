@@ -9,7 +9,7 @@
  */
 
 import { ORE, LOOT, COMPONENTS } from "./resources.js";
-import { ALLOY_FAMILIES } from "../refinery/index.js";
+import { ALLOY_FAMILIES } from "../refinery/families.js";
 
 export type IndustryPool = "ore" | "loot" | "component" | "material";
 
@@ -168,4 +168,3 @@ export function tickCraftJobs(jobs: CraftJob[], onDone: (job: CraftJob) => void)
   }
   return remaining;
 }
-

@@ -11,7 +11,8 @@ import { ModuleRarity } from "../data/moduleRarity.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { TUTORIAL_LOCAL_REGIONS } from "../data/tutorial-layout.js";
 import { getHardpointSlotCount } from "../utils/hardpoints.js";
-import { makeDefaultAlloyCodex, makeDefaultRefineryStorage } from "../refinery/index.js";
+import { makeDefaultAlloyCodex } from "../refinery/assessment.js";
+import { makeDefaultRefineryStorage } from "../refinery/storage.js";
 import { defaultFitting } from "./player-data.js";
 
 export function makePlayer(): Player {

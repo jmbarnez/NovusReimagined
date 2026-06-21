@@ -1,11 +1,10 @@
-import { _G } from "../../state.js";
 import type { WorldSnapshot } from "../../sim/snapshot.js";
-import { addBullet, addEnemyBullet } from "../../utils/entities.js";
+import { addBullet, addEnemyBullet, clearBullets, clearEnemyBullets } from "../../utils/entities.js";
 import { toDamageProfile, toWeaponDelivery } from "./converters.js";
 
 export function applyProjectileSnapshots(snap: WorldSnapshot): void {
-  _G.bullets.length = 0;
-  _G.enemyBullets.length = 0;
+  clearBullets();
+  clearEnemyBullets();
 
   for (const ent of snap.entities) {
     if (ent.type === "bullet") {

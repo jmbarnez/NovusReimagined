@@ -1,5 +1,4 @@
 import { _G, type Player } from "../../../state.js";
-import { TUTORIAL_STEP_COUNT } from "../../../data/tutorial.js";
 
 export const playerTutorialScanningAccess = {
   setTutorialStep(step: number, p: Player = _G.P) {
@@ -14,10 +13,10 @@ export const playerTutorialScanningAccess = {
     p.tutorial.active = active;
   },
 
-  setTutorialComplete(p: Player = _G.P) {
+  setTutorialComplete(p: Player = _G.P, finalStep: number = p.tutorial.step) {
     p.tutorial.active = false;
     p.tutorial.completed = true;
-    p.tutorial.step = TUTORIAL_STEP_COUNT - 1;
+    p.tutorial.step = finalStep;
   },
 
   setTutorialSkipped(p: Player = _G.P) {

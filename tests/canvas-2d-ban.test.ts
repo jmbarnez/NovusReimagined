@@ -39,4 +39,18 @@ describe("Canvas 2D ban", () => {
     );
     expect(Object.keys(files)).toEqual([]);
   });
+
+  it("no src/ file queries the removed screen canvas", () => {
+    const files = (import.meta as RawGlobImportMeta).glob(
+      ["../src/**/*.ts", "../src/**/*.tsx"],
+      { query: "?raw", import: "default", eager: true },
+    );
+
+    const offenders = Object.entries(files).flatMap(([file, text]) => {
+      if (/getElementById\(\s*["']c["']\s*\)/.test(text)) return [file];
+      return [];
+    });
+
+    expect(offenders).toEqual([]);
+  });
 });

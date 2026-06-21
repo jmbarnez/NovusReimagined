@@ -6,7 +6,7 @@
  * entries on add via `stackSignature`/composition normalization.
  */
 import { _G, type Player, type MixedOreCargo, type BulkMaterialStack } from "../../../../state.js";
-import { stackSignature } from "../../../../refinery/index.js";
+import { stackSignature } from "../../../../refinery/composition.js";
 
 export const playerCargoAccess = {
   addMixedOreCargo(cargo: MixedOreCargo, p: Player = _G.P) {

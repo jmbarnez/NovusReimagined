@@ -157,6 +157,60 @@ export function destroyAsteroid(asteroid: Asteroid, isMiningLaser: boolean, mini
   }
 }
 
+/**
+ * Destroy an asteroid mined by an AI ship.
+ *
+ * Spawns visual debris and FX only — no ore pickups, no XP, no log events.
+ * This prevents players from scavenging ore that ambient miners depleted.
+ */
+export function destroyAsteroidAi(asteroid: Asteroid): void {
+  const tintHue = asteroid.tintHue ?? 30;
+  const tintSat = asteroid.tintSat ?? 13;
+  const fill = `hsl(${tintHue}, ${tintSat}%, 22%)`;
+  const stroke = `hsl(${tintHue}, ${tintSat}%, 42%)`;
+
+  // Visual-only rocky debris chunks
+  const numChunks = 3 + Math.floor(Math.random() * 3);
+  for (let c = 0; c < numChunks; c++) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = 45 + Math.random() * 75;
+    const numVertices = 5 + Math.floor(Math.random() * 3);
+    const pts: [number, number][] = [];
+    for (let v = 0; v < numVertices; v++) {
+      const a = (v / numVertices) * Math.PI * 2;
+      const r = 0.65 + Math.random() * 0.45;
+      pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+    }
+    asteroidDebrisList.push({
+      x: asteroid.x,
+      y: asteroid.y,
+      vx: asteroid.vx + Math.cos(ang) * spd,
+      vy: asteroid.vy + Math.sin(ang) * spd,
+      angle: Math.random() * Math.PI * 2,
+      angularVel: (Math.random() - 0.5) * 4.5,
+      pts,
+      radius: asteroid.radius * (0.22 + Math.random() * 0.24),
+      fill,
+      stroke,
+      life: 1.1 + Math.random() * 0.7,
+      maxLife: 2.0,
+    });
+  }
+
+  // FX: shockwave + dust particles (no ore pickups, no XP, no log)
+  const color = oreColorForComposition(normalizeComposition(asteroid.composition));
+  addShockwave({
+    x: asteroid.x,
+    y: asteroid.y,
+    maxRadius: asteroid.radius * 2.3,
+    life: 0.48,
+    color,
+    width: 2.4,
+  });
+  spawnParticles(asteroid.x, asteroid.y, color, 12, 85);
+  sfxShipExplosion(asteroid.x, asteroid.y, 0.4);
+}
+
 function rollOreKey(composition: Record<string, number>): string {
   const sorted = sortedCompositionEntries(composition);
   const roll = Math.random();

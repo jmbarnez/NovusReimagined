@@ -1,5 +1,10 @@
 import { _G, type Player } from "../../state.js";
-import { addWreckPiece, addSalvagePickup } from "../../utils/entities.js";
+import {
+  addWreckPiece,
+  addSalvagePickup,
+  removeWreckPiece,
+  removeSalvagePickup,
+} from "../../utils/entities.js";
 import { showPickupToast } from "../../feedback.js";
 import { sfxItemPickup, sfxCreditPickup } from "../../audio/procedural.js";
 import type { SnapshotEntityMaps } from "./entity-maps.js";
@@ -19,7 +24,7 @@ export function applyWreckSnapshots(maps: SnapshotEntityMaps): void {
       wp.maxHp = snapEnt.maxHp || 10;
       maps.wrecks.delete(wp.id);
     } else {
-      _G.wreckPieces.splice(i, 1);
+      removeWreckPiece(i);
     }
   }
 
@@ -70,7 +75,7 @@ export function applySalvageSnapshots(maps: SnapshotEntityMaps, p: Player | null
           sfxItemPickup(sp.kind, sp.x, sp.y);
         }
       }
-      _G.salvagePickups.splice(i, 1);
+      removeSalvagePickup(i);
     }
   }
 

@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "vite build",
-    "lint": "echo \"lint: no-op placeholder (scripts/check-gp-boundaries.ts not yet implemented)\" && exit 0",
+    "lint": "tsx scripts/check-gp-boundaries.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",

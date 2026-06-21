@@ -13,7 +13,7 @@ import { lerp } from "../../utils/math.js";
 import { isVisible } from "../../utils/game.js";
 import { hasCommsEquipment } from "../../player/player-stats.js";
 import { getEnemyTexture, getEnemyLightTextures, lightDirIndex } from "./bake.js";
-import { _nameStyle, _levelStyle, _speechStyle } from "./lifecycle.js";
+import { _nameStyle, _levelStyle, _speechStyle } from "./styles.js";
 import { getSunWorldPos } from "../../utils/sun-position.js";
 import { getAiState } from "../../physics/npcs/ai-state.js";
 import { getNpcSpeech } from "../npc-speech.js";

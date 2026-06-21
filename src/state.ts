@@ -8,7 +8,7 @@
  * If it only matters to the local display/input layer, it belongs in Client.
  */
 
-import { SpatialGrid } from "./utils/spatial.js";
+import type { SpatialGrid } from "./utils/spatial.js";
 import type {
   Bullet,
   EnemyBullet,

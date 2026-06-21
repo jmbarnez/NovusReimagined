@@ -22,9 +22,9 @@ import type { ModuleInstance } from "../../../../types/moduleInstance.js";
 import {
   flattenStorageMaterials,
   preferredStorageForMaterial,
-  stackSignature,
   storageUsedVolumeM3,
-} from "../../../../refinery/index.js";
+} from "../../../../refinery/storage.js";
+import { stackSignature } from "../../../../refinery/composition.js";
 
 function cloneMaterialStack(stack: BulkMaterialStack): BulkMaterialStack {
   return {

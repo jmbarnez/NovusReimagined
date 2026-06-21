@@ -6,10 +6,8 @@ import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { clearSimulationEntities } from "../src/utils/entities.js";
 import { buildFactionShip, processAmbientBehavior, updateAmbientDirector } from "../src/physics/ambient-ships.js";
 import { getTaskState } from "../src/physics/npcs/task-state.js";
-import { getAiState } from "../src/physics/npcs/ai-state.js";
 import { applySnapshotToG } from "../src/net/snapshot-apply.js";
 import type { Asteroid } from "../src/types/asteroid.js";
-import type { Enemy } from "../src/types/enemy.js";
 
 function addAsteroidNear(x: number, y: number): Asteroid {
   const sys = G.GALAXY[0]!;
@@ -40,53 +38,7 @@ function addAsteroidNear(x: number, y: number): Asteroid {
   return asteroid;
 }
 
-function addHostileNear(x: number, y: number): Enemy {
-  const sys = G.GALAXY[0]!;
-  const enemy: Enemy = {
-    id: `hostile-${sys.enemies.length}`,
-    type: "rat",
-    name: "Rat",
-    x,
-    y,
-    px: x,
-    py: y,
-    spawnX: x,
-    spawnY: y,
-    hp: 50,
-    maxHp: 50,
-    shield: 0,
-    maxShield: 0,
-    structure: 30,
-    maxStructure: 30,
-    weaponMult: 1,
-    vx: 0,
-    vy: 0,
-    angle: 0,
-    prevAngle: 0,
-    angularVel: 0,
-    speed: 100,
-    credits: 0,
-    loot: {},
-    turretCds: [],
-    alive: true,
-    respawnTimer: 0,
-    aggroRange: 200,
-    weaponRange: 300,
-    sigRadius: 20,
-    accuracy: 1,
-    fitting: { turret: [], high: [], med: [], low: [] },
-    level: 1,
-    faction: "hostile",
-    hailable: false,
-    commsRange: 0,
-  };
-  sys.enemies.push(enemy);
-  if (!sys.enemyMap) sys.enemyMap = new Map();
-  sys.enemyMap.set(enemy.id, enemy);
-  return enemy;
-}
-
-describe("ambient ships", () => {
+describe("ambient mining vessels", () => {
   beforeEach(() => {
     G.GALAXY = buildGalaxy();
     populateSystem(G.GALAXY[0]!);
@@ -98,7 +50,7 @@ describe("ambient ships", () => {
     clearSimulationEntities();
   });
 
-  it("miner creates a mining beam when in range of an asteroid", () => {
+  it("miner activates mining laser when in range of an asteroid", () => {
     const sys = G.GALAXY[0]!;
     const asteroid = addAsteroidNear(100, 0);
     const gate = sys.gates[0]!;
@@ -114,11 +66,13 @@ describe("ambient ships", () => {
     ts.taskTimer = 30;
     ts.mineTargetId = asteroid.id;
 
-    G.beams.length = 0;
     processAmbientBehavior(miner, 0.016);
 
-    expect(G.beams.length).toBeGreaterThan(0);
-    expect(G.beams[0]!.color).toBe("#00ffcc");
+    expect(ts.miningLaser.active).toBe(true);
+    expect(ts.miningLaser.hitR).toBe(asteroid.radius);
+    // Beam endpoint should be near the asteroid surface, not at its center
+    const beamLen = Math.hypot(ts.miningLaser.x2 - ts.miningLaser.x1, ts.miningLaser.y2 - ts.miningLaser.y1);
+    expect(beamLen).toBeLessThan(100); // ship is at (100,0), asteroid at (100,0) — very close
   });
 
   it("miner damages asteroid while mining", () => {
@@ -139,61 +93,115 @@ describe("ambient ships", () => {
 
     const initialHp = asteroid.hp;
 
-    // 0.5s harvest cooldown means we need ~60 ticks (1s) to see damage
-    for (let i = 0; i < 120; i++) {
+    // With miningMult=1.0 and 0.5s cd, ~6 dmg/hit → depletes 100hp in ~8s (~530 ticks)
+    for (let i = 0; i < 600; i++) {
       processAmbientBehavior(miner, 0.016);
     }
 
     expect(asteroid.hp).toBeLessThan(initialHp);
+    expect(asteroid.hp).toBeLessThanOrEqual(0);
+    expect(asteroid.depleted).toBe(true);
   });
 
-  it("escort fires at nearby hostile", () => {
+  it("AI-mined asteroids drop no ore pickups for the player", () => {
     const sys = G.GALAXY[0]!;
-    const hostile = addHostileNear(100, 0);
+    const asteroid = addAsteroidNear(100, 0);
     const gate = sys.gates[0]!;
-    const escort = buildFactionShip(sys, "faction_escort", gate, 0);
-    escort.x = 0;
-    escort.y = 0;
-    sys.enemies.push(escort);
+    const miner = buildFactionShip(sys, "faction_miner", gate, 0);
+    miner.x = 100;
+    miner.y = 0;
+    sys.enemies.push(miner);
     if (!sys.enemyMap) sys.enemyMap = new Map();
-    sys.enemyMap.set(escort.id, escort);
+    sys.enemyMap.set(miner.id, miner);
 
-    const ts = getTaskState(escort.id);
-    ts.task = "engage";
-    const ai = getAiState(escort.id);
-    ai.npcTarget = hostile;
-    ai.npcHasLock = true;
+    const ts = getTaskState(miner.id);
+    ts.task = "mine";
+    ts.taskTimer = 30;
+    ts.mineTargetId = asteroid.id;
 
-    G.enemyBullets.length = 0;
-    processAmbientBehavior(escort, 0.016);
+    const salvageBefore = G.salvagePickups?.length ?? 0;
 
-    expect(G.enemyBullets.length).toBeGreaterThan(0);
+    // Run until depleted (~600 ticks at 0.016 = ~10s)
+    for (let i = 0; i < 600; i++) {
+      processAmbientBehavior(miner, 0.016);
+    }
+
+    expect(asteroid.depleted).toBe(true);
+    // No ore pickups should have been spawned for the player
+    expect(G.salvagePickups?.length ?? 0).toBe(salvageBefore);
   });
 
-  it("scout beam weapon adds a combat beam", () => {
+  it("miner picks a new asteroid after depleting one", () => {
     const sys = G.GALAXY[0]!;
-    const hostile = addHostileNear(100, 0);
+    const asteroid1 = addAsteroidNear(100, 0);
+    const asteroid2 = addAsteroidNear(200, 0);
     const gate = sys.gates[0]!;
-    const scout = buildFactionShip(sys, "faction_scout", gate, 0);
-    scout.x = 0;
-    scout.y = 0;
-    sys.enemies.push(scout);
+    const miner = buildFactionShip(sys, "faction_miner", gate, 0);
+    miner.x = 100;
+    miner.y = 0;
+    sys.enemies.push(miner);
     if (!sys.enemyMap) sys.enemyMap = new Map();
-    sys.enemyMap.set(scout.id, scout);
+    sys.enemyMap.set(miner.id, miner);
 
-    const ts = getTaskState(scout.id);
-    ts.task = "engage";
-    const ai = getAiState(scout.id);
-    ai.npcTarget = hostile;
-    ai.npcHasLock = true;
+    const ts = getTaskState(miner.id);
+    ts.task = "mine";
+    ts.taskTimer = 60; // Long enough to mine both
+    ts.mineTargetId = asteroid1.id;
 
-    G.beams.length = 0;
-    processAmbientBehavior(scout, 0.016);
+    // Mine first asteroid to depletion
+    for (let i = 0; i < 600; i++) {
+      processAmbientBehavior(miner, 0.016);
+    }
 
-    expect(G.beams.length).toBeGreaterThan(0);
+    expect(asteroid1.depleted).toBe(true);
+    // Miner should have picked a new target
+    expect(ts.mineTargetId).toBe(asteroid2.id);
+    expect(ts.task).toBe("mine");
   });
 
-  it("syncs ambient mining beams via snapshots", () => {
+  it("miner departs when task timer expires", () => {
+    const sys = G.GALAXY[0]!;
+    const gate = sys.gates[0]!;
+    const miner = buildFactionShip(sys, "faction_miner", gate, 0);
+    miner.x = 100;
+    miner.y = 0;
+    sys.enemies.push(miner);
+    if (!sys.enemyMap) sys.enemyMap = new Map();
+    sys.enemyMap.set(miner.id, miner);
+
+    const ts = getTaskState(miner.id);
+    ts.task = "mine";
+    ts.taskTimer = 0.01; // Expire almost immediately
+    ts.mineTargetId = undefined; // No asteroid
+
+    processAmbientBehavior(miner, 0.016);
+
+    expect(ts.task).toBe("depart");
+    expect(ts.miningLaser.active).toBe(false);
+  });
+
+  it("director spawns at most 3 miners", () => {
+    const sys = G.GALAXY[0]!;
+    // Pre-populate with 3 miners
+    for (let i = 0; i < 3; i++) {
+      const gate = sys.gates[0]!;
+      const miner = buildFactionShip(sys, "faction_miner", gate, 0);
+      miner.x = 100 + i * 50;
+      sys.enemies.push(miner);
+      if (!sys.enemyMap) sys.enemyMap = new Map();
+      sys.enemyMap.set(miner.id, miner);
+      const ts = getTaskState(miner.id);
+      ts.task = "mine"; // Not transiting
+    }
+
+    const countBefore = sys.enemies.filter(e => e.faction === "neutral").length;
+    updateAmbientDirector(100); // Large dt to trigger spawn check
+    const countAfter = sys.enemies.filter(e => e.faction === "neutral").length;
+
+    expect(countAfter).toBe(countBefore); // No new spawn
+  });
+
+  it("syncs beams via snapshots", () => {
     G.beams.length = 0;
     const snap = {
       tick: 1,

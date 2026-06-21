@@ -2,7 +2,8 @@ import { type Player } from "../../state.js";
 import { PlayerAccess, getState } from "../../state-access.js";
 import { getRecipe, createCraftJob, type IndustryPool, tickCraftJobs, type CraftJob, RECIPES } from "../../data/industryRecipes.js";
 import { invalidate } from "../../player/player-stats.js";
-import { ALLOY_FAMILIES, materialMatchesRecipeMaterial } from "../../refinery/index.js";
+import { ALLOY_FAMILIES } from "../../refinery/families.js";
+import { materialMatchesRecipeMaterial } from "../../refinery/storage.js";
 import type { ActionResponse } from "./economy.js";
 
 function materialStockOf(key: string, p: Player): number {

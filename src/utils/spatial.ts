@@ -1,7 +1,7 @@
 import { getState } from "../state-access.js";
-import { curSys } from "./game.js";
 import { getPlayerColRadius, getEnemyColRadius } from "./collision-helpers.js";
 import { getAsteroidColRadius } from "./asteroid-helpers.js";
+import type { System } from "../types/system.js";
 
 // ─── Spatial grid performance telemetry ─────────────────────────────────────
 interface SpatialGridPerf {
@@ -268,12 +268,18 @@ export class SpatialGrid {
   }
 }
 
+function resolveSpatialSystem(sysIdx?: number): System | null {
+  const state = getState();
+  const idx = sysIdx ?? state.player?.sysIdx ?? 0;
+  return state.GALAXY[idx] || state.GALAXY[0] || null;
+}
+
 export function rebuildSpatialGrid(sysIdx?: number) {
   const t0 = typeof performance !== "undefined" ? performance.now() : 0;
   const grid = getState().spatialGrid;
   if (!grid) return;
   grid.clear();
-  const sys = sysIdx !== undefined ? getState().GALAXY[sysIdx] : curSys();
+  const sys = resolveSpatialSystem(sysIdx);
   if (!sys) return;
 
   if (!sys.liveEnemies) sys.liveEnemies = [];
@@ -321,7 +327,7 @@ export function syncSpatialGrid(sysIdx?: number) {
   const t0 = typeof performance !== "undefined" ? performance.now() : 0;
   const grid = getState().spatialGrid;
   if (!grid) return;
-  const sys = sysIdx !== undefined ? getState().GALAXY[sysIdx] : curSys();
+  const sys = resolveSpatialSystem(sysIdx);
   if (!sys) return;
 
   const expectedIds = new Set<string>();

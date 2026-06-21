@@ -14,7 +14,7 @@ import {
 } from "../../../../state.js";
 import type { ModuleInstance } from "../../../../types/moduleInstance.js";
 import type { CraftJob } from "../../../../data/industryRecipes.js";
-import { stackSignature } from "../../../../refinery/index.js";
+import { stackSignature } from "../../../../refinery/composition.js";
 
 export const playerCraftingAccess = {
   setCraftQueue(queue: Player["craftQueue"], p: Player = _G.P) {

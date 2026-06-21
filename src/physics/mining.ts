@@ -14,20 +14,33 @@ import { showDamageNumber } from "../combat/damage-display.js";
 import { getPlayerTurretOrigin } from "../combat/turret-origin.js";
 import { getPlayerInput } from "../player/input-state.js";
 import { harvestAsteroid, destroyAsteroid } from "../utils/mining.js";
-import { isPointInAsteroid, asteroidSegmentPolygonHit } from "./combat-physics.js";
+import { asteroidSegmentPolygonHit } from "./combat-physics.js";
 import type { Asteroid } from "../types/asteroid.js";
 
 let _miningHumTimer = 0;
 let _miningSparkTimer = 0;
 
-/** Find the non-depleted asteroid whose polygon contains the given world point. */
-function findAsteroidAtPoint(sys: ReturnType<typeof getState>["GALAXY"][number] | undefined, wx: number, wy: number): Asteroid | null {
+/**
+ * Cast a beam segment from (x1,y1) to (x2,y2) and find the closest non-depleted
+ * asteroid whose polygon the beam passes through. Returns the asteroid and the
+ * surface hit point, or null if no asteroid is intersected.
+ */
+function raycastAsteroids(
+  sys: ReturnType<typeof getState>["GALAXY"][number] | undefined,
+  x1: number, y1: number, x2: number, y2: number,
+): { ast: Asteroid; x: number; y: number } | null {
   if (!sys) return null;
+  let best: { ast: Asteroid; x: number; y: number; dist: number } | null = null;
   for (const ast of sys.asteroids) {
     if (ast.depleted || ast.hp <= 0) continue;
-    if (isPointInAsteroid(wx, wy, ast, 0)) return ast;
+    const hit = asteroidSegmentPolygonHit(x1, y1, x2, y2, ast, 0);
+    if (!hit) continue;
+    const dist = Math.hypot(hit.x - x1, hit.y - y1);
+    if (!best || dist < best.dist) {
+      best = { ast, x: hit.x, y: hit.y, dist };
+    }
   }
-  return null;
+  return best ? { ast: best.ast, x: best.x, y: best.y } : null;
 }
 
 export function updateMining(dt: number, p: Player) {
@@ -74,8 +87,8 @@ export function updateMining(dt: number, p: Player) {
       targetY = origin.y + dy * scale;
     }
 
-    // Find asteroid whose polygon contains the cursor (no auto-lock snap)
-    const ast = findAsteroidAtPoint(sys, targetX, targetY);
+    // Raycast from turret origin to cursor — beam hits whatever is in its path
+    const rayHit = raycastAsteroids(sys, origin.x, origin.y, targetX, targetY);
 
     const energyCost = 10 * dt;
     if (p.energy < energyCost) {
@@ -84,24 +97,16 @@ export function updateMining(dt: number, p: Player) {
     }
     PlayerAccess.setEnergy(p.energy - energyCost, p);
 
-    if (ast) {
-      // Precise polygon surface hit — beam stops exactly at the asteroid edge
-      const hit = asteroidSegmentPolygonHit(origin.x, origin.y, targetX, targetY, ast, 0);
-      let surfaceX: number, surfaceY: number, hitNx: number, hitNy: number;
-      if (hit) {
-        surfaceX = hit.x;
-        surfaceY = hit.y;
-      } else {
-        // Cursor is inside the asteroid but origin is too — use cursor as fallback
-        surfaceX = targetX;
-        surfaceY = targetY;
-      }
+    if (rayHit) {
+      const ast = rayHit.ast;
+      const surfaceX = rayHit.x;
+      const surfaceY = rayHit.y;
       // Surface normal = outward direction from asteroid centre to hit point
       const ndx = surfaceX - ast.x;
       const ndy = surfaceY - ast.y;
       const nlen = Math.hypot(ndx, ndy) || 1;
-      hitNx = ndx / nlen;
-      hitNy = ndy / nlen;
+      const hitNx = ndx / nlen;
+      const hitNy = ndy / nlen;
 
       MiningAccess.update({
         active: true,
