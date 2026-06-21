@@ -19,11 +19,11 @@ describe("authoritative command validation", () => {
 
   it("rejects invalid rack names for slot toggles", () => {
     const p = makePlayer();
-    const before = [...p.turretPower];
+    const before = p.fireControlSlot;
 
     executeGameCommand({ type: "toggleSlotDefaultAction", payload: { rack: "bogus", idx: 0 } }, p);
 
-    expect(p.turretPower).toEqual(before);
+    expect(p.fireControlSlot).toBe(before);
   });
 
   it("accepts turret modules in unified high slots but rejects incompatible rack fits", () => {

@@ -4,7 +4,7 @@ import { getStats } from "../player/player-stats.js";
 import { showDamageNumber } from "../combat/damage-display.js";
 import { damageEnemy, damageAsteroid } from "../combat.js";
 import { updateSensorLocks } from "../targeting.js";
-import { spawnImpactFlash } from "../utils/fx.js";
+import { spawnCollisionFx } from "../utils/fx.js";
 import { floatText } from "../utils/fx.js";
 import { removeBullet, updateBeams, updateParticles, updateShockwaves, updateFloatTexts, isTargetDestroyed } from "../utils/entities.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
@@ -159,10 +159,10 @@ export function updateProjectiles(dt: number) {
             delivery: isMining ? "mining" : (b.weaponId || b.kind || "projectile"),
           },
         });
-        spawnImpactFlash(hitX, hitY, b.color || "#ff4422");
+        spawnCollisionFx({ x: hitX, y: hitY, nx: 0, ny: 0, intensity: 55, material: isMining ? "ore" : "rock", tint: b.color || "#ff4422" });
         b.life = 0;
       } else if (enemyTarget && enemyTarget.data) {
-        spawnImpactFlash(b.x, b.y, b.color || "#ff4422");
+        spawnCollisionFx({ x: b.x, y: b.y, nx: 0, ny: 0, intensity: 55, material: "metal", tint: b.color || "#ff4422" });
         if (b.owner === getState().player) {
           WorldAccess.queueEffect({
             type: "impact",

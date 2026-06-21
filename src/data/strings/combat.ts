@@ -17,14 +17,7 @@ export const combatStrings: Record<Language, Record<string, string>> = {
     "combat.abilityFired": "{name}",
     "combat.abilityCooldown": "COOLDOWN",
     "combat.abilityNoCap": "NO CAP",
-    "combat.rackOnline": "{rack} RACK ONLINE",
-    "combat.rackOffline": "{rack} RACK OFFLINE",
-    "combat.allSystemsOnline": "ALL SYSTEMS ONLINE",
-    "combat.allSystemsOffline": "ALL SYSTEMS OFFLINE",
-    "combat.modulePoweringUp": "{name} POWERING UP",
-    "combat.modulePoweringDown": "{name} POWERING DOWN",
-    "combat.moduleOn": "{name} ON",
-    "combat.moduleOff": "{name} OFF",
+
     "combat.xpGain": "+{xp} XP",
   },
   es: {
@@ -43,14 +36,7 @@ export const combatStrings: Record<Language, Record<string, string>> = {
     "combat.abilityFired": "{name}",
     "combat.abilityCooldown": "EN ENFRIAMIENTO",
     "combat.abilityNoCap": "SIN CAPACITOR",
-    "combat.rackOnline": "BANCO {rack} EN LÍNEA",
-    "combat.rackOffline": "BANCO {rack} FUERA DE LÍNEA",
-    "combat.allSystemsOnline": "TODOS LOS SISTEMAS EN LÍNEA",
-    "combat.allSystemsOffline": "TODOS LOS SISTEMAS FUERA DE LÍNEA",
-    "combat.modulePoweringUp": "{name} ACTIVANDO",
-    "combat.modulePoweringDown": "{name} DESACTIVANDO",
-    "combat.moduleOn": "{name} ACTIVADO",
-    "combat.moduleOff": "{name} DESACTIVADO",
+
     "combat.xpGain": "+{xp} XP",
   },
 };

@@ -1,6 +1,6 @@
 import { Client, type Player } from "../state.js";
 import { PlayerAccess, getState, WorldAccess } from "../state-access.js";
-import { floatText, spawnImpactFlash, spawnParticles } from "../utils/fx.js";
+import { floatText, spawnCollisionFx, spawnParticles } from "../utils/fx.js";
 import { triggerShieldHit, triggerHullHit, triggerStructureHit } from "../render/entity-visuals.js";
 import { respawnPlayer } from "../utils/game.js";
 import { MODULE_DAMAGE_CHANCE, MODULE_DAMAGE_RATIO, RACK_TYPES } from "../constants.js";
@@ -63,7 +63,7 @@ function damageRandomModule(amount: number, p: Player) {
       const uid = slots[i];
       if (!uid) continue;
       const inst = getInstance(uid, p);
-      if (inst && inst.durability > 0 && (p.slotActive?.[rack]?.[i] ?? true)) {
+      if (inst && inst.durability > 0) {
         candidates.push({ rack, idx: i, uid });
       }
     }
@@ -77,10 +77,6 @@ function damageRandomModule(amount: number, p: Player) {
   const m = MODULES[inst.baseId];
   if (inst.durability <= 0) {
     PlayerAccess.setModuleDurability(pick.uid, 0, p);
-    PlayerAccess.setSlotActive(pick.rack, pick.idx, false, p);
-    if (pick.rack === "turret" && p.turretPower) {
-      PlayerAccess.setTurretPower(pick.idx, false, p);
-    }
     invalidate(p);
     const msg = m ? t("combat.moduleOfflineLog", { name: m.short || m.name }) : t("combat.moduleOffline");
     if (p === getState().player) {
@@ -159,7 +155,8 @@ export function damagePlayer(
   const displayTypeFinal = opts.isCrit ? "crit" : displayType;
   if (isLocalPlayer) {
     showDamageNumber(p.x, p.y - 25, displayDmg, displayTypeFinal, "enemyToPlayer");
-    spawnImpactFlash(sourceX, sourceY, DMG_COLORS[displayTypeFinal] || DMG_COLORS.hit);
+    const dmgMaterial = displayType === "shield" ? "shield" : displayType === "structure" ? "debris" : "metal";
+    spawnCollisionFx({ x: sourceX, y: sourceY, nx: 0, ny: 0, intensity: 60, material: dmgMaterial, tint: DMG_COLORS[displayTypeFinal] || DMG_COLORS.hit });
   }
 
   if (isLocalPlayer && (displayType === "hull" || displayType === "structure")) {

@@ -90,6 +90,10 @@ export function getTutorialGuideTarget(): { x: number; y: number } | null {
     return { x: TUTORIAL_GATE.x, y: TUTORIAL_GATE.y };
   }
 
+  if (step.guideTarget) {
+    return { x: step.guideTarget.x, y: step.guideTarget.y };
+  }
+
   if (step.nav) {
     return { x: step.nav.targetX, y: step.nav.targetY };
   }

@@ -17,16 +17,8 @@ export function onTurretContextMenu(e: MouseEvent, rack: string, idx: number) {
 
 export function showTurretCtxMenu(x: number, y: number, turretIdx: number) {
   if (!hudState.turretCtxMenu) return;
-  const powered = getState().player.turretPower?.[turretIdx] ?? false;
-  const cycling = (getState().player.turretPowerCd?.[turretIdx] || 0) > 0;
-  const action = powered ? "Power Down" : "Power Up";
-  const btnClass = cycling ? "disabled" : "";
 
   setHtml(hudState.turretCtxMenu, `
-    <div class="ctx-item ${btnClass}" data-action="toggle-power" data-idx="${turretIdx}">
-      ${action} ${cycling ? "(cycling...)" : ""}
-    </div>
-    <div class="ctx-sep"></div>
     <div class="ctx-item" data-action="clear-target" data-idx="${turretIdx}">Clear Target</div>
   `);
   setStyle(hudState.turretCtxMenu, { display: "block" });
@@ -51,14 +43,7 @@ export function onCtxItemClick(e: Event) {
   const idx = parseInt((e.target as HTMLElement).dataset.idx!, 10);
   hideTurretCtxMenu();
 
-  if (action === "toggle-power") {
-    const cycling = (getState().player.turretPowerCd?.[idx] || 0) > 0;
-    if (cycling) return;
-    queueFrameAction({
-      type: "toggleSlotDefaultAction",
-      payload: { rack: playerHardpointRack(getState().player), idx },
-    });
-  } else if (action === "clear-target") {
+  if (action === "clear-target") {
     queueFrameAction({
       type: "assignModuleSlotToTarget",
       payload: { slotIdx: idx, targetId: null },

@@ -82,11 +82,10 @@ describe("prediction action replay", () => {
     expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBe(asteroidId);
   });
 
-  it("reapplies a pending module toggle after an older snapshot overwrites local power state", () => {
+  it("reapplies a pending hardpoint selection after an older snapshot overwrites local fire slot", () => {
     const authoritative = makePlayer();
     authoritative.netId = G.P.netId;
-    authoritative.turretPower[0] = false;
-    authoritative.turretPowerCd[0] = 0;
+    authoritative.fireControlSlot = 0;
 
     predictionManager.addInput(frameWithAction([
       { type: "toggleSlotDefaultAction", payload: { rack: "high", idx: 0 } },
@@ -96,8 +95,7 @@ describe("prediction action replay", () => {
     applySnapshotToG(snap, true);
     predictionManager.reconcile(snap);
 
-    expect(G.P.turretPower[0]).toBe(true);
-    expect(G.P.turretPowerCd[0]).toBeGreaterThan(0);
+    expect(G.P.fireControlSlot).toBe(0);
   });
 
   it("applies mining laser snapshot state for host role on full snapshot", () => {

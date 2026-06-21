@@ -52,12 +52,12 @@ describe("GameServer sensor lock resolution", () => {
     server.handleClientInput(clientId, lockFrame(1, enemy.id));
 
     const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
-    for (let i = 0; i < 900; i++) {
+    for (let i = 0; i < 300; i++) {
       tick(1 / 60);
     }
 
     const slot = p.lockQueue.find((s) => s.id === enemy.id);
     expect(slot, JSON.stringify(p.lockQueue)).toBeTruthy();
     expect(slot?.resolving).toBe(false);
-  }, 20000);
+  }, 30000);
 });

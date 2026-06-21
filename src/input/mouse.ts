@@ -46,8 +46,8 @@ export function handleMouseDown(e: MouseEvent): void {
       queueFrameAction({ type: "fireSelectedTurret" });
     }
 
-    // Target locking on click (shift-click or normal)
-    if (!Client.stationOpen && !Client.bridgeOpen) {
+    // Target locking on Ctrl+click
+    if (e.ctrlKey && !Client.stationOpen && !Client.bridgeOpen) {
       const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
       const sys = curSys();
       let locked = false;

@@ -92,11 +92,9 @@ export function updateTractorDial() {
     const inst = getInstance(uid);
     const m = inst ? MODULES[inst.baseId] : null;
     if (m && MODULE_FLAGS.isTractor(m)) {
-      if (getState().player.turretPower?.[i]) {
-        tractorIdx = i;
-        tractorMod = m;
-        break;
-      }
+      tractorIdx = i;
+      tractorMod = m;
+      break;
     }
   }
 

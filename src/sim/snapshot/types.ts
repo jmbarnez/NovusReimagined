@@ -44,11 +44,7 @@ export interface PlayerSnapshot {
   _assignTargetId?: string | null;
   turretTargets?: (string | null)[] | null;
   highTargets?: (string | null)[] | null;
-  slotActive?: Record<string, boolean[]> | null;
-  turretPower?: boolean[] | null;
   turretCds?: number[] | null;
-  turretPowerCd?: number[] | null;
-  slotPowerCd?: Record<string, number[]> | null;
   moduleHp?: Record<string, (number | null)[]> | null;
   fitting?: Record<string, (string | null)[]> | null;
   ore?: Record<string, number> | null;
@@ -74,11 +70,17 @@ export interface PlayerSnapshot {
 
 export interface EntitySnapshot {
   id: string | number;
-  type: "bullet" | "enemyBullet" | "enemy" | "asteroid" | "wreckpiece" | "salvagepickup" | "player";
+  type: "bullet" | "enemyBullet" | "enemy" | "asteroid" | "wreckpiece" | "salvagepickup" | "player" | "beam";
   x: number;
   y: number;
   vx: number;
   vy: number;
+  x1?: number;
+  y1?: number;
+  x2?: number;
+  y2?: number;
+  width?: number;
+  life?: number;
   angle?: number;
   hp?: number;
   maxHp?: number;

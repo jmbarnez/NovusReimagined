@@ -42,7 +42,7 @@
 /* Turret with assigned target */
 .hud-slot.target-assigned { border-color: rgba(60,140,90,0.55); }
 
-.hud-slot.inactive-active { opacity: 0.45; filter: grayscale(0.6); }
+
 
 /* Hotkey badge */
 .hud-slot .sl-badge {
@@ -104,7 +104,6 @@
 .hud-slot .sl-sub.assigned { color: var(--hud-positive); }
 .hud-slot .sl-sub.on { color: var(--hud-positive); }
 .hud-slot .sl-sub.off { color: var(--hud-danger); }
-.hud-slot .sl-sub.cycling { color: #e8c06a; }
 .hud-slot .sl-sub.damaged { color: #ff8844; }
 
 /* LED status indicator */
@@ -132,17 +131,6 @@
   background: #ff8844;
   box-shadow: 0 0 3px rgba(255, 136, 68, 0.5), inset 0 0 1px rgba(0,0,0,0.3);
 }
-.hud-slot .sl-led.cycling {
-  background: #e8c06a;
-  box-shadow: 0 0 3px rgba(232, 192, 106, 0.5), inset 0 0 1px rgba(0,0,0,0.3);
-  animation: led-pulse 1.2s infinite ease-in-out;
-}
-
-@keyframes led-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
 /* Heat bar */
 .hud-slot .sl-heat-track {
   position: absolute;

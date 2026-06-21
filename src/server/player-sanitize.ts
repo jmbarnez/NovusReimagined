@@ -76,30 +76,6 @@ function cloneFitting(value: Player["fitting"], fallback: Player["fitting"], shi
   return out;
 }
 
-function zeroSlotTimers(fitting: Player["fitting"]): Record<string, number[]> {
-  const out: Record<string, number[]> = {};
-  for (const rack of RACK_TYPES) {
-    out[rack] = Array(fitting[rack]?.length ?? 0).fill(0);
-  }
-  return out;
-}
-
-function offlineSlotActive(value: Player["slotActive"], fitting: Player["fitting"], ship: ShipDef): Record<string, boolean[]> {
-  const out: Record<string, boolean[]> = {};
-  const hardpointRack = getHardpointRack(ship);
-  for (const rack of RACK_TYPES) {
-    const n = fitting[rack]?.length ?? 0;
-    if (rack === "high" && hardpointRack === "high") {
-      const source = legacyHardpointSource(value?.high, value?.turret, n, () => false);
-      out[rack] = Array.from({ length: n }, (_, idx) => source[idx] === true);
-      continue;
-    }
-    const source = value?.[rack] ?? [];
-    out[rack] = Array.from({ length: n }, (_, idx) => source[idx] === true);
-  }
-  return out;
-}
-
 function cloneModuleHp(value: Player["moduleHp"], fitting: Player["fitting"], ship: ShipDef): Record<string, (number | null)[]> {
   const out: Record<string, (number | null)[]> = {};
   const hardpointRack = getHardpointRack(ship);
@@ -176,15 +152,11 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
   p.moduleCargo = Array.isArray(incoming.moduleCargo) ? clone(incoming.moduleCargo) : clone(base.moduleCargo);
   p.fitting = cloneFitting(incoming.fitting, base.fitting, ship);
   p.moduleHp = cloneModuleHp(incoming.moduleHp, p.fitting, ship);
-  p.slotActive = offlineSlotActive(incoming.slotActive, p.fitting, ship);
-  p.slotPowerCd = zeroSlotTimers(p.fitting);
   const hardpointRack = getHardpointRack(ship);
-  const hardpointCount = p.fitting[hardpointRack]?.length ?? p.turretPower.length;
+  const hardpointCount = p.fitting[hardpointRack]?.length ?? 0;
   p.turretTargets = Array(hardpointCount).fill(null);
   p.highTargets = Array(p.fitting.high?.length ?? 0).fill(null);
   p.turretCds = Array(hardpointCount).fill(0);
-  p.turretPower = Array(hardpointCount).fill(false);
-  p.turretPowerCd = Array(hardpointCount).fill(0);
   p.fireControlSlot = 0;
   p.targetLock = null;
   p.lockQueue = [];
@@ -251,9 +223,6 @@ export function createDurableCharacterSync(source: Player): Player {
   p.turretTargets = Array(p.turretTargets?.length ?? 0).fill(null);
   p.highTargets = Array(p.highTargets?.length ?? 0).fill(null);
   p.turretCds = Array(p.turretCds?.length ?? 0).fill(0);
-  p.turretPower = Array(p.turretPower?.length ?? 0).fill(false);
-  p.turretPowerCd = Array(p.turretPowerCd?.length ?? 0).fill(0);
-  p.slotPowerCd = zeroSlotTimers(p.fitting);
   p.shootCd = 0;
   p.mineCd = 0;
   p.invincible = 0;

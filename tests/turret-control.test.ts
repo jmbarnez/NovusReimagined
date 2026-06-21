@@ -25,7 +25,6 @@ describe("turret control hardpoint rack", () => {
     G.P.energy = 1_000;
     G.P.ammo.hybrid = 1_000;
     G.P.fitting.high[0] = "start-tu-civ-cannon";
-    G.P.turretPower[0] = true;
     G.P.lockQueue = [{ id: enemy.id, resolving: false, acc: 1 }];
     G.P.turretTargets[0] = enemy.id;
 

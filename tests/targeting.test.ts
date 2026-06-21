@@ -16,8 +16,6 @@ import {
 } from "../src/targeting.js";
 import { SHIPS } from "../src/data/ships.js";
 import { MODULES } from "../src/data/modules.js";
-import { toggleSlotDefaultAction } from "../src/player/player-fitting.js";
-import { respawnPlayer } from "../src/utils/game.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 import { getStats } from "../src/player/player-stats.js";
 import { C } from "../src/config/index.js";
@@ -127,31 +125,7 @@ describe("lock re-click assignment", () => {
   });
 });
 
-describe("server-side slot power", () => {
-  it("toggles a non-local player's fitted hardpoint using that player's cargo", () => {
-    const local = installTestPlayer(makePlayer());
-    local.moduleCargo = [];
 
-    const remote = makePlayer();
-    expect(remote.turretPower[0]).toBe(false);
-
-    toggleSlotDefaultAction("high", 0, remote);
-
-    expect(remote.turretPower[0]).toBe(true);
-    expect(remote.turretPowerCd[0]).toBeGreaterThan(0);
-  });
-
-  it("preserves high-slot hardpoint power arrays after respawn", () => {
-    const local = installTestPlayer(makePlayer());
-    G.GALAXY = buildGalaxy();
-    populateSystem(G.GALAXY[0]!);
-
-    respawnPlayer(local);
-
-    expect(local.turretPower).toHaveLength(local.fitting.high.length);
-    expect(local.turretPowerCd).toHaveLength(local.fitting.high.length);
-  });
-});
 
 describe("target resolution", () => {
   beforeEach(() => {

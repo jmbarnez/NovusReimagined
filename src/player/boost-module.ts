@@ -23,8 +23,7 @@ export function getIonBoostModuleState(
     if (!uid) continue;
     const inst = moduleInstanceForUid(p, uid, cargoMap);
     if (inst?.baseId !== ION_BOOST_MODULE_ID) continue;
-    const active = p.slotActive?.med?.[i] ?? true;
-    const online = active && inst.durability > 0;
+    const online = inst.durability > 0;
     return { fitted: true, online, slotIdx: i, uid };
   }
   return { fitted: false, online: false, slotIdx: -1, uid: null };

@@ -130,11 +130,9 @@ export function respawnPlayer(p: Player = getState().player) {
 
   const fit = p.fitting;
   const hardpointCount = fit[playerHardpointRack(p)]?.length ?? 0;
-  const slotActive: Record<string, boolean[]> = { turret: [], high: [], med: [], low: [] };
   const moduleHp: Record<string, (number | null)[]> = { turret: [], high: [], med: [], low: [] };
   for (const rack of RACK_TYPES) {
     const n = fit[rack].length;
-    slotActive[rack] = Array(n).fill(true);
     moduleHp[rack] = Array(n).fill(null);
     for (let i = 0; i < n; i++) {
       const uid = fit[rack][i];
@@ -146,12 +144,9 @@ export function respawnPlayer(p: Player = getState().player) {
   }
 
   if (isLocal) {
-    PlayerAccess.setSlotActiveAll(slotActive);
     PlayerAccess.setModuleHpAll(moduleHp);
     PlayerAccess.setTurretTargetsAll(Array(hardpointCount).fill(null));
     PlayerAccess.setTurretCdsAll(Array(hardpointCount).fill(0));
-    PlayerAccess.setTurretPowerAll(Array(hardpointCount).fill(false));
-    PlayerAccess.setTurretPowerCdAll(Array(hardpointCount).fill(0));
     PlayerAccess.setCombatBar({ pos: 0.5, dir: 1 });
     if (p.slotHeat) {
       PlayerAccess.setSlotHeatAll({
@@ -162,12 +157,9 @@ export function respawnPlayer(p: Player = getState().player) {
       });
     }
   } else {
-    p.slotActive = slotActive;
     p.moduleHp = moduleHp;
     p.turretTargets = Array(hardpointCount).fill(null);
     p.turretCds = Array(hardpointCount).fill(0);
-    p.turretPower = Array(hardpointCount).fill(false);
-    p.turretPowerCd = Array(hardpointCount).fill(0);
     p.combatBar = { pos: 0.5, dir: 1 };
     if (p.slotHeat) {
       p.slotHeat = {

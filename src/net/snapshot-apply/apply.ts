@@ -5,6 +5,7 @@ import { rebuildSpatialGrid } from "../../utils/spatial.js";
 import { netLog } from "../../ui/net-console.js";
 import { createSnapshotEntityMaps, categorizeSnapshotEntities } from "./entity-maps.js";
 import { applyProjectileSnapshots } from "./projectiles.js";
+import { applyBeamSnapshots } from "./beams.js";
 import { applyLocalPlayerSnapshot, shouldApplyLocalPlayerSnapshot } from "./local-player.js";
 import { applySalvageSnapshots, applyWreckSnapshots } from "./wreck-salvage.js";
 import { applyRemotePlayerSnapshots } from "./remote-players.js";
@@ -32,6 +33,7 @@ export function applySnapshotToG(snap: WorldSnapshot, isFullSnapshot = false): v
   categorizeSnapshotEntities(snap, maps);
 
   applyProjectileSnapshots(snap);
+  applyBeamSnapshots(snap);
   applyWreckSnapshots(maps);
   applySalvageSnapshots(maps, p);
   applyRemotePlayerSnapshots(maps, snap, p, isFullSnapshot);

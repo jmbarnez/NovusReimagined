@@ -119,7 +119,6 @@ export function loadPlayer(): Player {
     }
     if (p.damagedModuleHp) delete p.damagedModuleHp;
     if (!p.moduleHp || typeof p.moduleHp !== "object") p.moduleHp = { turret: [], high: [], med: [], low: [] };
-    if (!p.slotActive || typeof p.slotActive !== "object") p.slotActive = { turret: [], high: [], med: [], low: [] };
     if (!Array.isArray(p.moduleCargo)) p.moduleCargo = [];
     if (!Array.isArray(p.contracts)) p.contracts = [];
     if (!Array.isArray(p.craftQueue)) p.craftQueue = [];

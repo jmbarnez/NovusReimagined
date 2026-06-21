@@ -82,8 +82,7 @@ export const shipStrings: Record<Language, Record<string, string>> = {
     "ship.ready": "RDY",
     "ship.heat": "HEAT",
     "ship.durability": "DURABILITY",
-    "ship.pwrDown": "PWR DN...",
-    "ship.pwrUp": "PWR UP...",
+
     "ship.targetAssign": "→ TARGET",
     "ship.lockAssign": "→ LOCK",
     "ship.allSystems": "All Systems",
@@ -176,8 +175,7 @@ export const shipStrings: Record<Language, Record<string, string>> = {
     "ship.ready": "LISTO",
     "ship.heat": "CALOR",
     "ship.durability": "DURABILIDAD",
-    "ship.pwrDown": "APGANDO...",
-    "ship.pwrUp": "ENCENDIENDO...",
+
     "ship.targetAssign": "→ OBJETIVO",
     "ship.lockAssign": "→ BLOQUEO",
     "ship.allSystems": "Todos los Sistemas",

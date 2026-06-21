@@ -4,7 +4,7 @@ import { MODULES, MODULE_FLAGS } from "../../../data/modules.js";
 import { getHardpointRack, getHardpointSlotCount } from "../../../utils/hardpoints.js";
 import { WEAPON_PROFILES } from "../../../data/weaponProfiles.js";
 import { getInstance } from "../../../utils/items.js";
-import { TURRET_POWER_CYCLE_S } from "../../../constants.js";
+
 import { targetByLockId } from "../../../targeting.js";
 import { getStats, getWeaponProfileForSlot } from "../../../player/player-stats.js";
 import { isOpen } from "../windows.js";
@@ -142,39 +142,34 @@ export function updateShipPanelLive() {
     const m = inst ? MODULES[inst.baseId] : null;
     if (!inst || !m) return;
 
-    // Power
-    const isPowered = p.turretPower?.[idx] ?? false;
-    const powerCd = p.turretPowerCd?.[idx] || 0;
-
-    let powerText = t("ship.offline");
-    let powerCls = "tc-pill offline";
-    if (powerCd > 0) {
-      powerText = isPowered ? t("ship.pwrDown") : t("ship.pwrUp");
-      powerCls = "tc-pill cycling";
-    } else if (isPowered) {
-      powerText = t("ship.online");
-      powerCls = "tc-pill online";
-    }
-
+    // Status pill
     const durPct = Math.round((inst.durability / inst.maxDurability) * 100);
-    if (durPct <= 0) {
-      powerText = t("ship.offline");
-      powerCls = "tc-pill offline";
+    const modOffline = durPct <= 0;
+    const modDamaged = durPct < 100 && durPct > 0;
+
+    let statusText = t("ship.online");
+    let statusCls = "tc-pill online";
+    if (modOffline) {
+      statusText = t("ship.offline");
+      statusCls = "tc-pill offline";
+    } else if (modDamaged) {
+      statusText = t("ship.damagedAbbr");
+      statusCls = "tc-pill damaged";
     }
 
-    if (nodes.lastPower !== powerText) {
-      setText(nodes.powerPill, powerText);
-      nodes.powerPill.className = powerCls;
-      nodes.lastPower = powerText;
+    if (nodes.lastPower !== statusText) {
+      setText(nodes.powerPill, statusText);
+      nodes.powerPill.className = statusCls;
+      nodes.lastPower = statusText;
     }
 
     // Cooldown
     const isWeaponTurret = inst.baseId && m.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m);
     const prof = getWeaponProfileForSlot(idx, p) ?? WEAPON_PROFILES[inst.baseId] ?? WEAPON_PROFILES.default;
-    
+
     let cdPct = 0;
     let cdText = t("ship.ready");
-    
+
     if (isWeaponTurret) {
       const cdVal = p.turretCds?.[idx] || 0;
       if (cdVal > 0 && prof.rate > 0) {
@@ -182,13 +177,6 @@ export function updateShipPanelLive() {
         cdPct = 1 - pct;
         cdText = `${Math.round(cdPct * 100)}%`;
       }
-    }
-    
-    // Cycle delay
-    if (powerCd > 0) {
-      const pct = Math.max(0, Math.min(1, powerCd / TURRET_POWER_CYCLE_S));
-      cdPct = 1 - pct;
-      cdText = `${Math.round(cdPct * 100)}%`;
     }
 
     const cdPctStr = `${cdPct * 100}%`;
@@ -213,8 +201,6 @@ export function updateShipPanelLive() {
       nodes.lastHeatPct = heatPctStr;
     }
 
-    const modOffline = durPct <= 0;
-    const modDamaged = durPct < 100 && durPct > 0;
     const overheat = heatDanger && !modDamaged && !modOffline;
 
     if (nodes.lastHeatDanger !== heatDanger) {

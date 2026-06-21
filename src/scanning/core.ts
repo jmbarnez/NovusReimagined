@@ -5,7 +5,6 @@ import { getSensorContactRangePx } from "../targeting.js";
 import { C } from "../config/index.js";
 import { SHIPS } from "../data/ships.js";
 import { MODULES } from "../data/modules.js";
-import { isSlotOnline } from "../utils/slot-power.js";
 import { getInstance } from "../utils/items.js";
 import { isHeadlessServer } from "../physics/net-input.js";
 
@@ -27,7 +26,7 @@ export function getActiveScannerIndex(p: Player): number {
       const inst = getInstance(uid, p);
       if (!inst || inst.durability <= 0) continue;
       const m = MODULES[inst.baseId];
-      if (m?.isScanner && isSlotOnline(rack, i, p)) return i;
+      if (m?.isScanner && inst.durability > 0) return i;
     }
   }
   return -1;

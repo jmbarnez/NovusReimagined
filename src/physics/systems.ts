@@ -1,5 +1,5 @@
 import { Client } from "../state.js";
-import { getState, PlayerAccess } from "../state-access.js";
+import { PlayerAccess, getState } from "../state-access.js";
 import { updateShip } from "./ship.js";
 import { updateTutorialTrack } from "./tutorial-track.js";
 import { updateCombat, updateProjectiles } from "./combat-physics.js";
@@ -56,23 +56,6 @@ function tutorialTrack(): SimSystem {
     id: "tutorial-track",
     category: "physics",
     run(dt) { updateTutorialTrack(dt, getState().player); },
-  };
-}
-
-function turretPowerCd(): SimSystem {
-  return {
-    id: "turret-power-cd",
-    category: "combat",
-    run(dt) {
-      const p = getState().player;
-      if (!p?.turretPowerCd) return;
-      for (let i = 0; i < p.turretPowerCd.length; i++) {
-        if (p.turretPowerCd[i] > 0) {
-          const nextCd = Math.max(0, p.turretPowerCd[i] - dt);
-          PlayerAccess.setTurretPowerCd(i, nextCd);
-        }
-      }
-    },
   };
 }
 
@@ -205,7 +188,6 @@ export const SIMULATION_SYSTEMS: readonly SimSystem[] = [
   abilities(),
   ships(),
   tutorialTrack(),
-  turretPowerCd(),
   turretCooldowns(),
   combat(),
   ambientDirector(),

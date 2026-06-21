@@ -78,7 +78,7 @@ export function weaponSkillBonus(delivery: WeaponDelivery, p: Player = getState(
 }
 
 function isModuleActive(m: ModuleDef, rack: RackId, idx: number, p: Player): boolean {
-  return rack === playerHardpointRack(p) ? (p.turretPower?.[idx] ?? false) : (p.slotActive?.[rack]?.[idx] ?? true);
+  return true;
 }
 
 function isPlayer(obj: unknown): obj is Player {

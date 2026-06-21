@@ -4,6 +4,7 @@ import {
   getTutorialTrackById,
   trackTotalArcLength,
   TUTORIAL_BELT_CENTER,
+  TUTORIAL_STATION,
 } from "./layout.js";
 import { tutorialKeyStyled, tutorialBarKeyStyled } from "./controls.js";
 import { t } from "../../utils/i18n.js";
@@ -28,14 +29,13 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.pilotingChoice.title"),
     objective: () => t("tutorial.step.pilotingChoice.objective", {
       forwardKey: tutorialKeyStyled("forwardThrust"),
-      reverseKey: tutorialKeyStyled("reverseThrust"),
       leftKey: tutorialKeyStyled("turnLeft"),
       rightKey: tutorialKeyStyled("turnRight"),
-      settingsKey: tutorialKeyStyled("settings"),
     }),
     zone: { x: 0, y: 0, r: 0 },
     beaconColor: 0x55aaff,
     noDimmer: true,
+    guideTarget: TUTORIAL_STATION,
     onEnter(ctx) {
       ctx.patchSnapshot({ pilotingTried: false });
     },
@@ -51,6 +51,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     zone: { x: 0, y: 0, r: 0 },
     beaconColor: 0x55aaff,
     noDimmer: true,
+    guideTarget: TUTORIAL_STATION,
     onEnter(ctx) {
       ctx.patchSnapshot({ boostUsed: false });
     },
@@ -136,7 +137,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.targeting.title"),
     highlight: "#hud-scanner-dock",
     objective() {
-      const lockAction = `<span class="tutorial-keybind">${t("tutorial.action.shiftLeftClick")}</span>`;
+      const lockAction = `<span class="tutorial-keybind">${t("tutorial.action.ctrlLeftClick")}</span>`;
       return t("tutorial.step.targeting.objectiveDirect", { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake"), lockAction });
     },
     zone: tutorialRegionZone("tut-mining"),

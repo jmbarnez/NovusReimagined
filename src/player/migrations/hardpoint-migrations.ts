@@ -20,8 +20,6 @@ export function normalizeHardpointArrays(p: Player): void {
   p.turretTargets = copyPaddedArray(p.turretTargets, hardpointCount, () => null);
   p.highTargets = copyPaddedArray(p.highTargets, highCount, () => null);
   p.turretCds = copyPaddedArray(p.turretCds, hardpointCount, () => 0);
-  p.turretPower = copyPaddedArray(p.turretPower, hardpointCount, () => false);
-  p.turretPowerCd = copyPaddedArray(p.turretPowerCd, hardpointCount, () => 0);
 }
 
 export function migrateLegacyHardpointFit(p: Player): void {
@@ -34,10 +32,6 @@ export function migrateLegacyHardpointFit(p: Player): void {
   if (p.moduleHp && typeof p.moduleHp === "object") {
     p.moduleHp.high = mergeLegacyTurretSlotsIntoHigh(p.moduleHp.high, p.moduleHp.turret, highCount, () => null);
     p.moduleHp.turret = [];
-  }
-  if (p.slotActive && typeof p.slotActive === "object") {
-    p.slotActive.high = mergeLegacyTurretSlotsIntoHigh(p.slotActive.high, p.slotActive.turret, highCount, () => true);
-    p.slotActive.turret = [];
   }
 }
 
@@ -56,18 +50,10 @@ export function applyStarterTrainingFit(p: Player): void {
   p.turretTargets = Array(hardpointCount).fill(null);
   p.highTargets = Array(fit.high?.length ?? 0).fill(null);
   p.turretCds = Array(hardpointCount).fill(0);
-  p.turretPower = Array(hardpointCount).fill(false);
-  p.turretPowerCd = Array(hardpointCount).fill(0);
   p.moduleHp = {
     turret: Array(fit.turret.length).fill(null),
     high: Array(fit.high?.length ?? 0).fill(null),
     med: Array(fit.med?.length ?? 0).fill(null),
     low: Array(fit.low?.length ?? 0).fill(null),
-  };
-  p.slotActive = {
-    turret: Array(fit.turret.length).fill(true),
-    high: Array(fit.high?.length ?? 0).fill(true),
-    med: Array(fit.med?.length ?? 0).fill(true),
-    low: Array(fit.low?.length ?? 0).fill(true),
   };
 }

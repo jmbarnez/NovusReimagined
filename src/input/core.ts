@@ -29,8 +29,14 @@ export function getUiPointerBlockSelector(): string {
     "#pause-overlay",
     "#title-screen",
     ".window",
-    "#hud-bottom",
     "#hud-minimap",
+    "#hud-overlay > *",
+    "#hud-tutorial",
+    "#hud-tutorial *",
+    "#turret-ctx-menu",
+    "#turret-ctx-menu *",
+    "#enemy-ctx-menu",
+    "#enemy-ctx-menu *",
     "[id^='hud-win-']",
   ].join(", ");
 }

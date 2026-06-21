@@ -1,6 +1,5 @@
 import { Client, isGameplayPaused, type Player } from "../state.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
-import { isSlotOnline } from "../utils/slot-power.js";
 import { PlayerAccess, getState } from "../state-access.js";
 import { floatText } from "../utils/fx.js";
 import { t } from "../utils/i18n.js";
@@ -9,7 +8,11 @@ import { C } from "../config/index.js";
 import { playerShoot } from "./player-shoot.js";
 
 function isTurretReady(idx: number, p: Player): boolean {
-  return isSlotOnline(playerHardpointRack(p), idx, p);
+  const rack = playerHardpointRack(p);
+  const uid = p.fitting?.[rack]?.[idx];
+  if (!uid) return false;
+  const inst = p.moduleCargo.find(item => item.uid === uid);
+  return !!inst && inst.durability > 0;
 }
 
 export function fireSelectedTurret(p: Player = getState().player) {

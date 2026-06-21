@@ -1,11 +1,12 @@
 import { Client, type Player } from "../../state.js";
 import { PlayerAccess, MiningAccess, SalvagerAccess, TractorAccess, getState } from "../../state-access.js";
+import { cloneArrayRecord } from "./converters.js";
 import { invalidate } from "../../player/player-stats.js";
 import type { WorldSnapshot } from "../../sim/snapshot.js";
 import { populateSystem } from "../../world-gen.js";
 import { netLog } from "../../ui/net-console.js";
 import { emit } from "../../events.js";
-import { booleanArrayRecordsEqual, cloneArrayRecord } from "./converters.js";
+
 
 export function shouldApplyLocalPlayerSnapshot(p: Player | null, snap: WorldSnapshot): boolean {
   return !(
@@ -109,24 +110,8 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
       PlayerAccess.setHighTarget(i, snap.player.highTargets[i], p);
     }
   }
-  let slotActiveChanged = false;
-  if (snap.player.slotActive) {
-    if (!booleanArrayRecordsEqual(p.slotActive, snap.player.slotActive)) {
-      PlayerAccess.setSlotActiveAll(cloneArrayRecord(snap.player.slotActive), p);
-      slotActiveChanged = true;
-    }
-  }
-  if (snap.player.turretPower) {
-    PlayerAccess.setTurretPowerAll([...snap.player.turretPower], p);
-  }
   if (snap.player.turretCds) {
     PlayerAccess.setTurretCdsAll([...snap.player.turretCds], p);
-  }
-  if (snap.player.turretPowerCd) {
-    PlayerAccess.setTurretPowerCdAll([...snap.player.turretPowerCd], p);
-  }
-  if (snap.player.slotPowerCd) {
-    PlayerAccess.setSlotPowerCdAll(cloneArrayRecord(snap.player.slotPowerCd), p);
   }
   if (snap.player.moduleHp) {
     PlayerAccess.setModuleHpAll(cloneArrayRecord(snap.player.moduleHp), p);
@@ -136,7 +121,7 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
   }
 
   emit("inventory:changed");
-  if (slotActiveChanged) {
+  if (snap.player.moduleHp) {
     invalidate(p);
   }
   if (snap.player.miningLaser) {

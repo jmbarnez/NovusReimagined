@@ -18,31 +18,6 @@ export const playerFittingAccess = {
     p.moduleHp[rack][idx] = hp;
   },
 
-  setSlotActive(rack: string, idx: number, active: boolean, p: Player = _G.P) {
-    if (!p.slotActive[rack]) p.slotActive[rack] = [];
-    p.slotActive[rack][idx] = active;
-  },
-
-  setSlotPowerCd(rack: string, idx: number, cd: number, p: Player = _G.P) {
-    if (!p.slotPowerCd) p.slotPowerCd = {};
-    if (!p.slotPowerCd[rack]) p.slotPowerCd[rack] = [];
-    p.slotPowerCd[rack][idx] = cd;
-  },
-
-  setSlotPowerCdAll(record: Record<string, number[]>, p: Player = _G.P) {
-    p.slotPowerCd = record;
-  },
-
-  setTurretPower(idx: number, powered: boolean, p: Player = _G.P) {
-    if (!p.turretPower) p.turretPower = [];
-    p.turretPower[idx] = powered;
-  },
-
-  setTurretPowerCd(idx: number, cd: number, p: Player = _G.P) {
-    if (!p.turretPowerCd) p.turretPowerCd = [];
-    p.turretPowerCd[idx] = cd;
-  },
-
   setTurretCd(idx: number, cd: number, p: Player = _G.P) {
     if (!p.turretCds) p.turretCds = [];
     p.turretCds[idx] = cd;
@@ -100,10 +75,6 @@ export const playerFittingAccess = {
     p.moduleCargo = cargo;
   },
 
-  setSlotActiveAll(record: Record<string, boolean[]>, p: Player = _G.P) {
-    p.slotActive = record;
-  },
-
   setModuleHpAll(record: Record<string, (number | null)[]>, p: Player = _G.P) {
     p.moduleHp = record;
   },
@@ -114,14 +85,6 @@ export const playerFittingAccess = {
 
   setTurretCdsAll(cds: number[], p: Player = _G.P) {
     p.turretCds = cds;
-  },
-
-  setTurretPowerAll(powers: boolean[], p: Player = _G.P) {
-    p.turretPower = powers;
-  },
-
-  setTurretPowerCdAll(cds: number[], p: Player = _G.P) {
-    p.turretPowerCd = cds;
   },
 
   setSlotHeatAll(heat: Record<string, number[]>, p: Player = _G.P) {

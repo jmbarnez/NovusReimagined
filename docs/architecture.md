@@ -354,7 +354,6 @@ World construction and population subsystems.
 | `G.players` | physics, spatial, net | main.ts, net client | `registerPlayer()` / `PlayerAccess.addServerPlayer()` |
 | `G.spatialGrid` | physics, combat | main.ts | Via `WorldAccess.setSpatialGrid()` |
 | `G.P.fitting`, `G.P.moduleCargo` | station/inventory UI, player-stats | `sim/commands.ts` handlers | Client queues commands; snapshot apply mirrors server state |
-| `G.P.slotActive` | physics/ship.ts, ui/hud-overlay | ui/hud-overlay.ts | UI-driven only |
 | `G.P.shield/hp/structure` | ui/hud-overlay, station | combat/damage-display.ts, station repair | Damage flows through `damagePlayer()` in `combat/damage-display.ts` |
 | `G.P.craftQueue` | station/hub industry UI | `sim/commands.ts`, physics.ts | Queue/cancel via commands; completion on server tick |
 | `G.P.contracts`, `G.P.stationOffers*` | contracts UI/HUD | `sim/commands.ts` | Offer lifecycle on dock/accept/turn-in/undock |

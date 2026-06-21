@@ -35,15 +35,11 @@ export function processModuleCapDrain(
       const m = MODULES[inst.baseId];
       if (!m?.isActive || !m.capDrainPerSec) continue;
       if (MODULE_FLAGS.isTractor(m)) continue;
-      if (!(p.slotActive?.[rack]?.[i] ?? true)) continue;
       if (inst.baseId === ION_BOOST_MODULE_ID && !isThrusting) continue;
       const drain = m.capDrainPerSec * dt;
       if (p.energy >= drain) {
         PlayerAccess.setEnergy(p.energy - drain, p);
         capDrained = true;
-      } else {
-        PlayerAccess.setSlotActive(rack, i, false, p);
-        anyStateChanged = true;
       }
     }
   }

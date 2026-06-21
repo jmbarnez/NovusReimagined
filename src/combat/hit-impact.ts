@@ -1,4 +1,4 @@
-import { spawnImpactFlash, spawnParticles } from "../utils/fx.js";
+import { spawnCollisionFx, spawnParticles } from "../utils/fx.js";
 import { DMG_COLORS, showDamageNumber } from "./damage-display.js";
 import { triggerShieldHit, triggerStructureHit } from "../render/entity-visuals.js";
 
@@ -28,9 +28,11 @@ export function spawnHitImpactVisuals(opts: SpawnHitImpactOptions): void {
   if (layer === "miss") {
     spawnParticles(impactX, impactY, color, 1, 50);
   } else if (layer === "asteroid" || layer === "mining") {
-    spawnParticles(impactX, impactY, color, 1, 50);
+    spawnCollisionFx({ x: impactX, y: impactY, nx: 0, ny: 0, intensity: 40, material: "ore", tint: color });
+  } else if (layer === "shield") {
+    spawnCollisionFx({ x: impactX, y: impactY, nx: 0, ny: 0, intensity: 60, material: "shield", tint: color });
   } else {
-    spawnImpactFlash(impactX, impactY, color);
+    spawnCollisionFx({ x: impactX, y: impactY, nx: 0, ny: 0, intensity: 60, material: "metal", tint: color });
   }
 }
 

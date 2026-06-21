@@ -10,8 +10,10 @@ import type { Asteroid } from "../types/asteroid.js";
 import type { Gate, Station } from "../types/station.js";
 import type { System } from "../types/system.js";
 import { liveEnemies, liveAsteroids } from "../utils/game.js";
-import { angleDiff, rayCircleSurfaceHit } from "../utils/math.js";
+import { angleDiff } from "../utils/math.js";
+import { harvestAsteroid, destroyAsteroid } from "../utils/mining.js";
 import { getEnemyTurretOrigin } from "../combat/turret-origin.js";
+import { asteroidSegmentPolygonHit } from "./combat-physics.js";
 import { SHIPS } from "../data/ships.js";
 import { isHostile } from "../combat/factions.js";
 import { pickHostileTarget } from "./npc-ai.js";
@@ -298,18 +300,29 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
           e.vy *= 0.95;
           e.angle += angleDiff(e.angle, Math.atan2(dy, dx)) * 0.1;
 
-          // Industrial mining beam visual effect
+          // Industrial mining beam visual effect — precise polygon surface hit
           const origin = getEnemyTurretOrigin(e);
-          const surface = rayCircleSurfaceHit(origin.x, origin.y, asteroid.x, asteroid.y, asteroid.radius);
+          const hit = asteroidSegmentPolygonHit(origin.x, origin.y, asteroid.x, asteroid.y, asteroid, 0);
+          const surfaceX = hit ? hit.x : asteroid.x;
+          const surfaceY = hit ? hit.y : asteroid.y;
           addBeam({
             x1: origin.x,
             y1: origin.y,
-            x2: surface.x,
-            y2: surface.y,
+            x2: surfaceX,
+            y2: surfaceY,
             color: "#00ffcc",
             width: 3.0,
             life: 0.5,
           });
+
+          const result = harvestAsteroid(asteroid, 0.4);
+          if (result.depleted) {
+            destroyAsteroid(asteroid, true, 0.4);
+            ts.mineTargetId = undefined;
+            ts.task = "patrol";
+            ts.taskTimer = 15.0;
+            pickRandomPatrolWp(ts);
+          }
 
           _miningLaserHum -= dt;
           if (_miningLaserHum <= 0) {

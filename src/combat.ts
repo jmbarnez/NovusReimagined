@@ -3,7 +3,7 @@ import { t } from "./utils/i18n.js";
 import { addXp, addSkillXp } from "./player/player-data.js";
 import { WEAPON_SKILL, type WeaponDelivery } from "./data/skills.js";
 import { XP_PER_KILL, RESPAWN_S, PLAYER_PARTICIPATION_WINDOW_MS } from "./constants.js";
-import { floatText, spawnImpactFlash, spawnExplosion } from "./utils/fx.js";
+import { floatText, spawnCollisionFx, spawnExplosion } from "./utils/fx.js";
 import { removeSensorLock } from "./targeting.js";
 import { logEvent } from "./feedback.js";
 import { progressMissions } from "./data/missions.js";
@@ -62,7 +62,7 @@ export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner
   }
   
   showDamageNumber(e.x, e.y - 14, dmg, displayType, "playerToEnemy");
-  spawnImpactFlash(px || e.x, py || e.y, displayType === "shield" ? "#44ccff" : "#ff4422");
+  spawnCollisionFx({ x: px || e.x, y: py || e.y, nx: 0, ny: 0, intensity: 60, material: displayType === "shield" ? "shield" : "metal", tint: displayType === "shield" ? "#44ccff" : "#ff4422" });
   if (e.hp <= 0 && (e.structure ?? 0) <= 0) killEnemy(e);
 }
 

@@ -1,9 +1,8 @@
-import { random, rayCircleSurfaceHit } from "../utils/math.js";
+import { random } from "../utils/math.js";
 import { Client, isGameplayPaused, type Player } from "../state.js";
 import { MiningAccess, PlayerAccess, getState, WorldAccess } from "../state-access.js";
 import { getStats } from "../player/player-stats.js";
-import { spawnMiningSparks } from "../utils/fx.js";
-import { getAsteroidColRadius } from "../utils/asteroid-helpers.js";
+import { spawnCollisionFx } from "../utils/fx.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import {
   forEachFittedModuleSlot,
@@ -15,22 +14,20 @@ import { damagePlayer, showDamageNumber } from "../combat/damage-display.js";
 import { getPlayerTurretOrigin } from "../combat/turret-origin.js";
 import { getPlayerInput } from "../player/input-state.js";
 import { harvestAsteroid, destroyAsteroid } from "../utils/mining.js";
+import { isPointInAsteroid, asteroidSegmentPolygonHit } from "./combat-physics.js";
+import type { Asteroid } from "../types/asteroid.js";
 
 let _miningHumTimer = 0;
 let _miningSparkTimer = 0;
 
-/** Find the nearest non-depleted asteroid within tolerance of the given point. */
-function findAsteroidAtCursor(sys: ReturnType<typeof getState>["GALAXY"][number] | undefined, wx: number, wy: number, tolerance: number) {
+/** Find the non-depleted asteroid whose polygon contains the given world point. */
+function findAsteroidAtPoint(sys: ReturnType<typeof getState>["GALAXY"][number] | undefined, wx: number, wy: number): Asteroid | null {
   if (!sys) return null;
-  let best: { ast: typeof sys.asteroids[number]; dist: number } | null = null;
   for (const ast of sys.asteroids) {
     if (ast.depleted || ast.hp <= 0) continue;
-    const dist = Math.hypot(ast.x - wx, ast.y - wy);
-    if (dist <= ast.radius + tolerance && (!best || dist < best.dist)) {
-      best = { ast, dist };
-    }
+    if (isPointInAsteroid(wx, wy, ast, 0)) return ast;
   }
-  return best?.ast ?? null;
+  return null;
 }
 
 export function updateMining(dt: number, p: Player) {
@@ -77,8 +74,8 @@ export function updateMining(dt: number, p: Player) {
       targetY = origin.y + dy * scale;
     }
 
-    // Find asteroid near the cursor (generous tolerance for feel)
-    const ast = findAsteroidAtCursor(sys, targetX, targetY, 40);
+    // Find asteroid whose polygon contains the cursor (no auto-lock snap)
+    const ast = findAsteroidAtPoint(sys, targetX, targetY);
 
     const energyCost = 10 * dt;
     if (p.energy < energyCost) {
@@ -88,17 +85,33 @@ export function updateMining(dt: number, p: Player) {
     PlayerAccess.setEnergy(p.energy - energyCost, p);
 
     if (ast) {
-      const astColR = getAsteroidColRadius(ast);
-      const surface = rayCircleSurfaceHit(origin.x, origin.y, ast.x, ast.y, astColR);
+      // Precise polygon surface hit — beam stops exactly at the asteroid edge
+      const hit = asteroidSegmentPolygonHit(origin.x, origin.y, targetX, targetY, ast, 0);
+      let surfaceX: number, surfaceY: number, hitNx: number, hitNy: number;
+      if (hit) {
+        surfaceX = hit.x;
+        surfaceY = hit.y;
+      } else {
+        // Cursor is inside the asteroid but origin is too — use cursor as fallback
+        surfaceX = targetX;
+        surfaceY = targetY;
+      }
+      // Surface normal = outward direction from asteroid centre to hit point
+      const ndx = surfaceX - ast.x;
+      const ndy = surfaceY - ast.y;
+      const nlen = Math.hypot(ndx, ndy) || 1;
+      hitNx = ndx / nlen;
+      hitNy = ndy / nlen;
+
       MiningAccess.update({
         active: true,
         x1: origin.x,
         y1: origin.y,
-        x2: surface.x,
-        y2: surface.y,
-        hitR: astColR,
-        hitNx: surface.nx,
-        hitNy: surface.ny,
+        x2: surfaceX,
+        y2: surfaceY,
+        hitR: ast.radius,
+        hitNx,
+        hitNy,
         phase: (p.miningLaser?.phase || 0) + dt * 18,
       }, p);
       beamSet = true;
@@ -108,7 +121,7 @@ export function updateMining(dt: number, p: Player) {
         if (_miningHumTimer <= 0) {
           WorldAccess.queueEffect({
             type: "industrialBeam",
-            payload: { delivery: "mining", x: surface.x, y: surface.y },
+            payload: { delivery: "mining", x: surfaceX, y: surfaceY },
           });
           _miningHumTimer = 0.5;
         }
@@ -116,7 +129,7 @@ export function updateMining(dt: number, p: Player) {
         if (_miningSparkTimer <= 0) {
           _miningSparkTimer = 0.11 + random() * 0.07;
           const sparkColor = p.miningLaser?.oreColor || "#c8a060";
-          spawnMiningSparks(surface.x, surface.y, surface.nx, surface.ny, sparkColor, 1.0);
+          spawnCollisionFx({ x: surfaceX, y: surfaceY, nx: hitNx, ny: hitNy, intensity: 40, material: "ore", tint: sparkColor });
         }
       }
 
@@ -127,12 +140,12 @@ export function updateMining(dt: number, p: Player) {
 
       const result = harvestAsteroid(ast, st.miningMult);
       if (result.dmg > 0) {
-        showDamageNumber(surface.x, surface.y, Math.round(result.dmg), "mining");
+        showDamageNumber(surfaceX, surfaceY, Math.round(result.dmg), "mining");
       }
       if (p === getState().player) {
         WorldAccess.queueEffect({
           type: "impact",
-          payload: { x: surface.x, y: surface.y, color: "#ff8822", delivery: "mining" },
+          payload: { x: surfaceX, y: surfaceY, color: "#ff8822", delivery: "mining" },
         });
       }
       PlayerAccess.setMineCd(0.45, p);
@@ -144,7 +157,7 @@ export function updateMining(dt: number, p: Player) {
       }
       if (p === getState().player) {
         const oreColor = p.miningLaser?.oreColor || "#a0a5aa";
-        spawnMiningSparks(surface.x, surface.y, surface.nx, surface.ny, oreColor, 1.4);
+        spawnCollisionFx({ x: surfaceX, y: surfaceY, nx: hitNx, ny: hitNy, intensity: 56, material: "ore", tint: oreColor });
       }
       if (!result.depleted) return;
 

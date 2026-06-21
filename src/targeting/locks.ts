@@ -190,7 +190,6 @@ function tryAutoAssignSpecialTurret(id: string, isAst: boolean, isPiece: boolean
     if (!uid) continue;
     const m = getFittedHardpointModule(p, i);
     if (!m || !acceptsSpecialResourceTarget(m, isAst, isPiece)) continue;
-    if (!(p.turretPower?.[i])) continue;
     if (p.turretTargets?.[i]) continue;
     candidates.push(i);
   }
@@ -214,7 +213,6 @@ function autoFillUnboundWeaponTurrets(p: Player = getState().player): void {
     if (!uid) continue;
     const m = getFittedHardpointModule(p, i);
     if (!m || !isWeaponHardpointModule(m)) continue;
-    if (!p.turretPower?.[i]) continue;
     if (p.turretTargets?.[i]) continue;
     setPlayerTurretTarget(p, i, firstEnemyLock, true);
   }
@@ -258,7 +256,7 @@ export function updateSensorLocks(dt: number, st: ComputedStats, p: Player = get
           const turretSlot = p.fireControlSlot ?? 0;
           const m = getFittedHardpointModule(p, turretSlot);
           if (m && isWeaponHardpointModule(m)) {
-            if ((p.turretPower?.[turretSlot]) && !(p.turretTargets?.[turretSlot])) {
+            if (!(p.turretTargets?.[turretSlot])) {
               setPlayerTurretTarget(p, turretSlot, target.id, true);
             }
           }

@@ -14,7 +14,7 @@
  * The spatial grid is rebuilt between passes so position corrections are
  * reflected in the broad-phase.
  */
-import { getState, PlayerAccess } from "../state-access.js";
+import { getState, PlayerAccess, WorldAccess } from "../state-access.js";
 import { curSys, allActivePlayers } from "../utils/game.js";
 import { rebuildSpatialGrid, type SpatialQueryResult } from "../utils/spatial.js";
 import {
@@ -39,7 +39,7 @@ import {
   getMomentOfInertia,
 } from "../utils/collision-helpers.js";
 import { getAsteroidColRadius } from "../utils/asteroid-helpers.js";
-import { spawnCollisionSparks } from "../utils/fx.js";
+import { spawnCollisionFx } from "../utils/fx.js";
 import { isPointInAsteroid } from "./combat-physics.js";
 import type { Player } from "../state.js";
 import type { Enemy } from "../types/enemy.js";
@@ -256,15 +256,17 @@ function resolvePlayerCollisions(p: Player): void {
       const mA = ast.radius * ast.radius * ASTEROID_DENSITY;
       const iA = getMomentOfInertia(mA, ast.radius);
       const [cx, cy] = contactPoint(p.x, p.y, playerR, ast.x, ast.y, h.radius, nx, ny);
+      // Sparks on every contact
+      const sparkIntensity = Math.max(50, Math.hypot(p.vx || 0, p.vy || 0));
+      spawnCollisionFx({ x: cx, y: cy, nx, ny, intensity: sparkIntensity });
+      WorldAccess.queueEffect({
+        type: "impact",
+        payload: { x: cx, y: cy, color: "#ffcc66", delivery: "projectile" },
+      });
       const res = resolveRigidCollision(p, ast, playerMass, mA, playerI, iA, nx, ny, depth, COLLISION_RESTITUTION, COLLISION_FRICTION, cx, cy, p.va, ast.spinVel);
       if (res.dav1) PlayerAccess.updatePhysics({ va: p.va + res.dav1 }, p);
       ast.spinVel += res.dav2;
 
-      if (res.closing > 30) {
-        const cX = p.x - nx * (playerR * 0.5);
-        const cY = p.y - ny * (playerR * 0.5);
-        spawnCollisionSparks(cX, cY, nx, ny, res.closing, "#ffcc66");
-      }
       const id = p.netId ?? p.shipId;
       if (res.closing > COLLISION_DMG_THRESHOLD && getCollisionCooldown(id) <= 0) {
         const dmg = (res.closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE;
@@ -281,15 +283,16 @@ function resolvePlayerCollisions(p: Player): void {
       const enMass = getEnemyMass(en.type);
       const enI = getMomentOfInertia(enMass, enR);
       const [cx, cy] = contactPoint(p.x, p.y, playerR, en.x, en.y, enR, nx, ny);
+      // Sparks on every contact
+      const sparkIntensity = Math.max(50, Math.hypot(p.vx || 0, p.vy || 0));
+      spawnCollisionFx({ x: cx, y: cy, nx, ny, intensity: sparkIntensity });
+      WorldAccess.queueEffect({
+        type: "impact",
+        payload: { x: cx, y: cy, color: "#ffcc66", delivery: "projectile" },
+      });
       const res = resolveRigidCollision(p, en, playerMass, enMass, playerI, enI, nx, ny, overlap, COLLISION_RESTITUTION, COLLISION_FRICTION, cx, cy, p.va, en.angularVel);
       if (res.dav1) PlayerAccess.updatePhysics({ va: p.va + res.dav1 }, p);
       en.angularVel += res.dav2;
-
-      if (res.closing > 30) {
-        const cX = p.x - nx * (playerR * 0.5);
-        const cY = p.y - ny * (playerR * 0.5);
-        spawnCollisionSparks(cX, cY, nx, ny, res.closing, "#ff8844");
-      }
       const id = p.netId ?? p.shipId;
       if (res.closing > COLLISION_DMG_THRESHOLD && getCollisionCooldown(id) <= 0) {
         const dmg = (res.closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.5;
@@ -307,19 +310,21 @@ function resolvePlayerCollisions(p: Player): void {
       const pieceMass = piece.radius * piece.radius * WRECK_DENSITY;
       const pieceI = getMomentOfInertia(pieceMass, piece.radius);
       const [cx, cy] = contactPoint(p.x, p.y, playerR, piece.x, piece.y, piece.radius, wnx, wny);
+      // Sparks on every contact
+      const sparkIntensity = Math.max(50, Math.hypot(p.vx || 0, p.vy || 0));
+      spawnCollisionFx({ x: cx, y: cy, nx: wnx, ny: wny, intensity: sparkIntensity });
+      WorldAccess.queueEffect({
+        type: "impact",
+        payload: { x: cx, y: cy, color: "#ffcc66", delivery: "projectile" },
+      });
       const res = resolveRigidCollision(p, piece, playerMass, pieceMass, playerI, pieceI, wnx, wny, overlap, COLLISION_RESTITUTION, COLLISION_FRICTION, cx, cy, p.va, piece.angularVel);
       if (res.dav1) PlayerAccess.updatePhysics({ va: p.va + res.dav1 }, p);
       piece.angularVel += res.dav2;
 
-      if (res.closing > 30) {
-        const cX = p.x - wnx * (playerR * 0.5);
-        const cY = p.y - wny * (playerR * 0.5);
-        spawnCollisionSparks(cX, cY, wnx, wny, res.closing, "#aa88ff");
-      }
       const id = p.netId ?? p.shipId;
       if (res.closing > COLLISION_DMG_THRESHOLD && getCollisionCooldown(id) <= 0) {
         const dmg = (res.closing - COLLISION_DMG_THRESHOLD) * COLLISION_DMG_SCALE * 0.4;
-        damagePlayer(dmg, piece.x, piece.y, {}, p);
+        damagePlayer(dmg, cx, cy, {}, p);
         setCollisionCooldown(id, COLLISION_COOLDOWN);
       }
     }
@@ -368,6 +373,12 @@ function resolveNpcCollisions(): void {
       const mA = a.radius * a.radius * ASTEROID_DENSITY;
       const iA = getMomentOfInertia(mA, a.radius);
       const [cx, cy] = contactPoint(e.x, e.y, enemyR, a.x, a.y, aR, nx, ny);
+      const npcIntensity = Math.max(50, Math.hypot(e.vx || 0, e.vy || 0));
+      spawnCollisionFx({ x: cx, y: cy, nx, ny, intensity: npcIntensity });
+      WorldAccess.queueEffect({
+        type: "impact",
+        payload: { x: cx, y: cy, color: "#ffcc66", delivery: "projectile" },
+      });
       const res = resolveRigidCollision(e, a, enemyMass, mA, enemyI, iA, nx, ny, overlap, COLLISION_RESTITUTION, COLLISION_FRICTION, cx, cy, e.angularVel, a.spinVel);
       e.angularVel += res.dav1;
       a.spinVel += res.dav2;
@@ -375,6 +386,7 @@ function resolveNpcCollisions(): void {
   }
 
   // Asteroid ↔ asteroid (brute force — typically small N)
+  // Uses polygon-based SAT collision for precision, matching the visual shape.
   for (let i = 0; i < asteroids.length; i++) {
     const a1 = asteroids[i];
     const r1 = getAsteroidColRadius(a1);
@@ -387,14 +399,28 @@ function resolveNpcCollisions(): void {
       const dist = Math.hypot(dx, dy);
       const r2 = getAsteroidColRadius(a2);
       const minDist = r1 + r2;
+      // Broad-phase: skip if bounding circles don't overlap
       if (dist >= minDist || dist < 0.001) continue;
-      const overlap = minDist - dist;
-      // Normal points from a2 → a1 (e2 → e1)
-      const nx = -dx / dist;
-      const ny = -dy / dist;
+      // Narrow-phase: polygon SAT collision
+      asteroidShapeToWorld(a1, _worldPolyA);
+      asteroidShapeToWorld(a2, _worldPolyB);
+      const info = polygonCollisionInfo(_worldPolyA, _worldPolyB);
+      if (!info) continue;
+      // Normal points from a2 → a1 (e2 → e1), matching polygonCollisionInfo convention
+      const nx = info.nx;
+      const ny = info.ny;
+      const overlap = info.depth;
       const m2 = a2.radius * a2.radius * ASTEROID_DENSITY;
       const i2 = getMomentOfInertia(m2, a2.radius);
       const [cx, cy] = contactPoint(a1.x, a1.y, r1, a2.x, a2.y, r2, nx, ny);
+      const relVx = (a2.vx || 0) - (a1.vx || 0);
+      const relVy = (a2.vy || 0) - (a1.vy || 0);
+      const astIntensity = Math.max(50, Math.hypot(relVx, relVy));
+      spawnCollisionFx({ x: cx, y: cy, nx, ny, intensity: astIntensity });
+      WorldAccess.queueEffect({
+        type: "impact",
+        payload: { x: cx, y: cy, color: "#ffcc66", delivery: "projectile" },
+      });
       const res = resolveRigidCollision(a1, a2, m1, m2, i1, i2, nx, ny, overlap, COLLISION_RESTITUTION, COLLISION_FRICTION, cx, cy, a1.spinVel, a2.spinVel);
       a1.spinVel += res.dav1;
       a2.spinVel += res.dav2;

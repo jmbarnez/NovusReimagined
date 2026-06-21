@@ -48,6 +48,16 @@ function snapshotEntities(state: GameState, subject: Player): EntitySnapshot[] {
     });
   }
 
+  for (const b of state.beams) {
+    entities.push({
+      id: b.id,
+      type: "beam",
+      x: q(b.x1), y: q(b.y1), vx: q(b.x2 - b.x1), vy: q(b.y2 - b.y1),
+      x1: q(b.x1), y1: q(b.y1), x2: q(b.x2), y2: q(b.y2),
+      color: b.color, width: b.width, life: q(b.life),
+    });
+  }
+
   const sys = state.GALAXY[subject.sysIdx] || state.GALAXY[0];
   if (sys) {
     for (const en of sys.enemies) {
@@ -167,11 +177,7 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
       _assignTargetId: getAssignTargetId(subject.netId ?? subject.shipId),
       turretTargets: subject.turretTargets ? [ ...subject.turretTargets ] : null,
       highTargets: subject.highTargets ? [ ...subject.highTargets ] : null,
-      slotActive: subject.slotActive ? JSON.parse(JSON.stringify(subject.slotActive)) : null,
-      turretPower: subject.turretPower ? [ ...subject.turretPower ] : null,
       turretCds: subject.turretCds ? [ ...subject.turretCds ] : null,
-      turretPowerCd: subject.turretPowerCd ? [ ...subject.turretPowerCd ] : null,
-      slotPowerCd: subject.slotPowerCd ? JSON.parse(JSON.stringify(subject.slotPowerCd)) : null,
       moduleHp: subject.moduleHp ? JSON.parse(JSON.stringify(subject.moduleHp)) : null,
       fitting: subject.fitting ? JSON.parse(JSON.stringify(subject.fitting)) : null,
       ore: subject.ore ? { ...subject.ore } : null,

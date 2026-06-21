@@ -19,7 +19,7 @@ import { getState } from "../state-access.js";
 import type { System } from "../types/system.js";
 import { getNovusPrimeIdx } from "./galaxy-build.js";
 import { buildTutorialHiddenSite, seedHiddenSites } from "./hidden-sites.js";
-import { normalizeComposition, sortedCompositionEntries, type OreComposition } from "../utils/ore-naming.js";
+import { normalizeComposition, type OreComposition } from "../utils/ore-naming.js";
 
 export const SECTOR_OUTER_RADIUS = C.WORLD.SECTOR.outerRadius;
 const SECTOR_BELT_CENTER = C.WORLD.SECTOR.beltCenter;
@@ -356,13 +356,15 @@ function randomAsteroidComposition(weights: OreComposition, f: () => number): Or
 }
 
 function asteroidDisplayName(composition: OreComposition): string {
-  const sorted = sortedCompositionEntries(composition);
-  const first = sorted[0]?.[0] ?? "iron";
-  const second = sorted[1]?.[0];
-  const firstLabel = ORE[first]?.label.split(" ")[0] ?? first;
-  if (!second || (sorted[1]?.[1] ?? 0) < 0.18) return `${firstLabel} Asteroid`;
-  const secondLabel = ORE[second]?.label.split(" ")[0] ?? second;
-  return `${firstLabel}-${secondLabel} Asteroid`;
+  // "Asteroid" + short alphanumeric code for lock card display.
+  // Composition is not surfaced in the name — players discover ore content
+  // through mining/scanning, not from the target card.
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 5; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `Asteroid ${code}`;
 }
 
 export function populateSystem(sys: System) {

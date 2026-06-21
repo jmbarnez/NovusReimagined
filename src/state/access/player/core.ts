@@ -96,6 +96,14 @@ export const playerCoreAccess = {
     p.gateBoostRemaining = value;
   },
 
+  setGateCooldowns(value: Record<string, number>, p: Player = _G.P) {
+    p.gateCooldowns = value;
+  },
+
+  setGatesCleared(value: string[], p: Player = _G.P) {
+    p.gatesCleared = value;
+  },
+
   setHomeSysIdx(value: number, p: Player = _G.P) {
     p.homeSysIdx = value;
   },

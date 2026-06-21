@@ -1,5 +1,5 @@
 import type { GameEffect } from "../state.js";
-import { floatText, spawnExplosion, spawnShockwave, spawnImpactFlash, spawnBeam } from "../utils/fx.js";
+import { floatText, spawnExplosion, spawnShockwave, spawnCollisionFx, spawnBeam } from "../utils/fx.js";
 import { addParticle } from "../utils/entities.js";
 import { random } from "../utils/math.js";
 import { sfxWeaponFire, sfxProjectileImpact, sfxShipExplosion, sfxShieldImpact, sfxHullImpact, sfxHostileLocking, sfxHostileLock, sfxUnderAttackPulse, sfxIndustrialBeam, sfxBlip, sfxBeamImpact } from "../audio/procedural.js";
@@ -19,7 +19,7 @@ export function handleGameEffect(eff: GameEffect): void {
       spawnShockwave(p.x ?? 0, p.y ?? 0, p.color ?? "#ffffff", p.scale);
       break;
     case "impact":
-      spawnImpactFlash(p.x ?? 0, p.y ?? 0, p.color ?? "#ffffff");
+      spawnCollisionFx({ x: p.x ?? 0, y: p.y ?? 0, nx: 0, ny: 0, intensity: 55, material: "energy", tint: p.color ?? "#ffffff" });
       if (p.delivery === "mining") {
         sfxBeamImpact("mining", p.x ?? 0, p.y ?? 0);
       } else {

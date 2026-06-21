@@ -22,7 +22,6 @@ export const XP_PER_MINE = 10;
 export const LEVEL_XP_BASE = 350;
 export const RESPAWN_S = 45;
 export const WARP_TIME = 4.8;
-export const TURRET_POWER_CYCLE_S = 3.0;
 export const PLAYER_PARTICIPATION_WINDOW_MS = 8000;
 
 export const ACCEL = 950;

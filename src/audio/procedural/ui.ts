@@ -143,28 +143,3 @@ export function sfxError() {
   sfxBlip(300, 0.1);
 }
 
-export function sfxPowerCycle(up = true) {
-  const a = getAudio();
-  if (!a) return;
-  const { ctx, master } = a;
-  const t0 = now();
-  const osc = ctx.createOscillator();
-  osc.type = "sawtooth";
-  if (up) {
-    osc.frequency.setValueAtTime(200, t0);
-    osc.frequency.linearRampToValueAtTime(600, t0 + 0.18);
-  } else {
-    osc.frequency.setValueAtTime(600, t0);
-    osc.frequency.linearRampToValueAtTime(200, t0 + 0.18);
-  }
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.08, t0);
-  g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.22);
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 1200;
-  osc.connect(filter).connect(g).connect(master);
-  osc.start(t0);
-  osc.stop(t0 + 0.22);
-  _disconnectOnEnd(osc, filter, g);
-}

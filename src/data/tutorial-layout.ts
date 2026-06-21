@@ -19,6 +19,7 @@ export {
   TUTORIAL_GATE,
   TUTORIAL_LOCAL_REGIONS,
   TUTORIAL_TRACKS,
+  TUTORIAL_BOOST_GATES,
   getTutorialTrackById,
   getActiveTutorialTracks,
   getTutorialTrackForNav,

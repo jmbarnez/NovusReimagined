@@ -6,7 +6,7 @@ import { queueFrameAction } from "../../sim/input.js";
 import { SHIPS, type ShipDef, type ShipFitting } from "../../data/ships.js";
 import { MODULES, MODULE_FLAGS } from "../../data/modules.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
-import { MODULE_HP_MAX, TURRET_POWER_CYCLE_S } from "../../constants.js";
+import { MODULE_HP_MAX } from "../../constants.js";
 import { hotkeyBadge } from "../../utils/format.js";
 import { targetByLockId } from "../../targeting.js";
 import { applyBarHotkey } from "../../player/player-fitting.js";
@@ -20,7 +20,6 @@ import { itemIconHtml } from "../icons/item-icon-bake.js";
 import type { ComputedStats } from "../../player/player-stats.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
-import { getSlotPowerCd, isSlotPoweredOn } from "../../utils/slot-power.js";
 import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave, remove, setCssVar } from "../dom-helpers.js";
 import { getAssignTargetId } from "../../player/target-selection.js";
 
@@ -136,23 +135,16 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
   const pending = getAssignTargetId(getState().player.netId ?? getState().player.shipId) != null;
-
   const isTurret = rack === playerHardpointRack(getState().player);
-  const ownPower = isSlotPoweredOn(r, idx, getState().player);
-  const isPowered = ownPower;
-  const powerCd = getSlotPowerCd(r, idx, getState().player);
-  const isSlotActive = isPowered && powerCd <= 0;
+
+  const isSlotActive = !!inst && inst.durability > 0;
 
   const durPct = inst ? Math.round((inst.durability / inst.maxDurability) * 100) : 100;
   const modDamaged = inst && durPct < 100 && durPct > 0;
   const modOffline = inst && durPct <= 0;
 
   let cls = `hud-slot rack-${rack}`;
-  if (!isSlotActive) cls += " inactive-active";
-  if (isSlotActive && !isTurret) cls += " module-on";
-  if (isTurret && isPowered && powerCd <= 0) cls += " turret-on";
-  if (isTurret && !isPowered && powerCd <= 0) cls += " turret-off";
-  if (isTurret && powerCd > 0) cls += " turret-cycling";
+  if (isSlotActive) cls += " module-on";
   if (modDamaged) cls += " module-damaged";
   if (modOffline) cls += " module-offline";
 
@@ -184,8 +176,6 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     ledCls = "sl-led off";
   } else if (modDamaged) {
     ledCls = "sl-led damaged";
-  } else if (isTurret && powerCd > 0) {
-    ledCls = "sl-led cycling";
   } else if (isSlotActive) {
     ledCls = "sl-led on";
   } else if (m) {
@@ -195,8 +185,9 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
 
   // Tractor Beam strength toggle button
   const isTractor = m && MODULE_FLAGS.isTractor(m);
+  const isTractorOnline = isTractor && isSlotActive;
   let strBtn = el.querySelector(".sl-str-toggle") as HTMLButtonElement | null;
-  if (isTractor && isSlotActive) {
+  if (isTractorOnline) {
     const minimized = localStorage.getItem("tractor-dial-minimized") === "true";
     const arrow = minimized ? "▲" : "▼";
     const btnText = `STR ${arrow}`;
@@ -262,11 +253,6 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
       cdH = `${pct * 100}%`;
     }
   }
-  // Power cycle overlay takes precedence
-  if (isTurret && powerCd > 0) {
-    const pct = Math.max(0, Math.min(1, powerCd / TURRET_POWER_CYCLE_S));
-    cdH = `${pct * 100}%`;
-  }
   // Ability module: surface ability cooldown in the slot overlay.
   if (m?.ability && ABILITY_BY_ID[m.ability]) {
     const def = ABILITY_BY_ID[m.ability];
@@ -284,9 +270,6 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   if (modDamaged) {
     subText = `${durPct}%`;
     subCls = "sl-sub damaged";
-  } else if (isTurret && powerCd > 0) {
-    subText = isPowered ? t("ship.pwrDown") : t("ship.pwrUp");
-    subCls = "sl-sub cycling";
   } else if (isWeaponTurret && assignedId != null) {
     const tgt = targetByLockId(assignedId);
     subText = `→${tgt ? (tgt.name || "").slice(0, 3) : "?"}`;

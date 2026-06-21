@@ -2,7 +2,7 @@ import { random } from "../../utils/math.js";
 import { Client, type Player } from "../../state.js";
 import { PlayerAccess, getState, WorldAccess } from "../../state-access.js";
 import { getStats } from "../../player/player-stats.js";
-import { spawnImpactFlash } from "../../utils/fx.js";
+import { spawnCollisionFx } from "../../utils/fx.js";
 import { removeEnemyBullet } from "../../utils/entities.js";
 import { nearestPlayerInSys } from "../../utils/game.js";
 import { getPlayerColRadius, getEnemyColRadius } from "../../utils/collision-helpers.js";
@@ -164,7 +164,7 @@ export function updateEnemyBullets(dt: number, sysIdx: number) {
     }
 
     if (astHit && astHitT === earliestT) {
-      spawnImpactFlash(astHitX, astHitY, b.color || "#ff6644");
+      spawnCollisionFx({ x: astHitX, y: astHitY, nx: 0, ny: 0, intensity: 55, material: "rock", tint: b.color || "#ff6644" });
       WorldAccess.queueEffect({
         type: "impact",
         payload: { x: astHitX, y: astHitY, color: b.color || "#ff6644", delivery: b.kind || "projectile" },

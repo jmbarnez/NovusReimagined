@@ -71,6 +71,8 @@ export interface TutorialStep {
   zone: TutorialZone;
   beaconColor: number;
   nav?: TutorialNavTarget;
+  /** Optional fixed world point for the off-screen guide arrow. Overrides the zone fallback. */
+  guideTarget?: { x: number; y: number };
   highlight?: string;
   tour?: TutorialTour;
   stationTourGroup?: "hangar" | "industry";

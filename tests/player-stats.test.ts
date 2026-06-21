@@ -34,7 +34,6 @@ describe("player-stats computeStats", () => {
     const inst = makeTestInstance("test-hi-link", "hi-link");
     G.P.moduleCargo.push(inst);
     G.P.fitting.high[0] = inst.uid;
-    G.P.turretPower[0] = true;
     G.P.moduleHp.high[0] = MODULE_HP_MAX;
     invalidate(G.P);
     const withLink = computeStats(G.P).weaponMult;
@@ -43,7 +42,6 @@ describe("player-stats computeStats", () => {
 
   it("resolves the primary weapon from the player's hardpoint rack", () => {
     G.P.fitting.high[0] = "start-tu-civ-cannon";
-    G.P.turretPower[0] = true;
     G.P.moduleHp.high[0] = MODULE_HP_MAX;
     invalidate(G.P);
 
@@ -55,13 +53,13 @@ describe("player-stats computeStats", () => {
     const inst = makeTestInstance("test-me-ab1", "me-ab1");
     G.P.moduleCargo.push(inst);
     G.P.fitting.med[0] = inst.uid;
-    G.P.slotActive.med[0] = true;
     G.P.moduleHp.med[0] = MODULE_HP_MAX;
     invalidate(G.P);
     const on = computeStats(G.P);
     expect(on.thrustScale).toBeGreaterThan(0);
 
-    G.P.slotActive.med[0] = false;
+    const inst2 = G.P.moduleCargo.find(i => i.uid === inst.uid);
+    if (inst2) inst2.durability = 0;
     invalidate(G.P);
     const off = computeStats(G.P);
     expect(off.thrustScale).toBeLessThan(on.thrustScale);
@@ -97,7 +95,6 @@ describe("player-stats computeStats", () => {
     }];
     G.P.moduleCargo.push(inst);
     G.P.fitting.low[0] = inst.uid;
-    G.P.slotActive.low[0] = true;
     G.P.moduleHp.low[0] = MODULE_HP_MAX;
     invalidate(G.P);
     const st = computeStats(G.P);
@@ -153,15 +150,11 @@ describe("player-data loadPlayer migrations", () => {
       fitting: { turret: [], high: [null, null], med: [null], low: [null] },
       turretTargets: [],
       turretCds: [],
-      turretPower: [],
-      turretPowerCd: [],
     });
     localStorage.setItem("ss2-sim-v1", raw);
     const p = loadPlayer();
     expect(p.turretTargets).toHaveLength(2);
     expect(p.turretCds).toHaveLength(2);
-    expect(p.turretPower).toHaveLength(2);
-    expect(p.turretPowerCd).toHaveLength(2);
   });
 
   it("migrates legacy turret fits into unified high hardpoints", () => {
@@ -179,24 +172,15 @@ describe("player-data loadPlayer migrations", () => {
         med: [null, null],
         low: [null, null, null],
       },
-      slotActive: {
-        turret: [true, false],
-        high: [false, true],
-        med: [true, true],
-        low: [true, true, true],
-      },
       highTargets: ["wreck-1"],
       turretTargets: [],
       turretCds: [],
-      turretPower: [],
-      turretPowerCd: [],
     });
     localStorage.setItem("ss2-sim-v1", raw);
     const p = loadPlayer();
     expect(p.fitting.turret).toEqual([]);
     expect(p.fitting.high).toEqual(["legacy-hi-1", "legacy-hi-2", "legacy-tu-1", "legacy-tu-2"]);
     expect(p.moduleHp.high).toEqual([55, 65, 35, 45]);
-    expect(p.slotActive.high).toEqual([false, true, true, false]);
     expect(p.highTargets).toEqual(["wreck-1", null, null, null]);
   });
 

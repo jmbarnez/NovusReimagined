@@ -11,7 +11,6 @@ describe("ion boost UI", () => {
 
   it("renders ion boost module status in the ship panel", () => {
     G.P.fitting.med[0] = "start-me-ab1";
-    G.P.slotActive.med[0] = true;
 
     const host = document.createElement("div");
     host.innerHTML = renderStatsTabHTML();

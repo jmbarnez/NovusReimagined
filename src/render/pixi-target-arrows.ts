@@ -295,7 +295,8 @@ export function syncPixiTutorialGuideArrow(Wc: number, Hc: number, camxR: number
   const zoom = Client.zoom;
   const cx = viewCenterX(Wc);
   const cy = viewCenterY(Hc);
-  const mL = 30, mR = 10, mT = LOCK_RAIL_H + 10, mB = HUD_BOTTOM_H + 10;
+  const margin = 72;
+  const mL = margin, mR = margin, mT = LOCK_RAIL_H + margin, mB = HUD_BOTTOM_H + margin;
 
   const sx = cx + (target.x - camxR) * zoom;
   const sy = cy + (target.y - camyR) * zoom;
@@ -320,10 +321,10 @@ export function syncPixiTutorialGuideArrow(Wc: number, Hc: number, camxR: number
   const arrow = getArrow();
   arrow.position.set(px, py);
   arrow.rotation = angle;
-  arrow.moveTo(13, 0);
-  arrow.lineTo(-7, -6);
-  arrow.lineTo(-7, 6);
+  arrow.moveTo(22, 0);
+  arrow.lineTo(-13, -11);
+  arrow.lineTo(-13, 11);
   arrow.closePath();
-  arrow.fill({ color: 0xffdd44, alpha: pulse * 0.85 });
+  arrow.fill({ color: 0xffdd44, alpha: pulse * 0.9 });
   releaseArrowAndLabel();
 }

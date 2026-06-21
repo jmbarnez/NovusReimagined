@@ -68,8 +68,6 @@ export interface PlayerCombat {
   turretTargets: (string | null)[];
   highTargets: (string | null)[];
   turretCds: number[];
-  turretPower: boolean[];
-  turretPowerCd: number[];
   combatBar: { pos: number; dir: number };
   energy: number;
   shootCd: number; mineCd: number;
@@ -96,8 +94,6 @@ export interface PlayerEconomy {
 export interface PlayerFitting {
   fitting: Record<string, (string | null)[]>;
   moduleHp: Record<string, (number | null)[]>;
-  slotActive: Record<string, boolean[]>;
-  slotPowerCd?: Record<string, number[]>;
   slotHeat?: Record<string, number[]>;
 }
 

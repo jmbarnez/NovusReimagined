@@ -182,39 +182,11 @@ describe("GameServer movement input", () => {
     p.vy = 0;
     p.energy = 100;
     p.fitting.med[0] = "start-me-ab1";
-    p.slotActive.med[0] = true;
     server.handleClientInput("ion-boost-client", directFrame(2, DIRECT_BOOST_KEYS));
     tick(1 / 60);
 
     expect(p.vx).toBeGreaterThan(baseBoostVx);
     expect(100 - p.energy).toBeLessThan(baseBoostDrain);
-  });
-
-  it("offline ion boost module does not provide its boost bonus", () => {
-    server.handleClientConnect("offline-boost-client", "Pilot", makePlayer());
-    const sessions = (server as unknown as { sessions: Map<string, { playerState: Player }> }).sessions;
-    const session = sessions.get("offline-boost-client");
-    expect(session).toBeTruthy();
-    if (!session) return;
-
-    const tick = (server as unknown as { tick: (dt: number) => void }).tick.bind(server);
-    const p = session.playerState;
-    p.angle = 0;
-    p.energy = 100;
-    removeIonBoostModule(p);
-    server.handleClientInput("offline-boost-client", directFrame(1, DIRECT_BOOST_KEYS));
-    tick(1 / 60);
-    const baseBoostVx = p.vx;
-
-    p.vx = 0;
-    p.vy = 0;
-    p.energy = 100;
-    p.fitting.med[0] = "start-me-ab1";
-    p.slotActive.med[0] = false;
-    server.handleClientInput("offline-boost-client", directFrame(2, DIRECT_BOOST_KEYS));
-    tick(1 / 60);
-
-    expect(p.vx).toBeCloseTo(baseBoostVx, 5);
   });
 
   it("does not boost below the capacitor start threshold", () => {
@@ -229,7 +201,6 @@ describe("GameServer movement input", () => {
     p.angle = 0;
     p.energy = 100;
     p.fitting.med[0] = "start-me-ab1";
-    p.slotActive.med[0] = true;
 
     // Baseline: forward thrust without boost
     server.handleClientInput("low-cap-boost-client", directFrame(1, DIRECT_FORWARD_KEYS));

@@ -2,6 +2,20 @@ import { TAU } from "../constants.js";
 import { addParticle, addBeam, addFloatText, addShockwave, addImpactDecal, removeImpactDecal } from "./entities.js";
 import { getState } from "../state-access.js";
 
+// ─── Material-based collision FX ─────────────────────────────────────────────
+//  Every collision/impact in the game routes through spawnCollisionFx, which
+//  picks spark colors, particle counts, and flash ring style based on the
+//  material pair.  This replaces the scattered spawnImpactFlash / spawnBeamImpact
+//  / spawnMiningSparks / spawnCollisionSparks wrappers with one entry point.
+
+export type CollisionMaterial =
+  | "metal"    // ship hulls, station plating
+  | "rock"     // asteroids
+  | "shield"   // energy shields
+  | "debris"   // wreck pieces
+  | "energy"   // beam/projectile hits
+  | "ore";     // mining laser on asteroid
+
 export function spawnMuzzleFlash(x: number, y: number, angle: number, color: string, intensity = 6) {
   const n = Math.max(3, Math.round(intensity));
   for (let i = 0; i < n; i++) {
@@ -65,39 +79,20 @@ export function floatText(x: number, y: number, text: string, color = "#fff", bg
   addFloatText({ x, y, text, color, bgColor, life: 1, vy: -44 });
 }
 
-export function spawnImpactFlash(x: number, y: number, color: string) {
-  spawnParticles(x, y, color, 2, 70);
-}
+// ─── Legacy compat wrappers (delegate to spawnCollisionFx) ───────────────────
+//  These keep existing call sites working. New code should call spawnCollisionFx
+//  directly with an explicit material.
 
-export function spawnBeamImpact(x: number, y: number, color: string) {
-  spawnParticles(x, y, color, 1, 55);
+export function spawnImpactFlash(x: number, y: number, color: string) {
+  spawnCollisionFx({ x, y, nx: 0, ny: 0, intensity: 60, material: "energy", tint: color });
 }
 
 export function spawnBeamImpactSubtle(x: number, y: number, color: string) {
-  spawnParticles(x, y, color, 1, 40);
-}
-
-export function spawnMiningImpact(x: number, y: number) {
-  spawnParticles(x, y, "#ff8822", 1, 45);
+  spawnCollisionFx({ x, y, nx: 0, ny: 0, intensity: 35, material: "energy", tint: color });
 }
 
 export function spawnMiningSparks(x: number, y: number, nx = 0, ny = -1, color = "#c8a060", scale = 1) {
-  for (let i = 0; i < Math.max(2, Math.round(5 * scale)); i++) {
-    const spread = (Math.random() - 0.5) * 1.4;
-    const tx = -ny;
-    const ty = nx;
-    const spd = 30 + Math.random() * 80 * scale;
-    addParticle({
-      x,
-      y,
-      color,
-      vx: (nx + tx * spread) * spd,
-      vy: (ny + ty * spread) * spd,
-      r: 1 + Math.random() * 1.5 * scale,
-      life: 0.25 + Math.random() * 0.2,
-      decay: 2.8,
-    });
-  }
+  spawnCollisionFx({ x, y, nx, ny, intensity: 40 * scale, material: "ore", tint: color });
 }
 
 function _spawnDebris(x: number, y: number, color: string, count: number, sizeScale: number) {
@@ -174,63 +169,84 @@ export function spawnShockwave(x: number, y: number, color: string, scale = 1.0)
   });
 }
 
-/** GPU-rendered procedural sparks at a collision contact point.
- *  Sparks spray along the surface tangent (perpendicular to the normal),
- *  with a few bright center sparks and a quick flash ring. */
-export function spawnCollisionSparks(
-  x: number, y: number,
-  nx: number, ny: number,
-  intensity: number,
-  baseColor = "#ffcc66",
-): void {
+/** Unified collision FX — bright hot sparks + flash ring on every collision.
+ *
+ *  Simple and visible: orange-gold sparks, white-hot center, warm flash ring.
+ *  No material-specific colors — just hot debris flying off a contact point.
+ */
+export interface CollisionFxOptions {
+  x: number;
+  y: number;
+  /** Contact normal pointing away from the impacted surface. (0,0) = radial. */
+  nx: number;
+  ny: number;
+  /** Impact strength — controls particle count and flash ring size. */
+  intensity: number;
+  /** Material type (kept for API compat, currently unused). */
+  material?: CollisionMaterial;
+  /** Unused — kept for API compat. */
+  tint?: string;
+}
+
+export function spawnCollisionFx(opts: CollisionFxOptions): void {
+  const { x, y, nx, ny, intensity, tint } = opts;
   if (intensity <= 0) return;
-  const count = Math.min(24, Math.max(6, Math.round(intensity * 0.15)));
-  // Tangent direction (perpendicular to normal)
+
+  const sparkColor = tint ?? "#ffcc66";
+  const hasNormal = nx !== 0 || ny !== 0;
+  const count = Math.min(8, Math.max(3, Math.round(intensity * 0.06)));
+  const spdScale = Math.min(1.0, Math.max(0.4, intensity * 0.006));
+
+  // Minimal directional spark spray
   const tx = -ny;
   const ty = nx;
-  const spdScale = Math.min(1.5, intensity * 0.012);
-
   for (let i = 0; i < count; i++) {
-    const spread = (Math.random() - 0.5) * 1.8;
-    const spd = (80 + Math.random() * 160) * spdScale;
-    // Mix normal reflection with tangent spread
-    const vx = (nx * 0.4 + tx * spread) * spd;
-    const vy = (ny * 0.4 + ty * spread) * spd;
+    const spd = (40 + Math.random() * 80) * spdScale;
+    let vx: number, vy: number;
+    if (hasNormal) {
+      const spread = (Math.random() - 0.5) * 1.6;
+      vx = (nx * 0.3 + tx * spread) * spd;
+      vy = (ny * 0.3 + ty * spread) * spd;
+    } else {
+      const a = Math.random() * TAU;
+      vx = Math.cos(a) * spd;
+      vy = Math.sin(a) * spd;
+    }
     addParticle({
       x, y,
-      color: baseColor,
+      color: sparkColor,
       vx, vy,
-      r: 3 + Math.random() * 4,
-      life: 0.35 + Math.random() * 0.4,
-      drag: 0.88 + Math.random() * 0.05,
-      decay: 1.8 + Math.random() * 0.8,
+      r: 2 + Math.random() * 2,
+      life: 0.2 + Math.random() * 0.2,
+      drag: 0.9 + Math.random() * 0.04,
+      decay: 1.8 + Math.random() * 0.6,
     });
   }
 
-  // Bright white-hot center sparks
-  const hotCount = Math.min(8, Math.max(2, Math.round(count * 0.35)));
+  // Few tiny white-hot center sparks
+  const hotCount = Math.min(3, Math.max(1, Math.round(count * 0.25)));
   for (let i = 0; i < hotCount; i++) {
     const a = Math.random() * TAU;
-    const s = (50 + Math.random() * 100) * spdScale;
+    const s = (30 + Math.random() * 50) * spdScale;
     addParticle({
       x, y,
       color: "#ffffff",
       vx: Math.cos(a) * s,
       vy: Math.sin(a) * s,
-      r: 2 + Math.random() * 2.5,
-      life: 0.18 + Math.random() * 0.15,
-      drag: 0.84,
-      decay: 3.5,
+      r: 1.5 + Math.random() * 1,
+      life: 0.12 + Math.random() * 0.1,
+      drag: 0.86,
+      decay: 3.0,
     });
   }
 
-  // Quick flash ring — scales with intensity
-  const ringR = 8 + Math.min(30, intensity * 0.15);
+  // Subtle flash ring
+  const ringR = 4 + Math.min(12, intensity * 0.08);
   addShockwave({
     x, y,
     maxRadius: ringR,
-    life: 0.12 + Math.min(0.1, intensity * 0.001),
+    life: 0.08 + Math.min(0.08, intensity * 0.0008),
     color: "#fff8e0",
-    width: 1.5,
+    width: 1,
   });
 }

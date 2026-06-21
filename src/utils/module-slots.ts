@@ -2,7 +2,6 @@ import type { Player } from "../state.js";
 import { MODULES, type ModuleDef } from "../data/modules.js";
 import { getInstance } from "./items.js";
 import { playerHardpointRack, type HardpointRack } from "./hardpoints.js";
-import { isSlotOnline } from "./slot-power.js";
 
 export type AssignableRack = HardpointRack;
 
@@ -19,7 +18,10 @@ export function getFittedModuleDef(rack: AssignableRack, idx: number, p: Player)
 }
 
 export function isModuleSlotPowered(rack: AssignableRack, idx: number, p: Player): boolean {
-  return isSlotOnline(rack, idx, p);
+  const uid = p.fitting?.[rack]?.[idx];
+  if (!uid) return false;
+  const inst = getInstance(uid, p);
+  return !!inst && inst.durability > 0;
 }
 
 export function getModuleSlotTargetId(rack: AssignableRack, idx: number, p: Player): string | null {

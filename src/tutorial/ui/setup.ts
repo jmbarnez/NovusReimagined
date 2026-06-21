@@ -10,7 +10,7 @@ import { t } from "../../utils/i18n.js";
 import { tutorialState } from "./state.js";
 import { renderStep } from "./render.js";
 import { hideTutorialOverlay, showCompleteBanner } from "./lifecycle.js";
-import { getElement, createElement, append, setHtml, onClick, onKeydown } from "../../ui/dom-helpers.js";
+import { getElement, createElement, append, setHtml, onClick, onKeydown, onMouseDown } from "../../ui/dom-helpers.js";
 
 const RENDER_REFRESH_EVENTS = [
   "tutorial:step-change",
@@ -140,6 +140,12 @@ function bindTutorialEvents(): void {
 
   onClick(tutorialState.root, () => {
     if (tutorialState.layerEl) bringToFront(tutorialState.layerEl);
+  });
+
+  // Prevent mousedown from bubbling to the global input handler so clicking
+  // tutorial buttons (Next, Skip, etc.) does not fire the selected weapon.
+  onMouseDown(tutorialState.root, (e) => {
+    e.stopPropagation();
   });
 
   bindSkipControls(tutorialState.root);

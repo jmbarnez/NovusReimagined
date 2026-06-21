@@ -13,8 +13,7 @@ describe("createServerPlayerState", () => {
     incoming.vy = -999;
     incoming.targetLock = { id: "rat-1", x: 1, y: 2, hp: 10 };
     incoming.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
-    incoming.turretPower = incoming.turretPower.map(() => true);
-    incoming.turretPowerCd = incoming.turretPowerCd.map(() => 99);
+
     incoming.boostLockout = true;
     incoming.netInputFrame = {
       tick: 7,
@@ -34,8 +33,7 @@ describe("createServerPlayerState", () => {
     expect(sanitized.vy).toBe(0);
     expect(sanitized.targetLock).toBeNull();
     expect(sanitized.lockQueue).toEqual([]);
-    expect(sanitized.turretPower.every((powered) => powered === false)).toBe(true);
-    expect(sanitized.turretPowerCd.every((cd) => cd === 0)).toBe(true);
+
     expect(sanitized.netInputFrame).toBeNull();
     expect(sanitized.boostLockout).toBe(false);
   });
@@ -61,8 +59,7 @@ describe("createServerPlayerState", () => {
     p.vx = 12;
     p.targetLock = { id: "rat-1", x: 1, y: 2, hp: 10 };
     p.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
-    p.turretPower = p.turretPower.map(() => true);
-    p.turretPowerCd = p.turretPowerCd.map(() => 9);
+
     p.miningLaser = { active: true, x1: 0, y1: 0, x2: 1, y2: 1, phase: 1, hitR: 5, hitNx: 1, hitNy: 0 };
 
     const sync = createDurableCharacterSync(p);
@@ -71,8 +68,7 @@ describe("createServerPlayerState", () => {
     expect(sync.vx).toBe(0);
     expect(sync.targetLock).toBeNull();
     expect(sync.lockQueue).toEqual([]);
-    expect(sync.turretPower.every((powered) => powered === false)).toBe(true);
-    expect(sync.turretPowerCd.every((cd) => cd === 0)).toBe(true);
+
     expect(sync.miningLaser).toBeNull();
   });
 
@@ -91,15 +87,14 @@ describe("createServerPlayerState", () => {
     expect(sanitized.mixedOreCargo[0]!.composition).toEqual({ iron: 0.7, nickel: 0.3 });
   });
 
-  it("accepts turret power commands after connect sanitization", () => {
+  it("selects hardpoint fire slot after connect sanitization", () => {
     const incoming = makePlayer();
     incoming.fitting.high[0] = "start-tu-civ-cannon";
     const sanitized = createServerPlayerState("client_real", "Pilot One", incoming, buildGalaxy());
 
     executeGameCommand({ type: "toggleSlotDefaultAction", payload: { rack: "high", idx: 0 } }, sanitized);
 
-    expect(sanitized.turretPower[0]).toBe(true);
-    expect(sanitized.turretPowerCd[0]).toBeGreaterThan(0);
+    expect(sanitized.fireControlSlot).toBe(0);
   });
 
   it("migrates legacy turret fits into unified high hardpoints during sanitization", () => {
@@ -117,18 +112,10 @@ describe("createServerPlayerState", () => {
       med: [null, null],
       low: [null, null, null],
     };
-    incoming.slotActive = {
-      turret: [true, false],
-      high: [false, true],
-      med: [true, true],
-      low: [true, true, true],
-    };
-
     const sanitized = createServerPlayerState("client_real", "Pilot One", incoming, buildGalaxy());
 
     expect(sanitized.fitting.turret).toEqual([]);
     expect(sanitized.fitting.high).toEqual(["legacy-hi-1", "legacy-hi-2", "legacy-tu-1", "legacy-tu-2"]);
     expect(sanitized.moduleHp.high).toEqual([70, 85, 25, 40]);
-    expect(sanitized.slotActive.high).toEqual([false, true, true, false]);
   });
 });

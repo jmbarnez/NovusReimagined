@@ -65,6 +65,73 @@ describe("new game client input", () => {
     expect(Client.mouse.rmb).toBe(false);
   });
 
+  it("does not fire when clicking on the HUD slot panel", () => {
+    const overlay = document.createElement("div");
+    overlay.id = "hud-overlay";
+    const modules = document.createElement("div");
+    modules.id = "hud-modules";
+    const slots = document.createElement("div");
+    slots.id = "hud-slots";
+    const slot = document.createElement("div");
+    slot.className = "hud-slot";
+    slots.appendChild(slot);
+    modules.appendChild(slots);
+    overlay.appendChild(modules);
+    document.body.appendChild(overlay);
+
+    const event = new MouseEvent("mousedown", { button: 0, clientX: 400, clientY: 300 });
+    Object.defineProperty(event, "target", { value: slot, enumerable: true });
+    handleMouseDown(event);
+
+    const frame = createLocalInputFrame(1);
+    expect(frame.actions.some(a => a.type === "fireSelectedTurret")).toBe(false);
+    expect(Client.mouse.lmb).toBe(true);
+
+    document.body.removeChild(overlay);
+  });
+
+  it("does not fire when clicking on a HUD window", () => {
+    const win = document.createElement("div");
+    win.className = "window";
+    const body = document.createElement("div");
+    body.className = "win-body";
+    win.appendChild(body);
+    document.body.appendChild(win);
+
+    const event = new MouseEvent("mousedown", { button: 0, clientX: 400, clientY: 300 });
+    Object.defineProperty(event, "target", { value: body, enumerable: true });
+    handleMouseDown(event);
+
+    const frame = createLocalInputFrame(1);
+    expect(frame.actions.some(a => a.type === "fireSelectedTurret")).toBe(false);
+
+    document.body.removeChild(win);
+  });
+
+  it("does not fire when clicking on a tutorial card Next button", () => {
+    const layer = document.createElement("div");
+    layer.id = "world-tutorial-layer";
+    const tutorial = document.createElement("div");
+    tutorial.id = "hud-tutorial";
+    const card = document.createElement("div");
+    card.className = "tutorial-card";
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "tutorial-next-btn";
+    card.appendChild(nextBtn);
+    tutorial.appendChild(card);
+    layer.appendChild(tutorial);
+    document.body.appendChild(layer);
+
+    const event = new MouseEvent("mousedown", { button: 0, clientX: 400, clientY: 300 });
+    Object.defineProperty(event, "target", { value: nextBtn, enumerable: true });
+    handleMouseDown(event);
+
+    const frame = createLocalInputFrame(1);
+    expect(frame.actions.some(a => a.type === "fireSelectedTurret")).toBe(false);
+
+    document.body.removeChild(layer);
+  });
+
   it("always sends WASD keys", () => {
     Client.keys["w"] = true;
     Client.keys["a"] = true;

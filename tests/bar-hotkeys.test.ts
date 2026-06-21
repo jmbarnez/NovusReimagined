@@ -7,6 +7,7 @@ import { createLocalInputFrame } from "../src/sim/input.js";
 import { setAssignTargetId } from "../src/player/target-selection.js";
 import { playerHardpointRack } from "../src/utils/hardpoints.js";
 
+
 describe("bar hotkeys", () => {
   beforeEach(() => {
     installTestPlayer(makePlayer());
@@ -15,20 +16,15 @@ describe("bar hotkeys", () => {
   });
 
   it("queues hardpoint selection through the command path", () => {
-    const hardpointRack = playerHardpointRack(G.P);
-    G.P.turretPower[0] = false;
-
     applyBarHotkey(0);
     const frame = createLocalInputFrame(1);
 
     expect(frame.actions).toEqual([
-      { type: "toggleSlotDefaultAction", payload: { rack: hardpointRack, idx: 0 } },
       { type: "setFireControlSlot", payload: { slot: 0 } },
     ]);
   });
 
   it("queues hardpoint target assignment when an assignment target is selected", () => {
-    G.P.turretPower[0] = true;
     setAssignTargetId(G.P.netId ?? G.P.shipId, "rat-1");
 
     applyBarHotkey(0);

@@ -67,7 +67,7 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
     id: "approach",
     points: [TUTORIAL_SPAWN, TUTORIAL_STATION],
     halfWidth: 120,
-    activeForSteps: ["fly-academy"],
+    activeForSteps: ["piloting-choice", "boost-try", "fly-academy"],
   },
   {
     id: "spoke-mining",
@@ -96,6 +96,13 @@ export const TUTORIAL_TRACKS: TutorialTrackSegment[] = [
     halfWidth: 120,
     activeForSteps: ["fly-gate"],
   },
+];
+
+/** Boost gates along the approach track to the Academy. */
+export const TUTORIAL_BOOST_GATES: TutorialBoostGate[] = [
+  { id: "approach-gate-1", trackId: "approach", x: -4500, y: 0, angle: 0, halfWidth: 90 },
+  { id: "approach-gate-2", trackId: "approach", x: -3400, y: 0, angle: 0, halfWidth: 90 },
+  { id: "approach-gate-3", trackId: "approach", x: -2300, y: 0, angle: 0, halfWidth: 90 },
 ];
 
 export function getTutorialTrackById(id: string): TutorialTrackSegment | undefined {

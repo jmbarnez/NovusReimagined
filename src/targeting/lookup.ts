@@ -38,7 +38,14 @@ export function targetByLockId(id: string, p: Player = getState().player): Enemy
   }
   if (ast && !ast.depleted && ast.hp > 0) {
     if (!ast.name) {
-      ast.name = "Asteroid";
+      // Generate a random alphanumeric code from the asteroid ID
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+      const seed = ast.id;
+      for (let i = 0; i < 5; i++) {
+        code += chars[(seed.charCodeAt(i % seed.length) + i * 7) % chars.length];
+      }
+      ast.name = `Asteroid ${code}`;
     }
     return ast;
   }
