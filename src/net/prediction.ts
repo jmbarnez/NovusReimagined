@@ -10,6 +10,7 @@ import type { WorldSnapshot } from "../sim/snapshot.js";
 import { TICK_DT } from "../constants.js";
 import { updateCombat } from "../physics/combat-physics.js";
 import { startScanPulse } from "../scanning/index.js";
+import { detachTractorBeam } from "../player/tractor.js";
 
 // PredictionManager class: Maintains unacknowledged local input frames
 // and replays them on top of incoming server snapshots to reconcile state.
@@ -130,8 +131,8 @@ export class PredictionManager {
         case "toggleSlotDefaultAction":
           replayPredictedToggleSlotAction(action.payload.rack, action.payload.idx, p);
           break;
-        case "setTractorTightness":
-          PlayerAccess.setTractorTightness(action.payload.value, p);
+        case "retractTractorBeam":
+          detachTractorBeam(p);
           break;
         case "setMapScannerPower":
           PlayerAccess.setMapScannerActive(action.payload.active, p);

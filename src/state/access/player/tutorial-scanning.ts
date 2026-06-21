@@ -104,7 +104,4 @@ export const playerTutorialScanningAccess = {
     p.tractorCarryKg = value;
   },
 
-  setTractorTightness(value: number, p: Player = _G.P) {
-    p.tractorTightness = value;
-  },
 };

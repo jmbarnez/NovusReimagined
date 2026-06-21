@@ -6,6 +6,7 @@ import { t } from "../utils/i18n.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { C } from "../config/index.js";
 import { playerShoot } from "./player-shoot.js";
+import { attachTractorFromSelectedSlot } from "../player/tractor.js";
 
 function isTurretReady(idx: number, p: Player): boolean {
   const rack = playerHardpointRack(p);
@@ -23,11 +24,16 @@ export function fireSelectedTurret(p: Player = getState().player) {
   const uid = p.fitting?.[rack]?.[slot];
   const inst = uid ? p.moduleCargo.find(item => item.uid === uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
-  if (!m || MODULE_FLAGS.isMiningTurret(m) || !m.weaponDelivery) return;
+  if (!m || MODULE_FLAGS.isMiningTurret(m)) return;
   if (!isTurretReady(slot, p)) {
     if (typeof window !== "undefined") floatText(p.x, p.y - 32, t("combat.turretOffline"), "#ff6644");
     return;
   }
+  if (MODULE_FLAGS.isTractor(m)) {
+    attachTractorFromSelectedSlot(slot, p);
+    return;
+  }
+  if (!m.weaponDelivery) return;
   playerShoot(slot, null, p);
 }
 

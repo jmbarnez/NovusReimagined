@@ -5,10 +5,10 @@ import { getStats } from "../player/player-stats.js";
 import { spawnCollisionFx } from "../utils/fx.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import {
-  forEachFittedModuleSlot,
+  getFittedModuleDef,
   isModuleSlotPowered,
-  type ModuleSlotRef,
 } from "../utils/module-slots.js";
+import { playerHardpointRack } from "../utils/hardpoints.js";
 import { ORE } from "../data/resources.js";
 import { showDamageNumber } from "../combat/damage-display.js";
 import { getPlayerTurretOrigin } from "../combat/turret-origin.js";
@@ -67,10 +67,16 @@ export function updateMining(dt: number, p: Player) {
 
   const sys = getState().GALAXY[p.sysIdx];
   let beamSet = false;
+  const selectedRack = playerHardpointRack(p);
+  const selectedIdx = p.fireControlSlot ?? 0;
+  const selectedModule = getFittedModuleDef(selectedRack, selectedIdx, p);
+  if (!selectedModule || !MODULE_FLAGS.isMiningTurret(selectedModule) || !isModuleSlotPowered(selectedRack, selectedIdx, p)) {
+    MiningAccess.update({ active: false, phase: 0, oreKey: "", oreColor: "" }, p);
+    return;
+  }
 
-  const processMiner = (ref: ModuleSlotRef, m: typeof MODULES[string]) => {
+  const processMiner = (m: typeof MODULES[string]) => {
     if (beamSet) return;
-    if (!isModuleSlotPowered(ref.rack, ref.idx, p)) return;
 
     const origin = getPlayerTurretOrigin(p);
     const maxRange = m.optimalRange != null ? m.optimalRange : st.mineRange;
@@ -187,7 +193,7 @@ export function updateMining(dt: number, p: Player) {
     }
   };
 
-  forEachFittedModuleSlot(MODULE_FLAGS.isMiningTurret, processMiner, p);
+  processMiner(selectedModule);
   if (!beamSet) {
     MiningAccess.update({ active: false, phase: 0, oreKey: "", oreColor: "" }, p);
   }

@@ -21,8 +21,9 @@ const MAX_INDICES = MAX_GATES * 6;
 const PILLAR_PAD = 38;
 /** Half-thickness of the curtain along the boost direction. */
 const CURTAIN_HALF = 20;
-/** Cooldown window (seconds) over which the activation flash fades. */
-const FLASH_WINDOW = 2.0;
+/** Cooldown window (seconds) over which the activation flash fades.
+ *  Kept short for a minimal, brief warp shimmer on pass-through. */
+const FLASH_WINDOW = 0.5;
 /** Proximity range (world units) within which the gate charges up. */
 const CHARGE_RANGE = 700;
 
@@ -232,7 +233,8 @@ export function destroyBoostGateMesh(): void {
   _ug = null;
 }
 
-/** Compute a 0..1 proximity charge from the player to the gate. */
+/** Compute a 0..1 proximity charge from the player to the gate.
+ *  Bidirectional: the gate lights up as the player approaches from either side. */
 export function computeGateCharge(
   gateX: number,
   gateY: number,
@@ -248,9 +250,6 @@ export function computeGateCharge(
 
   const nx = Math.cos(gateAngle);
   const ny = Math.sin(gateAngle);
-  // Along-track distance (gate ahead of player → positive)
-  const along = dx * nx + dy * ny;
-  if (along < 0) return 0;
 
   // Perpendicular offset from the boost axis
   const perp = Math.abs(-dx * ny + dy * nx);

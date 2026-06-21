@@ -72,7 +72,6 @@ export function makePlayer(): Player {
     contracts: [],
     craftQueue: [],
     tractorCarryKg: 0,
-    tractorTightness: 0.5,
     hubQueue: [],
     hubOutput: { loot: {}, ore: {}, materials: [], modules: [] },
     hubDeposit: { raw: [], ore: {}, materials: [], loot: {}, modules: [] },

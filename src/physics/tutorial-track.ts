@@ -5,6 +5,7 @@ import {
   TUTORIAL_BOOST_GATES,
   getActiveTutorialTracks,
   detectGateCrossing,
+  gateCrossingDirection,
   type TutorialBoostGate,
 } from "../data/tutorial-layout.js";
 
@@ -37,8 +38,9 @@ function getActiveBoostGates(stepId: string): TutorialBoostGate[] {
 }
 
 function applyGateBoost(p: Player, gate: TutorialBoostGate): void {
-  const nx = Math.cos(gate.angle);
-  const ny = Math.sin(gate.angle);
+  const dir = gateCrossingDirection(gate, p.vx, p.vy);
+  const nx = Math.cos(gate.angle) * dir;
+  const ny = Math.sin(gate.angle) * dir;
   PlayerAccess.updatePhysics(
     { vx: p.vx + nx * BOOST_IMPULSE, vy: p.vy + ny * BOOST_IMPULSE },
     p,

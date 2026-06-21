@@ -32,6 +32,7 @@ export {
   getGateControlHint,
   gatePillarPositions,
   detectGateCrossing,
+  gateCrossingDirection,
   type TutorialLocalRegion,
   type TutorialTrackSegment,
   type TutorialBoostGate,

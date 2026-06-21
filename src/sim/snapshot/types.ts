@@ -23,7 +23,7 @@ export interface PlayerSnapshot {
   homeSysIdx?: number;
   miningLaser?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; hitR: number; hitNx: number; hitNy: number } | null;
   salvager?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetPieceId: string | null } | null;
-  tractor?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetId: string | null; tooHeavy: boolean } | null;
+  tractor?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetId: string | null; sourceSlotIdx?: number; tooHeavy: boolean } | null;
   gateCooldowns?: Record<string, number> | null;
   gatesCleared?: string[] | null;
   warpCooldown?: number;
@@ -95,7 +95,7 @@ export interface EntitySnapshot {
   boostLockout?: boolean;
   miningLaser?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; hitR: number; hitNx: number; hitNy: number } | null;
   salvager?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetPieceId: string | null } | null;
-  tractor?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetId: string | null; tooHeavy: boolean } | null;
+  tractor?: { active: boolean; x1: number; y1: number; x2: number; y2: number; phase: number; targetId: string | null; sourceSlotIdx?: number; tooHeavy: boolean } | null;
   spinAngle?: number;
   spinVel?: number;
   enemyType?: string;

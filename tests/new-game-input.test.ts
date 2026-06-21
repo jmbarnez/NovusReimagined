@@ -65,6 +65,26 @@ describe("new game client input", () => {
     expect(Client.mouse.rmb).toBe(false);
   });
 
+  it("queues tractor retraction on right-click when a beam is attached", () => {
+    getState().player.tractor = {
+      active: true,
+      targetId: "asteroid-1",
+      sourceSlotIdx: 0,
+      tooHeavy: false,
+      x1: 0,
+      y1: 0,
+      x2: 100,
+      y2: 0,
+      phase: 0,
+    };
+
+    const event = new MouseEvent("mousedown", { button: 2, clientX: 400, clientY: 300 });
+    handleMouseDown(event);
+
+    const frame = createLocalInputFrame(1);
+    expect(frame.actions).toContainEqual({ type: "retractTractorBeam" });
+  });
+
   it("does not fire when clicking on the HUD slot panel", () => {
     const overlay = document.createElement("div");
     overlay.id = "hud-overlay";

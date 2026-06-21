@@ -253,12 +253,23 @@ export function detectGateCrossing(
   const t = d1 / (d1 - d2);
   const cx = x1 + (x2 - x1) * t;
   const cy = y1 + (y2 - y1) * t;
-  const perpX = -ny * gate.halfWidth;
-  const perpY = nx * gate.halfWidth;
   const dist = Math.abs((cx - gate.x) * (-ny) + (cy - gate.y) * nx);
   if (dist > gate.halfWidth) return false;
+  // Bidirectional: any non-trivial through-plane velocity counts.
   const dot = vx * nx + vy * ny;
-  return dot > 0;
+  return Math.abs(dot) > 1.0;
+}
+
+/** Returns the sign (-1 or +1) of the player's through-plane velocity at the
+ *  crossing point. Positive = along gate.angle, negative = against. */
+export function gateCrossingDirection(
+  gate: { x: number; y: number; angle: number },
+  vx: number, vy: number,
+): number {
+  const nx = Math.cos(gate.angle);
+  const ny = Math.sin(gate.angle);
+  const dot = vx * nx + vy * ny;
+  return dot >= 0 ? 1 : -1;
 }
 
 // ── Types (kept for warp gate rendering compatibility) ─────────────────────

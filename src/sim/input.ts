@@ -47,9 +47,9 @@ const MAX_ACTIONS_PER_FRAME = 16;
 function sanitizeAction(action: Record<string, unknown>): GameCommand | null {
   switch (action.type) {
     case "fireSelectedTurret":
+    case "retractTractorBeam":
     case "setFireControlSlot":
     case "toggleSlotDefaultAction":
-    case "setTractorTightness":
       return sanitizeCombatAction(action);
 
     case "setMapScannerPower":

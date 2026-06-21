@@ -5,6 +5,10 @@ export interface FireSelectedTurretCommand {
   type: "fireSelectedTurret";
 }
 
+export interface RetractTractorBeamCommand {
+  type: "retractTractorBeam";
+}
+
 export interface DockCommand {
   type: "dock";
   payload?: { stationId?: string };
@@ -56,11 +60,6 @@ export interface CompleteSiteCommand {
     integrity: number;
     partial: boolean;
   };
-}
-
-export interface SetTractorTightnessCommand {
-  type: "setTractorTightness";
-  payload: { value: number };
 }
 
 export interface SetMapScannerPowerCommand {
@@ -193,6 +192,7 @@ export interface CollectHubOutputCommand {
 
 export type GameCommand =
   | FireSelectedTurretCommand
+  | RetractTractorBeamCommand
   | DockCommand
   | UndockCommand
   | WarpCommand
@@ -203,7 +203,6 @@ export type GameCommand =
   | SyncTutorialStepCommand
   | SkipTutorialCommand
   | CompleteSiteCommand
-  | SetTractorTightnessCommand
   | SetMapScannerPowerCommand
   | SetMapScannerConeCommand
   | SetMapScannerStrengthCommand

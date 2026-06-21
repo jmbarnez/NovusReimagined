@@ -142,7 +142,6 @@ export function loadPlayer(): Player {
     }
     migrateRefineryStorage(p);
     p.tractorCarryKg = 0;
-    if (typeof p.tractorTightness !== "number") p.tractorTightness = 0.5;
     if (!p.tutorial) p.tutorial = { active: false, step: 0, completed: false, skipped: false };
     if (p.pilotName === undefined || p.pilotName === null) p.pilotName = "";
     if (!Array.isArray(p.scannedSiteIds)) p.scannedSiteIds = [];

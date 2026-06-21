@@ -29,6 +29,7 @@ export interface SalvagerState {
 export interface TractorState {
   active: boolean;
   targetId: string | null;
+  sourceSlotIdx?: number;
   tooHeavy: boolean;
   x1: number; y1: number;
   x2: number; y2: number;
@@ -113,7 +114,6 @@ export interface PlayerIndustry {
   stationOffers: MissionContract[];
   stationOfferStationId: string | null;
   tractorCarryKg?: number;
-  tractorTightness?: number;
   miningLaser?: MiningLaserState | null;
   salvager?: SalvagerState | null;
   tractor?: TractorState | null;

@@ -15,7 +15,6 @@ import { hudState } from "../hud/state.js";
 import { updateSlots } from "../hud/slots.js";
 import { updateDockPrompt, updateHudOverviewPanel } from "../hud/overview.js";
 import { updateShipPanelLive, buildShipPanelShell, attachShipPanelListeners } from "../hud/ship-panel/index.js";
-import { updateTractorDial } from "../hud/tractor-dial.js";
 import { updateHubTooltip } from "../hud/hub-tooltip.js";
 import { applyTheme } from "./theme.js";
 import { updateMapOverlayDOM } from "./map-overlay.js";
@@ -84,7 +83,6 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
 
   updateSlots(ship, st, now);
   updateDockPrompt(sys);
-  updateTractorDial();
   updateHubTooltip(sys);
   maybeAutoCloseHubWindow();
   if (Client.overviewOpen) updateBridgeOverview();

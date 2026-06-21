@@ -20,9 +20,9 @@ import { handleTutorialCommand } from "./handlers/tutorial.js";
 export function executeGameCommand(command: GameCommand, p: Player): void {
   switch (command.type) {
     case "fireSelectedTurret":
+    case "retractTractorBeam":
     case "setFireControlSlot":
     case "toggleSlotDefaultAction":
-    case "setTractorTightness":
       return handleCombatCommand(command, p);
 
     case "setMapScannerPower":

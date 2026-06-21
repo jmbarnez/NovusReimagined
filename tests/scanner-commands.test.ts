@@ -5,19 +5,11 @@ import { makePlayer } from "../src/player/player-data.js";
 import { executeGameCommand } from "../src/sim/commands.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
 
-describe("scanner and tractor commands", () => {
+describe("scanner commands", () => {
   beforeEach(() => {
     installTestPlayer(makePlayer());
     G.GALAXY = buildGalaxy();
     populateSystem(G.GALAXY[0]!);
-  });
-
-  it("clamps tractor tightness through authoritative commands", () => {
-    executeGameCommand({ type: "setTractorTightness", payload: { value: 2 } }, G.P);
-    expect(G.P.tractorTightness).toBe(1);
-
-    executeGameCommand({ type: "setTractorTightness", payload: { value: -1 } }, G.P);
-    expect(G.P.tractorTightness).toBe(0);
   });
 
   it("applies map scanner settings through authoritative commands", () => {

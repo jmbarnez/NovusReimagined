@@ -66,8 +66,7 @@ export function syncUtilityBeams(now: number, alpha: number): void {
         tr.y2,
         tr.phase,
         tr.active,
-        tr.tooHeavy,
-        localPlayer.tractorTightness ?? 0.5
+        tr.tooHeavy
       );
     }
   }
@@ -102,8 +101,7 @@ export function syncUtilityBeams(now: number, alpha: number): void {
           p.tractor.y2,
           p.tractor.phase,
           p.tractor.active,
-          p.tractor.tooHeavy,
-          p.tractorTightness ?? 0.5
+          p.tractor.tooHeavy
         );
       }
     }
@@ -196,8 +194,7 @@ function drawTractorBeam(
   y2: number,
   phase: number,
   active: boolean,
-  tooHeavy: boolean,
-  tightness: number
+  tooHeavy: boolean
 ) {
   if (!_utilityGfx) return;
   const pulse = 0.7 + 0.3 * Math.sin(phase * 3.0);
@@ -220,7 +217,7 @@ function drawTractorBeam(
       currentDist += totalSeg;
     }
   } else {
-    const beamScale = 0.6 + tightness * 0.8;
+    const beamScale = 1;
 
     // Outer glow
     _utilityGfx.moveTo(x1, y1).lineTo(x2, y2)

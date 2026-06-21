@@ -1,24 +1,20 @@
 import "../styles/hud-slots.css";
 
 import { getState } from "../../state-access.js";
-import { t } from "../../utils/i18n.js";
-import { queueFrameAction } from "../../sim/input.js";
 import { SHIPS, type ShipDef, type ShipFitting } from "../../data/ships.js";
 import { MODULES, MODULE_FLAGS } from "../../data/modules.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
 import { MODULE_HP_MAX } from "../../constants.js";
 import { hotkeyBadge } from "../../utils/format.js";
 import { applyBarHotkey } from "../../player/player-fitting.js";
-import { floatText } from "../../utils/fx.js";
 import { getAbilityState, ABILITY_BY_ID } from "../../player/abilities.js";
 import { hudState, RACK_ORDER } from "./state.js";
 import { getInstance } from "../../utils/items.js";
 import { showSlotTooltip, hideSlotTooltip } from "./slotTooltip.js";
 import { itemIconHtml } from "../icons/item-icon-bake.js";
 import { getWeaponProfileForSlot, type ComputedStats } from "../../player/player-stats.js";
-import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
-import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave, remove, setCssVar } from "../dom-helpers.js";
+import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave } from "../dom-helpers.js";
 
 export interface SlotNode {
   el: HTMLElement;
@@ -167,47 +163,6 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
     ledCls = "sl-led off";
   }
   if (ledEl.className !== ledCls) ledEl.className = ledCls;
-
-  // Tractor Beam strength toggle button
-  const isTractor = m && MODULE_FLAGS.isTractor(m);
-  const isTractorOnline = isTractor && isSlotActive;
-  let strBtn = el.querySelector(".sl-str-toggle") as HTMLButtonElement | null;
-  if (isTractorOnline) {
-    const minimized = localStorage.getItem("tractor-dial-minimized") === "true";
-    const arrow = minimized ? "▲" : "▼";
-    const btnText = `STR ${arrow}`;
-
-    if (!strBtn) {
-      strBtn = createElement("button", "sl-str-toggle") as HTMLButtonElement;
-      setText(strBtn, btnText);
-      strBtn.title = t("ship.tractorControls");
-      append(el, strBtn);
-
-      onClick(strBtn, (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-
-        const isMin = localStorage.getItem("tractor-dial-minimized") === "true";
-        if (isMin) {
-          localStorage.removeItem("tractor-dial-minimized");
-        } else {
-          localStorage.setItem("tractor-dial-minimized", "true");
-        }
-
-        sfxBlip(isMin ? 1100 : 750, 0.02);
-      });
-    } else {
-      if (strBtn.textContent !== btnText) {
-        setText(strBtn, btnText);
-      }
-    }
-    const tightness = getState().player.tractorTightness ?? 0.5;
-    setCssVar(strBtn, "--tightness", String(tightness));
-  } else {
-    if (strBtn) {
-      remove(strBtn);
-    }
-  }
 
   // Heat / module HP bar (dirty-check)
   const heat = getState().player.slotHeat?.[r]?.[idx] || 0;

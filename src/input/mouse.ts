@@ -51,6 +51,10 @@ export function handleMouseDown(e: MouseEvent): void {
   }
   if (e.button === 2) {
     if (isBlockedByUi(e.target, getUiPointerBlockSelector())) return;
+    if (!Client.stationOpen && !Client.bridgeOpen && getState().player.tractor?.targetId) {
+      queueFrameAction({ type: "retractTractorBeam" });
+      return;
+    }
 
     let enemyClicked = null;
     if (!Client.stationOpen && !Client.bridgeOpen) {

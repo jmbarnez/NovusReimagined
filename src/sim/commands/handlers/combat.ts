@@ -1,12 +1,13 @@
 /**
  * Combat command handlers.
  *
- * Covers turret fire, fire-control slot selection, module slot toggling
- * (including ability activation), and tractor tightness.
+ * Covers turret fire, tractor retraction, fire-control slot selection, and
+ * module slot toggling (including ability activation).
  */
 import type { Player } from "../../../state.js";
 import { PlayerAccess } from "../../../state-access.js";
 import { fireSelectedTurret } from "../../../combat/turret-control.js";
+import { detachTractorBeam } from "../../../player/tractor.js";
 import { applyToggleSlotMutation } from "../../../player/player-fitting.js";
 import { tryActivate as tryActivateAbility, ABILITY_BY_ID } from "../../../player/abilities.js";
 import { MODULES } from "../../../data/modules.js";
@@ -19,9 +20,9 @@ export type CombatCommand = Extract<
   {
     type:
       | "fireSelectedTurret"
+      | "retractTractorBeam"
       | "setFireControlSlot"
-      | "toggleSlotDefaultAction"
-      | "setTractorTightness";
+      | "toggleSlotDefaultAction";
   }
 >;
 
@@ -29,6 +30,9 @@ export function handleCombatCommand(command: CombatCommand, p: Player): void {
   switch (command.type) {
     case "fireSelectedTurret":
       fireSelectedTurret(p);
+      break;
+    case "retractTractorBeam":
+      detachTractorBeam(p);
       break;
     case "setFireControlSlot":
       if (!isValidHardpointIndex(command.payload.slot, p)) break;
@@ -49,9 +53,5 @@ export function handleCombatCommand(command: CombatCommand, p: Player): void {
       applyToggleSlotMutation(rack, idx, p);
       break;
     }
-    case "setTractorTightness":
-      if (!Number.isFinite(command.payload.value)) break;
-      PlayerAccess.setTractorTightness(Math.max(0, Math.min(1, command.payload.value)), p);
-      break;
   }
 }
