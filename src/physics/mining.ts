@@ -10,7 +10,7 @@ import {
   type ModuleSlotRef,
 } from "../utils/module-slots.js";
 import { ORE } from "../data/resources.js";
-import { damagePlayer, showDamageNumber } from "../combat/damage-display.js";
+import { showDamageNumber } from "../combat/damage-display.js";
 import { getPlayerTurretOrigin } from "../combat/turret-origin.js";
 import { getPlayerInput } from "../player/input-state.js";
 import { harvestAsteroid, destroyAsteroid } from "../utils/mining.js";

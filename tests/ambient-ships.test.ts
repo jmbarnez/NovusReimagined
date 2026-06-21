@@ -139,6 +139,7 @@ describe("ambient ships", () => {
 
     const initialHp = asteroid.hp;
 
+    // 0.5s harvest cooldown means we need ~60 ticks (1s) to see damage
     for (let i = 0; i < 120; i++) {
       processAmbientBehavior(miner, 0.016);
     }

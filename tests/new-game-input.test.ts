@@ -85,7 +85,8 @@ describe("new game client input", () => {
 
     const frame = createLocalInputFrame(1);
     expect(frame.actions.some(a => a.type === "fireSelectedTurret")).toBe(false);
-    expect(Client.mouse.lmb).toBe(true);
+    expect(Client.mouse.lmb).toBe(false);
+    expect(frame.keys.lmb).toBe(false);
 
     document.body.removeChild(overlay);
   });
@@ -104,6 +105,8 @@ describe("new game client input", () => {
 
     const frame = createLocalInputFrame(1);
     expect(frame.actions.some(a => a.type === "fireSelectedTurret")).toBe(false);
+    expect(Client.mouse.lmb).toBe(false);
+    expect(frame.keys.lmb).toBe(false);
 
     document.body.removeChild(win);
   });
@@ -128,8 +131,49 @@ describe("new game client input", () => {
 
     const frame = createLocalInputFrame(1);
     expect(frame.actions.some(a => a.type === "fireSelectedTurret")).toBe(false);
+    expect(Client.mouse.lmb).toBe(false);
+    expect(frame.keys.lmb).toBe(false);
 
     document.body.removeChild(layer);
+  });
+
+  it("does not set lmb when clicking on the minimap", () => {
+    const overlay = document.createElement("div");
+    overlay.id = "hud-overlay";
+    const minimap = document.createElement("div");
+    minimap.id = "hud-minimap";
+    overlay.appendChild(minimap);
+    document.body.appendChild(overlay);
+
+    const event = new MouseEvent("mousedown", { button: 0, clientX: 400, clientY: 300 });
+    Object.defineProperty(event, "target", { value: minimap, enumerable: true });
+    handleMouseDown(event);
+
+    const frame = createLocalInputFrame(1);
+    expect(frame.actions.some(a => a.type === "fireSelectedTurret")).toBe(false);
+    expect(Client.mouse.lmb).toBe(false);
+    expect(frame.keys.lmb).toBe(false);
+
+    document.body.removeChild(overlay);
+  });
+
+  it("does not set lmb when clicking on a context menu", () => {
+    const menu = document.createElement("div");
+    menu.id = "turret-ctx-menu";
+    const item = document.createElement("div");
+    item.className = "ctx-menu-item";
+    menu.appendChild(item);
+    document.body.appendChild(menu);
+
+    const event = new MouseEvent("mousedown", { button: 0, clientX: 400, clientY: 300 });
+    Object.defineProperty(event, "target", { value: item, enumerable: true });
+    handleMouseDown(event);
+
+    const frame = createLocalInputFrame(1);
+    expect(Client.mouse.lmb).toBe(false);
+    expect(frame.keys.lmb).toBe(false);
+
+    document.body.removeChild(menu);
   });
 
   it("always sends WASD keys", () => {

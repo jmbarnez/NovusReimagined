@@ -18,11 +18,12 @@ export function handleMouseDown(e: MouseEvent): void {
   }
   if (e.button === 0) {
     const shiftClick = e.shiftKey || !!Client.keys["shift"];
-    Client.mouse.lmb = !shiftClick;
     if (shiftClick) setCursorLock(false, getCanvasElement());
 
+    const blockedByUi = e.target instanceof Element && isBlockedByUi(e.target, getUiPointerBlockSelector());
+
     // Map drag start
-    if (Client.showMap && e.target instanceof Element && isBlockedByUi(e.target, getUiPointerBlockSelector())) {
+    if (Client.showMap && blockedByUi) {
       const mapOverlay = e.target.closest("#map-overlay, #hud-win-body-map");
       if (mapOverlay) {
         Client.mapDragging = true;
@@ -32,7 +33,10 @@ export function handleMouseDown(e: MouseEvent): void {
       }
     }
 
-    if (isBlockedByUi(e.target, getUiPointerBlockSelector())) return;
+    // Don't activate LMB (mining/fire) when clicking on HUD or UI elements
+    if (blockedByUi) return;
+
+    Client.mouse.lmb = !shiftClick;
 
     // Manual fire on LMB click
     if (

@@ -5,8 +5,7 @@ import { getState } from "../state-access.js";
 // ─── Material-based collision FX ─────────────────────────────────────────────
 //  Every collision/impact in the game routes through spawnCollisionFx, which
 //  picks spark colors, particle counts, and flash ring style based on the
-//  material pair.  This replaces the scattered spawnImpactFlash / spawnBeamImpact
-//  / spawnMiningSparks / spawnCollisionSparks wrappers with one entry point.
+//  material pair.
 
 export type CollisionMaterial =
   | "metal"    // ship hulls, station plating
@@ -77,22 +76,6 @@ export function spawnBeam(x1: number, y1: number, x2: number, y2: number, color:
 
 export function floatText(x: number, y: number, text: string, color = "#fff", bgColor?: string) {
   addFloatText({ x, y, text, color, bgColor, life: 1, vy: -44 });
-}
-
-// ─── Legacy compat wrappers (delegate to spawnCollisionFx) ───────────────────
-//  These keep existing call sites working. New code should call spawnCollisionFx
-//  directly with an explicit material.
-
-export function spawnImpactFlash(x: number, y: number, color: string) {
-  spawnCollisionFx({ x, y, nx: 0, ny: 0, intensity: 60, material: "energy", tint: color });
-}
-
-export function spawnBeamImpactSubtle(x: number, y: number, color: string) {
-  spawnCollisionFx({ x, y, nx: 0, ny: 0, intensity: 35, material: "energy", tint: color });
-}
-
-export function spawnMiningSparks(x: number, y: number, nx = 0, ny = -1, color = "#c8a060", scale = 1) {
-  spawnCollisionFx({ x, y, nx, ny, intensity: 40 * scale, material: "ore", tint: color });
 }
 
 function _spawnDebris(x: number, y: number, color: string, count: number, sizeScale: number) {

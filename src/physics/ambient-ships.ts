@@ -315,13 +315,18 @@ export function processAmbientBehavior(e: Enemy, dt: number) {
             life: 0.5,
           });
 
-          const result = harvestAsteroid(asteroid, 0.4);
-          if (result.depleted) {
-            destroyAsteroid(asteroid, true, 0.4);
-            ts.mineTargetId = undefined;
-            ts.task = "patrol";
-            ts.taskTimer = 15.0;
-            pickRandomPatrolWp(ts);
+          if (ts.mineCd > 0) {
+            ts.mineCd -= dt;
+          } else {
+            const result = harvestAsteroid(asteroid, 0.4);
+            ts.mineCd = 0.5;
+            if (result.depleted) {
+              destroyAsteroid(asteroid, true, 0.4);
+              ts.mineTargetId = undefined;
+              ts.task = "patrol";
+              ts.taskTimer = 15.0;
+              pickRandomPatrolWp(ts);
+            }
           }
 
           _miningLaserHum -= dt;

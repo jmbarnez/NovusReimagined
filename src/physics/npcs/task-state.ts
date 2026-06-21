@@ -14,6 +14,7 @@ export interface EnemyTaskState {
   wpY: number | undefined;
   exitGateIdx: number | undefined;
   mineTargetId: string | undefined;
+  mineCd: number;
 }
 
 const _store = new Map<string, EnemyTaskState>();
@@ -26,6 +27,7 @@ function defaultTaskState(): EnemyTaskState {
     wpY: undefined,
     exitGateIdx: undefined,
     mineTargetId: undefined,
+    mineCd: 0,
   };
 }
 
