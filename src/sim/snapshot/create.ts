@@ -1,26 +1,7 @@
 import type { GameState, Player } from "../../state.js";
 import { getStats } from "../../player/player-stats.js";
-import type { AutoTarget } from "../../types/combat.js";
-import type { EntitySnapshot, TargetLockSnapshot, WorldSnapshot } from "./types.js";
+import type { EntitySnapshot, WorldSnapshot } from "./types.js";
 import { quantizeSnapshotNumber as q } from "./helpers.js";
-import { getAssignTargetId } from "../../player/target-selection.js";
-
-function snapshotTargetLock(target: AutoTarget | null | undefined): TargetLockSnapshot | null {
-  if (!target) return null;
-  return {
-    id: target.id,
-    x: q(target.x),
-    y: q(target.y),
-    hp: target.hp,
-    name: target.name,
-    alive: target.alive,
-    depleted: target.depleted,
-    sigRadius: target.sigRadius,
-    vx: typeof target.vx === "number" ? q(target.vx) : undefined,
-    vy: typeof target.vy === "number" ? q(target.vy) : undefined,
-    radius: target.radius,
-  };
-}
 
 function snapshotEntities(state: GameState, subject: Player): EntitySnapshot[] {
   const entities: EntitySnapshot[] = [];
@@ -172,11 +153,6 @@ export function createSnapshot(tick: number, state: GameState, subject: Player):
       gatesCleared: subject.gatesCleared ? [ ...subject.gatesCleared ] : null,
       warpCooldown: typeof subject.warpCooldown === "number" ? q(subject.warpCooldown) : undefined,
       warpTargetIdx: typeof subject.warpTargetIdx === "number" ? subject.warpTargetIdx : undefined,
-      targetLock: snapshotTargetLock(subject.targetLock),
-      lockQueue: subject.lockQueue ? subject.lockQueue.map(s => ({ ...s })) : null,
-      _assignTargetId: getAssignTargetId(subject.netId ?? subject.shipId),
-      turretTargets: subject.turretTargets ? [ ...subject.turretTargets ] : null,
-      highTargets: subject.highTargets ? [ ...subject.highTargets ] : null,
       turretCds: subject.turretCds ? [ ...subject.turretCds ] : null,
       moduleHp: subject.moduleHp ? JSON.parse(JSON.stringify(subject.moduleHp)) : null,
       fitting: subject.fitting ? JSON.parse(JSON.stringify(subject.fitting)) : null,

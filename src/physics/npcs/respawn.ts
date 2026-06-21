@@ -21,12 +21,7 @@ export function updateEnemyRespawns(dt: number, sysIdx: number) {
     e.angularVel = 0;
     e.angle = random() * Math.PI * 2;
     const ai = getAiState(e.id);
-    ai.targetingPlayer = false;
-    ai.hasLockOnPlayer = false;
-    ai.lockOnTimer = 0;
     ai.npcTarget = null;
-    ai.npcLockTimer = 0;
-    ai.npcHasLock = false;
     ai.orbitDir = undefined;
   }
 }

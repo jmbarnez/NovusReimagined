@@ -42,7 +42,7 @@ export const MAP_LAYER_Z = {
 
 export const HUD_LAYER_Z = {
   CORE: 0,
-  TARGET_ARROWS: 100,
+  GUIDE_ARROWS: 100,
 } as const;
 
 export const EFFECT_LAYER_Z = {

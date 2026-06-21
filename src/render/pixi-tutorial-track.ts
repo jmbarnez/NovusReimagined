@@ -33,7 +33,7 @@ export function syncPixiTutorialTrack(now: number): void {
   }
 
   // World-space chevrons are disabled; tutorial direction is handled by the
-  // off-screen guide arrow in pixi-target-arrows.ts.
+  // off-screen guide arrow in pixi-guide-arrows.ts.
   _trackGfx.visible = false;
 }
 

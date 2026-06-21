@@ -12,7 +12,6 @@ import { refreshEffectFonts } from "../../render/fx/index.js";
 import { refreshHudFonts } from "../../render/pixi-hud-core.js";
 import { refreshChatBubbleFonts } from "../../render/pixi-chat-bubbles.js";
 import { refreshStationOverlayFonts } from "../../render/pixi-station-overlays.js";
-import { refreshTargetArrowFonts } from "../../render/pixi-target-arrows.js";
 import { refreshTutorialGateFonts } from "../../render/pixi-tutorial-gates.js";
 import { refreshWarpScreenFonts } from "../../render/pixi-warp-screen.js";
 import { refreshEffectsOverlayFonts } from "../../render/pixi-effects-overlay.js";
@@ -197,7 +196,6 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     refreshChatBubbleFonts();
     refreshStationOverlayFonts();
     refreshEffectFonts();
-    refreshTargetArrowFonts();
     refreshTutorialGateFonts();
     refreshWarpScreenFonts();
     refreshEffectsOverlayFonts();
@@ -217,7 +215,6 @@ export function attachSettingsListeners(el: HTMLElement, bubble: HTMLElement) {
     refreshChatBubbleFonts();
     refreshStationOverlayFonts();
     refreshEffectFonts();
-    refreshTargetArrowFonts();
     refreshTutorialGateFonts();
     refreshWarpScreenFonts();
     refreshEffectsOverlayFonts();

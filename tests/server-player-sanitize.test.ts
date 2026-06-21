@@ -11,8 +11,6 @@ describe("createServerPlayerState", () => {
     incoming.pilotName = "Ace Pilot";
     incoming.vx = 999;
     incoming.vy = -999;
-    incoming.targetLock = { id: "rat-1", x: 1, y: 2, hp: 10 };
-    incoming.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
 
     incoming.boostLockout = true;
     incoming.netInputFrame = {
@@ -31,8 +29,6 @@ describe("createServerPlayerState", () => {
     expect(sanitized.pilotName).toBe("Ace Pilot");
     expect(sanitized.vx).toBe(0);
     expect(sanitized.vy).toBe(0);
-    expect(sanitized.targetLock).toBeNull();
-    expect(sanitized.lockQueue).toEqual([]);
 
     expect(sanitized.netInputFrame).toBeNull();
     expect(sanitized.boostLockout).toBe(false);
@@ -57,8 +53,6 @@ describe("createServerPlayerState", () => {
     const p = makePlayer();
     p.netId = "client_real";
     p.vx = 12;
-    p.targetLock = { id: "rat-1", x: 1, y: 2, hp: 10 };
-    p.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
 
     p.miningLaser = { active: true, x1: 0, y1: 0, x2: 1, y2: 1, phase: 1, hitR: 5, hitNx: 1, hitNy: 0 };
 
@@ -66,8 +60,6 @@ describe("createServerPlayerState", () => {
 
     expect(sync.netId).toBeUndefined();
     expect(sync.vx).toBe(0);
-    expect(sync.targetLock).toBeNull();
-    expect(sync.lockQueue).toEqual([]);
 
     expect(sync.miningLaser).toBeNull();
   });

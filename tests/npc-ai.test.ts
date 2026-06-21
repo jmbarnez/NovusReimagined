@@ -63,7 +63,6 @@ describe("processNpcBehavior", () => {
     e.aggroRange = 310;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     const ai = getAiState(e.id);
-    expect(ai.targetingPlayer).toBe(true);
     expect(ai.npcTarget).toBe(G.P);
   });
 
@@ -73,7 +72,7 @@ describe("processNpcBehavior", () => {
     e.aggroRange = 310;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     const ai = getAiState(e.id);
-    expect(ai.targetingPlayer).toBeFalsy();
+    expect(ai.npcTarget).toBeNull();
   });
 
   it("sets explicit hostile faction on spawned enemies", () => {
@@ -99,7 +98,6 @@ describe("processNpcBehavior", () => {
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     ai = getAiState(e.id);
     expect(ai.npcTarget).toBe(G.P);
-    expect(ai.targetingPlayer).toBe(true);
   });
 
   it("keeps targeting when hull is breached but structure remains", () => {
@@ -107,13 +105,11 @@ describe("processNpcBehavior", () => {
     e.aggroRange = 310;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     let ai = getAiState(e.id);
-    expect(ai.targetingPlayer).toBe(true);
 
     G.P.hp = 0;
     G.P.structure = 50;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     ai = getAiState(e.id);
-    expect(ai.targetingPlayer).toBe(true);
     expect(ai.npcTarget).toBe(G.P);
   });
 
@@ -126,7 +122,6 @@ describe("processNpcBehavior", () => {
     G.P.structure = 0;
     processNpcBehavior(e, 0.1, 150, e.aggroRange);
     const ai = getAiState(e.id);
-    expect(ai.targetingPlayer).toBeFalsy();
     expect(ai.npcTarget).toBeNull();
   });
 

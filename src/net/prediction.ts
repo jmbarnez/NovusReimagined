@@ -5,19 +5,11 @@ import { updateShip } from "../physics/ship.js";
 import { updateTutorialTrack } from "../physics/tutorial-track.js";
 import { tickAbilities } from "../player/abilities.js";
 import { replayPredictedToggleSlotAction } from "../player/player-fitting.js";
-import {
-  assignModuleSlotToTarget,
-  clearSensorLocks,
-  removeSensorLock,
-  requestSensorLock,
-  selectLockTarget,
-} from "../targeting.js";
 import type { InputFrame } from "../sim/input.js";
 import type { WorldSnapshot } from "../sim/snapshot.js";
 import { TICK_DT } from "../constants.js";
 import { updateCombat } from "../physics/combat-physics.js";
 import { startScanPulse } from "../scanning/index.js";
-import { getAssignTargetId } from "../player/target-selection.js";
 
 // PredictionManager class: Maintains unacknowledged local input frames
 // and replays them on top of incoming server snapshots to reconcile state.
@@ -55,7 +47,7 @@ export class PredictionManager {
       tickAbilities(TICK_DT, p);
       updateShip(TICK_DT, p);
       updateTutorialTrack(TICK_DT, p, true);
-      updateCombat(TICK_DT, p, { lockPredictionOnly: true });
+      updateCombat(TICK_DT, p);
     }
 
     // Restore current local input state
@@ -90,7 +82,7 @@ export class PredictionManager {
     tickAbilities(TICK_DT, p);
     updateShip(TICK_DT, p);
     updateTutorialTrack(TICK_DT, p, false);
-    updateCombat(TICK_DT, p, { lockPredictionOnly: true });
+    updateCombat(TICK_DT, p);
 
     // Restore Client inputs (but not waypoint/navCommand so local physics changes are preserved)
     Client.keys[" "] = oldSpace;
@@ -138,33 +130,6 @@ export class PredictionManager {
         case "toggleSlotDefaultAction":
           replayPredictedToggleSlotAction(action.payload.rack, action.payload.idx, p);
           break;
-        case "assignModuleSlotToTarget":
-          assignModuleSlotToTarget(
-            action.payload.slotIdx,
-            action.payload.targetId,
-            p,
-            { ...action.payload.opts, silent: true, suppressFrameAction: true },
-          );
-          break;
-        case "requestSensorLock":
-          {
-            const existing = p.lockQueue.find((slot) => slot.id === action.payload.id);
-            // Prediction replay should not flip an already-selected assignment off.
-            if (existing && !existing.resolving && getAssignTargetId(p.netId ?? p.shipId) === action.payload.id) break;
-            requestSensorLock(action.payload.id, p, { suppressFrameAction: true });
-          }
-          break;
-        case "removeSensorLock":
-          removeSensorLock(action.payload.id, p, { suppressFrameAction: true });
-          break;
-        case "selectLockTarget":
-          // Idempotent replay: keep selection on, avoid toggle-off behavior.
-          if (getAssignTargetId(p.netId ?? p.shipId) === action.payload.id) break;
-          selectLockTarget(action.payload.id, p, { suppressFrameAction: true });
-          break;
-        case "clearSensorLocks":
-          clearSensorLocks(p, { suppressFrameAction: true });
-          break;
         case "setTractorTightness":
           PlayerAccess.setTractorTightness(action.payload.value, p);
           break;
@@ -184,26 +149,9 @@ export class PredictionManager {
             silent: true,
           });
           break;
-        case "setHighTarget":
-          PlayerAccess.setHighTarget(action.payload.idx, action.payload.targetId, p);
-          break;
       }
     }
   }
-}
-
-function areWaypointsEqual(a: { x: number; y: number } | null | undefined, b: { x: number; y: number } | null | undefined): boolean {
-  if (!a && !b) return true;
-  if (!a || !b) return false;
-  return a.x === b.x && a.y === b.y;
-}
-
-type NavCommand = { mode: "orbit" | "keepRange"; targetId: string; rangePx: number; dir: 1 | -1 } | null;
-
-function areNavCommandsEqual(a: NavCommand, b: NavCommand): boolean {
-  if (!a && !b) return true;
-  if (!a || !b) return false;
-  return a.mode === b.mode && a.targetId === b.targetId && a.rangePx === b.rangePx && a.dir === b.dir;
 }
 
 export const predictionManager = new PredictionManager();

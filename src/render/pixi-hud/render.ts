@@ -10,7 +10,7 @@ import { ensurePixiHUDReady } from "./init.js";
 import { CRITICAL_GLITCH_CHANCE, CRITICAL_GLITCH_MAX_OFFSET } from "./constants.js";
 import { updateHorizon } from "./horizon.js";
 import { updateSpeedArc, updateShieldArc } from "./arcs.js";
-import { updateSpeedLabel, updateShieldLabel, updateWarningBanner, updateTargetLabel } from "./labels.js";
+import { updateSpeedLabel, updateShieldLabel, updateWarningBanner } from "./labels.js";
 import { updateDriftVectors } from "./drift.js";
 
 export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
@@ -98,9 +98,6 @@ export function syncPixiHUD(Wc: number, Hc: number, now: number): void {
   const lastDriftSpeedRounded = Math.round(hudState.lastDriftSpeed);
   const driftDirty = zoomChanged || criticalChanged || driftVisible !== hudState.lastDriftVisible || driftAngleRounded !== lastDriftAngleRounded || driftSpeedRounded !== lastDriftSpeedRounded;
   updateDriftVectors(cx, cy, z, r, player, isCritical, theme.shield, theme.textDim, gx, gy, zoomChanged, criticalChanged, driftDirty);
-
-  // Target label
-  updateTargetLabel(cx, cy, isCritical, theme.textMain);
 
   // Update all caches at end of frame
   hudState.lastZoom = z;

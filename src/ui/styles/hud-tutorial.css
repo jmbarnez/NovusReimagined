@@ -375,10 +375,6 @@
   animation: hudTutorialPulse 1.4s ease-in-out infinite !important;
 }
 
-#hud-lock-rail.hud-highlight {
-  right: calc(var(--hud-minimap-w) + 6px) !important;
-}
-
 #hud-boost-status.hud-highlight {
   outline: none !important;
   box-shadow: none !important;

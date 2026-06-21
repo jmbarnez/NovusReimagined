@@ -22,12 +22,6 @@ export function executeGameCommand(command: GameCommand, p: Player): void {
     case "fireSelectedTurret":
     case "setFireControlSlot":
     case "toggleSlotDefaultAction":
-    case "assignModuleSlotToTarget":
-    case "setHighTarget":
-    case "requestSensorLock":
-    case "removeSensorLock":
-    case "selectLockTarget":
-    case "clearSensorLocks":
     case "setTractorTightness":
       return handleCombatCommand(command, p);
 

@@ -4,7 +4,6 @@ import { getHardpointSlotCount } from "../../../utils/hardpoints.js";
 import { getStats } from "../../../player/player-stats.js";
 import { getEffectiveSignatureRadius } from "../../../scanning/index.js";
 import { t } from "../../../utils/i18n.js";
-import { maxTargetLocks } from "../../../targeting.js";
 import { renderTurretCard } from "./turrets.js";
 import { cacheTurretCardRefs } from "./live.js";
 import { getIonBoostModuleState } from "../../../player/boost-module.js";
@@ -129,10 +128,7 @@ export function renderStatsTabHTML(): string {
     <div class="sp-sect">
       <div class="sp-sect-h">${t("ship.sensors")}</div>
       <div class="sp-stats-grid">
-        ${card(t("ship.maxTargets"), maxTargetLocks(getState().player))}
-        ${card(t("ship.lockRange"), `${ship.lockRangeKm} km`)}
         ${card(t("ship.scanRange"), `${ship.sensorContactRangeKm} km`)}
-        ${card(t("ship.lockScanMod"), `${st.lockScanMult.toFixed(1)}x`)}
       </div>
     </div>
   `;

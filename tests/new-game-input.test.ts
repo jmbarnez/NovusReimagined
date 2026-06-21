@@ -159,7 +159,7 @@ describe("new game client input", () => {
 
   it("does not set lmb when clicking on a context menu", () => {
     const menu = document.createElement("div");
-    menu.id = "turret-ctx-menu";
+    menu.id = "enemy-ctx-menu";
     const item = document.createElement("div");
     item.className = "ctx-menu-item";
     menu.appendChild(item);

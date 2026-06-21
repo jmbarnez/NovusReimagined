@@ -9,13 +9,11 @@ export interface PixiHudState {
   shieldArcFill: Graphics | null;
   driftVectors: Graphics | null;
   warningBanner: Text | null;
-  targetLabel: Text | null;
   speedLabel: Text | null;
   shieldLabel: Text | null;
   speedStyle: TextStyle | null;
   shieldStyle: TextStyle | null;
   warningStyle: TextStyle | null;
-  targetStyle: TextStyle | null;
   lastSpeed: number;
   lastShieldFrac: number;
   lastIsCritical: boolean;
@@ -29,8 +27,6 @@ export interface PixiHudState {
   lastDriftAngle: number;
   lastDriftSpeed: number;
   lastDriftVisible: boolean;
-  lastTargetId: string | null;
-  lastTargetDist: number;
   lastThemeKey: string;
 }
 
@@ -43,13 +39,11 @@ export const hudState: PixiHudState = {
   shieldArcFill: null,
   driftVectors: null,
   warningBanner: null,
-  targetLabel: null,
   speedLabel: null,
   shieldLabel: null,
   speedStyle: null,
   shieldStyle: null,
   warningStyle: null,
-  targetStyle: null,
   lastSpeed: -1,
   lastShieldFrac: -1,
   lastIsCritical: false,
@@ -63,7 +57,5 @@ export const hudState: PixiHudState = {
   lastDriftAngle: 0,
   lastDriftSpeed: -1,
   lastDriftVisible: false,
-  lastTargetId: null,
-  lastTargetDist: -1,
   lastThemeKey: "",
 };

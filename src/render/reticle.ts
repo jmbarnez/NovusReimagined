@@ -111,7 +111,7 @@ export function renderReticleStyle(
     }
 
     case "delta": {
-      // Y-shaped three-point locks pointing inwards at 120-degree intervals
+      // Y-shaped three-point markers pointing inwards at 120-degree intervals
       const gap = sz * 0.35;
       const len = sz * 0.65;
       const angles = [-Math.PI / 2, Math.PI / 6, 5 * Math.PI / 6];

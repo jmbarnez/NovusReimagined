@@ -1,9 +1,9 @@
 /**
  * Playable viewport.
  *
- * In-game the render surfaces are inset to the rect between the top lock-rail
- * and the bottom HUD bar (see canvas.ts / pixi.ts), so the canvas centre IS the
- * centre of the open playable area and the camera lock can use it directly.
+ * In-game the render surfaces are inset to the rect between the top and bottom
+ * HUD bars (see pixi.ts), so the canvas centre IS the centre of the open
+ * playable area and the camera can use it directly.
  */
 
 import { HUD_SIDE_W, HUD_BOTTOM_H } from "../constants.js";

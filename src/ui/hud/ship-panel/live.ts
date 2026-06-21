@@ -4,8 +4,6 @@ import { MODULES, MODULE_FLAGS } from "../../../data/modules.js";
 import { getHardpointRack, getHardpointSlotCount } from "../../../utils/hardpoints.js";
 import { WEAPON_PROFILES } from "../../../data/weaponProfiles.js";
 import { getInstance } from "../../../utils/items.js";
-
-import { targetByLockId } from "../../../targeting.js";
 import { getStats, getWeaponProfileForSlot } from "../../../player/player-stats.js";
 import { isOpen } from "../windows.js";
 import { t } from "../../../utils/i18n.js";
@@ -235,19 +233,6 @@ export function updateShipPanelLive() {
     if (nodes.lastDurabilityCls !== durCls) {
       nodes.durabilityFill.className = durCls;
       nodes.lastDurabilityCls = durCls;
-    }
-
-    // Lock Targeting Info
-    const assignedId = p.turretTargets?.[idx] ?? null;
-    let targetText = "";
-    if (assignedId != null) {
-      const targetObj = targetByLockId(assignedId, p);
-      targetText = targetObj ? `→ ${targetObj.name || t("ship.targetAssign").slice(2)}` : t("ship.lockAssign");
-    }
-
-    if (nodes.lastTargetName !== targetText) {
-      setText(nodes.targetVal, targetText);
-      nodes.lastTargetName = targetText;
     }
 
     // Selected slot highlights

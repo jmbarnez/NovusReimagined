@@ -137,8 +137,7 @@ export const MINING_TRACK_STEPS: TutorialStep[] = [
     title: t("tutorial.step.targeting.title"),
     highlight: "#hud-scanner-dock",
     objective() {
-      const lockAction = `<span class="tutorial-keybind">${t("tutorial.action.ctrlLeftClick")}</span>`;
-      return t("tutorial.step.targeting.objectiveDirect", { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake"), lockAction });
+      return t("tutorial.step.targeting.objectiveDirect", { overviewKey: tutorialKeyStyled("overview"), brakeKey: tutorialKeyStyled("brake") });
     },
     zone: tutorialRegionZone("tut-mining"),
     beaconColor: 0x88ccff,

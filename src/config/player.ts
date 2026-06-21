@@ -2,8 +2,6 @@ export const PLAYER = {
   SKILL_POTENCY: {
     // Per-weapon-type damage scaling (applied at fire time based on weapon delivery).
     weaponMultPerLevel: 0.025,
-    // Lock scan benefits from any combat training (uses max of the three weapon skills).
-    lockScanPerLevel: 0.018,
     miningMultPerLevel: 0.04,
     engineeringEhpPerLevel: 0.025,
     levelHpPerLevel: 0.09,

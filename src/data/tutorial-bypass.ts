@@ -1,5 +1,6 @@
 import { type Player } from "../state.js";
 import { dst } from "../utils/math.js";
+import { curSys } from "../utils/game.js";
 import { TUTORIAL_TRAINING_SITE_ID } from "./tutorial-site.js";
 import { getState } from "../state-access.js";
 import { ORE } from "./resources.js";
@@ -62,8 +63,13 @@ export function totalOre(p: Player): number {
 }
 
 export function hasLockOnAsteroid(p: Player): boolean {
-  if (p.targetLock?.id?.startsWith("ast-")) return true;
-  return p.lockQueue.some((s) => s.id.startsWith("ast-"));
+  const sys = curSys(p);
+  if (!sys) return false;
+  for (const a of sys.asteroids) {
+    if (a.depleted || a.hp <= 0) continue;
+    if (dst(p.x, p.y, a.x, a.y) <= a.radius + 80) return true;
+  }
+  return false;
 }
 
 function enemyInZone(e: { x: number; y: number; radius?: number }, zone: TutorialZone): boolean {

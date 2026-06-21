@@ -4,7 +4,6 @@ import type { ModuleInstance } from "../../types/moduleInstance.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 import type { MissionContract } from "../../data/missions.js";
 import type { SignatureContact } from "../../types/system.js";
-import type { AutoTarget, LockSlot } from "../../types/combat.js";
 import type { ActiveScanTarget } from "./combat.js";
 
 export interface MiningLaserState {
@@ -62,11 +61,7 @@ export interface PlayerCombat {
   structure: number; maxStructure: number;
   shield: number; shieldCd: number;
   maxShield?: number;
-  targetLock: AutoTarget | null;
-  lockQueue: LockSlot[];
   fireControlSlot: number;
-  turretTargets: (string | null)[];
-  highTargets: (string | null)[];
   turretCds: number[];
   combatBar: { pos: number; dir: number };
   energy: number;

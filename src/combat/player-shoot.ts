@@ -8,7 +8,7 @@ import { WEAPON_SKILL, levelForSkillXp, type WeaponDelivery } from "../data/skil
 import { C } from "../config/index.js";
 import { floatText, spawnMuzzleFlash } from "../utils/fx.js";
 import { addBullet, isTargetDestroyed } from "../utils/entities.js";
-import { isAsteroidTarget, transversalVs } from "../targeting.js";
+import { isAsteroidTarget, transversalVs } from "../targeting/lookup.js";
 import { MODULES, MODULE_FLAGS, type ModuleDef } from "../data/modules.js";
 import { getPlayerTurretOrigin } from "./turret-origin.js";
 import { flashSlotFire, logEvent } from "../feedback.js";
@@ -35,6 +35,7 @@ function validatePlayerShootRequirements(
   if (!uid) return null;
   const inst = p.moduleCargo.find((item: ModuleInstance) => item.uid === uid);
   if (!inst) return null;
+  if (inst.durability <= 0) return null;
   const turretMod = MODULES[inst.baseId];
   if (!turretMod) return null;
   if (MODULE_FLAGS.isMiningTurret(turretMod)) return null;

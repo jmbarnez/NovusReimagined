@@ -26,7 +26,7 @@ import { syncPixiDamageFlash } from "./pixi-damage-flash.js";
 import { syncPixiShockwaves, syncPixiFloatTexts, syncPixiWorldBorder } from "./pixi-effects-overlay.js";
 import { syncPixiChatBubbles } from "./pixi-chat-bubbles.js";
 import { syncPixiHUD } from "./pixi-hud-core.js";
-import { syncPixiTargetArrows, syncPixiTutorialGuideArrow } from "./pixi-target-arrows.js";
+import { syncPixiTutorialGuideArrow } from "./pixi-guide-arrows.js";
 import { drawPixiSystemMapCanvasOverlays, syncPixiSystemMap } from "./pixi-maps.js";
 import { syncPixiMinimap } from "./pixi-minimap.js";
 import { syncPixiCrosshair } from "./pixi-crosshair.js";
@@ -96,7 +96,6 @@ const SPACE_FRAME_SYSTEMS: Record<SpaceFrameSystemId, SpaceFrameSystemRunner> = 
   },
   thrust: (ctx) => syncThrust(ctx.alpha, ctx.now),
   hud: (ctx) => syncPixiHUD(ctx.width, ctx.height, ctx.now),
-  tarrows: (ctx) => syncPixiTargetArrows(ctx.width, ctx.height, ctx.camxR, ctx.camyR, ctx.now),
   guidearrow: (ctx) => {
     if (ctx.tutorialActive) syncPixiTutorialGuideArrow(ctx.width, ctx.height, ctx.camxR, ctx.camyR, ctx.now);
   },

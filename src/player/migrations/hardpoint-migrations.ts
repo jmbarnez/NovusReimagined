@@ -16,9 +16,6 @@ function copyPaddedArray<T>(prev: T[] | undefined, length: number, fallback: (id
 
 export function normalizeHardpointArrays(p: Player): void {
   const hardpointCount = p.fitting?.[playerHardpointRack(p)]?.length ?? 0;
-  const highCount = p.fitting?.high?.length ?? 0;
-  p.turretTargets = copyPaddedArray(p.turretTargets, hardpointCount, () => null);
-  p.highTargets = copyPaddedArray(p.highTargets, highCount, () => null);
   p.turretCds = copyPaddedArray(p.turretCds, hardpointCount, () => 0);
 }
 
@@ -37,18 +34,16 @@ export function migrateLegacyHardpointFit(p: Player): void {
 
 export function applyStarterTrainingFit(p: Player): void {
   const hasRegressedStarterFit =
-    p.fitting?.turret?.includes("start-tu-civ-cannon") ||
-    p.fitting?.high?.includes("start-tu-civ-cannon") ||
     p.fitting?.med?.includes("start-me-ab1") ||
     p.fitting?.low?.includes("start-tu-civ-scanner");
   if (!p.tutorial?.active || p.tutorial.completed || !hasRegressedStarterFit) return;
   const fit = defaultFitting(p.shipId);
-  fit.high[0] = "start-tu-civ-miner";
-  fit.high[1] = "start-tu-tractor";
+  fit.high[0] = "start-tu-civ-cannon";
+  fit.high[1] = "start-tu-pulse";
+  fit.med[0] = "start-me-ab1";
+  fit.low[0] = "start-lo-dcu";
   p.fitting = fit;
   const hardpointCount = fit[playerHardpointRack(p)]?.length ?? 0;
-  p.turretTargets = Array(hardpointCount).fill(null);
-  p.highTargets = Array(fit.high?.length ?? 0).fill(null);
   p.turretCds = Array(hardpointCount).fill(0);
   p.moduleHp = {
     turret: Array(fit.turret.length).fill(null),

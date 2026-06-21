@@ -154,12 +154,8 @@ export function createServerPlayerState(id: string, name: string, incoming: Play
   p.moduleHp = cloneModuleHp(incoming.moduleHp, p.fitting, ship);
   const hardpointRack = getHardpointRack(ship);
   const hardpointCount = p.fitting[hardpointRack]?.length ?? 0;
-  p.turretTargets = Array(hardpointCount).fill(null);
-  p.highTargets = Array(p.fitting.high?.length ?? 0).fill(null);
   p.turretCds = Array(hardpointCount).fill(0);
   p.fireControlSlot = 0;
-  p.targetLock = null;
-  p.lockQueue = [];
 
   p.blueprints = cloneBooleanRecord(incoming.blueprints, base.blueprints);
   p.skills = cloneNumberRecord(incoming.skills, base.skills);
@@ -218,10 +214,6 @@ export function createDurableCharacterSync(source: Player): Player {
   p.px = p.x;
   p.py = p.y;
   p.prevAngle = p.angle;
-  p.targetLock = null;
-  p.lockQueue = [];
-  p.turretTargets = Array(p.turretTargets?.length ?? 0).fill(null);
-  p.highTargets = Array(p.highTargets?.length ?? 0).fill(null);
   p.turretCds = Array(p.turretCds?.length ?? 0).fill(0);
   p.shootCd = 0;
   p.mineCd = 0;

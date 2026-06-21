@@ -30,6 +30,12 @@ interface ActiveStack {
 
 const _activeStacks = new Map<string, ActiveStack>();
 
+function pulsePickupStack(element: HTMLElement): void {
+  element.classList.remove("stack-bump");
+  void element.offsetWidth;
+  element.classList.add("stack-bump");
+}
+
 function resolvePickupDisplay(kind: string, payload: string, instance?: ModuleInstance, displayName?: string): { name: string; icon: string; color: string } {
   let name = "";
   let icon = "";
@@ -79,6 +85,7 @@ export function showPickupToast(kind: string, payload: string, qty: number, inst
     if (qtySpan) {
       setText(qtySpan, `x${existingStack.qty}`);
     }
+    pulsePickupStack(existingStack.element);
     existingStack.timeoutId = window.setTimeout(() => {
       existingStack.element.classList.add("fading");
       window.setTimeout(() => {

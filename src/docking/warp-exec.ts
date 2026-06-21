@@ -5,7 +5,6 @@ import { savePlayer } from "../player/player-data.js";
 import { addParticle } from "../utils/entities.js";
 import { random } from "../utils/math.js";
 import { curSys } from "../utils/game.js";
-import { clearSensorLocks } from "../targeting.js";
 import { floatText } from "../utils/fx.js";
 import { t } from "../utils/i18n.js";
 import { populateSystem } from "../world-gen.js";
@@ -17,7 +16,6 @@ import { clearTaskState } from "../physics/npcs/task-state.js";
 import { clearNpcSpeech } from "../render/npc-speech.js";
 import { clearPlayerInput } from "../player/input-state.js";
 import { clearCollisionCooldowns } from "../player/collision-state.js";
-import { clearAssignTargetIds } from "../player/target-selection.js";
 import type { Gate } from "../types/station.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { C } from "../config/index.js";
@@ -77,7 +75,6 @@ export function warpTo(gate: Gate, p: Player = getState().player) {
     p,
   );
   PlayerAccess.setInvincible(1.5, p);
-  clearSensorLocks(p);
   if (crossSys && typeof gate.targetSysIdx === "number") {
     PlayerAccess.setSysIdx(gate.targetSysIdx, p);
     const targetSys = getState().GALAXY[gate.targetSysIdx];
@@ -93,7 +90,6 @@ export function warpTo(gate: Gate, p: Player = getState().player) {
       clearNpcSpeech();
       clearPlayerInput();
       clearCollisionCooldowns();
-      clearAssignTargetIds();
       if (targetSys && stationLayer) initPixiCelestial(stationLayer, targetSys);
     }
   }

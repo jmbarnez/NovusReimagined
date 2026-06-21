@@ -2,7 +2,7 @@ import type { GameEffect } from "../state.js";
 import { floatText, spawnExplosion, spawnShockwave, spawnCollisionFx, spawnBeam } from "../utils/fx.js";
 import { addParticle } from "../utils/entities.js";
 import { random } from "../utils/math.js";
-import { sfxWeaponFire, sfxProjectileImpact, sfxShipExplosion, sfxShieldImpact, sfxHullImpact, sfxHostileLocking, sfxHostileLock, sfxUnderAttackPulse, sfxIndustrialBeam, sfxBlip, sfxBeamImpact } from "../audio/procedural.js";
+import { sfxWeaponFire, sfxProjectileImpact, sfxShipExplosion, sfxShieldImpact, sfxHullImpact, sfxUnderAttackPulse, sfxIndustrialBeam, sfxBlip, sfxBeamImpact } from "../audio/procedural.js";
 
 export function handleGameEffect(eff: GameEffect): void {
   const p = eff.payload;
@@ -37,12 +37,6 @@ export function handleGameEffect(eff: GameEffect): void {
       break;
     case "hullImpact":
       sfxHullImpact(p.vol ?? 1);
-      break;
-    case "hostileLocking":
-      sfxHostileLocking(p.x ?? 0, p.y ?? 0);
-      break;
-    case "hostileLock":
-      sfxHostileLock(p.x ?? 0, p.y ?? 0);
       break;
     case "underAttackPulse":
       sfxUnderAttackPulse(p.count ?? 1, p.x ?? 0, p.y ?? 0);

@@ -1,18 +1,7 @@
-import type { AutoTarget, LockSlot } from "../../types/combat.js";
 import type { CraftJob } from "../../data/industryRecipes.js";
 import type { MissionContract } from "../../data/missions.js";
 import type { ModuleInstance } from "../../types/moduleInstance.js";
 import type { BulkMaterialStack, HubDeposit, HubJob, HubOutput, MixedOreCargo } from "../../state.js";
-
-export type TargetLockSnapshot = Pick<AutoTarget, "id" | "x" | "y" | "hp"> & {
-  name?: string;
-  alive?: boolean;
-  depleted?: boolean;
-  sigRadius?: number;
-  vx?: number;
-  vy?: number;
-  radius?: number;
-};
 
 export interface PlayerSnapshot {
   netId?: string;
@@ -39,11 +28,6 @@ export interface PlayerSnapshot {
   gatesCleared?: string[] | null;
   warpCooldown?: number;
   warpTargetIdx?: number;
-  targetLock?: TargetLockSnapshot | null;
-  lockQueue?: LockSlot[] | null;
-  _assignTargetId?: string | null;
-  turretTargets?: (string | null)[] | null;
-  highTargets?: (string | null)[] | null;
   turretCds?: number[] | null;
   moduleHp?: Record<string, (number | null)[]> | null;
   fitting?: Record<string, (string | null)[]> | null;

@@ -9,21 +9,49 @@
 }
 
 .hud-slot {
+  --slot-accent: var(--hud-border);
   flex: 1;
   min-width: 26px;
   height: 100%;
-  background: transparent;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--hud-bg-window) 22%, transparent) 0%,
+      color-mix(in srgb, var(--hud-bg-deep) 42%, transparent) 100%);
   border: 1px solid rgba(28,32,40,0.22);
   padding: 1px 2px;
   position: relative;
   cursor: pointer;
-  transition: border-color 0.1s;
+  transition: border-color 0.1s, box-shadow 0.15s ease, background 0.15s ease;
   pointer-events: auto;
   overflow: hidden;
+  isolation: isolate;
 }
-.hud-slot:hover { border-color: rgba(60,80,100,0.55); }
-.hud-slot.pending-assign { border-color: rgba(80,220,255,0.7); }
-.hud-slot.overheat { border-color: #ff4422; animation: overheat-pulse 0.6s infinite alternate; }
+.hud-slot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 0%,
+      color-mix(in srgb, var(--slot-accent) 22%, transparent) 0%,
+      transparent 62%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.hud-slot:hover {
+  border-color: rgba(60,80,100,0.55);
+  box-shadow: inset 0 0 8px rgba(255,255,255,0.035);
+}
+.hud-slot.pending-assign {
+  --slot-accent: var(--hud-shield);
+  border-color: rgba(80,220,255,0.7) !important;
+}
+.hud-slot.overheat {
+  --slot-accent: var(--hud-danger);
+  border-color: #ff4422 !important;
+  animation: overheat-pulse 0.6s infinite alternate;
+}
 
 .hud-slot.rack-turret { border-color: rgba(80,60,40,0.35); }
 .hud-slot.rack-high   { border-color: rgba(80,80,30,0.35); }
@@ -32,15 +60,29 @@
 
 /* Selected turret (active fire slot) */
 .hud-slot.turret-selected {
+  --slot-accent: var(--hud-accent);
   border-color: rgba(220,180,70,0.85) !important;
-  box-shadow: 0 0 6px rgba(220,180,70,0.30);
+  box-shadow: 0 0 6px rgba(220,180,70,0.30), inset 0 0 10px rgba(220,180,70,0.08);
 }
 
 /* Active module ON state */
-.hud-slot.module-on { border-color: rgba(100,140,100,0.55); }
+.hud-slot.module-on {
+  --slot-accent: var(--hud-positive);
+  border-color: rgba(100,140,100,0.55);
+}
 
 /* Turret with assigned target */
-.hud-slot.target-assigned { border-color: rgba(60,140,90,0.55); }
+.hud-slot.target-assigned {
+  --slot-accent: var(--hud-positive);
+  border-color: rgba(60,140,90,0.55);
+}
+
+.hud-slot.module-on::before,
+.hud-slot.target-assigned::before,
+.hud-slot.pending-assign::before,
+.hud-slot.turret-selected::before {
+  opacity: 0.65;
+}
 
 
 
@@ -77,6 +119,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  z-index: 2;
 }
 .hud-slot .sl-name svg,
 .hud-slot .sl-name .item-icon-sprite,
@@ -137,21 +180,32 @@
   bottom: 1px; left: 3px; right: 3px;
   height: 2px;
   background: rgba(0,0,0,0.45);
+  z-index: 3;
 }
 .hud-slot .sl-heat-fill {
   height: 100%;
   background: #cc7722;
   transition: width 0.1s linear;
 }
-.hud-slot .sl-heat-fill.danger { background: #ff4422; }
+.hud-slot .sl-heat-fill.damaged {
+  background: linear-gradient(90deg, #ff8844, #cc4422);
+}
+.hud-slot .sl-heat-fill.danger {
+  background: linear-gradient(90deg, #ff4422, #ff9a44, #ff4422);
+  background-size: 180% 100%;
+  animation: heat-danger-flow 0.9s linear infinite;
+}
 
 /* Cooldown overlay */
 .hud-slot .sl-cd-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.62), rgba(0,0,0,0.42)),
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 6px);
   pointer-events: none;
   transition: height 0.1s linear;
+  z-index: 1;
 }
 
 /* Firing flash animations */
@@ -174,6 +228,7 @@
   background: #ff8820;
   opacity: 0;
   pointer-events: none;
+  z-index: 4;
 }
 .hud-slot.firing .sl-muzzle {
   animation: slot-fire-dot 0.15s ease-out;
@@ -182,6 +237,11 @@
 @keyframes overheat-pulse {
   0%   { border-color: #ff4422; box-shadow: 0 0 4px rgba(255,68,34,0.3); }
   100% { border-color: #882211; box-shadow: 0 0 2px rgba(255,68,34,0.1); }
+}
+
+@keyframes heat-danger-flow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 180% 0%; }
 }
 
 /* ── Rack Dividers ── */

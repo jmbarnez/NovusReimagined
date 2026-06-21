@@ -11,7 +11,6 @@ import { getUIFont } from "./ui-font.js";
 import { canWarpThroughGate, shouldShowWarpGate } from "../data/tutorial.js";
 import { gateChargeRadius, gateStableId } from "../utils/warp-gates.js";
 import { t } from "../utils/i18n.js";
-import { forEachAiState } from "../physics/npcs/ai-state.js";
 
 const TAU = Math.PI * 2;
 
@@ -128,8 +127,6 @@ function drawStationOverlay(g: Graphics, st: Station, sysSecurity: number, now: 
   const dockR = st.radius * 2;
   const interactR = st.isProcessingHub ? ((st.collectRadius ?? 220) + 80) : dockR;
   const inRange = dst(player.x, player.y, st.x, st.y) < interactR;
-  let locked = false;
-  forEachAiState((_id, s) => { if (s.hasLockOnPlayer) locked = true; });
 
   // Safe zone
   const safeR = st.safeRadius ?? (st.isHome ? 900 : 675);
@@ -189,7 +186,7 @@ function drawStationOverlay(g: Graphics, st: Station, sysSecurity: number, now: 
     g.circle(st.x, st.y, (st.collectRadius ?? 220) + 40).stroke({ color: 0xffa028, width: 1, alpha: 0.12 });
 
   } else {
-    const dockReady = inRange && !locked;
+    const dockReady = inRange;
     if (dockReady) {
       const dockPulse = 0.5 + 0.15 * Math.sin(now * 0.0035);
       g.circle(st.x, st.y, dockR).stroke({ color: 0x00f0ff, width: 1.6, alpha: 0.45 + dockPulse });
@@ -225,13 +222,11 @@ export function syncPixiStationOverlays(now: number, sys: System): void {
       layer.addChild(gfx);
       stationGfx.set(st.id, gfx);
     }
-    let locked = false;
-  forEachAiState((_id, s) => { if (s.hasLockOnPlayer) locked = true; });
     drawStationOverlay(gfx, st, sys.security ?? 0.5, now);
 
     if (dst(getState().player.x, getState().player.y, st.x, st.y) < st.radius * 2.5) {
-      const labelText = st.isProcessingHub ? "[F] Processing Hub" : (locked ? "◉ Locked" : "[F] Dock");
-      const labelFill = st.isProcessingHub ? "#ffaa44" : (locked ? "#ff5555" : "#88c8ff");
+      const labelText = st.isProcessingHub ? "[F] Processing Hub" : "[F] Dock";
+      const labelFill = st.isProcessingHub ? "#ffaa44" : "#88c8ff";
       const t = ensureText(st.id, labelText, st.x + st.radius + 15, st.y, labelFill);
       keepLabels.add(st.id);
       if (!layer.children.includes(t)) layer.addChild(t);

@@ -1,12 +1,10 @@
 
 import { PlayerAccess, getState, WorldAccess } from "../state-access.js";
-import { getStats } from "../player/player-stats.js";
 import { showDamageNumber } from "../combat/damage-display.js";
 import { damageEnemy, damageAsteroid } from "../combat.js";
-import { updateSensorLocks } from "../targeting.js";
 import { spawnCollisionFx } from "../utils/fx.js";
 import { floatText } from "../utils/fx.js";
-import { removeBullet, updateBeams, updateParticles, updateShockwaves, updateFloatTexts, isTargetDestroyed } from "../utils/entities.js";
+import { removeBullet, updateBeams, updateParticles, updateShockwaves, updateFloatTexts } from "../utils/entities.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
 import { getAsteroidColRadius } from "../utils/asteroid-helpers.js";
 import type { SpatialQueryResult } from "../utils/spatial.js";
@@ -14,16 +12,8 @@ import type { Enemy } from "../types/enemy.js";
 import type { Asteroid } from "../types/asteroid.js";
 import type { Player } from "../state.js";
 
-export function updateCombat(dt: number, p: Player = getState().player, opts?: { lockPredictionOnly?: boolean }) {
-  const st = getStats(p);
+export function updateCombat(dt: number, p: Player = getState().player) {
   if (p.shootCd > 0) PlayerAccess.setShootCd(p.shootCd - dt, p);
-  if (p.targetLock) {
-    const tl = p.targetLock;
-    const lost = !tl || isTargetDestroyed(tl) || Math.hypot(p.x - tl.x, p.y - tl.y) > 3500;
-    if (lost) PlayerAccess.setTargetLock(null, p);
-  }
-  updateSensorLocks(dt, st, p);
-  void opts;
 }
 
 const _bHits: SpatialQueryResult<Enemy | Asteroid>[] = [];

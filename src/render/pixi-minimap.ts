@@ -198,14 +198,31 @@ export function syncPixiMinimap(now: number): void {
   g.circle(mmX, mmY, maxRadarR);
   g.stroke({ color: cachedHudBorder, width: 1, alpha: 0.28 });
 
+  for (let i = 0; i < 8; i++) {
+    const tickAngle = (i / 8) * TAU;
+    const tickLen = i % 2 === 0 ? 5 : 3;
+    const cos = Math.cos(tickAngle);
+    const sin = Math.sin(tickAngle);
+    g.moveTo(mmX + cos * (maxRadarR - tickLen), mmY + sin * (maxRadarR - tickLen));
+    g.lineTo(mmX + cos * maxRadarR, mmY + sin * maxRadarR);
+  }
+  g.stroke({ color: cachedHudBorder, width: 1, alpha: 0.32 });
+
   // Radar sweep
   const sweepAngle = radarSweepAngle(now);
+  sweepGfx.moveTo(mmX, mmY);
+  sweepGfx.arc(mmX, mmY, maxRadarR, sweepAngle - 0.64, sweepAngle - 0.24);
+  sweepGfx.closePath();
+  sweepGfx.fill({ color: cachedHudBorderSoft, alpha: 0.06 });
   sweepGfx.moveTo(mmX, mmY);
   sweepGfx.arc(mmX, mmY, maxRadarR, sweepAngle - 0.38, sweepAngle);
   sweepGfx.closePath();
   sweepGfx.fill({ color: cachedHudBorder, alpha: 0.14 });
 
   // Sweep line
+  g.moveTo(mmX, mmY);
+  g.lineTo(mmX + Math.cos(sweepAngle - 0.18) * maxRadarR, mmY + Math.sin(sweepAngle - 0.18) * maxRadarR);
+  g.stroke({ color: cachedHudBorderSoft, width: 0.8, alpha: 0.18 });
   g.moveTo(mmX, mmY);
   g.lineTo(mmX + Math.cos(sweepAngle) * maxRadarR, mmY + Math.sin(sweepAngle) * maxRadarR);
   g.stroke({ color: cachedHudBorder, width: 1.2, alpha: 0.45 });

@@ -1,11 +1,9 @@
 import type { SlotNode } from "./slots.js";
-import type { LockCard } from "./targeting/index.js";
 
 export const hudState = {
   root: null as HTMLElement | null,
   sysName: null as HTMLElement | null,
   secEl: null as HTMLElement | null,
-  lockRail: null as HTMLElement | null,
   ovEntries: null as HTMLElement | null,
   ovPanel: null as HTMLElement | null,
   ovSortKey: "dist" as "state" | "class" | "name" | "dist",
@@ -16,11 +14,8 @@ export const hudState = {
   boostStatus: null as HTMLElement | null,
   slotsContainer: null as HTMLElement | null,
   slotNodes: new Map<string, SlotNode>(),
-  lockCards: new Map<string, LockCard>(),
-  lastLockCount: 0,
   lastSlotState: "",
 
-  turretCtxMenu: null as HTMLElement | null,
   enemyCtxMenu: null as HTMLElement | null,
 
   logEntries: null as HTMLElement | null,

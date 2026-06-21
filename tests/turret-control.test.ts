@@ -16,17 +16,9 @@ describe("turret control hardpoint rack", () => {
   });
 
   it("does not auto-fire assigned combat weapons (manual fire only)", () => {
-    const sys = G.GALAXY[0]!;
-    const enemy = sys.enemies[0]!;
-    sys.enemyMap = new Map([[enemy.id, enemy]]);
-
-    G.P.x = enemy.x;
-    G.P.y = enemy.y;
     G.P.energy = 1_000;
     G.P.ammo.hybrid = 1_000;
     G.P.fitting.high[0] = "start-tu-civ-cannon";
-    G.P.lockQueue = [{ id: enemy.id, resolving: false, acc: 1 }];
-    G.P.turretTargets[0] = enemy.id;
 
     updateTurretCooldowns(0.016, G.P);
 

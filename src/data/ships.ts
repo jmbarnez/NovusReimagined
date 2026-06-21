@@ -56,9 +56,7 @@ export interface ShipDef {
   resistances: Record<string, number>;
   weaponMult: number;
   miningMult: number;
-  lockBonusTicks: number;
   sensorContactRangeKm: number;
-  lockRangeKm: number;
   turretRangeKm: number;
   miningRangeKm: number;
   passiveScanRangeKm?: number;
@@ -98,9 +96,7 @@ export const SHIPS: Record<string, ShipDef> = {
     resistances: { em: 0.1, therm: 0.2, kin: 0.2, exp: 0.1 },
     weaponMult: 0.9,
     miningMult: 0.85,
-    lockBonusTicks: 1,
     sensorContactRangeKm: 118,
-    lockRangeKm: 86,
     turretRangeKm: 58,
     miningRangeKm: 8,
     passiveScanRangeKm: 54,
@@ -183,9 +179,7 @@ export const SHIPS: Record<string, ShipDef> = {
     resistances: { em: 0.2, therm: 0.2, kin: 0.4, exp: 0.4 },
     weaponMult: 0.75,
     miningMult: 1.35,
-    lockBonusTicks: 0,
     sensorContactRangeKm: 86,
-    lockRangeKm: 58,
     turretRangeKm: 30,
     miningRangeKm: 8,
     cruiseSpeedMult: 0.95,
@@ -244,9 +238,7 @@ export const SHIPS: Record<string, ShipDef> = {
     resistances: { em: 0.3, therm: 0.3, kin: 0.3, exp: 0.3 },
     weaponMult: 1.25,
     miningMult: 0.7,
-    lockBonusTicks: 0,
     sensorContactRangeKm: 96,
-    lockRangeKm: 64,
     turretRangeKm: 68,
     miningRangeKm: 8,
     cruiseSpeedMult: 1.04,

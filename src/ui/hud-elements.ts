@@ -20,10 +20,6 @@ export function getHudSlots(): HTMLElement | null {
   return getElement("hud-slots");
 }
 
-export function getHudLockRail(): HTMLElement | null {
-  return getElement("hud-lock-rail");
-}
-
 export function getHudMissions(): HTMLElement | null {
   return getElement("hud-missions");
 }

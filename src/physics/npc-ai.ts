@@ -1,6 +1,5 @@
 import { Client, type Player } from "../state.js";
 import { getState, WorldAccess } from "../state-access.js";
-import { SHIPS } from "../data/ships.js";
 import { ENEMY_DEFS } from "../data/enemies.js";
 import { C } from "../config/index.js";
 import type { EngagementProfile } from "../config/enemies.js";
@@ -10,7 +9,7 @@ import { isHostile } from "../combat/factions.js";
 import { processAmbientBehavior } from "./ambient-ships.js";
 import { liveEnemies } from "../utils/game.js";
 import { fireTurretsAt } from "../combat/enemy-turrets.js";
-import { getAiState, forEachAiState, type EnemyAIState } from "./npcs/ai-state.js";
+import { getAiState, type EnemyAIState } from "./npcs/ai-state.js";
 
 let _attackPulseTimer = 0;
 
@@ -127,26 +126,6 @@ function resolveNpcTargetState(
   return { target, isNew: !hadTarget && target !== null, isPlayer };
 }
 
-interface NpcLockResult {
-  lockTimer: number;
-  hasLock: boolean;
-  acquiredLock: boolean;
-}
-
-/** Advance lock timer and determine if lock resolves.  Pure. */
-function computeNpcLockResult(
-  currentTimer: number,
-  currentHasLock: boolean,
-  dt: number,
-  lockTimeRequired: number,
-): NpcLockResult {
-  const lockTimer = currentTimer + dt;
-  if (lockTimer >= lockTimeRequired && !currentHasLock) {
-    return { lockTimer, hasLock: true, acquiredLock: true };
-  }
-  return { lockTimer, hasLock: lockTimer >= lockTimeRequired, acquiredLock: false };
-}
-
 interface NpcMovementDeltas {
   angleDelta: number;
   vxDelta: number;
@@ -251,39 +230,15 @@ export function processNpcBehavior(e: Enemy, dt: number, _d: number, detectionRa
 
   if (!target) {
     ai.npcTarget = null;
-    ai.npcLockTimer = 0;
-    ai.npcHasLock = false;
-    ai.targetingPlayer = false;
-    ai.hasLockOnPlayer = false;
-    ai.lockOnTimer = 0;
   } else if (targetState.isNew) {
     ai.npcTarget = target;
-    ai.npcLockTimer = 0;
-    ai.npcHasLock = false;
-    ai.targetingPlayer = false;
-    ai.hasLockOnPlayer = false;
-    ai.lockOnTimer = 0;
-    if (targetState.isPlayer) {
-      ai.targetingPlayer = true;
-      WorldAccess.queueEffect({
-        type: "hostileLocking",
-        payload: { x: e.x, y: e.y },
-      });
-    }
   }
 
-  // ── 2. Range check (uses PREVIOUS tick lock state) ───────────────────────
+  // ── 2. Range check ───────────────────────────────────────────────────────
   if (target) {
     const dist = Math.hypot(target.x - e.x, target.y - e.y);
-    let limit = detectionRange;
-    if (ai.npcHasLock) limit *= C.ENEMIES.AI.DETECTION.lockOnMultiplier;
-    else if (ai.npcLockTimer) limit *= C.ENEMIES.AI.DETECTION.lockingMultiplier;
-
-    if (dist > limit) {
+    if (dist > detectionRange) {
       ai.npcTarget = null;
-      ai.targetingPlayer = false;
-      ai.hasLockOnPlayer = false;
-      ai.lockOnTimer = 0;
       target = null;
     }
   }
@@ -292,52 +247,18 @@ export function processNpcBehavior(e: Enemy, dt: number, _d: number, detectionRa
 
   if (target) {
     const dist = Math.hypot(target.x - e.x, target.y - e.y);
-    const isPlayer = targetState.isPlayer;
 
-    // ── 3. Lock resolution (pure computation, effects applied here) ───────
-    const shipDef = SHIPS[e.type] ?? SHIPS["scout"];
-    const lockTimeRequired = Math.max(
-      C.ENEMIES.AI.LOCK_ON.minTime,
-      C.ENEMIES.AI.LOCK_ON.baseTime - (shipDef.lockBonusTicks || 0) * C.ENEMIES.AI.LOCK_ON.perBonusTickReduction,
-    );
-
-    const lockResult = computeNpcLockResult(ai.npcLockTimer, ai.npcHasLock, dt, lockTimeRequired);
-    ai.npcLockTimer = lockResult.lockTimer;
-    ai.npcHasLock = lockResult.hasLock;
-
-    if (lockResult.acquiredLock && isPlayer) {
-      ai.hasLockOnPlayer = true;
-      WorldAccess.queueEffect({
-        type: "hostileLock",
-        payload: { x: e.x, y: e.y },
-      });
-    }
-
-    if (isPlayer) {
-      ai.targetingPlayer = true;
-      ai.lockOnTimer = ai.npcLockTimer;
-    } else {
-      ai.targetingPlayer = false;
-      ai.hasLockOnPlayer = false;
-      ai.lockOnTimer = 0;
-    }
-
-    // ── 4. Engagement movement (pure computation, mutation applied here) ───
+    // ── 3. Engagement movement (pure computation, mutation applied here) ───
     const mv = computeNpcEngagementMovement(e, target, dist, dt, prof, ai.orbitDir);
     if (mv.orbitDir !== undefined && mv.orbitDir !== ai.orbitDir) ai.orbitDir = mv.orbitDir;
     e.angle += mv.angleDelta;
     e.vx += mv.vxDelta;
     e.vy += mv.vyDelta;
 
-    // ── 5. Combat ────────────────────────────────────────────────────────────
-    if (ai.npcHasLock) {
-      fireTurretsAt(e, target, dt, detectionRange);
-    }
+    // ── 4. Combat ────────────────────────────────────────────────────────────
+    fireTurretsAt(e, target, dt, detectionRange);
   } else {
-    // ── 6. Idle movement (pure computation, mutation applied here) ───────────
-    ai.targetingPlayer = false;
-    ai.hasLockOnPlayer = false;
-    ai.lockOnTimer = 0;
+    // ── 5. Idle movement (pure computation, mutation applied here) ───────────
     const mv = computeNpcIdleMovement(e, dt, prof);
     e.vx += mv.vxDelta;
     e.vy += mv.vyDelta;
@@ -346,8 +267,8 @@ export function processNpcBehavior(e: Enemy, dt: number, _d: number, detectionRa
 }
 
 export function triggerAttackWarningPulse(_allEnemies: Enemy[], dt: number, _p?: Player) {
-  let lockedCount = 0;
-  let closestLocked: Enemy | null = null;
+  let threatCount = 0;
+  let closestThreat: Enemy | null = null;
   let closestDist = Infinity;
 
   const player = getState().player;
@@ -355,22 +276,22 @@ export function triggerAttackWarningPulse(_allEnemies: Enemy[], dt: number, _p?:
   if (sys?.liveEnemies) {
     for (const e of sys.liveEnemies) {
       const ai = getAiState(e.id);
-      if (!ai.hasLockOnPlayer) continue;
-      lockedCount++;
+      if (ai.npcTarget !== player) continue;
+      threatCount++;
       const ed = Math.hypot(player.x - e.x, player.y - e.y);
       if (ed < closestDist) {
         closestDist = ed;
-        closestLocked = e;
+        closestThreat = e;
       }
     }
   }
 
-  if (closestLocked) {
+  if (closestThreat) {
     _attackPulseTimer -= dt;
     if (_attackPulseTimer <= 0) {
       WorldAccess.queueEffect({
         type: "underAttackPulse",
-        payload: { count: lockedCount, x: closestLocked.x, y: closestLocked.y },
+        payload: { count: threatCount, x: closestThreat.x, y: closestThreat.y },
       });
       _attackPulseTimer = C.ENEMIES.ATTACK_PULSE_INTERVAL;
     }

@@ -79,11 +79,6 @@ export function initPixiHUD(): void {
     fontWeight: "bold",
     fill: "#ff4444",
   });
-  hudState.targetStyle = new TextStyle({
-    fontFamily: font,
-    fontSize: 9,
-    fill: "#ffffff",
-  });
 
   hudState.speedLabel = new Text({ text: "", style: hudState.speedStyle });
   hudState.speedLabel.anchor.set(1, 0.5);
@@ -97,11 +92,6 @@ export function initPixiHUD(): void {
   hudState.warningBanner.anchor.set(0.5, 0.5);
   hudState.warningBanner.visible = false;
   hudState.hudContainer.addChild(hudState.warningBanner);
-
-  hudState.targetLabel = new Text({ text: "", style: hudState.targetStyle });
-  hudState.targetLabel.anchor.set(0, 0.5);
-  hudState.targetLabel.visible = false;
-  hudState.hudContainer.addChild(hudState.targetLabel);
 }
 
 export function ensurePixiHUDReady(): boolean {
@@ -119,12 +109,10 @@ export function destroyPixiHUD(): void {
   hudState.shieldArcFill = null;
   hudState.driftVectors = null;
   hudState.warningBanner = null;
-  hudState.targetLabel = null;
   hudState.speedLabel = null;
   hudState.shieldLabel = null;
   hudState.speedStyle = null;
   hudState.shieldStyle = null;
   hudState.warningStyle = null;
-  hudState.targetStyle = null;
   resetPixiHudFrameCache();
 }

@@ -28,7 +28,6 @@ export const SPACE_FRAME_SYSTEM_IDS = [
   "map",
   "thrust",
   "hud",
-  "tarrows",
   "guidearrow",
   "vignette",
   "renderPixi",

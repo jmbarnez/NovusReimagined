@@ -13,7 +13,6 @@ import { clearTaskState } from "../../physics/npcs/task-state.js";
 import { clearNpcSpeech } from "../../render/npc-speech.js";
 import { clearPlayerInput } from "../../player/input-state.js";
 import { clearCollisionCooldowns } from "../../player/collision-state.js";
-import { clearAssignTargetIds } from "../../player/target-selection.js";
 import { clearBullets, clearEnemyBullets } from "./bullets.js";
 import { clearBeams } from "./beams.js";
 import { clearParticles } from "./particles.js";
@@ -39,7 +38,6 @@ export function clearSimulationEntities() {
   clearNpcSpeech();
   clearPlayerInput();
   clearCollisionCooldowns();
-  clearAssignTargetIds();
 }
 
 /**

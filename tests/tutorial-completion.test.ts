@@ -5,7 +5,6 @@ import { installTestPlayer } from "../src/player-registry.js";
 import {
   TUTORIAL_STEPS,
   buildTutorialCtx,
-  hasLockOnAsteroid,
   isZoneStepComplete,
   getTutorialNavRemainingM,
   getCurrentTutorialStep,
@@ -78,39 +77,6 @@ describe("fly-mining step completion", () => {
     expect(remaining).not.toBeNull();
     expect(remaining!).toBeGreaterThan(0);
     expect(remaining!).toBeCloseTo(120, 0);
-  });
-});
-
-describe("targeting step completion", () => {
-  beforeEach(() => {
-    installTestPlayer(makePlayer());
-    G.P.tutorial.active = true;
-    G.P.lockQueue = [];
-    G.P.targetLock = null;
-  });
-
-  it("completes with resolving lock outside zone", () => {
-    const targeting = stepById("targeting");
-    G.P.lockQueue = [{ id: "ast-1", resolving: true, acc: 0 }];
-    G.P.x = 0;
-    G.P.y = 0;
-    expect(hasLockOnAsteroid(G.P)).toBe(true);
-    expect(targeting.isComplete(buildTutorialCtx(0, 0, {}, G.P))).toBe(true);
-  });
-
-  it("completes with resolved lock outside zone", () => {
-    const targeting = stepById("targeting");
-    G.P.targetLock = { id: "ast-42", x: 1200, y: -200, hp: 100 };
-    G.P.x = 5000;
-    G.P.y = 5000;
-    expect(targeting.isComplete(buildTutorialCtx(0, 0, {}, G.P))).toBe(true);
-  });
-
-  it("fails with no asteroid lock", () => {
-    const targeting = stepById("targeting");
-    G.P.lockQueue = [{ id: "rat-1", resolving: false, acc: 1 }];
-    expect(hasLockOnAsteroid(G.P)).toBe(false);
-    expect(targeting.isComplete(buildTutorialCtx(0, 0, {}, G.P))).toBe(false);
   });
 });
 

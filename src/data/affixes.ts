@@ -28,27 +28,39 @@ const RACK_UTILITY = ["high", "med"];
 const RACK_RIG = ["low"];
 const ALL_RACKS = [...RACK_COMBAT, ...RACK_UTILITY, ...RACK_RIG];
 
+const TYPE_WEAPON = ["weapon"];
+
 export const AFFIXES: Record<string, AffixDef> = {
   // ── Combat (turret) ──────────────────────────────────────────────────────
   dmg: {
-    id: "dmg", name: "Weapon Dmg", affectedStat: "weaponMultBonus",
+    id: "dmg", name: "Weapon Damage", affectedStat: "weaponDamagePct",
     tiers: [{ minIlvl: 1, minRoll: 0.05, maxRoll: 0.15 }, { minIlvl: 10, minRoll: 0.15, maxRoll: 0.30 }],
     allowedRacks: RACK_COMBAT,
+    allowedTypes: TYPE_WEAPON,
   },
   range: {
-    id: "range", name: "Optimal Range", affectedStat: "optimalRange",
+    id: "range", name: "Weapon Range", affectedStat: "weaponRangePct",
     tiers: [{ minIlvl: 1, minRoll: 0.05, maxRoll: 0.10 }, { minIlvl: 10, minRoll: 0.10, maxRoll: 0.20 }],
     allowedRacks: RACK_COMBAT,
+    allowedTypes: TYPE_WEAPON,
   },
   tracking: {
-    id: "tracking", name: "Tracking Speed", affectedStat: "trackingSpeed",
+    id: "tracking", name: "Projectile Speed", affectedStat: "weaponProjectileSpeedPct",
     tiers: [{ minIlvl: 1, minRoll: 0.05, maxRoll: 0.15 }, { minIlvl: 10, minRoll: 0.15, maxRoll: 0.30 }],
     allowedRacks: RACK_COMBAT,
+    allowedTypes: TYPE_WEAPON,
   },
-  falloff: {
-    id: "falloff", name: "Falloff Range", affectedStat: "falloff",
-    tiers: [{ minIlvl: 1, minRoll: 0.08, maxRoll: 0.18 }, { minIlvl: 10, minRoll: 0.18, maxRoll: 0.35 }],
+  cycle: {
+    id: "cycle", name: "Cycle Speed", affectedStat: "weaponCyclePct",
+    tiers: [{ minIlvl: 1, minRoll: 0.04, maxRoll: 0.10 }, { minIlvl: 10, minRoll: 0.10, maxRoll: 0.20 }],
     allowedRacks: RACK_COMBAT,
+    allowedTypes: TYPE_WEAPON,
+  },
+  cap_efficiency: {
+    id: "cap_efficiency", name: "Capacitor Efficiency", affectedStat: "weaponCapCostPct",
+    tiers: [{ minIlvl: 1, minRoll: 0.04, maxRoll: 0.10 }, { minIlvl: 10, minRoll: 0.10, maxRoll: 0.18 }],
+    allowedRacks: RACK_COMBAT,
+    allowedTypes: TYPE_WEAPON,
   },
 
   // ── Utility (high/med slots) ──────────────────────────────────────────────
@@ -77,11 +89,7 @@ export const AFFIXES: Record<string, AffixDef> = {
     tiers: [{ minIlvl: 1, minRoll: 0.03, maxRoll: 0.08 }, { minIlvl: 10, minRoll: 0.08, maxRoll: 0.15 }],
     allowedRacks: RACK_UTILITY,
   },
-  lock_range: {
-    id: "lock_range", name: "Lock Range", affectedStat: "lockScanBonus",
-    tiers: [{ minIlvl: 1, minRoll: 0.05, maxRoll: 0.12 }, { minIlvl: 10, minRoll: 0.12, maxRoll: 0.22 }],
-    allowedRacks: RACK_UTILITY,
-  },
+
   thrust: {
     id: "thrust", name: "Thrust", affectedStat: "simThrustPctBonus",
     tiers: [{ minIlvl: 1, minRoll: 0.03, maxRoll: 0.08 }, { minIlvl: 10, minRoll: 0.08, maxRoll: 0.15 }],

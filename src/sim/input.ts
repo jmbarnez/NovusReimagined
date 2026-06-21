@@ -49,12 +49,6 @@ function sanitizeAction(action: Record<string, unknown>): GameCommand | null {
     case "fireSelectedTurret":
     case "setFireControlSlot":
     case "toggleSlotDefaultAction":
-    case "assignModuleSlotToTarget":
-    case "setHighTarget":
-    case "requestSensorLock":
-    case "removeSensorLock":
-    case "selectLockTarget":
-    case "clearSensorLocks":
     case "setTractorTightness":
       return sanitizeCombatAction(action);
 

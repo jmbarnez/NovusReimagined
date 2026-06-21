@@ -5,6 +5,7 @@ import { RARITY_CONFIG } from "../../data/moduleRarity.js";
 import { getInstance } from "../../utils/items.js";
 import { fmtModBonuses } from "../station/shared.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
+import { getWeaponProfileForSlot } from "../../player/player-stats.js";
 import { getElement, createElement, append, setHtml, setStyle, setPosition } from "../dom-helpers.js";
 
 const TOOLTIP_EL_ID = "hud-slot-tooltip";
@@ -60,6 +61,8 @@ export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouse
 
   let combatHtml = "";
   if (m.weaponDelivery) {
+    const slotIdx = Number.isFinite(idx) ? idx : 0;
+    const resolvedProfile = getWeaponProfileForSlot(slotIdx) ?? WEAPON_PROFILES[m.id] ?? WEAPON_PROFILES.default;
     const dmgParts = damageTypeLabel(m.damageProfile);
     const optimal = m.optimalRange ? `${m.optimalRange} km` : "—";
     const falloff = m.falloff ? `+${m.falloff} km` : "";
@@ -77,7 +80,10 @@ export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouse
         <div class="tt-section-title">Weapon System</div>
         <div class="tt-row"><span class="tt-label">Type</span><span class="tt-val">${deliveryLabels[m.weaponDelivery] || m.weaponDelivery}</span></div>
         ${dmgParts ? `<div class="tt-row"><span class="tt-label">Damage</span><span class="tt-val">${dmgParts}</span></div>` : ""}
+        <div class="tt-row"><span class="tt-label">Resolved Damage</span><span class="tt-val">${resolvedProfile.dmg.toFixed(1)}</span></div>
+        <div class="tt-row"><span class="tt-label">Cycle Time</span><span class="tt-val">${resolvedProfile.rate.toFixed(2)}s</span></div>
         <div class="tt-row"><span class="tt-label">Optimal Range</span><span class="tt-val">${optimal}${falloff ? ` (falloff ${falloff})` : ""}</span></div>
+        <div class="tt-row"><span class="tt-label">Resolved Range</span><span class="tt-val">${resolvedProfile.range} m</span></div>
         <div class="tt-row"><span class="tt-label">Tracking Speed</span><span class="tt-val">${tracking}</span></div>
         ${m.projectileKmPerTick ? `<div class="tt-row"><span class="tt-label">Projectile Speed</span><span class="tt-val">${projSpeed}</span></div>` : ""}
       </div>`;
@@ -120,7 +126,7 @@ export function showSlotTooltip(rack: string, idx: number, mouseX: number, mouse
 
   const isActive = m.isActive ? "Active Module" : "Passive Module";
   const capDrain = m.capDrainPerSec ? `<div class="tt-row"><span class="tt-label">Capacitor Drain</span><span class="tt-val">${m.capDrainPerSec} GJ/s</span></div>` : "";
-  const wProf = m.weaponDelivery ? (WEAPON_PROFILES[m.id] || WEAPON_PROFILES.default) : null;
+  const wProf = m.weaponDelivery ? (getWeaponProfileForSlot(idx) ?? WEAPON_PROFILES[m.id] ?? WEAPON_PROFILES.default) : null;
   const capCost = wProf && wProf.ec ? `<div class="tt-row"><span class="tt-label">Activation Cost</span><span class="tt-val">${wProf.ec} GJ</span></div>` : "";
 
   setHtml(el, `

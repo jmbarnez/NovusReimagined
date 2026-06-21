@@ -1,6 +1,7 @@
 import { MODULES, MODULE_FLAGS, type ModuleDef, type Rack } from "../data/modules.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
 import type { Player } from "../state.js";
+import { getInstance } from "../utils/items.js";
 
 type FittingLayout = Partial<Record<Rack, (string | null)[]>>;
 
@@ -29,6 +30,23 @@ export function findFirstWeaponHardpointModule(
 
 export function isWeaponHardpointModule(moduleDef: ModuleDef): boolean {
   return !!moduleDef.weaponDelivery && !MODULE_FLAGS.isMiningTurret(moduleDef) && !MODULE_FLAGS.isSalvager(moduleDef);
+}
+
+export function resolveWeaponTurret(fitting: FittingLayout, p: Player): ModuleDef | null {
+  const hardpointSlots = fitting[playerHardpointRack(p)] ?? [];
+  for (let i = 0; i < hardpointSlots.length; i++) {
+    const uid = hardpointSlots[i];
+    if (!uid) continue;
+    const inst = getInstance(uid, p);
+    if (!inst) continue;
+    const m = MODULES[inst.baseId];
+    if (m && isWeaponHardpointModule(m)) return m;
+  }
+  return null;
+}
+
+export function getWeaponTurretAtSlot(idx: number, p: Player): ModuleDef | null {
+  return getFittedHardpointModule(p, idx);
 }
 
 export function acceptsSpecialResourceTarget(moduleDef: ModuleDef, isAsteroid: boolean, isWreckPiece: boolean): boolean {

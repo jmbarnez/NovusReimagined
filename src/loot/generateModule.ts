@@ -1,11 +1,33 @@
 import { ModuleRarity, RARITY_CONFIG } from "../data/moduleRarity.js";
 import { AFFIXES, RolledAffix } from "../data/affixes.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
-import { MODULES } from "../data/modules.js";
+import { MODULES, MODULE_FLAGS, type ModuleDef } from "../data/modules.js";
 import { rpick, rf } from "../utils/math.js";
 
 function generateUid(): string {
   return Math.random().toString(36).substring(2, 11);
+}
+
+export function isPlayerWeaponModule(baseId: string): boolean {
+  const base = MODULES[baseId];
+  return !!base
+    && MODULE_FLAGS.isWeapon(base)
+    && !MODULE_FLAGS.isMiningTurret(base)
+    && !baseId.startsWith("tu-npc-");
+}
+
+export function playerWeaponModuleIds(): string[] {
+  return Object.keys(MODULES).filter(isPlayerWeaponModule);
+}
+
+function moduleTypeTags(base: ModuleDef): string[] {
+  const tags: string[] = [];
+  if (MODULE_FLAGS.isWeapon(base) && !MODULE_FLAGS.isMiningTurret(base)) tags.push("weapon");
+  if (MODULE_FLAGS.isMiningTurret(base)) tags.push("mining");
+  if (MODULE_FLAGS.isSalvager(base)) tags.push("salvage");
+  if (MODULE_FLAGS.isTractor(base)) tags.push("tractor");
+  if (base.ability) tags.push("ability");
+  return tags;
 }
 
 export function generateModuleInstance(baseId: string, itemLevel: number, danger: number): ModuleInstance {
@@ -26,10 +48,18 @@ export function generateModuleInstance(baseId: string, itemLevel: number, danger
     }
   }
 
-  // 2. Filter affixes by module rack
+  // 2. Filter affixes by module rack/type
+  const moduleTags = moduleTypeTags(base);
+  const weaponOnlyRolls = moduleTags.includes("weapon");
   const possibleAffixes = Object.values(AFFIXES).filter(a => {
     if (a.allowedRacks && a.allowedRacks.length > 0) {
-      return a.allowedRacks.includes(base.rack);
+      if (!a.allowedRacks.includes(base.rack)) return false;
+    }
+    if (weaponOnlyRolls) {
+      return !!a.allowedTypes?.includes("weapon");
+    }
+    if (a.allowedTypes && a.allowedTypes.length > 0) {
+      return a.allowedTypes.some((tag) => moduleTags.includes(tag));
     }
     return true;
   });

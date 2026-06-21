@@ -55,7 +55,6 @@ export const EFF_LABEL: Record<string, (v: number) => string> = {
   evasionMultBonus:    v => `evasion +${(v*100).toFixed(0)}%`,
   miningRangePctBonus: v => `mine range +${(v*100).toFixed(0)}%`,
   miningRangeKmBonus:  v => `mine range +${v}km`,
-  lockScanBonus:       v => `scan +${(v*100).toFixed(0)}%`,
   structuralMassMult:  v => `mass ×${v.toFixed(2)}`,
 };
 

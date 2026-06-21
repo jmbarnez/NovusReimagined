@@ -24,10 +24,6 @@ export function isModuleSlotPowered(rack: AssignableRack, idx: number, p: Player
   return !!inst && inst.durability > 0;
 }
 
-export function getModuleSlotTargetId(rack: AssignableRack, idx: number, p: Player): string | null {
-  return p.turretTargets?.[idx] ?? null;
-}
-
 export function forEachFittedModuleSlot(
   pred: (mod: ModuleDef) => boolean,
   fn: (ref: ModuleSlotRef, mod: ModuleDef) => void,

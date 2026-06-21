@@ -18,6 +18,20 @@
   z-index: 12;
 }
 
+#hud-log-panel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 20px;
+  bottom: 20px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 22%, transparent 78%, rgba(255,255,255,0.018)),
+    linear-gradient(90deg, color-mix(in srgb, var(--hud-accent) 8%, transparent), transparent 22%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 #hud-log-header {
   flex-shrink: 0;
   cursor: default;
@@ -40,6 +54,8 @@
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  position: relative;
+  z-index: 2;
 }
 
 #hud-log-entries {
@@ -64,7 +80,27 @@
 #hud-log-entries::-webkit-scrollbar-thumb { background: var(--hud-scrollbar-thumb); border-radius: 999px; }
 #hud-log-entries::-webkit-scrollbar-thumb:hover { background: var(--hud-scrollbar-thumb-hover); }
 
-.log-entry { white-space: pre-wrap; overflow: visible; word-break: break-word; user-select: text; margin-bottom: 1px; font-size: calc(7.5px * var(--effective-font-scale, 1)); line-height: 11px; }
+.log-entry {
+  position: relative;
+  white-space: pre-wrap;
+  overflow: visible;
+  word-break: break-word;
+  user-select: text;
+  margin-bottom: 1px;
+  padding-left: 5px;
+  font-size: calc(7.5px * var(--effective-font-scale, 1));
+  line-height: 11px;
+}
+.log-entry::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 2px;
+  background: currentColor;
+  opacity: 0.32;
+}
 .log-entry.log-info    { color: #8aa4c0; }
 .log-entry.log-combat  { color: #cc8866; }
 .log-entry.log-loot    { color: #66cc88; }

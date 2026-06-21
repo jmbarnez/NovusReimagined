@@ -27,13 +27,13 @@ describe("frame action queue", () => {
   it("keeps distinct command types alongside replaced settings", () => {
     queueFrameAction({ type: "setMapScannerPower", payload: { active: true } }, { replaceByType: true });
     queueFrameAction({ type: "setMapScannerPower", payload: { active: false } }, { replaceByType: true });
-    queueFrameAction({ type: "requestSensorLock", payload: { id: "rat-1" } });
+    queueFrameAction({ type: "setMapScannerCone", payload: { coneDeg: 90 } });
 
     const frame = createLocalInputFrame(1);
 
     expect(frame.actions).toEqual([
       { type: "setMapScannerPower", payload: { active: false } },
-      { type: "requestSensorLock", payload: { id: "rat-1" } },
+      { type: "setMapScannerCone", payload: { coneDeg: 90 } },
     ]);
   });
 

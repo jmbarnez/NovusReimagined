@@ -20,7 +20,6 @@ describe("hud tutorial dimmer cleanup", () => {
     for (const id of [
       "hud-status-bars",
       "hud-slots",
-      "hud-lock-rail",
       "hud-scanner-dock",
       "hud-log-panel",
       "hud-missions",

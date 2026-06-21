@@ -4,7 +4,6 @@ import { tutorialKeyStyled, tutorialBarKeyStyled } from "./controls.js";
 export const HUD_TOUR_PHASES = [
   { label: t("tutorial.hudTour.vitals.label"), body: t("tutorial.hudTour.vitals.body"), target: "#hud-status-bars" },
   { label: t("tutorial.hudTour.modules.label"), body: t("tutorial.hudTour.modules.body"), target: "#hud-slots" },
-  { label: t("tutorial.hudTour.lockRail.label"), body: t("tutorial.hudTour.lockRail.body"), target: "#hud-lock-rail" },
   { label: t("tutorial.hudTour.overview.label"), body: t("tutorial.hudTour.overview.body"), target: "#hud-scanner-dock" },
   { label: t("tutorial.hudTour.comms.label"), body: t("tutorial.hudTour.comms.body"), target: "#hud-log-panel" },
   { label: t("tutorial.hudTour.missions.label"), body: t("tutorial.hudTour.missions.body"), target: "#hud-missions" },

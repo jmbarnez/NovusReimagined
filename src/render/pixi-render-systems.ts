@@ -8,7 +8,7 @@ import { initPixiCombat, destroyPixiCombat } from "./combat/index.js";
 import { initPixiEffects, destroyPixiEffects } from "./fx/index.js";
 import { initVignette, destroyVignette } from "./pixi-vignette.js";
 import { initPixiHUD, destroyPixiHUD } from "./pixi-hud-core.js";
-import { initPixiTargetArrows, destroyPixiTargetArrows } from "./pixi-target-arrows.js";
+import { initPixiGuideArrows, destroyPixiGuideArrows } from "./pixi-guide-arrows.js";
 import { initPixiMaps, destroyPixiMaps } from "./pixi-maps.js";
 import { initPixiMinimap, destroyPixiMinimap } from "./pixi-minimap.js";
 import { initPixiCelestial, destroyPixiCelestial } from "./celestial/index.js";
@@ -16,6 +16,7 @@ import { initPixiAsteroids, destroyPixiAsteroids } from "./pixi-asteroids.js";
 import { initPixiHitEffects, destroyPixiHitEffects } from "./pixi-hit-effects.js";
 import { destroyLensFlare } from "./pixi-lens-flare.js";
 import { destroyEffectsOverlay } from "./pixi-effects-overlay.js";
+import { destroyPixiTutorialGates } from "./pixi-tutorial-gates.js";
 
 interface PixiRenderSystem {
   readonly id: string;
@@ -100,9 +101,9 @@ const RENDER_SYSTEMS: PixiRenderSystem[] = [
     destroy: destroyPixiHUD,
   },
   {
-    id: "target-arrows",
-    init: initPixiTargetArrows,
-    destroy: destroyPixiTargetArrows,
+    id: "guide-arrows",
+    init: initPixiGuideArrows,
+    destroy: destroyPixiGuideArrows,
   },
   {
     id: "minimap",
@@ -144,4 +145,5 @@ export function destroyGameplayPixiRenderSystems(): void {
   }
   runSystemStep("effects-overlay", destroyEffectsOverlay);
   runSystemStep("lens-flare", destroyLensFlare);
+  runSystemStep("tutorial-gates", destroyPixiTutorialGates);
 }

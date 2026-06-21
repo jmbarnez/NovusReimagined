@@ -1,26 +1,20 @@
 /**
- * PixiJS Hit Effects & Lock Brackets Renderer.
- * 
- * Migrates ship shield ripple waves, hull impact sparks, and targeting brackets to PixiJS:
- * - Ship Lock Brackets: Draws red/orange/yellow brackets around targets under active scanning/locks.
+ * PixiJS Hit Effects Renderer.
+ *
+ * Migrates ship shield ripple waves and hull impact sparks to PixiJS:
  * - Shield Impact Ripples: Dynamic concentric expanding circular rings originating from the hit contact angle.
  * - Hull sparks: Fiery sparks and dispersing debris particle lines when projectiles strike hulls.
  */
 import { Container, Graphics } from "pixi.js";
 import { getState } from "../state-access.js";
 import type { System } from "../types/system.js";
-import type { LockSlot } from "../types/combat.js";
 import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
-import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
 import { drawShipHitGlows } from "./pixi-hit-impact-draw.js";
 import { effectLayer } from "../pixi.js";
 import { getVisualState } from "./entity-visuals.js";
-import { getAiState } from "../physics/npcs/ai-state.js";
-import { getAssignTargetId } from "../player/target-selection.js";
 
 let _hitGfx: Graphics | null = null;
-const _lockMap = new Map<string, LockSlot>();
 
 export function initPixiHitEffects(parent: Container): void {
   destroyPixiHitEffects();
@@ -36,33 +30,13 @@ export function syncPixiHitEffects(now: number, alpha: number, sys: System): voi
   if (!_hitGfx) return;
 
   _hitGfx.clear();
-  _lockMap.clear();
 
-  const primaryId = getState().player?.targetLock?.id;
-  const selectedId = getAssignTargetId(getState().player?.netId ?? getState().player?.shipId ?? "");
-  if (Array.isArray(getState().player?.lockQueue)) {
-    for (const slot of getState().player.lockQueue) _lockMap.set(slot.id, slot);
-  }
-
-  // 1. Enemy Lock brackets & Shield glows
+  // 1. Enemy Shield glows
   if (sys?.liveEnemies) {
     for (const e of sys.liveEnemies) {
       if (!isVisible(e.x, e.y, 40)) continue;
       const ix = lerp(e.px, e.x, alpha);
       const iy = lerp(e.py, e.y, alpha);
-
-      // Lock Brackets
-      const slot = _lockMap.get(e.id);
-      if (slot) {
-        const ai = getAiState(e.id);
-        drawTargetLockBrackets(
-          _hitGfx, ix, iy, e.sigRadius ?? 18, slot, e.id === primaryId, now, "enemy",
-          { hasLockOnPlayer: ai.hasLockOnPlayer, targetingPlayer: ai.targetingPlayer },
-        );
-        if (e.id === selectedId) {
-          drawSelectedTargetIndicator(_hitGfx, ix, iy, e.sigRadius ?? 18, now);
-        }
-      }
 
       const sigR = e.sigRadius ?? 20;
       drawShipHitGlows(_hitGfx, ix, iy, sigR, Math.max(12, sigR * 0.85), getVisualState(e.id));

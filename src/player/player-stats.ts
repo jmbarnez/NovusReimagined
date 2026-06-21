@@ -2,7 +2,7 @@ import { getState, WorldAccess } from "../state-access.js";
 import { SHIPS, ShipDef } from "../data/ships.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "../data/modules.js";
 import { WEAPON_PROFILES, WeaponProfile } from "../data/weaponProfiles.js";
-import { resolveWeaponTurret, getWeaponTurretAtSlot } from "../targeting.js";
+import { resolveWeaponTurret } from "../targeting/modules.js";
 import { MODULE_HP_MAX, MIN_THRUST_PCT, SHIP_MASS_REF, RACK_TYPES, type RackId } from "../constants.js";
 import { levelForSkillXp, WEAPON_SKILL, type WeaponDelivery } from "../data/skills.js";
 import { getInstance } from "../utils/items.js";
@@ -39,7 +39,7 @@ export interface ComputedStats {
   hasSalvager: boolean;
   salvageBonus: number;
   metallurgyLevel: number;
-  lockScanMult: number;
+
   usedPG: number;
   usedCPU: number;
   totalPG: number;
@@ -167,20 +167,7 @@ export function computeStats(
   const lvlHp = (p.level - 1) * C.PLAYER.SKILL_POTENCY.levelHpPerLevel;
   const combatTrainingLvl = Math.max(skLv('ballistics'), skLv('beam_weapons'), skLv('missile_guidance'));
 
-  let lockScanMult = 1;
-  const allMods = [
-    ...(fitting.turret ?? []),
-    ...(fitting.high ?? []),
-    ...(fitting.med ?? []),
-    ...(fitting.low ?? []),
-  ].filter(Boolean) as string[];
-  for (const uid of allMods) {
-    const inst = getInstance(uid, p);
-    if (!inst) continue;
-    const m = MODULES[inst.baseId];
-    lockScanMult += m?.effects?.lockScanBonus || 0;
-  }
-  lockScanMult *= 1 + combatTrainingLvl * C.PLAYER.SKILL_POTENCY.lockScanPerLevel;
+
 
   // Base weapon multiplier — does not include weapon-type skill (applied at fire time).
   const weaponMult = ship.weaponMult * (1 + wepB);
@@ -289,7 +276,7 @@ export function computeStats(
     ship, weaponMult, miningMult, maxHp, maxStructure, maxShield, shieldRegen, maxEnergy, energyRegen,
     thrustScale, baseThrustScale, turnRate, baseTurnRate,
     mainThrust, retroThrust, lateralThrust, maxSpeed, baseMaxSpeed, dragPerSec,
-    weaponTurret, wProf, finalDmg, hasMiner, hasSalvager, salvageBonus, metallurgyLevel, lockScanMult,
+    weaponTurret, wProf, finalDmg, hasMiner, hasSalvager, salvageBonus, metallurgyLevel,
     usedPG, usedCPU,
     totalPG: (ship.fitting.powergrid || 0) + addPG,
     totalCPU: ship.fitting.cpu || 0,
@@ -327,13 +314,53 @@ export function computeScaledWeaponProfile(baseId: string, weaponTurret: ModuleD
   return wProf;
 }
 
+function clampWeaponAffix(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(min, Math.min(max, value));
+}
+
+export function applyWeaponAffixesToProfile(profile: WeaponProfile, inst: ModuleInstance | null): WeaponProfile {
+  if (!inst?.affixes?.length) return { ...profile };
+  const out: WeaponProfile = { ...profile };
+
+  for (const affix of inst.affixes) {
+    switch (affix.affectedStat) {
+      case "weaponDamagePct": {
+        out.dmg = Math.max(1, out.dmg * (1 + clampWeaponAffix(affix.value, -0.75, 4)));
+        break;
+      }
+      case "weaponCyclePct": {
+        out.rate = Math.max(0.05, out.rate * (1 - clampWeaponAffix(affix.value, -1, 0.85)));
+        break;
+      }
+      case "weaponRangePct": {
+        const mult = 1 + clampWeaponAffix(affix.value, -0.75, 3);
+        out.range = Math.max(1, Math.round(out.range * mult));
+        if (out.optimalPx != null) out.optimalPx = Math.max(1, Math.round(out.optimalPx * mult));
+        if (out.falloffPx != null) out.falloffPx = Math.max(1, Math.round(out.falloffPx * mult));
+        break;
+      }
+      case "weaponProjectileSpeedPct": {
+        if (out.spd > 0) out.spd = Math.max(1, Math.round(out.spd * (1 + clampWeaponAffix(affix.value, -0.75, 3))));
+        break;
+      }
+      case "weaponCapCostPct": {
+        out.ec = Math.max(0, out.ec * (1 - clampWeaponAffix(affix.value, -1, 0.85)));
+        break;
+      }
+    }
+  }
+
+  return out;
+}
+
 export function getWeaponProfileForSlot(idx: number, p: Player = getState().player): WeaponProfile | null {
   const ship = SHIPS[p.shipId];
   const uid = p.fitting[playerHardpointRack(p)]?.[idx];
   const inst = uid ? getInstance(uid, p) : null;
   const m = inst ? MODULES[inst.baseId] : null;
-  if (!m) return null;
-  return computeScaledWeaponProfile(inst!.baseId, m, ship);
+  if (!inst || !m) return null;
+  return applyWeaponAffixesToProfile(computeScaledWeaponProfile(inst.baseId, m, ship), inst);
 }
 
 export function hasCommsEquipment(p: Player = getState().player): boolean {

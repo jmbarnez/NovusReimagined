@@ -49,7 +49,7 @@ Clients (SP via local worker, MP host/client): send input frames, prediction, an
 **Key rules:**
 - All `G.*` and `G.P.*` field writes must go through accessors in `src/state-access.ts`.
 - All `G.P.*` array mutations (push, splice, unshift, pop, fill) must also go through
-  `PlayerAccess` methods (e.g. `addModuleCargo`, `removeModuleCargo`, `spliceLockQueue`).
+  `PlayerAccess` methods (e.g. `addModuleCargo`, `removeModuleCargo`).
 - Direct `G.P.*` reads are allowed everywhere for performance.
 - Do not directly assign empty arrays to simulation entity fields (e.g. `G.bullets = []`).
   Use `clearSimulationEntities()` from `src/utils/entities.ts`.
@@ -98,11 +98,10 @@ export function clearMyComponents(): void { _store.clear(); }
 |-------|------|-------|---------|
 | `entity-visuals` | `src/render/entity-visuals.ts` | Enemy/Player | Shield/hull hit flash state for Pixi render |
 | `npc-speech` | `src/render/npc-speech.ts` | Enemy/Neutral | Floating hail/speech bubble text + expiry |
-| `ai-state` | `src/physics/npcs/ai-state.ts` | Enemy | AI behavior flags (targeting, lock timers, aim state) |
+| `ai-state` | `src/physics/npcs/ai-state.ts` | Enemy | AI behavior flags (target, orbit direction, aim state) |
 | `task-state` | `src/physics/npcs/task-state.ts` | Enemy | Patrol/mining/task timers and waypoints |
 | `input-state` | `src/player/input-state.ts` | Player | Input frame cache (keys, mouse, waypoint, navCommand) |
 | `collision-state` | `src/player/collision-state.ts` | Player | Collision damage cooldown timer |
-| `target-selection` | `src/player/target-selection.ts` | Player | Selected lock target for module assignment |
 
 **When to add a new store:**
 1. The state is ephemeral (does not need to be saved/loaded).
@@ -208,12 +207,12 @@ src/
   state-access.ts     State access barrel re-export
   state.ts            Global state definition
   state/actions/      Server-authoritative action handlers (economy, crafting, missions, inventory)
-  targeting/          Targeting system (assignment, locks, lookup, ranges)
+  targeting/          Targeting helpers (lookup, ranges, special-resource targets)
   tutorial/           Tutorial system with modular step data, logic, and UI overlay
                       data/              Tutorial step definitions, phases, layout, controls, helpers
                       logic/             Tutorial runtime logic (context, events, lifecycle, sync, tick)
                       ui/                Tutorial UI overlay (setup, card, spotlight, visuals, render, lifecycle, frame-loop)
-  types/              Shared structural interfaces (entities, world, lock state)
+  types/              Shared structural interfaces (entities, world)
   ui/                 DOM-based overlays (station, bridge, inventory, settings)
   tutorial/ui/        Tutorial UI overlay system (setup, card, spotlight, visuals, render, lifecycle, frame-loop)
   utils/              Pure utilities (math, spatial grid, FX helpers, camera, entities, pool)

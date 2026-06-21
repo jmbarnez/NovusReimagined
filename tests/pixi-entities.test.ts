@@ -22,8 +22,6 @@ describe("syncPixiEntities", () => {
     G.P.sysIdx = 0;
     G.P.x = 0;
     G.P.y = 0;
-    G.P.lockQueue = [];
-    G.P.targetLock = null;
     updateViewportBounds(1280, 720, 1, 0, 0);
 
     const pixiMod = await import("../src/pixi.js");

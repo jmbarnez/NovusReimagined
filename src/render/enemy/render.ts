@@ -5,7 +5,6 @@ import { Sprite, Graphics, Text, Texture, type ContainerChild } from "pixi.js";
 import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
 import type { Enemy } from "../../types/enemy.js";
-import type { LockSlot } from "../../types/combat.js";
 import { ENEMY_DEFS } from "../../data/enemies.js";
 import { getEnemyColRadius } from "../../utils/collision-helpers.js";
 import { entityLayer, effectLayer } from "../../pixi.js";
@@ -15,7 +14,6 @@ import { hasCommsEquipment } from "../../player/player-stats.js";
 import { getEnemyTexture, getEnemyLightTextures, lightDirIndex } from "./bake.js";
 import { _nameStyle, _levelStyle, _speechStyle } from "./styles.js";
 import { getSunWorldPos } from "../../utils/sun-position.js";
-import { getAiState } from "../../physics/npcs/ai-state.js";
 import { getNpcSpeech } from "../npc-speech.js";
 
 const TAU = Math.PI * 2;
@@ -40,14 +38,12 @@ interface EnemyBundle {
   lastHp: number;
   lastShield: number;
   lastStructure: number;
-  lastLockKey: string;
-  wasLocked: boolean;
+  lastIndicatorKey: string;
   lastTextColor: string;
   lastCardKey: string;
 }
 
 export const _bundles = new Map<string, EnemyBundle>();
-const _lockMap = new Map<string, LockSlot>();
 const _activeEnemyIds = new Set<string>();
 
 function destroyDisplayObject(obj: ContainerChild): void {
@@ -99,7 +95,7 @@ function createBundle(e: { id: string; type: string; name: string; level?: numbe
   speechText.visible = false;
   effectLayer!.addChild(speechText);
 
-  return { hull, hullLight, lightTex, hpBar, shieldBar, structureBar, nameText, levelBg, levelText, indicator, speechText, lastHp: e.hp, lastShield: -1, lastStructure: -1, lastLockKey: "", wasLocked: false, lastTextColor: "", lastCardKey: "" };
+  return { hull, hullLight, lightTex, hpBar, shieldBar, structureBar, nameText, levelBg, levelText, indicator, speechText, lastHp: e.hp, lastShield: -1, lastStructure: -1, lastIndicatorKey: "", lastTextColor: "", lastCardKey: "" };
 }
 
 function destroyBundle(id: string) {
@@ -122,7 +118,6 @@ export function destroyPixiEntityBundles(): void {
   for (const id of Array.from(_bundles.keys())) {
     destroyBundle(id);
   }
-  _lockMap.clear();
   _activeEnemyIds.clear();
 }
 
@@ -156,13 +151,6 @@ function rebuildBarSegment(g: Graphics, frac: number, secIdx: number, barW: numb
   }
 }
 
-// ─── Targeting indicator ──────────────────────────────────────────────────────
-function rebuildIndicator(g: Graphics, color: number) {
-  g.clear();
-  // Small downward-pointing triangle — matches original Canvas 2D shape.
-  g.poly([0, 0, -5, -6, 5, -6], true).fill({ color });
-}
-
 /**
  * Sync enemy sprites with G state. Call once per render frame after physics.
  * alpha is the render interpolation factor (0–1) between the last two ticks.
@@ -178,12 +166,6 @@ export function syncPixiEntities(alpha: number, now: number): void {
   const sunPos = getSunWorldPos(sys);
   const sunWorldX = sunPos.x;
   const sunWorldY = sunPos.y;
-
-  // Build lock lookup (primary + queue)
-  _lockMap.clear();
-  if (Array.isArray(getState().player.lockQueue)) {
-    for (const slot of getState().player.lockQueue) _lockMap.set(slot.id, slot);
-  }
 
   _activeEnemyIds.clear();
 
@@ -221,8 +203,6 @@ export function syncPixiEntities(alpha: number, now: number): void {
       b.hullLight.visible = false;
     }
 
-    const lockSlot = _lockMap.get(e.id);
-    const isLocked = !!(lockSlot && !lockSlot.resolving);
     const frac = e.hp / Math.max(1, e.maxHp);
     const hasShield = (e.maxShield ?? 0) > 0;
     const hasStruct = (e.maxStructure ?? 0) > 0;
@@ -231,8 +211,7 @@ export function syncPixiEntities(alpha: number, now: number): void {
     const hpDamaged = frac < 1;
     const shieldDamaged = hasShield && (e.shield ?? 0) < (e.maxShield ?? 0);
     const structDamaged = hasStruct && (e.structure ?? 0) < (e.maxStructure ?? 0);
-    const showBars = !lod && (hpDamaged || shieldDamaged || structDamaged || isLocked);
-    const lockStateChanged = b.wasLocked !== isLocked;
+    const showBars = !lod && (hpDamaged || shieldDamaged || structDamaged);
 
     // Unified health bar divided into 3 side-by-side segments
     if (showBars) {
@@ -241,14 +220,14 @@ export function syncPixiEntities(alpha: number, now: number): void {
       const secW = (barW - 2 * gap) / 3;
 
       // Shield bar (segment 0)
-      if (lockStateChanged || b.lastShield !== e.shield) {
+      if (b.lastShield !== e.shield) {
         rebuildBarSegment(b.shieldBar, shieldFrac, 0, barW, secW, gap, 0x3399ff);
         b.lastShield = e.shield ?? 0;
       }
       b.shieldBar.x = ix; b.shieldBar.y = iy; b.shieldBar.alpha = 1;
 
       // HP bar (segment 1)
-      if (lockStateChanged || b.lastHp !== e.hp) {
+      if (b.lastHp !== e.hp) {
         const hpCol = frac > 0.5 ? 0xdd3333 : frac > 0.25 ? 0xbb2222 : 0xff2222;
         rebuildBarSegment(b.hpBar, frac, 1, barW, secW, gap, hpCol);
         b.lastHp = e.hp;
@@ -256,7 +235,7 @@ export function syncPixiEntities(alpha: number, now: number): void {
       b.hpBar.x = ix; b.hpBar.y = iy; b.hpBar.alpha = 1;
 
       // Structure bar (segment 2)
-      if (lockStateChanged || b.lastStructure !== e.structure) {
+      if (b.lastStructure !== e.structure) {
         rebuildBarSegment(b.structureBar, structFrac, 2, barW, secW, gap, 0xee9944);
         b.lastStructure = e.structure ?? 0;
       }
@@ -266,8 +245,6 @@ export function syncPixiEntities(alpha: number, now: number): void {
       b.hpBar.alpha = 0;
       b.structureBar.alpha = 0;
     }
-
-    b.wasLocked = isLocked;
 
     const playerHasComms = hasCommsEquipment();
 
@@ -349,33 +326,19 @@ export function syncPixiEntities(alpha: number, now: number): void {
       b.speechText.visible = false;
     }
 
-    // Targeting or hailing indicator (triangle or cyan pulsing ! above enemy)
+    // Hailing indicator (cyan pulsing ! above neutral hailable NPCs)
     if (!lod && e.faction === "neutral" && e.hailable && playerHasComms) {
       const key = "hailable";
-      if (b.lastLockKey !== key) {
+      if (b.lastIndicatorKey !== key) {
         b.indicator.clear();
         b.indicator.rect(-1.5, -15, 3, 7).fill({ color: 0x00ffd0 });
         b.indicator.circle(0, -4, 1.8).fill({ color: 0x00ffd0 });
-        b.lastLockKey = key;
+        b.lastIndicatorKey = key;
       }
       b.indicator.x = ix; b.indicator.y = iy - 40;
       b.indicator.alpha = 0.5 + Math.sin(now / 150) * 0.4;
-    } else if (!lod) {
-      const ai = getAiState(e.id);
-      if (ai.hasLockOnPlayer) {
-        const key = "locked";
-        if (b.lastLockKey !== key) { rebuildIndicator(b.indicator, 0xff4444); b.lastLockKey = key; }
-        b.indicator.x = ix; b.indicator.y = iy - 40; b.indicator.alpha = 1;
-      } else if (ai.targetingPlayer && ai.lockOnTimer > 0) {
-        const key = "targeting";
-        if (b.lastLockKey !== key) { rebuildIndicator(b.indicator, 0xffcc44); b.lastLockKey = key; }
-        b.indicator.x = ix; b.indicator.y = iy - 40;
-        b.indicator.alpha = Math.floor(now / 200) % 2 === 0 ? 1 : 0;
-      } else {
-        if (b.lastLockKey !== "none") { b.indicator.clear(); b.lastLockKey = "none"; }
-      }
     } else {
-      if (b.lastLockKey !== "none") { b.indicator.clear(); b.lastLockKey = "none"; }
+      if (b.lastIndicatorKey !== "none") { b.indicator.clear(); b.lastIndicatorKey = "none"; }
       b.indicator.alpha = 0;
     }
   }

@@ -13,7 +13,6 @@ import { on } from "../events.js";
 import type { Enemy } from "../types/enemy.js";
 import type { Asteroid } from "../types/asteroid.js";
 import { t } from "../utils/i18n.js";
-import { getAiState } from "../physics/npcs/ai-state.js";
 import { gateDestinationName, gateStableId } from "../utils/warp-gates.js";
 import { getElement, query, createElement, setHtml, setText, setStyle, toggleClass, append, getStyleProperty, setPosition, onMouseDown, onClick, onWindowMouseMove, onWindowMouseUp, onWindowResize } from "./dom-helpers.js";
 
@@ -64,14 +63,7 @@ export function buildLocalOverviewRows(): OverviewRow[] {
     if (!e.alive) continue;
     const d = dst(getState().player.x, getState().player.y, e.x, e.y);
     if (d > range) continue;
-    const slot = getState().player.lockQueue.find((s) => s.id === e.id);
-    let status = "";
-    if (slot?.resolving) status += `<span class="ov-plock ov-scanning">${t("bridge.scan")}</span>`;
-    else if (slot && !slot.resolving) status += `<span class="ov-plock${getState().player.targetLock?.id === e.id ? " ov-primary" : ""}">${getState().player.targetLock?.id === e.id ? t("bridge.lockPrimary") : t("bridge.lock")}</span>`;
-    const ai = getAiState(e.id);
-    if (ai.hasLockOnPlayer) status += `<span class="ov-threat ov-threat-locked" title="${t("bridge.hasLockedYou")}">◉</span>`;
-    else if (ai.targetingPlayer) status += `<span class="ov-threat ov-threat-scan" title="${t("bridge.lockingYou")}">▲</span>`;
-    if (!status) status = "—";
+    const status = "—";
     rows.push({
       kind: e.faction === "neutral" ? "neutral" : "hostile",
       id: e.id,
@@ -88,10 +80,7 @@ export function buildLocalOverviewRows(): OverviewRow[] {
     if (a.depleted || a.hp <= 0) continue;
     const d = dst(getState().player.x, getState().player.y, a.x, a.y) - a.radius;
     if (d > range) continue;
-    const slot = getState().player.lockQueue.find((s) => s.id === a.id);
-    let status = t("bridge.dash");
-    if (slot?.resolving) status = t("bridge.scan");
-    else if (slot && !slot.resolving) status = getState().player.targetLock?.id === a.id ? t("bridge.lockPrimary") : t("bridge.lock");
+    const status = "—";
     rows.push({
       kind: "asteroid",
       id: a.id,
@@ -125,14 +114,10 @@ export function buildLocalOverviewRows(): OverviewRow[] {
     const alwaysShowTutorialGate = sys.idx === 0 && getState().player.sysIdx === 0;
     if (!alwaysShowTutorialGate && d > range) continue;
     const destination = gateDestinationName(g, getState().GALAXY);
-    const gateId = gateStableId(g);
-    const slot = getState().player.lockQueue.find((s) => s.id === gateId);
-    let status = t("bridge.dash");
-    if (slot?.resolving) status = t("bridge.scan");
-    else if (slot && !slot.resolving) status = getState().player.targetLock?.id === gateId ? t("bridge.lockPrimary") : t("bridge.lock");
+    const status = "—";
     rows.push({
       kind: "gate",
-      id: gateId,
+      id: gateStableId(g),
       icon: "◇",
       cls: "GATE",
       name: `↩ ${destination}`,

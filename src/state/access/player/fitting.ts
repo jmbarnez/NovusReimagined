@@ -1,7 +1,5 @@
 import { _G, type Player } from "../../../state.js";
-import { setAssignTargetId as _setAssignTargetId } from "../../../player/target-selection.js";
 import type { ModuleInstance } from "../../../types/moduleInstance.js";
-import type { LockSlot } from "../../../types/combat.js";
 
 export const playerFittingAccess = {
   setFittingSlot(rack: string, idx: number, uid: string | null, p: Player = _G.P) {
@@ -29,21 +27,8 @@ export const playerFittingAccess = {
     p.slotHeat[rack][idx] = heat;
   },
 
-  setTargetLock(target: Player["targetLock"], p: Player = _G.P) {
-    p.targetLock = target;
-  },
-
-  setLockQueue(queue: Player["lockQueue"], p: Player = _G.P) {
-    p.lockQueue = queue;
-  },
-
   setFireControlSlot(slot: number, p: Player = _G.P) {
     p.fireControlSlot = slot;
-  },
-
-  setTurretTarget(idx: number, targetId: string | null, p: Player = _G.P) {
-    if (!p.turretTargets) p.turretTargets = [];
-    p.turretTargets[idx] = targetId;
   },
 
   setShootCd(value: number, p: Player = _G.P) {
@@ -58,15 +43,6 @@ export const playerFittingAccess = {
     p.recoilFrames = value;
   },
 
-  setAssignTargetId(id: string | null, p: Player = _G.P) {
-    _setAssignTargetId(p.netId ?? p.shipId, id);
-  },
-
-  setHighTarget(idx: number, targetId: string | null, p: Player = _G.P) {
-    if (!p.highTargets) p.highTargets = [];
-    p.highTargets[idx] = targetId;
-  },
-
   addModuleCargo(inst: ModuleInstance, p: Player = _G.P) {
     p.moduleCargo.push(inst);
   },
@@ -77,10 +53,6 @@ export const playerFittingAccess = {
 
   setModuleHpAll(record: Record<string, (number | null)[]>, p: Player = _G.P) {
     p.moduleHp = record;
-  },
-
-  setTurretTargetsAll(targets: (string | null)[], p: Player = _G.P) {
-    p.turretTargets = targets;
   },
 
   setTurretCdsAll(cds: number[], p: Player = _G.P) {
@@ -100,22 +72,4 @@ export const playerFittingAccess = {
     p.moduleCargo.splice(index, 1);
   },
 
-  spliceLockQueue(index: number, deleteCount: number, p: Player = _G.P) {
-    return p.lockQueue.splice(index, deleteCount);
-  },
-
-  unshiftLockQueue(item: LockSlot, p: Player = _G.P) {
-    p.lockQueue.unshift(item);
-  },
-
-  popLockQueue(p: Player = _G.P) {
-    return p.lockQueue.pop();
-  },
-
-  updateLockQueueSlot(id: string, data: Partial<LockSlot>, p: Player = _G.P) {
-    const slot = p.lockQueue?.find(s => s.id === id);
-    if (slot) {
-      Object.assign(slot, data);
-    }
-  },
 };

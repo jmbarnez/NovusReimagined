@@ -76,13 +76,6 @@ export const ENEMIES = {
     },
     DETECTION: {
       baseAggroRange: 250,
-      lockOnMultiplier: 2.5,
-      lockingMultiplier: 1.5,
-    },
-    LOCK_ON: {
-      minTime: 0.8,
-      baseTime: 6.0,
-      perBonusTickReduction: 1.5,
     },
     ENGAGEMENT,
     SAFE_ZONE: {

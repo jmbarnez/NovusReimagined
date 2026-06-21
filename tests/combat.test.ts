@@ -6,11 +6,13 @@ import { normalizeProfile, applyResists, computeHitQuality } from "../src/combat
 import { damageEnemy } from "../src/combat/damage-enemy.js";
 import { killEnemy } from "../src/combat/kill-rewards.js";
 import { fireMissile } from "../src/combat/missile.js";
-import { computeScaledWeaponProfile } from "../src/player/player-stats.js";
+import { playerShoot } from "../src/combat/player-shoot.js";
+import { computeScaledWeaponProfile, getWeaponProfileForSlot } from "../src/player/player-stats.js";
 import { MODULES } from "../src/data/modules.js";
 import { SHIPS } from "../src/data/ships.js";
 import { WEAPON_PROFILES } from "../src/data/weaponProfiles.js";
 import type { Enemy } from "../src/types/enemy.js";
+import { C } from "../src/config/index.js";
 
 const noResist = { em: 0, therm: 0, kin: 0, exp: 0 };
 
@@ -120,6 +122,45 @@ describe("server-side weapon ownership", () => {
     const mod = MODULES["tu-missile"];
     fireMissile(0, 0, 0, WEAPON_PROFILES["tu-missile"], 10, mod, null, 0, remote);
     expect(G.bullets[0]?.owner).toBe(remote);
+  });
+
+  it("selected weapon fire uses rolled cooldown and capacitor cost", () => {
+    const weapon = G.P.moduleCargo.find((inst) => inst.uid === "start-tu-civ-cannon");
+    expect(weapon).toBeTruthy();
+    if (!weapon) return;
+    weapon.affixes = [
+      { id: "cycle", name: "Cycle Speed", affectedStat: "weaponCyclePct", value: 0.25 },
+      { id: "cap_efficiency", name: "Capacitor Efficiency", affectedStat: "weaponCapCostPct", value: 0.50 },
+    ];
+    G.P.energy = 100;
+    G.P.ammo.hybrid = 100;
+    G.P.fitting.high[0] = weapon.uid;
+    G.P.turretCds[0] = 0;
+
+    const profile = getWeaponProfileForSlot(0, G.P);
+    expect(profile).toBeTruthy();
+    if (!profile) return;
+
+    const beforeEnergy = G.P.energy;
+    expect(playerShoot(0, null, G.P)).toBe(true);
+
+    expect(G.P.turretCds[0]).toBeCloseTo(profile.rate);
+    expect(beforeEnergy - G.P.energy).toBeCloseTo(profile.ec + C.COMBAT.CAP_FIRE_SURCHARGE);
+  });
+
+  it("does not fire empty, offline, or non-weapon hardpoint slots", () => {
+    G.P.fitting.high[0] = null;
+    expect(playerShoot(0, null, G.P)).toBe(false);
+
+    G.P.fitting.high[0] = "start-tu-civ-miner";
+    expect(playerShoot(0, null, G.P)).toBe(false);
+
+    const weapon = G.P.moduleCargo.find((inst) => inst.uid === "start-tu-civ-cannon");
+    expect(weapon).toBeTruthy();
+    if (!weapon) return;
+    G.P.fitting.high[0] = weapon.uid;
+    weapon.durability = 0;
+    expect(playerShoot(0, null, G.P)).toBe(false);
   });
 
   it("drops one credit and one ferro chunk from target dummies", () => {

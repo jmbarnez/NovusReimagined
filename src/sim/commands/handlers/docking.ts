@@ -6,7 +6,6 @@
 import type { Player } from "../../../state.js";
 import { PlayerAccess } from "../../../state-access.js";
 import { getDockableStation } from "../../../docking/index.js";
-import { clearSensorLocks } from "../../../targeting.js";
 import { getStats } from "../../../player/player-stats.js";
 import { checkDeliveryContracts } from "../../../data/missions.js";
 import type { GameCommand } from "../types.js";
@@ -21,7 +20,6 @@ export function handleDockingCommand(command: DockingCommand, p: Player): void {
       if (!station) break;
       checkDeliveryContracts(station, p);
       refreshStationOffers(p, station.id);
-      clearSensorLocks(p);
       PlayerAccess.updatePhysics({ vx: 0, vy: 0 }, p);
       PlayerAccess.setInvincible(1.5, p);
       break;

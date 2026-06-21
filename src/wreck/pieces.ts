@@ -1,6 +1,5 @@
 import { getState } from "../state-access.js";
 import { WRECK_PIECE_LINEAR_DRAG, WRECK_PIECE_ANGULAR_DRAG } from "../constants.js";
-import { removeSensorLock } from "../targeting.js";
 import { removeWreckPiece } from "../utils/entities.js";
 
 export function updateWreckPieces(dt: number) {
@@ -9,7 +8,6 @@ export function updateWreckPieces(dt: number) {
     p.age += dt;
     p.despawnTimer -= dt;
     if (p.despawnTimer <= 0) {
-      removeSensorLock(p.id);
       removeWreckPiece(i);
       continue;
     }

@@ -9,11 +9,10 @@ import { updateMissionsPanel } from "../hud-missions.js";
 import { attachInventoryListeners } from "../inventory/index.js";
 import { hideInvHoverTip } from "../inventory/overlays/index.js";
 import { renderSkillsContent, initSkillsInteractions } from "../skills.js";
-import { toggleHudWindow, isOpen, getHudWindow, closeHudWindow, openHudWindow } from "../hud/windows.js";
+import { isOpen, getHudWindow, closeHudWindow, openHudWindow } from "../hud/windows.js";
 import { updateMapSurveyUi } from "../map-survey.js";
 import { hudState } from "../hud/state.js";
 import { updateSlots } from "../hud/slots.js";
-import { updateLockRail } from "../hud/targeting/index.js";
 import { updateDockPrompt, updateHudOverviewPanel } from "../hud/overview.js";
 import { updateShipPanelLive, buildShipPanelShell, attachShipPanelListeners } from "../hud/ship-panel/index.js";
 import { updateTractorDial } from "../hud/tractor-dial.js";
@@ -84,7 +83,6 @@ export function updateHudOverlay(Wc: number, Hc: number, now: number) {
   }
 
   updateSlots(ship, st, now);
-  updateLockRail(st, now);
   updateDockPrompt(sys);
   updateTractorDial();
   updateHubTooltip(sys);
@@ -129,12 +127,25 @@ export function toggleCargoWindow() {
 }
 
 export function toggleSkillsWindow() {
+  const win = getHudWindow("skills");
+  if (win && getStyleProperty(win, "display") !== "none") {
+    closeHudWindow("skills");
+    return;
+  }
   const div = createElement("div", "br-pane");
   div.id = "bridge-pane-skills";
   setStyle(div, { height: "100%", overflow: "auto", display: "flex", flexDirection: "column" });
   setHtml(div, renderSkillsContent());
-  toggleHudWindow("skills", "Skills", div);
+  openHudWindow("skills", "Skills", div);
   initSkillsInteractions(div);
+  const w = getHudWindow("skills");
+  if (w) {
+    const ww = 370;
+    const wh = 440;
+    const left = Math.max(0, window.innerWidth - ww - 8);
+    const top = Math.max(0, window.innerHeight - wh - 8);
+    setStyle(w, { left: `${left}px`, top: `${top}px`, right: "auto", bottom: "auto", width: `${ww}px`, height: `${wh}px` });
+  }
 }
 
 export function toggleScannerDock() {

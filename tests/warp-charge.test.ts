@@ -66,7 +66,6 @@ describe("warp gate hold-to-charge", () => {
     p.sysIdx = 0;
     p.x = 100;
     p.y = 0;
-    p.targetLock = null;
     p.warpCooldown = 0;
     setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true, lmb: false }, { x: 0, y: 0 });
     Client.keys["warp"] = false;
@@ -95,7 +94,6 @@ describe("warp gate hold-to-charge", () => {
     p.sysIdx = 0;
     p.x = 0;
     p.y = 0;
-    p.targetLock = null;
     p.warpCooldown = 0;
     setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true, lmb: false }, { x: 0, y: 0 });
 
@@ -123,7 +121,6 @@ describe("warp gate hold-to-charge", () => {
     p.sysIdx = 0;
     p.x = 158;
     p.y = 0;
-    p.targetLock = null;
     p.warpCooldown = 0;
     setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true, lmb: false }, { x: 0, y: 0 });
 
@@ -151,7 +148,6 @@ describe("warp gate hold-to-charge", () => {
     p.sysIdx = 0;
     p.x = 100;
     p.y = 0;
-    p.targetLock = null;
     p.warpCooldown = 0;
     setPlayerInput(p.netId ?? p.shipId, { space: false, w: false, a: false, s: false, d: false, boost: false, warp: true, lmb: false }, { x: 0, y: 0 });
     Client.keys["warp"] = false;

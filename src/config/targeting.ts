@@ -1,21 +1,9 @@
 export const TARGETING = {
-  LOCK: {
-    baseRangePx: 620,
-    referenceKm: 72,
-    timeBase: 5.0,
-    sigReference: 38,
-    sigExponent: 0.9,
-    multFloor: 0.42,
-  },
   SENSOR: {
     baseRangePx: 620,
     referenceKm: 72,
     dropRangeMultiplier: 1.08,
   },
-  ASTEROID_LOCK_TIME: 1.4,
-  WRECK_PIECE_LOCK_TIME: 0.9,
-  MAX_TARGET_LOCKS_BASE: 2,
-  MAX_TARGET_LOCKS_CAP: 9,
   ENEMY_LEVEL: {
     hpScoreMin: 25,
     hpScoreRange: 155,

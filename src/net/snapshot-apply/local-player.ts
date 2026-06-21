@@ -98,18 +98,6 @@ export function applyLocalPlayerSnapshot(p: Player, snap: WorldSnapshot, isFullS
   p.gatesCleared = snap.player.gatesCleared ? [...snap.player.gatesCleared] : [];
   if (typeof snap.player.warpCooldown === "number") p.warpCooldown = snap.player.warpCooldown;
   if (typeof snap.player.warpTargetIdx === "number") p.warpTargetIdx = snap.player.warpTargetIdx;
-  PlayerAccess.setTargetLock(snap.player.targetLock ? { ...snap.player.targetLock } : null, p);
-  const incomingLocks = snap.player.lockQueue ? snap.player.lockQueue.map((s) => ({ ...s })) : [];
-  PlayerAccess.setLockQueue(incomingLocks, p);
-  PlayerAccess.setAssignTargetId(snap.player._assignTargetId ?? null, p);
-  if (snap.player.turretTargets) {
-    PlayerAccess.setTurretTargetsAll([...snap.player.turretTargets], p);
-  }
-  if (snap.player.highTargets) {
-    for (let i = 0; i < snap.player.highTargets.length; i++) {
-      PlayerAccess.setHighTarget(i, snap.player.highTargets[i], p);
-    }
-  }
   if (snap.player.turretCds) {
     PlayerAccess.setTurretCdsAll([...snap.player.turretCds], p);
   }

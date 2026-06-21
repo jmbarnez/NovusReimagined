@@ -34,7 +34,6 @@ describe("space frame render systems", () => {
       "map",
       "thrust",
       "hud",
-      "tarrows",
       "guidearrow",
       "vignette",
       "renderPixi",

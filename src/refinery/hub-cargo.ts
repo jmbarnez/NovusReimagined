@@ -5,7 +5,6 @@ import { floatText } from "../utils/fx.js";
 import { t } from "../utils/i18n.js";
 import { curSys } from "../utils/game.js";
 import { random } from "../utils/math.js";
-import { removeSensorLock } from "../targeting.js";
 import { removeWreckPiece } from "../utils/entities.js";
 import { logEvent } from "../feedback.js";
 import { estimateMixedOreCargoMassKg } from "./composition.js";
@@ -26,13 +25,11 @@ export function processFloatingItem(itemId: string, p: Player): { success: boole
   if (item.kind === "debris") {
     const idx = getState().wreckPieces.findIndex((wp) => wp.id === itemId);
     if (idx !== -1) {
-      removeSensorLock(itemId, p);
       removeWreckPiece(idx);
     }
   } else {
     const sys = curSys(p);
     if (sys?.asteroids.some((ast) => ast.id === itemId)) {
-      removeSensorLock(itemId, p);
       WorldAccess.depleteAsteroid(p.sysIdx, itemId, 90 + random() * 60);
     }
   }

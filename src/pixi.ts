@@ -21,7 +21,6 @@ import { clearEnemyTextureCaches } from "./render/enemy/index.js";
 import { clearStationTextureCaches } from "./render/pixi-stations.js";
 import { resizeNebulaMesh } from "./render/pixi-nebula-gpu.js";
 import { destroyLensFlare } from "./render/pixi-lens-flare.js";
-import { LOCK_RAIL_H } from "./constants.js";
 import { playRect, setViewportSize } from "./render/viewport.js";
 import { configureStageLayerOrder, configureWorldLayerOrder } from "./render/pixi-z-order.js";
 

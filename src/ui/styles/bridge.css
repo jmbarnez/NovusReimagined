@@ -6,7 +6,7 @@
 .window::before{content:"";position:absolute;inset:0;background:linear-gradient(140deg,color-mix(in srgb,var(--hud-text-bright) 8%,transparent) 0%,transparent 36%,transparent 68%,color-mix(in srgb,var(--hud-accent) 10%,transparent) 100%);border-radius:inherit;pointer-events:none;z-index:3;}
 .window-overview{left:auto;right:8px;top:30px;width:320px;height:calc(80vh - 60px);min-width:180px;}
 .window-cargo{left:calc(50% - 320px);top:calc(50% - 260px);width:640px;height:520px;min-width:360px;min-height:260px;}
-.window-skills{left:8px;top:30px;width:370px;height:calc(80vh - 60px);min-width:260px;}
+.window-skills{left:auto;right:8px;bottom:8px;width:370px;height:440px;min-width:260px;}
 .window-missions{right:8px;top:60px;width:360px;height:360px;min-width:220px;}
 .window-station{left:calc(50% - 420px);top:calc(50% - 280px);width:840px;height:560px;min-width:560px;min-height:360px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);}
 .window.is-expanded{left:0!important;top:0!important;right:auto!important;width:100%!important;height:100%!important;resize:none;border-width:2px;border-color:var(--hud-border-accent);}
@@ -63,13 +63,6 @@
 .ov-row-neutral .ov-name{color:#a0a5aa;}
 .ov-icon{width:20px;text-align:center;color:var(--hud-text-dim);}
 .ov-st{font-variant-numeric:tabular-nums;color:var(--hud-text-dim);white-space:nowrap;}
-.ov-plock{color:var(--hud-accent);font-size: calc(9px * var(--effective-font-scale, 1));}
-.ov-plock.ov-scanning{color:var(--hud-shield);}
-.ov-plock.ov-primary{color:var(--hud-accent);}
-.ov-threat{font-size: calc(10px * var(--effective-font-scale, 1));margin-left:3px;vertical-align:middle;}
-.ov-threat.ov-threat-locked{color:var(--hud-danger);}
-.ov-threat.ov-threat-scan{color:var(--hud-cap);animation:ov-threat-blink 0.75s infinite alternate;}
-@keyframes ov-threat-blink{from{opacity:1}to{opacity:0.3}}
 .ov-num{text-align:right;font-variant-numeric:tabular-nums;color:var(--hud-text-dim);}
 .br-pane{min-height:0;height:100%;}
 .br-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;}

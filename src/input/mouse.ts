@@ -4,7 +4,6 @@ import { showEnemyCtxMenu } from "../ui/hud/enemy-menu.js";
 import { showZoomIndicator } from "../ui/hud/zoom-indicator.js";
 import { curSys } from "../utils/game.js";
 import { dst } from "../utils/math.js";
-import { gateStableId } from "../utils/warp-gates.js";
 import { getState } from "../state-access.js";
 import { stopEngineNodes } from "../audio/procedural.js";
 import { getCanvasElement, isBlockedByUi, getUiPointerBlockSelector, setCursorLock, clearAllInputState } from "./core.js";
@@ -48,49 +47,6 @@ export function handleMouseDown(e: MouseEvent): void {
       !Client.settingsOpen
     ) {
       queueFrameAction({ type: "fireSelectedTurret" });
-    }
-
-    // Target locking on Ctrl+click
-    if (e.ctrlKey && !Client.stationOpen && !Client.bridgeOpen) {
-      const wx = Client.mouseWorld.x, wy = Client.mouseWorld.y;
-      const sys = curSys();
-      let locked = false;
-      if (sys) {
-        for (const en of sys.enemies) {
-          if (en.alive && dst(wx, wy, en.x, en.y) < 30) {
-            queueFrameAction({ type: "requestSensorLock", payload: { id: en.id } });
-            locked = true;
-            break;
-          }
-        }
-        if (!locked) {
-          for (const a of sys.asteroids) {
-            if (!a.depleted && a.hp > 0 && dst(wx, wy, a.x, a.y) < a.radius + 12) {
-              queueFrameAction({ type: "requestSensorLock", payload: { id: a.id } });
-              locked = true;
-              break;
-            }
-          }
-        }
-        if (!locked) {
-          for (const p of getState().wreckPieces) {
-            if (p.hp > 0 && dst(wx, wy, p.x, p.y) < 22) {
-              queueFrameAction({ type: "requestSensorLock", payload: { id: p.id } });
-              locked = true;
-              break;
-            }
-          }
-        }
-        if (!locked) {
-          for (const gate of sys.gates) {
-            if (dst(wx, wy, gate.x, gate.y) < gate.radius * 1.2) {
-              queueFrameAction({ type: "requestSensorLock", payload: { id: gateStableId(gate) } });
-              locked = true;
-              break;
-            }
-          }
-        }
-      }
     }
   }
   if (e.button === 2) {

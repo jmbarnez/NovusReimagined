@@ -2,14 +2,13 @@ import { Client, type Player } from "../state.js";
 import { WorldAccess, MiningAccess, PlayerAccess, getState } from "../state-access.js";
 import { savePlayer } from "../player/player-data.js";
 import { getStats, invalidate } from "../player/player-stats.js";
-import { clearSensorLocks } from "../targeting.js";
 import { SHIPS } from "../data/ships.js";
 import { populateSystem } from "../world-gen.js";
 import { floatText, spawnExplosion, spawnShockwave } from "./fx.js";
 import { t } from "./i18n.js";
 import { sfxShipExplosion } from "../audio/procedural.js";
 import { viewCenterX, viewCenterY } from "../render/viewport.js";
-import { MODULE_HP_MAX, RACK_TYPES, LOCK_RAIL_H, HUD_SIDE_W, HUD_BOTTOM_H } from "../constants.js";
+import { MODULE_HP_MAX, RACK_TYPES, HUD_SIDE_W, HUD_BOTTOM_H } from "../constants.js";
 import { emit } from "../events.js";
 import { clearSimulationEntities } from "./entities.js";
 import { playerHardpointRack } from "./hardpoints.js";
@@ -41,7 +40,7 @@ export function s2w(sx: number, sy: number): { x: number; y: number } {
 }
 
 export function topHudHeight(): number {
-  return Array.isArray(getState().player?.lockQueue) && getState().player.lockQueue.length > 0 ? LOCK_RAIL_H : 0;
+  return 0;
 }
 
 export function curSys(p: Player = getState().player): System | null {
@@ -145,7 +144,6 @@ export function respawnPlayer(p: Player = getState().player) {
 
   if (isLocal) {
     PlayerAccess.setModuleHpAll(moduleHp);
-    PlayerAccess.setTurretTargetsAll(Array(hardpointCount).fill(null));
     PlayerAccess.setTurretCdsAll(Array(hardpointCount).fill(0));
     PlayerAccess.setCombatBar({ pos: 0.5, dir: 1 });
     if (p.slotHeat) {
@@ -158,7 +156,6 @@ export function respawnPlayer(p: Player = getState().player) {
     }
   } else {
     p.moduleHp = moduleHp;
-    p.turretTargets = Array(hardpointCount).fill(null);
     p.turretCds = Array(hardpointCount).fill(0);
     p.combatBar = { pos: 0.5, dir: 1 };
     if (p.slotHeat) {
@@ -186,7 +183,6 @@ export function respawnPlayer(p: Player = getState().player) {
     PlayerAccess.setMaxShield(st.maxShield);
     PlayerAccess.setEnergy(st.maxEnergy);
     PlayerAccess.setInvincible(3.0);
-    clearSensorLocks(p);
     MiningAccess.update({ active: false });
     clearSimulationEntities();
     emit("simulation:clear");
@@ -202,7 +198,6 @@ export function respawnPlayer(p: Player = getState().player) {
     p.maxShield = st.maxShield;
     p.energy = st.maxEnergy;
     p.invincible = 3.0;
-    clearSensorLocks(p);
   }
 
   populateSystem(getState().GALAXY[homeIdx]);

@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { _G as G, Client } from "../src/state.js";;
+import { _G as G, Client } from "../src/state.js";
 import { makePlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
 import { predictionManager } from "../src/net/prediction.js";
 import { applySnapshotToG } from "../src/net/client.js";
 import { createSnapshot } from "../src/sim/snapshot.js";
 import { buildGalaxy, populateSystem } from "../src/world-gen.js";
-import { setAssignTargetId, getAssignTargetId } from "../src/player/target-selection.js";
 import type { InputFrame } from "../src/sim/input.js";
 
 function frameWithAction(actions: InputFrame["actions"]): InputFrame {
@@ -23,63 +22,8 @@ describe("prediction action replay", () => {
     predictionManager.clear();
     const local = installTestPlayer(makePlayer());
     local.netId = "local-player";
-    local.lockQueue = [];
-    local.targetLock = null;
-    setAssignTargetId(local.netId ?? local.shipId, null);
     G.GALAXY = buildGalaxy();
     populateSystem(G.GALAXY[0]!);
-  });
-
-  it("reapplies a pending sensor-lock request after an older snapshot overwrites local state", () => {
-    const authoritative = makePlayer();
-    authoritative.netId = G.P.netId;
-    authoritative.lockQueue = [];
-    authoritative.targetLock = null;
-    const asteroid = G.GALAXY[0]?.asteroids[0];
-    const asteroidId = asteroid?.id;
-    expect(asteroidId).toBeTruthy();
-    if (!asteroidId) return;
-    if (asteroid) {
-      G.P.x = asteroid.x;
-      G.P.y = asteroid.y;
-      authoritative.x = asteroid.x;
-      authoritative.y = asteroid.y;
-    }
-
-    predictionManager.addInput(frameWithAction([
-      { type: "requestSensorLock", payload: { id: asteroidId } },
-    ]));
-
-    const snap = createSnapshot(0, G, authoritative);
-    applySnapshotToG(snap, true);
-    predictionManager.reconcile(snap);
-
-    expect(G.P.lockQueue[0]?.id).toBe(asteroidId);
-    expect(G.P.lockQueue[0]?.resolving).toBe(true);
-  });
-
-  it("does not toggle assignment off when replaying a pending second-click lock action", () => {
-    const authoritative = makePlayer();
-    authoritative.netId = G.P.netId;
-    const asteroid = G.GALAXY[0]?.asteroids[0];
-    const asteroidId = asteroid?.id;
-    expect(asteroidId).toBeTruthy();
-    if (!asteroidId) return;
-
-    G.P.lockQueue = [{ id: asteroidId, resolving: false, acc: 1 }];
-    setAssignTargetId(G.P.netId ?? G.P.shipId, asteroidId);
-    authoritative.lockQueue = [{ id: asteroidId, resolving: false, acc: 1 }];
-    setAssignTargetId(authoritative.netId ?? authoritative.shipId, asteroidId);
-
-    predictionManager.addInput(frameWithAction([
-      { type: "requestSensorLock", payload: { id: asteroidId } },
-    ]));
-
-    const snap = createSnapshot(0, G, authoritative);
-    applySnapshotToG(snap, true);
-    predictionManager.reconcile(snap);
-
-    expect(getAssignTargetId(G.P.netId ?? G.P.shipId)).toBe(asteroidId);
   });
 
   it("reapplies a pending hardpoint selection after an older snapshot overwrites local fire slot", () => {

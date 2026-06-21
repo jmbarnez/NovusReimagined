@@ -5,7 +5,6 @@ import { C } from "../config/index.js";
 import { addXp, addSkillXp } from "../player/player-data.js";
 import { WEAPON_SKILL, type WeaponDelivery } from "../data/skills.js";
 import { floatText, spawnExplosion } from "../utils/fx.js";
-import { removeSensorLock } from "../targeting.js";
 import { logEvent } from "../feedback.js";
 import { t } from "../utils/i18n.js";
 import { progressMissions } from "../data/missions.js";
@@ -72,7 +71,6 @@ export function killEnemy(e: Enemy) {
   const killer: Player | undefined = e.lastHitByPlayer ?? undefined;
 
   if (playerParticipated && killer) {
-    removeSensorLock(e.id, killer);
     if (isTutorialEnemy) {
       PlayerAccess.setKills(killer.kills + 1, killer);
       logEvent(t("combat.destroyedTargetDummy", { name: e.name }), "combat");

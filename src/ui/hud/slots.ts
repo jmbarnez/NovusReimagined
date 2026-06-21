@@ -8,20 +8,17 @@ import { MODULES, MODULE_FLAGS } from "../../data/modules.js";
 import { WEAPON_PROFILES } from "../../data/weaponProfiles.js";
 import { MODULE_HP_MAX } from "../../constants.js";
 import { hotkeyBadge } from "../../utils/format.js";
-import { targetByLockId } from "../../targeting.js";
 import { applyBarHotkey } from "../../player/player-fitting.js";
 import { floatText } from "../../utils/fx.js";
 import { getAbilityState, ABILITY_BY_ID } from "../../player/abilities.js";
-import { onTurretContextMenu } from "./turret-menu.js";
 import { hudState, RACK_ORDER } from "./state.js";
 import { getInstance } from "../../utils/items.js";
 import { showSlotTooltip, hideSlotTooltip } from "./slotTooltip.js";
 import { itemIconHtml } from "../icons/item-icon-bake.js";
-import type { ComputedStats } from "../../player/player-stats.js";
+import { getWeaponProfileForSlot, type ComputedStats } from "../../player/player-stats.js";
 import { sfxBlip } from "../../audio/procedural.js";
 import { playerHardpointRack } from "../../utils/hardpoints.js";
 import { createElement, append, setHtml, setText, setStyle, toggleClass, onClick, onMouseEnter, onMouseLeave, remove, setCssVar } from "../dom-helpers.js";
-import { getAssignTargetId } from "../../player/target-selection.js";
 
 export interface SlotNode {
   el: HTMLElement;
@@ -38,7 +35,7 @@ export interface SlotNode {
 export function updateSlots(ship: ShipDef, st: ComputedStats, now: number) {
   const ft = ship.fitting;
   const nSlots = (ft.turret | 0) + (ft.high | 0) + (ft.med | 0) + (ft.low | 0);
-  const stateKey = `${nSlots}|${getAssignTargetId(getState().player.netId ?? getState().player.shipId) ?? "-"}`;
+  const stateKey = String(nSlots);
 
   // Rebuild slots if ship/fitting changed
   if (stateKey !== hudState.lastSlotState) {
@@ -113,9 +110,6 @@ export function rebuildSlots(ship: ShipDef) {
       append(el, muzzle);
 
       onClick(el, (e) => onSlotClick(e as MouseEvent, rack, idx));
-      if (rack === playerHardpointRack(getState().player)) {
-        onClick(el, (e) => onTurretContextMenu(e as MouseEvent, rack, idx));
-      }
       onMouseEnter(el, (e) => showSlotTooltip(rack, idx, (e as MouseEvent).clientX, (e as MouseEvent).clientY));
       onMouseLeave(el, () => hideSlotTooltip());
 
@@ -134,7 +128,6 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   const uid = getState().player.fitting[r]?.[idx];
   const inst = uid ? getInstance(uid) : null;
   const m = inst ? MODULES[inst.baseId] : null;
-  const pending = getAssignTargetId(getState().player.netId ?? getState().player.shipId) != null;
   const isTurret = rack === playerHardpointRack(getState().player);
 
   const isSlotActive = !!inst && inst.durability > 0;
@@ -149,14 +142,6 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   if (modOffline) cls += " module-offline";
 
   if (isTurret && idx === (getState().player.fireControlSlot ?? 0)) cls += " turret-selected";
-
-  const assignedId = isTurret
-    ? (getState().player.turretTargets?.[idx] ?? null)
-    : (rack === "high" && m?.isSalvager ? (getState().player.highTargets?.[idx] ?? null) : null);
-  if (assignedId != null) cls += " target-assigned";
-
-  const canAssign = isTurret && (m?.weaponDelivery || MODULE_FLAGS.isMiningTurret(m));
-  if (pending && canAssign) cls += " pending-assign";
 
   if (el.className !== cls) el.className = cls;
 
@@ -246,7 +231,7 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   const isWeaponTurret = isTurret && inst?.baseId && m?.weaponDelivery && !MODULE_FLAGS.isMiningTurret(m);
   let cdH = "0%";
   if (isWeaponTurret) {
-    const prof = WEAPON_PROFILES[inst!.baseId] || WEAPON_PROFILES.default;
+    const prof = getWeaponProfileForSlot(idx) ?? WEAPON_PROFILES[inst!.baseId] ?? WEAPON_PROFILES.default;
     const cdVal = getState().player.turretCds?.[idx] || 0;
     if (cdVal > 0 && prof.rate > 0) {
       const pct = Math.max(0, Math.min(1, cdVal / prof.rate));
@@ -270,10 +255,6 @@ export function updateSlotNode(node: SlotNode, rack: string, idx: number, hkIdx:
   if (modDamaged) {
     subText = `${durPct}%`;
     subCls = "sl-sub damaged";
-  } else if (isWeaponTurret && assignedId != null) {
-    const tgt = targetByLockId(assignedId);
-    subText = `→${tgt ? (tgt.name || "").slice(0, 3) : "?"}`;
-    subCls = "sl-sub assigned";
   }
   setText(subEl, subText);
   if (subEl.className !== subCls) subEl.className = subCls;

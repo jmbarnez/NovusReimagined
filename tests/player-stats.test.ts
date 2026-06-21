@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { _G as G } from "../src/state.js";;
 import { makePlayer, loadPlayer } from "../src/player/player-data.js";
 import { installTestPlayer } from "../src/player-registry.js";
-import { computeStats, getStats, invalidate } from "../src/player/player-stats.js";
+import { computeStats, getStats, getWeaponProfileForSlot, invalidate } from "../src/player/player-stats.js";
 import { MODULE_HP_MAX } from "../src/constants.js";
 import { ModuleRarity } from "../src/data/moduleRarity.js";
 import { ModuleInstance } from "../src/types/moduleInstance.js";
@@ -47,6 +47,52 @@ describe("player-stats computeStats", () => {
 
     const st = computeStats(G.P);
     expect(st.weaponTurret?.id).toBe("tu-civilian-cannon");
+  });
+
+  it("applies weapon instance rolls to the fired weapon profile", () => {
+    const rolled = makeTestInstance("rolled-tu-cannon", "tu-cannon");
+    const stockCannon = makeTestInstance("stock-tu-cannon", "tu-cannon");
+    rolled.affixes = [
+      { id: "dmg", name: "Weapon Damage", affectedStat: "weaponDamagePct", value: 0.25 },
+      { id: "cycle", name: "Cycle Speed", affectedStat: "weaponCyclePct", value: 0.20 },
+      { id: "range", name: "Weapon Range", affectedStat: "weaponRangePct", value: 0.10 },
+      { id: "tracking", name: "Projectile Speed", affectedStat: "weaponProjectileSpeedPct", value: 0.15 },
+      { id: "cap_efficiency", name: "Capacitor Efficiency", affectedStat: "weaponCapCostPct", value: 0.10 },
+    ];
+    G.P.moduleCargo.push(rolled);
+    G.P.moduleCargo.push(stockCannon);
+    G.P.fitting.high[0] = rolled.uid;
+    G.P.fitting.high[1] = stockCannon.uid;
+    invalidate(G.P);
+
+    const stock = getWeaponProfileForSlot(1, G.P);
+    const prof = getWeaponProfileForSlot(0, G.P);
+
+    expect(prof).toBeTruthy();
+    expect(stock).toBeTruthy();
+    if (!prof || !stock) return;
+    expect(prof.dmg).toBeGreaterThan(stock.dmg);
+    expect(prof.rate).toBeLessThan(stock.rate);
+    expect(prof.range).toBeGreaterThan(stock.range);
+    expect(prof.spd).toBeGreaterThan(stock.spd);
+    expect(prof.ec).toBeLessThan(stock.ec);
+  });
+
+  it("ignores unknown weapon roll keys", () => {
+    const rolled = makeTestInstance("unknown-roll-tu-cannon", "tu-cannon");
+    const stockCannon = makeTestInstance("stock-unknown-tu-cannon", "tu-cannon");
+    rolled.affixes = [{ id: "bad", name: "Bad Roll", affectedStat: "notAWeaponStat", value: 999 }];
+    G.P.moduleCargo.push(rolled);
+    G.P.moduleCargo.push(stockCannon);
+    G.P.fitting.high[0] = rolled.uid;
+    G.P.fitting.high[1] = stockCannon.uid;
+
+    const prof = getWeaponProfileForSlot(0, G.P);
+    const stock = getWeaponProfileForSlot(1, G.P);
+
+    expect(prof?.dmg).toBe(stock?.dmg);
+    expect(prof?.rate).toBe(stock?.rate);
+    expect(prof?.range).toBe(stock?.range);
   });
 
   it("ion boost module toggle changes thrustScale", () => {
@@ -113,11 +159,11 @@ describe("player-data loadPlayer migrations", () => {
     const p = loadPlayer();
     expect(p.shipId).toBe("scout");
     // makePlayer now issues civilian starter modules with this uid.
-    expect(p.fitting.high[0]).toBe("start-tu-civ-miner");
-    expect(p.fitting.high[1]).toBe("start-tu-tractor");
+    expect(p.fitting.high[0]).toBe("start-tu-civ-cannon");
+    expect(p.fitting.high[1]).toBe("start-tu-pulse");
     expect(p.fitting.med[0]).toBe("start-me-ab1");
     expect(p.fitting.low[0]).toBe("start-lo-dcu");
-    expect(p.moduleCargo.length).toBe(10);
+    expect(p.moduleCargo.length).toBe(11);
   });
 
   it("migrates moduleInventory to moduleCargo", () => {
@@ -128,7 +174,7 @@ describe("player-data loadPlayer migrations", () => {
     });
     localStorage.setItem("ss2-sim-v1", raw);
     const p = loadPlayer();
-    expect(p.moduleCargo.length).toBe(13);
+    expect(p.moduleCargo.length).toBe(14);
     expect((p as any).moduleInventory).toBeUndefined();
   });
 
@@ -144,16 +190,14 @@ describe("player-data loadPlayer migrations", () => {
     expect(Array.isArray(p.moduleHp.turret)).toBe(true);
   });
 
-  it("normalizes hardpoint arrays from the active hardpoint rack length", () => {
+  it("normalizes hardpoint cooldown arrays from the active hardpoint rack length", () => {
     const raw = JSON.stringify({
       shipId: "scout",
       fitting: { turret: [], high: [null, null], med: [null], low: [null] },
-      turretTargets: [],
       turretCds: [],
     });
     localStorage.setItem("ss2-sim-v1", raw);
     const p = loadPlayer();
-    expect(p.turretTargets).toHaveLength(2);
     expect(p.turretCds).toHaveLength(2);
   });
 
@@ -172,16 +216,12 @@ describe("player-data loadPlayer migrations", () => {
         med: [null, null],
         low: [null, null, null],
       },
-      highTargets: ["wreck-1"],
-      turretTargets: [],
-      turretCds: [],
     });
     localStorage.setItem("ss2-sim-v1", raw);
     const p = loadPlayer();
     expect(p.fitting.turret).toEqual([]);
     expect(p.fitting.high).toEqual(["legacy-hi-1", "legacy-hi-2", "legacy-tu-1", "legacy-tu-2"]);
     expect(p.moduleHp.high).toEqual([55, 65, 35, 45]);
-    expect(p.highTargets).toEqual(["wreck-1", null, null, null]);
   });
 
   it("falls back to makePlayer on corrupted JSON", () => {

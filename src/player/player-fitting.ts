@@ -3,18 +3,14 @@ import { PlayerAccess, getState } from "../state-access.js";
 import { queueFrameAction } from "../sim/input.js";
 import { SHIPS } from "../data/ships.js";
 import { MODULES } from "../data/modules.js";
-import { invalidate } from "./player-stats.js";
-import { enemyByLockId, targetByLockId } from "../targeting.js";
 import { floatText } from "../utils/fx.js";
 import { t } from "../utils/i18n.js";
 import { MODULE_HP_MAX, RACK_TYPES } from "../constants.js";
-import { emit } from "../events.js";
-import { sfxTurretAssign } from "../audio/procedural.js";
 import { getInstance } from "../utils/items.js";
 import { ModuleInstance } from "../types/moduleInstance.js";
 import { tryActivate as tryActivateAbility, ABILITY_BY_ID } from "./abilities.js";
-import { getAssignTargetId } from "./target-selection.js";
 import { playerHardpointRack } from "../utils/hardpoints.js";
+import type { Player } from "../state.js";
 
 export function syncSlotHeat(p: Player = getState().player) {
   const s = SHIPS[p.shipId];
@@ -38,7 +34,6 @@ export function syncSlotHeat(p: Player = getState().player) {
     med: pull(s.fitting.med, p.slotHeat?.med),
     low: pull(s.fitting.low, p.slotHeat?.low),
   }, p);
-  PlayerAccess.setTurretTargetsAll(pullNull(hardpointCount, p.turretTargets || []), p);
   PlayerAccess.setTurretCdsAll(pull(hardpointCount, p.turretCds || []), p);
   const moduleHp: Record<string, (number | null)[]> = p.moduleHp ? { ...p.moduleHp } : { turret: [], high: [], med: [], low: [] };
   for (const rack of RACK_TYPES) {
@@ -102,20 +97,12 @@ export function applyBarHotkey(keyIndex: number) {
   const hardpointRack = playerHardpointRack(getState().player);
   if (rack === hardpointRack) {
     queueFrameAction({ type: "setFireControlSlot", payload: { slot: idx } });
-    const assignTargetId = getAssignTargetId(getState().player.netId ?? getState().player.shipId);
-    if (assignTargetId != null) {
-      queueFrameAction({ type: "assignModuleSlotToTarget", payload: { slotIdx: idx, targetId: assignTargetId } });
-      queueFrameAction({ type: "selectLockTarget", payload: { id: assignTargetId } });
-      sfxTurretAssign();
-    }
     return;
   }
 
   // Non-hardpoint slots: abilities still fire from the hotkey; passive modules are always on.
   queueFrameAction({ type: "toggleSlotDefaultAction", payload: { rack, idx } });
 }
-
-import type { Player } from "../state.js";
 
 export function toggleSlotDefaultAction(rack: string, idx: number, p: Player = getState().player) {
   const instanceId = p.fitting[rack]?.[idx];

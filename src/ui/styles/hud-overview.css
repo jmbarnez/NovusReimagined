@@ -67,6 +67,41 @@
   transition: background 0.12s ease, color 0.12s ease;
 }
 
+#hud-overview-panel .ov-row:hover td {
+  background: color-mix(in srgb, var(--hud-accent) 8%, var(--hud-bg-deep) 92%);
+  color: var(--hud-text-bright);
+}
+
+#hud-overview-panel .ov-row-hostile td:first-child {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--hud-danger) 70%, transparent);
+}
+
+#hud-overview-panel .ov-row-self td:first-child {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--hud-shield) 70%, transparent);
+}
+
+#hud-overview-panel .ov-row-asteroid td:first-child {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--hud-hull) 65%, transparent);
+}
+
+#hud-overview-panel .ov-row-station td:first-child,
+#hud-overview-panel .ov-row-gate td:first-child {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--hud-positive) 58%, transparent);
+}
+
+#hud-overview-panel .ov-row-hostile:hover td {
+  background: color-mix(in srgb, var(--hud-danger) 7%, var(--hud-bg-deep) 93%);
+}
+
+#hud-overview-panel .ov-row-self:hover td {
+  background: color-mix(in srgb, var(--hud-shield) 7%, var(--hud-bg-deep) 93%);
+}
+
+#hud-overview-panel .ov-icon {
+  color: var(--hud-text-dim);
+  text-shadow: 0 0 6px color-mix(in srgb, currentColor 24%, transparent);
+}
+
 /* Remove final right border on table columns */
 #hud-overview-panel .ov-table th:last-child,
 #hud-overview-panel .ov-table td:last-child {

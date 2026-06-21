@@ -183,6 +183,3 @@ export function sfxWeaponMissile(typeId = "default", vol = 1, x = 0, y = 0) {
   _disconnectOnEnd(whistle, wg, pn3!);
 }
 
-export function sfxTurretAssign() {
-  sfxBlip(660, 0.07);
-}

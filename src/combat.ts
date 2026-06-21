@@ -4,7 +4,6 @@ import { addXp, addSkillXp } from "./player/player-data.js";
 import { WEAPON_SKILL, type WeaponDelivery } from "./data/skills.js";
 import { XP_PER_KILL, RESPAWN_S, PLAYER_PARTICIPATION_WINDOW_MS } from "./constants.js";
 import { floatText, spawnCollisionFx, spawnExplosion } from "./utils/fx.js";
-import { removeSensorLock } from "./targeting.js";
 import { logEvent } from "./feedback.js";
 import { progressMissions } from "./data/missions.js";
 import { showDamageNumber } from "./combat/damage-display.js";
@@ -68,7 +67,6 @@ export function damageEnemy(e: Enemy, dmg: number, px: number, py: number, owner
 
 
 export function killEnemy(e: Enemy) {
-  removeSensorLock(e.id);
   e.alive = false;
   removeVisualState(e.id);
   removeAiState(e.id);

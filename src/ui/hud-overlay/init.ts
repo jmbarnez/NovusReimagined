@@ -16,7 +16,6 @@ import { t } from "../../utils/i18n.js";
 import { on } from "../../events.js";
 import { hudState } from "../hud/state.js";
 import { updateHudOverviewPanel, updateHudOverviewPanelHeaders, buildOverviewPanel } from "../hud/overview.js";
-import { hideTurretCtxMenu } from "../hud/turret-menu.js";
 import { hideEnemyCtxMenu } from "../hud/enemy-menu.js";
 import { flushPendingLogEntries, logEvent, registerLogSink } from "../hud/logs.js";
 import { showXpEarned } from "../hud/xp.js";
@@ -33,9 +32,6 @@ let ctxMenuDismissBound = false;
 let _removeDocumentClick: (() => void) | null = null;
 
 function onCtxMenuDismiss(e: Event) {
-  if (hudState.turretCtxMenu && !hudState.turretCtxMenu.contains((e as MouseEvent).target as Node)) {
-    hideTurretCtxMenu();
-  }
   if (hudState.enemyCtxMenu && !hudState.enemyCtxMenu.contains(e.target as Node)) {
     hideEnemyCtxMenu();
   }
@@ -58,7 +54,6 @@ export function initHudOverlay() {
   setHtml(overlay, `
     <span id="hud-sys-name"></span>
     <span id="hud-sec"></span>
-    <div id="hud-lock-rail"></div>
     <div id="hud-dock-prompt"></div>
     <div id="hud-pickup-container"></div>
     <div id="hud-crossing-banner" class="hud-crossing-banner" style="display: none;"></div>
@@ -97,7 +92,6 @@ export function initHudOverlay() {
   hudState.root = overlay;
   hudState.sysName = overlay.querySelector("#hud-sys-name");
   hudState.secEl = overlay.querySelector("#hud-sec");
-  hudState.lockRail = overlay.querySelector("#hud-lock-rail");
   hudState.dockPrompt = overlay.querySelector("#hud-dock-prompt");
   let xpPopup = getElement("hud-xp-popup");
   if (!xpPopup) {
@@ -182,16 +176,6 @@ export function initHudOverlay() {
     if (siteId) openDecryptionWindowForSite(siteId);
   });
 
-  // Turret context menu
-  if (!getElement("turret-ctx-menu")) {
-    hudState.turretCtxMenu = createElement("div");
-    hudState.turretCtxMenu.id = "turret-ctx-menu";
-    setStyle(hudState.turretCtxMenu, { display: "none" });
-    append(document.body, hudState.turretCtxMenu);
-  } else {
-    hudState.turretCtxMenu = getElement("turret-ctx-menu");
-  }
-
   // Enemy context menu
   if (!getElement("enemy-ctx-menu")) {
     hudState.enemyCtxMenu = createElement("div");
@@ -274,12 +258,9 @@ export function destroyHudOverlay() {
   }
   resetHubWindowState();
   hudState.slotNodes.clear();
-  hudState.lockCards.clear();
   hudState.statusGroups = [];
   hudState.statusFills = [];
-  if (hudState.turretCtxMenu) remove(hudState.turretCtxMenu);
   if (hudState.enemyCtxMenu) remove(hudState.enemyCtxMenu);
-  hudState.turretCtxMenu = null;
   hudState.enemyCtxMenu = null;
   if (hudState.xpPopup) remove(hudState.xpPopup);
   hudState.xpPopup = null;

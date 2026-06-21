@@ -9,26 +9,16 @@ import type { Enemy } from "../../types/enemy.js";
 import type { Player } from "../../state.js";
 
 export interface EnemyAIState {
-  targetingPlayer: boolean;
-  hasLockOnPlayer: boolean;
-  lockOnTimer: number;
   orbitDir: 1 | -1 | undefined;
   npcTarget: Enemy | Player | null;
-  npcLockTimer: number;
-  npcHasLock: boolean;
 }
 
 const _store = new Map<string, EnemyAIState>();
 
 function defaultAiState(): EnemyAIState {
   return {
-    targetingPlayer: false,
-    hasLockOnPlayer: false,
-    lockOnTimer: 0,
     orbitDir: undefined,
     npcTarget: null,
-    npcLockTimer: 0,
-    npcHasLock: false,
   };
 }
 
@@ -54,23 +44,6 @@ export function clearAiState(): void {
 
 // ── Convenience accessors for render / UI (read-only) ──────────────────────
 
-export function isTargetingPlayer(id: string): boolean {
-  return _store.get(id)?.targetingPlayer ?? false;
-}
-
-export function hasLockOnPlayer(id: string): boolean {
-  return _store.get(id)?.hasLockOnPlayer ?? false;
-}
-
-export function getLockOnTimer(id: string): number {
-  return _store.get(id)?.lockOnTimer ?? 0;
-}
-
 export function getNpcTarget(id: string): Enemy | Player | null {
   return _store.get(id)?.npcTarget ?? null;
-}
-
-/** Iterate all AI states. Used by warning-pulse logic. */
-export function forEachAiState(cb: (id: string, s: EnemyAIState) => void): void {
-  for (const [id, s] of _store) cb(id, s);
 }

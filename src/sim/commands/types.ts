@@ -38,20 +38,6 @@ export interface ToggleSlotDefaultActionCommand {
   payload: { rack: string; idx: number };
 }
 
-export interface AssignModuleSlotToTargetCommand {
-  type: "assignModuleSlotToTarget";
-  payload: {
-    slotIdx: number;
-    targetId: string | null;
-    opts?: { clearAssign?: boolean; silent?: boolean };
-  };
-}
-
-export interface SetHighTargetCommand {
-  type: "setHighTarget";
-  payload: { idx: number; targetId: string | null };
-}
-
 export interface SyncTutorialStepCommand {
   type: "syncTutorialStep";
   payload: Player["tutorial"];
@@ -70,25 +56,6 @@ export interface CompleteSiteCommand {
     integrity: number;
     partial: boolean;
   };
-}
-
-export interface RequestSensorLockCommand {
-  type: "requestSensorLock";
-  payload: { id: string };
-}
-
-export interface RemoveSensorLockCommand {
-  type: "removeSensorLock";
-  payload: { id: string };
-}
-
-export interface SelectLockTargetCommand {
-  type: "selectLockTarget";
-  payload: { id: string };
-}
-
-export interface ClearSensorLocksCommand {
-  type: "clearSensorLocks";
 }
 
 export interface SetTractorTightnessCommand {
@@ -233,15 +200,9 @@ export type GameCommand =
   | InteractSiteCommand
   | SetFireControlSlotCommand
   | ToggleSlotDefaultActionCommand
-  | AssignModuleSlotToTargetCommand
-  | SetHighTargetCommand
   | SyncTutorialStepCommand
   | SkipTutorialCommand
   | CompleteSiteCommand
-  | RequestSensorLockCommand
-  | RemoveSensorLockCommand
-  | SelectLockTargetCommand
-  | ClearSensorLocksCommand
   | SetTractorTightnessCommand
   | SetMapScannerPowerCommand
   | SetMapScannerConeCommand

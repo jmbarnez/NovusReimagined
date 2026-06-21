@@ -1,13 +1,10 @@
 import { Client } from "../state.js";
 import { getState, PlayerAccess, SalvagerAccess, WorldAccess } from "../state-access.js";
 import { MODULES, MODULE_FLAGS } from "../data/modules.js";
-import { getInstance } from "../utils/items.js";
 import type { WreckPiece } from "../types/system.js";
-import type { LockSlot } from "../types/combat.js";
 import { dst } from "../utils/math.js";
 import { floatText } from "../utils/fx.js";
 import { t } from "../utils/i18n.js";
-import { isWreckPieceTarget } from "../targeting.js";
 import { addSkillXp } from "./player-data.js";
 import { damageWreckPiece } from "../wreck/index.js";
 import { forEachFittedModuleSlot, getFittedModuleDef, isModuleSlotPowered } from "../utils/module-slots.js";
@@ -34,18 +31,19 @@ function findSalvagerSlot(): { rack: AssignableRack; idx: number; rollBonus: num
   return firstRack && firstIdx >= 0 ? { rack: firstRack, idx: firstIdx, rollBonus } : null;
 }
 
-function resolveAssignedPiece(slotIdx: number): WreckPiece | null {
-  const assignedId = getState().player.turretTargets?.[slotIdx];
-  if (!assignedId || !isWreckPieceTarget(assignedId)) return null;
-
-  const lockSlot = getState().player.lockQueue?.find((s: LockSlot) => s.id === assignedId);
-  if (!lockSlot || lockSlot.resolving) return null;
-
-  const piece = getState().wreckPieces.find((p) => p.id === assignedId);
-  if (!piece || piece.hp <= 0) return null;
-  if (dst(getState().player.x, getState().player.y, piece.x, piece.y) > SALVAGE_RANGE) return null;
-
-  return piece;
+function findNearestSalvagePiece(): WreckPiece | null {
+  const p = getState().player;
+  let best: WreckPiece | null = null;
+  let bestD = SALVAGE_RANGE;
+  for (const piece of getState().wreckPieces) {
+    if (piece.hp <= 0) continue;
+    const d = dst(p.x, p.y, piece.x, piece.y);
+    if (d < bestD) {
+      bestD = d;
+      best = piece;
+    }
+  }
+  return best;
 }
 
 export function updateSalvager(dt: number) {
@@ -64,7 +62,7 @@ export function updateSalvager(dt: number) {
     return;
   }
 
-  const piece = resolveAssignedPiece(slot.idx);
+  const piece = findNearestSalvagePiece();
   if (!piece) {
     SalvagerAccess.update({ active: false, targetPieceId: null });
     return;

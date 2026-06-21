@@ -20,6 +20,7 @@ export function makePlayer(): Player {
   const hardpointCount = getHardpointSlotCount("scout");
   const startingModules: ModuleInstance[] = [
     { uid: "start-tu-civ-cannon", baseId: "tu-civilian-cannon", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
+    { uid: "start-tu-pulse", baseId: "tu-pulse", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
     { uid: "start-tu-civ-miner", baseId: "tu-civilian-miner", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
     { uid: "start-tu-civ-salvager", baseId: "tu-civilian-salvager", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
     { uid: "start-tu-tractor", baseId: "tu-tractor", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
@@ -30,17 +31,10 @@ export function makePlayer(): Player {
     { uid: "start-lo-dcu", baseId: "lo-dcu", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
     { uid: "start-lo-battery", baseId: "lo-battery", rarity: ModuleRarity.Stock, itemLevel: 1, durability: 100, maxDurability: 100, affixes: [] },
   ];
-  fit.high[0] = "start-tu-civ-miner";
-  fit.high[1] = "start-tu-tractor";
+  fit.high[0] = "start-tu-civ-cannon";
+  fit.high[1] = "start-tu-pulse";
   fit.med[0] = "start-me-ab1";
   fit.low[0] = "start-lo-dcu";
-  fit.low[1] = "start-lo-battery";
-  fit.high[2] = "start-tu-civ-scanner";
-  fit.high[3] = "start-hi-comms";
-  fit.med[1] = "start-me-shield";
-  // Cannon and salvager are NOT pre-fitted so tutorial hangar-turrets step
-  // can teach the player to fit them. ensurePlayerHasWeapon() adds a fallback
-  // weapon later for non-tutorial paths.
 
   return {
     shipId: 'scout',
@@ -51,12 +45,8 @@ export function makePlayer(): Player {
     hp: 100, maxHp: 100,
     shield: 0, shieldCd: 0,
     structure: 80, maxStructure: 80,
-    targetLock: null,
-    lockQueue: [],
     fireControlSlot: 0,
     netInputFrame: null,
-    turretTargets: Array(hardpointCount).fill(null),
-    highTargets: Array(fit.high?.length ?? 0).fill(null),
     turretCds: Array(hardpointCount).fill(0),
     combatBar: { pos: 0.5, dir: 1 },
     energy: 100,

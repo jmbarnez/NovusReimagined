@@ -1,5 +1,5 @@
 import { dst } from "../utils/math.js";
-import { transversalVs } from "../targeting.js";
+import { transversalVs } from "../targeting/lookup.js";
 import { C } from "../config/index.js";
 import type { Player } from "../state.js";
 import type { ModuleDef } from "../data/modules.js";

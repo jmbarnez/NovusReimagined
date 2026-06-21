@@ -1,27 +1,22 @@
 /**
- * PixiJS Asteroids & Target Locks Renderer.
- * 
- * Migrates asteroid fields and target bracket indicators to PixiJS:
+ * PixiJS Asteroids Renderer.
+ *
+ * Migrates asteroid fields to PixiJS:
  * - Asteroid Bodies: Cached procedural sprites with clipped rocky silhouettes.
  * - Mining Debris: Short-lived rock chunks with matching dark outlines.
  * - Surface Lighting: Sun-relative baked light buckets without screen-space shadows.
  * - Health Bars: Dynamic resource bars fading in under damaged rocks.
- * - Selection Brackets: Glowing primary/secondary blue targeting locks.
  */
 import { Container, Graphics, ImageSource, Sprite, Texture } from "pixi.js";
 import { Client } from "../state.js";
-import { getState } from "../state-access.js";
 import type { Asteroid } from "../types/asteroid.js";
 import type { System } from "../types/system.js";
-import type { LockSlot } from "../types/combat.js";
 import { lerp } from "../utils/math.js";
 import { isVisible } from "../utils/game.js";
 import { asteroidDebrisList } from "../utils/mining.js";
-import { drawTargetLockBrackets, drawSelectedTargetIndicator } from "./pixi-lock-brackets.js";
 import { PixiGeometryBufferPool } from "./pixi-geometry-buffer-pool.js";
 import { entityLayer } from "../pixi.js";
 import { getSunWorldPos } from "../utils/sun-position.js";
-import { getAssignTargetId } from "../player/target-selection.js";
 
 const TAU = Math.PI * 2;
 const ASTEROID_TEX_SCALE = 3;
@@ -35,7 +30,6 @@ let _asteroidGfx: Graphics | null = null;
 let _asteroidSpriteLayer: Container | null = null;
 const _asteroidSprites = new Map<string, Sprite>();
 const _asteroidTextureCache = new Map<string, Texture>();
-const _asteroidLockMap = new Map<string, LockSlot>();
 const _polyBuffers = new PixiGeometryBufferPool();
 
 function hslStr(h: number, s: number, l: number, a = 1): string {
@@ -251,14 +245,6 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
 
   gfx.clear();
   _polyBuffers.resetFrame();
-  _asteroidLockMap.clear();
-
-  const player = getState().player;
-  const primaryId = player.targetLock?.id;
-  const selectedId = getAssignTargetId(player.netId ?? player.shipId);
-  if (Array.isArray(player.lockQueue)) {
-    for (const slot of player.lockQueue) _asteroidLockMap.set(slot.id, slot);
-  }
 
   const asteroids = sys?.liveAsteroids ?? [];
   const isMultiplayer = Client.multiplayerRole !== "none";
@@ -282,14 +268,6 @@ export function syncPixiAsteroids(now: number, alpha: number, sys: System): void
           .rect(a.x - bw / 2, by, bw * hp, 4).fill({ color: hp > 0.6 ? 0xc8a060 : hp > 0.3 ? 0xcc6622 : 0x882211 });
       }
 
-      // 4. Render blue locking brackets
-      const slot = _asteroidLockMap.get(a.id);
-      if (slot) {
-        drawTargetLockBrackets(gfx, a.x, a.y, a.radius, slot, a.id === primaryId, now, "neutral");
-        if (a.id === selectedId) {
-          drawSelectedTargetIndicator(gfx, a.x, a.y, a.radius, now);
-        }
-      }
     }
   hideUnusedAsteroidSprites(activeIds);
 

@@ -36,14 +36,14 @@ describe("ClientSession.consumeInputForTick", () => {
   it("returns stale actions while still preserving latest lagged movement frame", () => {
     const session = new ClientSession("c1", "Pilot", makePlayer());
     session.addInput(
-      makeFrame(5, [{ type: "requestSensorLock", payload: { id: "rat-1" } }]),
+      makeFrame(5, [{ type: "setFireControlSlot", payload: { slot: 0 } }]),
     );
 
     const { frame, staleActions } = session.consumeInputForTick(20);
 
     expect(frame?.tick).toBe(5);
     expect(frame?.actions).toEqual([]);
-    expect(staleActions).toEqual([{ type: "requestSensorLock", payload: { id: "rat-1" } }]);
+    expect(staleActions).toEqual([{ type: "setFireControlSlot", payload: { slot: 0 } }]);
     expect(session.inputBuffer).toHaveLength(0);
   });
 });

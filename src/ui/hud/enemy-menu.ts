@@ -1,7 +1,5 @@
 import "../styles/hud-enemy-menu.css";
-import { Client } from "../../state.js";
 import { getState } from "../../state-access.js";
-import { queueFrameAction } from "../../sim/input.js";
 import { hudState } from "./state.js";
 import { hasCommsEquipment } from "../../player/player-stats.js";
 import { randomHailLine } from "../../data/faction-comms.js";
@@ -18,17 +16,13 @@ export function showEnemyCtxMenu(x: number, y: number, enemyId: string) {
   const sys = getState().GALAXY[getState().player.sysIdx];
   const enemy = sys?.enemies?.find((x) => x.id === enemyId);
   const isNeutral = enemy?.faction === "neutral";
-  const isLocked = getState().player.lockQueue?.some((slot) => slot.id === enemyId && !slot.resolving) ?? false;
 
   let hailHtml = "";
   if (isNeutral && enemy?.hailable && hasCommsEquipment()) {
     hailHtml = `<div class="ctx-item" data-action="hail">${t("enemyMenu.hail")}</div><div class="ctx-sep"></div>`;
   }
 
-  setHtml(hudState.enemyCtxMenu, `
-    ${hailHtml}
-    <div class="ctx-item" data-action="toggle-lock">${isLocked ? t("enemyMenu.unlockTarget") : t("enemyMenu.lockTarget")}</div>
-  `);
+  setHtml(hudState.enemyCtxMenu, hailHtml);
 
   setStyle(hudState.enemyCtxMenu, { display: "block" });
   setPosition(hudState.enemyCtxMenu, `${x}px`, `${y}px`);
@@ -74,14 +68,7 @@ export function onEnemyCtxItemClick(e: Event) {
   e.stopPropagation();
   hideEnemyCtxMenu();
 
-  if (action === "toggle-lock") {
-    const isLocked = getState().player.lockQueue?.some((slot) => slot.id === activeEnemyId && !slot.resolving) ?? false;
-    if (isLocked) {
-      queueFrameAction({ type: "removeSensorLock", payload: { id: activeEnemyId } });
-    } else {
-      queueFrameAction({ type: "requestSensorLock", payload: { id: activeEnemyId } });
-    }
-  } else if (action === "hail") {
+  if (action === "hail") {
     if (activeEnemyId) {
       setNpcSpeech(activeEnemyId, randomHailLine(), 4000);
     }

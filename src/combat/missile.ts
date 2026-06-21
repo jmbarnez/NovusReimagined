@@ -1,5 +1,5 @@
 import { addBullet, isTargetDestroyed } from "../utils/entities.js";
-import { targetByLockId, isAsteroidTarget } from "../targeting.js";
+import { isAsteroidTarget } from "../targeting/lookup.js";
 import { liveEnemies } from "../utils/game.js";
 import { C } from "../config/index.js";
 import type { ModuleDef } from "../data/modules.js";
@@ -8,23 +8,16 @@ import type { Player } from "../state.js";
 import type { Enemy } from "../types/enemy.js";
 import type { Asteroid } from "../types/asteroid.js";
 import type { WreckPiece } from "../types/system.js";
-import type { AutoTarget } from "../types/combat.js";
-import { isGateLockId } from "../utils/warp-gates.js";
+import { isGateId } from "../utils/warp-gates.js";
 
 /**
- * Pick the enemy a launched missile should home onto: an explicitly passed
- * target, otherwise the slot's assigned lock, otherwise the primary target
- * lock. Missiles only track live enemies (not asteroids/wrecks); a missile with
+ * Pick the enemy a launched missile should home onto.
+ * Missiles only track live enemies (not asteroids/wrecks); a missile with
  * no valid target dumbfires straight ahead.
  */
-function resolveMissileTarget(passed: Enemy | Asteroid | WreckPiece | null, slotIdx: number, p: Player): Enemy | null {
-  let t: Enemy | Asteroid | WreckPiece | AutoTarget | null =
-    passed && !isAsteroidTarget(passed.id) ? passed : null;
-  if (!t) {
-    const lockId = p.turretTargets?.[slotIdx] || p.targetLock?.id || null;
-    if (lockId) t = targetByLockId(lockId, p);
-  }
-  if (!t || isAsteroidTarget(t.id) || isGateLockId(t.id)) return null;
+function resolveMissileTarget(passed: Enemy | Asteroid | WreckPiece | null, _slotIdx: number, p: Player): Enemy | null {
+  const t = passed && !isAsteroidTarget(passed.id) ? passed : null;
+  if (!t || isAsteroidTarget(t.id) || isGateId(t.id)) return null;
   const enemy = liveEnemies(p).find((e) => e.id === t.id) ?? null;
   return enemy && !isTargetDestroyed(enemy) ? enemy : null;
 }

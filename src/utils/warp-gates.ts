@@ -1,15 +1,12 @@
 import type { Gate } from "../types/station.js";
 import type { System } from "../types/system.js";
-import type { AutoTarget } from "../types/combat.js";
 import type { Player } from "../state.js";
 import { C } from "../config/index.js";
-import { getState } from "../state-access.js";
-import { curSys } from "./game.js";
 
 const WARP_GATE_APERTURE_FRACTION = 0.78;
 const DEFAULT_CHARGE_RADIUS_MULT = C.WORLD.GATES.activationRadiusMult ?? 2.0;
 
-export function isGateLockId(id: string): boolean {
+export function isGateId(id: string): boolean {
   return id.startsWith("gate-") || id.startsWith("local|");
 }
 
@@ -71,21 +68,3 @@ export function didCrossGateAperture(gate: Gate, player: Player): boolean {
   return nearX * nearX + nearY * nearY <= r * r;
 }
 
-export function gateByLockId(id: string): Gate | null {
-  const sys = curSys(getState().player);
-  if (!sys) return null;
-  return sys.gates.find((gate) => gateStableId(gate) === id) ?? null;
-}
-
-export function gateLockTarget(gate: Gate, galaxy: System[]): AutoTarget {
-  return {
-    id: gateStableId(gate),
-    x: gate.x,
-    y: gate.y,
-    hp: 1,
-    name: gateDestinationName(gate, galaxy),
-    alive: true,
-    sigRadius: gate.radius * 3,
-    radius: gate.radius,
-  };
-}

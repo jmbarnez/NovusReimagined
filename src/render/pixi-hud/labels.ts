@@ -1,7 +1,3 @@
-import { Client } from "../../state.js";
-import { getState } from "../../state-access.js";
-import { targetByLockId } from "../../targeting.js";
-import { dst } from "../../utils/math.js";
 import { hudState } from "./state.js";
 import { HUD_CRITICAL_COLOR, themeColor } from "./constants.js";
 
@@ -67,34 +63,4 @@ export function updateWarningBanner(
   }
 }
 
-export function updateTargetLabel(
-  cx: number,
-  cy: number,
-  isCritical: boolean,
-  themeTextMain: string,
-): void {
-  if (!hudState.targetLabel) return;
-  const primaryId = getState().player?.targetLock?.id;
-  if (primaryId) {
-    const target = targetByLockId(primaryId, getState().player);
-    if (target && target.hp > 0) {
-      const player = getState().player;
-      const targetSx = cx + (target.x - Client.camx) * Client.zoom;
-      const targetSy = cy + (target.y - Client.camy) * Client.zoom;
-      const targetRad = target.radius || 18;
-      const bracketOffset = (targetRad + 9) * Client.zoom;
-      const targetDist = Math.round(dst(player.x, player.y, target.x, target.y));
 
-      const distText = `[${targetDist}m]`;
-      if (hudState.targetLabel.text !== distText) hudState.targetLabel.text = distText;
-      hudState.targetLabel.position.set(Math.round(targetSx + bracketOffset + 5), Math.round(targetSy));
-      const labelColor = isCritical ? HUD_CRITICAL_COLOR : themeColor(themeTextMain);
-      if ((hudState.targetLabel.style.fill as string | number) !== labelColor) hudState.targetLabel.style.fill = labelColor;
-      hudState.targetLabel.visible = true;
-    } else {
-      hudState.targetLabel.visible = false;
-    }
-  } else {
-    hudState.targetLabel.visible = false;
-  }
-}

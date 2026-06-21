@@ -167,10 +167,12 @@ export function syncPixiCrosshair(): void {
   const style = Client.settings?.reticleStyle || "classic";
   const lineWidth = 1.5 / Client.zoom;
   const colorNum = hexStringToNumber(theme.textMain || "#ffffff");
+  const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.0022);
 
   gfx.clear();
-  gfx.alpha = 0.55;
+  gfx.alpha = 0.53 + pulse * 0.04;
   gfx.position.set(x, y);
+  gfx.circle(0, 0, sz * (1.08 + pulse * 0.025));
+  gfx.stroke({ color: colorNum, width: lineWidth * 0.65, alpha: 0.12 + pulse * 0.04 });
   drawReticleStyle(gfx, style, sz, colorNum, lineWidth);
 }
-

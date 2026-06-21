@@ -8,7 +8,6 @@ import { hudState } from "./state.js";
 import { showEnemyCtxMenu } from "./enemy-menu.js";
 import { formatDistance } from "../../utils/format.js";
 import { t } from "../../utils/i18n.js";
-import { queueFrameAction } from "../../sim/input.js";
 import { createElement, append, setHtml, setText, setStyle, onClick, onContextMenu, remove, onMouseDown, onDocumentMouseMove, onDocumentMouseUp } from "../dom-helpers.js";
 
 /* ── Overview Panel Builder ── */
@@ -113,11 +112,6 @@ export function updateHudOverviewPanel() {
           (ev as MouseEvent).preventDefault();
           (ev as MouseEvent).stopPropagation();
           showEnemyCtxMenu((ev as MouseEvent).clientX, (ev as MouseEvent).clientY, r.id);
-        }
-      });
-      onClick(tr, () => {
-        if (r.kind === "hostile" || r.kind === "neutral" || r.kind === "asteroid" || r.kind === "gate") {
-          queueFrameAction({ type: "requestSensorLock", payload: { id: r.id } });
         }
       });
 

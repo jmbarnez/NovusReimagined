@@ -1,17 +1,14 @@
 import { Client } from "../state.js";
 import { getState, PlayerAccess, TractorAccess } from "../state-access.js";
 import { MODULES, MODULE_FLAGS, ModuleDef } from "../data/modules.js";
-import { getInstance } from "../utils/items.js";
 import { dst } from "../utils/math.js";
 import { floatText } from "../utils/fx.js";
 import { t } from "../utils/i18n.js";
-import { isWreckPieceTarget, isAsteroidTarget } from "../targeting.js";
 import { curSys } from "../utils/game.js";
 import { ASTEROID_DENSITY } from "../constants.js";
 import { invalidate } from "./player-stats.js";
 import type { Asteroid } from "../types/asteroid.js";
 import type { WreckPiece } from "../types/system.js";
-import type { LockSlot } from "../types/combat.js";
 import { findFirstPoweredModuleSlot } from "../utils/module-slots.js";
 
 export const TRACTOR_RANGE = 600;
@@ -24,32 +21,33 @@ function findTractorSlot(): { idx: number; mod: ModuleDef } | null {
   return findFirstPoweredModuleSlot(MODULE_FLAGS.isTractor, getState().player);
 }
 
-function resolveAssignedTarget(slotIdx: number): { entity: Asteroid | WreckPiece; mass: number; id: string } | null {
-  const assignedId = getState().player.turretTargets?.[slotIdx];
-  if (!assignedId) return null;
+function findNearestTractorTarget(): { entity: Asteroid | WreckPiece; mass: number; id: string } | null {
+  const p = getState().player;
+  let best: { entity: Asteroid | WreckPiece; mass: number; id: string } | null = null;
+  let bestD = TRACTOR_RANGE;
 
-  const lockSlot = getState().player.lockQueue?.find((s: LockSlot) => s.id === assignedId);
-  if (!lockSlot || lockSlot.resolving) return null;
-
-  if (isWreckPieceTarget(assignedId)) {
-    const piece = getState().wreckPieces.find((p) => p.id === assignedId);
-    if (!piece || piece.hp <= 0) return null;
-    if (dst(getState().player.x, getState().player.y, piece.x, piece.y) > TRACTOR_RANGE) return null;
+  for (const piece of getState().wreckPieces) {
+    if (piece.hp <= 0) continue;
+    const d = dst(p.x, p.y, piece.x, piece.y);
+    if (d > bestD) continue;
     const mass = piece.radius * piece.radius * 0.8;
-    return { entity: piece, mass, id: assignedId };
+    best = { entity: piece, mass, id: piece.id };
+    bestD = d;
   }
 
-  if (isAsteroidTarget(assignedId)) {
-    const sys = curSys();
-    if (!sys) return null;
-    const ast = sys.asteroidMap?.get(assignedId);
-    if (!ast || ast.depleted || ast.hp <= 0) return null;
-    if (dst(getState().player.x, getState().player.y, ast.x, ast.y) > TRACTOR_RANGE) return null;
-    const mass = ast.radius * ast.radius * ASTEROID_DENSITY;
-    return { entity: ast, mass, id: assignedId };
+  const sys = curSys();
+  if (sys) {
+    for (const ast of sys.asteroids) {
+      if (ast.depleted || ast.hp <= 0) continue;
+      const d = dst(p.x, p.y, ast.x, ast.y);
+      if (d > bestD) continue;
+      const mass = ast.radius * ast.radius * ASTEROID_DENSITY;
+      best = { entity: ast, mass, id: ast.id };
+      bestD = d;
+    }
   }
 
-  return null;
+  return best;
 }
 
 function setCarryKg(kg: number) {
@@ -87,7 +85,7 @@ export function updateTractor(dt: number) {
     return;
   }
 
-  const resolved = resolveAssignedTarget(slot.idx);
+  const resolved = findNearestTractorTarget();
   if (!resolved) {
     TractorAccess.update({ active: false, targetId: null, tooHeavy: false });
     setCarryKg(0);

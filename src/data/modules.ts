@@ -23,7 +23,6 @@ export interface ModuleEffects {
   shieldRegenFlat?: number;
   miningRangePctBonus?: number;
   miningRangeKmBonus?: number;
-  lockScanBonus?: number;
   evasionMultBonus?: number;
   [key: string]: number | undefined;
 }
@@ -402,7 +401,7 @@ export const MODULES: Record<string, ModuleDef> = {
     powergrid: 0,
     cpu: 14,
     massKg: 1300,
-    effects: { weaponMultBonus: 0.04, lockScanBonus: 0.22 },
+    effects: { weaponMultBonus: 0.04 },
   },
   "lo-gyro": {
     id: "lo-gyro",
@@ -426,7 +425,7 @@ export const MODULES: Record<string, ModuleDef> = {
     powergrid: 0,
     cpu: 3,
     massKg: 120,
-    effects: { lockScanBonus: 0.05 },
+    effects: {},
     isScanner: true,
     scanRange: 1.05,
     scanStrength: 1.05,

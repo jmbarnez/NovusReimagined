@@ -129,11 +129,11 @@ describe("map render regressions", () => {
   });
 
   it("keeps high-priority map-related UI layers above bridge windows", async () => {
-    const turretMenuCss = await readSource("../src/ui/styles/hud-turret-menu.css");
+    const missionTooltipCss = await readSource("../src/ui/styles/hud-mission-tooltip.css");
     const xpCss = await readSource("../src/ui/styles/hud-xp.css");
     const bridgeCss = await readSource("../src/ui/styles/bridge.css");
 
-    expect(turretMenuCss).toMatch(/#turret-ctx-menu\s*\{[\s\S]*?z-index:\s*9200;/);
+    expect(missionTooltipCss).toMatch(/#hud-mission-tooltip\s*\{[\s\S]*?z-index:\s*9200;/);
     expect(xpCss).toMatch(/#hud-xp-popup\s*\{[\s\S]*?z-index:\s*9200;/);
     expect(bridgeCss).toMatch(/\.inv-ctx\s*\{[\s\S]*?z-index:\s*9200;/);
   });
